@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# alias here='nautilus . '
+alias codei=code-insiders
+alias tx=tmux
+alias txp=tmuxp
+
+alias h=htop
+alias d=docker
+
+alias ls='ls --color'
+alias ll='ls -ahlF'
+alias cls='clear'
+alias cat="bat --style="changes,header""
+# list the PATH separated by new lines
+alias lpath='echo $PATH | tr ":" "\n"' 
+
+# verbose
+alias mkdir='mkdir -v'
+alias mv='mv -v'
+alias cp='cp -v'
+alias rm='rm -v'
+alias ln='ln -v'
+
+# git
+alias g-repo="git config user.name gh-liu && git config user.email liugh.cs@gmail.com"
+alias git-tree='git log --graph --decorate --pretty=oneline --abbrev-commit'
+alias gcn='git commit -v --no-verify'
+
+# tmux
+alias ta='tmux attach -t'
+alias tad='tmux attach -d -t'
+alias ts='tmux new-session -s'
+alias tl='tmux list-sessions'
+alias tksv='tmux kill-server'
+alias tkss='tmux kill-session -t'
+
+# rust
+alias cg='cargo'
+alias cgfmt='cargo-fmt'

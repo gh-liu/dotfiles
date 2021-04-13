@@ -1,0 +1,206 @@
+call plug#begin('~/.vim/plugged')
+
+Plug 'morhetz/gruvbox'
+let g:gruvbox_contrast_dark = 'soft'
+
+" File Tree
+Plug 'preservim/nerdtree'
+" shows a git diff
+Plug 'airblade/vim-gitgutter'
+" Underlines the word under the cursor
+Plug 'itchyny/vim-cursorword'
+" Status Line
+Plug 'itchyny/lightline.vim'
+" Display vertical lines
+" Plug 'Yggdroot/indentLine'
+" Rainbow Parentheses
+Plug 'kien/rainbow_parentheses.vim'
+" On-demand lazy load
+" Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+" Interact with tmux 
+Plug 'benmills/vimux'
+" Vim start up time debug (figure out which script is slow)
+Plug 'tweekmonster/startuptime.vim'           
+" Comment functions so powerful 
+Plug 'preservim/nerdcommenter'
+" Browse the tags of the current file
+Plug 'majutsushi/tagbar'
+" Git plugin for Vim
+Plug 'tpope/vim-fugitive'
+Plug 'rhysd/git-messenger.vim'
+" Plug 'Yggdroot/indentLine', { 'on': 'IndentLinesEnable' }
+"   autocmd! User indentLine doautocmd indentLine Syntax
+"   let g:indentLine_color_term = 239
+"   let g:indentLine_color_gui = '#616161'
+" Edit
+" Plug 'tpope/vim-repeat'
+" Plug 'tpope/vim-surround'
+" Plug 'tpope/vim-endwise'
+" Plug 'tpope/vim-commentary'
+"   map  gc  <Plug>Commentary
+"   nmap gcc <Plug>CommentaryLine
+
+" Plug 'junegunn/fzf',        { 'do': './install --all' }
+" Plug 'junegunn/fzf.vim'
+Plug 'ctrlpvim/ctrlp.vim' 
+
+Plug 'SirVer/ultisnips'
+
+" Plug 'codota/tabnine-vim'
+" Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
+" Plug 'stephpy/vim-yaml'
+
+" markdown support
+Plug 'godlygeek/tabular'
+Plug 'plasticboy/vim-markdown'
+let g:vim_markdown_folding_disabled = 1
+" markdown preview
+Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+" Plug 'rust-lang/rust.vim'
+
+call plug#end()
+"}}}
+
+" Plugins Setting ----------------------------------{{{
+
+" lightline.vim
+" let g:lightline = {
+"       \ 'colorscheme': 'jellybeans',
+"       \ }
+
+" NerdTree
+augroup nerdtree_settings
+    autocmd!
+    " NERDDTree快捷键
+    map <C-n> :NERDTreeToggle<CR>
+    nnoremap <leader>t :NERDTreeToggle<CR>
+    nnoremap <leader>d :NERDTreeFind<CR>
+    " 是否显示隐藏文件
+    let NERDTreeShowHidden=1
+    " 设置宽度
+    let NERDTreeWinSize=30
+    " 在终端启动vim时，共享NERDTree
+    let g:nerdtree_tabs_open_on_console_startup=1
+    " 忽略以下文件的显示
+    " let NERDTreeIgnore=['\.pyc','\~$',
+    "             \ '\.swp',
+    "             \ '\.o',
+    "             \ '.DS_Store',
+    "             \ '\.orig$',
+    "             \ '@neomake_',
+    "             \ '.coverage.',
+    "             \ '__pycache__$[[dir]]',
+    "             \ '.pytest_cache$[[dir]]',
+    "             \ '.git$[[dir]]',
+    "             \ '.idea[[dir]]',
+    "             \ '.vscode[[dir]]',
+    "             \ 'htmlcov[[dir]]',
+    "             \ 'test-reports[[dir]]',
+    "             \ '.egg-info$[[dir]]']
+    " 显示书签列表
+    let NERDTreeShowBookmarks=1
+    " 改变nerdtree的箭头
+    " let g:NERDTreeDirArrowExpandable = '?'
+    " let g:NERDTreeDirArrowCollapsible = '?'
+    " vim不指定具体文件打开时，自动使用nerdtree
+    autocmd StdinReadPre * let s:std_in=1
+    autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree |endif
+
+    " 当vim打开一个目录时，nerdtree自动使用
+    autocmd StdinReadPre * let s:std_in=1
+    autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | endif
+    " 打开新的窗口，focus在buffer里而不是NerdTree里
+    autocmd VimEnter * :wincmd l
+
+    " 当vim中没有其他文件，值剩下nerdtree的时候，自动关闭窗口
+    autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
+augroup END
+
+augroup rainbow_parentheses_settings
+let g:rbpt_colorpairs = [
+    \ ['brown',       'RoyalBlue3'],
+    \ ['Darkblue',    'SeaGreen3'],
+    \ ['darkgray',    'DarkOrchid3'],
+    \ ['darkgreen',   'firebrick3'],
+    \ ['darkcyan',    'RoyalBlue3'],
+    \ ['darkred',     'SeaGreen3'],
+    \ ['darkmagenta', 'DarkOrchid3'],
+    \ ['brown',       'firebrick3'],
+    \ ['gray',        'RoyalBlue3'],
+    \ ['black',       'SeaGreen3'],
+    \ ['darkmagenta', 'DarkOrchid3'],
+    \ ['Darkblue',    'firebrick3'],
+    \ ['darkgreen',   'RoyalBlue3'],
+    \ ['darkcyan',    'SeaGreen3'],
+    \ ['darkred',     'DarkOrchid3'],
+    \ ['red',         'firebrick3'],
+    \ ]
+let g:rbpt_max = 16
+
+augroup END
+
+" vim-which-key
+" nnoremap <silent> <leader> :WhichKey ','<CR>
+" set timeoutlen=500
+
+" vimux
+nnoremap <Leader>ri :VimuxPromptCommand<CR>
+nnoremap <Leader>rc :VimuxCloseRunner<CR>
+nnoremap <Leader>rl :VimuxRunLastCommand<CR>
+
+" tagbar
+nnoremap <F8> :TagbarToggle<CR>
+
+"  coc.nvim 
+  
+if has_key(g:plugs, 'coc.nvim')
+  function! s:check_back_space() abort
+    let col = col('.') - 1
+    return !col || getline('.')[col - 1]  =~# '\s'
+  endfunction
+
+  inoremap <silent><expr> <TAB>
+        \ pumvisible() ? "\<C-n>" :
+        \ <SID>check_back_space() ? "\<TAB>" :
+        \ coc#refresh()
+  inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+  function! s:show_documentation()
+    if (index(['vim', 'help'], &filetype) >= 0)
+      execute 'h' expand('<cword>')
+    else
+      call CocAction('doHover')
+    endif
+  endfunction
+
+  nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+  " Extensions for CoC
+  " let g:coc_global_extensions = [
+  "   \'coc-json',
+  "   \'coc-snippets',
+  "   \'coc-sh',
+  "   \'coc-go',
+  "   \'coc-git',
+  "   \'coc-prettier', 
+  "   \'coc-eslint', 
+  "   \'coc-tsserver'
+  "   \]
+  command! -nargs=0 Prettier :CocCommand prettier.formatFile
+
+  let g:go_doc_keywordprg_enabled = 0
+
+  augroup coc-config
+    autocmd!
+    autocmd VimEnter * nmap <silent> <leader>gd <Plug>(coc-definition)
+    autocmd VimEnter * nmap <silent> <leader>gi <Plug>(coc-implementation)
+    autocmd VimEnter * nmap <silent> <leader>gr <Plug>(coc-references)
+    
+    autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
+  augroup END
+endif
+
+" }}}
+

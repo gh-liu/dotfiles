@@ -1,0 +1,11 @@
+" general configuration
+source ~/.vim/config.vim
+
+" plugins installation and configuration
+source ~/.vim/plugins.vim
+
+" custom mappings
+source ~/.vim/mappings.vim
+
+" custom commands and autocmds
+source ~/.vim/commands.vim

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Open your $EDITOR in the lower 3rd of your tmux window until you exit it.
+peek() { tmux split-window -p 33 "$EDITOR" "$@" }
+
+# hook direnv
+# https://github.com/direnv/direnv/blob/master/docs/hook.md
+# eval "$( hook zsh)"
+
+# https://www.commandlinefu.com/commands/view/9065/what-is-the-use-of-this-switch-
+function manswitch () { man $1 | less -p "^ +$2"; }
