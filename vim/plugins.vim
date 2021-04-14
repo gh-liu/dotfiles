@@ -43,6 +43,7 @@ Plug 'rhysd/git-messenger.vim'
 " Plug 'junegunn/fzf',        { 'do': './install --all' }
 " Plug 'junegunn/fzf.vim'
 Plug 'ctrlpvim/ctrlp.vim' 
+Plug 'dyng/ctrlsf.vim'
 
 " Plug 'SirVer/ultisnips'
 
@@ -216,3 +217,18 @@ let g:go_highlight_operators = 1
 let g:go_auto_type_info = 1
 
 " au filetype go inoremap <buffer> . .<C-x><C-o>
+
+" CtrlSF.vim
+nmap     <leader>ff <Plug>CtrlSFPrompt
+vmap     <leader>ff <Plug>CtrlSFVwordPath
+vmap     <leader>fF <Plug>CtrlSFVwordExec
+nmap     <leader>fn <Plug>CtrlSFCwordPath
+
+nnoremap <leader>fo :CtrlSFOpen<CR>
+nnoremap <leader>ft :CtrlSFToggle<CR>
+inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
+nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
+" let g:ctrlsf_default_view_mode = 'compact'
+let g:ctrlsf_auto_focus = {
+    \ "at": "start",
+    \ }
