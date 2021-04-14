@@ -29,7 +29,7 @@ vim +PlugInstall +qall
 
 # zsh
 # zsh theme and plugin
-ln -sf $BASE/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
+ln -sf $BASE/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
 mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
 ln -sf $BASE/zsh/zshrc ~/.zshrc
 ln -sf $BASE/zsh/common_env ~/.common_env
@@ -61,3 +61,4 @@ source ~/.zshrc
 # ln -sf $BASE/zsh/common_env ~/.common_env
 # ln -sf $BASE/zsh/common_func ~/.common_func
 # ln -sf $BASE/zsh/common_alias ~/.common_alias
+# ln -sf $BASE/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
