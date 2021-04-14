@@ -23,6 +23,8 @@ ln -sf $BASE/vim/plugins.vim ~/.vim/plugins.vim
 ln -sf $BASE/vim/mappings.vim ~/.vim/mappings.vim
 ln -sf $BASE/vim/commands.vim ~/.vim/commands.vim
 
+ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
+
 vim +PlugInstall +qall
 
 # zsh
@@ -51,6 +53,8 @@ source ~/.zshrc
 # ln -sf $BASE/vim/plugins.vim ~/.vim/plugins.vim
 # ln -sf $BASE/vim/mappings.vim ~/.vim/mappings.vim
 # ln -sf $BASE/vim/commands.vim ~/.vim/commands.vim
+
+# ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
 
 # mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
 # ln -sf $BASE/zsh/zshrc ~/.zshrc

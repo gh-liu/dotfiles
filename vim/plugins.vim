@@ -44,10 +44,10 @@ Plug 'rhysd/git-messenger.vim'
 " Plug 'junegunn/fzf.vim'
 Plug 'ctrlpvim/ctrlp.vim' 
 
-Plug 'SirVer/ultisnips'
+" Plug 'SirVer/ultisnips'
 
 " Plug 'codota/tabnine-vim'
-" Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
+Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
 " Plug 'stephpy/vim-yaml'
 
 " markdown support
@@ -178,16 +178,16 @@ if has_key(g:plugs, 'coc.nvim')
   nnoremap <silent> K :call <SID>show_documentation()<CR>
 
   " Extensions for CoC
-  " let g:coc_global_extensions = [
-  "   \'coc-json',
-  "   \'coc-snippets',
+  let g:coc_global_extensions = [
+    \'coc-snippets',
+    \'coc-json',
+    \'coc-go'
+    \]
   "   \'coc-sh',
-  "   \'coc-go',
   "   \'coc-git',
   "   \'coc-prettier', 
   "   \'coc-eslint', 
   "   \'coc-tsserver'
-  "   \]
   command! -nargs=0 Prettier :CocCommand prettier.formatFile
 
   let g:go_doc_keywordprg_enabled = 0
@@ -204,3 +204,15 @@ endif
 
 " }}}
 
+" vim-go 
+" Go syntax highlighting
+let g:go_highlight_fields = 1
+let g:go_highlight_functions = 1
+let g:go_highlight_function_calls = 1
+let g:go_highlight_extra_types = 1
+let g:go_highlight_operators = 1
+
+" Status line types/signatures
+let g:go_auto_type_info = 1
+
+" au filetype go inoremap <buffer> . .<C-x><C-o>
