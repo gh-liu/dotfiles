@@ -1,3 +1,3 @@
 {
-  "go.goplsPath": "/home/sr/env/golang/gopath/bin/gopls"
+  "go.goplsPath": "_GOBIN/gopls"
 }
