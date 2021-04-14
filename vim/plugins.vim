@@ -76,7 +76,7 @@ augroup nerdtree_settings
     autocmd!
     " NERDDTree快捷键
     map <C-n> :NERDTreeToggle<CR>
-    nnoremap <leader>t :NERDTreeToggle<CR>
+    " nnoremap <leader>t :NERDTreeToggle<CR>
     nnoremap <leader>d :NERDTreeFind<CR>
     " 是否显示隐藏文件
     let NERDTreeShowHidden=1
@@ -152,7 +152,7 @@ nnoremap <Leader>rc :VimuxCloseRunner<CR>
 nnoremap <Leader>rl :VimuxRunLastCommand<CR>
 
 " tagbar
-nnoremap <F8> :TagbarToggle<CR>
+nnoremap <F2> :TagbarToggle<CR>
 
 "  coc.nvim 
   
