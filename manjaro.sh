@@ -31,7 +31,7 @@ echo -e "\n" | sudo pacman -S docker docker-compose
 echo -e "\n" | sudo pacman -S htop tcpdump strace perf httpie
 echo -e "\n" | sudo pacman -S cmake gdb lldb 
 echo -e "\n" | sudo pacman -S virtualbox vagrant 
-echo -e "\n" | sudo pacman -S ripgrep the_silver_searcher vagrant cloc nodejs npm github-cli neofetch cmatrix
+echo -e "\n" | sudo pacman -S ripgrep the_silver_searcher proxychains-ng vagrant cloc nodejs npm github-cli neofetch cmatrix
 
 echo -e "\n" | sudo pacman -S vlc spotify qv2ray google-chrome obsidian visual-studio-code-insiders-bin typora menulibre telegram-desktop 
 
