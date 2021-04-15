@@ -72,9 +72,16 @@ command! PU PlugUpdate | PlugUpgrade
 let g:gruvbox_contrast_dark = 'soft'
 
 " lightline.vim 
-" let g:lightline = {
-"       \ 'colorscheme': 'jellybeans',
-"       \ }
+let g:lightline = {
+      \ 'colorscheme': 'powerline',
+      \ 'active': {
+      \   'left': [ [ 'mode', 'paste' ],
+      \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+      \ },
+      \ 'component_function': {
+      \   'gitbranch': 'FugitiveHead'
+      \ },
+      \ }
 
 " NerdTree 
 augroup nerdtree_settings
