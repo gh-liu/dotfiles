@@ -15,7 +15,8 @@ Plug 'kien/rainbow_parentheses.vim'
 Plug 'itchyny/vim-cursorword'
 
 " File Tree 
-Plug 'preservim/nerdtree'
+" Plug 'preservim/nerdtree'
+Plug 'tpope/vim-vinegar'
 
 " Show keymaps begin with <leader> 
 Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
@@ -84,6 +85,7 @@ let g:lightline = {
       \ }
 
 " NerdTree 
+if has_key(g:plugs, 'nerdtree') 
 augroup nerdtree_settings
   autocmd!
   " NERDDTree快捷键
@@ -130,6 +132,7 @@ augroup nerdtree_settings
   " 当vim中没有其他文件，值剩下nerdtree的时候，自动关闭窗口
   autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 augroup END
+endif
 
 " rainbow_parentheses.vim 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
@@ -249,3 +252,6 @@ nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
 " NERDCommenter
 let g:NERDCreateDefaultMappings = 0
 map <leader>cc  <plug>NERDCommenterToggle
+
+" netrw
+let g:netrw_liststyle = 3
