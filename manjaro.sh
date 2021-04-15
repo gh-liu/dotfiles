@@ -25,7 +25,7 @@ echo -e "\n" | sudo pacman -S yay
 echo -e "\n" | sudo pacman -S ibus-rime
 
 echo -e "\n" | sudo pacman -S base-devel coreutils
-echo -e "\n" | sudo pacman -S zsh vim tmux tmuxp
+echo -e "\n" | sudo pacman -S zsh vim tmux tmuxp alacritty
 echo -e "\n" | sudo pacman -S jq bat fzf ctags
 echo -e "\n" | sudo pacman -S docker docker-compose 
 echo -e "\n" | sudo pacman -S htop tcpdump strace perf httpie
