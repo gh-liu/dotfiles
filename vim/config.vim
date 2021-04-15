@@ -54,6 +54,9 @@ set autowrite
 
 set complete-=i
 
+" Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+
 " => Colors and Fonts
 " Enable syntax highlighting
 syntax enable 

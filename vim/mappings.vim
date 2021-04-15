@@ -15,11 +15,11 @@ nnoremap ]l :lnext<cr>
 nnoremap [l :lprev<cr>
 
 " close windows, tabs, quickfix-win, localtion-win
-" nnoremap <Leader>cw :close<cr>
-" nnoremap <Leader>ct :tabclose<cr>
+nnoremap <Leader>cw :close<cr>
+nnoremap <Leader>ct :tabclose<cr>
 
-" nnoremap <Leader>cq :ccl<cr>
-" nnoremap <Leader>cl :lcl<cr>
+nnoremap <Leader>cq :ccl<cr>
+nnoremap <Leader>cl :lcl<cr>
 
 " new a window or tab
 nnoremap <Leader>nw :new<cr>
