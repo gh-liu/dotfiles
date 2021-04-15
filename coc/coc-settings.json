@@ -4,5 +4,6 @@
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
-  ]
+  ],
+  "explorer.width": 25
 }

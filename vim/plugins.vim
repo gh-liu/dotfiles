@@ -202,6 +202,7 @@ if has_key(g:plugs, 'coc.nvim')
 
   " Extensions for CoC
   let g:coc_global_extensions = [
+    \'coc-explorer',
     \'coc-snippets',
     \'coc-json',
     \'coc-toml', 
@@ -220,6 +221,8 @@ if has_key(g:plugs, 'coc.nvim')
 
   " Add `:Format` command to format current buffer.
   command! -nargs=0 Format :call CocAction('format')
+
+  map <leader>e :CocCommand explorer<CR>
 endif
 
 " vim-go 
@@ -255,3 +258,5 @@ map <leader>cc  <plug>NERDCommenterToggle
 
 " netrw
 let g:netrw_liststyle = 3
+let g:netrw_winsize = 25
+map <C-n> :Lexplore<CR>

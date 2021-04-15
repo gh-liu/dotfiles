@@ -40,7 +40,7 @@ set smartindent
 " Set relative number
 set number
 " set relativenumber
-map <silent><F4> :set relativenumber!<CR>
+map <silent><F3> :set relativenumber!<CR>
 " Set 7 lines under the cursor - when moving vertically using j/k
 set so=10
 " show the cursor position all the time
