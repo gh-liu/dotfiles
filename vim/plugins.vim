@@ -185,13 +185,10 @@ if has_key(g:plugs, 'coc.nvim')
   let g:coc_global_extensions = [
     \'coc-snippets',
     \'coc-json',
+    \'coc-toml', 
+    \'coc-yaml',
     \'coc-go'
     \]
-  "   \'coc-sh',
-  "   \'coc-git',
-  "   \'coc-prettier', 
-  "   \'coc-eslint', 
-  "   \'coc-tsserver'
   command! -nargs=0 Prettier :CocCommand prettier.formatFile
 
   let g:go_doc_keywordprg_enabled = 0
