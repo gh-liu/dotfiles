@@ -1,77 +1,78 @@
+" >>>>>> Plugins 
+
 call plug#begin('~/.vim/plugged')
 
+" Theme 
 Plug 'morhetz/gruvbox'
 let g:gruvbox_contrast_dark = 'soft'
 
-" File Tree
-Plug 'preservim/nerdtree'
-" shows a git diff
-Plug 'airblade/vim-gitgutter'
-" Underlines the word under the cursor
-Plug 'itchyny/vim-cursorword'
-" Status Line
+" Status Line 
 Plug 'itchyny/lightline.vim'
-" Display vertical lines
-" Plug 'Yggdroot/indentLine'
-" Rainbow Parentheses
+
+" Rainbow Parentheses 
 Plug 'kien/rainbow_parentheses.vim'
-" On-demand lazy load
-" Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+
+" Underlines the word under the cursor 
+Plug 'itchyny/vim-cursorword'
+
+" File Tree 
+Plug 'preservim/nerdtree'
+
+" Show keymaps begin with <leader> 
+Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+
+" Git 
+Plug 'tpope/vim-fugitive'
+" shows a git diff 
+Plug 'airblade/vim-gitgutter'
+" show the git message 
+Plug 'rhysd/git-messenger.vim'
+
 " Interact with tmux 
 Plug 'benmills/vimux'
-" Vim start up time debug (figure out which script is slow)
-Plug 'tweekmonster/startuptime.vim'           
-" Comment functions so powerful 
-Plug 'preservim/nerdcommenter'
+
+" Vim start up time debug (figure out which script is slow) 
+Plug 'tweekmonster/startuptime.vim'
+
 " Browse the tags of the current file
 Plug 'majutsushi/tagbar'
-" Git plugin for Vim
-Plug 'tpope/vim-fugitive'
-Plug 'rhysd/git-messenger.vim'
-" Plug 'Yggdroot/indentLine', { 'on': 'IndentLinesEnable' }
-"   autocmd! User indentLine doautocmd indentLine Syntax
-"   let g:indentLine_color_term = 239
-"   let g:indentLine_color_gui = '#616161'
-" Edit
-" Plug 'tpope/vim-repeat'
-" Plug 'tpope/vim-surround'
-" Plug 'tpope/vim-endwise'
-" Plug 'tpope/vim-commentary'
-"   map  gc  <Plug>Commentary
-"   nmap gcc <Plug>CommentaryLine
 
-" Plug 'junegunn/fzf',        { 'do': './install --all' }
-" Plug 'junegunn/fzf.vim'
+" Comment 
+Plug 'preservim/nerdcommenter'
+
+" Search 
 Plug 'ctrlpvim/ctrlp.vim' 
 Plug 'dyng/ctrlsf.vim'
+" Plug 'junegunn/fzf',        { 'do': './install --all' }
+" Plug 'junegunn/fzf.vim'
 
-" Plug 'SirVer/ultisnips'
-
-" Plug 'codota/tabnine-vim'
-Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
-" Plug 'stephpy/vim-yaml'
-
-" markdown support
+" Aligning text 
 Plug 'godlygeek/tabular'
+
+" Markdown 
 Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
-" markdown preview
+" markdown preview 
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 
+" Language 
+Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
+" Plug 'SirVer/ultisnips'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 " Plug 'rust-lang/rust.vim'
 
 call plug#end()
 "}}}
 
-" Plugins Setting ----------------------------------{{{
 
-" lightline.vim
+" >>>>>> Plugins Setting 
+
+" lightline.vim 
 " let g:lightline = {
 "       \ 'colorscheme': 'jellybeans',
 "       \ }
 
-" NerdTree
+" NerdTree 
 augroup nerdtree_settings
     autocmd!
     " NERDDTree快捷键
@@ -119,6 +120,7 @@ augroup nerdtree_settings
     autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 augroup END
 
+" rainbow_parentheses.vim 
 augroup rainbow_parentheses_settings
 let g:rbpt_colorpairs = [
     \ ['brown',       'RoyalBlue3'],
@@ -143,8 +145,10 @@ let g:rbpt_max = 16
 augroup END
 
 " vim-which-key
-" nnoremap <silent> <leader> :WhichKey ','<CR>
-" set timeoutlen=500
+if has_key(g:plugs, 'vim-which-key')
+  nnoremap <silent> <leader> :WhichKey ','<CR>
+  set timeoutlen=500
+endif
 
 " vimux
 nnoremap <Leader>ri :VimuxPromptCommand<CR>
@@ -155,7 +159,6 @@ nnoremap <Leader>rl :VimuxRunLastCommand<CR>
 nnoremap <F2> :TagbarToggle<CR>
 
 "  coc.nvim 
-  
 if has_key(g:plugs, 'coc.nvim')
   function! s:check_back_space() abort
     let col = col('.') - 1
@@ -219,16 +222,20 @@ let g:go_auto_type_info = 1
 " au filetype go inoremap <buffer> . .<C-x><C-o>
 
 " CtrlSF.vim
-nmap     <leader>ff <Plug>CtrlSFPrompt
-vmap     <leader>ff <Plug>CtrlSFVwordPath
-vmap     <leader>fF <Plug>CtrlSFVwordExec
-nmap     <leader>fn <Plug>CtrlSFCwordPath
-
-nnoremap <leader>fo :CtrlSFOpen<CR>
-nnoremap <leader>ft :CtrlSFToggle<CR>
-inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
-nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
 " let g:ctrlsf_default_view_mode = 'compact'
 let g:ctrlsf_auto_focus = {
     \ "at": "start",
     \ }
+nmap     <leader>ff <Plug>CtrlSFPrompt
+vmap     <leader>ff <Plug>CtrlSFVwordPath
+vmap     <leader>fF <Plug>CtrlSFVwordExec
+nmap     <leader>fn <Plug>CtrlSFCwordPath
+nnoremap <leader>fo :CtrlSFOpen<CR>
+nnoremap <leader>ft :CtrlSFToggle<CR>
+inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
+nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
+
+
+" NERDCommenter
+let g:NERDCreateDefaultMappings = 0
+map <leader>cc  <plug>NERDCommenterToggle
