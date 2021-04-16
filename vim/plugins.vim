@@ -38,7 +38,9 @@ Plug 'tweekmonster/startuptime.vim'
 Plug 'majutsushi/tagbar'
 
 " Comment 
-Plug 'preservim/nerdcommenter'
+" Plug 'preservim/nerdcommenter'
+" Plug 'tomtom/tcomment_vim'
+Plug 'tpope/vim-commentary'
 
 " Search 
 Plug 'ctrlpvim/ctrlp.vim' 
@@ -253,8 +255,8 @@ nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
 
 
 " NERDCommenter
-let g:NERDCreateDefaultMappings = 0
-map <leader>cc  <plug>NERDCommenterToggle
+" let g:NERDCreateDefaultMappings = 0
+" map <leader>cc  <plug>NERDCommenterToggle
 
 " netrw
 let g:netrw_liststyle = 3
