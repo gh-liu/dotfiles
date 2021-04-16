@@ -37,6 +37,10 @@ Plug 'tweekmonster/startuptime.vim'
 " Browse the tags of the current file
 Plug 'majutsushi/tagbar'
 
+" Edit
+Plug 'tpope/vim-repeat'
+Plug 'tpope/vim-surround'
+
 " Comment 
 " Plug 'preservim/nerdcommenter'
 " Plug 'tomtom/tcomment_vim'
