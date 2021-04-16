@@ -52,8 +52,8 @@ Plug 'godlygeek/tabular'
 " Search 
 Plug 'ctrlpvim/ctrlp.vim' 
 Plug 'dyng/ctrlsf.vim'
-" Plug 'junegunn/fzf',        { 'do': './install --all' }
-" Plug 'junegunn/fzf.vim'
+Plug 'junegunn/fzf',        { 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
 
 " Bracket maps
 Plug 'tpope/vim-unimpaired'
