@@ -56,6 +56,7 @@ source ~/.zshrc
 
 # generate the 'goplsPath' of 'coc-settings.json'
 # sed -i "s:_GOBIN:$GOBIN:" ./coc/coc-settings.json
+# sed -i "s:$GOBIN:_GOBIN:" ./coc/coc-settings.json
 # ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
 
 # mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
