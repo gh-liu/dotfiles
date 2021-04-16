@@ -46,26 +46,29 @@ Plug 'tpope/vim-surround'
 " Plug 'tomtom/tcomment_vim'
 Plug 'tpope/vim-commentary'
 
+" Aligning text 
+Plug 'godlygeek/tabular'
+
 " Search 
 Plug 'ctrlpvim/ctrlp.vim' 
 Plug 'dyng/ctrlsf.vim'
 " Plug 'junegunn/fzf',        { 'do': './install --all' }
 " Plug 'junegunn/fzf.vim'
 
-" Aligning text 
-Plug 'godlygeek/tabular'
-
-" Markdown 
-Plug 'plasticboy/vim-markdown'
-let g:vim_markdown_folding_disabled = 1
-" markdown preview 
-Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+" Bracket maps
+Plug 'tpope/vim-unimpaired'
 
 " Language 
 Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
 " Plug 'SirVer/ultisnips'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 " Plug 'rust-lang/rust.vim'
+
+" Markdown 
+Plug 'plasticboy/vim-markdown'
+let g:vim_markdown_folding_disabled = 1
+" markdown preview 
+Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 
 call plug#end()
 

@@ -1,18 +1,18 @@
 " Smart way to move between windows, tabs, buffers, quickfix
-nnoremap ]w <c-w>w
-nnoremap [w <c-w>W
+" nnoremap ]w <c-w>w
+" nnoremap [w <c-w>W
 
-nnoremap ]t :tabn<cr>
-nnoremap [t :tabp<cr>
+" nnoremap ]t :tabn<cr>
+" nnoremap [t :tabp<cr>
 
-nnoremap ]b :bnext<cr>
-nnoremap [b :bprev<cr>
+" nnoremap ]b :bnext<cr>
+" nnoremap [b :bprev<cr>
 
-nnoremap ]q :cnext<cr>
-nnoremap [q :cprev<cr>
+" nnoremap ]q :cnext<cr>
+" nnoremap [q :cprev<cr>
 
-nnoremap ]l :lnext<cr>
-nnoremap [l :lprev<cr>
+" nnoremap ]l :lnext<cr>
+" nnoremap [l :lprev<cr>
 
 " close windows, tabs, quickfix-win, localtion-win
 nnoremap <Leader>cw :close<cr>
