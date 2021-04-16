@@ -245,6 +245,15 @@ let g:go_highlight_operators = 1
 let g:go_auto_type_info = 1
 " disable K
 let g:go_doc_keywordprg_enabled = 0
+let g:go_debug_mappings = {
+  \ '(go-debug-breakpoint)': {'key': '<F6>'},
+  \ '(go-debug-step)':       {'key': '<F7>'},
+  \ '(go-debug-next)':       {'key': '<F8>'},
+  \ '(go-debug-continue)':   {'key': '<F9>'},
+  \ '(go-debug-print)':      {'key': '<F10>'},
+  \ '(go-debug-halt)':       {'key': '<F11>'},
+  \ }
+
 
 " CtrlSF.vim
 " let g:ctrlsf_default_view_mode = 'compact'
