@@ -125,6 +125,6 @@ if [ -f ~/.custom_cfg ]; then
     . ~/.custom_cfg
 fi
 
-# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 export DISABLE_AUTO_TITLE='true'

@@ -12,25 +12,25 @@ nnoremap <Leader>cq :ccl<cr>
 nnoremap <Leader>cl :lcl<cr>
 
 " new a window or tab
-nnoremap <Leader>nw :new<cr>
+" nnoremap <Leader>nw :new<cr>
 nnoremap <Leader>nt :tabnew<cr>
 
 "" window
-nnoremap <leader>ws :split<CR>
-nnoremap <leader>wv :vsplit<CR>
+" nnoremap <leader>ws :split<CR>
+" nnoremap <leader>wv :vsplit<CR>
 
 " <Leader>[1-9] move to tab [1-9]
-for s:i in range(1, 9)
-  execute 'nnoremap <Leader>' . s:i . ' ' . s:i . 'gt'
-endfor
+" for s:i in range(1, 9)
+"   execute 'nnoremap <Leader>' . s:i . ' ' . s:i . 'gt'
+" endfor
 
 " repeat in opposite direction
 noremap \ ,
 
 " Quit
-" inoremap <C-Q>     <esc>:q<cr>
-" nnoremap <C-Q>     :q<cr>
-" vnoremap <C-Q>     <esc>
+inoremap <C-Q>     <esc>:q<cr>
+nnoremap <C-Q>     :q<cr>
+vnoremap <C-Q>     <esc>
 nnoremap <Leader>q :q<cr>
 nnoremap <Leader>Q :qa!<cr>
 vnoremap <Leader>q <esc>
@@ -69,8 +69,8 @@ nnoremap <C-f> <nop>
 nnoremap <Leader><C-f> <C-f>
 
 " Tags
-nnoremap <C-]> g<C-]>
-nnoremap g[ :pop<cr>
+" nnoremap <C-]> g<C-]>
+" nnoremap g[ :pop<cr>
 
 " Moving lines
 nnoremap <silent> <C-k> :move-2<cr>

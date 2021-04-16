@@ -13,7 +13,9 @@ alias ll='ls -ahlF'
 alias cls='clear'
 alias cat="bat --style="changes,header""
 # list the PATH separated by new lines
-alias lpath='echo $PATH | tr ":" "\n"' 
+alias lpath='echo $PATH | tr ":" "\n"'
+
+alias pc='proxychains'
 
 # verbose
 alias mkdir='mkdir -v'

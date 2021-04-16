@@ -65,3 +65,6 @@ source ~/.zshrc
 # ln -sf $BASE/zsh/common_func ~/.common_func
 # ln -sf $BASE/zsh/common_alias ~/.common_alias
 # ln -sf $BASE/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
+
+# alacritty
+# ln -sf $(pwd)/alacritty/alacritty.yml ~/.alacritty.yml
