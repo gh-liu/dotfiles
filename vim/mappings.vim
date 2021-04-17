@@ -73,7 +73,13 @@ nnoremap <Leader><C-f> <C-f>
 " nnoremap g[ :pop<cr>
 
 " Moving lines
-nnoremap <silent> <C-k> :move-2<cr>
-nnoremap <silent> <C-j> :move+<cr>
-nnoremap <silent> <C-h> <<
-nnoremap <silent> <C-l> >>
+" nnoremap <silent> <C-k> :move-2<cr>
+" nnoremap <silent> <C-j> :move+<cr>
+" nnoremap <silent> <C-h> <<
+" nnoremap <silent> <C-l> >>
+
+"use <ctrl>+j/k/h/l to switch the right direction just like you use the j/k/h/l to move the cursor
+nmap <C-j> <C-W>j
+nmap <C-k> <C-W>k
+nmap <C-h> <C-W>h
+nmap <C-l> <C-W>l
