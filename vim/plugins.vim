@@ -15,7 +15,6 @@ Plug 'kien/rainbow_parentheses.vim'
 Plug 'itchyny/vim-cursorword'
 
 " File Tree 
-" Plug 'preservim/nerdtree'
 Plug 'tpope/vim-vinegar'
 
 " Show keymaps begin with <leader> 
@@ -95,56 +94,6 @@ let g:lightline = {
       \   'gitbranch': 'FugitiveHead'
       \ },
       \ }
-
-" NerdTree 
-if has_key(g:plugs, 'nerdtree') 
-augroup nerdtree_settings
-  autocmd!
-  " NERDDTree快捷键
-  map <C-n> :NERDTreeToggle<CR>
-  " nnoremap <leader>t :NERDTreeToggle<CR>
-  nnoremap <leader>d :NERDTreeFind<CR>
-  " 是否显示隐藏文件
-  let NERDTreeShowHidden=1
-  " 设置宽度
-  let NERDTreeWinSize=30
-  " 在终端启动vim时，共享NERDTree
-  let g:nerdtree_tabs_open_on_console_startup=1
-  " 忽略以下文件的显示
-  " let NERDTreeIgnore=['\.pyc','\~$',
-  "             \ '\.swp',
-  "             \ '\.o',
-  "             \ '.DS_Store',
-  "             \ '\.orig$',
-  "             \ '@neomake_',
-  "             \ '.coverage.',
-  "             \ '__pycache__$[[dir]]',
-  "             \ '.pytest_cache$[[dir]]',
-  "             \ '.git$[[dir]]',
-  "             \ '.idea[[dir]]',
-  "             \ '.vscode[[dir]]',
-  "             \ 'htmlcov[[dir]]',
-  "             \ 'test-reports[[dir]]',
-  "             \ '.egg-info$[[dir]]']
-  " 显示书签列表
-  let NERDTreeShowBookmarks=1
-  " 改变nerdtree的箭头
-  " let g:NERDTreeDirArrowExpandable = '?'
-  " let g:NERDTreeDirArrowCollapsible = '?'
-  " vim不指定具体文件打开时，自动使用nerdtree
-  autocmd StdinReadPre * let s:std_in=1
-  autocmd VimEnter * if argc() == 0 && !exists("s:std_in") | NERDTree |endif
-
-  " 当vim打开一个目录时，nerdtree自动使用
-  autocmd StdinReadPre * let s:std_in=1
-  autocmd VimEnter * if argc() == 1 && isdirectory(argv()[0]) && !exists("s:std_in") | exe 'NERDTree' argv()[0] | wincmd p | ene | endif
-  " 打开新的窗口，focus在buffer里而不是NerdTree里
-  autocmd VimEnter * :wincmd l
-
-  " 当vim中没有其他文件，值剩下nerdtree的时候，自动关闭窗口
-  autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-augroup END
-endif
 
 " rainbow_parentheses.vim 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
