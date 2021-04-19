@@ -1,6 +1,9 @@
 {
   "coc.preferences.extensionUpdateCheck": "daily",
   "go.goplsPath": "_GOBIN/gopls",
+  "go.goplsOptions": {
+    "completeUnimported": true
+  },
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
