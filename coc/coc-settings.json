@@ -6,5 +6,11 @@
     "gosnippets/UltiSnips"
   ],
   "explorer.width": 25,
-  "explorer.quitOnOpen": true
+  "explorer.quitOnOpen": true,
+  "list.insertMappings": {
+		"<C-g>": "do:exit"
+  },
+  "list.normalMappings": {
+		"<C-g>": "do:exit"
+  }
 }

@@ -216,6 +216,7 @@ if has_key(g:plugs, 'coc.nvim')
     \'coc-json',
     \'coc-toml', 
     \'coc-yaml',
+    \'coc-sh',
     \'coc-go'
     \]
 
@@ -226,6 +227,9 @@ if has_key(g:plugs, 'coc.nvim')
     autocmd VimEnter * nmap <silent> <leader>gr <Plug>(coc-references)
     
     autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
+
+    autocmd VimEnter * nmap <silent> [d <Plug>(coc-implementation)
+    autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
   augroup END
 
   " Add `:Format` command to format current buffer.

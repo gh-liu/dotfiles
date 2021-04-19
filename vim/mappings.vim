@@ -7,6 +7,8 @@ nnoremap ]W :tablast<cr>
 " close windows, tabs, quickfix-win, localtion-win
 nnoremap <Leader>cw :close<cr>
 nnoremap <Leader>ct :tabclose<cr>
+nnoremap <Leader>cW :close!<cr>
+nnoremap <Leader>cT :tabclose!<cr>
 
 nnoremap <Leader>cq :ccl<cr>
 nnoremap <Leader>cl :lcl<cr>
