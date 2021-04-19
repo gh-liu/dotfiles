@@ -41,6 +41,9 @@ Plug 'majutsushi/tagbar'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 
+" Pairs
+" Plug 'jiangmiao/auto-pairs'
+
 " Comment 
 " Plug 'preservim/nerdcommenter'
 " Plug 'tomtom/tcomment_vim'
@@ -213,6 +216,7 @@ if has_key(g:plugs, 'coc.nvim')
   let g:coc_global_extensions = [
     \'coc-explorer',
     \'coc-snippets',
+    \'coc-pairs',
     \'coc-json',
     \'coc-toml', 
     \'coc-yaml',
