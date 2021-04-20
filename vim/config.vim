@@ -37,10 +37,8 @@ set smarttab
 set autoindent
 " Smart indent
 set smartindent
-" Set relative number
+" Set number
 set number
-" set relativenumber
-map <silent><F3> :set relativenumber!<CR>
 " Set 7 lines under the cursor - when moving vertically using j/k
 set so=10
 " show the cursor position all the time

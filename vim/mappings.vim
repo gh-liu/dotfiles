@@ -86,6 +86,9 @@ nmap <C-k> <C-W>k
 nmap <C-h> <C-W>h
 nmap <C-l> <C-W>l
 
+" set relativenumber
+map <silent><F2> :set relativenumber!<CR>
+
 
 " <leader>g //fugitive
 " <leader>f //ctrlsf

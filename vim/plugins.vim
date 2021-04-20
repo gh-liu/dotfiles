@@ -130,7 +130,7 @@ nnoremap <Leader>tc :VimuxCloseRunner<CR>
 nnoremap <Leader>tl :VimuxRunLastCommand<CR>
 
 " tagbar
-nnoremap <F2> :TagbarToggle<CR>
+nnoremap <leader>lt :TagbarToggle<CR>
 
 "  coc.nvim 
 if has_key(g:plugs, 'coc.nvim')
