@@ -297,3 +297,7 @@ nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
 nmap <leader>gs :tabe<CR>:Gstatus<CR>
 nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
+
+" vim-repeat
+silent! call repeat#set("\<Plug>coc-diagnostic-prev",-1)
+silent! call repeat#set("\<Plug>coc-diagnostic-next",-1)
