@@ -3,8 +3,8 @@ augroup filetype_vim
     autocmd!
     autocmd FileType vim setlocal foldmethod=marker
     " edit vimrc
-    :nnoremap <leader>ev :vsplit $MYVIMRC<cr>
-    :nnoremap <leader>sv :source $MYVIMRC<cr>
+    nnoremap <leader>ev :vsplit $MYVIMRC<cr>
+    nnoremap <leader>sv :source $MYVIMRC<cr>
     autocmd FileType vim :iabbrev <buffer> --- ----------------------------------{{{
 augroup END
 " }}} }}}

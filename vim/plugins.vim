@@ -125,9 +125,9 @@ if has_key(g:plugs, 'vim-which-key')
 endif
 
 " vimux
-nnoremap <Leader>ri :VimuxPromptCommand<CR>
-nnoremap <Leader>rc :VimuxCloseRunner<CR>
-nnoremap <Leader>rl :VimuxRunLastCommand<CR>
+nnoremap <Leader>tp :VimuxPromptCommand<CR>
+nnoremap <Leader>tc :VimuxCloseRunner<CR>
+nnoremap <Leader>tl :VimuxRunLastCommand<CR>
 
 " tagbar
 nnoremap <F2> :TagbarToggle<CR>
@@ -175,13 +175,13 @@ if has_key(g:plugs, 'coc.nvim')
 
   augroup coc-config
     autocmd!
-    autocmd VimEnter * nmap <silent> <leader>gd <Plug>(coc-definition)
-    autocmd VimEnter * nmap <silent> <leader>gi <Plug>(coc-implementation)
-    autocmd VimEnter * nmap <silent> <leader>gr <Plug>(coc-references)
+:    autocmd VimEnter * nmap <silent> <leader>jd <Plug>(coc-definition)
+    " autocmd VimEnter * nmap <silent> <leader>gi <Plug>(coc-implementation)
+    " autocmd VimEnter * nmap <silent> <leader>gr <Plug>(coc-references)
     
     autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
 
-    autocmd VimEnter * nmap <silent> [d <Plug>(coc-implementation)
+    autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
     autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
   augroup END
 
@@ -203,13 +203,27 @@ let g:go_auto_type_info = 1
 " disable K
 let g:go_doc_keywordprg_enabled = 0
 let g:go_debug_mappings = {
-  \ '(go-debug-breakpoint)': {'key': '<F6>'},
-  \ '(go-debug-step)':       {'key': '<F7>'},
-  \ '(go-debug-next)':       {'key': '<F8>'},
-  \ '(go-debug-continue)':   {'key': '<F9>'},
-  \ '(go-debug-print)':      {'key': '<F10>'},
-  \ '(go-debug-halt)':       {'key': '<F11>'},
+  \ '(go-debug-step)':       {'key': '<leader>ds'},
+  \ '(go-debug-stepout)':    {'key': '<leader>do'},
+  \ '(go-debug-next)':       {'key': '<leader>dn'},
+  \ '(go-debug-continue)':   {'key': '<leader>dc'},
+  \ '(go-debug-print)':      {'key': '<leader>dp'},
+  \ '(go-debug-halt)':       {'key': '<leader>dh'},
   \ }
+" create custom mappings for Go files
+" autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
+" autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
+" autocmd BufEnter *.go nmap <leader>c  <Plug>(go-coverage-toggle)
+" autocmd BufEnter *.go nmap <leader>ii  <Plug>(go-info)
+autocmd BufEnter *.go nmap <leader>li  <Plug>(go-implements)
+autocmd BufEnter *.go nmap <leader>ld  <Plug>(go-describe)
+
+autocmd BufEnter *.go nmap <leader>db  :GoDebugBreakpoint<cr>
+autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
+autocmd BufEnter *.go nmap <leader>dq  <Plug>(go-debug-stop)
+
+autocmd BufEnter *.go nmap <leader>cc  <Plug>(go-callers)
+autocmd BufEnter *.go nmap <leader>cs  <Plug>(go-callstack)
 
 
 " CtrlSF.vim
@@ -238,3 +252,15 @@ map <C-n> :Lexplore<CR>
 
 " vim-commentary
 autocmd FileType toml setlocal commentstring=#\ %s
+" vim registers <C-/> as <C-_>
+nmap <C-_> gcc
+imap <C-_> <C-O>gcc
+
+" fugitive.vim mappings
+nmap <leader>gb :Gblame<CR>
+nmap <leader>gr :Gread<CR>
+nmap <leader>gw :Gwrite<CR>
+nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
+nmap <leader>gs :tabe<CR>:Gstatus<CR>
+nmap <leader>gc :Gcommit<CR>
+nmap <leader>gl :tabe %<CR>:Glog -- %<CR>

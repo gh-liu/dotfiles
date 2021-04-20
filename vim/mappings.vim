@@ -86,6 +86,22 @@ nmap <C-k> <C-W>k
 nmap <C-h> <C-W>h
 nmap <C-l> <C-W>l
 
-" Fast editing and sourcing of `.vimrc`
-nnoremap <leader>ev :vsplit $MYVIMRC<cr>
-nnoremap <leader>sv :source $MYVIMRC<cr>
+
+" <leader>g //fugitive
+" <leader>f //ctrlsf
+" <leader>t //vimux
+
+" <leader>c //close, call
+" <leader>cc / cs //call
+" <leader>n //new
+" <leader>o/O // newline
+" <leader>q/Q //quit
+" <leader>ev/sv // edit vimrc
+" <leader>ee // explor
+
+" <leader>rn // rename
+
+" <leader>d debug
+" <leader>r run
+" <leader>j jump
+" <leader>l list
