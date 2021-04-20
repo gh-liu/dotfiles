@@ -175,11 +175,11 @@ if has_key(g:plugs, 'coc.nvim')
 
   augroup coc-config
     autocmd!
-:    autocmd VimEnter * nmap <silent> <leader>jd <Plug>(coc-definition)
+    " autocmd VimEnter * nmap <silent> <leader>jd <Plug>(coc-definition)
     " autocmd VimEnter * nmap <silent> <leader>gi <Plug>(coc-implementation)
     " autocmd VimEnter * nmap <silent> <leader>gr <Plug>(coc-references)
     
-    autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
+    " autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
 
     autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
     autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
@@ -210,21 +210,54 @@ let g:go_debug_mappings = {
   \ '(go-debug-print)':      {'key': '<leader>dp'},
   \ '(go-debug-halt)':       {'key': '<leader>dh'},
   \ }
-" create custom mappings for Go files
-" autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
-" autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
-" autocmd BufEnter *.go nmap <leader>c  <Plug>(go-coverage-toggle)
-" autocmd BufEnter *.go nmap <leader>ii  <Plug>(go-info)
-autocmd BufEnter *.go nmap <leader>li  <Plug>(go-implements)
-autocmd BufEnter *.go nmap <leader>ld  <Plug>(go-describe)
 
-autocmd BufEnter *.go nmap <leader>db  :GoDebugBreakpoint<cr>
-autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
-autocmd BufEnter *.go nmap <leader>dq  <Plug>(go-debug-stop)
+augroup golang
+    let g:tagbar_type_go = {
+      \ 'ctagstype' : 'go',
+      \ 'kinds'     : [
+        \ 'p:package',
+        \ 'i:imports:1',
+        \ 'c:constants',
+        \ 'v:variables',
+        \ 't:types',
+        \ 'n:interfaces',
+        \ 'w:fields',
+        \ 'e:embedded',
+        \ 'm:methods',
+        \ 'r:constructor',
+        \ 'f:functions'
+      \ ],
+      \ 'sro' : '.',
+      \ 'kind2scope' : {
+        \ 't' : 'ctype',
+        \ 'n' : 'ntype'
+      \ },
+      \ 'scope2kind' : {
+        \ 'ctype' : 't',
+        \ 'ntype' : 'n'
+      \ },
+      \ 'ctagsbin'  : 'gotags',
+      \ 'ctagsargs' : '-sort -silent'
+    \ }
 
-autocmd BufEnter *.go nmap <leader>cc  <Plug>(go-callers)
-autocmd BufEnter *.go nmap <leader>cs  <Plug>(go-callstack)
+    " create custom mappings for Go files
+    " autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
+    " autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
+    " autocmd BufEnter *.go nmap <leader>c  <Plug>(go-coverage-toggle)
+    " autocmd BufEnter *.go nmap <leader>ii <Plug>(go-info)
+    autocmd BufEnter *.go nmap <leader>li  <Plug>(go-implements)
+    autocmd BufEnter *.go nmap <leader>ld  <Plug>(go-describe)
+    autocmd BufEnter *.go nmap <leader>lr  <Plug>(go-def)
 
+    autocmd BufEnter *.go nmap <leader>rn  <Plug>(go-rename)
+
+    autocmd BufEnter *.go nmap <leader>db  :GoDebugBreakpoint<cr>
+    autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
+    autocmd BufEnter *.go nmap <leader>dq  <Plug>(go-debug-stop)
+
+    autocmd BufEnter *.go nmap <leader>cc  <Plug>(go-callers)
+    autocmd BufEnter *.go nmap <leader>cs  <Plug>(go-callstack)
+augroup END
 
 " CtrlSF.vim
 " let g:ctrlsf_default_view_mode = 'compact'
