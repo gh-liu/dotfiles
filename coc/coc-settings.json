@@ -1,9 +1,17 @@
 {
   "coc.preferences.extensionUpdateCheck": "weekly",
-  "suggest.noselect": false,
+  "coc.preferences.jumpCommand":"drop",
   "diagnostic.errorSign": "✘",
-  "diagnostic.warningSign": "!",
-  "diagnostic.infoSign": "?",
+  "diagnostic.warningSign": "⚠",
+  "diagnostic.hintSign": "➤",
+  "diagnostic.infoSign": "ℹ",
+  "suggest.noselect": false,
+  "list.insertMappings": {
+		"<C-g>": "do:exit"
+  },
+  "list.normalMappings": {
+		"<C-g>": "do:exit"
+  },
   "go.goplsPath": "_GOBIN/gopls",
   "go.goplsOptions": {
     "completeUnimported": true
@@ -13,11 +21,5 @@
     "gosnippets/UltiSnips"
   ],
   "explorer.width": 25,
-  "explorer.quitOnOpen": true,
-  "list.insertMappings": {
-		"<C-g>": "do:exit"
-  },
-  "list.normalMappings": {
-		"<C-g>": "do:exit"
-  }
+  "explorer.quitOnOpen": true
 }
