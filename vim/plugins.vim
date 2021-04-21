@@ -9,7 +9,7 @@ Plug 'morhetz/gruvbox'
 Plug 'itchyny/lightline.vim'
 
 " Rainbow Parentheses 
-Plug 'kien/rainbow_parentheses.vim'
+" Plug 'kien/rainbow_parentheses.vim'
 
 " Underlines the word under the cursor 
 Plug 'itchyny/vim-cursorword'
@@ -28,7 +28,7 @@ Plug 'tpope/vim-fugitive'
 " shows a git diff 
 " Plug 'airblade/vim-gitgutter'
 " show the git message 
-Plug 'rhysd/git-messenger.vim'
+" Plug 'rhysd/git-messenger.vim'
 
 " Interact with tmux 
 Plug 'benmills/vimux'
