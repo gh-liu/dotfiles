@@ -11,6 +11,8 @@ Plug 'itchyny/lightline.vim'
 " Rainbow Parentheses 
 " Plug 'kien/rainbow_parentheses.vim'
 
+Plug 'machakann/vim-highlightedyank'
+
 " Underlines the word under the cursor 
 Plug 'itchyny/vim-cursorword'
 
