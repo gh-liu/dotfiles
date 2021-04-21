@@ -3,7 +3,7 @@
 call plug#begin('~/.vim/plugged')
 
 " Theme 
-Plug 'morhetz/gruvbox'
+Plug 'gruvbox-community/gruvbox'
 
 " Status Line 
 Plug 'itchyny/lightline.vim'
@@ -75,6 +75,10 @@ Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
 " markdown preview 
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+
+" Plug 'cespare/vim-toml'
+" Plug 'stephpy/vim-yaml'
+" Plug 'elzr/vim-json', {'for' : 'json'}
 
 call plug#end()
 
@@ -299,6 +303,7 @@ nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 
 " fzf.vim
 let g:fzf_command_prefix = 'FZF'
+let g:fzf_layout = { 'down': '~20%' }
 nmap <leader>p :FZF
 
 " undotree
