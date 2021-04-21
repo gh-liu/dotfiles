@@ -313,7 +313,7 @@ nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 
 " fzf.vim
-let g:fzf_command_prefix = 'FZF'
+let g:fzf_command_prefix = 'Fzf'
 let g:fzf_layout = { 'down': '~20%' }
 " nmap <leader>p :FZF
 nmap <C-p> :FzfFiles<cr>
