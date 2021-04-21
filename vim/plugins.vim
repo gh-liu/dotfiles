@@ -17,6 +17,9 @@ Plug 'itchyny/vim-cursorword'
 " File Tree 
 Plug 'tpope/vim-vinegar'
 
+" undotree
+Plug 'mbbill/undotree'
+
 " Show keymaps begin with <leader> 
 Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 
@@ -39,6 +42,8 @@ Plug 'majutsushi/tagbar'
 " Edit
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
+
+Plug 'andrewradev/splitjoin.vim'
 
 " Pairs
 " Plug 'jiangmiao/auto-pairs'
