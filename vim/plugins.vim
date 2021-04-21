@@ -132,7 +132,7 @@ nnoremap <Leader>tc :VimuxCloseRunner<CR>
 nnoremap <Leader>tl :VimuxRunLastCommand<CR>
 
 " tagbar
-nnoremap <leader>lt :TagbarToggle<CR>
+nnoremap <leader>st :TagbarToggle<CR>
 
 "  coc.nvim 
 if has_key(g:plugs, 'coc.nvim')
@@ -298,3 +298,7 @@ nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 " fzf.vim
 let g:fzf_command_prefix = 'FZF'
 nmap <leader>p :FZF
+
+" undotree
+let g:undotree_SetFocusWhenToggle = 1
+nnoremap <leader>su :UndotreeToggle<CR>
