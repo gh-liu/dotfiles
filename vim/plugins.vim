@@ -205,12 +205,11 @@ let g:go_auto_type_info = 1
 " disable K
 let g:go_doc_keywordprg_enabled = 0
 let g:go_debug_mappings = {
-  \ '(go-debug-step)':       {'key': '<leader><leader>s'},
-  \ '(go-debug-stepout)':    {'key': '<leader><leader>o'},
-  \ '(go-debug-next)':       {'key': '<leader><leader>n'},
-  \ '(go-debug-continue)':   {'key': '<leader><leader>c'},
-  \ '(go-debug-print)':      {'key': '<leader><leader>p'},
-  \ '(go-debug-halt)':       {'key': '<leader>dh'},
+  \ '(go-debug-stepout)':    {'key': '<F6>'},
+  \ '(go-debug-step)':       {'key': '<F7>'},
+  \ '(go-debug-next)':       {'key': '<F8>'},
+  \ '(go-debug-continue)':   {'key': '<F9>'},
+  \ '(go-debug-print)':      {'key': '<F10>'},
   \ }
 
 augroup golang
@@ -295,3 +294,7 @@ nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
 nmap <leader>gs :tabe<CR>:Gstatus<CR>
 nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
+
+" fzf.vim
+let g:fzf_command_prefix = 'FZF'
+nmap <leader>p :FZF
