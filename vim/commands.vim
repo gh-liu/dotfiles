@@ -47,4 +47,8 @@ endfunction
 autocmd vimrc BufEnter *.txt call s:helptab()
 
 autocmd vimrc vimenter * ++nested colorscheme gruvbox
+
+" Automatically resize screens to be equally the same
+autocmd VimResized * wincmd =
+
 " }}}

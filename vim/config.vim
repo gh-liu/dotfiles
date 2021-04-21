@@ -77,20 +77,3 @@ set nowb
 set noswapfile
 
 set pumheight=10             " Completion window max size
-" Automatically resize screens to be equally the same
-autocmd VimResized * wincmd =
-
-" Visual linewise up and down by default (and use gj gk to go quicker)
-noremap <Up> gk
-noremap <Down> gj
-noremap j gj
-noremap k gk
-
-" Remap H and L (top, bottom of screen to left and right end of line)
-nnoremap H ^
-nnoremap L $
-vnoremap H ^
-vnoremap L g_
-
-" Do not show stupid q: window
-map q: :q

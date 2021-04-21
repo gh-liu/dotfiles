@@ -89,6 +89,21 @@ nmap <C-l> <C-W>l
 " set relativenumber
 map <silent><F2> :set relativenumber!<CR>
 
+" Visual linewise up and down by default (and use gj gk to go quicker)
+noremap <Up> gk
+noremap <Down> gj
+noremap j gj
+noremap k gk
+
+" Remap H and L (top, bottom of screen to left and right end of line)
+nnoremap H ^
+nnoremap L $
+vnoremap H ^
+vnoremap L g_
+
+" Do not show stupid q: window
+map q: :q
+
 
 " <leader>g //fugitive
 " <leader>f //ctrlsf
