@@ -26,7 +26,7 @@ Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 " Git 
 Plug 'tpope/vim-fugitive'
 " shows a git diff 
-Plug 'airblade/vim-gitgutter'
+" Plug 'airblade/vim-gitgutter'
 " show the git message 
 Plug 'rhysd/git-messenger.vim'
 
@@ -45,12 +45,9 @@ Plug 'tpope/vim-surround'
 
 Plug 'andrewradev/splitjoin.vim'
 
-" Pairs
-" Plug 'jiangmiao/auto-pairs'
+Plug 'easymotion/vim-easymotion'
 
 " Comment 
-" Plug 'preservim/nerdcommenter'
-" Plug 'tomtom/tcomment_vim'
 Plug 'tpope/vim-commentary'
 
 " Aligning text 
@@ -208,11 +205,11 @@ let g:go_auto_type_info = 1
 " disable K
 let g:go_doc_keywordprg_enabled = 0
 let g:go_debug_mappings = {
-  \ '(go-debug-step)':       {'key': '<leader>ds'},
-  \ '(go-debug-stepout)':    {'key': '<leader>do'},
-  \ '(go-debug-next)':       {'key': '<leader>dn'},
-  \ '(go-debug-continue)':   {'key': '<leader>dc'},
-  \ '(go-debug-print)':      {'key': '<leader>dp'},
+  \ '(go-debug-step)':       {'key': '<leader><leader>s'},
+  \ '(go-debug-stepout)':    {'key': '<leader><leader>o'},
+  \ '(go-debug-next)':       {'key': '<leader><leader>n'},
+  \ '(go-debug-continue)':   {'key': '<leader><leader>c'},
+  \ '(go-debug-print)':      {'key': '<leader><leader>p'},
   \ '(go-debug-halt)':       {'key': '<leader>dh'},
   \ }
 
@@ -250,15 +247,16 @@ augroup golang
     " autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
     " autocmd BufEnter *.go nmap <leader>c  <Plug>(go-coverage-toggle)
     " autocmd BufEnter *.go nmap <leader>ii <Plug>(go-info)
-    autocmd BufEnter *.go nmap <leader>li  <Plug>(go-implements)
-    autocmd BufEnter *.go nmap <leader>ld  <Plug>(go-describe)
-    autocmd BufEnter *.go nmap <leader>lr  <Plug>(go-def)
+    autocmd BufEnter *.go nmap <leader><leader>i  <Plug>(go-implements)
+    autocmd BufEnter *.go nmap <leader><leader>d  <Plug>(go-describe)
+    autocmd BufEnter *.go nmap <leader><leader>r  <Plug>(go-def)
 
     autocmd BufEnter *.go nmap <leader>rn  <Plug>(go-rename)
 
-    autocmd BufEnter *.go nmap <leader>db  :GoDebugBreakpoint<cr>
-    autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
+    autocmd BufEnter *.go nmap <leader><leader>b  :GoDebugBreakpoint<cr>
+
     autocmd BufEnter *.go nmap <leader>dq  <Plug>(go-debug-stop)
+    autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
 
     autocmd BufEnter *.go nmap <leader>cc  <Plug>(go-callers)
     autocmd BufEnter *.go nmap <leader>cs  <Plug>(go-callstack)
@@ -277,11 +275,6 @@ nnoremap <leader>fo :CtrlSFOpen<CR>
 nnoremap <leader>ft :CtrlSFToggle<CR>
 inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
 nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
-
-
-" NERDCommenter
-" let g:NERDCreateDefaultMappings = 0
-" map <leader>cc  <plug>NERDCommenterToggle
 
 " netrw
 let g:netrw_liststyle = 3
@@ -302,7 +295,3 @@ nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
 nmap <leader>gs :tabe<CR>:Gstatus<CR>
 nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
-
-" vim-repeat
-silent! call repeat#set("\<Plug>coc-diagnostic-prev",-1)
-silent! call repeat#set("\<Plug>coc-diagnostic-next",-1)
