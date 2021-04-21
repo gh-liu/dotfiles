@@ -41,13 +41,18 @@ Plug 'tweekmonster/startuptime.vim'
 " Browse the tags of the current file
 Plug 'majutsushi/tagbar'
 
+Plug 'tyru/open-browser.vim'
+
 " Edit
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
+Plug 'tpope/vim-abolish'
+
+" Plug 'arthurxavierx/vim-caser'
 
 Plug 'andrewradev/splitjoin.vim'
 
-Plug 'easymotion/vim-easymotion'
+" Plug 'easymotion/vim-easymotion'
 
 " Comment 
 Plug 'tpope/vim-commentary'
@@ -56,16 +61,17 @@ Plug 'tpope/vim-commentary'
 Plug 'godlygeek/tabular'
 
 " Search 
-Plug 'ctrlpvim/ctrlp.vim' 
+" Plug 'ctrlpvim/ctrlp.vim' 
 Plug 'dyng/ctrlsf.vim'
 Plug 'junegunn/fzf',        { 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
+" Plug 'mileszs/ack.vim'
 
 " Bracket maps
 Plug 'tpope/vim-unimpaired'
 
 " Language 
-Plug 'neoclide/coc.nvim', {'branch': 'release', 'do': { -> coc#util#install() }}
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " Plug 'SirVer/ultisnips'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 " Plug 'rust-lang/rust.vim'
@@ -79,6 +85,10 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': 
 " Plug 'cespare/vim-toml'
 " Plug 'stephpy/vim-yaml'
 " Plug 'elzr/vim-json', {'for' : 'json'}
+" Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
+
+" Plug 't9md/vim-choosewin'
+
 
 call plug#end()
 
@@ -294,6 +304,7 @@ imap <C-_> <C-O>gcc
 
 " fugitive.vim mappings
 nmap <leader>gb :Gblame<CR>
+vmap <leader>gb :Gblame<CR>
 nmap <leader>gr :Gread<CR>
 nmap <leader>gw :Gwrite<CR>
 nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
@@ -304,8 +315,14 @@ nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 " fzf.vim
 let g:fzf_command_prefix = 'FZF'
 let g:fzf_layout = { 'down': '~20%' }
-nmap <leader>p :FZF
+" nmap <leader>p :FZF
+nmap <C-p> :FzfFiles<cr>
+imap <C-p> <esc>:<C-u>FzfFiles<cr>
 
 " undotree
 let g:undotree_SetFocusWhenToggle = 1
 nnoremap <leader>su :UndotreeToggle<CR>
+
+let g:netrw_nogx = 1 " disable netrw's gx mapping.
+nmap gx <Plug>(openbrowser-smart-search)
+vmap gx <Plug>(openbrowser-smart-search)
