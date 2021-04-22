@@ -271,9 +271,9 @@ augroup golang
     autocmd BufEnter *.go nmap <leader>cr <Plug>(go-coverage-toggle)
     " autocmd BufEnter *.go nmap <leader>ii <Plug>(go-info)
     autocmd BufEnter *.go nmap <leader>i  <Plug>(go-implements)
-    " autocmd BufEnter *.go nmap <leader>d  <Plug>(go-describe)
-    autocmd BufEnter *.go nmap <leader>d  <Plug>(go-def)
-    autocmd BufEnter *.go nmap <leader>p  <Plug>(go-def-pop)
+    autocmd BufEnter *.go nmap <leader>d  <Plug>(go-describe)
+    " autocmd BufEnter *.go nmap <leader>d  <Plug>(go-def)
+    " autocmd BufEnter *.go nmap <leader>p  <Plug>(go-def-pop)
 
     autocmd BufEnter *.go nmap <leader>b   :GoDebugBreakpoint<cr>
     autocmd BufEnter *.go nmap <leader>dq  :GoDebugStop<cr>
