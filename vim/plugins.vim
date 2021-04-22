@@ -148,6 +148,7 @@ nnoremap <Leader>tc :VimuxCloseRunner<CR>
 nnoremap <Leader>tl :VimuxRunLastCommand<CR>
 
 " tagbar
+let g:tagbar_autofocus = 1
 nnoremap <leader>st :TagbarToggle<CR>
 
 "  coc.nvim 
