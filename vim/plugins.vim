@@ -82,12 +82,11 @@ let g:vim_markdown_folding_disabled = 1
 " markdown preview 
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 
+Plug 't9md/vim-choosewin'
 " Plug 'cespare/vim-toml'
 " Plug 'stephpy/vim-yaml'
 " Plug 'elzr/vim-json', {'for' : 'json'}
 " Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
-
-" Plug 't9md/vim-choosewin'
 
 
 call plug#end()
@@ -139,7 +138,7 @@ endif
 " vim-which-key
 if has_key(g:plugs, 'vim-which-key')
   nnoremap <silent> <leader> :WhichKey ','<CR>
-  set timeoutlen=500
+  set timeoutlen=360
 endif
 
 " vimux
@@ -149,7 +148,7 @@ nnoremap <Leader>tl :VimuxRunLastCommand<CR>
 
 " tagbar
 let g:tagbar_autofocus = 1
-nnoremap <leader>st :TagbarToggle<CR>
+nnoremap <leader>tt :TagbarToggle<CR>
 
 "  coc.nvim 
 if has_key(g:plugs, 'coc.nvim')
@@ -221,6 +220,8 @@ let g:go_highlight_operators = 1
 let g:go_auto_type_info = 1
 " disable K
 let g:go_doc_keywordprg_enabled = 0
+
+let g:go_test_show_name = 1
 let g:go_debug_mappings = {
   \ '(go-debug-stepout)':    {'key': '<F6>'},
   \ '(go-debug-step)':       {'key': '<F7>'},
@@ -259,23 +260,20 @@ augroup golang
     \ }
 
     " create custom mappings for Go files
-    " autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
-    " autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
-    " autocmd BufEnter *.go nmap <leader>c  <Plug>(go-coverage-toggle)
+    autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
+    autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
+    autocmd BufEnter *.go nmap <leader>cr <Plug>(go-coverage-toggle)
     " autocmd BufEnter *.go nmap <leader>ii <Plug>(go-info)
-    autocmd BufEnter *.go nmap <leader><leader>i  <Plug>(go-implements)
-    autocmd BufEnter *.go nmap <leader><leader>d  <Plug>(go-describe)
-    autocmd BufEnter *.go nmap <leader><leader>r  <Plug>(go-def)
+    autocmd BufEnter *.go nmap <leader>i  <Plug>(go-implements)
+    " autocmd BufEnter *.go nmap <leader>d  <Plug>(go-describe)
+    autocmd BufEnter *.go nmap <leader>d  <Plug>(go-def)
 
-    autocmd BufEnter *.go nmap <leader>rn  <Plug>(go-rename)
-
-    autocmd BufEnter *.go nmap <leader><leader>b  :GoDebugBreakpoint<cr>
-
-    autocmd BufEnter *.go nmap <leader>dq  <Plug>(go-debug-stop)
+    autocmd BufEnter *.go nmap <leader>b   :GoDebugBreakpoint<cr>
+    autocmd BufEnter *.go nmap <leader>dq  :GoDebugStop<cr>
     autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
 
-    autocmd BufEnter *.go nmap <leader>cc  <Plug>(go-callers)
-    autocmd BufEnter *.go nmap <leader>cs  <Plug>(go-callstack)
+    autocmd BufEnter *.go nmap <leader>cc <Plug>(go-callers)
+    autocmd BufEnter *.go nmap <leader>cs <Plug>(go-callstack)
 augroup END
 
 " CtrlSF.vim
@@ -306,10 +304,10 @@ imap <C-_> <C-O>gcc
 " fugitive.vim mappings
 nmap <leader>gb :Gblame<CR>
 vmap <leader>gb :Gblame<CR>
-nmap <leader>gr :Gread<CR>
-nmap <leader>gw :Gwrite<CR>
-nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
-nmap <leader>gs :tabe<CR>:Gstatus<CR>
+" nmap <leader>gr :Gread<CR>
+" nmap <leader>gw :Gwrite<CR>
+" nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
+" nmap <leader>gs :tabe<CR>:Gstatus<CR>
 nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 
@@ -322,8 +320,12 @@ imap <C-p> <esc>:<C-u>FzfFiles<cr>
 
 " undotree
 let g:undotree_SetFocusWhenToggle = 1
-nnoremap <leader>su :UndotreeToggle<CR>
+nnoremap <leader>uu :UndotreeToggle<CR>
 
 let g:netrw_nogx = 1 " disable netrw's gx mapping.
 nmap gx <Plug>(openbrowser-smart-search)
 vmap gx <Plug>(openbrowser-smart-search)
+
+
+"vim-choosewin
+nmap = <Plug>(choosewin)

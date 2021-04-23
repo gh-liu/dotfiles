@@ -104,22 +104,5 @@ vnoremap L g_
 " Do not show stupid q: window
 map q: :q
 
-
-" <leader>g //fugitive
-" <leader>f //ctrlsf
-" <leader>t //vimux
-
-" <leader>c //close, call
-" <leader>cc / cs //call
-" <leader>n //new
-" <leader>o/O // newline
-" <leader>q/Q //quit
-" <leader>ev/sv // edit vimrc
-" <leader>ee // explor
-
-" <leader>rn // rename
-
-" <leader>d debug
-" <leader>r run
-" <leader>j jump
-" <leader>l list
+" Exit on j
+imap jj <Esc>
