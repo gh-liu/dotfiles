@@ -230,6 +230,12 @@ let g:go_debug_mappings = {
   \ '(go-debug-print)':      {'key': '<F10>'},
   \ }
 
+let g:go_debug_windows = {
+          \ 'vars':       'leftabove 30vnew',
+          \ 'stack':      'leftabove 20new',
+          \ 'goroutines': 'leftabove 10new',
+          \ 'out':        'botright  5new',
+\ }
 augroup golang
     let g:tagbar_type_go = {
       \ 'ctagstype' : 'go',
@@ -267,6 +273,7 @@ augroup golang
     autocmd BufEnter *.go nmap <leader>i  <Plug>(go-implements)
     " autocmd BufEnter *.go nmap <leader>d  <Plug>(go-describe)
     autocmd BufEnter *.go nmap <leader>d  <Plug>(go-def)
+    autocmd BufEnter *.go nmap <leader>p  <Plug>(go-def-pop)
 
     autocmd BufEnter *.go nmap <leader>b   :GoDebugBreakpoint<cr>
     autocmd BufEnter *.go nmap <leader>dq  :GoDebugStop<cr>
