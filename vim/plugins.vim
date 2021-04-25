@@ -142,9 +142,9 @@ if has_key(g:plugs, 'vim-which-key')
 endif
 
 " vimux
-nnoremap <Leader>tp :VimuxPromptCommand<CR>
-nnoremap <Leader>tc :VimuxCloseRunner<CR>
-nnoremap <Leader>tl :VimuxRunLastCommand<CR>
+nnoremap <Leader>vp :VimuxPromptCommand<CR>
+nnoremap <Leader>vc :VimuxCloseRunner<CR>
+nnoremap <Leader>vl :VimuxRunLastCommand<CR>
 
 " tagbar
 let g:tagbar_autofocus = 1
