@@ -148,7 +148,9 @@ nnoremap <Leader>tl :VimuxRunLastCommand<CR>
 
 " tagbar
 let g:tagbar_autofocus = 1
-nnoremap <leader>tt :TagbarToggle<CR>
+let g:tagbar_position = 'leftabove vertical'
+let g:tagbar_width = 25
+nnoremap <F2>  :TagbarToggle<CR>
 
 "  coc.nvim 
 if has_key(g:plugs, 'coc.nvim')

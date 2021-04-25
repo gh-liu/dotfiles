@@ -87,7 +87,7 @@ nmap <C-h> <C-W>h
 nmap <C-l> <C-W>l
 
 " set relativenumber
-map <silent><F2> :set relativenumber!<CR>
+map <silent><F3> :set relativenumber!<CR>
 
 " Visual linewise up and down by default (and use gj gk to go quicker)
 noremap <Up> gk
