@@ -242,34 +242,6 @@ let g:go_debug_windows = {
           \ 'out':        'botright  5new',
 \ }
 augroup golang
-    let g:tagbar_type_go = {
-      \ 'ctagstype' : 'go',
-      \ 'kinds'     : [
-        \ 'p:package',
-        \ 'i:imports:1',
-        \ 'c:constants',
-        \ 'v:variables',
-        \ 't:types',
-        \ 'n:interfaces',
-        \ 'w:fields',
-        \ 'e:embedded',
-        \ 'm:methods',
-        \ 'r:constructor',
-        \ 'f:functions'
-      \ ],
-      \ 'sro' : '.',
-      \ 'kind2scope' : {
-        \ 't' : 'ctype',
-        \ 'n' : 'ntype'
-      \ },
-      \ 'scope2kind' : {
-        \ 'ctype' : 't',
-        \ 'ntype' : 'n'
-      \ },
-      \ 'ctagsbin'  : 'gotags',
-      \ 'ctagsargs' : '-sort -silent'
-    \ }
-
     " create custom mappings for Go files
     autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
     autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
