@@ -12,9 +12,16 @@
   "list.normalMappings": {
 		"<C-g>": "do:exit"
   },
-  "go.goplsPath": "_GOBIN/gopls",
-  "go.goplsOptions": {
-    "completeUnimported": true
+  "languageserver": {
+    "golang": {
+      "command": "gopls",
+      "args": ["-remote", "auto"],
+      "rootPatterns": ["go.mod"],
+      "filetypes": ["go"],
+      "initializationOptions": {
+      "completeUnimported": true
+      }
+    }
   },
   "snippets.ultisnips.directories": [
     "UltiSnips",
