@@ -244,8 +244,8 @@ let g:go_debug_windows = {
 \ }
 augroup golang
     " create custom mappings for Go files
-    autocmd BufEnter *.go nmap <leader>t  <Plug>(go-test)
-    autocmd BufEnter *.go nmap <leader>tt <Plug>(go-test-func)
+    autocmd BufEnter *.go nmap <leader>tt  <Plug>(go-test)
+    autocmd BufEnter *.go nmap <leader>tf <Plug>(go-test-func)
     autocmd BufEnter *.go nmap <leader>cr <Plug>(go-coverage-toggle)
     " autocmd BufEnter *.go nmap <leader>ii <Plug>(go-info)
     autocmd BufEnter *.go nmap <leader>i  <Plug>(go-implements)
