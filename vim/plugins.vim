@@ -224,6 +224,9 @@ let g:go_doc_keywordprg_enabled = 0
 let g:go_debug_preserve_layout = 1
 let g:go_highlight_debug = 0 
 
+" complete by coc.nvim
+let g:go_code_completion_enabled = 0
+
 let g:go_test_show_name = 1
 let g:go_debug_mappings = {
   \ '(go-debug-stepout)':    {'key': '<F6>'},
