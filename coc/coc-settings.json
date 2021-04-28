@@ -19,8 +19,14 @@
       "rootPatterns": ["go.mod"],
       "filetypes": ["go"],
       "initializationOptions": {
-      "completeUnimported": true
+        "completeUnimported": true
       }
+    },
+    "bash": {
+      "command": "bash-language-server",
+      "args": ["start"],
+      "filetypes": ["sh"],
+      "ignoredRootPaths": ["~"]
     }
   },
   "snippets.ultisnips.directories": [

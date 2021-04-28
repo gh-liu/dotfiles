@@ -198,6 +198,7 @@ if has_key(g:plugs, 'coc.nvim')
     " autocmd VimEnter * nmap <silent> <leader>gr <Plug>(coc-references)
     
     " autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
+    autocmd VimEnter * nmap <silent> <leader>fx <Plug>(coc-fix-current)	
 
     autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
     autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
