@@ -75,9 +75,9 @@ Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " Plug 'SirVer/ultisnips'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 " Plug 'rust-lang/rust.vim'
-Plug 'cespare/vim-toml'
-Plug 'stephpy/vim-yaml'
-Plug 'elzr/vim-json', {'for' : 'json'}
+" Plug 'cespare/vim-toml'
+" Plug 'stephpy/vim-yaml'
+" Plug 'elzr/vim-json', {'for' : 'json'}
 Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 " Markdown 
 Plug 'plasticboy/vim-markdown'
@@ -184,7 +184,9 @@ if has_key(g:plugs, 'coc.nvim')
     \'coc-explorer',
     \'coc-snippets',
     \'coc-pairs',
-    \'coc-yank'
+    \'coc-yank',
+    \'coc-yaml',
+    \'coc-json'
     \]
 
   augroup coc-config
