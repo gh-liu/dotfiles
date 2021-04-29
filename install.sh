@@ -21,7 +21,8 @@ ln -sf $BASE/vim/vimrc ~/.vimrc
 ln -sf $BASE/vim/config.vim ~/.vim/config.vim
 ln -sf $BASE/vim/plugins.vim ~/.vim/plugins.vim
 ln -sf $BASE/vim/mappings.vim ~/.vim/mappings.vim
-ln -sf $BASE/vim/commands.vim ~/.vim/commands.vim
+ln -sf $BASE/vim/autocmd.vim ~/.vim/autocmd.vim
+ln -sf $BASE/vim/abbr.vim ~/.vim/abbr.vim
 
 ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
 
@@ -52,7 +53,8 @@ source ~/.zshrc
 # ln -sf $BASE/vim/config.vim ~/.vim/config.vim
 # ln -sf $BASE/vim/plugins.vim ~/.vim/plugins.vim
 # ln -sf $BASE/vim/mappings.vim ~/.vim/mappings.vim
-# ln -sf $BASE/vim/commands.vim ~/.vim/commands.vim
+# ln -sf $BASE/vim/autocmd.vim ~/.vim/autocmd.vim
+# ln -sf $BASE/vim/abbr.vim ~/.vim/abbr.vim
 
 # generate the 'goplsPath' of 'coc-settings.json'
 # sed -i "s:_GOBIN:$GOBIN:" ./coc/coc-settings.json

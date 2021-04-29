@@ -11,7 +11,7 @@ Plug 'itchyny/lightline.vim'
 " Rainbow Parentheses 
 " Plug 'kien/rainbow_parentheses.vim'
 
-Plug 'machakann/vim-highlightedyank'
+" Plug 'machakann/vim-highlightedyank'
 
 " Underlines the word under the cursor 
 Plug 'itchyny/vim-cursorword'
@@ -36,7 +36,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'benmills/vimux'
 
 " Vim start up time debug (figure out which script is slow) 
-Plug 'tweekmonster/startuptime.vim'
+" Plug 'tweekmonster/startuptime.vim'
 
 " Browse the tags of the current file
 Plug 'majutsushi/tagbar'
@@ -75,7 +75,10 @@ Plug 'neoclide/coc.nvim', {'branch': 'release'}
 " Plug 'SirVer/ultisnips'
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 " Plug 'rust-lang/rust.vim'
-
+Plug 'cespare/vim-toml'
+Plug 'stephpy/vim-yaml'
+Plug 'elzr/vim-json', {'for' : 'json'}
+Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 " Markdown 
 Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
@@ -83,11 +86,6 @@ let g:vim_markdown_folding_disabled = 1
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 
 Plug 't9md/vim-choosewin'
-" Plug 'cespare/vim-toml'
-" Plug 'stephpy/vim-yaml'
-" Plug 'elzr/vim-json', {'for' : 'json'}
-" Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
-
 
 call plug#end()
 
@@ -186,9 +184,7 @@ if has_key(g:plugs, 'coc.nvim')
     \'coc-explorer',
     \'coc-snippets',
     \'coc-pairs',
-    \'coc-json',
-    \'coc-toml', 
-    \'coc-yaml'
+    \'coc-yank'
     \]
 
   augroup coc-config
@@ -223,6 +219,8 @@ if has_key(g:plugs, 'coc.nvim')
   nnoremap <silent><nowait> <space>o  :<C-u>CocList outline<cr>
   " Search workspace symbols.
   nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
+  " open yank list
+  nnoremap <silent> <space>y  :<C-u>CocList -A --normal yank<cr>
   " Do default action for next item.
   nnoremap <silent><nowait> <space>j  :<C-u>CocNext<CR>
   " Do default action for previous item.
