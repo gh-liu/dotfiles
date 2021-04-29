@@ -92,9 +92,6 @@ call plug#end()
 
 " >>>>>> Plugins Setting 
 
-" vim-plug
-command! PU PlugUpdate | PlugUpgrade
-
 " gruvbox
 let g:gruvbox_contrast_dark = 'soft'
 

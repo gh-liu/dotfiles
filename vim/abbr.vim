@@ -11,4 +11,6 @@ call SetupCommandAbbrs('C', 'CocConfig')
 call SetupCommandAbbrs('CR', 'CocRestart')
 call SetupCommandAbbrs('L', 'CocList')
 call SetupCommandAbbrs('S', 'CocSearch')
+call SetupCommandAbbrs('PU', 'PlugUpdate')
+call SetupCommandAbbrs('PC', 'PlugClean')
 
