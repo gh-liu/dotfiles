@@ -34,5 +34,6 @@
     "gosnippets/UltiSnips"
   ],
   "explorer.width": 25,
-  "explorer.quitOnOpen": true
+  "explorer.quitOnOpen": true,
+  "explorer.file.showHiddenFiles": true
 }
