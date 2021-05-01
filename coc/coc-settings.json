@@ -1,32 +1,45 @@
 {
   "coc.preferences.extensionUpdateCheck": "weekly",
-  "coc.preferences.jumpCommand":"drop",
+  "coc.preferences.jumpCommand": "drop",
   "diagnostic.errorSign": "✘",
   "diagnostic.warningSign": "⚠",
   "diagnostic.hintSign": "➤",
   "diagnostic.infoSign": "ℹ",
   "suggest.noselect": false,
   "list.insertMappings": {
-		"<C-g>": "do:exit"
+    "<C-g>": "do:exit"
   },
   "list.normalMappings": {
-		"<C-g>": "do:exit"
+    "<C-g>": "do:exit"
   },
   "languageserver": {
     "golang": {
       "command": "gopls",
-      "args": ["-remote", "auto"],
-      "rootPatterns": ["go.mod"],
-      "filetypes": ["go"],
+      "args": [
+        "-remote",
+        "auto"
+      ],
+      "rootPatterns": [
+        "go.mod"
+      ],
+      "filetypes": [
+        "go"
+      ],
       "initializationOptions": {
         "completeUnimported": true
       }
     },
     "bash": {
       "command": "bash-language-server",
-      "args": ["start"],
-      "filetypes": ["sh"],
-      "ignoredRootPaths": ["~"]
+      "args": [
+        "start"
+      ],
+      "filetypes": [
+        "sh"
+      ],
+      "ignoredRootPaths": [
+        "~"
+      ]
     }
   },
   "snippets.ultisnips.directories": [
