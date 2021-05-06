@@ -48,5 +48,6 @@
   ],
   "explorer.width": 25,
   "explorer.quitOnOpen": true,
-  "explorer.file.showHiddenFiles": true
+  "explorer.file.showHiddenFiles": true,
+  "yank.highlight.enable": false
 }

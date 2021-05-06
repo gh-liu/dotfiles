@@ -11,7 +11,7 @@ Plug 'itchyny/lightline.vim'
 " Rainbow Parentheses 
 " Plug 'kien/rainbow_parentheses.vim'
 
-" Plug 'machakann/vim-highlightedyank'
+Plug 'machakann/vim-highlightedyank'
 
 " Underlines the word under the cursor 
 Plug 'itchyny/vim-cursorword'
@@ -334,5 +334,8 @@ nmap gx <Plug>(openbrowser-smart-search)
 vmap gx <Plug>(openbrowser-smart-search)
 
 
-"vim-choosewin
+" vim-choosewin
 nmap = <Plug>(choosewin)
+
+" vim-highlightedyank
+let g:highlightedyank_highlight_duration = 200
