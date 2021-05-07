@@ -181,7 +181,6 @@ if has_key(g:plugs, 'coc.nvim')
     \'coc-explorer',
     \'coc-snippets',
     \'coc-pairs',
-    \'coc-yank',
     \'coc-yaml',
     \'coc-json'
     \]
@@ -219,7 +218,7 @@ if has_key(g:plugs, 'coc.nvim')
   " Search workspace symbols.
   nnoremap <silent><nowait> <space>s  :<C-u>CocList -I symbols<cr>
   " open yank list
-  nnoremap <silent> <space>y  :<C-u>CocList -A --normal yank<cr>
+  " nnoremap <silent> <space>y  :<C-u>CocList -A --normal yank<cr>
   " Do default action for next item.
   nnoremap <silent><nowait> <space>j  :<C-u>CocNext<CR>
   " Do default action for previous item.
