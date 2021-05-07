@@ -264,22 +264,25 @@ let g:go_debug_windows = {
           \ 'out':        'botright  5new',
 \ }
 augroup golang
+    autocmd!
     " create custom mappings for Go files
-    autocmd BufEnter *.go nmap <leader>tt  <Plug>(go-test)
-    autocmd BufEnter *.go nmap <leader>tf <Plug>(go-test-func)
-    autocmd BufEnter *.go nmap <leader>cr <Plug>(go-coverage-toggle)
-    " autocmd BufEnter *.go nmap <leader>ii <Plug>(go-info)
-    " autocmd BufEnter *.go nmap <leader>i  <Plug>(go-implements)
-    autocmd BufEnter *.go nmap <leader>d  <Plug>(go-describe)
-    " autocmd BufEnter *.go nmap <leader>d  <Plug>(go-def)
-    " autocmd BufEnter *.go nmap <leader>p  <Plug>(go-def-pop)
+    autocmd FileType go nmap <silent> <leader>tt  <Plug>(go-test)
+    autocmd FileType go nmap <silent> <leader>tf <Plug>(go-test-func)
+    autocmd FileType go nmap <silent> <leader>cr <Plug>(go-coverage-toggle)
+    " autocmd FileType go nmap <silent> <leader>ii <Plug>(go-info)
+    " autocmd FileType go nmap <silent> <leader>i  <Plug>(go-implements)
+    autocmd FileType go nmap <silent> <leader>d  <Plug>(go-describe)
+    " autocmd FileType go nmap <silent> <leader>d  <Plug>(go-def)
+    " autocmd FileType go nmap <silent> <leader>p  <Plug>(go-def-pop)
 
-    autocmd BufEnter *.go nmap <leader>b   :GoDebugBreakpoint<cr>
-    autocmd BufEnter *.go nmap <leader>dq  :GoDebugStop<cr>
-    autocmd BufEnter *.go nmap <leader>ds  :GoDebugStart
+    autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
+    autocmd FileType go nmap <silent> <leader>dq  :GoDebugStop<cr>
+    autocmd FileType go nmap <silent> <leader>ds  :GoDebugStart
 
-    autocmd BufEnter *.go nmap <leader>cc <Plug>(go-callers)
-    autocmd BufEnter *.go nmap <leader>cs <Plug>(go-callstack)
+    autocmd FileType go nmap <silent> <leader>cc <Plug>(go-callers)
+    autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
+
+    autocmd FileType go nmap <silent> <Leader>td <Plug>(go-def-tab)
 augroup END
 
 " CtrlSF.vim
