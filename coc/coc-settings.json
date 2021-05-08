@@ -5,6 +5,7 @@
   "diagnostic.warningSign": "⚠",
   "diagnostic.hintSign": "➤",
   "diagnostic.infoSign": "ℹ",
+  "diagnostic.checkCurrentLine": true,
   "suggest.noselect": false,
   "list.insertMappings": {
     "<C-g>": "do:exit"
@@ -12,36 +13,41 @@
   "list.normalMappings": {
     "<C-g>": "do:exit"
   },
-  "languageserver": {
-    "golang": {
-      "command": "gopls",
-      "args": [
-        "-remote",
-        "auto"
-      ],
-      "rootPatterns": [
-        "go.mod"
-      ],
-      "filetypes": [
-        "go"
-      ],
-      "initializationOptions": {
-        "completeUnimported": true
-      }
-    },
-    "bash": {
-      "command": "bash-language-server",
-      "args": [
-        "start"
-      ],
-      "filetypes": [
-        "sh"
-      ],
-      "ignoredRootPaths": [
-        "~"
-      ]
-    }
+  "go.goplsPath": "_GOBIN/gopls",
+  "go.goplsArgs": ["-remote", "auto", "-logfile", "/tmp/gopls.log"],
+  "go.goplsOptions": {
+    "completeUnimported": true
   },
+  // "languageserver": {
+  //   "golang": {
+  //     "command": "gopls",
+  //     "args": [
+  //       "-remote",
+  //       "auto"
+  //     ],
+  //     "rootPatterns": [
+  //       "go.mod"
+  //     ],
+  //     "filetypes": [
+  //       "go"
+  //     ],
+  //     "initializationOptions": {
+  //       "completeUnimported": true
+  //     }
+  //   },
+  //   "bash": {
+  //     "command": "bash-language-server",
+  //     "args": [
+  //       "start"
+  //     ],
+  //     "filetypes": [
+  //       "sh"
+  //     ],
+  //     "ignoredRootPaths": [
+  //       "~"
+  //     ]
+  //   }
+  // },
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
