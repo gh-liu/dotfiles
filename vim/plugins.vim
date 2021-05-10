@@ -66,8 +66,6 @@ Plug 'tpope/vim-abolish'
 
 Plug 'andrewradev/splitjoin.vim'
 
-" Plug 'easymotion/vim-easymotion'
-
 " Comment 
 Plug 'tpope/vim-commentary'
 if has_key(g:plugs, 'vim-commentary')
@@ -90,7 +88,7 @@ if has_key(g:plugs, 'tagbar')
     let g:tagbar_autofocus = 1
     let g:tagbar_position = 'leftabove vertical'
     let g:tagbar_width = 25
-    " nnoremap <F2>  :TagbarToggle<CR>
+    nnoremap T :TagbarToggle<CR>
 endif
 
 " show marks
@@ -105,14 +103,29 @@ map <C-n> :Lexplore<CR>
 
 " undotree
 Plug 'mbbill/undotree'
-let g:undotree_SetFocusWhenToggle = 1
-" nnoremap <leader>uu :UndotreeToggle<CR>
+if has_key(g:plugs, 'undotree')
+    let g:undotree_SetFocusWhenToggle = 1
+    nnoremap U :UndotreeToggle<CR>
+endif
 
 " Bracket maps
 " Plug 'tpope/vim-unimpaired'
 
+" Extended "%" matching
+Plug 'vim-scripts/matchit.zip'
+
 Plug 't9md/vim-choosewin'
 nmap <C-w><C-w> <Plug>(choosewin)
+
+" Plug 'easymotion/vim-easymotion'
+if has_key(g:plugs, 'vim-easymotion')
+    let g:EasyMotion_smartcase = 1
+    map <Leader><leader>h <Plug>(easymotion-linebackward)
+    map <Leader><Leader>j <Plug>(easymotion-j)
+    map <Leader><Leader>k <Plug>(easymotion-k)
+    map <Leader><leader>l <Plug>(easymotion-lineforward)
+    map <Leader><leader>. <Plug>(easymotion-repeat)
+endif
 " }}}
 
 " Git --------{{{
@@ -318,6 +331,14 @@ Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
 " markdown preview 
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+" }}}
+
+
+" text object --------{{{
+" Plug 'kana/vim-textobj-user'
+" Plug 'kana/vim-textobj-line'
+" Plug 'kana/vim-textobj-entire'
+" Plug 'kana/vim-textobj-indent'
 " }}}
 
 " other tools --------{{{

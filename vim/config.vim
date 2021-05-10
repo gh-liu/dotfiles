@@ -98,7 +98,7 @@ nnoremap ; :
 nnoremap # *
 nnoremap * #
 
-" use 'w' move between tabs
+" easy move
 nnoremap [w :tabprevious<cr>
 nnoremap ]w :tabnext<cr>
 nnoremap [W :tabfirst<cr>
@@ -129,7 +129,6 @@ nnoremap <Leader>cw :close<cr>
 nnoremap <Leader>ct :tabclose<cr>
 nnoremap <Leader>cW :close!<cr>
 nnoremap <Leader>cT :tabclose!<cr>
-
 nnoremap <Leader>cq :ccl<cr>
 nnoremap <Leader>cl :lcl<cr>
 
@@ -142,19 +141,22 @@ nnoremap <Leader>nt :tabnew<cr>
 " nnoremap <leader>wv :vsplit<CR>
 
 " <Leader>[1-9] move to tab [1-9]
-" for s:i in range(1, 9)
-"   execute 'nnoremap <Leader>' . s:i . ' ' . s:i . 'gt'
-" endfor
+for s:i in range(1, 9)
+  execute 'nnoremap <Leader>' . s:i . ' ' . s:i . 'gt'
+endfor
 
 " repeat in opposite direction
 noremap \ ,
 
 " Quit
-inoremap <C-Q>     <esc>:q<cr>
-nnoremap <C-Q>     :q<cr>
-vnoremap <C-Q>     <esc>
+inoremap <C-q> <esc>:q<cr>
+nnoremap <C-q> :q<cr>
+vnoremap <C-q> <esc>
 nnoremap <Leader>q :q<cr>
 nnoremap <Leader>Q :qa!<cr>
+
+" w!! to sudo & write a file
+cmap w!! w !sudo tee >/dev/null %
 
 " movement in command-edit mode
 cnoremap <C-a> <HOME>
@@ -177,17 +179,17 @@ nnoremap Q @q
 
 nnoremap Y y$
 
-" Open new line below and above current line
+" Open new line below and above current line, use `.` repeat.
 nnoremap <leader>o o<esc>
 nnoremap <leader>O O<esc>
 
 " Save
-inoremap <C-s>     <C-O>:update<cr>
-nnoremap <C-s>     :update<cr>
+inoremap <C-s> <C-O>:update<cr>
+nnoremap <C-s> :update<cr>
 
 " Disable CTRL-F on tmux
 nnoremap <C-f> <nop>
-nnoremap <Leader><C-f> <C-f>
+nmap <Leader><C-f> <C-f>
 
 " Tags
 " nnoremap <C-]> g<C-]>
@@ -311,7 +313,21 @@ augroup vimrc
             autocmd Syntax * call matchadd('Debug', '\W\zs\(NOTE\|INFO\|IDEA\|NOTICE\)')
         endif
     endif
+
+    " autocmd BufReadPost quickfix,location nnoremap <buffer> v <C-w><Enter><C-w>L
+    " autocmd BufReadPost quickfix,location nnoremap <buffer> s <C-w><Enter><C-w>K
 augroup END
+
+" function! AutoSetFileHead()
+"     if &filetype == 'sh'
+"         call setline(1, "\#!/bin/bash")
+"     endif
+
+"     normal G
+"     normal o
+"     normal o
+" endfun
+" autocmd BufNewFile *.sh exec ":call AutoSetFileHead()"
 
 " }}}
 
