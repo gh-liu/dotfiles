@@ -122,11 +122,11 @@ nmap <C-w><C-w> <Plug>(choosewin)
 Plug 'easymotion/vim-easymotion'
 if has_key(g:plugs, 'vim-easymotion')
     let g:EasyMotion_smartcase = 1
-    " map <Leader><leader>h <Plug>(easymotion-linebackward)
+    map <Leader><leader>. <Plug>(easymotion-repeat)
+    map <Leader><leader>h <Plug>(easymotion-linebackward)
+    map <Leader><leader>l <Plug>(easymotion-lineforward)
     " map <Leader><Leader>j <Plug>(easymotion-j)
     " map <Leader><Leader>k <Plug>(easymotion-k)
-    " map <Leader><leader>l <Plug>(easymotion-lineforward)
-    " map <Leader><leader>. <Plug>(easymotion-repeat)
 endif
 " }}}
 
