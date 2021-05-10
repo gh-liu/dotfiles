@@ -1,5 +1,6 @@
 call plug#begin('~/.vim/plugged')
 
+" View --------{{{
 " Theme 
 Plug 'gruvbox-community/gruvbox'
 let g:gruvbox_contrast_dark = 'soft'
@@ -48,66 +49,15 @@ if has_key(g:plugs, 'rainbow_parentheses.vim')
     autocmd Syntax * RainbowParenthesesLoadBraces
 endif
 
-" show marks
-Plug 'kshenoy/vim-signature'
-
 " highlight yank
 Plug 'machakann/vim-highlightedyank'
 let g:highlightedyank_highlight_duration = 200
 
 " Underlines the word under the cursor 
 Plug 'itchyny/vim-cursorword'
+" }}}
 
-" File Tree 
-Plug 'tpope/vim-vinegar'
-" netrw
-let g:netrw_liststyle = 3
-let g:netrw_winsize = 25
-map <C-n> :Lexplore<CR>
-
-" undotree
-Plug 'mbbill/undotree'
-let g:undotree_SetFocusWhenToggle = 1
-" nnoremap <leader>uu :UndotreeToggle<CR>
-
-" Git 
-Plug 'tpope/vim-fugitive'
-nmap <leader>gb :Gblame<CR>
-vmap <leader>gb :Gblame<CR>
-" nmap <leader>gr :Gread<CR>
-" nmap <leader>gw :Gwrite<CR>
-" nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
-" nmap <leader>gs :tabe<CR>:Gstatus<CR>
-" nmap <leader>gc :Gcommit<CR>
-nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
-" shows a git diff 
-Plug 'airblade/vim-gitgutter'
-" show the git message 
-" Plug 'rhysd/git-messenger.vim'
-
-" Interact with tmux 
-Plug 'benmills/vimux'
-if has_key(g:plugs, 'vimux')
-    nnoremap <Leader>vp :VimuxPromptCommand<CR>
-    nnoremap <Leader>vc :VimuxCloseRunner<CR>
-    nnoremap <Leader>vl :VimuxRunLastCommand<CR>
-endif
-
-" Browse the tags of the current file
-Plug 'majutsushi/tagbar'
-if has_key(g:plugs, 'tagbar')
-    let g:tagbar_autofocus = 1
-    let g:tagbar_position = 'leftabove vertical'
-    let g:tagbar_width = 25
-    " nnoremap <F2>  :TagbarToggle<CR>
-endif
-
-" Plug 'tyru/open-browser.vim'
-" let g:netrw_nogx = 1 " disable netrw's gx mapping.
-" nmap gx <Plug>(openbrowser-smart-search)
-" vmap gx <Plug>(openbrowser-smart-search)
-
-" Edit
+" Edit --------{{{
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-abolish'
@@ -131,8 +81,66 @@ endif
 
 " Aligning text 
 Plug 'godlygeek/tabular'
+" }}}
 
-" Search 
+" Nav --------{{{
+" Browse the tags of the current file
+Plug 'majutsushi/tagbar'
+if has_key(g:plugs, 'tagbar')
+    let g:tagbar_autofocus = 1
+    let g:tagbar_position = 'leftabove vertical'
+    let g:tagbar_width = 25
+    " nnoremap <F2>  :TagbarToggle<CR>
+endif
+
+" show marks
+Plug 'kshenoy/vim-signature'
+
+" File Tree 
+Plug 'tpope/vim-vinegar'
+" netrw
+let g:netrw_liststyle = 3
+let g:netrw_winsize = 25
+map <C-n> :Lexplore<CR>
+
+" undotree
+Plug 'mbbill/undotree'
+let g:undotree_SetFocusWhenToggle = 1
+" nnoremap <leader>uu :UndotreeToggle<CR>
+
+" Bracket maps
+" Plug 'tpope/vim-unimpaired'
+
+Plug 't9md/vim-choosewin'
+nmap <C-w><C-w> <Plug>(choosewin)
+" }}}
+
+" Git --------{{{
+Plug 'tpope/vim-fugitive'
+nmap <leader>gb :Gblame<CR>
+vmap <leader>gb :Gblame<CR>
+" nmap <leader>gr :Gread<CR>
+" nmap <leader>gw :Gwrite<CR>
+" nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
+" nmap <leader>gs :tabe<CR>:Gstatus<CR>
+" nmap <leader>gc :Gcommit<CR>
+nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
+" shows a git diff 
+Plug 'airblade/vim-gitgutter'
+" show the git message 
+" Plug 'rhysd/git-messenger.vim'
+" }}}
+
+" Interact with tmux --------{{{
+Plug 'benmills/vimux'
+if has_key(g:plugs, 'vimux')
+    nnoremap <Leader>vp :VimuxPromptCommand<CR>
+    nnoremap <Leader>vc :VimuxCloseRunner<CR>
+    nnoremap <Leader>vl :VimuxRunLastCommand<CR>
+endif
+" }}}
+
+" Search --------{{{
 " Plug 'ctrlpvim/ctrlp.vim' 
 Plug 'dyng/ctrlsf.vim'
 if has_key(g:plugs, 'ctrlsf.vim')
@@ -155,11 +163,9 @@ let g:fzf_layout = { 'down': '~20%' }
 nmap <C-p> :Files<cr>
 imap <C-p> <esc>:<C-u>Files<cr>
 " Plug 'mileszs/ack.vim'
+" }}}
 
-" Bracket maps
-Plug 'tpope/vim-unimpaired'
-
-" coc.nvim 
+" coc.nvim --------{{{
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 if has_key(g:plugs, 'coc.nvim')
     " Use <cr> to confirm completion
@@ -240,7 +246,9 @@ if has_key(g:plugs, 'coc.nvim')
     " plugs settings
     map <leader>ee :CocCommand explorer<CR>
 endif
+" }}}
 
+" lang --------{{{
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 if has_key(g:plugs, 'vim-go')
     " Go syntax highlighting
@@ -310,11 +318,9 @@ Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
 " markdown preview 
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+" }}}
 
-
-Plug 't9md/vim-choosewin'
-nmap <C-w><C-w> <Plug>(choosewin)
-
+" other tools --------{{{
 " Show keymaps begin with <leader> 
 " Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 if has_key(g:plugs, 'vim-which-key')
@@ -322,7 +328,13 @@ if has_key(g:plugs, 'vim-which-key')
     set timeoutlen=360
 endif
 
+" Plug 'tyru/open-browser.vim'
+" let g:netrw_nogx = 1 " disable netrw's gx mapping.
+" nmap gx <Plug>(openbrowser-smart-search)
+" vmap gx <Plug>(openbrowser-smart-search)
+
 " Vim start up time debug (figure out which script is slow) 
-" Plug 'tweekmonster/startuptime.vim'
+Plug 'tweekmonster/startuptime.vim'
+" }}}
 
 call plug#end()

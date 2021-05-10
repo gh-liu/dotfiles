@@ -104,6 +104,26 @@ nnoremap ]w :tabnext<cr>
 nnoremap [W :tabfirst<cr>
 nnoremap ]W :tablast<cr>
 
+nnoremap [b :bprevious<cr>
+nnoremap ]b :bnext<cr>
+nnoremap [B :bfirst<cr>
+nnoremap ]B :blast<cr>
+
+nnoremap [l :lprevious<cr>
+nnoremap ]l :lnext<cr>
+nnoremap [L :lfirst<cr>
+nnoremap ]L :llast<cr>
+
+nnoremap [q :cprevious<cr>
+nnoremap ]q :cnext<cr>
+nnoremap [Q :cfirst<cr>
+nnoremap ]Q :clast<cr>
+
+nnoremap [t :tprevious<cr>
+nnoremap ]t :tnext<cr>
+nnoremap [T :tfirst<cr>
+nnoremap ]T :tlast<cr>
+
 " close windows, tabs, quickfix-win, localtion-win
 nnoremap <Leader>cw :close<cr>
 nnoremap <Leader>ct :tabclose<cr>
@@ -206,20 +226,19 @@ vmap jj <Esc>
 
 " // search the visual block
 vnoremap // y/<c-r>"<cr>
-" }}}
 
 " flod code: <leader>zz
-let g:FoldMethod = 0
-fun! ToggleFold()
-    if g:FoldMethod == 0
+let s:FoldAll = 0
+fun! ToggleAllFold()
+    if s:FoldAll == 0
         exe "normal! zM"
-        let g:FoldMethod = 1
+        let s:FoldAll = 1
     else
         exe "normal! zR"
-        let g:FoldMethod = 0
+        let s:FoldAll = 0
     endif
 endfun
-noremap <leader>zz :call ToggleFold()<cr>
+noremap <leader>zz :call ToggleAllFold()<cr>
 
 " set relativenumber
 " map <silent><F2> :set relativenumber!<CR>
@@ -236,8 +255,11 @@ function! HideNumber()
 endfun
 nnoremap <F2> :call HideNumber()<CR>
 
+" Toggle highlight
+noremap <silent><leader>/ :set nohls!<CR>
+" }}}
 
-" --- AUTO CMD --- 
+" AUTO CMD --------{{{
 augroup filetype_vim
     autocmd!
     autocmd FileType vim setlocal foldmethod=marker
@@ -304,8 +326,8 @@ function! SetupCommandAbbrs(from, to)
 endfunction
 
 " coc-nvim
-call SetupCommandAbbrs('L', 'CocList')
-call SetupCommandAbbrs('C', 'CocConfig')
+call SetupCommandAbbrs('CL', 'CocList')
+call SetupCommandAbbrs('CC', 'CocConfig')
 " call SetupCommandAbbrs('S', 'CocSearch')
 " call SetupCommandAbbrs('CR', 'CocRestart')
 
