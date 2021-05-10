@@ -224,7 +224,8 @@ map q: :q
 
 " Exit on j
 imap jj <Esc>
-vmap jj <Esc>
+imap jk <Esc>
+vmap jk <Esc>
 
 " // search the visual block
 vnoremap // y/<c-r>"<cr>
