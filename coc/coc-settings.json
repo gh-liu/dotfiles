@@ -13,7 +13,7 @@
   "list.normalMappings": {
     "<C-g>": "do:exit"
   },
-  "go.goplsPath": "_GOBIN/gopls",
+  "go.goplsPath": "gopls",
   "go.goplsArgs": ["-remote", "auto", "-logfile", "/tmp/gopls.log"],
   "go.goplsOptions": {
     "completeUnimported": true
