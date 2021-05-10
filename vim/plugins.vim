@@ -1,11 +1,11 @@
 call plug#begin('~/.vim/plugged')
 
 " View --------{{{
-" Theme 
+" Theme
 Plug 'gruvbox-community/gruvbox'
 let g:gruvbox_contrast_dark = 'soft'
 
-" Status Line 
+" Status Line
 Plug 'itchyny/lightline.vim'
 if has_key(g:plugs, 'lightline.vim')
     let g:lightline = {
@@ -20,7 +20,7 @@ if has_key(g:plugs, 'lightline.vim')
         \ }
 endif
 
-" Rainbow Parentheses 
+" Rainbow Parentheses
 Plug 'kien/rainbow_parentheses.vim'
 if has_key(g:plugs, 'rainbow_parentheses.vim')
     let g:rbpt_colorpairs = [
@@ -53,7 +53,7 @@ endif
 Plug 'machakann/vim-highlightedyank'
 let g:highlightedyank_highlight_duration = 200
 
-" Underlines the word under the cursor 
+" Underlines the word under the cursor
 Plug 'itchyny/vim-cursorword'
 " }}}
 
@@ -66,7 +66,7 @@ Plug 'tpope/vim-abolish'
 
 Plug 'andrewradev/splitjoin.vim'
 
-" Comment 
+" Comment
 Plug 'tpope/vim-commentary'
 if has_key(g:plugs, 'vim-commentary')
     " vim-commentary
@@ -77,8 +77,10 @@ if has_key(g:plugs, 'vim-commentary')
     vmap <C-_> gc
 endif
 
-" Aligning text 
+" Aligning text
 Plug 'godlygeek/tabular'
+
+Plug 'bronson/vim-trailing-whitespace'
 " }}}
 
 " Nav --------{{{
@@ -94,7 +96,7 @@ endif
 " show marks
 Plug 'kshenoy/vim-signature'
 
-" File Tree 
+" File Tree
 Plug 'tpope/vim-vinegar'
 " netrw
 let g:netrw_liststyle = 3
@@ -138,9 +140,9 @@ vmap <leader>gb :Gblame<CR>
 " nmap <leader>gs :tabe<CR>:Gstatus<CR>
 " nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
-" shows a git diff 
+" shows a git diff
 Plug 'airblade/vim-gitgutter'
-" show the git message 
+" show the git message
 " Plug 'rhysd/git-messenger.vim'
 " }}}
 
@@ -154,7 +156,7 @@ endif
 " }}}
 
 " Search --------{{{
-" Plug 'ctrlpvim/ctrlp.vim' 
+" Plug 'ctrlpvim/ctrlp.vim'
 Plug 'dyng/ctrlsf.vim'
 if has_key(g:plugs, 'ctrlsf.vim')
     " let g:ctrlsf_default_view_mode = 'compact'
@@ -225,9 +227,9 @@ if has_key(g:plugs, 'coc.nvim')
       autocmd VimEnter * nmap <silent> gy <Plug>(coc-type-definition)
       autocmd VimEnter * nmap <silent> gi <Plug>(coc-implementation)
       autocmd VimEnter * nmap <silent> gr <Plug>(coc-references)
-      
+
       autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
-      autocmd VimEnter * nmap <silent> <leader>fc <Plug>(coc-fix-current)	
+      autocmd VimEnter * nmap <silent> <leader>fc <Plug>(coc-fix-current)
 
       autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
       autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
@@ -276,7 +278,7 @@ if has_key(g:plugs, 'vim-go')
     " disable K
     let g:go_doc_keywordprg_enabled = 0
     let g:go_debug_preserve_layout = 1
-    let g:go_highlight_debug = 0 
+    let g:go_highlight_debug = 0
     " complete by coc.nvim
     let g:go_code_completion_enabled = 0
     let g:go_test_show_name = 1
@@ -326,10 +328,10 @@ endif
 " Plug 'elzr/vim-json', {'for' : 'json'}
 Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 
-" Markdown 
+" Markdown
 Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
-" markdown preview 
+" markdown preview
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
 " }}}
 
@@ -342,7 +344,7 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': 
 " }}}
 
 " other tools --------{{{
-" Show keymaps begin with <leader> 
+" Show keymaps begin with <leader>
 " Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 if has_key(g:plugs, 'vim-which-key')
     nnoremap <silent> <leader> :WhichKey ','<CR>
@@ -354,7 +356,7 @@ endif
 " nmap gx <Plug>(openbrowser-smart-search)
 " vmap gx <Plug>(openbrowser-smart-search)
 
-" Vim start up time debug (figure out which script is slow) 
+" Vim start up time debug (figure out which script is slow)
 Plug 'tweekmonster/startuptime.vim'
 " }}}
 

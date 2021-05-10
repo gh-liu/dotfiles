@@ -7,7 +7,7 @@ set fileencodings=ucs-bom,utf-8,cp936,gb18030,big5,euc-jp,euc-kr,latin1
 " Set to auto read when a file is changed from the outside
 set autoread
 " be iMproved
-set nocompatible 
+set nocompatible
 " For regular expressions turn magic on
 set magic
 " Sets how many lines of history VIM has to remember
@@ -48,7 +48,7 @@ set wildmenu
 " Height of the command bar
 set cmdheight=2
 " Automatically save before :next, :make etc.
-set autowrite 
+set autowrite
 
 " set complete-=i
 set pumheight=10             " Completion window max size
@@ -58,7 +58,7 @@ set completeopt=longest,menu
 set shortmess+=c
 
 " Enable syntax highlighting
-syntax enable 
+syntax enable
 " Enable 256 colors palette in Gnome Terminal
 if $COLORTERM == 'gnome-terminal'
     set t_Co=256
@@ -290,7 +290,7 @@ augroup END
 
 
 function! s:helptab()
-  if &buftype == 'help' 
+  if &buftype == 'help'
     wincmd T
     nnoremap <buffer> q :q<cr>
   endif
