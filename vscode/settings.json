@@ -1,0 +1,170 @@
+{
+    // explorer
+    "explorer.openEditors.visible": 0,
+    "explorer.confirmDragAndDrop": false,
+    // editor
+    "editor.fontSize": 13,
+    "editor.fontFamily": "'Cascadia Code', Consolas, 'Courier New', monospace",
+    "editor.fontLigatures": true,
+    "editor.minimap.maxColumn": 80,
+    "editor.minimap.enabled": false,
+    "editor.wordWrapColumn": 120,
+    "editor.dragAndDrop": false,
+    "editor.glyphMargin": false,
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
+    },
+    "editor.parameterHints.enabled": false,
+    // "editor.rulers": [120],
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+        ]
+    },
+    "editor.scrollBeyondLastLine": false,
+    // files
+    "files.autoSave": "afterDelay",
+    "files.eol": "\n",
+    // workbench
+    "workbench.editor.enablePreview": false,
+    "workbench.editor.enablePreviewFromQuickOpen": false,
+    "workbench.startupEditor": "newUntitledFile",
+    "workbench.colorTheme": "GitHub Light Default",
+    "workbench.editor.untitled.hint": "hidden",
+    "workbench.commandPalette.history": 50,
+    "window.titleBarStyle": "custom",
+    // search
+    "search.showLineNumbers": true,
+    "search.smartCase": true,
+    // Extension: vim
+    "vim.leader": ",",
+    "vim.hlsearch": true,
+    "vim.textwidth": 120,
+    "vim.visualstar": true,
+    "vim.insertModeKeyBindings": [
+        {
+            "before": ["j", "j"],
+            "after": ["<Esc>"]
+        },
+        {
+            "before": ["<C-h>"],
+            "after": ["<left>"]
+        },
+        {
+            "before": ["<C-l>"],
+            "after": ["<right>"]
+        },
+        {
+            "before": ["<C-j>"],
+            "after": ["<down>"]
+        },
+        {
+            "before": ["<C-k>"],
+            "after": ["<up>"]
+        }
+    ],
+    "vim.normalModeKeyBindingsNonRecursive": [
+        // - leader-q to quit
+        {
+            "before": ["leader", "q"],
+            "commands": [
+                {
+                    "command": "workbench.action.files.save",
+                    "args": []
+                },
+                {
+                    "command": "workbench.action.closeActiveEditor",
+                    "args": []
+                }
+            ]
+        },
+        // - switch # and *
+        {
+            "before": ["*"],
+            "after": ["#"]
+        },
+        {
+            "before": ["#"],
+            "after": ["*"]
+        },
+        // - show the command palette
+        {
+            "before": [";"],
+            "commands": [
+                "workbench.action.showCommands",
+            ]
+        },
+        // - leader-p to all opened editors
+        {
+            "before": ["leader", "p"],
+            "commands": [
+                "workbench.action.openNextRecentlyUsedEditorInGroup"
+            ]
+        },
+        // - leader-f: go to file
+        {
+            "before": ["leader", "f"],
+            "commands": [
+                "workbench.action.quickOpen",
+            ]
+        },
+        // - leader-g go to symbol
+        {
+            "before": ["leader", "g"],
+            "commands": [
+                "workbench.action.gotoSymbol",
+            ]
+        },
+        // - leader-s show problems
+        {
+            "before": ["leader", "s"],
+            "commands": [
+                "workbench.actions.view.problems"
+            ]
+        },
+        // - leader-en Go to Next Error or Warning
+        {
+            "before": ["leader", "e", "n"],
+            "commands": [
+                "editor.action.marker.nextInFiles"
+            ]
+        },
+        // - leader-ep Go to Previous Error or Warning
+        {
+            "before": ["leader", "e", "p"],
+            "commands": [
+                "editor.action.marker.prevInFiles"
+            ]
+        },
+        // - leader-/ to turn-off highlight
+        {
+            "before":["leader", "/"],
+            "commands": [
+                ":nohl",
+            ]
+        },
+    ],
+    "vim.visualModeKeyBindingsNonRecursive": [
+        // - indent/outdent lines (repeatable)
+        {
+            "before": [
+                ">"
+            ],
+            "commands": [
+                "editor.action.indentLines"
+            ]
+        },
+        {
+            "before": [
+                "<"
+            ],
+            "commands": [
+                "editor.action.outdentLines"
+            ]
+        },
+    ],
+    //########## proxy ##########
+    // "http.proxy": "http://127.0.0.1:1081",
+    // "http.proxyStrictSSL": false,
+}
