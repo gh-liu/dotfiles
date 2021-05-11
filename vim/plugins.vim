@@ -78,7 +78,12 @@ if has_key(g:plugs, 'vim-commentary')
 endif
 
 " Aligning text
-Plug 'godlygeek/tabular'
+" Plug 'godlygeek/tabular'
+Plug 'junegunn/vim-easy-align'
+if has_key(g:plugs, 'vim-easy-align')
+    vmap <Leader>a <Plug>(EasyAlign)
+    nmap <Leader>a <Plug>(EasyAlign)
+endif
 
 Plug 'bronson/vim-trailing-whitespace'
 " }}}
