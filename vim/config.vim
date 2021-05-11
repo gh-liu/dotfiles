@@ -100,6 +100,11 @@ nnoremap ; :
 nnoremap # *
 nnoremap * #
 
+" switch ` and '
+" By default, ' jumps to the marked line, ` jumps to the marked line and columnm
+nnoremap ' `
+nnoremap ` '
+
 " easy move
 nnoremap [w :tabprevious<cr>
 nnoremap ]w :tabnext<cr>
