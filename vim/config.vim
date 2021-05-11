@@ -231,6 +231,7 @@ map q: :q
 
 " Exit on j
 imap jj <Esc>
+imap kk <Esc>
 imap jk <Esc>
 vmap jk <Esc>
 
