@@ -54,6 +54,6 @@
   ],
   "explorer.width": 25,
   "explorer.quitOnOpen": true,
-  "explorer.openAction.strategy": "tab",
+  "explorer.openAction.strategy": "vsplit.intelligent",
   "explorer.file.showHiddenFiles": true
 }

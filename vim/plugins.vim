@@ -148,6 +148,8 @@ nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 " shows a git diff
 Plug 'airblade/vim-gitgutter'
 if has_key(g:plugs, 'vim-gitgutter')
+    let g:gitgutter_enabled = 0
+    nnoremap <leader>gs :GitGutterToggle<CR>
 endif
 " show the git message
 " Plug 'rhysd/git-messenger.vim'

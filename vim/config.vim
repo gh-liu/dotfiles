@@ -143,6 +143,8 @@ nnoremap <Leader>cl :lcl<cr>
 " nnoremap <Leader>nw :new<cr>
 nnoremap <Leader>nt :tabnew<cr>
 
+nnoremap <Leader>wt <C-w>T
+
 "" window
 " nnoremap <leader>ws :split<CR>
 " nnoremap <leader>wv :vsplit<CR>
