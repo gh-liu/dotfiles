@@ -244,6 +244,11 @@ if has_key(g:plugs, 'coc.nvim')
 
     " Add `:Format` command to format current buffer.
     command! -nargs=0 Format :call CocAction('format')
+    " Add some commands for Go
+    command! -nargs=0 GoGenTestFile :call CocAction('runCommand', 'go.test.generate.file')
+    command! -nargs=0 GoGenTestFunc :call CocAction('runCommand', 'go.test.generate.function')
+    command! -nargs=0 GoGenTestExpo :call CocAction('runCommand', 'go.test.generate.exported')
+    " command! -nargs=0 GoTestToggle  :call CocAction('runCommand', 'go.test.toggle')
 
     " Mappings for CoCList
     " Show all diagnostics.
@@ -324,6 +329,10 @@ if has_key(g:plugs, 'vim-go')
         autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
 
         autocmd FileType go nmap <silent> <Leader>td <Plug>(go-def-tab)
+        autocmd Filetype go
+            \  command! -bang A call go#alternate#Switch(<bang>0, 'edit')
+            \| command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
+            \| command! -bang AS call go#alternate#Switch(<bang>0, 'split')
     augroup END
 endif
 " Plug 'rust-lang/rust.vim'
