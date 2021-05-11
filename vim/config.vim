@@ -85,6 +85,8 @@ set foldenable
 set foldmethod=indent
 set foldlevel=99
 
+" for gitgutter
+set updatetime=300
 " }}}
 
 " MAPPINGS --------{{{
