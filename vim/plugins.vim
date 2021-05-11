@@ -147,6 +147,8 @@ vmap <leader>gb :Gblame<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 " shows a git diff
 Plug 'airblade/vim-gitgutter'
+if has_key(g:plugs, 'vim-gitgutter')
+endif
 " show the git message
 " Plug 'rhysd/git-messenger.vim'
 " }}}

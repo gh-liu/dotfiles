@@ -240,7 +240,7 @@ vnoremap // y/<c-r>"<cr>
 
 " flod code: <leader>zz
 let s:FoldAll = 0
-fun! ToggleAllFold()
+function! ToggleAllFold()
     if s:FoldAll == 0
         exe "normal! zM"
         let s:FoldAll = 1
@@ -250,6 +250,7 @@ fun! ToggleAllFold()
     endif
 endfun
 noremap <leader>zz :call ToggleAllFold()<cr>
+noremap <leader>zc za
 
 " set relativenumber
 " map <silent><F2> :set relativenumber!<CR>
