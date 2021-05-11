@@ -61,9 +61,7 @@ Plug 'itchyny/vim-cursorword'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-abolish'
-
 " Plug 'arthurxavierx/vim-caser'
-
 Plug 'andrewradev/splitjoin.vim'
 
 " Comment
@@ -174,11 +172,11 @@ if has_key(g:plugs, 'ctrlsf.vim')
         \ }
     nmap     <leader>ff <Plug>CtrlSFPrompt
     vmap     <leader>ff <Plug>CtrlSFVwordPath
-    vmap     <leader>fF <Plug>CtrlSFVwordExec
-    nmap     <leader>fn <Plug>CtrlSFCwordPath
+    " vmap     <leader>fF <Plug>CtrlSFVwordExec
+    " nmap     <leader>fn <Plug>CtrlSFCwordPath
     nnoremap <leader>fo :CtrlSFOpen<CR>
     nnoremap <leader>ft :CtrlSFToggle<CR>
-    inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
+    " inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
     nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
 endif
 Plug 'junegunn/fzf',        { 'do': './install --all' }
