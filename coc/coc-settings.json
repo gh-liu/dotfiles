@@ -18,7 +18,7 @@
   "go.goplsOptions": {
     "completeUnimported": true
   },
-  // "languageserver": {
+  "languageserver": {
   //   "golang": {
   //     "command": "gopls",
   //     "args": [
@@ -35,19 +35,19 @@
   //       "completeUnimported": true
   //     }
   //   },
-  //   "bash": {
-  //     "command": "bash-language-server",
-  //     "args": [
-  //       "start"
-  //     ],
-  //     "filetypes": [
-  //       "sh"
-  //     ],
-  //     "ignoredRootPaths": [
-  //       "~"
-  //     ]
-  //   }
-  // },
+    "bash": {
+      "command": "bash-language-server",
+      "args": [
+        "start"
+      ],
+      "filetypes": [
+        "sh"
+      ],
+      "ignoredRootPaths": [
+        "~"
+      ]
+    }
+  },
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
