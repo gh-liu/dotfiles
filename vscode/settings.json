@@ -62,6 +62,18 @@
         {
             "before": ["<C-k>"],
             "after": ["<up>"]
+        },
+        {
+            "before": ["<C-a>"],
+            "commands":[{
+                "command":"cursorHome"
+            }]
+        },
+        {
+            "before": ["<C-e>"],
+            "commands":[{
+                "command":"cursorEnd"
+            }]
         }
     ],
     "vim.normalModeKeyBindingsNonRecursive": [
@@ -164,6 +176,7 @@
             ]
         },
     ],
+    "tabnine.experimentalAutoImports": true,
     //########## proxy ##########
     // "http.proxy": "http://127.0.0.1:1081",
     // "http.proxyStrictSSL": false,
