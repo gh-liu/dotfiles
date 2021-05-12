@@ -248,7 +248,7 @@ if has_key(g:plugs, 'coc.nvim')
     command! -nargs=0 GoGenTestFile :call CocAction('runCommand', 'go.test.generate.file')
     command! -nargs=0 GoGenTestFunc :call CocAction('runCommand', 'go.test.generate.function')
     command! -nargs=0 GoGenTestExpo :call CocAction('runCommand', 'go.test.generate.exported')
-    " command! -nargs=0 GoTestToggle  :call CocAction('runCommand', 'go.test.toggle')
+    command! -nargs=0 GoTestToggle  :call CocAction('runCommand', 'go.test.toggle')
 
     " Mappings for CoCList
     " Show all diagnostics.
@@ -312,9 +312,9 @@ if has_key(g:plugs, 'vim-go')
     augroup vim-go-conf
         autocmd!
         " create custom mappings for Go files
-        autocmd FileType go nmap <silent> <leader>tt  <Plug>(go-test)
-        autocmd FileType go nmap <silent> <leader>tf <Plug>(go-test-func)
-        autocmd FileType go nmap <silent> <leader>cr <Plug>(go-coverage-toggle)
+        " autocmd FileType go nmap <silent> <leader>tt  <Plug>(go-test)
+        " autocmd FileType go nmap <silent> <leader>tf <Plug>(go-test-func)
+        " autocmd FileType go nmap <silent> <leader>cr <Plug>(go-coverage-toggle)
         " autocmd FileType go nmap <silent> <leader>ii <Plug>(go-info)
         " autocmd FileType go nmap <silent> <leader>i  <Plug>(go-implements)
         autocmd FileType go nmap <silent> <leader>d  <Plug>(go-describe)
@@ -322,8 +322,6 @@ if has_key(g:plugs, 'vim-go')
         " autocmd FileType go nmap <silent> <leader>p  <Plug>(go-def-pop)
 
         autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
-        autocmd FileType go nmap <silent> <leader>dq  :GoDebugStop<cr>
-        autocmd FileType go nmap <silent> <leader>ds  :GoDebugStart
 
         autocmd FileType go nmap <silent> <leader>cc <Plug>(go-callers)
         autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
@@ -334,6 +332,7 @@ if has_key(g:plugs, 'vim-go')
             \| command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
             \| command! -bang AS call go#alternate#Switch(<bang>0, 'split')
     augroup END
+
 endif
 " Plug 'rust-lang/rust.vim'
 
@@ -376,4 +375,6 @@ endif
 " Plug 'tweekmonster/startuptime.vim'
 " }}}
 
+Plug 'szw/vim-smartclose'
+let g:smartclose_default_mapping_key = '<leader><leader>c'
 call plug#end()

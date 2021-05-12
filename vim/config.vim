@@ -365,6 +365,16 @@ call SetupCommandAbbrs('CC', 'CocConfig')
 call SetupCommandAbbrs('PU', 'PlugUpdate')
 call SetupCommandAbbrs('PC', 'PlugClean')
 
+" Golang
+call SetupCommandAbbrs('GA','GoTestToggle')
+call SetupCommandAbbrs('GGT','GoGenTestFile')
+call SetupCommandAbbrs('GGF','GoGenTestFunc')
+call SetupCommandAbbrs('GGE','GoGenTestExpo')
+call SetupCommandAbbrs('GTT','GoTest')
+call SetupCommandAbbrs('GTF','GoTestFunc')
+call SetupCommandAbbrs('GDS','GoDebugStart')
+call SetupCommandAbbrs('GDQ','GoDebugStop')
+
 " vim-choosewin
 " call SetupCommandAbbrs('CW', 'ChooseWin')
 
