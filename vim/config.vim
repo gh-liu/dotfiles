@@ -334,13 +334,25 @@ augroup vagrant
   autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
 augroup END
 
-
+" open help page in a new tab
 function! s:helptab()
   if &buftype == 'help'
     wincmd T
     nnoremap <buffer> q :q<cr>
   endif
-endfunction
+endfun
+
+"open plug github repo in browser by press <CR>
+function! s:goto_github()
+    let s:repo = matchstr(expand("<cWORD>"), '\v[0-9A-Za-z\-\_\.]+/[0-9A-Za-z\-\_\.]+')
+    if empty(s:repo)
+        echo "GoToGithub: No repository found."
+    else
+        let s:url = 'https://github.com/' . s:repo
+        call netrw#BrowseX(s:url, 0)
+    end
+endfun
+
 augroup vimrc
     autocmd!
     autocmd BufEnter *.txt call s:helptab()
@@ -360,6 +372,8 @@ augroup vimrc
         endif
     endif
 
+    autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
+
     " autocmd BufReadPost quickfix,location nnoremap <buffer> v <C-w><Enter><C-w>L
     " autocmd BufReadPost quickfix,location nnoremap <buffer> s <C-w><Enter><C-w>K
 augroup END
@@ -375,6 +389,9 @@ augroup END
 " endfun
 " autocmd BufNewFile *.sh exec ":call AutoSetFileHead()"
 
+
+
+
 " }}}
 
 " ABBR --------{{{
@@ -385,7 +402,7 @@ function! SetupCommandAbbrs(from, to)
   exec 'cnoreabbrev <expr> '.a:from
         \ .' ((getcmdtype() ==# ":" && getcmdline() ==# "'.a:from.'")'
         \ .'? ("'.a:to.'") : ("'.a:from.'"))'
-endfunction
+endfun
 
 " coc-nvim
 call SetupCommandAbbrs('CL', 'CocList')

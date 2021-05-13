@@ -20,6 +20,7 @@ mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
 ln -sf $BASE/vim/vimrc ~/.vimrc
 ln -sf $BASE/vim/config.vim ~/.vim/config.vim
 ln -sf $BASE/vim/plugins.vim ~/.vim/plugins.vim
+ln -sf $BASE/vim/snippets ~/.vim/snippets
 
 ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
 

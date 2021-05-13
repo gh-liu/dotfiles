@@ -214,6 +214,9 @@ if has_key(g:plugs, 'coc.nvim')
     " Use <S-Tab> navigate to the previous complete item
     inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 
+    " Make <tab> used for trigger snippet expand and jump like VSCode.
+    let g:coc_snippet_next = '<tab>'
+
     " Use K to show documentation
     function! s:show_documentation()
       if (index(['vim', 'help'], &filetype) >= 0)
@@ -380,8 +383,19 @@ endif
 
 " Vim start up time debug (figure out which script is slow)
 " Plug 'tweekmonster/startuptime.vim'
-" }}}
 
 Plug 'szw/vim-smartclose'
 let g:smartclose_default_mapping_key = '<leader><leader>c'
+
+" rename the buffer
+Plug 'danro/rename.vim'
+
+" vscode's task system
+Plug 'skywind3000/asynctasks.vim'
+Plug 'skywind3000/asyncrun.vim'
+let g:asyncrun_open = 6
+
+" Plug 'puremourning/vimspector'
+
+" }}}
 call plug#end()

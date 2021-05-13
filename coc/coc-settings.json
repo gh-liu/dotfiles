@@ -2,7 +2,7 @@
   "coc.preferences.extensionUpdateCheck": "weekly",
   "coc.preferences.jumpCommand": "drop",
   "diagnostic.errorSign": "✘",
-  "diagnostic.warningSign": "⚠",
+  "diagnostic.warningSign": "∆",
   "diagnostic.hintSign": "➤",
   "diagnostic.infoSign": "ℹ",
   "diagnostic.checkCurrentLine": true,
@@ -48,6 +48,7 @@
       ]
     }
   },
+  "snippets.userSnippetsDirectory": "~/.vim/snippets",
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
