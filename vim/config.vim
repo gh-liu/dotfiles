@@ -374,7 +374,7 @@ call SetupCommandAbbrs('GTT','GoTest')
 call SetupCommandAbbrs('GTF','GoTestFunc')
 call SetupCommandAbbrs('GDS','GoDebugStart')
 call SetupCommandAbbrs('GDQ','GoDebugStop')
-
+call SetupCommandAbbrs('GR','GoRun')
 " vim-choosewin
 " call SetupCommandAbbrs('CW', 'ChooseWin')
 

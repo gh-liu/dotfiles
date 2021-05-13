@@ -124,12 +124,18 @@ nmap <C-w><C-w> <Plug>(choosewin)
 
 Plug 'easymotion/vim-easymotion'
 if has_key(g:plugs, 'vim-easymotion')
+    let g:EasyMotion_do_mapping = 0
     let g:EasyMotion_smartcase = 1
     map <Leader><leader>. <Plug>(easymotion-repeat)
     map <Leader><leader>h <Plug>(easymotion-linebackward)
     map <Leader><leader>l <Plug>(easymotion-lineforward)
-    " map <Leader><Leader>j <Plug>(easymotion-j)
-    " map <Leader><Leader>k <Plug>(easymotion-k)
+    map <Leader><Leader>j <Plug>(easymotion-j)
+    map <Leader><Leader>k <Plug>(easymotion-k)
+
+    map <Leader><Leader>W <Plug>(easymotion-W) 
+    map <Leader><Leader>w <Plug>(easymotion-w) 
+    map <Leader><Leader>N <Plug>(easymotion-N)
+    map <Leader><Leader>n <Plug>(easymotion-n)
 endif
 " }}}
 
@@ -172,11 +178,12 @@ if has_key(g:plugs, 'ctrlsf.vim')
         \ }
     nmap     <leader>ff <Plug>CtrlSFPrompt
     vmap     <leader>ff <Plug>CtrlSFVwordPath
-    " vmap     <leader>fF <Plug>CtrlSFVwordExec
-    " nmap     <leader>fn <Plug>CtrlSFCwordPath
-    nnoremap <leader>fo :CtrlSFOpen<CR>
+    vmap     <leader>fF <Plug>CtrlSFVwordExec
+    nmap     <leader>fw <Plug>CtrlSFCwordPath
+    nmap     <leader>fW <Plug>CtrlSFCwordExec
+    nmap     <leader><leader>f <Plug>CtrlSFPwordExec
+
     nnoremap <leader>ft :CtrlSFToggle<CR>
-    " inoremap <leader>ft <Esc>:CtrlSFToggle<CR>
     nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
 endif
 Plug 'junegunn/fzf',        { 'do': './install --all' }

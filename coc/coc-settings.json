@@ -14,7 +14,7 @@
     "<C-g>": "do:exit"
   },
   "go.goplsPath": "gopls",
-  "go.goplsArgs": ["-remote", "auto", "-logfile", "/tmp/gopls.log"],
+  "go.goplsArgs": ["-remote", "auto"],
   "go.goplsOptions": {
     "completeUnimported": true
   },
