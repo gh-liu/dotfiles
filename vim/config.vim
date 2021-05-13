@@ -87,6 +87,10 @@ set foldlevel=99
 
 " for gitgutter
 set updatetime=300
+
+hi! link SignColumn   LineNr
+hi! link ShowMarksHLl DiffAdd
+hi! link ShowMarksHLu DiffChange
 " }}}
 
 " MAPPINGS --------{{{
@@ -240,6 +244,12 @@ vmap jk <Esc>
 " // search the visual block
 vnoremap // y/<c-r>"<cr>
 
+" Keep search pattern at the center of the screen
+nnoremap <silent> n nzz
+nnoremap <silent> N Nzz
+nnoremap <silent> * *zz
+nnoremap <silent> # #zz
+
 " flod code: <leader>zz
 let s:FoldAll = 0
 function! ToggleAllFold()
@@ -257,7 +267,7 @@ noremap <leader>zc za
 " set relativenumber
 " map <silent><F2> :set relativenumber!<CR>
 
-function! HideNumber()
+function! ToogleNumber()
   if(&relativenumber == &number)
     set relativenumber! number!
   elseif(&number)
@@ -267,7 +277,24 @@ function! HideNumber()
   endif
   set number?
 endfun
-nnoremap <F2> :call HideNumber()<CR>
+
+" Toggle signcolumn. Works only on vim>=8.0 or NeoVim
+function! ToggleSignColumn()
+    if !exists("b:signcolumn_on") || b:signcolumn_on
+        set signcolumn=no
+        let b:signcolumn_on=0
+    else
+        set signcolumn=auto
+        let b:signcolumn_on=1
+    endif
+endfun
+
+function! ToggleSignColumnAndNumber()
+  call ToogleNumber()
+  call ToggleSignColumn()
+endfun
+
+nnoremap <F2> :call ToggleSignColumnAndNumber()<CR>
 
 " Toggle highlight
 noremap <silent><leader>/ :set nohls!<CR>
@@ -289,13 +316,18 @@ augroup filetype_tmux_conf
     autocmd FileType tmux :iabbrev <buffer> --- --------{{
 augroup END
 
-" augroup json_lang
-"     autocmd!
+augroup json_lang
+    autocmd!
 "     autocmd BufNewFile,BufRead *.html setlocal nowrap
 "     autocmd FileType json nmap <leader> =  :%!jq .<CR>
 "     autocmd FileType json vmap <leader> =  :%!jq .<CR>
-"     autocmd FileType json set sw=2 ts=2
-" augroup END
+    autocmd FileType json set sw=2 ts=2
+augroup END
+
+augroup yaml_lang
+    autocmd!
+autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
+augroup END
 
 augroup vagrant
   autocmd!
