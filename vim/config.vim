@@ -375,6 +375,10 @@ call SetupCommandAbbrs('GTF','GoTestFunc')
 call SetupCommandAbbrs('GDS','GoDebugStart')
 call SetupCommandAbbrs('GDQ','GoDebugStop')
 call SetupCommandAbbrs('GR','GoRun')
+
+" Splitjoin
+call SetupCommandAbbrs('SJ','SplitjoinJoin')
+call SetupCommandAbbrs('SS','SplitjoinSplit')
 " vim-choosewin
 " call SetupCommandAbbrs('CW', 'ChooseWin')
 
