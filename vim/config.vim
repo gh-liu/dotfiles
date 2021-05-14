@@ -307,13 +307,13 @@ augroup filetype_vim
     " edit vimrc
     nnoremap <leader>ev :vsplit $MYVIMRC<cr>
     nnoremap <leader>sv :source $MYVIMRC<cr>
-    autocmd FileType vim :iabbrev <buffer> --- --------{{
+    " autocmd FileType vim :iabbrev <buffer> --- --------{{
 augroup END
 
 augroup filetype_tmux_conf
     autocmd!
-    autocmd FileType tmux setlocal foldmethod=markers
-    autocmd FileType tmux :iabbrev <buffer> --- --------{{
+    autocmd FileType tmux setlocal foldmethod=marker
+    " autocmd FileType tmux :iabbrev <buffer> --- --------{{
 augroup END
 
 augroup json_lang

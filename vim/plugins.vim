@@ -397,5 +397,7 @@ let g:asyncrun_open = 6
 
 " Plug 'puremourning/vimspector'
 
+" Plug 'tmux-plugins/vim-tmux'
+
 " }}}
 call plug#end()
