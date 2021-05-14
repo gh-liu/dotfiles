@@ -347,6 +347,8 @@ endif
 
 " Plug 'SirVer/ultisnips'
 
+Plug 'aklt/plantuml-syntax'
+
 " Plug 'cespare/vim-toml'
 " Plug 'stephpy/vim-yaml'
 Plug 'uarun/vim-protobuf'
