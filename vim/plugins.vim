@@ -76,8 +76,7 @@ if has_key(g:plugs, 'vim-commentary')
 endif
 
 " Aligning text
-" Plug 'godlygeek/tabular'
-Plug 'junegunn/vim-easy-align'
+" Plug 'junegunn/vim-easy-align'
 if has_key(g:plugs, 'vim-easy-align')
     vmap <Leader>a <Plug>(EasyAlign)
     nmap <Leader>a <Plug>(EasyAlign)
@@ -350,14 +349,16 @@ endif
 
 " Plug 'cespare/vim-toml'
 " Plug 'stephpy/vim-yaml'
+Plug 'uarun/vim-protobuf'
 " Plug 'elzr/vim-json', {'for' : 'json'}
 Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 
 " Markdown
+Plug 'godlygeek/tabular'
 Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
-" markdown preview
 Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+Plug 'mzlogin/vim-markdown-toc'
 " }}}
 
 
@@ -391,9 +392,9 @@ let g:smartclose_default_mapping_key = '<leader><leader>c'
 Plug 'danro/rename.vim'
 
 " vscode's task system
-Plug 'skywind3000/asynctasks.vim'
-Plug 'skywind3000/asyncrun.vim'
-let g:asyncrun_open = 6
+" Plug 'skywind3000/asynctasks.vim'
+" Plug 'skywind3000/asyncrun.vim'
+" let g:asyncrun_open = 6
 
 " Plug 'puremourning/vimspector'
 
