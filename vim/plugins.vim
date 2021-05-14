@@ -233,6 +233,7 @@ if has_key(g:plugs, 'coc.nvim')
       \'coc-pairs',
       \'coc-yaml',
       \'coc-json',
+      \'coc-vimlsp',
       \'coc-go'
       \]
 
