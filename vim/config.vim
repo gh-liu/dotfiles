@@ -30,7 +30,7 @@ set shiftwidth=4
 set tabstop=4
 " Use spaces instead of tabs
 set expandtab
-dkarter/bullets.vim'" Be smart when using tabs
+" Be smart when using tabs
 set smarttab
 " Auto indent
 set autoindent
