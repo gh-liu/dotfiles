@@ -227,6 +227,10 @@ noremap <Down> gj
 noremap j gj
 noremap k gk
 
+noremap $ g$
+noremap 0 g0
+
+
 " Remap H and L (top, bottom of screen to left and right end of line)
 nnoremap H ^
 nnoremap L $
@@ -404,6 +408,8 @@ function! SetupCommandAbbrs(from, to)
         \ .' ((getcmdtype() ==# ":" && getcmdline() ==# "'.a:from.'")'
         \ .'? ("'.a:to.'") : ("'.a:from.'"))'
 endfun
+
+call SetupCommandAbbrs('H', 'h')
 
 " coc-nvim
 call SetupCommandAbbrs('CL', 'CocList')
