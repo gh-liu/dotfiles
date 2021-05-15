@@ -186,6 +186,10 @@ inoremap <C-h> <left>
 inoremap <C-l> <right>
 inoremap <C-j> <down>
 inoremap <C-k> <up>
+" imap <C-h> <C-o>h
+" imap <C-l> <C-o>l
+" imap <C-j> <C-o>j
+" imap <C-k> <C-o>k
 inoremap <C-^> <C-o><C-^> " edit alternate file
 
 " qq to record, Q to replay
@@ -394,8 +398,8 @@ augroup END
 " endfun
 " autocmd BufNewFile *.sh exec ":call AutoSetFileHead()"
 
-
-
+" repeat last commands
+nnoremap <silent> <leader><leader>r @:
 
 " }}}
 

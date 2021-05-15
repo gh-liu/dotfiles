@@ -410,5 +410,8 @@ Plug 'danro/rename.vim'
 " Plug 'christoomey/vim-tmux-navigator'
 " Plug 'dkarter/bullets.vim'
 
+" for making Vim plugins
+" Plug 'tpope/vim-scriptease'
+
 " }}}
 call plug#end()
