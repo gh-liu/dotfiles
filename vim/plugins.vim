@@ -349,6 +349,9 @@ endif
 " Plug 'SirVer/ultisnips'
 
 Plug 'aklt/plantuml-syntax'
+if executable('java')
+  Plug 'scrooloose/vim-slumlord'
+endif
 
 " Plug 'cespare/vim-toml'
 " Plug 'stephpy/vim-yaml'
@@ -402,6 +405,10 @@ Plug 'danro/rename.vim'
 " Plug 'puremourning/vimspector'
 
 " Plug 'tmux-plugins/vim-tmux'
+
+" Plug 'vim-scripts/YankRing.vim'
+" Plug 'christoomey/vim-tmux-navigator'
+" Plug 'dkarter/bullets.vim'
 
 " }}}
 call plug#end()

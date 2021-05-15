@@ -30,7 +30,7 @@ set shiftwidth=4
 set tabstop=4
 " Use spaces instead of tabs
 set expandtab
-" Be smart when using tabs ;)
+dkarter/bullets.vim'" Be smart when using tabs
 set smarttab
 " Auto indent
 set autoindent
@@ -99,6 +99,7 @@ inoremap <F1> <Esc>
 vnoremap <F1> <Esc>
 
 nnoremap ; :
+nnoremap <leader>; ;
 
 " switch # *
 nnoremap # *
