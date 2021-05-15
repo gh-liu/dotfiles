@@ -37,6 +37,10 @@ alias tl='tmux list-sessions'
 alias tksv='tmux kill-server'
 alias tkss='tmux kill-session -t'
 
+alias tpf='tmuxp freeze'
+alias tpl='tmuxp load'
+alias tpll='tmuxp ls'
+
 # rust
 alias cg='cargo'
 alias cgfmt='cargo-fmt'
