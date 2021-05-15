@@ -307,6 +307,28 @@ nnoremap <F2> :call ToggleSignColumnAndNumber()<CR>
 
 " Toggle highlight
 noremap <silent><leader>/ :set nohls!<CR>
+
+" export all vim mappings
+function! ExportAllMappings()
+  redir! > vim_keys.txt
+    silent verbose map
+  redir END
+endfun
+
+" returns vim command output
+" function! GetCommandOutput(command)
+"   let save_a = @a
+"   try
+"     silent! redir @a
+"     silent! execute a:command
+"     redir END
+"   finally
+"     " restore register
+"     let result = @a
+"     let @a = save_a
+"     return result
+"   endtry
+" endfun
 " }}}
 
 " AUTO CMD --------{{{

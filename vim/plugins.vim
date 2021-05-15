@@ -51,10 +51,12 @@ endif
 
 " highlight yank
 Plug 'machakann/vim-highlightedyank'
-let g:highlightedyank_highlight_duration = 200
+let g:highlightedyank_highlight_duration = 100
 
 " Underlines the word under the cursor
 Plug 'itchyny/vim-cursorword'
+
+" Plug 'Yggdroot/indentLine'
 " }}}
 
 " Edit --------{{{
@@ -106,9 +108,10 @@ let g:netrw_winsize = 25
 map <C-n> :Lexplore<CR>
 
 " undotree
-Plug 'mbbill/undotree'
+Plug 'mbbill/undotree', { 'on': 'UndotreeToggle' }
 if has_key(g:plugs, 'undotree')
     let g:undotree_SetFocusWhenToggle = 1
+    let g:undotree_WindowLayout = 2
     nnoremap U :UndotreeToggle<CR>
 endif
 
@@ -412,6 +415,7 @@ Plug 'danro/rename.vim'
 
 " for making Vim plugins
 " Plug 'tpope/vim-scriptease'
+Plug 'junegunn/vader.vim'
 
 " }}}
 call plug#end()
