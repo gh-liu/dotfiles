@@ -57,6 +57,11 @@ let g:highlightedyank_highlight_duration = 100
 Plug 'itchyny/vim-cursorword'
 
 " Plug 'Yggdroot/indentLine'
+if has_key(g:plugs, 'indentLine')
+    autocmd! User indentLine doautocmd indentLine Syntax
+    let g:indentLine_color_term = 239
+    let g:indentLine_color_gui = '#616161'
+endif
 " }}}
 
 " Edit --------{{{
@@ -65,7 +70,10 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-abolish'
 " Plug 'arthurxavierx/vim-caser'
 Plug 'andrewradev/splitjoin.vim'
-
+if has_key(g:plugs, 'splitjoin.vim')
+    nnoremap gss :SplitjoinSplit<cr>
+    nnoremap gsj :SplitjoinJoin<cr>
+endif
 " Comment
 Plug 'tpope/vim-commentary'
 if has_key(g:plugs, 'vim-commentary')
@@ -85,6 +93,14 @@ if has_key(g:plugs, 'vim-easy-align')
 endif
 
 Plug 'bronson/vim-trailing-whitespace'
+
+Plug 'AndrewRadev/switch.vim'
+if has_key(g:plugs, 'switch.vim')
+    let g:switch_mapping = '-'
+    let g:switch_custom_definitions = [
+    \   ['MON', 'TUE', 'WED', 'THU', 'FRI']
+    \ ]
+endif
 " }}}
 
 " Nav --------{{{
@@ -185,6 +201,7 @@ endif
 " replacement of gitgutter
 Plug 'mhinz/vim-signify', { 'on': 'GitGutterToggle' }
 if has_key(g:plugs, 'vim-signify')
+    let g:signify_vcs_list = ['git']
     nnoremap <leader>gt :SignifyToggle<CR>
 endif
 " show the git message
@@ -396,7 +413,7 @@ Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 Plug 'godlygeek/tabular'
 Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
-Plug 'iamcco/markdown-preview.nvim', { 'do': { -> mkdp#util#install() }, 'for': ['markdown', 'vim-plug']}
+Plug 'iamcco/markdown-preview.nvim', { 'do': ':call mkdp#util#install()', 'for': 'markdown', 'on': 'MarkdownPreview' }
 Plug 'mzlogin/vim-markdown-toc'
 " }}}
 
