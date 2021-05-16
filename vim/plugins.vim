@@ -152,10 +152,15 @@ vmap <leader>gb :Gblame<CR>
 " nmap <leader>gc :Gcommit<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 " shows a git diff
-Plug 'airblade/vim-gitgutter'
+" Plug 'airblade/vim-gitgutter', { 'on': 'GitGutterToggle' }
 if has_key(g:plugs, 'vim-gitgutter')
     let g:gitgutter_enabled = 0
-    nnoremap <leader>gs :GitGutterToggle<CR>
+    nnoremap <leader>gt :GitGutterToggle<CR>
+endif
+" replacement of gitgutter
+Plug 'mhinz/vim-signify', { 'on': 'GitGutterToggle' }
+if has_key(g:plugs, 'vim-signify')
+    nnoremap <leader>gt :SignifyToggle<CR>
 endif
 " show the git message
 " Plug 'rhysd/git-messenger.vim'
