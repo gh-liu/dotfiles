@@ -99,6 +99,31 @@ endif
 
 " show marks
 Plug 'kshenoy/vim-signature'
+if has_key(g:plugs, 'vim-signature')
+    let g:SignatureMap = {
+        \ 'Leader'             :  "m",
+        \ 'PlaceNextMark'      :  "m,",
+        \ 'ToggleMarkAtLine'   :  "m.",
+        \ 'PurgeMarksAtLine'   :  "m-",
+        \ 'DeleteMark'         :  "dm",
+        \ 'PurgeMarks'         :  "m<Space>",
+        \ 'PurgeMarkers'       :  "m<BS>",
+        \ 'GotoNextLineAlpha'  :  "']",
+        \ 'GotoPrevLineAlpha'  :  "'[",
+        \ 'GotoNextSpotAlpha'  :  "`]",
+        \ 'GotoPrevSpotAlpha'  :  "`[",
+        \ 'GotoNextLineByPos'  :  "]'",
+        \ 'GotoPrevLineByPos'  :  "['",
+        \ 'GotoNextSpotByPos'  :  "]`",
+        \ 'GotoPrevSpotByPos'  :  "[`",
+        \ 'GotoNextMarker'     :  "]-",
+        \ 'GotoPrevMarker'     :  "[-",
+        \ 'GotoNextMarkerAny'  :  "]=",
+        \ 'GotoPrevMarkerAny'  :  "[=",
+        \ 'ListBufferMarks'    :  "m/",
+        \ 'ListBufferMarkers'  :  "m?"
+        \ }
+endif
 
 " File Tree
 Plug 'tpope/vim-vinegar'
@@ -289,7 +314,7 @@ if has_key(g:plugs, 'coc.nvim')
     nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 
     " plugs settings
-    map <leader>ee :CocCommand explorer<CR>
+    map <leader><leader>e :CocCommand explorer<CR>
 endif
 " }}}
 
@@ -420,7 +445,7 @@ Plug 'danro/rename.vim'
 
 " for making Vim plugins
 " Plug 'tpope/vim-scriptease'
-Plug 'junegunn/vader.vim'
+" Plug 'junegunn/vader.vim'
 
 " }}}
 call plug#end()
