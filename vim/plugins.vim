@@ -278,7 +278,6 @@ if has_key(g:plugs, 'coc.nvim')
 
     " Extensions for CoC
     let g:coc_global_extensions = [
-      \'coc-explorer',
       \'coc-snippets',
       \'coc-pairs',
       \'coc-yaml',
@@ -330,8 +329,9 @@ if has_key(g:plugs, 'coc.nvim')
     " Resume latest coc list.
     nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 
-    " plugs settings
-    map <leader><leader>e :CocCommand explorer<CR>
+    " plugs settings:
+    " coc-explorer
+    " map <leader><leader>e :CocCommand explorer<CR>
 endif
 " }}}
 

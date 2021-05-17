@@ -52,9 +52,9 @@
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
-  ],
-  "explorer.width": 25,
-  "explorer.quitOnOpen": true,
-  "explorer.openAction.strategy": "vsplit.intelligent",
-  "explorer.file.showHiddenFiles": true
+  ]
+  // "explorer.width": 25,
+  // "explorer.quitOnOpen": true,
+  // "explorer.openAction.strategy": "tab",
+  // "explorer.file.showHiddenFiles": true
 }
