@@ -96,7 +96,7 @@ Plug 'bronson/vim-trailing-whitespace'
 
 Plug 'AndrewRadev/switch.vim'
 if has_key(g:plugs, 'switch.vim')
-    let g:switch_mapping = '-'
+    let g:switch_mapping = '_'
     let g:switch_custom_definitions = [
     \   ['MON', 'TUE', 'WED', 'THU', 'FRI']
     \ ]
