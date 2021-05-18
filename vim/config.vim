@@ -54,9 +54,6 @@ set autowrite
 set pumheight=10             " Completion window max size
 set completeopt=longest,menu
 
-" Don't pass messages to |ins-completion-menu|.
-set shortmess+=c
-
 " Enable syntax highlighting
 syntax enable
 " Enable 256 colors palette in Gnome Terminal
@@ -260,6 +257,21 @@ nnoremap <silent> n nzz
 nnoremap <silent> N Nzz
 nnoremap <silent> * *zz
 nnoremap <silent> # #zz
+
+" TextEdit might fail if hidden is not set.
+set hidden
+
+" Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
 
 " flod code: <leader>zz
 let s:FoldAll = 0

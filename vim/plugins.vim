@@ -98,7 +98,8 @@ Plug 'AndrewRadev/switch.vim'
 if has_key(g:plugs, 'switch.vim')
     let g:switch_mapping = '_'
     let g:switch_custom_definitions = [
-    \   ['MON', 'TUE', 'WED', 'THU', 'FRI']
+    \   ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+    \   ['ture', 'false']
     \ ]
 endif
 " }}}
@@ -144,9 +145,12 @@ endif
 " File Tree
 Plug 'tpope/vim-vinegar'
 " netrw
+" let g:netrw_banner = 1
+" let g:netrw_browse_split = 4
+" let g:netrw_altv = 1
 let g:netrw_liststyle = 3
-let g:netrw_winsize = 25
-map <C-n> :Lexplore<CR>
+" let g:netrw_winsize = 25
+map <C-n> :Vexplore<CR>
 
 " undotree
 Plug 'mbbill/undotree', { 'on': 'UndotreeToggle' }
