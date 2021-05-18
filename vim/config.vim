@@ -243,9 +243,9 @@ map q: :q
 
 " Exit on j
 imap jj <Esc>
-imap kk <Esc>
-imap hh <Esc>
-imap ll <Esc>
+" imap kk <Esc>
+" imap hh <Esc>
+" imap ll <Esc>
 imap jk <Esc>
 vmap jk <Esc>
 
@@ -328,6 +328,23 @@ function! ExportAllMappings()
     silent verbose map
   redir END
 endfun
+
+" ]p to paste into a newline
+" [p to paste into the line upon cursor
+" https://github.com/tpope/vim-unimpaired/blob/master/plugin/unimpaired.vim#L343
+function! s:putline(how, map) abort
+  let [body, type] = [getreg(v:register), getregtype(v:register)]
+  if type ==# 'V'
+    exe 'normal! "'.v:register.a:how
+  else
+    call setreg(v:register, body, 'l')
+    exe 'normal! "'.v:register.a:how
+    call setreg(v:register, body, type)
+  endif
+  silent! call repeat#set("\<Plug>unimpairedPut".a:map)
+endfunction
+nnoremap <silent> [p :call <SID>putline('[p', 'Above')<CR>
+nnoremap <silent> ]p :call <SID>putline(']p', 'Below')<CR>
 
 " returns vim command output
 " function! GetCommandOutput(command)

@@ -92,7 +92,7 @@ if has_key(g:plugs, 'vim-easy-align')
     nmap <Leader>a <Plug>(EasyAlign)
 endif
 
-Plug 'bronson/vim-trailing-whitespace'
+Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 
 Plug 'AndrewRadev/switch.vim'
 if has_key(g:plugs, 'switch.vim')
@@ -303,6 +303,8 @@ if has_key(g:plugs, 'coc.nvim')
 
       autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
       autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
+
+    "   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
     augroup END
 
     " Add `:Format` command to format current buffer.
@@ -467,6 +469,8 @@ Plug 'danro/rename.vim'
 " for making Vim plugins
 " Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
+
+" Plug 'ruanyl/vim-gh-line'
 
 " }}}
 call plug#end()
