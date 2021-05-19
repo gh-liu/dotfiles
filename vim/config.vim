@@ -247,7 +247,7 @@ imap jj <Esc>
 " imap hh <Esc>
 " imap ll <Esc>
 imap jk <Esc>
-vmap jk <Esc>
+" vmap jk <Esc>
 
 " // search the visual block
 vnoremap // y/<c-r>"<cr>
