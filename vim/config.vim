@@ -465,6 +465,7 @@ function! SetupCommandAbbrs(from, to)
 endfun
 
 call SetupCommandAbbrs('H', 'h')
+call SetupCommandAbbrs('LE', 'Lexplore')
 
 " coc-nvim
 call SetupCommandAbbrs('CL', 'CocList')
