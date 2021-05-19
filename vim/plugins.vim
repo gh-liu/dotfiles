@@ -105,13 +105,72 @@ endif
 " }}}
 
 " Nav --------{{{
-" Browse the tags of the current file
+" Browse the tags of the currentfile
 Plug 'majutsushi/tagbar'
 if has_key(g:plugs, 'tagbar')
     let g:tagbar_autofocus = 1
     let g:tagbar_position = 'leftabove vertical'
     let g:tagbar_width = 25
     nnoremap T :TagbarToggle<CR>
+
+    " https://github.com/preservim/tagbar/wiki#markdown
+    let g:tagbar_type_markdown = {
+    \ 'ctagstype'	: 'markdown',
+    \ 'kinds'		: [
+        \ 'c:chapter:0:1',
+        \ 's:section:0:1',
+        \ 'S:subsection:0:1',
+        \ 't:subsubsection:0:1',
+        \ 'T:l4subsection:0:1',
+        \ 'u:l5subsection:0:1',
+    \ ],
+    \ 'sro'			: '""',
+    \ 'kind2scope'	: {
+        \ 'c' : 'chapter',
+        \ 's' : 'section',
+        \ 'S' : 'subsection',
+        \ 't' : 'subsubsection',
+        \ 'T' : 'l4subsection',
+    \ },
+    \ 'scope2kind'	: {
+        \ 'chapter' : 'c',
+        \ 'section' : 's',
+        \ 'subsection' : 'S',
+        \ 'subsubsection' : 't',
+        \ 'l4subsection' : 'T',
+    \ },
+    \ }
+
+" slow
+"     let g:tagbar_type_json = {
+"     \ 'ctagstype' : 'json',
+"     \ 'kinds' : [
+"       \ 'o:objects',
+"       \ 'a:arrays',
+"       \ 'n:numbers',
+"       \ 's:strings',
+"       \ 'b:booleans',
+"       \ 'z:nulls'
+"     \ ],
+"   \ 'sro' : '.',
+"     \ 'scope2kind': {
+"     \ 'object': 'o',
+"       \ 'array': 'a',
+"       \ 'number': 'n',
+"       \ 'string': 's',
+"       \ 'boolean': 'b',
+"       \ 'null': 'z'
+"     \ },
+"     \ 'kind2scope': {
+"     \ 'o': 'object',
+"       \ 'a': 'array',
+"       \ 'n': 'number',
+"       \ 's': 'string',
+"       \ 'b': 'boolean',
+"       \ 'z': 'null'
+"     \ },
+"     \ 'sort' : 0
+"     \ }
 endif
 
 " show marks
@@ -421,6 +480,14 @@ Plug 'plasticboy/vim-markdown'
 let g:vim_markdown_folding_disabled = 1
 Plug 'iamcco/markdown-preview.nvim', { 'do': ':call mkdp#util#install()', 'for': 'markdown', 'on': 'MarkdownPreview' }
 Plug 'mzlogin/vim-markdown-toc'
+let g:vmt_fence_text = 'TOC'
+let g:vmt_fence_closing_text = '/TOC'
+
+
+
+
+
+
 " }}}
 
 
