@@ -105,6 +105,10 @@ endif
 " }}}
 
 " Nav --------{{{
+" Plug 'ludovicchabant/vim-gutentags'
+if has_key(g:plugs, 'vim-gutentags')
+    let g:gutentags_enabled=0
+endif
 " Browse the tags of the currentfile
 Plug 'majutsushi/tagbar'
 if has_key(g:plugs, 'tagbar')
