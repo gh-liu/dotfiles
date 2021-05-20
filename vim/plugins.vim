@@ -318,19 +318,25 @@ if has_key(g:plugs, 'coc.nvim')
     " To make <cr> select the first completion item and confirm the completion when no item has been selected
     inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<CR>"
 
-    " " Use <tab> for trigger completion and navigate to the next complete item
-    " function! s:check_back_space() abort
-    "   let col = col('.') - 1
-    "   return !col || getline('.')[col - 1]  =~# '\s'
-    " endfunction
+    " Use <tab> for trigger completion and navigate to the next complete item
+    function! s:check_back_space() abort
+      let col = col('.') - 1
+      return !col || getline('.')[col - 1]  =~# '\s'
+    endfunction
     " inoremap <silent><expr> <TAB>
     "       \ pumvisible() ? "\<C-n>" :
     "       \ <SID>check_back_space() ? "\<TAB>" :
     "       \ coc#refresh()
-    " " Use <S-Tab> navigate to the previous complete item
-    " inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+    inoremap <silent><expr> <TAB>
+      \ pumvisible() ? "\<C-n>" :
+      \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])\<CR>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
+    " Use <S-Tab> navigate to the previous complete item
+    inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 
-    " Make <tab> used for trigger snippet expand and jump like VSCode.
+    " Make <tab> used for trigger completion, completion confirm, snippet expand and jump like VSCode.
+    " https://github.com/neoclide/coc-snippets
     let g:coc_snippet_next = '<tab>'
 
     " Use K to show documentation
