@@ -16,7 +16,8 @@
   "go.goplsPath": "gopls",
   "go.goplsArgs": ["-remote", "auto"],
   "go.goplsOptions": {
-    "completeUnimported": true
+    "completeUnimported": true,
+    "usePlaceholders": true
   },
   "languageserver": {
   //   "golang": {
