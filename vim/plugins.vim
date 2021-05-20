@@ -355,7 +355,6 @@ if has_key(g:plugs, 'coc.nvim')
       \'coc-pairs',
       \'coc-yaml',
       \'coc-json',
-      \'coc-vimlsp',
       \'coc-go'
       \]
 
@@ -510,7 +509,7 @@ let g:vmt_fence_closing_text = '/TOC'
 
 " other tools --------{{{
 " Show keymaps begin with <leader>
-" Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 if has_key(g:plugs, 'vim-which-key')
     nnoremap <silent> <leader> :WhichKey ','<CR>
     set timeoutlen=360
