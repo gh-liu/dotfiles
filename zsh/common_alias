@@ -8,6 +8,8 @@ alias txp=tmuxp
 alias h=htop
 alias d=docker
 
+alias tfs='wmctrl -ir $(xdotool getwindowfocus) -b toggle,fullscreen'
+
 alias ls='ls --color'
 alias ll='ls -ahlF'
 alias cls='clear'
