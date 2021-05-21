@@ -457,8 +457,8 @@ if has_key(g:plugs, 'vim-go')
 
         autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
 
-        autocmd FileType go nmap <silent> <leader>cc <Plug>(go-callers)
-        autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
+        " autocmd FileType go nmap <silent> <leader>cc <Plug>(go-callers)
+        " autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
 
         autocmd FileType go nmap <silent> <Leader>td <Plug>(go-def-tab)
         autocmd Filetype go
@@ -524,7 +524,7 @@ endif
 " Plug 'tweekmonster/startuptime.vim'
 
 Plug 'szw/vim-smartclose'
-let g:smartclose_default_mapping_key = '<leader><leader>c'
+let g:smartclose_default_mapping_key = '<leader>c'
 
 " rename the buffer
 Plug 'danro/rename.vim'

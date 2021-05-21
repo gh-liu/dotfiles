@@ -133,13 +133,14 @@ nnoremap ]t :tnext<cr>
 nnoremap [T :tfirst<cr>
 nnoremap ]T :tlast<cr>
 
-" close windows, tabs, quickfix-win, localtion-win
-nnoremap <Leader>cw :close<cr>
-nnoremap <Leader>ct :tabclose<cr>
-nnoremap <Leader>cW :close!<cr>
-nnoremap <Leader>cT :tabclose!<cr>
-nnoremap <Leader>cq :ccl<cr>
-nnoremap <Leader>cl :lcl<cr>
+" close windows, tabs, quickfix-win, localtion-win.
+" Use plug smartclose.
+" nnoremap <Leader>cw :close<cr>
+" nnoremap <Leader>ct :tabclose<cr>
+" nnoremap <Leader>cW :close!<cr>
+" nnoremap <Leader>cT :tabclose!<cr>
+" nnoremap <Leader>cq :ccl<cr>
+" nnoremap <Leader>cl :lcl<cr>
 
 " new a window or tab
 " nnoremap <Leader>nw :new<cr>
@@ -487,6 +488,11 @@ call SetupCommandAbbrs('GTF','GoTestFunc')
 call SetupCommandAbbrs('GDS','GoDebugStart')
 call SetupCommandAbbrs('GDQ','GoDebugStop')
 call SetupCommandAbbrs('GR','GoRun')
+call SetupCommandAbbrs('GI','GoImpl')
+call SetupCommandAbbrs('GCE','GoCallees')
+call SetupCommandAbbrs('GCR','GoCallers')
+call SetupCommandAbbrs('GCK','GoCallstack')
+
 
 " Splitjoin
 call SetupCommandAbbrs('SJ','SplitjoinJoin')
