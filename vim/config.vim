@@ -164,7 +164,7 @@ noremap \ ,
 inoremap <C-q> <esc>:q<cr>
 nnoremap <C-q> :q<cr>
 vnoremap <C-q> <esc>
-nnoremap <Leader>q :q<cr>
+" nnoremap <Leader>q :q<cr> " Use plug smartclose
 nnoremap <Leader>Q :qa!<cr>
 
 " w!! to sudo & write a file

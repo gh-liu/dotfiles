@@ -492,11 +492,6 @@ Plug 'mzlogin/vim-markdown-toc'
 let g:vmt_fence_text = 'TOC'
 let g:vmt_fence_closing_text = '/TOC'
 
-
-
-
-
-
 " }}}
 
 
@@ -524,7 +519,10 @@ endif
 " Plug 'tweekmonster/startuptime.vim'
 
 Plug 'szw/vim-smartclose'
-let g:smartclose_default_mapping_key = '<leader>c'
+if has_key(g:plugs, 'vim-which-key')
+    let g:smartclose_default_mapping_key = '<leader>c'
+    nnoremap <silent><leader>q :SmartClose<CR>
+endif
 
 " rename the buffer
 Plug 'danro/rename.vim'
