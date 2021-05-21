@@ -727,7 +727,9 @@ key_bindings:
   #- { key: PageUp,    mods: Shift,   mode: ~Alt,        action: ScrollPageUp,  }
   #- { key: PageDown,  mods: Shift,   mode: ~Alt,        action: ScrollPageDown }
   #- { key: Home,      mods: Shift,   mode: ~Alt,        action: ScrollToTop,   }
-  #- { key: End,       mods: Shift,   mode: ~Alt,        action: ScrollToBottom }
+  # - { key: End,       mods: Shift,   mode: ~Alt,        action: ScrollToBottom }
+  # [fullscreen support](https://github.com/alacritty/alacritty/issues/35)
+  - { key: F11, command: { program: "/bin/sh", args: ["-c", "wmctrl -ir $(xdotool getwindowfocus) -b toggle,fullscreen" ] } }
 
   # Vi Mode
   #- { key: Space,  mods: Shift|Control, mode: Vi|~Search, action: ScrollToBottom          }
