@@ -1,0 +1,7 @@
+#!/bin/bash
+# Change the input method to Eng.
+# Use ctrl-space to toggle the input method.
+if [ $(ibus engine) != "xkb:us::eng" ];
+then
+ibus engine xkb:us::eng
+fi
