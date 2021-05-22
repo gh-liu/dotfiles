@@ -266,7 +266,7 @@ if has_key(g:plugs, 'vim-gitgutter')
     nnoremap <leader>gt :GitGutterToggle<CR>
 endif
 " replacement of gitgutter
-Plug 'mhinz/vim-signify', { 'on': 'GitGutterToggle' }
+Plug 'mhinz/vim-signify', { 'on': 'SignifyToggle' }
 if has_key(g:plugs, 'vim-signify')
     let g:signify_vcs_list = ['git']
     nnoremap <leader>gt :SignifyToggle<CR>
