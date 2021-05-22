@@ -1,9 +1,9 @@
 " BASIC CONFIG --------{{{
 " With a map leader it's possible to do extra key combinations
-" let mapleader=','
-" noremap \ ,
-let mapleader = ';'
-nnoremap \ ;
+let mapleader=','
+noremap \ ,
+" let mapleader = ';'
+" nnoremap \ ;
 " Set utf8 as standard encoding and en_US as the standard language
 set encoding=utf8
 set fileencodings=ucs-bom,utf-8,cp936,gb18030,big5,euc-jp,euc-kr,latin1
