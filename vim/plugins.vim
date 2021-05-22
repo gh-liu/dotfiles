@@ -266,10 +266,11 @@ if has_key(g:plugs, 'vim-gitgutter')
     nnoremap <leader>gt :GitGutterToggle<CR>
 endif
 " replacement of gitgutter
-Plug 'mhinz/vim-signify', { 'on': 'SignifyToggle' }
+Plug 'mhinz/vim-signify'
 if has_key(g:plugs, 'vim-signify')
     let g:signify_vcs_list = ['git']
     nnoremap <leader>gt :SignifyToggle<CR>
+    nnoremap <leader>gd :SignifyHunkDiff<CR>
 endif
 " show the git message
 " Plug 'rhysd/git-messenger.vim'
