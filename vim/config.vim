@@ -1,6 +1,9 @@
 " BASIC CONFIG --------{{{
 " With a map leader it's possible to do extra key combinations
-let mapleader=','
+" let mapleader=','
+" noremap \ ,
+let mapleader = ';'
+nnoremap \ ;
 " Set utf8 as standard encoding and en_US as the standard language
 set encoding=utf8
 set fileencodings=ucs-bom,utf-8,cp936,gb18030,big5,euc-jp,euc-kr,latin1
@@ -157,9 +160,6 @@ for s:i in range(1, 9)
   execute 'nnoremap <Leader>' . s:i . ' ' . s:i . 'gt'
 endfor
 
-" repeat in opposite direction
-noremap \ ,
-
 " Quit
 inoremap <C-q> <esc>:q<cr>
 nnoremap <C-q> :q<cr>
@@ -258,6 +258,12 @@ nnoremap <silent> n nzz
 nnoremap <silent> N Nzz
 nnoremap <silent> * *zz
 nnoremap <silent> # #zz
+
+" change window size
+nnoremap <left>   <c-w>>
+nnoremap <right>  <c-w><
+nnoremap <up>     <c-w>-
+nnoremap <down>   <c-w>+
 
 " TextEdit might fail if hidden is not set.
 set hidden

@@ -4,6 +4,9 @@ call plug#begin('~/.vim/plugged')
 " Theme
 Plug 'gruvbox-community/gruvbox'
 let g:gruvbox_contrast_dark = 'soft'
+Plug 'arcticicestudio/nord-vim'
+Plug 'mhartington/oceanic-next'
+Plug 'joshdick/onedark.vim'
 
 " Status Line
 Plug 'itchyny/lightline.vim'
@@ -250,6 +253,7 @@ endif
 " }}}
 
 " Git --------{{{
+Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-fugitive'
 nmap <leader>gb :Gblame<CR>
 vmap <leader>gb :Gblame<CR>
@@ -552,6 +556,8 @@ Plug 'danro/rename.vim'
 " Plug 'mattn/vim-lsp-settings'
 " Plug 'prabirshrestha/asyncomplete.vim'
 " Plug 'prabirshrestha/asyncomplete-lsp.vim'
+
+Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
 
 " }}}
 call plug#end()
