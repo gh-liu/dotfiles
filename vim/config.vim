@@ -420,14 +420,28 @@ function! s:goto_github()
     end
 endfun
 
+function! s:setNorelativenumber()
+  " if it's number , set norelativenumber
+  if (&number == 1)
+    set norelativenumber
+  endif
+endfun
+
+function! s:setRelativenumber()
+  " if it's number , set relativenumber
+  if (&number == 1)
+    set relativenumber
+  endif
+endfun
+
 augroup vimrc
     autocmd!
     autocmd BufEnter *.txt call s:helptab()
 
     autocmd vimenter * ++nested colorscheme gruvbox
 
-    autocmd InsertEnter * :set norelativenumber number
-    autocmd InsertLeave * :set relativenumber
+    autocmd InsertEnter * call s:setNorelativenumber() 
+    autocmd InsertLeave * call s:setRelativenumber()   
 
     autocmd VimResized * wincmd =
 
