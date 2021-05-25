@@ -89,6 +89,11 @@ set foldlevel=99
 set updatetime=300
 
 set lazyredraw
+set ttyfast
+set noerrorbells
+set showcmd   
+set splitright  
+set splitbelow 
 
 hi! link SignColumn   LineNr
 hi! link ShowMarksHLl DiffAdd

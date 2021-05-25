@@ -3,7 +3,7 @@ call plug#begin('~/.vim/plugged')
 " View --------{{{
 " Theme
 Plug 'gruvbox-community/gruvbox'
-let g:gruvbox_contrast_dark = 'soft'
+let g:gruvbox_contrast_dark = 'hard'
 " Plug 'arcticicestudio/nord-vim'
 " Plug 'mhartington/oceanic-next'
 Plug 'joshdick/onedark.vim'
@@ -464,6 +464,8 @@ if has_key(g:plugs, 'vim-go')
 
         autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
 
+        autocmd FileType go nmap <silent> <leader><leader>b :<C-u>call <SID>build_go_files()<CR>
+
         " autocmd FileType go nmap <silent> <leader>cc <Plug>(go-callers)
         " autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
 
@@ -473,6 +475,16 @@ if has_key(g:plugs, 'vim-go')
             \| command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
             \| command! -bang AS call go#alternate#Switch(<bang>0, 'split')
     augroup END
+
+    " run :GoBuild or :GoTestCompile based on the go file
+    function! s:build_go_files()
+    let l:file = expand('%')
+    if l:file =~# '^\f\+_test\.go$'
+        call go#test#Test(0, 1)
+    elseif l:file =~# '^\f\+\.go$'
+        call go#cmd#Build(0)
+    endif
+    endfunction
 
 endif
 " Plug 'rust-lang/rust.vim'
