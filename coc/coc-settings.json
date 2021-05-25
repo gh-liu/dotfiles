@@ -1,7 +1,7 @@
 {
   "coc.preferences.extensionUpdateCheck": "weekly",
   "coc.preferences.jumpCommand": "drop",
-  "diagnostic.errorSign": "✘",
+  "diagnostic.errorSign": "✖",
   "diagnostic.warningSign": "∆",
   "diagnostic.hintSign": "➤",
   "diagnostic.infoSign": "ℹ",
