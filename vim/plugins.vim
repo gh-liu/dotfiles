@@ -548,7 +548,7 @@ endif
 " Plug 'dkarter/bullets.vim'
 
 " for making Vim plugins
-" Plug 'tpope/vim-scriptease'
+Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
 
 " Plug 'ruanyl/vim-gh-line'

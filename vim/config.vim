@@ -88,6 +88,8 @@ set foldlevel=99
 " for gitgutter
 set updatetime=300
 
+set lazyredraw
+
 hi! link SignColumn   LineNr
 hi! link ShowMarksHLl DiffAdd
 hi! link ShowMarksHLu DiffChange
@@ -461,6 +463,10 @@ augroup vimrc
     " if executable('ibus')
       " autocmd InsertLeave * call system("CIMTE")
     " endif
+
+    autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
+    autocmd FileType yaml setlocal expandtab shiftwidth=2 tabstop=2
+    autocmd FileType json setlocal expandtab shiftwidth=2 tabstop=2
 augroup END
 
 " function! AutoSetFileHead()
@@ -476,6 +482,12 @@ augroup END
 
 " repeat last commands
 nnoremap <silent> <leader><leader>r @:
+
+" echo the number under the cursor as binary, useful for bitwise operations
+function! s:echoBinary()
+  echo printf("%08b", expand('<cword>'))
+endfunction
+nnoremap <silent> gb :<C-u>call <SID>echoBinary()<CR>
 
 " }}}
 
