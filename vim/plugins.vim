@@ -4,8 +4,8 @@ call plug#begin('~/.vim/plugged')
 " Theme
 Plug 'gruvbox-community/gruvbox'
 let g:gruvbox_contrast_dark = 'soft'
-Plug 'arcticicestudio/nord-vim'
-Plug 'mhartington/oceanic-next'
+" Plug 'arcticicestudio/nord-vim'
+" Plug 'mhartington/oceanic-next'
 Plug 'joshdick/onedark.vim'
 
 " Status Line
@@ -253,7 +253,7 @@ endif
 " }}}
 
 " Git --------{{{
-Plug 'tpope/vim-rhubarb'
+" Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-fugitive'
 nmap <leader>gb :Gblame<CR>
 vmap <leader>gb :Gblame<CR>
