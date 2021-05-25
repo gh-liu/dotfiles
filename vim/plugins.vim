@@ -97,7 +97,7 @@ endif
 
 Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 
-Plug 'mg979/vim-visual-multi', {'branch': 'master'}
+" Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 
 Plug 'AndrewRadev/switch.vim'
 if has_key(g:plugs, 'switch.vim')
@@ -234,8 +234,8 @@ endif
 " Extended "%" matching
 Plug 'vim-scripts/matchit.zip'
 
-Plug 't9md/vim-choosewin'
-nmap <C-w><C-w> <Plug>(choosewin)
+" Plug 't9md/vim-choosewin'
+" nmap <C-w><C-w> <Plug>(choosewin)
 
 Plug 'easymotion/vim-easymotion'
 if has_key(g:plugs, 'vim-easymotion')
@@ -532,7 +532,7 @@ if has_key(g:plugs, 'vim-which-key')
 endif
 
 " rename the buffer
-Plug 'danro/rename.vim'
+" Plug 'danro/rename.vim'
 
 " vscode's task system
 " Plug 'skywind3000/asynctasks.vim'
@@ -559,7 +559,7 @@ Plug 'danro/rename.vim'
 " Plug 'prabirshrestha/asyncomplete.vim'
 " Plug 'prabirshrestha/asyncomplete-lsp.vim'
 
-Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
+" Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
 
 " }}}
 call plug#end()
