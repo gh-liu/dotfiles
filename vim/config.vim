@@ -444,9 +444,9 @@ augroup vimrc
     " autocmd BufReadPost quickfix,location nnoremap <buffer> v <C-w><Enter><C-w>L
     " autocmd BufReadPost quickfix,location nnoremap <buffer> s <C-w><Enter><C-w>K
 
-    if executable('ibus')
-      autocmd InsertLeave * call system("CIMTE")
-    endif
+    " if executable('ibus')
+      " autocmd InsertLeave * call system("CIMTE")
+    " endif
 augroup END
 
 " function! AutoSetFileHead()
