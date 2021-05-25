@@ -60,18 +60,18 @@ let g:highlightedyank_highlight_duration = 100
 Plug 'itchyny/vim-cursorword'
 
 " Plug 'Yggdroot/indentLine'
-if has_key(g:plugs, 'indentLine')
-    autocmd! User indentLine doautocmd indentLine Syntax
-    let g:indentLine_color_term = 239
-    let g:indentLine_color_gui = '#616161'
-endif
+" if has_key(g:plugs, 'indentLine')
+"     autocmd! User indentLine doautocmd indentLine Syntax
+"     let g:indentLine_color_term = 239
+"     let g:indentLine_color_gui = '#616161'
+" endif
 " }}}
 
 " Edit --------{{{
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
-Plug 'tpope/vim-abolish'
-" Plug 'arthurxavierx/vim-caser'
+" Plug 'tpope/vim-abolish'
+Plug 'arthurxavierx/vim-caser'
 Plug 'andrewradev/splitjoin.vim'
 if has_key(g:plugs, 'splitjoin.vim')
     nnoremap gss :SplitjoinSplit<cr>
@@ -90,30 +90,30 @@ endif
 
 " Aligning text
 " Plug 'junegunn/vim-easy-align'
-if has_key(g:plugs, 'vim-easy-align')
-    vmap <Leader>a <Plug>(EasyAlign)
-    nmap <Leader>a <Plug>(EasyAlign)
-endif
+" if has_key(g:plugs, 'vim-easy-align')
+"     vmap <Leader>a <Plug>(EasyAlign)
+"     nmap <Leader>a <Plug>(EasyAlign)
+" endif
 
 Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 
 " Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 
-Plug 'AndrewRadev/switch.vim'
-if has_key(g:plugs, 'switch.vim')
-    let g:switch_mapping = '_'
-    let g:switch_custom_definitions = [
-    \   ['MON', 'TUE', 'WED', 'THU', 'FRI'],
-    \   ['ture', 'false']
-    \ ]
-endif
+" Plug 'AndrewRadev/switch.vim'
+" if has_key(g:plugs, 'switch.vim')
+"     let g:switch_mapping = '_'
+"     let g:switch_custom_definitions = [
+"     \   ['MON', 'TUE', 'WED', 'THU', 'FRI'],
+"     \   ['ture', 'false']
+"     \ ]
+" endif
 " }}}
 
 " Nav --------{{{
 " Plug 'ludovicchabant/vim-gutentags'
-if has_key(g:plugs, 'vim-gutentags')
-    let g:gutentags_enabled=0
-endif
+" if has_key(g:plugs, 'vim-gutentags')
+"     let g:gutentags_enabled=0
+" endif
 " Browse the tags of the currentfile
 Plug 'majutsushi/tagbar'
 if has_key(g:plugs, 'tagbar')
@@ -237,21 +237,21 @@ Plug 'vim-scripts/matchit.zip'
 " Plug 't9md/vim-choosewin'
 " nmap <C-w><C-w> <Plug>(choosewin)
 
-Plug 'easymotion/vim-easymotion'
-if has_key(g:plugs, 'vim-easymotion')
-    let g:EasyMotion_do_mapping = 0
-    let g:EasyMotion_smartcase = 1
-    map <Leader><leader>. <Plug>(easymotion-repeat)
-    map <Leader><leader>h <Plug>(easymotion-linebackward)
-    map <Leader><leader>l <Plug>(easymotion-lineforward)
-    map <Leader><Leader>j <Plug>(easymotion-j)
-    map <Leader><Leader>k <Plug>(easymotion-k)
+" Plug 'easymotion/vim-easymotion'
+" if has_key(g:plugs, 'vim-easymotion')
+"     let g:EasyMotion_do_mapping = 0
+"     let g:EasyMotion_smartcase = 1
+"     map <Leader><leader>. <Plug>(easymotion-repeat)
+"     map <Leader><leader>h <Plug>(easymotion-linebackward)
+"     map <Leader><leader>l <Plug>(easymotion-lineforward)
+"     map <Leader><Leader>j <Plug>(easymotion-j)
+"     map <Leader><Leader>k <Plug>(easymotion-k)
 
-    map <Leader><Leader>W <Plug>(easymotion-W) 
-    map <Leader><Leader>w <Plug>(easymotion-w) 
-    map <Leader><Leader>N <Plug>(easymotion-N)
-    map <Leader><Leader>n <Plug>(easymotion-n)
-endif
+"     map <Leader><Leader>W <Plug>(easymotion-W) 
+"     map <Leader><Leader>w <Plug>(easymotion-w) 
+"     map <Leader><Leader>N <Plug>(easymotion-N)
+"     map <Leader><Leader>n <Plug>(easymotion-n)
+" endif
 " }}}
 
 " Git --------{{{
@@ -267,10 +267,10 @@ vmap <leader>gb :Gblame<CR>
 nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 " shows a git diff
 " Plug 'airblade/vim-gitgutter', { 'on': 'GitGutterToggle' }
-if has_key(g:plugs, 'vim-gitgutter')
-    let g:gitgutter_enabled = 0
-    nnoremap <leader>gt :GitGutterToggle<CR>
-endif
+" if has_key(g:plugs, 'vim-gitgutter')
+"     let g:gitgutter_enabled = 0
+"     nnoremap <leader>gt :GitGutterToggle<CR>
+" endif
 " replacement of gitgutter
 Plug 'mhinz/vim-signify'
 if has_key(g:plugs, 'vim-signify')
@@ -304,10 +304,10 @@ if has_key(g:plugs, 'ctrlsf.vim')
     vmap     <leader>fF <Plug>CtrlSFVwordExec
     nmap     <leader>fw <Plug>CtrlSFCwordPath
     nmap     <leader>fW <Plug>CtrlSFCwordExec
-    nmap     <leader><leader>f <Plug>CtrlSFPwordExec
+    " nmap     <leader><leader>f <Plug>CtrlSFPwordExec
 
     nnoremap <leader>ft :CtrlSFToggle<CR>
-    nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
+    " nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
 endif
 Plug 'junegunn/fzf',        { 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
@@ -531,8 +531,8 @@ if has_key(g:plugs, 'vim-which-key')
     nnoremap <silent><leader>q :SmartClose<CR>
 endif
 
-" rename the buffer
-" Plug 'danro/rename.vim'
+" Vim sugar for the UNIX shell commands 
+Plug 'tpope/vim-eunuch'
 
 " vscode's task system
 " Plug 'skywind3000/asynctasks.vim'
