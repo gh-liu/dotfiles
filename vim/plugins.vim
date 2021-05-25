@@ -97,6 +97,8 @@ endif
 
 Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 
+Plug 'mg979/vim-visual-multi', {'branch': 'master'}
+
 Plug 'AndrewRadev/switch.vim'
 if has_key(g:plugs, 'switch.vim')
     let g:switch_mapping = '_'
