@@ -257,21 +257,12 @@ Plug 'vim-scripts/matchit.zip'
 " Git --------{{{
 " Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-fugitive'
-nmap <leader>gb :Gblame<CR>
-vmap <leader>gb :Gblame<CR>
-" nmap <leader>gr :Gread<CR>
-" nmap <leader>gw :Gwrite<CR>
-" nmap <leader>gd :tabe<CR>:Gdiffsplit<CR>
-" nmap <leader>gs :tabe<CR>:Gstatus<CR>
-" nmap <leader>gc :Gcommit<CR>
-nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
+if has_key(g:plugs, 'vim-fugitive')
+    nmap <leader>gb :Gblame<CR>
+    vmap <leader>gb :Gblame<CR>
+    nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
+endif
 " shows a git diff
-" Plug 'airblade/vim-gitgutter', { 'on': 'GitGutterToggle' }
-" if has_key(g:plugs, 'vim-gitgutter')
-"     let g:gitgutter_enabled = 0
-"     nnoremap <leader>gt :GitGutterToggle<CR>
-" endif
-" replacement of gitgutter
 Plug 'mhinz/vim-signify'
 if has_key(g:plugs, 'vim-signify')
     let g:signify_vcs_list = ['git']
@@ -457,24 +448,19 @@ if has_key(g:plugs, 'vim-go')
         " autocmd FileType go nmap <silent> <leader>tt  <Plug>(go-test)
         " autocmd FileType go nmap <silent> <leader>tf <Plug>(go-test-func)
         " autocmd FileType go nmap <silent> <leader>cr <Plug>(go-coverage-toggle)
-        " autocmd FileType go nmap <silent> <leader>ii <Plug>(go-info)
-        " autocmd FileType go nmap <silent> <leader>i  <Plug>(go-implements)
         autocmd FileType go nmap <silent> <leader>d  <Plug>(go-describe)
-        " autocmd FileType go nmap <silent> <leader>d  <Plug>(go-def)
-        " autocmd FileType go nmap <silent> <leader>p  <Plug>(go-def-pop)
 
         autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
 
         autocmd FileType go nmap <silent> <leader><leader>b :<C-u>call <SID>build_go_files()<CR>
-
-        " autocmd FileType go nmap <silent> <leader>cc <Plug>(go-callers)
-        " autocmd FileType go nmap <silent> <leader>cs <Plug>(go-callstack)
 
         autocmd FileType go nmap <silent> <Leader>td <Plug>(go-def-tab)
         autocmd Filetype go
             \  command! -bang A call go#alternate#Switch(<bang>0, 'edit')
             \| command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
             \| command! -bang AS call go#alternate#Switch(<bang>0, 'split')
+
+        autocmd BufEnter *.go silent exe "GoGuruScope " . go#package#ImportPath() . "..."
     augroup END
 
     " run :GoBuild or :GoTestCompile based on the go file
@@ -551,8 +537,6 @@ Plug 'tpope/vim-eunuch'
 " Plug 'skywind3000/asynctasks.vim'
 " Plug 'skywind3000/asyncrun.vim'
 " let g:asyncrun_open = 6
-
-" Plug 'puremourning/vimspector'
 
 " Plug 'tmux-plugins/vim-tmux'
 

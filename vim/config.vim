@@ -509,6 +509,9 @@ endfun
 call SetupCommandAbbrs('H', 'h')
 call SetupCommandAbbrs('LE', 'Lexplore')
 
+" fzf.vim
+call SetupCommandAbbrs('RG', 'Rg')
+
 " coc-nvim
 call SetupCommandAbbrs('CL', 'CocList')
 call SetupCommandAbbrs('CC', 'CocConfig')
