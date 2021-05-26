@@ -1,7 +1,7 @@
 {
   "coc.preferences.extensionUpdateCheck": "weekly",
   "coc.preferences.jumpCommand": "drop",
-  "diagnostic.errorSign": "✖",
+  "diagnostic.errorSign": "✘",
   "diagnostic.warningSign": "∆",
   "diagnostic.hintSign": "➤",
   "diagnostic.infoSign": "ℹ",
@@ -14,28 +14,31 @@
     "<C-g>": "do:exit"
   },
   "go.goplsPath": "gopls",
-  "go.goplsArgs": ["-remote", "auto"],
+  "go.goplsArgs": [
+    "-remote",
+    "auto"
+  ],
   "go.goplsOptions": {
     "completeUnimported": true,
     "usePlaceholders": true
   },
   "languageserver": {
-  //   "golang": {
-  //     "command": "gopls",
-  //     "args": [
-  //       "-remote",
-  //       "auto"
-  //     ],
-  //     "rootPatterns": [
-  //       "go.mod"
-  //     ],
-  //     "filetypes": [
-  //       "go"
-  //     ],
-  //     "initializationOptions": {
-  //       "completeUnimported": true
-  //     }
-  //   },
+    //   "golang": {
+    //     "command": "gopls",
+    //     "args": [
+    //       "-remote",
+    //       "auto"
+    //     ],
+    //     "rootPatterns": [
+    //       "go.mod"
+    //     ],
+    //     "filetypes": [
+    //       "go"
+    //     ],
+    //     "initializationOptions": {
+    //       "completeUnimported": true
+    //     }
+    //   },
     "bash": {
       "command": "bash-language-server",
       "args": [
