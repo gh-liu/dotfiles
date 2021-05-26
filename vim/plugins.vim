@@ -558,8 +558,11 @@ Plug 'tpope/vim-scriptease'
 
 " Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
 " show hex colors
-Plug 'lilydjwg/colorizer', {'on': ['ColorHighlight', 'ColorHighlight', 'ColorToggle']}
-let g:colorizer_nomap = 1
+" Plug 'lilydjwg/colorizer', {'on': ['ColorHighlight', 'ColorHighlight', 'ColorToggle']}
+" let g:colorizer_nomap = 1
+Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase' }
+set termguicolors
+let g:Hexokinase_highlighters = ['background']
 
 " }}}
 call plug#end()
