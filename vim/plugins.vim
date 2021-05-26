@@ -557,6 +557,9 @@ Plug 'tpope/vim-scriptease'
 " Plug 'prabirshrestha/asyncomplete-lsp.vim'
 
 " Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
+" show hex colors
+Plug 'lilydjwg/colorizer', {'on': ['ColorHighlight', 'ColorHighlight', 'ColorToggle']}
+let g:colorizer_nomap = 1
 
 " }}}
 call plug#end()
