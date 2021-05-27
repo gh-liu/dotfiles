@@ -65,7 +65,7 @@ if has_key(g:plugs, 'vim-signature')
         \ 'PlaceNextMark'      :  "m,",
         \ 'ToggleMarkAtLine'   :  "m.",
         \ 'PurgeMarksAtLine'   :  "m-",
-        \ 'De  leteMark'         :  "dm",
+        \ 'DeleteMark'         :  "dm",
         \ 'PurgeMarks'         :  "m<Space>",
         \ 'PurgeMarkers'       :  "m<BS>",
         \ 'GotoNextLineAlpha'  :  "']",
@@ -167,19 +167,16 @@ Plug 'benjifisher/matchit.zip'
 " Plug 'ctrlpvim/ctrlp.vim'
 Plug 'dyng/ctrlsf.vim'
 if has_key(g:plugs, 'ctrlsf.vim')
-  let g:ctrlsf_default_view_mode = 'compact'
+  " let g:ctrlsf_default_view_mode = 'compact'
   let g:ctrlsf_auto_focus = {
         \ "at": "start",
         \ }
-    nmap   <leader>ff <Plug>CtrlSFPrompt
-    vmap   <leader>ff <Plug>CtrlSFVwordPath
-    vmap   <leader>fF <Plug>CtrlSFVwordExec
-    nmap   <leader>fw <Plug>CtrlSFCwordPath
-    nmap   <leader>fW <Plug>CtrlSFCwordExec
-  " nmap   <leader><leader>f <Plug>CtrlSFPwordExec
-
-    nnoremap <leader>ft :CtrlSFToggle<CR>
-  " nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
+    nnoremap   <leader>ff <Plug>CtrlSFPrompt
+    vnoremap   <leader>ff <Plug>CtrlSFVwordPath
+    vnoremap   <leader>fF <Plug>CtrlSFVwordExec
+    nnoremap   <leader>fw <Plug>CtrlSFCwordPath
+    nnoremap   <leader>fW <Plug>CtrlSFCwordExec
+    nnoremap   <leader>ft :CtrlSFToggle<CR>
 endif
 Plug 'junegunn/fzf',        { 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
@@ -219,7 +216,7 @@ if has_key(g:plugs, 'coc.nvim')
 
   " Use K to show documentation
     function! s:show_documentation()
-      if (index(['vim', 'help'], &fi  letype) >= 0)
+      if (index(['vim', 'help'], &filetype) >= 0)
         execute 'h' expand('<cword>')
       else
         call CocAction('doHover')
@@ -255,7 +252,7 @@ if has_key(g:plugs, 'coc.nvim')
     augroup END
 
   " Add `:Format` command to format current buffer.
-    command! -nargs=0 Format :call CocAction('format')
+    " command! -nargs=0 Format :call CocAction('format')
   " Add some commands for Go
     command! -nargs=0 GoGenTestFile :call CocAction('runCommand', 'go.test.generate.file')
     command! -nargs=0 GoGenTestFunc :call CocAction('runCommand', 'go.test.generate.function')
