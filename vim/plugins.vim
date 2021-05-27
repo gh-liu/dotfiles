@@ -171,11 +171,12 @@ if has_key(g:plugs, 'ctrlsf.vim')
   let g:ctrlsf_auto_focus = {
         \ "at": "start",
         \ }
-    nnoremap   <leader>ff <Plug>CtrlSFPrompt
-    vnoremap   <leader>ff <Plug>CtrlSFVwordPath
-    vnoremap   <leader>fF <Plug>CtrlSFVwordExec
-    nnoremap   <leader>fw <Plug>CtrlSFCwordPath
-    nnoremap   <leader>fW <Plug>CtrlSFCwordExec
+    nmap     <leader>ff <Plug>CtrlSFPrompt
+    vmap     <leader>ff <Plug>CtrlSFVwordPath
+    vmap     <leader>fF <Plug>CtrlSFVwordExec
+    nmap     <leader>fw <Plug>CtrlSFCwordPath
+    nmap     <leader>fW <Plug>CtrlSFCwordExec
+    
     nnoremap   <leader>ft :CtrlSFToggle<CR>
 endif
 Plug 'junegunn/fzf',        { 'do': './install --all' }
