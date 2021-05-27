@@ -13,8 +13,8 @@ Plug 'kien/rainbow_parentheses.vim'
 
 " Show Hex Colors
 if executable("go")
-    Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase','on': ['HexokinaseToggle']}
-    set termguicolors
+  Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase','on': ['HexokinaseToggle']}
+  set termguicolors
   let g:Hexokinase_highlighters = ['background']
 endif
 
@@ -60,9 +60,10 @@ Plug 'unblevable/quick-scope'
 Plug 'junegunn/fzf',        { 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
 
+" Handle multi-file find and replace.
 " Plug 'mhinz/vim-grepper'
 
-" Plug 'dyng/ctrlsf.vim' " Use Rg of fzf.vim
+" Plug 'dyng/ctrlsf.vim' 
 " Plug 'ctrlpvim/ctrlp.vim'
 " Plug 'mileszs/ack.vim'
 
@@ -133,7 +134,7 @@ Plug 'mzlogin/vim-markdown-toc'
 " Writing
 " Dim paragraphs above and below the active paragraph.
 Plug 'junegunn/limelight.vim'
-let g:limelight_conceal_ctermfg=244
+  let g:limelight_conceal_ctermfg=244
 
 " Distraction free writing by removing UI elements and centering everything.
 Plug 'junegunn/goyo.vim'
@@ -158,8 +159,6 @@ Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
 
-" Plug 'ruanyl/vim-gh-line'
-
 " LSP and Complete
 " Plug 'prabirshrestha/vim-lsp'
 " Plug 'mattn/vim-lsp-settings'
@@ -181,9 +180,6 @@ Plug 'tpope/vim-scriptease'
 
 " Automatically clear search highlights after you move your cursor.
 " Plug 'haya14busa/is.vim'
-
-" Handle multi-file find and replace.
-" Plug 'mhinz/vim-grepper'
 
 " Better display unwanted whitespace.
 " Plug 'ntpeters/vim-better-whitespace'
@@ -638,15 +634,15 @@ if !exists('g:gruvbox_contrast_dark')
   let g:gruvbox_contrast_dark='hard'
 endif
 " Specific colorscheme settings (must come after setting your colorscheme).
-" if (g:colors_name == 'gruvbox')
-"   if (&background == 'dark')
-"     hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
-"   else
-"     hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"     hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"     hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"   endif
-" endif
+if (g:colors_name == 'gruvbox')
+  if (&background == 'dark')
+    hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
+  else
+    " hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+    " hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+    " hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+  endif
+endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
   let g:rbpt_colorpairs = [
@@ -744,18 +740,18 @@ endif
 "     map <Leader><Leader>n <Plug>(easymotion-n)
 " endif
 
-if has_key(g:plugs, 'ctrlsf.vim')
-  " let g:ctrlsf_default_view_mode = 'compact'
-  let g:ctrlsf_auto_focus = {
-        \ "at": "start",
-        \ }
-    nmap     <leader>ff <Plug>CtrlSFPrompt
-    vmap     <leader>ff <Plug>CtrlSFVwordPath
-    vmap     <leader>fF <Plug>CtrlSFVwordExec
-    nmap     <leader>fw <Plug>CtrlSFCwordPath
-    nmap     <leader>fW <Plug>CtrlSFCwordExec
-    nnoremap   <leader>ft :CtrlSFToggle<CR>
-endif
+" if has_key(g:plugs, 'ctrlsf.vim')
+"   " let g:ctrlsf_default_view_mode = 'compact'
+"   let g:ctrlsf_auto_focus = {
+"         \ "at": "start",
+"         \ }
+"     nmap     <leader>ff <Plug>CtrlSFPrompt
+"     vmap     <leader>ff <Plug>CtrlSFVwordPath
+"     vmap     <leader>fF <Plug>CtrlSFVwordExec
+"     nmap     <leader>fw <Plug>CtrlSFCwordPath
+"     nmap     <leader>fW <Plug>CtrlSFCwordExec
+"     nnoremap   <leader>ft :CtrlSFToggle<CR>
+" endif
 
 if has_key(g:plugs, 'fzf.vim')
   let g:fzf_layout = { 'down': '~20%' }
@@ -763,9 +759,11 @@ if has_key(g:plugs, 'fzf.vim')
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
   nnoremap <silent> <leader>ff :Rg 
-  xnoremap <silent> <Leader>ag       y:Ag <C-R>"<CR>
-  nnoremap <silent> <Leader><Enter> :Buffers<CR>
+  xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
+
   nnoremap <silent> <Leader>L :Lines<CR>
+  nnoremap <silent> <Leader>C :Colors<CR>
+    nnoremap <silent> <Leader><Enter> :Buffers<CR>
   
   " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
   command! -bang -nargs=* Rg
@@ -956,9 +954,9 @@ if has_key(g:plugs, 'vim-signify')
   endif
 endif
 
-if has_key(g:plugs, 'vim-gutentags')
-  let g:gutentags_enabled=0
-endif
+" if has_key(g:plugs, 'vim-gutentags')
+"   let g:gutentags_enabled=0
+" endif
 
 if has_key(g:plugs, 'vim-go')
   " Go syntax highlighting
@@ -1026,11 +1024,11 @@ if has_key(g:plugs, 'vimux')
     nnoremap <Leader>vl :VimuxRunLastCommand<CR>
 endif
 
-if has_key(g:plugs, 'indentLine')
-  autocmd! User indentLine doautocmd indentLine Syntax
-  let g:indentLine_color_term = 239
-  let g:indentLine_color_gui = '#616161'
-endif
+" if has_key(g:plugs, 'indentLine')
+"   autocmd! User indentLine doautocmd indentLine Syntax
+"   let g:indentLine_color_term = 239
+"   let g:indentLine_color_gui = '#616161'
+" endif
 
 if has_key(g:plugs, 'quick-scope')
   " Trigger a highlight in the appropriate direction when pressing these keys.
