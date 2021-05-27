@@ -1,59 +1,54 @@
+" == Plugins == {{{1
 call plug#begin('~/.vim/plugged')
-
-" == Color == {{{1
-" == Theme == {{{2
+" Theme
 Plug 'gruvbox-community/gruvbox'
 Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 
-" == Status Line == {{{2
+" Status Line
 Plug 'itchyny/lightline.vim'
 
-" == Rainbow Parentheses == {{{2
+" Rainbow Parentheses
 Plug 'kien/rainbow_parentheses.vim'
 
-" == Hightligh Yank == {{{2
-Plug 'machakann/vim-highlightedyank'
-  let g:highlightedyank_highlight_duration = 100
-
-" == Underlines the word under the cursor == {{{2
-Plug 'itchyny/vim-cursorword'
-
-" == Marks == {{{2
-Plug 'kshenoy/vim-signature'
-
-" == Show Hex Colors == {{{2
+" Show Hex Colors
 if executable("go")
     Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase','on': ['HexokinaseToggle']}
     set termguicolors
   let g:Hexokinase_highlighters = ['background']
 endif
 
-" == Indent Line == {{{2
+" Hightligh Yank
+Plug 'machakann/vim-highlightedyank'
+  let g:highlightedyank_highlight_duration = 100
+
+" Underlines the word under the cursor
+Plug 'itchyny/vim-cursorword'
+
+" Marks
+Plug 'kshenoy/vim-signature'
+
+" Indent Line 
 " Plug 'Yggdroot/indentLine'
 
-
-" == Edit == {{{1
+" Edit
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
-
 Plug 'arthurxavierx/vim-caser'
   let g:caser_prefix = 'cr'
 Plug 'andrewradev/splitjoin.vim'
-
 Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
-
-" Aligning text
 " Plug 'junegunn/vim-easy-align'
-
-" Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 " Plug 'AndrewRadev/switch.vim'
+" Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 
-
-" == Move == {{{1
+" Move
 " Extended "%" matching
 Plug 'benjifisher/matchit.zip'
+
+" Plug 'easymotion/vim-easymotion'
+Plug 'unblevable/quick-scope'
 
 " text object 
 " Plug 'kana/vim-textobj-user'
@@ -61,24 +56,21 @@ Plug 'benjifisher/matchit.zip'
 " Plug 'kana/vim-textobj-entire'
 " Plug 'kana/vim-textobj-indent'
 
-" Plug 'easymotion/vim-easymotion'
-
-
-" == Search == {{{1
+" Search
 Plug 'junegunn/fzf',        { 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
+
+" Plug 'mhinz/vim-grepper'
 
 " Plug 'dyng/ctrlsf.vim' " Use Rg of fzf.vim
 " Plug 'ctrlpvim/ctrlp.vim'
 " Plug 'mileszs/ack.vim'
 
-
-" == Nav == {{{1
-" == Tag == {{{2
+" Tag
 Plug 'majutsushi/tagbar'
 " Plug 'ludovicchabant/vim-gutentags'
 
-" == netrw == {{{2
+" netrw
 Plug 'tpope/vim-vinegar'
 " netrw
 "   let g:netrw_banner = 1
@@ -88,36 +80,29 @@ Plug 'tpope/vim-vinegar'
 "   let g:netrw_winsize = 25
 map <C-n> :Vexplore<CR>
 
-" == UndoTree == {{{2
+" UndoTree
 Plug 'mbbill/undotree', { 'on': 'UndotreeToggle' }
 
-" == Choose Windows == {{{2
+" Choose Windows
 " Plug 't9md/vim-choosewin'
 " nmap <C-w><C-w> <Plug>(choosewin)
 
-
-" == Git == {{{1
+" Git
 " Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-fugitive'
 
-" shows a git diff
-Plug 'mhinz/vim-signify'
+" Shows a git diff
+Plug 'mhinz/vim-signify', { 'on': 'SignifyToggle' } 
 
-" show the git message
+" Show the git message
 " Plug 'rhysd/git-messenger.vim'
 
-" == Tmux == {{{1
+" Tmux
 Plug 'benmills/vimux'
-if has_key(g:plugs, 'vimux')
-    nnoremap <Leader>vp :VimuxPromptCommand<CR>
-    nnoremap <Leader>vc :VimuxCloseRunner<CR>
-    nnoremap <Leader>vl :VimuxRunLastCommand<CR>
-endif
 " Plug 'tmux-plugins/vim-tmux'
 " Plug 'christoomey/vim-tmux-navigator'
 
-
-" == Lang == {{{1
+" Lang
 " Plug 'SirVer/ultisnips'
 
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
@@ -145,38 +130,33 @@ Plug 'mzlogin/vim-markdown-toc'
   let g:vmt_fence_text = 'TOC'
   let g:vmt_fence_closing_text = '/TOC'
 
-" == Writing == {{{1
+" Writing
 " Dim paragraphs above and below the active paragraph.
 Plug 'junegunn/limelight.vim'
+let g:limelight_conceal_ctermfg=244
 
 " Distraction free writing by removing UI elements and centering everything.
 Plug 'junegunn/goyo.vim'
 
-" == Misc == {{{1
+" Misc
 " Show keymaps begin with <leader>
-Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
-if has_key(g:plugs, 'vim-which-key')
-  nnoremap <silent> <leader> :WhichKey ','<CR>
-  set timeoutlen=360
-endif
+" Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
+" if has_key(g:plugs, 'vim-which-key')
+"   nnoremap <silent> <leader> :WhichKey ','<CR>
+"   set timeoutlen=360
+" endif
 
 Plug 'szw/vim-smartclose'
 if has_key(g:plugs, 'vim-smartclose')
   let g:smartclose_default_mapping_key = '<leader>c'
-  nnoremap <silent><leader>q :SmartClose<CR>
 endif
 
 " Vim sugar for the UNIX shell commands 
 Plug 'tpope/vim-eunuch'
 
-" for making Vim plugins
+" For making Vim plugins
 Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
-
-" vscode's task system
-" Plug 'skywind3000/asynctasks.vim'
-" Plug 'skywind3000/asyncrun.vim'
-"   let g:asyncrun_open = 6
 
 " Plug 'ruanyl/vim-gh-line'
 
@@ -210,26 +190,26 @@ Plug 'tpope/vim-scriptease'
 
 call plug#end()
 
-" general configuration
-source ~/.vim/config.vim
 
-" == Plugins Config == {{{1
+" == Color == {{{1
+" Enable 24-bit true colors if your terminal supports it.
+if (has("termguicolors"))
+  " https://github.com/vim/vim/issues/993#issuecomment-255651605
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
 
-" gruvbox
-if !exists('g:gruvbox_contrast_dark')
-  let g:gruvbox_contrast_dark='hard'
+  set termguicolors
 endif
-" Specific colorscheme settings (must come after setting your colorscheme).
-" if (g:colors_name == 'gruvbox')
-"   if (&background == 'dark')
-"     hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
-"   else
-"     hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"     hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"     hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"   endif
-" endif
 
+" Enable syntax highlighting.
+syntax on
+
+" Set the color scheme.
+colorscheme gruvbox
+set background=dark
+
+
+" == Status Line == {{{1
 if has_key(g:plugs, 'lightline.vim')
   let g:lightline = {
         \ 'colorscheme': 'powerline',
@@ -241,6 +221,403 @@ if has_key(g:plugs, 'lightline.vim')
         \   'gitbranch': 'FugitiveHead'
         \ },
         \ }
+endif
+
+
+" == Basic Settings == {{{1
+let mapleader      = ','
+let maplocalleader = ','
+
+set nocompatible
+
+set encoding=utf8
+set fileencodings=ucs-bom,utf-8,cp936,gb18030,big5,euc-jp,euc-kr,latin1
+
+set autoread
+set autowrite
+
+set history=5000
+set mouse-=a
+set laststatus=2
+
+set cursorline
+set cursorcolumn
+
+set magic
+set hlsearch
+set incsearch
+set ignorecase
+
+set shiftwidth=4
+set tabstop=4
+set expandtab
+set smarttab
+
+set autoindent
+set smartindent
+
+set number
+set relativenumber
+
+set so=10
+set ruler
+set wildmenu
+set showcmd
+set cmdheight=2
+
+set pumheight=10
+set completeopt=longest,menu
+
+set nobackup
+set nowb
+set noswapfile
+
+set foldenable
+set foldmethod=indent
+set foldlevel=99
+
+set ttyfast
+set lazyredraw
+
+set hidden
+set shortmess+=c
+
+set updatetime=300
+set noerrorbells
+
+filetype on
+filetype indent on
+filetype plugin on
+filetype plugin indent on
+
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
+
+
+" == Basic mappings == {{{1
+nnoremap <F1> <Esc>
+inoremap <F1> <Esc>
+vnoremap <F1> <Esc>
+
+" Disable CTRL-F for Tmux
+nnoremap <C-f> <nop>
+nmap <Leader><C-f> <C-f>
+
+" nnoremap ; :
+" nnoremap <leader>; ;
+
+" Switch # *
+nnoremap # *
+nnoremap * #
+
+" Switch ` and '
+" By default, ' jumps to the marked line, ` jumps to the marked line and columnm
+nnoremap ' `
+nnoremap ` '
+
+nnoremap [w :tabprevious<cr>
+nnoremap ]w :tabnext<cr>
+nnoremap [W :tabfirst<cr>
+nnoremap ]W :tablast<cr>
+
+nnoremap [b :bprevious<cr>
+nnoremap ]b :bnext<cr>
+nnoremap [B :bfirst<cr>
+nnoremap ]B :blast<cr>
+
+nnoremap [l :lprevious<cr>
+nnoremap ]l :lnext<cr>
+nnoremap [L :lfirst<cr>
+nnoremap ]L :llast<cr>
+
+nnoremap [q :cprevious<cr>
+nnoremap ]q :cnext<cr>
+nnoremap [Q :cfirst<cr>
+nnoremap ]Q :clast<cr>
+
+nnoremap [t :tprevious<cr>
+nnoremap ]t :tnext<cr>
+nnoremap [T :tfirst<cr>
+nnoremap ]T :tlast<cr>
+
+" <Leader>[1-9] move to tab [1-9]
+for s:i in range(1, 9)
+  execute 'nnoremap <Leader>' . s:i . ' ' . s:i . 'gt'
+endfor
+
+" Move current window to a new tab
+nnoremap <Leader>wt <C-w>T
+
+nmap <C-j> <C-W>j
+nmap <C-k> <C-W>k
+nmap <C-h> <C-W>h
+nmap <C-l> <C-W>l
+
+cnoremap <C-h> <left>
+cnoremap <C-j> <down>
+cnoremap <C-k> <up>
+cnoremap <C-l> <right>
+cnoremap <C-a> <HOME>
+
+inoremap <C-h> <left>
+inoremap <C-j> <down>
+inoremap <C-k> <up>
+inoremap <C-l> <right>
+imap <C-a> <HOME>
+imap <C-e> <END>
+
+" noremap <Up> gk
+" noremap <Down> gj
+noremap j gj
+noremap k gk
+
+noremap $ g$
+noremap 0 g0
+
+nnoremap H ^
+nnoremap L $
+vnoremap H ^
+vnoremap L g_
+
+" Edit alternate file
+inoremap <C-^> <C-o><C-^>
+
+" Save
+inoremap <C-s> <C-O>:update<cr>
+nnoremap <C-s> :update<cr>
+
+" Exit
+inoremap <C-q> <esc>:q<cr>
+nnoremap <C-q> :q<cr>
+vnoremap <C-q> <esc>
+nnoremap <Leader>q :q<cr>
+nnoremap <Leader>Q :qa!<cr>
+
+" Esc quickly
+imap jj <Esc>
+imap jk <Esc>
+
+" qq to record, Q to replay
+nnoremap Q @q
+
+" same as D
+nnoremap Y y$
+
+" Search the visual block
+vnoremap // y/<c-r>"<cr>
+
+" Toggle highlight
+noremap <silent><leader>/ :set nohls!<CR>
+
+" Keep search pattern at the center of the screen
+nnoremap <silent> n nzz
+nnoremap <silent> N Nzz
+nnoremap <silent> * *zz
+nnoremap <silent> # #zz
+
+" Change window size
+nnoremap <left>   <c-w>>
+nnoremap <right>  <c-w><
+nnoremap <up>   <c-w>-
+nnoremap <down>   <c-w>+
+
+nnoremap <leader>o o<esc>
+nnoremap <leader>O O<esc>
+
+" Do not show stupid q: window
+map q: :q
+
+" Edit vimrc
+nnoremap <leader>ev :tabnew $MYVIMRC<cr>
+nnoremap <leader>sv :source $MYVIMRC<cr>
+
+" Press * to search for the term under the cursor or a visual selection and
+" then press a key below to replace all instances of it in the current file.
+nnoremap <Leader>r :%s///g<Left><Left>
+nnoremap <Leader>rc :%s///gc<Left><Left><Left>
+xnoremap <Leader>r :s///g<Left><Left>
+xnoremap <Leader>rc :s///gc<Left><Left><Left>
+
+function! ToogleNumber()
+  if (&relativenumber == &number)
+    set relativenumber! number!
+  elseif (&number)
+    set number!
+  else
+    set relativenumber!
+  endif
+    set number?
+endfun
+function! ToggleSignColumn()
+  if &number
+    set signcolumn=number
+  else
+    set signcolumn=no
+  endif
+endfun
+function! ToggleSignColumnAndNumber()
+  call ToogleNumber()
+  call ToggleSignColumn()
+endfun
+nnoremap <F2> :call ToggleSignColumnAndNumber()<CR>
+
+" ]p to paste into a newline
+" [p to paste into the line upon cursor
+" https://github.com/tpope/vim-unimpaired/blob/master/plugin/unimpaired.vim#L343
+function! s:putline(how, map) abort
+  let [body, type] = [getreg(v:register), getregtype(v:register)]
+  if type ==# 'V'
+    exe 'normal! "'.v:register.a:how
+  else
+    call setreg(v:register, body, 'l')
+    exe 'normal! "'.v:register.a:how
+    call setreg(v:register, body, type)
+  endif
+    silent! call repeat#set("\<Plug>unimpairedPut".a:map)
+endfunction
+nnoremap <silent> [p :call <SID>putline('[p', 'Above')<CR>
+nnoremap <silent> ]p :call <SID>putline(']p', 'Below')<CR>
+
+" Echo the number under the cursor as binary, useful for bitwise operations
+function! s:echoBinary()
+  echo printf("%08b", expand('<cword>'))
+endfunction
+nnoremap <silent> gb :<C-u>call <SID>echoBinary()<CR>
+
+" == Basic autocommands == {{{1
+autocmd VimResized * wincmd =
+
+" Only show the cursor line in the active buffer.
+augroup CursorLine
+    au!
+    au VimEnter,WinEnter,BufWinEnter * setlocal cursorline
+    au WinLeave * setlocal nocursorline
+augroup END
+
+" Open help page in a new tab
+function! s:helptab()
+  if &buftype == 'help'
+  wincmd T
+  nnoremap <buffer> q :q<cr>
+  endif
+endfun
+"Open plug github repo in browser by press <CR>
+function! s:goto_github()
+  let s:repo = matchstr(expand("<cWORD>"), '\v[0-9A-Za-z\-\_\.]+/[0-9A-Za-z\-\_\.]+')
+  if empty(s:repo)
+    echo "GoToGithub: No repository found."
+  else
+    let s:url = 'https://github.com/' . s:repo
+    call netrw#BrowseX(s:url, 0)
+  end
+endfun
+function! s:setNorelativenumber()
+  " if it's number , set norelativenumber
+  if (&number == 1)
+  set norelativenumber
+  endif
+endfun
+function! s:setRelativenumber()
+  " if it's number , set relativenumber
+  if (&number == 1)
+  set relativenumber
+  endif
+endfun
+
+augroup myfunc
+  autocmd!
+  " if executable('ibus')
+  " autocmd InsertLeave * call system("CIMTE")
+  " endif
+
+  autocmd BufEnter *.txt call s:helptab()
+  autocmd InsertEnter * call s:setNorelativenumber() 
+  autocmd InsertLeave * call s:setRelativenumber()
+
+  autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
+augroup END
+
+augroup myhl
+  autocmd!
+  " Highlight TODO, FIXME, NOTE, etc.
+  if v:version > 701
+    autocmd Syntax * call matchadd('Todo',  '\W\zs\(TODO\|FIXME\|CHANGED\|DONE\|XXX\|BUG\|HACK\)')
+    autocmd Syntax * call matchadd('Debug', '\W\zs\(NOTE\|INFO\|IDEA\|NOTICE\)')
+  endif
+augroup END
+
+augroup myfiletype
+  autocmd!
+  autocmd FileType vim setlocal foldmethod=marker
+  autocmd FileType tmux setlocal foldmethod=marker
+
+  autocmd FileType json setlocal expandtab shiftwidth=2 tabstop=2
+  autocmd FileType yaml setlocal expandtab shiftwidth=2 tabstop=2
+  autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
+
+  autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
+augroup END
+
+if !v:vim_did_enter && has('reltime')
+  let g:startuptime = reltime()
+  augroup vimrc-startuptime
+  autocmd! VimEnter * ++once
+  \        let g:startuptime = reltime(g:startuptime)
+  \        | redraw
+  \        | echomsg 'startuptime: ' .. reltimestr(g:startuptime)
+  augroup END
+endif
+
+
+
+" == Basic commands == {{{1
+" Add all TODO items to the quickfix list relative to where you opened Vim.
+function! s:todo() abort
+  let entries = []
+  for cmd in ['git grep -niIw -e TODO -e FIXME 2> /dev/null',
+            \ 'grep -rniIw -e TODO -e FIXME . 2> /dev/null']
+    let lines = split(system(cmd), '\n')
+    if v:shell_error != 0 | continue | endif
+    for line in lines
+      let [fname, lno, text] = matchlist(line, '^\([^:]*\):\([^:]*\):\(.*\)')[1:3]
+      call add(entries, { 'filename': fname, 'lnum': lno, 'text': text })
+    endfor
+    break
+  endfor
+
+  if !empty(entries)
+    call setqflist(entries)
+    copen
+  endif
+endfunction
+command! Todo call s:todo()
+
+" Export all vim mappings
+function! s:export_all_mappings()
+  redir! > vim_keys.txt
+  silent verbose map
+  redir END
+endfun
+command! ExportAllMappings call s:export_all_mappings()
+
+
+" == Plugins Config == {{{1
+" gruvbox
+if !exists('g:gruvbox_contrast_dark')
+  let g:gruvbox_contrast_dark='hard'
+endif
+" Specific colorscheme settings (must come after setting your colorscheme).
+if (g:colors_name == 'gruvbox')
+  if (&background == 'dark')
+    hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
+  else
+    hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+    hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+    hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+  endif
 endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
@@ -352,10 +729,13 @@ endif
 
 if has_key(g:plugs, 'fzf.vim')
   let g:fzf_layout = { 'down': '~20%' }
-  nmap <C-p> :Files<cr>
-  imap <C-p> <esc>:<C-u>Files<cr>
+  nnoremap <C-p> :Files<cr>
+  inoremap <C-p> <esc>:<C-u>Files<cr>
 
-  nmap  <leader>ff :Rg 
+  nnoremap  <leader>ff :Rg 
+  nnoremap <silent> <Leader><Enter> :Buffers<CR>
+  nnoremap <silent> <Leader>l :Lines<CR>
+  
   " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
   command! -bang -nargs=* Rg
     \ call fzf#vim#grep(
@@ -424,7 +804,7 @@ if has_key(g:plugs, 'coc.nvim')
       autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
       autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
 
-  "   autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+      autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
     augroup END
 
   " Add `:Format` command to format current buffer.
@@ -454,17 +834,13 @@ if has_key(g:plugs, 'coc.nvim')
     nnoremap <silent><nowait> <space>k  :<C-u>CocPrev<CR>
   " Resume latest coc list.
     nnoremap <silent><nowait> <space>p :<C-u>CocListResume<CR>
-
-  " plugs settings:
-  " coc-explorer
-  " map <leader><leader>e :CocCommand explorer<CR>
 endif
 
 if has_key(g:plugs, 'tagbar')
   let g:tagbar_autofocus = 1
   let g:tagbar_position = 'leftabove vertical'
   let g:tagbar_width = 25
-    nnoremap T :TagbarToggle<CR>
+  nnoremap T :TagbarToggle<CR>
 
   " https://github.com/preservim/tagbar/wiki#markdown
   let g:tagbar_type_markdown = {
@@ -528,24 +904,31 @@ endif
 if has_key(g:plugs, 'undotree')
   let g:undotree_SetFocusWhenToggle = 1
   let g:undotree_WindowLayout = 2
-    nnoremap U :UndotreeToggle<CR>
+  nnoremap U :UndotreeToggle<CR>
 endif
 
 if has_key(g:plugs, 'vim-fugitive')
-    nmap <leader>gb :Gblame<CR>
-    vmap <leader>gb :Gblame<CR>
-    nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
+  nmap <leader>gb :Gblame<CR>
+  vmap <leader>gb :Gblame<CR>
+  nmap <leader>gl :tabe %<CR>:Glog -- %<CR>
 endif
 
 if has_key(g:plugs, 'vim-signify')
   let g:signify_vcs_list = ['git']
-    nnoremap <leader>gt :SignifyToggle<CR>
-    nnoremap <leader>gd :SignifyHunkDiff<CR>
+  nnoremap <leader>gt :SignifyToggle<CR>
+  nnoremap <leader>gd :SignifyHunkDiff<CR>
+
+  " highlight SignifySignAdd    ctermfg=green  guifg=#00ff00 cterm=NONE gui=NONE
+    highlight SignifySignAdd    ctermfg=142   guifg=#b8bb26 cterm=NONE gui=NONE
+  " highlight SignifySignDelete ctermfg=red    guifg=#ff0000 cterm=NONE gui=NONE
+  highlight SignifySignDelete ctermfg=167    guifg=#fb4934 cterm=NONE gui=NONE
+  " highlight SignifySignChange ctermfg=yellow guifg=#ffff00 cterm=NONE gui=NONE
+  highlight SignifySignChange ctermfg=108 guifg=#8ec07c cterm=NONE gui=NONE
 endif
 
-" if has_key(g:plugs, 'vim-gutentags')
-"   let g:gutentags_enabled=0
-" endif
+if has_key(g:plugs, 'vim-gutentags')
+  let g:gutentags_enabled=0
+endif
 
 if has_key(g:plugs, 'vim-go')
   " Go syntax highlighting
@@ -581,10 +964,6 @@ if has_key(g:plugs, 'vim-go')
 
   augroup vim-go-conf
     autocmd!
-    "create custom mappings for Go files
-    "autocmd FileType go nmap <silent> <leader>tt  <Plug>(go-test)
-    "autocmd FileType go nmap <silent> <leader>tf <Plug>(go-test-func)
-    "autocmd FileType go nmap <silent> <leader>cr <Plug>(go-coverage-toggle)
     autocmd FileType go nmap <silent> <leader>d  <Plug>(go-describe)
 
     autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
@@ -609,11 +988,34 @@ if has_key(g:plugs, 'vim-go')
         call go#cmd#Build(0)
     endif
   endfunction
-
 endif
 
-" if has_key(g:plugs, 'indentLine')
-"     autocmd! User indentLine doautocmd indentLine Syntax
-"   let g:indentLine_color_term = 239
-"   let g:indentLine_color_gui = '#616161'
-" endif
+if has_key(g:plugs, 'vimux')
+    nnoremap <Leader>vp :VimuxPromptCommand<CR>
+    nnoremap <Leader>vc :VimuxCloseRunner<CR>
+    nnoremap <Leader>vl :VimuxRunLastCommand<CR>
+endif
+
+if has_key(g:plugs, 'indentLine')
+  autocmd! User indentLine doautocmd indentLine Syntax
+  let g:indentLine_color_term = 239
+  let g:indentLine_color_gui = '#616161'
+endif
+
+if has_key(g:plugs, 'quick-scope')
+  " Trigger a highlight in the appropriate direction when pressing these keys.
+  let g:qs_highlight_on_keys=['f', 'F', 't', 'T']
+  " Only underline the highlights instead of using custom colors.
+  highlight QuickScopePrimary gui=underline cterm=underline
+  highlight QuickScopeSecondary gui=underline cterm=underline
+endif
+
+
+
+" == Abbrs == {{{1
+source ~/.vim/abbr.vim
+
+" == Highlight == {{{1
+" hi! link SignColumn   LineNr
+" hi! link ShowMarksHLl DiffAdd
+" hi! link ShowMarksHLu DiffChange
