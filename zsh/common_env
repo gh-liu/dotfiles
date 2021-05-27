@@ -17,6 +17,9 @@ export DOCKER_CONF=~/env/docker/conf
 # vagrant
 export VGHOME=~/env/vm
 
+# vagrant
+export TMUXP=~/.tmuxp
+
 path=(
     $HOME/bin
     $GOPATH/bin                              # golang
