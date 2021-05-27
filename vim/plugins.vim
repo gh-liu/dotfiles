@@ -171,12 +171,12 @@ if has_key(g:plugs, 'ctrlsf.vim')
   let g:ctrlsf_auto_focus = {
         \ "at": "start",
         \ }
-    nmap     <leader>ff <Plug>CtrlSFPrompt
-    vmap     <leader>ff <Plug>CtrlSFVwordPath
-    vmap     <leader>fF <Plug>CtrlSFVwordExec
-    nmap     <leader>fw <Plug>CtrlSFCwordPath
-    nmap     <leader>fW <Plug>CtrlSFCwordExec
-  " nmap     <leader><leader>f <Plug>CtrlSFPwordExec
+    nmap   <leader>ff <Plug>CtrlSFPrompt
+    vmap   <leader>ff <Plug>CtrlSFVwordPath
+    vmap   <leader>fF <Plug>CtrlSFVwordExec
+    nmap   <leader>fw <Plug>CtrlSFCwordPath
+    nmap   <leader>fW <Plug>CtrlSFCwordExec
+  " nmap   <leader><leader>f <Plug>CtrlSFPwordExec
 
     nnoremap <leader>ft :CtrlSFToggle<CR>
   " nnoremap <silent> <leader>fj :CtrlSFFocus<CR>
@@ -191,12 +191,12 @@ imap <C-p> <esc>:<C-u>Files<cr>
 " == COC == {{{
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 if has_key(g:plugs, 'coc.nvim')
-  " Use <cr> to confirm comp  letion
+  " Use <cr> to confirm completion
     inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-  " To make <cr> select the first comp  letion item and confirm the comp  letion when no item has been selected
+  " To make <cr> select the first completion item and confirm the completion when no item has been selected
     inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<CR>"
 
-  " Use <tab> for trigger comp  letion and navigate to the next comp  lete item
+  " Use <tab> for trigger completion and navigate to the next complete item
     function! s:check_back_space() abort
       let col = col('.') - 1
       return !col || getline('.')[col - 1]  =~# '\s'
@@ -210,10 +210,10 @@ if has_key(g:plugs, 'coc.nvim')
       \ coc#expandableOrJumpable() ? "\<C-r>=coc#rpc#request('doKeymap', ['snippets-expand-jump',''])\<CR>" :
       \ <SID>check_back_space() ? "\<TAB>" :
       \ coc#refresh()
-  " Use <S-Tab> navigate to the previous comp  lete item
+  " Use <S-Tab> navigate to the previous complete item
     inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 
-  " Make <tab> used for trigger comp  letion, comp  letion confirm, snippet expand and jump like VSCode.
+  " Make <tab> used for trigger completion, completion confirm, snippet expand and jump like VSCode.
   " https://github.com/neoclide/coc-snippets
   let g:coc_snippet_next = '<tab>'
 
@@ -280,7 +280,7 @@ if has_key(g:plugs, 'coc.nvim')
   " Do default action for previous item.
     nnoremap <silent><nowait> <space>k  :<C-u>CocPrev<CR>
   " Resume latest coc list.
-    nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
+    nnoremap <silent><nowait> <space>p:<C-u>CocListResume<CR>
 
   " plugs settings:
   " coc-explorer
@@ -457,7 +457,7 @@ if has_key(g:plugs, 'vim-go')
   let g:go_doc_keywordprg_enabled = 0
   let g:go_debug_preserve_layout = 1
   let g:go_highlight_debug = 0
-  " comp  lete by coc.nvim
+  " complete by coc.nvim
   let g:go_code_completion_enabled = 0
   let g:go_test_show_name = 1
 
@@ -562,11 +562,11 @@ Plug 'tpope/vim-scriptease'
 
 " Plug 'ruanyl/vim-gh-line'
 
-" LSP and Comp  lete
+" LSP and Complete
 " Plug 'prabirshrestha/vim-lsp'
 " Plug 'mattn/vim-lsp-settings'
-" Plug 'prabirshrestha/asyncomp  lete.vim'
-" Plug 'prabirshrestha/asyncomp  lete-lsp.vim'
+" Plug 'prabirshrestha/asyncomplete.vim'
+" Plug 'prabirshrestha/asyncomplete-lsp.vim'
 
 " Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
 "
