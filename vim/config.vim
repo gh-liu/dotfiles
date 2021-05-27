@@ -62,8 +62,6 @@ if $COLORTERM == 'gnome-terminal'
   set t_Co=256
 endif
 set background=dark
-" Color Scheme
-" colorscheme jellybeans
 
 " Enable filetype plugins
 filetype on
@@ -92,6 +90,15 @@ set noerrorbells
 set showcmd   
 set splitright  
 set splitbelow 
+
+" Enable 24-bit true colors if your terminal supports it.
+if (has("termguicolors"))
+  " https://github.com/vim/vim/issues/993#issuecomment-255651605
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+
+  set termguicolors
+endif
 
 " TextEdit might fail if hidden is not set.
 set hidden

@@ -3,7 +3,19 @@ call plug#begin('~/.vim/plugged')
 " == Color == {{{1
 " == Theme == {{{2
 Plug 'gruvbox-community/gruvbox'
-  let g:gruvbox_contrast_dark = 'hard'
+if !exists('g:gruvbox_contrast_dark')
+  let g:gruvbox_contrast_dark='hard'
+endif
+" Specific colorscheme settings (must come after setting your colorscheme).
+" if (g:colors_name == 'gruvbox')
+"   if (&background == 'dark')
+"     hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
+"   else
+"     hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"     hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"     hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"   endif
+" endif
 Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 
