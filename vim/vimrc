@@ -67,7 +67,7 @@ Plug 'junegunn/fzf.vim'
 " Plug 'mileszs/ack.vim'
 
 " Tag
-Plug 'majutsushi/tagbar'
+Plug 'majutsushi/tagbar', { 'on': 'TagbarToggle' }
 " Plug 'ludovicchabant/vim-gutentags'
 
 " netrw
@@ -396,6 +396,9 @@ vnoremap <C-q> <esc>
 nnoremap <Leader>q :q<cr>
 nnoremap <Leader>Q :qa!<cr>
 
+" <Leader>c Close quickfix/location window
+" nnoremap <leader>c :cclose<bar>lclose<cr>
+
 " Esc quickly
 imap jj <Esc>
 imap jk <Esc>
@@ -603,6 +606,31 @@ function! s:export_all_mappings()
 endfun
 command! ExportAllMappings call s:export_all_mappings()
 
+" Change directory to the root of the Git repository
+function! s:root()
+  let root = systemlist('git rev-parse --show-toplevel')[0]
+  if v:shell_error
+    echo 'Not in git repo'
+  else
+    execute 'lcd' root
+    echo 'Changed directory to: '.root
+  endif
+endfunction
+command! Root call s:root()
+
+" Profile
+function! s:profile(bang)
+  if a:bang
+    profile pause
+    noautocmd qall
+  else
+    profile start /tmp/profile.log
+    profile func *
+    profile file *
+  endif
+endfunction
+command! -bang Profile call s:profile(<bang>0)
+
 
 " == Plugins Config == {{{1
 " gruvbox
@@ -610,15 +638,15 @@ if !exists('g:gruvbox_contrast_dark')
   let g:gruvbox_contrast_dark='hard'
 endif
 " Specific colorscheme settings (must come after setting your colorscheme).
-if (g:colors_name == 'gruvbox')
-  if (&background == 'dark')
-    hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
-  else
-    hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-    hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-    hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-  endif
-endif
+" if (g:colors_name == 'gruvbox')
+"   if (&background == 'dark')
+"     hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
+"   else
+"     hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"     hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"     hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"   endif
+" endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
   let g:rbpt_colorpairs = [
@@ -682,8 +710,10 @@ if has_key(g:plugs, 'vim-commentary')
 endif
 
 if has_key(g:plugs, 'splitjoin.vim')
-    nnoremap gss :SplitjoinSplit<cr>
-    nnoremap gsj :SplitjoinJoin<cr>
+  let g:splitjoin_split_mapping = ''
+  let g:splitjoin_join_mapping = ''
+  nnoremap gss :SplitjoinSplit<cr>
+  nnoremap gsj :SplitjoinJoin<cr>
 endif
 
 " if has_key(g:plugs, 'switch.vim')
@@ -732,9 +762,10 @@ if has_key(g:plugs, 'fzf.vim')
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
-  nnoremap  <leader>ff :Rg 
+  nnoremap <silent> <leader>ff :Rg 
+  xnoremap <silent> <Leader>ag       y:Ag <C-R>"<CR>
   nnoremap <silent> <Leader><Enter> :Buffers<CR>
-  nnoremap <silent> <Leader>l :Lines<CR>
+  nnoremap <silent> <Leader>L :Lines<CR>
   
   " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
   command! -bang -nargs=* Rg
@@ -918,12 +949,11 @@ if has_key(g:plugs, 'vim-signify')
   nnoremap <leader>gt :SignifyToggle<CR>
   nnoremap <leader>gd :SignifyHunkDiff<CR>
 
-  " highlight SignifySignAdd    ctermfg=green  guifg=#00ff00 cterm=NONE gui=NONE
+  if (g:colors_name == 'gruvbox')
     highlight SignifySignAdd    ctermfg=142   guifg=#b8bb26 cterm=NONE gui=NONE
-  " highlight SignifySignDelete ctermfg=red    guifg=#ff0000 cterm=NONE gui=NONE
-  highlight SignifySignDelete ctermfg=167    guifg=#fb4934 cterm=NONE gui=NONE
-  " highlight SignifySignChange ctermfg=yellow guifg=#ffff00 cterm=NONE gui=NONE
-  highlight SignifySignChange ctermfg=108 guifg=#8ec07c cterm=NONE gui=NONE
+    highlight SignifySignDelete ctermfg=167    guifg=#fb4934 cterm=NONE gui=NONE
+    highlight SignifySignChange ctermfg=108 guifg=#8ec07c cterm=NONE gui=NONE
+  endif
 endif
 
 if has_key(g:plugs, 'vim-gutentags')
@@ -968,7 +998,7 @@ if has_key(g:plugs, 'vim-go')
 
     autocmd FileType go nmap <silent> <leader>b   :GoDebugBreakpoint<cr>
 
-    autocmd FileType go nmap <silent> <leader><leader>b :<C-u>call <SID>build_go_files()<CR>
+    autocmd FileType go nmap <silent> <leader>B :<C-u>call <SID>build_go_files()<CR>
 
     autocmd FileType go nmap <silent> <Leader>td <Plug>(go-def-tab)
     " autocmd Filetype go
