@@ -1,5 +1,4 @@
-" BASIC CONFIG --------{{{
-" With a map leader it's possible to do extra key combinations
+" == Options == {{{1
 let mapleader=','
 noremap \ ,
 " let mapleader = ';'
@@ -15,7 +14,6 @@ set nocompatible
 set magic
 " Sets how many lines of history VIM has to remember
 set history=5000
-
 " Disable the use of the mouse
 set mouse-=a
 " Always show the status line
@@ -54,14 +52,14 @@ set cmdheight=2
 set autowrite
 
 " set complete-=i
-set pumheight=10             " Completion window max size
+set pumheight=10       " Completion window max size
 set completeopt=longest,menu
 
 " Enable syntax highlighting
 syntax enable
 " Enable 256 colors palette in Gnome Terminal
 if $COLORTERM == 'gnome-terminal'
-    set t_Co=256
+  set t_Co=256
 endif
 set background=dark
 " Color Scheme
@@ -95,12 +93,20 @@ set showcmd
 set splitright  
 set splitbelow 
 
-hi! link SignColumn   LineNr
-hi! link ShowMarksHLl DiffAdd
-hi! link ShowMarksHLu DiffChange
-" }}}
+" TextEdit might fail if hidden is not set.
+set hidden
+" Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
 
-" MAPPINGS --------{{{
+" == Mapping == {{{1
 nnoremap <F1> <Esc>
 inoremap <F1> <Esc>
 vnoremap <F1> <Esc>
@@ -269,59 +275,140 @@ nnoremap <silent> # #zz
 " change window size
 nnoremap <left>   <c-w>>
 nnoremap <right>  <c-w><
-nnoremap <up>     <c-w>-
+nnoremap <up>   <c-w>-
 nnoremap <down>   <c-w>+
 
-" TextEdit might fail if hidden is not set.
-set hidden
+" Toggle highlight
+noremap <silent><leader>/ :set nohls!<CR>
 
-" Don't pass messages to |ins-completion-menu|.
-set shortmess+=c
+" == Auto Command == {{{1
+augroup filetype_vim
+  autocmd!
+  autocmd FileType vim setlocal foldmethod=marker
+  " edit vimrc
+  nnoremap <leader>ev :vsplit $MYVIMRC<cr>
+  nnoremap <leader>sv :source $MYVIMRC<cr>
+augroup END
 
-" Always show the signcolumn, otherwise it would shift the text each time
-" diagnostics appear/become resolved.
-if has("nvim-0.5.0") || has("patch-8.1.1564")
-  " Recently vim can merge signcolumn and number column into one
-  set signcolumn=number
-else
-  set signcolumn=yes
+augroup filetype_tmux_conf
+  autocmd!
+  autocmd FileType tmux setlocal foldmethod=marker
+augroup END
+
+augroup json_lang
+  autocmd!
+  autocmd FileType json setlocal expandtab shiftwidth=2 tabstop=2
+augroup END
+
+augroup yaml_lang
+  autocmd!
+  autocmd FileType yaml setlocal expandtab shiftwidth=2 tabstop=2
+augroup END
+
+augroup go_lang
+  autocmd!
+  autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
+augroup END
+
+augroup vagrant
+  autocmd!
+  autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
+augroup END
+
+" open help page in a new tab
+function! s:helptab()
+  if &buftype == 'help'
+  wincmd T
+  nnoremap <buffer> q :q<cr>
+  endif
+endfun
+
+"open plug github repo in browser by press <CR>
+function! s:goto_github()
+  let s:repo = matchstr(expand("<cWORD>"), '\v[0-9A-Za-z\-\_\.]+/[0-9A-Za-z\-\_\.]+')
+  if empty(s:repo)
+    echo "GoToGithub: No repository found."
+  else
+    let s:url = 'https://github.com/' . s:repo
+    call netrw#BrowseX(s:url, 0)
+  end
+endfun
+
+function! s:setNorelativenumber()
+  " if it's number , set norelativenumber
+  if (&number == 1)
+  set norelativenumber
+  endif
+endfun
+
+function! s:setRelativenumber()
+  " if it's number , set relativenumber
+  if (&number == 1)
+  set relativenumber
+  endif
+endfun
+
+augroup vimrc
+  autocmd!
+  autocmd BufEnter *.txt call s:helptab()
+  autocmd vimenter * ++nested colorscheme gruvbox
+  autocmd InsertEnter * call s:setNorelativenumber() 
+  autocmd InsertLeave * call s:setRelativenumber()   
+
+  autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
+  " Highlight TODO, FIXME, NOTE, etc.
+  if v:version > 701
+  autocmd Syntax * call matchadd('Todo',  '\W\zs\(TODO\|FIXME\|CHANGED\|DONE\|XXX\|BUG\|HACK\)')
+  autocmd Syntax * call matchadd('Debug', '\W\zs\(NOTE\|INFO\|IDEA\|NOTICE\)')
+  endif
+
+  " if executable('ibus')
+    " autocmd InsertLeave * call system("CIMTE")
+  " endif
+augroup END
+
+
+" == Function == {{{1
+if !v:vim_did_enter && has('reltime')
+  let g:startuptime = reltime()
+  augroup vimrc-startuptime
+  autocmd! VimEnter * ++once
+  \        let g:startuptime = reltime(g:startuptime)
+  \        | redraw
+  \        | echomsg 'startuptime: ' .. reltimestr(g:startuptime)
+  augroup END
 endif
 
-" flod code: <leader>zz
-let s:FoldAll = 0
-function! ToggleAllFold()
-    if s:FoldAll == 0
-        exe "normal! zM"
-        let s:FoldAll = 1
-    else
-        exe "normal! zR"
-        let s:FoldAll = 0
-    endif
-endfun
-noremap <leader>zz :call ToggleAllFold()<cr>
-noremap <leader>zc za
-
-" set relativenumber
-" map <silent><F2> :set relativenumber!<CR>
+" let s:FoldAll = 0
+" function! ToggleAllFold()
+"   if s:FoldAll == 0
+"     exe "normal! zM"
+"     let s:FoldAll = 1
+"   else
+"     exe "normal! zR"
+"     let s:FoldAll = 0
+"   endif
+" endfun
+" noremap <leader>zz :call ToggleAllFold()<cr>
+" noremap <leader>zc za
 
 function! ToogleNumber()
-  if(&relativenumber == &number)
+  if (&relativenumber == &number)
     set relativenumber! number!
-  elseif(&number)
+  elseif (&number)
     set number!
   else
     set relativenumber!
   endif
-  set number?
+    set number?
 endfun
-
 " Toggle signcolumn. Works only on vim>=8.0 or NeoVim
 function! ToggleSignColumn()
-    if &number
-        set signcolumn=number
-    else
-        set signcolumn=no
-    endif
+  if &number
+    set signcolumn=number
+  else
+    set signcolumn=no
+  endif
 endfun
 
 function! ToggleSignColumnAndNumber()
@@ -331,13 +418,10 @@ endfun
 
 nnoremap <F2> :call ToggleSignColumnAndNumber()<CR>
 
-" Toggle highlight
-noremap <silent><leader>/ :set nohls!<CR>
-
 " export all vim mappings
 function! ExportAllMappings()
   redir! > vim_keys.txt
-    silent verbose map
+  silent verbose map
   redir END
 endfun
 
@@ -353,140 +437,10 @@ function! s:putline(how, map) abort
     exe 'normal! "'.v:register.a:how
     call setreg(v:register, body, type)
   endif
-  silent! call repeat#set("\<Plug>unimpairedPut".a:map)
+    silent! call repeat#set("\<Plug>unimpairedPut".a:map)
 endfunction
 nnoremap <silent> [p :call <SID>putline('[p', 'Above')<CR>
 nnoremap <silent> ]p :call <SID>putline(']p', 'Below')<CR>
-
-" returns vim command output
-" function! GetCommandOutput(command)
-"   let save_a = @a
-"   try
-"     silent! redir @a
-"     silent! execute a:command
-"     redir END
-"   finally
-"     " restore register
-"     let result = @a
-"     let @a = save_a
-"     return result
-"   endtry
-" endfun
-" }}}
-
-" AUTO CMD --------{{{
-augroup filetype_vim
-    autocmd!
-    autocmd FileType vim setlocal foldmethod=marker
-    " edit vimrc
-    nnoremap <leader>ev :vsplit $MYVIMRC<cr>
-    nnoremap <leader>sv :source $MYVIMRC<cr>
-    " autocmd FileType vim :iabbrev <buffer> --- --------{{
-augroup END
-
-augroup filetype_tmux_conf
-    autocmd!
-    autocmd FileType tmux setlocal foldmethod=marker
-    " autocmd FileType tmux :iabbrev <buffer> --- --------{{
-augroup END
-
-augroup json_lang
-    autocmd!
-"     autocmd BufNewFile,BufRead *.html setlocal nowrap
-"     autocmd FileType json nmap <leader> =  :%!jq .<CR>
-"     autocmd FileType json vmap <leader> =  :%!jq .<CR>
-    autocmd FileType json set sw=2 ts=2
-augroup END
-
-augroup yaml_lang
-    autocmd!
-autocmd FileType yaml setlocal ts=2 sts=2 sw=2 expandtab
-augroup END
-
-augroup vagrant
-  autocmd!
-  autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
-augroup END
-
-" open help page in a new tab
-function! s:helptab()
-  if &buftype == 'help'
-    wincmd T
-    nnoremap <buffer> q :q<cr>
-  endif
-endfun
-
-"open plug github repo in browser by press <CR>
-function! s:goto_github()
-    let s:repo = matchstr(expand("<cWORD>"), '\v[0-9A-Za-z\-\_\.]+/[0-9A-Za-z\-\_\.]+')
-    if empty(s:repo)
-        echo "GoToGithub: No repository found."
-    else
-        let s:url = 'https://github.com/' . s:repo
-        call netrw#BrowseX(s:url, 0)
-    end
-endfun
-
-function! s:setNorelativenumber()
-  " if it's number , set norelativenumber
-  if (&number == 1)
-    set norelativenumber
-  endif
-endfun
-
-function! s:setRelativenumber()
-  " if it's number , set relativenumber
-  if (&number == 1)
-    set relativenumber
-  endif
-endfun
-
-augroup vimrc
-    autocmd!
-    autocmd BufEnter *.txt call s:helptab()
-
-    autocmd vimenter * ++nested colorscheme gruvbox
-
-    autocmd InsertEnter * call s:setNorelativenumber() 
-    autocmd InsertLeave * call s:setRelativenumber()   
-
-    autocmd VimResized * wincmd =
-
-    if has("autocmd")
-        " Highlight TODO, FIXME, NOTE, etc.
-        if v:version > 701
-            autocmd Syntax * call matchadd('Todo',  '\W\zs\(TODO\|FIXME\|CHANGED\|DONE\|XXX\|BUG\|HACK\)')
-            autocmd Syntax * call matchadd('Debug', '\W\zs\(NOTE\|INFO\|IDEA\|NOTICE\)')
-        endif
-    endif
-
-    autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
-
-    " autocmd BufReadPost quickfix,location nnoremap <buffer> v <C-w><Enter><C-w>L
-    " autocmd BufReadPost quickfix,location nnoremap <buffer> s <C-w><Enter><C-w>K
-
-    " if executable('ibus')
-      " autocmd InsertLeave * call system("CIMTE")
-    " endif
-
-    autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
-    autocmd FileType yaml setlocal expandtab shiftwidth=2 tabstop=2
-    autocmd FileType json setlocal expandtab shiftwidth=2 tabstop=2
-augroup END
-
-" function! AutoSetFileHead()
-"     if &filetype == 'sh'
-"         call setline(1, "\#!/bin/bash")
-"     endif
-
-"     normal G
-"     normal o
-"     normal o
-" endfun
-" autocmd BufNewFile *.sh exec ":call AutoSetFileHead()"
-
-" repeat last commands
-nnoremap <silent> <leader><leader>r @:
 
 " echo the number under the cursor as binary, useful for bitwise operations
 function! s:echoBinary()
@@ -494,16 +448,30 @@ function! s:echoBinary()
 endfunction
 nnoremap <silent> gb :<C-u>call <SID>echoBinary()<CR>
 
-" }}}
+" returns vim command output
+" function! GetCommandOutput(command)
+"   let save_a = @a
+"   try
+"   silent! redir @a
+"   silent! execute a:command
+"   redir END
+"   finally
+"   " restore register
+"   let result = @a
+"   let @a = save_a
+"   return result
+"   endtry
+" endfun
 
-" ABBR --------{{{
+
+" == Abbr == {{{1
 iabbrev thsi this
 iabbrev cosnt const
 
 function! SetupCommandAbbrs(from, to)
   exec 'cnoreabbrev <expr> '.a:from
-        \ .' ((getcmdtype() ==# ":" && getcmdline() ==# "'.a:from.'")'
-        \ .'? ("'.a:to.'") : ("'.a:from.'"))'
+       \ .' ((getcmdtype() ==# ":" && getcmdline() ==# "'.a:from.'")'
+       \ .'? ("'.a:to.'") : ("'.a:from.'"))'
 endfun
 
 call SetupCommandAbbrs('H', 'h')
@@ -541,18 +509,15 @@ call SetupCommandAbbrs('GCK','GoCallstack')
 " Splitjoin
 call SetupCommandAbbrs('SJ','SplitjoinJoin')
 call SetupCommandAbbrs('SS','SplitjoinSplit')
+
 " vim-choosewin
 " call SetupCommandAbbrs('CW', 'ChooseWin')
 
+" markdown
 " call SetupCommandAbbrs('MP', 'MarkdownPreview')
-" }}}
 
-if !v:vim_did_enter && has('reltime')
-  let g:startuptime = reltime()
-  augroup vimrc-startuptime
-    autocmd! VimEnter * ++once
-    \                   let g:startuptime = reltime(g:startuptime)
-    \                 | redraw
-    \                 | echomsg 'startuptime: ' .. reltimestr(g:startuptime)
-  augroup END
-endif
+" == Highlight == {{{1
+hi! link SignColumn   LineNr
+hi! link ShowMarksHLl DiffAdd
+hi! link ShowMarksHLu DiffChange
+
