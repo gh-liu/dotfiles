@@ -5,6 +5,7 @@ call plug#begin('~/.vim/plugged')
 Plug 'gruvbox-community/gruvbox'
   let g:gruvbox_contrast_dark = 'hard'
 Plug 'joshdick/onedark.vim'
+Plug 'rakr/vim-one'
 
 " == Status Line == {{{2
 Plug 'itchyny/lightline.vim'
@@ -164,8 +165,7 @@ Plug 'benjifisher/matchit.zip'
 " endif
 
 " == Search == {{{1
-" Plug 'ctrlpvim/ctrlp.vim'
-Plug 'dyng/ctrlsf.vim'
+" Plug 'dyng/ctrlsf.vim' " Use Rg of fzf.vim
 if has_key(g:plugs, 'ctrlsf.vim')
   " let g:ctrlsf_default_view_mode = 'compact'
   let g:ctrlsf_auto_focus = {
@@ -176,14 +176,24 @@ if has_key(g:plugs, 'ctrlsf.vim')
     vmap     <leader>fF <Plug>CtrlSFVwordExec
     nmap     <leader>fw <Plug>CtrlSFCwordPath
     nmap     <leader>fW <Plug>CtrlSFCwordExec
-    
     nnoremap   <leader>ft :CtrlSFToggle<CR>
 endif
+
 Plug 'junegunn/fzf',        { 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
+if has_key(g:plugs, 'fzf.vim')
   let g:fzf_layout = { 'down': '~20%' }
-nmap <C-p> :Files<cr>
-imap <C-p> <esc>:<C-u>Files<cr>
+  nmap <C-p> :Files<cr>
+  imap <C-p> <esc>:<C-u>Files<cr>
+
+  nmap  <leader>ff :Rg 
+  " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
+  command! -bang -nargs=* Rg
+    \ call fzf#vim#grep(
+    \ "rg --column --line-number --no-heading --color=always --smart-case " .
+    \ <q-args>, 1, fzf#vim#with_preview(), <bang>0)
+endif
+" Plug 'ctrlpvim/ctrlp.vim'
 " Plug 'mileszs/ack.vim'
 
 " == COC == {{{
@@ -531,6 +541,12 @@ Plug 'mzlogin/vim-markdown-toc'
   let g:vmt_fence_text = 'TOC'
   let g:vmt_fence_closing_text = '/TOC'
 
+" == Writing == {{{1
+" Dim paragraphs above and below the active paragraph.
+Plug 'junegunn/limelight.vim'
+
+" Distraction free writing by removing UI elements and centering everything.
+Plug 'junegunn/goyo.vim'
 
 " == Misc == {{{1
 " Show keymaps begin with <leader>
@@ -572,5 +588,20 @@ Plug 'tpope/vim-scriptease'
 "   let g:netrw_nogx = 1 " disable netrw's gx mapping.
 "   nmap gx <Plug>(openbrowser-smart-search)
 "   vmap gx <Plug>(openbrowser-smart-search)
+
+" Run a diff on 2 directories.
+" Plug 'will133/vim-dirdiff'
+
+" Run a diff on 2 blocks of text.
+" Plug 'AndrewRadev/linediff.vim'
+
+" Automatically clear search highlights after you move your cursor.
+" Plug 'haya14busa/is.vim'
+
+" Handle multi-file find and replace.
+" Plug 'mhinz/vim-grepper'
+
+" Better display unwanted whitespace.
+" Plug 'ntpeters/vim-better-whitespace'
 
 call plug#end()
