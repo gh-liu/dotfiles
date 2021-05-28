@@ -627,6 +627,10 @@ function! s:profile(bang)
 endfunction
 command! -bang Profile call s:profile(<bang>0)
 
+" Full screen support
+if executable("wmctrl") && executable("xdotool")
+  command! FullScreenToggle call system("wmctrl -ir $(xdotool getwindowfocus) -b toggle,fullscreen")
+endif
 
 " == Plugins Config == {{{1
 " gruvbox
