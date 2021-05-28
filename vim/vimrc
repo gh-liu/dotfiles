@@ -6,7 +6,7 @@ Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 
 " Status Line
-Plug 'itchyny/lightline.vim'
+" Plug 'itchyny/lightline.vim'
 
 " Rainbow Parentheses
 Plug 'junegunn/rainbow_parentheses.vim'
@@ -14,7 +14,6 @@ Plug 'junegunn/rainbow_parentheses.vim'
 " Show Hex Colors
 if executable("go")
   Plug 'rrethy/vim-hexokinase', { 'do': 'make hexokinase','on': ['HexokinaseToggle']}
-  set termguicolors
   let g:Hexokinase_highlighters = ['background']
 endif
 
@@ -208,18 +207,31 @@ set background=dark
 
 
 " == Status Line == {{{1
-if has_key(g:plugs, 'lightline.vim')
-  let g:lightline = {
-        \ 'colorscheme': 'powerline',
-        \ 'active': {
-        \   'left': [ [ 'mode', 'paste' ],
-        \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
-        \ },
-        \ 'component_function': {
-        \   'gitbranch': 'FugitiveHead'
-        \ },
-        \ }
-endif
+" if has_key(g:plugs, 'lightline.vim')
+"   let g:lightline = {
+"         \ 'colorscheme': 'powerline',
+"         \ 'active': {
+"         \   'left': [ [ 'mode', 'paste' ],
+"         \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+"         \ },
+"         \ 'component_function': {
+"         \   'gitbranch': 'FugitiveHead'
+"         \ },
+"         \ }
+" endif
+" https://github.com/junegunn/dotfiles/blob/83a40932cac993925176c830d332f68ef445a19a/vimrc#L268
+function! s:statusline_expr()
+  let mod = "%{&modified ? '[+] ' : !&modifiable ? '[x] ' : ''}"
+  let ro  = "%{&readonly ? '[RO] ' : ''}"
+  let ft  = "%{len(&filetype) ? '['.&filetype.'] ' : ''}"
+  let fug = "%{exists('g:loaded_fugitive') ? fugitive#statusline() : ''}"
+  let sep = ' %= '
+  let pos = ' %-12(%l : %c%V%) '
+  let pct = ' %P'
+
+  return '[%n] %F %<'.mod.ro.ft.fug.sep.pos.'%*'.pct
+endfunction
+let &statusline = s:statusline_expr()
 
 
 " == Basic Settings == {{{1
@@ -235,7 +247,7 @@ set autoread
 set autowrite
 
 set history=5000
-set mouse-=a
+set mouse=a
 set laststatus=2
 
 set cursorline
