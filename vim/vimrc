@@ -630,16 +630,15 @@ command! -bang Profile call s:profile(<bang>0)
 if !exists('g:gruvbox_contrast_dark')
   let g:gruvbox_contrast_dark='hard'
 endif
-" TODO: the color of select aere
-" if (g:colors_name == 'gruvbox')
-"   if (&background == 'dark')
-"     " hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
-"   else
-"     " hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"     " hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"     " hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-"   endif
-" endif
+if (g:colors_name == 'gruvbox')
+  if (&background == 'dark')
+     hi Visual cterm=NONE ctermfg=NONE ctermbg=214 guifg=#282828 guibg=#fabd2f
+  else
+    " hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+    " hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+    " hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+  endif
+endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
   let g:rbpt_colorpairs = [
