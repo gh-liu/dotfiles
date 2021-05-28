@@ -642,6 +642,8 @@ endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
   let g:rainbow#blacklist = [121]
+  let g:rainbow#pairs = [['(', ')'], ['[', ']'], ['{', '}']]
+
   autocmd VimEnter * RainbowParentheses
 endif
 
