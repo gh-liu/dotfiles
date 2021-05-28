@@ -35,8 +35,8 @@ Plug 'kshenoy/vim-signature'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
-Plug 'arthurxavierx/vim-caser'
-  let g:caser_prefix = 'cr'
+" Plug 'arthurxavierx/vim-caser'
+"   let g:caser_prefix = 'cr'
 Plug 'andrewradev/splitjoin.vim'
 Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 " Plug 'junegunn/vim-easy-align'
@@ -305,10 +305,6 @@ nmap <Leader><C-f> <C-f>
 " nnoremap ; :
 " nnoremap <leader>; ;
 
-" Switch # *
-nnoremap # *
-nnoremap * #
-
 " Switch ` and '
 " By default, ' jumps to the marked line, ` jumps to the marked line and columnm
 nnoremap ' `
@@ -414,13 +410,14 @@ noremap <silent><leader>/ :set nohls!<CR>
 " Keep search pattern at the center of the screen
 nnoremap <silent> n nzz
 nnoremap <silent> N Nzz
-nnoremap <silent> * *zz
-nnoremap <silent> # #zz
+" Switch # *
+nnoremap <silent> * #zz
+nnoremap <silent> # *zz
 
 " Change window size
 nnoremap <left>   <c-w>>
 nnoremap <right>  <c-w><
-nnoremap <up>   <c-w>-
+nnoremap <up>     <c-w>-
 nnoremap <down>   <c-w>+
 
 nnoremap <leader>o o<esc>
@@ -633,16 +630,16 @@ command! -bang Profile call s:profile(<bang>0)
 if !exists('g:gruvbox_contrast_dark')
   let g:gruvbox_contrast_dark='hard'
 endif
-" Specific colorscheme settings (must come after setting your colorscheme).
-if (g:colors_name == 'gruvbox')
-  if (&background == 'dark')
-    hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
-  else
-    " hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-    " hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-    " hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
-  endif
-endif
+" TODO: the color of select aere
+" if (g:colors_name == 'gruvbox')
+"   if (&background == 'dark')
+"     " hi Visual cterm=NONE ctermfg=NONE ctermbg=237 guibg=#3a3a3a
+"   else
+"     " hi Visual cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"     " hi CursorLine cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"     " hi ColorColumn cterm=NONE ctermfg=NONE ctermbg=228 guibg=#f2e5bc
+"   endif
+" endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
   let g:rbpt_colorpairs = [
@@ -758,18 +755,24 @@ if has_key(g:plugs, 'fzf.vim')
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
-  nnoremap <silent> <leader>ff :Rg 
+  nnoremap <leader>ff :Rg 
   xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
+  nnoremap <silent> <leader>fw :call <SID>search_word_underline()<CR>
 
   nnoremap <silent> <Leader>L :Lines<CR>
   nnoremap <silent> <Leader>C :Colors<CR>
-    nnoremap <silent> <Leader><Enter> :Buffers<CR>
+  nnoremap <silent> <Leader><Enter> :Buffers<CR>
   
   " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
   command! -bang -nargs=* Rg
     \ call fzf#vim#grep(
     \ "rg --column --line-number --no-heading --color=always --smart-case " .
     \ <q-args>, 1, fzf#vim#with_preview(), <bang>0)
+
+  function! s:search_word_underline() abort
+    let l:cw = expand('<cword>')
+    execute 'Rg ' . l:cw
+  endfun
 endif
 
 if has_key(g:plugs, 'coc.nvim')
