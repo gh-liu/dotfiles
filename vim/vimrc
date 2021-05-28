@@ -35,8 +35,7 @@ Plug 'kshenoy/vim-signature'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
-" Plug 'arthurxavierx/vim-caser'
-"   let g:caser_prefix = 'cr'
+Plug 'tpope/vim-abolish'
 Plug 'andrewradev/splitjoin.vim'
 Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 " Plug 'junegunn/vim-easy-align'
@@ -552,6 +551,7 @@ augroup myfiletype
 
   autocmd FileType json setlocal expandtab shiftwidth=2 tabstop=2
   autocmd FileType yaml setlocal expandtab shiftwidth=2 tabstop=2
+  autocmd FileType vim setlocal expandtab shiftwidth=2 tabstop=2
   autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
 
   autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
