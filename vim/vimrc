@@ -9,7 +9,7 @@ Plug 'rakr/vim-one'
 Plug 'itchyny/lightline.vim'
 
 " Rainbow Parentheses
-Plug 'kien/rainbow_parentheses.vim'
+Plug 'junegunn/rainbow_parentheses.vim'
 
 " Show Hex Colors
 if executable("go")
@@ -146,10 +146,10 @@ Plug 'junegunn/goyo.vim'
 "   set timeoutlen=360
 " endif
 
-Plug 'szw/vim-smartclose'
-if has_key(g:plugs, 'vim-smartclose')
-  let g:smartclose_default_mapping_key = '<leader>c'
-endif
+" Plug 'szw/vim-smartclose'
+" if has_key(g:plugs, 'vim-smartclose')
+"   let g:smartclose_default_mapping_key = '<leader>c'
+" endif
 
 " Vim sugar for the UNIX shell commands 
 Plug 'tpope/vim-eunuch'
@@ -388,7 +388,7 @@ nnoremap <Leader>q :q<cr>
 nnoremap <Leader>Q :qa!<cr>
 
 " <Leader>c Close quickfix/location window
-" nnoremap <leader>c :cclose<bar>lclose<cr>
+nnoremap <leader>c :cclose<bar>lclose<cr>
 
 " Esc quickly
 imap jj <Esc>
@@ -641,30 +641,7 @@ if (g:colors_name == 'gruvbox')
 endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
-  let g:rbpt_colorpairs = [
-        \ ['brown',       'RoyalBlue3'],
-        \ ['Darkblue',    'SeaGreen3'],
-        \ ['darkgray',    'DarkOrchid3'],
-        \ ['darkgreen',   'firebrick3'],
-        \ ['darkcyan',    'RoyalBlue3'],
-        \ ['darkred',     'SeaGreen3'],
-        \ ['darkmagenta', 'DarkOrchid3'],
-        \ ['brown',       'firebrick3'],
-        \ ['gray',        'RoyalBlue3'],
-        \ ['darkmagenta', 'DarkOrchid3'],
-        \ ['Darkblue',    'firebrick3'],
-        \ ['darkgreen',   'RoyalBlue3'],
-        \ ['darkcyan',    'SeaGreen3'],
-        \ ['darkred',     'DarkOrchid3'],
-        \ ['red',         'firebrick3'],
-        \ ]
-
-  let g:rbpt_max = 16
-  let g:rbpt_loadcmd_toggle = 0
-    autocmd VimEnter * RainbowParenthesesToggle
-    autocmd Syntax * RainbowParenthesesLoadRound
-    autocmd Syntax * RainbowParenthesesLoadSquare
-    autocmd Syntax * RainbowParenthesesLoadBraces
+  autocmd VimEnter * RainbowParentheses
 endif
 
 if has_key(g:plugs, 'vim-signature')
