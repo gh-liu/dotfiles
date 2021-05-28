@@ -28,7 +28,7 @@ Plug 'itchyny/vim-cursorword'
 " Marks
 Plug 'kshenoy/vim-signature'
 
-" Indent Line 
+" Indent Line
 " Plug 'Yggdroot/indentLine'
 
 " Edit
@@ -49,7 +49,7 @@ Plug 'benjifisher/matchit.zip'
 " Plug 'easymotion/vim-easymotion'
 Plug 'unblevable/quick-scope'
 
-" text object 
+" text object
 " Plug 'kana/vim-textobj-user'
 " Plug 'kana/vim-textobj-line'
 " Plug 'kana/vim-textobj-entire'
@@ -62,7 +62,7 @@ Plug 'junegunn/fzf.vim'
 " Handle multi-file find and replace.
 " Plug 'mhinz/vim-grepper'
 
-" Plug 'dyng/ctrlsf.vim' 
+" Plug 'dyng/ctrlsf.vim'
 " Plug 'ctrlpvim/ctrlp.vim'
 " Plug 'mileszs/ack.vim'
 
@@ -90,9 +90,11 @@ Plug 'mbbill/undotree', { 'on': 'UndotreeToggle' }
 " Git
 " Plug 'tpope/vim-rhubarb'
 Plug 'tpope/vim-fugitive'
+" Git commit browser. Requires fugitive.
+Plug 'junegunn/gv.vim'
 
 " Shows a git diff
-Plug 'mhinz/vim-signify', { 'on': 'SignifyToggle' } 
+Plug 'mhinz/vim-signify', { 'on': 'SignifyToggle' }
 
 " Show the git message
 " Plug 'rhysd/git-messenger.vim'
@@ -131,12 +133,9 @@ Plug 'mzlogin/vim-markdown-toc'
   let g:vmt_fence_closing_text = '/TOC'
 
 " Writing
-" Dim paragraphs above and below the active paragraph.
-Plug 'junegunn/limelight.vim'
-  let g:limelight_conceal_ctermfg=244
-
-" Distraction free writing by removing UI elements and centering everything.
-Plug 'junegunn/goyo.vim'
+" Plug 'junegunn/limelight.vim'
+  " let g:limelight_conceal_ctermfg=244
+" Plug 'junegunn/goyo.vim'
 
 " Misc
 " Show keymaps begin with <leader>
@@ -151,12 +150,16 @@ Plug 'junegunn/goyo.vim'
 "   let g:smartclose_default_mapping_key = '<leader>c'
 " endif
 
-" Vim sugar for the UNIX shell commands 
+" Vim sugar for the UNIX shell commands
 Plug 'tpope/vim-eunuch'
 
 " For making Vim plugins
 Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
+
+" Share Code
+Plug 'junegunn/vim-carbon-now-sh'
+let g:carbon_now_sh_options = { 't': 'oceanic-next'}
 
 " LSP and Complete
 " Plug 'prabirshrestha/vim-lsp'
@@ -529,7 +532,7 @@ augroup myfunc
   " endif
 
   autocmd BufEnter *.txt call s:helptab()
-  autocmd InsertEnter * call s:setNorelativenumber() 
+  autocmd InsertEnter * call s:setNorelativenumber()
   autocmd InsertLeave * call s:setRelativenumber()
 
   autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
@@ -710,8 +713,8 @@ endif
 "     map <Leader><Leader>j <Plug>(easymotion-j)
 "     map <Leader><Leader>k <Plug>(easymotion-k)
 
-"     map <Leader><Leader>W <Plug>(easymotion-W) 
-"     map <Leader><Leader>w <Plug>(easymotion-w) 
+"     map <Leader><Leader>W <Plug>(easymotion-W)
+"     map <Leader><Leader>w <Plug>(easymotion-w)
 "     map <Leader><Leader>N <Plug>(easymotion-N)
 "     map <Leader><Leader>n <Plug>(easymotion-n)
 " endif
@@ -734,14 +737,14 @@ if has_key(g:plugs, 'fzf.vim')
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
-  nnoremap <leader>ff :Rg 
+  nnoremap <leader>ff :Rg
   xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
   nnoremap <silent> <leader>fw :call <SID>search_word_underline()<CR>
 
   nnoremap <silent> <Leader>L :Lines<CR>
   nnoremap <silent> <Leader>C :Colors<CR>
   nnoremap <silent> <Leader><Enter> :Buffers<CR>
-  
+
   " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
   command! -bang -nargs=* Rg
     \ call fzf#vim#grep(
