@@ -641,6 +641,7 @@ if (g:colors_name == 'gruvbox')
 endif
 
 if has_key(g:plugs, 'rainbow_parentheses.vim')
+  let g:rainbow#blacklist = [121]
   autocmd VimEnter * RainbowParentheses
 endif
 
