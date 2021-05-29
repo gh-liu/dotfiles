@@ -759,7 +759,7 @@ if has_key(g:plugs, 'fzf.vim')
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
-  nnoremap <leader>ff :Rg
+  nnoremap <leader>ff :Rg 
   xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
   nnoremap <silent> <leader>fw :call <SID>search_word_underline()<CR>
 
