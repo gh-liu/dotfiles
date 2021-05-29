@@ -90,7 +90,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'junegunn/gv.vim'
 
 " Shows a git diff
-Plug 'mhinz/vim-signify', { 'on': 'SignifyToggle' }
+Plug 'mhinz/vim-signify'
 
 " Show the git message
 " Plug 'rhysd/git-messenger.vim'
@@ -212,11 +212,12 @@ function! s:statusline_expr()
   " let ff  = "%{len(&fileformat) ? '['.&fileformat.'] ' : ''}"
   " let fe  = "%{len(&fileencoding) ? '['.&fileencoding.'] ' : ''}"
   let fug = "%{exists('g:loaded_fugitive') ? fugitive#statusline() : ''}"
+  let sgf = "%{exists('g:loaded_signify') ? sy#repo#get_stats_decorated() : ''}"
   let sep = ' %= '
   let pos = ' %-12(%l : %c%V%) '
   let pct = ' %P'
 
-  return '[%n] %F %<'.mod.ro.ft.fug.sep.pos.'%*'.pct
+  return '[%n] %F %<'.mod.ro.ft.fug.sgf.sep.pos.'%*'.pct
 endfunction
 let &statusline = s:statusline_expr()
 
