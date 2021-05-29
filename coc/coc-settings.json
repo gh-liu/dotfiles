@@ -53,6 +53,7 @@
       ]
     }
   },
+  "snippets.loadFromExtensions": false,
   "snippets.userSnippetsDirectory": "~/.vim/snippets",
   "snippets.ultisnips.directories": [
     "UltiSnips",

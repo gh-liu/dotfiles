@@ -14,8 +14,15 @@ call SetupCommandAbbrs('LE', 'Lexplore')
 call SetupCommandAbbrs('RG', 'Rg')
 
 " coc-nvim
-call SetupCommandAbbrs('CL', 'CocList')
 call SetupCommandAbbrs('CC', 'CocConfig')
+call SetupCommandAbbrs('CL', 'CocList')
+call SetupCommandAbbrs('CLD', 'CocList diagnostics')
+call SetupCommandAbbrs('CLE', 'CocList extensions')
+call SetupCommandAbbrs('CLC', 'CocList commands')
+call SetupCommandAbbrs('CLO', 'CocList outline')
+call SetupCommandAbbrs('CLS', 'CocList symbols')
+call SetupCommandAbbrs('CLL', 'CocListResume')
+
 " call SetupCommandAbbrs('S', 'CocSearch')
 " call SetupCommandAbbrs('CR', 'CocRestart')
 
