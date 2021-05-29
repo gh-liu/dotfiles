@@ -217,7 +217,7 @@ function! s:statusline_expr()
   let pos = ' %-12(%l : %c%V%) '
   let pct = ' %P'
 
-  return '[%n] %F %<'.mod.ro.ft.fug.sgf.sep.pos.'%*'.pct
+  return '[%n] %F %<'.mod.ro.fug.sgf.sep.ft.pos.'%*'.pct
 endfunction
 let &statusline = s:statusline_expr()
 
@@ -265,6 +265,8 @@ set cmdheight=2
 
 set pumheight=10
 set completeopt=longest,menu
+set complete-=i   " disable scanning included files
+set complete-=t   " disable searching tags
 
 set nobackup
 set nowb
@@ -344,6 +346,10 @@ endfor
 
 " Move current window to a new tab
 nnoremap <Leader>wt <C-w>T
+
+" Quickly move current line
+nnoremap [e  :move-2<cr>
+nnoremap ]e  :move+1<cr>
 
 nmap <C-j> <C-W>j
 nmap <C-k> <C-W>k
@@ -438,6 +444,13 @@ nnoremap <Leader>r :%s///g<Left><Left>
 nnoremap <Leader>rc :%s///gc<Left><Left><Left>
 xnoremap <Leader>r :s///g<Left><Left>
 xnoremap <Leader>rc :s///gc<Left><Left><Left>
+
+" Don't lose selection when shifting sidewards
+xnoremap <  <gv
+xnoremap >  >gv
+
+" TODO: Quickly edit macros
+" nnoremap <leader>m  :<c-u><c-r><c-r>='let @'. v:register .' = '. string(getreg(v:register))<cr><c-f><left>
 
 function! ToogleNumber()
   if (&relativenumber == &number)
