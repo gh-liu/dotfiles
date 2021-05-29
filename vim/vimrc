@@ -5,9 +5,6 @@ Plug 'gruvbox-community/gruvbox'
 Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 
-" Status Line
-" Plug 'itchyny/lightline.vim'
-
 " Rainbow Parentheses
 Plug 'junegunn/rainbow_parentheses.vim'
 
@@ -45,8 +42,8 @@ Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 " Extended "%" matching
 Plug 'benjifisher/matchit.zip'
 
-" Plug 'easymotion/vim-easymotion'
-Plug 'unblevable/quick-scope'
+Plug 'easymotion/vim-easymotion'
+" Plug 'unblevable/quick-scope'
 
 " text object
 " Plug 'kana/vim-textobj-user'
@@ -149,6 +146,9 @@ Plug 'mzlogin/vim-markdown-toc'
 "   let g:smartclose_default_mapping_key = '<leader>c'
 " endif
 
+" Run a diff on 2 blocks of text.
+Plug 'AndrewRadev/linediff.vim'
+
 " Vim sugar for the UNIX shell commands
 Plug 'tpope/vim-eunuch'
 
@@ -156,8 +156,8 @@ Plug 'tpope/vim-eunuch'
 Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
 
-" Share Code
-Plug 'junegunn/vim-carbon-now-sh'
+" Share Code 
+Plug 'junegunn/vim-carbon-now-sh', { 'on': 'CarbonNowSh' }
 let g:carbon_now_sh_options = { 't': 'oceanic-next'}
 
 " LSP and Complete
@@ -175,9 +175,6 @@ let g:carbon_now_sh_options = { 't': 'oceanic-next'}
 
 " Run a diff on 2 directories.
 " Plug 'will133/vim-dirdiff'
-
-" Run a diff on 2 blocks of text.
-" Plug 'AndrewRadev/linediff.vim'
 
 " Automatically clear search highlights after you move your cursor.
 " Plug 'haya14busa/is.vim'
@@ -207,23 +204,13 @@ set background=dark
 
 
 " == Status Line == {{{1
-" if has_key(g:plugs, 'lightline.vim')
-"   let g:lightline = {
-"         \ 'colorscheme': 'powerline',
-"         \ 'active': {
-"         \   'left': [ [ 'mode', 'paste' ],
-"         \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
-"         \ },
-"         \ 'component_function': {
-"         \   'gitbranch': 'FugitiveHead'
-"         \ },
-"         \ }
-" endif
 " https://github.com/junegunn/dotfiles/blob/83a40932cac993925176c830d332f68ef445a19a/vimrc#L268
 function! s:statusline_expr()
   let mod = "%{&modified ? '[+] ' : !&modifiable ? '[x] ' : ''}"
   let ro  = "%{&readonly ? '[RO] ' : ''}"
-  let ft  = "%{len(&filetype) ? '['.&filetype.'] ' : ''}"
+  let ft  = "%{len(&filetype) ? '['.&filetype.'] ' : '[No ft]'}"
+  " let ff  = "%{len(&fileformat) ? '['.&fileformat.'] ' : ''}"
+  " let fe  = "%{len(&fileencoding) ? '['.&fileencoding.'] ' : ''}"
   let fug = "%{exists('g:loaded_fugitive') ? fugitive#statusline() : ''}"
   let sep = ' %= '
   let pos = ' %-12(%l : %c%V%) '
@@ -720,20 +707,25 @@ endif
 "     nmap <Leader>a <Plug>(EasyAlign)
 " endif
 
-" if has_key(g:plugs, 'vim-easymotion')
-"   let g:EasyMotion_do_mapping = 0
-"   let g:EasyMotion_smartcase = 1
-"     map <Leader><leader>. <Plug>(easymotion-repeat)
-"     map <Leader><leader>h <Plug>(easymotion-linebackward)
-"     map <Leader><leader>l <Plug>(easymotion-lineforward)
-"     map <Leader><Leader>j <Plug>(easymotion-j)
-"     map <Leader><Leader>k <Plug>(easymotion-k)
+if has_key(g:plugs, 'vim-easymotion')
+  let g:EasyMotion_do_mapping = 0
+  let g:EasyMotion_smartcase = 1
+  let g:EasyMotion_enter_jump_first = 1 
 
-"     map <Leader><Leader>W <Plug>(easymotion-W)
-"     map <Leader><Leader>w <Plug>(easymotion-w)
-"     map <Leader><Leader>N <Plug>(easymotion-N)
-"     map <Leader><Leader>n <Plug>(easymotion-n)
-" endif
+  nmap f <Plug>(easymotion-s)
+  nmap F <Plug>(easymotion-bd-w)
+
+  map <Leader><leader>. <Plug>(easymotion-repeat)
+  map <Leader><leader>h <Plug>(easymotion-linebackward)
+  map <Leader><leader>l <Plug>(easymotion-lineforward)
+  map <Leader><Leader>j <Plug>(easymotion-j)
+  map <Leader><Leader>k <Plug>(easymotion-k)
+
+  map <Leader><Leader>W <Plug>(easymotion-W)
+  map <Leader><Leader>w <Plug>(easymotion-w)
+  map <Leader><Leader>N <Plug>(easymotion-N)
+  map <Leader><Leader>n <Plug>(easymotion-n)
+endif
 
 " if has_key(g:plugs, 'ctrlsf.vim')
 "   " let g:ctrlsf_default_view_mode = 'compact'
