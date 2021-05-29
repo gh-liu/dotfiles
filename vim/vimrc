@@ -828,7 +828,7 @@ if has_key(g:plugs, 'coc.nvim')
 
     augroup coc-conf
       autocmd!
-    " goto code navigation.
+      " goto code navigation.
       autocmd VimEnter * nmap <silent> gd <Plug>(coc-definition)
       autocmd VimEnter * nmap <silent> gy <Plug>(coc-type-definition)
       autocmd VimEnter * nmap <silent> gi <Plug>(coc-implementation)
@@ -841,6 +841,9 @@ if has_key(g:plugs, 'coc.nvim')
       autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
 
       autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+
+      nmap <C-a> <C-o>
+      nmap <C-d> <Plug>(coc-definition)
     augroup END
 
   " Add `:Format` command to format current buffer.
@@ -967,22 +970,37 @@ endif
 
 if has_key(g:plugs, 'vim-go')
   " Go syntax highlighting
+  let g:go_highlight_types = 1
   let g:go_highlight_fields = 1
   let g:go_highlight_functions = 1
   let g:go_highlight_function_calls = 1
   let g:go_highlight_extra_types = 1
   let g:go_highlight_operators = 1
+  let g:go_highlight_generate_tags = 1
+  let g:go_highlight_build_constraints = 1
+  let g:go_highlight_debug = 0
 
   " Status line types/signatures
   let g:go_auto_type_info = 1
+
   " disable K
   let g:go_doc_keywordprg_enabled = 0
-  let g:go_debug_preserve_layout = 1
-  let g:go_highlight_debug = 0
+
   " complete by coc.nvim
   let g:go_code_completion_enabled = 0
+
   let g:go_test_show_name = 1
 
+  " run go imports on file save
+  let g:go_fmt_command = "goimports"
+
+  let g:go_debug_preserve_layout = 1
+  let g:go_debug_windows = {
+              \ 'vars':       'leftabove 30vnew',
+              \ 'stack':      'leftabove 20new',
+              \ 'goroutines': 'leftabove 10new',
+              \ 'out':        'botright  5new',
+    \ }
   let g:go_debug_mappings = {
       \ '(go-debug-stepout)':    {'key': '<F6>'},
       \ '(go-debug-step)':       {'key': '<F7>'},
@@ -990,12 +1008,7 @@ if has_key(g:plugs, 'vim-go')
       \ '(go-debug-continue)':   {'key': '<F9>'},
       \ '(go-debug-print)':      {'key': '<F10>'},
       \ }
-  let g:go_debug_windows = {
-              \ 'vars':       'leftabove 30vnew',
-              \ 'stack':      'leftabove 20new',
-              \ 'goroutines': 'leftabove 10new',
-              \ 'out':        'botright  5new',
-    \ }
+
 
   augroup vim-go-conf
     autocmd!
