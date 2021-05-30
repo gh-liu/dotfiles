@@ -214,10 +214,10 @@ function! s:statusline_expr()
   let fug = "%{exists('g:loaded_fugitive') ? fugitive#statusline() : ''}"
   let sgf = "%{exists('g:loaded_signify') ? sy#repo#get_stats_decorated() : ''}"
   let sep = ' %= '
-  let pos = ' %-12(%l : %c%V%) '
+  let pos = ' %-12(%l/%L : %c%V%) '
   let pct = ' %P'
 
-  return '[%n] %F %<'.mod.ro.fug.sgf.sep.ft.pos.'%*'.pct
+  return '[%n] %F %<'.mod.ro.ft.fug.sep.sgf.pos.'%*'.pct
 endfunction
 let &statusline = s:statusline_expr()
 
@@ -992,7 +992,7 @@ if has_key(g:plugs, 'vim-go')
   let g:go_test_show_name = 1
 
   " run go imports on file save
-  let g:go_fmt_command = "goimports"
+  " let g:go_fmt_command = "goimports"
 
   let g:go_debug_preserve_layout = 1
   let g:go_debug_windows = {
