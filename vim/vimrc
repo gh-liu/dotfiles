@@ -36,10 +36,7 @@ Plug 'andrewradev/splitjoin.vim'
 " Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 " Plug 'junegunn/vim-easy-align'
 " Plug 'AndrewRadev/switch.vim'
-Plug 'mg979/vim-visual-multi', {'branch': 'master'}
-let g:VM_maps = {}
-let g:VM_maps['Find Under']='<C-m>'
-let g:VM_maps['Find Subword Under']='<C-m>'
+" Plug 'mg979/vim-visual-multi', {'branch': 'master'}
 
 " Move
 " Extended "%" matching
@@ -879,7 +876,7 @@ if has_key(g:plugs, 'coc.nvim')
 
     augroup coc-conf
       autocmd!
-      " autocmd VimEnter * nnoremap <silent><nowait>gh :call CocActionAsync('doHover')<CR>
+      autocmd VimEnter * nnoremap <silent><nowait>gh :call CocActionAsync('doHover')<CR>
       autocmd VimEnter * nnoremap <silent><nowait>gd :call CocActionAsync('jumpDefinition')<CR>
       autocmd VimEnter * nnoremap <silent><nowait>gD :call CocActionAsync('jumpDefinition', 'vsplit')<CR>
       " autocmd VimEnter * nmap <silent> gd <Plug>(coc-definition)
