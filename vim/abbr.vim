@@ -14,6 +14,7 @@ call SetupCommandAbbrs('LE', 'Lexplore')
 call SetupCommandAbbrs('RG', 'Rg')
 
 " coc-nvim
+call SetupCommandAbbrs('CS', 'CocSearch')
 call SetupCommandAbbrs('CR', 'CocRestart')
 call SetupCommandAbbrs('CC', 'CocConfig')
 call SetupCommandAbbrs('CL', 'CocList')
@@ -23,8 +24,6 @@ call SetupCommandAbbrs('CLC', 'CocList commands')
 call SetupCommandAbbrs('CLO', 'CocList outline')
 call SetupCommandAbbrs('CLS', 'CocList symbols')
 call SetupCommandAbbrs('CLL', 'CocListResume')
-
-" call SetupCommandAbbrs('S', 'CocSearch')
 
 " vim-plug
 call SetupCommandAbbrs('PU', 'PlugUpdate')

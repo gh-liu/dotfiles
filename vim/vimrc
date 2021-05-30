@@ -33,10 +33,13 @@ Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-abolish'
 Plug 'andrewradev/splitjoin.vim'
-Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
+" Plug 'bronson/vim-trailing-whitespace', { 'on': 'FixWhitespace' }
 " Plug 'junegunn/vim-easy-align'
 " Plug 'AndrewRadev/switch.vim'
-" Plug 'mg979/vim-visual-multi', {'branch': 'master'}
+Plug 'mg979/vim-visual-multi', {'branch': 'master'}
+let g:VM_maps = {}
+let g:VM_maps['Find Under']='<C-m>'
+let g:VM_maps['Find Subword Under']='<C-m>'
 
 " Move
 " Extended "%" matching
@@ -325,6 +328,9 @@ set shortmess+=c
 set updatetime=300
 set noerrorbells
 
+set splitright
+set splitbelow
+
 set tags=./tags;/
 
 filetype on
@@ -486,6 +492,9 @@ nnoremap <Leader>r :%s///g<Left><Left>
 nnoremap <Leader>rc :%s///gc<Left><Left><Left>
 xnoremap <Leader>r :s///g<Left><Left>
 xnoremap <Leader>rc :s///gc<Left><Left><Left>
+
+" Remove whitespace
+noremap <silent><leader>CW :%s/\s\+$//<CR>
 
 " Don't lose selection when shifting sidewards
 xnoremap <  <gv
@@ -870,13 +879,18 @@ if has_key(g:plugs, 'coc.nvim')
 
     augroup coc-conf
       autocmd!
-      " goto code navigation.
-      autocmd VimEnter * nmap <silent> gd <Plug>(coc-definition)
+      " autocmd VimEnter * nnoremap <silent><nowait>gh :call CocActionAsync('doHover')<CR>
+      autocmd VimEnter * nnoremap <silent><nowait>gd :call CocActionAsync('jumpDefinition')<CR>
+      autocmd VimEnter * nnoremap <silent><nowait>gD :call CocActionAsync('jumpDefinition', 'vsplit')<CR>
+      " autocmd VimEnter * nmap <silent> gd <Plug>(coc-definition)
       autocmd VimEnter * nmap <silent> gy <Plug>(coc-type-definition)
       autocmd VimEnter * nmap <silent> gi <Plug>(coc-implementation)
       autocmd VimEnter * nmap <silent> gr <Plug>(coc-references)
 
       autocmd VimEnter * nmap <silent> <leader>rn <Plug>(coc-rename)
+      autocmd VimEnter * nmap <silent> <leader>rf <Plug>(coc-refactor)
+      autocmd VimEnter * nmap <silent> <leader>ca <Plug>(coc-codeaction)
+      autocmd VimEnter * nmap <silent> <leader>cs <Plug>(coc-codeaction-selected)
       autocmd VimEnter * nmap <silent> <leader>fc <Plug>(coc-fix-current)
 
       autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
@@ -1091,6 +1105,12 @@ endif
 "   let g:indentLine_color_term = 239
 "   let g:indentLine_color_gui = '#616161'
 " endif
+
+if has_key(g:plugs, 'vim-visual-multi')
+  let g:VM_maps = {}
+  let g:VM_maps['Find Under']='<C-m>'
+  let g:VM_maps['Find Subword Under']='<C-m>'
+endif
 
 if has_key(g:plugs, 'quick-scope')
   " Trigger a highlight in the appropriate direction when pressing these keys.
