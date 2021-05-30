@@ -204,6 +204,7 @@ set background=dark
 
 
 " == Status Line == {{{1
+set laststatus=2
 " https://github.com/junegunn/dotfiles/blob/83a40932cac993925176c830d332f68ef445a19a/vimrc#L268
 function! s:statusline_expr()
   let mod = "%{&modified ? '[+] ' : !&modifiable ? '[x] ' : ''}"
@@ -221,6 +222,42 @@ function! s:statusline_expr()
 endfunction
 let &statusline = s:statusline_expr()
 
+" == Tab Line == {{{1
+function! Tabline()
+  let s = ''
+  for i in range(tabpagenr('$'))
+    " range() start from 0, but the number of tab start from 1.
+    let tabnr = i + 1 
+    " Gets current window of current tab.
+    let winnr = tabpagewinnr(tabnr)
+    " Each item in the list is the number of the buffer associated with each windows in the current tab.
+    let buflist = tabpagebuflist(tabnr)
+    " Gets current buffer number.
+    let bufnr = buflist[winnr - 1]
+    " Gets the name of the current buffer in the current window of the current tab.
+    let bufname = bufname(bufnr)
+
+    " Use "%1T" for the first tab, etc.
+    let s .= '%' . tabnr . 'T' 
+    " Highlight the current tab
+    let s .= (tabnr == tabpagenr() ? '%#TabLineSel#' : '%#TabLine#')
+    " Current tab number
+    let s .= ' ' . tabnr .':'
+    let s .= (bufname != '' ? '['. fnamemodify(bufname, ':t') . '] ' : '[No Name] ')
+    " Append '[+]' if the buffer of the current tab modified
+    let bufmodified = getbufvar(bufnr, "&mod")
+    if bufmodified
+      let s .= '[+] '
+    endif
+  endfor
+
+  let s .= '%#TabLineFill#'
+  " Use "%X" items for the closing labels.
+  let s .= '%=%999XX'
+  return s
+endfunction
+set tabline=%!Tabline()
+
 
 " == Basic Settings == {{{1
 let mapleader      = ','
@@ -236,7 +273,6 @@ set autowrite
 
 set history=5000
 set mouse=a
-set laststatus=2
 
 set cursorline
 set cursorcolumn
