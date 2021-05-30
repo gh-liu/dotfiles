@@ -2,7 +2,7 @@
 call plug#begin('~/.vim/plugged')
 " Theme
 Plug 'gruvbox-community/gruvbox'
-Plug 'joshdick/onedark.vim'
+" Plug 'joshdick/onedark.vim'
 Plug 'rakr/vim-one'
 
 " Rainbow Parentheses
@@ -258,6 +258,10 @@ function! Tabline()
 endfunction
 set tabline=%!Tabline()
 
+" hi TabLine      ctermfg=Black  ctermbg=Green     cterm=NONE
+" hi TabLineFill  ctermfg=Black  ctermbg=Green     cterm=NONE
+" hi TabLineSel   ctermfg=White  ctermbg=DarkBlue  cterm=NONE
+
 
 " == Basic Settings == {{{1
 let mapleader      = ','
@@ -320,6 +324,8 @@ set shortmess+=c
 
 set updatetime=300
 set noerrorbells
+
+set tags=./tags;/
 
 filetype on
 filetype indent on
