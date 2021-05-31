@@ -33,7 +33,7 @@ echo -e "\n" | sudo pacman -S cmake gdb lldb
 echo -e "\n" | sudo pacman -S virtualbox vagrant 
 echo -e "\n" | sudo pacman -S ripgrep the_silver_searcher proxychains-ng vagrant cloc nodejs npm github-cli neofetch cmatrix
 echo -e "\n" | sudo pacman -S bash-language-server
-echo -e "\n" | sudo pacman -S ibus-mozc graphviz
+echo -e "\n" | sudo pacman -S ibus-mozc graphviz namcap
 # full screen support
 echo -e "\n" | sudo pacman -S wmctrl xdotool
 
