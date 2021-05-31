@@ -19,7 +19,7 @@ Plug 'machakann/vim-highlightedyank'
   let g:highlightedyank_highlight_duration = 100
 
 " Underlines the word under the cursor
-Plug 'itchyny/vim-cursorword'
+" Plug 'itchyny/vim-cursorword'
 
 " Marks
 Plug 'kshenoy/vim-signature'
@@ -75,6 +75,12 @@ Plug 'tpope/vim-vinegar'
   let g:netrw_liststyle = 3
 "   let g:netrw_winsize = 25
 map <C-n> :Vexplore<CR>
+
+" Tree explorer
+" Plug 'vim-scripts/vtreeexplorer'
+" let treeExplVertical = 1
+" let treeExplWinSize = 30
+" let treeExplHidden = 1
 
 " UndoTree
 Plug 'mbbill/undotree', { 'on': 'UndotreeToggle' }
@@ -336,6 +342,7 @@ filetype plugin on
 filetype plugin indent on
 
 if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Merge signcolumn and number column into one
   set signcolumn=number
 else
   set signcolumn=yes
@@ -828,16 +835,16 @@ if has_key(g:plugs, 'fzf.vim')
 endif
 
 if has_key(g:plugs, 'coc.nvim')
-  " Use <cr> to confirm completion
-    inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
-  " To make <cr> select the first completion item and confirm the completion when no item has been selected
-    inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm() : "\<C-g>u\<CR>"
+  " Make <CR> auto-select the first completion item and notify coc.nvim to
+  " format on enter, <cr> could be remapped by other vim plugin
+  inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+                                \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
   " Use <tab> for trigger completion and navigate to the next complete item
-    function! s:check_back_space() abort
-      let col = col('.') - 1
-      return !col || getline('.')[col - 1]  =~# '\s'
-    endfunction
+  function! s:check_back_space() abort
+    let col = col('.') - 1
+    return !col || getline('.')[col - 1]  =~# '\s'
+  endfunction
   " inoremap <silent><expr> <TAB>
   "       \ pumvisible() ? "\<C-n>" :
   "       \ <SID>check_back_space() ? "\<TAB>" :
@@ -855,14 +862,15 @@ if has_key(g:plugs, 'coc.nvim')
   let g:coc_snippet_next = '<tab>'
 
   " Use K to show documentation
-    function! s:show_documentation()
-      if (index(['vim', 'help'], &filetype) >= 0)
-        execute 'h' expand('<cword>')
-      else
-        call CocAction('doHover')
-      endif
-    endfunction
-    nnoremap <silent> K :call <SID>show_documentation()<CR>
+  function! s:show_documentation()
+    if (index(['vim','help'], &filetype) >= 0)
+      execute 'h '.expand('<cword>')
+    elseif (coc#rpc#ready())
+      call CocActionAsync('doHover')
+    else
+      execute '!' . &keywordprg . " " . expand('<cword>')
+    endif
+  endfunction
 
   " Extensions for CoC
   let g:coc_global_extensions = [
@@ -876,6 +884,9 @@ if has_key(g:plugs, 'coc.nvim')
 
     augroup coc-conf
       autocmd!
+      nmap <C-a> <C-o>
+      nmap <C-d> <Plug>(coc-definition)
+
       autocmd VimEnter * nnoremap <silent><nowait>gh :call CocActionAsync('doHover')<CR>
       autocmd VimEnter * nnoremap <silent><nowait>gd :call CocActionAsync('jumpDefinition')<CR>
       autocmd VimEnter * nnoremap <silent><nowait>gD :call CocActionAsync('jumpDefinition', 'vsplit')<CR>
@@ -893,15 +904,17 @@ if has_key(g:plugs, 'coc.nvim')
       autocmd VimEnter * nmap <silent> [d <Plug>(coc-diagnostic-prev)
       autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
 
+      " Update signature help on jump placeholder.
       autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 
-      nmap <C-a> <C-o>
-      nmap <C-d> <Plug>(coc-definition)
+      " Highlight the symbol and its references when holding the cursor.
+      autocmd CursorHold * silent call CocActionAsync('highlight')
     augroup END
 
-  " Add `:Format` command to format current buffer.
-    " command! -nargs=0 Format :call CocAction('format')
-  " Add some commands for Go
+    " Add `:Format` command to format current buffer.
+    command! -nargs=0 Format :call CocAction('format')
+
+    " Add some commands for Go
     command! -nargs=0 GoGenTestFile :call CocAction('runCommand', 'go.test.generate.file')
     command! -nargs=0 GoGenTestFunc :call CocAction('runCommand', 'go.test.generate.function')
     command! -nargs=0 GoGenTestExpo :call CocAction('runCommand', 'go.test.generate.exported')
