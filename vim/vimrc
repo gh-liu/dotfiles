@@ -25,7 +25,7 @@ Plug 'machakann/vim-highlightedyank'
 Plug 'kshenoy/vim-signature'
 
 " Indent Line
-" Plug 'Yggdroot/indentLine'
+Plug 'Yggdroot/indentLine', { 'on': 'IndentLinesEnable' }
 
 " Edit
 Plug 'tpope/vim-repeat'
@@ -466,6 +466,7 @@ vnoremap // y/<c-r>"<cr>
 
 " Toggle highlight
 noremap <silent><leader>/ :set nohls!<CR>
+noremap <silent><leader><leader>/ :let @/ = ""<CR>
 
 " Keep search pattern at the center of the screen
 nnoremap <silent> n nzz
@@ -1130,6 +1131,13 @@ if has_key(g:plugs, 'quick-scope')
   highlight QuickScopeSecondary gui=underline cterm=underline
 endif
 
+if has_key(g:plugs, 'indentLine')
+  autocmd! User indentLine doautocmd indentLine Syntax
+  let g:indentLine_color_term = 239
+  let g:indentLine_color_gui = '#616161'
+  " resolve symbol " disappears for json files
+  let g:vim_json_conceal = 0 
+endif
 
 
 " == Abbrs == {{{1
