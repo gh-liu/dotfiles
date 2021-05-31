@@ -1,66 +1,55 @@
 #!/bin/bash
 BASE=$(pwd)
 
+# INSTALL
+
 ## tmux
 mkdir -p ~/.tmux/plugins/tpm
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-# tmux.conf
-mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
-ln -sf $BASE/tmux/tmux.conf ~/.tmux.conf
 
-## vim
-# theme
-mkdir -p ~/.vim/colors
-curl -o ~/.vim/colors/jellybeans.vim https://raw.githubusercontent.com/nanotech/jellybeans.vim/master/colors/jellybeans.vim
-# plug
+## vim-plug
+mkdir -p ~/.vim/autoload
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-# vimrc
-mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
-ln -sf $BASE/vim/vimrc ~/.vimrc
-ln -sf $BASE/vim/abbr.vim  ~/.vim/abbr.vim
-ln -sf $BASE/vim/snippets ~/.vim/snippets
 
-ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
-
-vim +PlugInstall +qall
-
-# zsh
-# zsh theme and plugin
-ln -sf $BASE/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
-mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
-ln -sf $BASE/zsh/zshrc ~/.zshrc
-ln -sf $BASE/zsh/common_env ~/.common_env
-ln -sf $BASE/zsh/common_func ~/.common_func
-ln -sf $BASE/zsh/common_alias ~/.common_alias
+## zsh plugin
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-completions
-git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search
+# git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search
+
+
+# CONFIG
+
+## scripts
+mkdir -p ~/bin
+for v in $BASE/bin/*; do
+  ln -svf "$v" ~/bin
+done
+
+## zsh
+mv -v ~/.zshrc ~/.zshrc.old 2> /dev/nullzsh
+for v in $BASE/zsh/common_*.vim; do
+  ln -svf "$v" ~/
+done
+ln -svf $BASE/zsh/.zshrc ~/.zshrc
+ln -svf $BASE/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
 source ~/.zshrc
 
+## tmux
+mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
+ln -svf $BASE/tmux/tmux.conf ~/.tmux.conf
 
-# just link the config
-# 
-# mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
-# ln -sf $BASE/tmux/tmux.conf ~/.tmux.conf
+## vim
+for v in $BASE/vim/*.vim; dozsh
+  ln -svf "$v" ~/.vim
+done
+mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
+ln -svf $BASE/vim/vimrc ~/.vimrc
+ln -svf $BASE/vim/snippets ~/.vim/snippets
+ln -svf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
+# Make sure that the vim-plug have installed.
+vim +PlugInstall +qall
 
-# mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
-# ln -sf $BASE/vim/vimrc ~/.vimrc
-# ln -sf $BASE/vim/abbr.vim  ~/.vim/abbr.vim
-# ln -sf $BASE/vim/snippets ~/.vim/snippets
-
-# generate the 'goplsPath' of 'coc-settings.json'
-# sed -i "s:_GOBIN:$GOBIN:" ./coc/coc-settings.json
-# sed -i "s:$GOBIN:_GOBIN:" ./coc/coc-settings.json
-# ln -sf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
-
-# mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
-# ln -sf $BASE/zsh/zshrc ~/.zshrc
-# ln -sf $BASE/zsh/common_env ~/.common_env
-# ln -sf $BASE/zsh/common_func ~/.common_func
-# ln -sf $BASE/zsh/common_alias ~/.common_alias
-# ln -sf $BASE/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
-
-# alacritty
-# ln -sf $(pwd)/alacritty/alacritty.yml ~/.alacritty.yml
+## alacritty
+ln -svf $BASE/alacritty/alacritty.yml ~/.alacritty.yml
