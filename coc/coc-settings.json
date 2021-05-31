@@ -41,6 +41,13 @@
   "list.normalMappings": {
     "<C-g>": "do:exit"
   },
+  // extensions and languageservers
+  "snippets.loadFromExtensions": false,
+  "snippets.userSnippetsDirectory": "~/.vim/snippets",
+  "snippets.ultisnips.directories": [
+    "UltiSnips",
+    "gosnippets/UltiSnips"
+  ],
   "go.goplsPath": "gopls",
   "go.goplsArgs": [
     "-remote",
@@ -50,23 +57,8 @@
     "completeUnimported": true,
     "usePlaceholders": true
   },
+  "vimlsp.indexes.runtimepath": false,
   "languageserver": {
-    //   "golang": {
-    //     "command": "gopls",
-    //     "args": [
-    //       "-remote",
-    //       "auto"
-    //     ],
-    //     "rootPatterns": [
-    //       "go.mod"
-    //     ],
-    //     "filetypes": [
-    //       "go"
-    //     ],
-    //     "initializationOptions": {
-    //       "completeUnimported": true
-    //     }
-    //   },
     "bash": {
       "command": "bash-language-server",
       "args": [
@@ -79,38 +71,5 @@
         "~"
       ]
     }
-  },
-  "snippets.loadFromExtensions": false,
-  "snippets.userSnippetsDirectory": "~/.vim/snippets",
-  "snippets.ultisnips.directories": [
-    "UltiSnips",
-    "gosnippets/UltiSnips"
-  ]
+  }
 }
-
-// Default suggest completionItemKindLabels
-// Text,"v"
-// Method,"f"
-// Function,"f"
-// Constructor,"f"
-// Field,"m"
-// Variable,"v"
-// Class,"C"
-// Interface,"I"
-// Module,"M"
-// Property,"m"
-// Unit,"U"
-// Value,"v"
-// Enum,"E"
-// Keyword,"k"
-// Snippet,"S"
-// Color,"v"
-// File,"F"
-// Reference,"r"
-// Folder,"F"
-// EnumMember,"m"
-// Constant,"v"
-// Struct,"S"
-// Event,"E"
-// Operator,"O"
-// TypeParameter,"T"
