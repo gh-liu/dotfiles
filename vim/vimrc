@@ -613,6 +613,18 @@ function! s:setRelativenumber()
   endif
 endfun
 
+augroup vimrc
+  " Automatic rename of tmux window
+  if exists('$TMUX') && !exists('$NORENAME')
+    autocmd BufEnter * if empty(&buftype) | call system('tmux rename-window '.expand('%:t:S')) | endif
+    autocmd VimLeave * call system('tmux set-window automatic-rename on')
+  endif
+
+  " http://vim.wikia.com/wiki/Highlight_unwanted_spaces
+  " autocmd BufNewFile,BufRead,InsertLeave * silent! match ExtraWhitespace /\s\+$/
+  " autocmd InsertEnter * silent! match ExtraWhitespace /\s\+\%#\@<!$/
+augroup END
+
 augroup myfunc
   autocmd!
   " if executable('ibus')
@@ -830,16 +842,37 @@ endif
 " endif
 
 if has_key(g:plugs, 'fzf.vim')
-  " let g:fzf_layout = { 'down': '~20%' }
+  let $FZF_DEFAULT_OPTS .= ' --inline-info'
+
+  let g:fzf_colors =
+    \ { 'fg':      ['fg', 'Normal'],
+    \ 'bg':      ['bg', 'Normal'],
+    \ 'hl':      ['fg', 'Comment'],
+    \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
+    \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
+    \ 'hl+':     ['fg', 'Statement'],
+    \ 'info':    ['fg', 'PreProc'],
+    \ 'border':  ['fg', 'Ignore'],
+    \ 'prompt':  ['fg', 'Conditional'],
+    \ 'pointer': ['fg', 'Exception'],
+    \ 'marker':  ['fg', 'Keyword'],
+    \ 'spinner': ['fg', 'Label'],
+    \ 'header':  ['fg', 'Comment'] }
+  
+  " See `man fzf-tmux` for available options
+  if exists('$TMUX')
+    let g:fzf_layout = { 'tmux': '-p90%,60%' }
+  else
+    " let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+    " let g:fzf_layout = { 'down': '~25%' }
+  endif
+
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
-  nnoremap <leader>ff :Rg 
-  xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
-  nnoremap <silent> <leader>fw :call <SID>search_word_underline()<CR>
-
   nnoremap <silent> <Leader>L :Lines<CR>
   nnoremap <silent> <Leader>C :Colors<CR>
+  nnoremap <silent> <Leader>` :Marks<CR>
   nnoremap <silent> <Leader><Enter> :Buffers<CR>
 
   " Allow passing optional flags into the Rg command. Example: :Rg myterm -g '*.md'
@@ -848,10 +881,21 @@ if has_key(g:plugs, 'fzf.vim')
     \ "rg --column --line-number --no-heading --color=always --smart-case " .
     \ <q-args>, 1, fzf#vim#with_preview(), <bang>0)
 
+  nnoremap <leader>ff :Rg 
+  xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
+  nnoremap <silent> <leader>fw :call <SID>search_word_underline()<CR>
   function! s:search_word_underline() abort
     let l:cw = expand('<cword>')
     execute 'Rg ' . l:cw
   endfun
+
+  augroup fzf-conf
+    autocmd!
+    " Hide statusline
+    " autocmd! FileType fzf set laststatus=0 noshowmode noruler
+    " \| autocmd BufLeave <buffer> set laststatus=2 showmode ruler
+  augroup END
+
 endif
 
 if has_key(g:plugs, 'coc.nvim')
