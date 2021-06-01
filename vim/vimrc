@@ -506,6 +506,24 @@ noremap <silent><leader>CW :%s/\s\+$//<CR>
 xnoremap <  <gv
 xnoremap >  >gv
 
+" https://github.com/junegunn/dotfiles/blob/057ee47465e43aafbd20f4c8155487ef147e29ea/vimrc#L1027
+" co? : Toggle options (inspired by unimpaired.vim)
+" function! s:map_change_option(...)
+"   let [key, opt] = a:000[0:1]
+"   let op = get(a:, 3, 'set '.opt.'!')
+"   execute printf("nnoremap co%s :%s<bar>set %s?<cr>", key, op, opt)
+" endfunction
+
+" call s:map_change_option('p', 'paste')
+" call s:map_change_option('n', 'number')
+" call s:map_change_option('w', 'wrap')
+" call s:map_change_option('h', 'hlsearch')
+" call s:map_change_option('m', 'mouse', 'let &mouse = &mouse == "" ? "a" : ""')
+" call s:map_change_option('t', 'textwidth',
+"     \ 'let &textwidth = input("textwidth (". &textwidth ."): ")<bar>redraw')
+" call s:map_change_option('b', 'background',
+"     \ 'let &background = &background == "dark" ? "light" : "dark"<bar>redraw')
+
 " TODO: Quickly edit macros
 " nnoremap <leader>m  :<c-u><c-r><c-r>='let @'. v:register .' = '. string(getreg(v:register))<cr><c-f><left>
 
@@ -812,7 +830,7 @@ endif
 " endif
 
 if has_key(g:plugs, 'fzf.vim')
-  let g:fzf_layout = { 'down': '~20%' }
+  " let g:fzf_layout = { 'down': '~20%' }
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
 
