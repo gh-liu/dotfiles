@@ -524,8 +524,9 @@ xnoremap >  >gv
 " call s:map_change_option('b', 'background',
 "     \ 'let &background = &background == "dark" ? "light" : "dark"<bar>redraw')
 
-" TODO: Quickly edit macros
-" nnoremap <leader>m  :<c-u><c-r><c-r>='let @'. v:register .' = '. string(getreg(v:register))<cr><c-f><left>
+" https://github.com/mhinz/vim-galore#quickly-edit-your-macros
+" Quickly edit macros, Use it like this <leader>m or "q<leader>m(Note the sign `"`).
+nnoremap <leader>m  :<c-u><c-r><c-r>='let @'. v:register .' = '. string(getreg(v:register))<cr><c-f><left>
 
 function! ToogleNumber()
   if (&relativenumber == &number)
@@ -635,7 +636,8 @@ augroup myfunc
   autocmd InsertEnter * call s:setNorelativenumber()
   autocmd InsertLeave * call s:setRelativenumber()
 
-  autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
+  " autocmd FileType *vim,*zsh,*bash,*tmux nnoremap <buffer> <silent> <cr> :call <sid>goto_github()<cr>
+  autocmd FileType *vim,*zsh,*bash,*tmux command! GOTOGITHUB call s:goto_github()
 augroup END
 
 augroup myhl
@@ -973,6 +975,7 @@ if has_key(g:plugs, 'coc.nvim')
       autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 
       " Highlight the symbol and its references when holding the cursor.
+      highlight CocHighlightText term=underline cterm=underline gui=underline
       autocmd CursorHold * silent call CocActionAsync('highlight')
     augroup END
 
