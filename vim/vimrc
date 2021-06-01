@@ -624,6 +624,9 @@ augroup vimrc
   " http://vim.wikia.com/wiki/Highlight_unwanted_spaces
   " autocmd BufNewFile,BufRead,InsertLeave * silent! match ExtraWhitespace /\s\+$/
   " autocmd InsertEnter * silent! match ExtraWhitespace /\s\+\%#\@<!$/
+
+  " Enter automatically into the files directory
+  autocmd BufEnter * silent! lcd %:p:h
 augroup END
 
 augroup myfunc
@@ -656,8 +659,12 @@ augroup myfiletype
 
   autocmd FileType json setlocal expandtab shiftwidth=2 tabstop=2
   autocmd FileType yaml setlocal expandtab shiftwidth=2 tabstop=2
-  autocmd FileType vim setlocal expandtab shiftwidth=2 tabstop=2
   autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
+
+  autocmd BufNewFile,BufRead *.sh setlocal expandtab shiftwidth=2 tabstop=2
+  autocmd BufNewFile,BufRead *.vim setlocal expandtab shiftwidth=2 tabstop=2
+  autocmd BufNewFile,BufRead *.proto setlocal expandtab shiftwidth=2 tabstop=2
+
 
   autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
 augroup END
