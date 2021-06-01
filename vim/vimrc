@@ -860,12 +860,12 @@ if has_key(g:plugs, 'fzf.vim')
     \ 'header':  ['fg', 'Comment'] }
   
   " See `man fzf-tmux` for available options
-  if exists('$TMUX')
-    let g:fzf_layout = { 'tmux': '-p90%,60%' }
-  else
-    " let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
-    " let g:fzf_layout = { 'down': '~25%' }
-  endif
+  " if exists('$TMUX')
+  "   let g:fzf_layout = { 'tmux': '-p90%,60%' , 'relative': v:true}
+  " else
+  "   let g:fzf_layout = { 'window': { 'width': 0.9, 'height': 0.6 } }
+  " endif
+  let g:fzf_layout = { 'down': '~25%' }
 
   nnoremap <C-p> :Files<cr>
   inoremap <C-p> <esc>:<C-u>Files<cr>
