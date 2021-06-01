@@ -46,7 +46,7 @@ for v in $BASE/vim/*.vim; dozsh
 done
 mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
 ln -svf $BASE/vim/vimrc ~/.vimrc
-ln -svf $BASE/vim/snippets ~/.vim/snippets
+ln -sv $BASE/vim/UltiSnips ~/.vim/UltiSnips
 ln -svf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
 # Make sure that the vim-plug have installed.
 vim +PlugInstall +qall

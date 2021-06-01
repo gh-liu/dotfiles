@@ -23,3 +23,10 @@
 #		endsnippet
 #
 # Online reference: https://github.com/SirVer/ultisnips/blob/master/doc/UltiSnips.txt
+
+snippet iferr "if err != nil" b
+if err != nil {
+    return ${1:nil},${2}
+}
+${3}
+endsnippet

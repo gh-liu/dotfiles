@@ -43,7 +43,7 @@
   },
   // extensions and languageservers
   "snippets.loadFromExtensions": false,
-  "snippets.userSnippetsDirectory": "~/.vim/snippets",
+  "snippets.userSnippetsDirectory": "~/.vim/UltiSnips",
   "snippets.ultisnips.directories": [
     "UltiSnips",
     "gosnippets/UltiSnips"
