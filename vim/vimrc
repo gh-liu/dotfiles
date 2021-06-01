@@ -882,6 +882,7 @@ if has_key(g:plugs, 'coc.nvim')
   let g:coc_snippet_next = '<tab>'
 
   " Use K to show documentation
+  nnoremap <silent> K :call <SID>show_documentation()<CR>
   function! s:show_documentation()
     if (index(['vim','help'], &filetype) >= 0)
       execute 'h '.expand('<cword>')
