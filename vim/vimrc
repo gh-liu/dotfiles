@@ -121,9 +121,9 @@ if executable('java')
   Plug 'scrooloose/vim-slumlord'
 endif
 
-" Plug 'cespare/vim-toml'
 " Plug 'stephpy/vim-yaml'
 " Plug 'elzr/vim-json', {'for' : 'json'}
+Plug 'cespare/vim-toml', {'for' : 'toml'}
 Plug 'uarun/vim-protobuf'
 Plug 'ekalinin/Dockerfile.vim', {'for' : 'Dockerfile'}
 
