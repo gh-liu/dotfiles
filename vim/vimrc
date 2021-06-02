@@ -890,6 +890,7 @@ if has_key(g:plugs, 'fzf.vim')
     \ "rg --column --line-number --no-heading --color=always --smart-case " .
     \ <q-args>, 1, fzf#vim#with_preview(), <bang>0)
 
+  nnoremap <leader>fF :Rg  -g '*'<left><left><left><left><left><left><left>
   nnoremap <leader>ff :Rg 
   xnoremap <silent> <Leader>ff y:Ag <C-R>"<CR>
   nnoremap <silent> <leader>fw :call <SID>search_word_underline()<CR>
