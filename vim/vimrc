@@ -626,7 +626,7 @@ augroup vimrc
   " autocmd InsertEnter * silent! match ExtraWhitespace /\s\+\%#\@<!$/
 
   " Enter automatically into the files directory
-  autocmd BufEnter * silent! lcd %:p:h
+  " autocmd BufEnter * silent! lcd %:p:h
 augroup END
 
 augroup myfunc
@@ -955,6 +955,7 @@ if has_key(g:plugs, 'coc.nvim')
       \'coc-go',
       \'coc-vimlsp'
       \]
+" coc-tsserver coc-prettier
 
     augroup coc-conf
       autocmd!

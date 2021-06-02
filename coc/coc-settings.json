@@ -49,6 +49,7 @@
     "gosnippets/UltiSnips"
   ],
   "go.goplsPath": "gopls",
+  // "go.goplsArgs": ["-remote", "auto", "-logfile", "/tmp/gopls.log"],
   "go.goplsArgs": [
     "-remote",
     "auto"
@@ -59,6 +60,14 @@
   },
   "vimlsp.indexes.runtimepath": false,
   "languageserver": {
+  //   "golang": {
+  //     "command": "gopls",
+  //     "rootPatterns": ["go.mod", ".vim/", ".git/", ".hg/"],
+  //     "filetypes": ["go"],
+  //     "initializationOptions": {
+  //       "usePlaceholders": true
+  //     }
+  //   },
     "bash": {
       "command": "bash-language-server",
       "args": [
