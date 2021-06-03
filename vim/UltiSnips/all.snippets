@@ -27,3 +27,7 @@
 snippet TD "TODO" b
 `!v printf(&commentstring, 'TODO ${1:DESCRIPTION} '. trim(system("date +%d.%m"),"\n").' '.trim(system("date +%Y"),"\n").'(liugh)')`
 endsnippet
+
+snippet cs "Comment string" b
+`!v printf(&commentstring, '${1:DESCRIPTION}')`
+endsnippet
