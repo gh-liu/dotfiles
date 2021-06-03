@@ -189,6 +189,8 @@ let g:carbon_now_sh_options = { 't': 'oceanic-next'}
 " Better display unwanted whitespace.
 " Plug 'ntpeters/vim-better-whitespace'
 
+" Plug 'editorconfig/editorconfig-vim'
+
 call plug#end()
 
 

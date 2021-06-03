@@ -24,7 +24,6 @@
 #
 # Online reference: https://github.com/SirVer/ultisnips/blob/master/doc/UltiSnips.txt
 
-snippet TD "TODO"
-@TODO ${1:DESCRIPTION}  `date +%d.%m` `date +%Y` (liugh)
+snippet TD "TODO" b
+`!v split(&commentstring, '%s')[0]`TODO ${1:DESCRIPTION}  `date +%d.%m` `date +%Y` (liugh)
 endsnippet
-
