@@ -1,4 +1,12 @@
 # proxy
-export http_proxy=http://127.0.0.1:1081
-export https_proxy=http://127.0.0.1:1081
-export ALL_PROXY=socks5://127.0.0.1:1080
+function setProxy(){
+    export http_proxy=http://127.0.0.1:1081
+    export https_proxy=http://127.0.0.1:1081
+    export ALL_PROXY=socks5://127.0.0.1:1080
+}
+function unsetProxy(){
+    unset http_proxy
+    unset https_proxy
+    unset ALL_PROXY
+}
+setProxy
