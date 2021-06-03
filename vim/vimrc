@@ -116,6 +116,10 @@ Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 
 " Plug 'rust-lang/rust.vim'
 
+" TypeScript
+" Plug 'herringtondarkholme/yats.vim'
+" Plug 'maxmellon/vim-jsx-pretty'
+
 Plug 'aklt/plantuml-syntax'
 if executable('java')
   Plug 'scrooloose/vim-slumlord'
@@ -956,9 +960,11 @@ if has_key(g:plugs, 'coc.nvim')
       \'coc-yaml',
       \'coc-json',
       \'coc-go',
+      \'coc-tsserver',
+      \'coc-prettier',
+      \'coc-eslint',
       \'coc-vimlsp'
       \]
-" coc-tsserver coc-prettier
 
     augroup coc-conf
       autocmd!
