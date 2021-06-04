@@ -194,7 +194,7 @@ let g:carbon_now_sh_options = { 't': 'oceanic-next'}
 
 " Plug 'editorconfig/editorconfig-vim'
 
-Plug 'romainl/vim-qf'
+" Plug 'romainl/vim-qf'
 
 call plug#end()
 
@@ -649,6 +649,9 @@ augroup vimrc
 
   " quickfix window on very bottom
   autocmd FileType qf wincmd J 
+
+  " https://vim.fandom.com/wiki/Automatically_quit_Vim_if_quickfix_window_is_the_last
+  autocmd BufEnter * if (&buftype=="quickfix" && winnr('$') < 2 ) | quit! | endif 
 augroup END
 
 augroup myfunc
@@ -1242,6 +1245,9 @@ if has_key(g:plugs, 'indentLine')
   let g:indentLine_color_gui = '#616161'
   " resolve symbol " disappears for json files
   let g:vim_json_conceal = 0 
+endif
+
+if has_key(g:plugs, 'vim-qf')
 endif
 
 
