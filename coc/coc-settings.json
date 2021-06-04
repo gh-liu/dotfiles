@@ -7,7 +7,7 @@
   "diagnostic.hintSign": "➤",
   "diagnostic.infoSign": "ℹ",
   "diagnostic.checkCurrentLine": true,
-  "suggest.noselect": false,
+  // "suggest.noselect": false,
   // "suggest.completionItemKindLabels": {
   //   "keyword": "\uf1de",
 	// 	"variable": "\ue79b",
