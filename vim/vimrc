@@ -340,9 +340,9 @@ set noerrorbells
 set splitright
 set splitbelow
 
-set notimeout
-set ttimeout
-set timeoutlen=100
+" set notimeout
+" set ttimeout
+set timeoutlen=200
 
 set tags=./tags;/
 
@@ -459,9 +459,9 @@ nnoremap <Leader>q :q<cr>
 nnoremap <Leader>Q :qa!<cr>
 
 " <Leader>c Close quickfix/location window
-" nnoremap <silent> <leader>c :cclose<bar>lclose<CR>
-nnoremap <leader>cq :cclose<cr>
-nnoremap <leader>cl :lclose<cr>
+nnoremap <silent> <leader>c :cclose<bar>lclose<CR>
+" nnoremap <leader>cq :cclose<cr>
+" nnoremap <leader>cl :lclose<cr>
 
 
 " Esc quickly
