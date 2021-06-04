@@ -149,7 +149,6 @@ Plug 'mzlogin/vim-markdown-toc'
 " Plug 'liuchengxu/vim-which-key', { 'on': ['WhichKey', 'WhichKey!'] }
 " if has_key(g:plugs, 'vim-which-key')
 "   nnoremap <silent> <leader> :WhichKey ','<CR>
-"   set timeoutlen=360
 " endif
 
 " Plug 'szw/vim-smartclose'
@@ -341,6 +340,10 @@ set noerrorbells
 set splitright
 set splitbelow
 
+set notimeout
+set ttimeout
+set timeoutlen=100
+
 set tags=./tags;/
 
 filetype on
@@ -456,7 +459,10 @@ nnoremap <Leader>q :q<cr>
 nnoremap <Leader>Q :qa!<cr>
 
 " <Leader>c Close quickfix/location window
-nnoremap <leader>c :cclose<bar>lclose<cr>
+" nnoremap <silent> <leader>c :cclose<bar>lclose<CR>
+nnoremap <leader>cq :cclose<cr>
+nnoremap <leader>cl :lclose<cr>
+
 
 " Esc quickly
 imap jj <Esc>
@@ -511,6 +517,9 @@ noremap <silent><leader>CW :%s/\s\+$//<CR>
 " Don't lose selection when shifting sidewards
 xnoremap <  <gv
 xnoremap >  >gv
+
+" terminal
+tnoremap <Esc> <C-\><C-n>
 
 " https://github.com/junegunn/dotfiles/blob/057ee47465e43aafbd20f4c8155487ef147e29ea/vimrc#L1027
 " co? : Toggle options (inspired by unimpaired.vim)
@@ -581,7 +590,6 @@ endfunction
 nnoremap <silent> gb :<C-u>call <SID>echoBinary()<CR>
 
 " == Basic autocommands == {{{1
-autocmd VimResized * wincmd =
 
 " Only show the cursor line in the active buffer.
 augroup CursorLine
@@ -633,6 +641,12 @@ augroup vimrc
 
   " Enter automatically into the files directory
   " autocmd BufEnter * silent! lcd %:p:h
+
+  " resize splits
+  autocmd VimResized * wincmd =
+
+  " quickfix window on very bottom
+  autocmd FileType qf wincmd J 
 augroup END
 
 augroup myfunc
@@ -1187,6 +1201,11 @@ if has_key(g:plugs, 'vim-go')
         call go#cmd#Build(0)
     endif
   endfunction
+
+  if has('terminal')
+    let g:go_term_enabled = 1
+    let g:go_term_mode = "split"
+  endif
 endif
 
 if has_key(g:plugs, 'vimux')
