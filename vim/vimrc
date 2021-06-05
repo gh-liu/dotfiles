@@ -354,6 +354,10 @@ set timeoutlen=320
 
 set tags=./tags;/
 
+set modelines=2
+" set colorcolumn=80
+set grepformat=%f:%l:%c:%m,%f:%l:%m
+
 filetype on
 filetype indent on
 filetype plugin on
@@ -1213,7 +1217,7 @@ if has_key(g:plugs, 'vim-go')
     "         \| command! -bang AV call go#alternate#Switch(<bang>0, 'vsplit')
     "         \| command! -bang AS call go#alternate#Switch(<bang>0, 'split')
 
-    autocmd BufEnter *.go silent exe "GoGuruScope " . go#package#ImportPath() . "..."
+    " autocmd BufEnter *.go silent exe "GoGuruScope " . go#package#ImportPath() . "..."
   augroup END
 
   " run :GoBuild or :GoTestCompile based on the go file

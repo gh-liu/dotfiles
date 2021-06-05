@@ -11,7 +11,7 @@ call SetupCommandAbbrs('H', 'h')
 call SetupCommandAbbrs('LE', 'Lexplore')
 
 " fzf.vim
-call SetupCommandAbbrs('RG', 'Rg')
+" call SetupCommandAbbrs('RG', 'Rg')
 
 " coc-nvim
 call SetupCommandAbbrs('CS', 'CocSearch')
