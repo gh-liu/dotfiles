@@ -350,7 +350,7 @@ set splitbelow
 
 " set notimeout
 " set ttimeout
-set timeoutlen=300
+set timeoutlen=320
 
 set tags=./tags;/
 
@@ -371,6 +371,8 @@ endif
 nnoremap <F1> <Esc>
 inoremap <F1> <Esc>
 vnoremap <F1> <Esc>
+
+" map <space> <leader>
 
 " Disable CTRL-F for Tmux
 nnoremap <C-f> <nop>
@@ -949,9 +951,9 @@ if has_key(g:plugs, 'coc.nvim')
   " position. Coc only does snippet and additional edit on confirm.
   " <cr> could be remapped by other vim plugin, try `:verbose imap <CR>`.
   if exists('*complete_info')
-    inoremap <expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u"
+    inoremap <silent><expr> <cr> complete_info()["selected"] != "-1" ? "\<C-y>" : "\<C-g>u"
   else
-    inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u"
+    inoremap <silent><expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u"
   endif
 
   " Use <tab> for trigger completion and navigate to the next complete item
