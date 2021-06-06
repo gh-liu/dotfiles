@@ -607,7 +607,7 @@ nnoremap <silent> gb :<C-u>call <SID>echoBinary()<CR>
 
 augroup vimrc
   " Open netrw if no files provided
-  autocmd VimEnter * if argc() == 0 | Explore! | endif
+  " autocmd VimEnter * if argc() == 0 | Explore! | endif
 
   " http://vim.wikia.com/wiki/Highlight_unwanted_spaces
   " autocmd BufNewFile,BufRead,InsertLeave * silent! match ExtraWhitespace /\s\+$/
