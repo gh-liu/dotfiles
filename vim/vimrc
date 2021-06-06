@@ -298,8 +298,8 @@ set autowrite
 set history=5000
 set mouse=a
 
-set cursorline
-set cursorcolumn
+" set cursorline
+" set cursorcolumn
 
 set magic
 set hlsearch
@@ -605,11 +605,35 @@ nnoremap <silent> gb :<C-u>call <SID>echoBinary()<CR>
 
 " == Basic autocommands == {{{1
 
-" Only show the cursor line in the active buffer.
-augroup CursorLine
-    au!
-    au VimEnter,WinEnter,BufWinEnter * setlocal cursorline
-    au WinLeave * setlocal nocursorline
+augroup vimrc
+  " Open netrw if no files provided
+  autocmd VimEnter * if argc() == 0 | Explore! | endif
+
+  " http://vim.wikia.com/wiki/Highlight_unwanted_spaces
+  " autocmd BufNewFile,BufRead,InsertLeave * silent! match ExtraWhitespace /\s\+$/
+  " autocmd InsertEnter * silent! match ExtraWhitespace /\s\+\%#\@<!$/
+
+  " Enter automatically into the files directory
+  " autocmd BufEnter * silent! lcd %:p:h
+
+  " resize splits
+  autocmd VimResized * wincmd =
+
+  " quickfix window on very bottom
+  autocmd FileType qf wincmd J 
+
+  " https://vim.fandom.com/wiki/Automatically_quit_Vim_if_quickfix_window_is_the_last
+  autocmd BufEnter * if (&buftype=="quickfix" && winnr('$') < 2 ) | quit! | endif 
+
+  " Automatic rename of tmux window
+  if exists('$TMUX') && !exists('$NORENAME')
+    autocmd BufEnter * if empty(&buftype) | call system('tmux rename-window '.expand('%:t:S')) | endif
+    autocmd VimLeave * call system('tmux set-window automatic-rename on')
+  endif
+  
+  " Only show the cursor line in the active buffer.
+  au VimEnter,WinEnter,BufWinEnter * setlocal cursorline cursorcolumn
+  au WinLeave * setlocal nocursorline nocursorcolumn
 augroup END
 
 " Open help page in a new tab
@@ -641,30 +665,6 @@ function! s:setRelativenumber()
   set relativenumber
   endif
 endfun
-
-augroup vimrc
-  " Automatic rename of tmux window
-  if exists('$TMUX') && !exists('$NORENAME')
-    autocmd BufEnter * if empty(&buftype) | call system('tmux rename-window '.expand('%:t:S')) | endif
-    autocmd VimLeave * call system('tmux set-window automatic-rename on')
-  endif
-
-  " http://vim.wikia.com/wiki/Highlight_unwanted_spaces
-  " autocmd BufNewFile,BufRead,InsertLeave * silent! match ExtraWhitespace /\s\+$/
-  " autocmd InsertEnter * silent! match ExtraWhitespace /\s\+\%#\@<!$/
-
-  " Enter automatically into the files directory
-  " autocmd BufEnter * silent! lcd %:p:h
-
-  " resize splits
-  autocmd VimResized * wincmd =
-
-  " quickfix window on very bottom
-  autocmd FileType qf wincmd J 
-
-  " https://vim.fandom.com/wiki/Automatically_quit_Vim_if_quickfix_window_is_the_last
-  autocmd BufEnter * if (&buftype=="quickfix" && winnr('$') < 2 ) | quit! | endif 
-augroup END
 
 augroup myfunc
   autocmd!
