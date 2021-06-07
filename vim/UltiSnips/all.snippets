@@ -25,7 +25,7 @@
 # Online reference: https://github.com/SirVer/ultisnips/blob/master/doc/UltiSnips.txt
 
 snippet TD "TODO" b
-`!v printf(&commentstring, 'TODO ${1:DESCRIPTION} '. trim(system("date +%d.%m"),"\n").' '.trim(system("date +%Y"),"\n").'(liugh)')`
+`!v printf(&commentstring, 'TODO ${1:DESCRIPTION} '. trim(system("date +%m.%d"),"\n").' '.trim(system("date +%Y"),"\n").'(liugh)')`
 endsnippet
 
 snippet cs "Comment string" b
