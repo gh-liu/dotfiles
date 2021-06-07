@@ -28,8 +28,8 @@ for v in $BASE/bin/*; do
 done
 
 ## zsh
-mv -v ~/.zshrc ~/.zshrc.old 2> /dev/nullzsh
-for v in $BASE/zsh/common_*.vim; do
+mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
+for v in $BASE/zsh/.common_*; do
   ln -svf "$v" ~/
 done
 ln -svf $BASE/zsh/.zshrc ~/.zshrc
@@ -41,7 +41,7 @@ mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
 ln -svf $BASE/tmux/tmux.conf ~/.tmux.conf
 
 ## vim
-for v in $BASE/vim/*.vim; dozsh
+for v in $BASE/vim/*.vim; do
   ln -svf "$v" ~/.vim
 done
 mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
