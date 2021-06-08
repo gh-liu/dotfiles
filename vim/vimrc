@@ -791,6 +791,7 @@ function! Note(...)
   end
 endfunction
 command! -nargs=* Note call Note(<f-args>)
+command! SearchNotes call fzf#run(fzf#wrap({'source': 'rg -t md -l --files', 'options': ['--bind', 'change:reload:rg -t md -l {q}', '--phony', '--with-nth', '2..'], 'dir': $NOTES_DIR, 'sink': 'edit'}))
 
 
 " == Plugins Config == {{{1
