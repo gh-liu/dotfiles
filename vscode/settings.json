@@ -4,23 +4,21 @@
     "explorer.confirmDragAndDrop": false,
     // editor
     "editor.fontSize": 13,
-    "editor.fontFamily": "'Cascadia Code', Consolas, 'Courier New', monospace",
+    "editor.fontFamily": " Consolas, 'Cascadia Code', 'Courier New', monospace",
     "editor.fontLigatures": true,
     "editor.minimap.maxColumn": 80,
     "editor.minimap.enabled": false,
     "editor.wordWrapColumn": 120,
     "editor.dragAndDrop": false,
-    "editor.glyphMargin": false,
     "editor.quickSuggestions": {
-      "other": true,
-      "comments": true,
-      "strings": true
+        "other": true,
+        "comments": true,
+        "strings": true
     },
     "editor.parameterHints.enabled": false,
     // "editor.rulers": [120],
     "editor.tokenColorCustomizations": {
-        "textMateRules": [
-        ]
+        "textMateRules": []
     },
     "editor.scrollBeyondLastLine": false,
     // files
@@ -37,6 +35,7 @@
     // search
     "search.showLineNumbers": true,
     "search.smartCase": true,
+    // "terminal.integrated.automationShell.linux": "zsh",
     // Extension: vim
     "vim.leader": ",",
     "vim.hlsearch": true,
@@ -44,42 +43,74 @@
     "vim.visualstar": true,
     "vim.insertModeKeyBindings": [
         {
-            "before": ["j", "j"],
-            "after": ["<Esc>"]
+            "before": [
+                "j",
+                "j"
+            ],
+            "after": [
+                "<Esc>"
+            ]
         },
         {
-            "before": ["<C-h>"],
-            "after": ["<left>"]
+            "before": [
+                "<C-h>"
+            ],
+            "after": [
+                "<left>"
+            ]
         },
         {
-            "before": ["<C-l>"],
-            "after": ["<right>"]
+            "before": [
+                "<C-l>"
+            ],
+            "after": [
+                "<right>"
+            ]
         },
         {
-            "before": ["<C-j>"],
-            "after": ["<down>"]
+            "before": [
+                "<C-j>"
+            ],
+            "after": [
+                "<down>"
+            ]
         },
         {
-            "before": ["<C-k>"],
-            "after": ["<up>"]
+            "before": [
+                "<C-k>"
+            ],
+            "after": [
+                "<up>"
+            ]
         },
         {
-            "before": ["<C-a>"],
-            "commands":[{
-                "command":"cursorHome"
-            }]
+            "before": [
+                "<C-a>"
+            ],
+            "commands": [
+                {
+                    "command": "cursorHome"
+                }
+            ]
         },
         {
-            "before": ["<C-e>"],
-            "commands":[{
-                "command":"cursorEnd"
-            }]
+            "before": [
+                "<C-e>"
+            ],
+            "commands": [
+                {
+                    "command": "cursorEnd"
+                }
+            ]
         }
     ],
     "vim.normalModeKeyBindingsNonRecursive": [
         // - leader-q to quit
         {
-            "before": ["leader", "q"],
+            "before": [
+                "leader",
+                "q"
+            ],
             "commands": [
                 {
                     "command": "workbench.action.files.save",
@@ -93,65 +124,98 @@
         },
         // - switch # and *
         {
-            "before": ["*"],
-            "after": ["#"]
+            "before": [
+                "*"
+            ],
+            "after": [
+                "#"
+            ]
         },
         {
-            "before": ["#"],
-            "after": ["*"]
+            "before": [
+                "#"
+            ],
+            "after": [
+                "*"
+            ]
         },
         // - show the command palette
         {
-            "before": [";"],
+            "before": [
+                ";"
+            ],
             "commands": [
                 "workbench.action.showCommands",
             ]
         },
         // - leader-p to all opened editors
         {
-            "before": ["leader", "p"],
+            "before": [
+                "leader",
+                "p"
+            ],
             "commands": [
                 "workbench.action.openNextRecentlyUsedEditorInGroup"
             ]
         },
         // - leader-f: go to file
         {
-            "before": ["leader", "f"],
+            "before": [
+                "leader",
+                "f"
+            ],
             "commands": [
                 "workbench.action.quickOpen",
             ]
         },
         // - leader-g go to symbol
         {
-            "before": ["leader", "g"],
+            "before": [
+                "leader",
+                "g"
+            ],
             "commands": [
                 "workbench.action.gotoSymbol",
             ]
         },
         // - leader-s show problems
         {
-            "before": ["leader", "s"],
+            "before": [
+                "leader",
+                "s"
+            ],
             "commands": [
                 "workbench.actions.view.problems"
             ]
         },
         // - leader-en Go to Next Error or Warning
         {
-            "before": ["leader", "e", "n"],
+            "before": [
+                "leader",
+                "e",
+                "n"
+            ],
             "commands": [
                 "editor.action.marker.nextInFiles"
             ]
         },
         // - leader-ep Go to Previous Error or Warning
         {
-            "before": ["leader", "e", "p"],
+            "before": [
+                "leader",
+                "e",
+                "p"
+            ],
             "commands": [
                 "editor.action.marker.prevInFiles"
             ]
         },
         // - leader-/ to turn-off highlight
         {
-            "before":["leader", "/"],
+            "before": [
+                "leader",
+                "/"
+            ],
             "commands": [
                 ":nohl",
             ]
@@ -176,8 +240,27 @@
             ]
         },
     ],
-    "tabnine.experimentalAutoImports": true,
-    //########## proxy ##########
+    "editor.formatOnSave": true,
+    // ########## go ##########
+    "go.lintOnSave": "package",
+    "go.vetOnSave": "package",
+    "go.autocompleteUnimportedPackages": true,
+    "go.lintTool": "revive",
+    "go.testFlags": [
+        "-v"
+    ],
+    "go.delveConfig": {
+        "useApiV1": false,
+        "dlvLoadConfig": {
+            "followPointers": true,
+            "maxVariableRecurse": 3,
+            "maxStringLen": 400,
+            "maxArrayValues": 400,
+            "maxStructFields": -1
+        }
+    },
+    "security.workspace.trust.untrustedFiles": "open"
+    // ########## proxy ##########
     // "http.proxy": "http://127.0.0.1:1081",
     // "http.proxyStrictSSL": false,
 }
