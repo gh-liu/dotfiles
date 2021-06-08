@@ -21,6 +21,8 @@ export VGHOME=~/env/vm
 # vagrant
 export TMUXP=~/.tmuxp
 
+export NOTES_DIR=~/mynotes
+
 path=(
     $HOME/bin
     $GOPATH/bin                              # golang

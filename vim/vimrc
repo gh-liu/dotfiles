@@ -778,6 +778,21 @@ if executable("wmctrl") && executable("xdotool")
   command! FullScreenToggle call system("wmctrl -ir $(xdotool getwindowfocus) -b toggle,fullscreen")
 endif
 
+" Notes! Need set $NOTES_DIR in shell.
+function! Note(...)
+  if a:0 > 0
+    let l:path = $NOTES_DIR ."/". strftime("%Y%m%d%H%M")."_".trim(join(a:000)).".md"
+    execute (@% == "" ? "edit" : "tabedit") fnameescape(l:path)
+    execute "norm" "i# ".trim(join(a:000))
+    execute "norm" "o"
+    execute "norm" "o"
+  else
+    call fzf#vim#files($NOTES_DIR, {'options': ['--with-nth', '2..']}, 0)
+  end
+endfunction
+command! -nargs=* Note call Note(<f-args>)
+
+
 " == Plugins Config == {{{1
 " gruvbox
 if !exists('g:gruvbox_contrast_dark')
