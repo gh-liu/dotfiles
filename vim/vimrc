@@ -113,7 +113,7 @@ Plug 'benmills/vimux'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
-
+Plug 'gh-liu/gotests.vim'
 " Plug 'rust-lang/rust.vim'
 
 " TypeScript
@@ -1058,10 +1058,10 @@ if has_key(g:plugs, 'coc.nvim')
     command! -nargs=0 Format :call CocAction('format')
 
     " Add some commands for Go
-    command! -nargs=0 GoGenTestFile :call CocAction('runCommand', 'go.test.generate.file')
-    command! -nargs=0 GoGenTestFunc :call CocAction('runCommand', 'go.test.generate.function')
-    command! -nargs=0 GoGenTestExpo :call CocAction('runCommand', 'go.test.generate.exported')
-    command! -nargs=0 GoTestToggle  :call CocAction('runCommand', 'go.test.toggle')
+    " command! -nargs=0 GoGenTestFile :call CocAction('runCommand', 'go.test.generate.file')
+    " command! -nargs=0 GoGenTestFunc :call CocAction('runCommand', 'go.test.generate.function')
+    " command! -nargs=0 GoGenTestExpo :call CocAction('runCommand', 'go.test.generate.exported')
+    " command! -nargs=0 GoTestToggle  :call CocAction('runCommand', 'go.test.toggle')
 
   " " Mappings for CoCList
   " " Show all diagnostics.
