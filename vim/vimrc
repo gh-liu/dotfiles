@@ -533,7 +533,8 @@ xnoremap <  <gv
 xnoremap >  >gv
 
 " terminal
-tnoremap <Esc> <C-\><C-n>
+" tnoremap <Esc> <C-\><C-n>
+tnoremap <expr> <Esc> (&filetype == "fzf") ? "<Esc>" : "<c-\><c-n>"
 
 " https://github.com/junegunn/dotfiles/blob/057ee47465e43aafbd20f4c8155487ef147e29ea/vimrc#L1027
 " co? : Toggle options (inspired by unimpaired.vim)
