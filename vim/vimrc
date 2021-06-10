@@ -107,13 +107,22 @@ Plug 'benmills/vimux'
 " Plug 'tmux-plugins/vim-tmux'
 " Plug 'christoomey/vim-tmux-navigator'
 
-" Lang
+" Snippets
 " Plug 'SirVer/ultisnips'
+" Plug 'honza/vim-snippets'
 
+" LSP and Complete
+" Plug 'prabirshrestha/vim-lsp'
+" Plug 'mattn/vim-lsp-settings'
+" Plug 'prabirshrestha/asyncomplete.vim'
+" Plug 'prabirshrestha/asyncomplete-lsp.vim'
+" Plug 'prabirshrestha/asyncomplete-ultisnips.vim'
+
+" Lang
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
-Plug 'gh-liu/gotests.vim'
+" Plug 'gh-liu/gotests.vim'
 " Plug 'rust-lang/rust.vim'
 
 " TypeScript
@@ -169,12 +178,6 @@ Plug 'tpope/vim-scriptease'
 " Share Code 
 Plug 'junegunn/vim-carbon-now-sh', { 'on': 'CarbonNowSh' }
 let g:carbon_now_sh_options = { 't': 'oceanic-next'}
-
-" LSP and Complete
-" Plug 'prabirshrestha/vim-lsp'
-" Plug 'mattn/vim-lsp-settings'
-" Plug 'prabirshrestha/asyncomplete.vim'
-" Plug 'prabirshrestha/asyncomplete-lsp.vim'
 
 " Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
 "
@@ -1288,6 +1291,43 @@ if has_key(g:plugs, 'indentLine')
 endif
 
 if has_key(g:plugs, 'vim-qf')
+endif
+
+if has_key(g:plugs, 'asyncomplete.vim')
+  inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+  inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+  inoremap <expr> <cr>    pumvisible() ? asyncomplete#close_popup() : "\<cr>"
+
+  function! s:check_back_space() abort
+      let col = col('.') - 1
+      return !col || getline('.')[col - 1]  =~ '\s'
+  endfunction
+
+  " inoremap <silent><expr> <TAB>
+  "   \ pumvisible() ? "\<C-n>" :
+  "   \ <SID>check_back_space() ? "\<TAB>" :
+  "   \ asyncomplete#force_refresh()
+  " inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+  set completeopt=menuone,noinsert,noselect,preview
+
+  autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif
+
+  if executable('gopls')
+    au User lsp_setup call lsp#register_server({
+        \ 'name': 'gopls',
+        \ 'cmd': {server_info->['gopls','-remote','auto']},
+        \ 'whitelist': ['go'],
+        \ })
+    autocmd BufWritePre *.go LspDocumentFormatSync
+  endif
+
+  " let g:UltiSnipsExpandTrigger="<c-e>"
+  " call asyncomplete#register_source(asyncomplete#sources#ultisnips#get_source_options({
+  "     \ 'name': 'ultisnips',
+  "     \ 'allowlist': ['*'],
+  "     \ 'completor': function('asyncomplete#sources#ultisnips#completor'),
+  "     \ }))
 endif
 
 
