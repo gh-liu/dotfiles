@@ -1,3 +1,11 @@
+" == Install vim-plug == {{{1
+" let s:settings_plug_path = expand(s:settings_config_dir . '~/.vim/autoload/plug.vim')
+" if !filereadable(s:settings_plug_path)
+"   silent! exec 'silent !curl -fkLo "' . s:settings_plug_path . '" --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+" endif
+" silent! exec 'source ' . s:settings_plug_path
+
+
 " == Plugins == {{{1
 call plug#begin('~/.vim/plugged')
 " Theme
@@ -111,7 +119,7 @@ Plug 'benmills/vimux'
 " Plug 'SirVer/ultisnips'
 " Plug 'honza/vim-snippets'
 
-" LSP and Complete
+" LSP and Complete: https://raw.githubusercontent.com/prabirshrestha/dotfiles/master/.vimrc
 " Plug 'prabirshrestha/vim-lsp'
 " Plug 'mattn/vim-lsp-settings'
 " Plug 'prabirshrestha/asyncomplete.vim'
@@ -147,6 +155,9 @@ Plug 'iamcco/markdown-preview.nvim', { 'do': ':call mkdp#util#install()', 'for':
 Plug 'mzlogin/vim-markdown-toc'
   let g:vmt_fence_text = 'TOC'
   let g:vmt_fence_closing_text = '/TOC'
+
+Plug 'lambdalisue/vim-backslash', { 'filetype': 'vim' }
+let g:vim_backslash#preventers = [{ -> context_filetype#get_filetype() !=# 'vim' }]
 
 " Writing
 " Plug 'junegunn/limelight.vim'
@@ -360,6 +371,9 @@ set tags=./tags;/
 set modelines=2
 " set colorcolumn=80
 set grepformat=%f:%l:%c:%m,%f:%l:%m
+if executable('rg')
+  set grepprg=rg\ --no-heading\ --vimgrep
+endif
 
 filetype on
 filetype indent on
@@ -378,6 +392,17 @@ endif
 nnoremap <F1> <Esc>
 inoremap <F1> <Esc>
 vnoremap <F1> <Esc>
+
+" Ctrl+c as Esc
+nnoremap <C-c> <Esc>
+inoremap <C-c> <Esc>
+vnoremap <C-c> <Esc>
+snoremap <C-c> <Esc>
+xnoremap <C-c> <Esc>
+cnoremap <C-c> <Esc>
+onoremap <C-c> <Esc>
+lnoremap <C-c> <Esc>
+tnoremap <C-c> <Esc>
 
 " map <space> <leader>
 
