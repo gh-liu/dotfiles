@@ -1051,7 +1051,7 @@ if has_key(g:plugs, 'coc.nvim')
       autocmd VimEnter * nmap <silent> ]d <Plug>(coc-diagnostic-next)
 
       " Update signature help on jump placeholder.
-      autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+      " autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 
       " Highlight the symbol and its references when holding the cursor.
       highlight CocHighlightText term=underline cterm=underline gui=underline
