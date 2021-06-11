@@ -156,8 +156,7 @@ Plug 'mzlogin/vim-markdown-toc'
   let g:vmt_fence_text = 'TOC'
   let g:vmt_fence_closing_text = '/TOC'
 
-Plug 'lambdalisue/vim-backslash', { 'filetype': 'vim' }
-let g:vim_backslash#preventers = [{ -> context_filetype#get_filetype() !=# 'vim' }]
+Plug 'lambdalisue/vim-backslash', { 'for': 'vim' }
 
 " Writing
 " Plug 'junegunn/limelight.vim'
