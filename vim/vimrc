@@ -1190,6 +1190,7 @@ if has_key(g:plugs, 'vim-fugitive')
 endif
 
 if has_key(g:plugs, 'vim-signify')
+  let g:signify_disable_by_default = 1
   let g:signify_vcs_list = ['git']
   nnoremap <leader>gt :SignifyToggle<CR>
   nnoremap <leader>gd :SignifyHunkDiff<CR>
