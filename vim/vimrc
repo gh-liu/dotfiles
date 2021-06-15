@@ -1,9 +1,9 @@
 " == Install vim-plug == {{{1
-" let s:settings_plug_path = expand(s:settings_config_dir . '~/.vim/autoload/plug.vim')
-" if !filereadable(s:settings_plug_path)
-"   silent! exec 'silent !curl -fkLo "' . s:settings_plug_path . '" --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-" endif
-" silent! exec 'source ' . s:settings_plug_path
+let s:settings_plug_path = '~/.vim/autoload/plug.vim'
+if !filereadable(s:settings_plug_path)
+  silent! exec 'silent !curl -fkLo "' . s:settings_plug_path . '" --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+  silent! exec 'source ' . s:settings_plug_path
+endif
 
 
 " == Plugins == {{{1
@@ -157,6 +157,10 @@ Plug 'mzlogin/vim-markdown-toc'
   let g:vmt_fence_closing_text = '/TOC'
 
 Plug 'lambdalisue/vim-backslash', { 'for': 'vim' }
+	let g:vim_backslash#preventers = [
+	      \ { -> context_filetype#get_filetype() !=# 'vim' },
+	      \]
+Plug 'Shougo/context_filetype.vim'
 
 " Writing
 " Plug 'junegunn/limelight.vim'
@@ -186,8 +190,7 @@ Plug 'tpope/vim-scriptease'
 " Plug 'junegunn/vader.vim'
 
 " Share Code 
-Plug 'junegunn/vim-carbon-now-sh', { 'on': 'CarbonNowSh' }
-let g:carbon_now_sh_options = { 't': 'oceanic-next'}
+" Plug 'junegunn/vim-carbon-now-sh', { 'on': 'CarbonNowSh' }
 
 " Plug 'chrisbra/unicode.vim', {'on': ['UnicodeName', 'UnicodeTable']}
 "
@@ -584,6 +587,9 @@ tnoremap <expr> <Esc> (&filetype == "fzf") ? "<Esc>" : "<c-\><c-n>"
 " https://github.com/mhinz/vim-galore#quickly-edit-your-macros
 " Quickly edit macros, Use it like this <leader>m or "q<leader>m(Note the sign `"`).
 nnoremap <leader>m  :<c-u><c-r><c-r>='let @'. v:register .' = '. string(getreg(v:register))<cr><c-f><left>
+
+" Use space close/open flod
+nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<CR>
 
 function! ToogleNumber()
   if (&relativenumber == &number)
@@ -1287,12 +1293,6 @@ if has_key(g:plugs, 'vimux')
     nnoremap <Leader>vl :VimuxRunLastCommand<CR>
 endif
 
-" if has_key(g:plugs, 'indentLine')
-"   autocmd! User indentLine doautocmd indentLine Syntax
-"   let g:indentLine_color_term = 239
-"   let g:indentLine_color_gui = '#616161'
-" endif
-
 if has_key(g:plugs, 'vim-visual-multi')
   let g:VM_maps = {}
   let g:VM_maps['Find Under']='<C-m>'
@@ -1316,6 +1316,10 @@ if has_key(g:plugs, 'indentLine')
 endif
 
 if has_key(g:plugs, 'vim-qf')
+endif
+
+if has_key(g:plugs, 'vim-carbon-now-sh')
+  let g:carbon_now_sh_options = { 't': 'oceanic-next'}
 endif
 
 if has_key(g:plugs, 'asyncomplete.vim')
