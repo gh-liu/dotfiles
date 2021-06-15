@@ -22,18 +22,18 @@
 # install software
 echo -e "\n" | sudo pacman -S archlinuxcn-keyring
 echo -e "\n" | sudo pacman -S yay
-echo -e "\n" | sudo pacman -S ibus-rime
+echo -e "\n" | sudo pacman -S ibus-rime ibus-mozc
 
 echo -e "\n" | sudo pacman -S base-devel coreutils
 echo -e "\n" | sudo pacman -S zsh vim tmux tmuxp alacritty
-echo -e "\n" | sudo pacman -S jq bat fzf ctags
+echo -e "\n" | sudo pacman -S jq bat fzf ctags ripgrep the_silver_searcher proxychains-ng 
 echo -e "\n" | sudo pacman -S docker docker-compose 
-echo -e "\n" | sudo pacman -S htop tcpdump strace perf httpie
-echo -e "\n" | sudo pacman -S cmake gdb lldb 
+echo -e "\n" | sudo pacman -S htop tcpdump strace perf httpie wrk cmake gdb lldb 
 echo -e "\n" | sudo pacman -S virtualbox vagrant 
-echo -e "\n" | sudo pacman -S ripgrep the_silver_searcher proxychains-ng vagrant cloc nodejs npm github-cli neofetch cmatrix
-echo -e "\n" | sudo pacman -S bash-language-server
-echo -e "\n" | sudo pacman -S ibus-mozc graphviz namcap
+echo -e "\n" | sudo pacman -S cloc github-cli neofetch cmatrix
+echo -e "\n" | sudo pacman -S bash-language-server nodejs npm
+echo -e "\n" | sudo pacman -S graphviz namcap
+
 # full screen support
 echo -e "\n" | sudo pacman -S wmctrl xdotool
 
