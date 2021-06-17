@@ -1122,6 +1122,7 @@ if has_key(g:plugs, 'tagbar')
   let g:tagbar_autofocus = 1
   let g:tagbar_position = 'leftabove vertical'
   let g:tagbar_width = 25
+  let g:tagbar_sort = 0
   nnoremap T :TagbarToggle<CR>
 
   " https://github.com/preservim/tagbar/wiki#markdown
@@ -1200,6 +1201,7 @@ if has_key(g:plugs, 'vim-signify')
   let g:signify_vcs_list = ['git']
   nnoremap <leader>gt :SignifyToggle<CR>
   nnoremap <leader>gd :SignifyHunkDiff<CR>
+  nnoremap <leader>gu :SignifyHunkUndo<CR>
 
   if (g:colors_name == 'gruvbox')
     highlight SignifySignAdd    ctermfg=142   guifg=#b8bb26 cterm=NONE gui=NONE
