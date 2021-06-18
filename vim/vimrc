@@ -568,21 +568,22 @@ tnoremap <expr> <Esc> (&filetype == "fzf") ? "<Esc>" : "<c-\><c-n>"
 
 " https://github.com/junegunn/dotfiles/blob/057ee47465e43aafbd20f4c8155487ef147e29ea/vimrc#L1027
 " co? : Toggle options (inspired by unimpaired.vim)
-" function! s:map_change_option(...)
-"   let [key, opt] = a:000[0:1]
-"   let op = get(a:, 3, 'set '.opt.'!')
-"   execute printf("nnoremap co%s :%s<bar>set %s?<cr>", key, op, opt)
-" endfunction
+function! s:map_change_option(...)
+  let prefix = 'co'
+  let [key, opt] = a:000[0:1]
+  let op = get(a:, 3, 'set '.opt.'!')
+  execute printf("nnoremap %s%s :%s<bar>set %s?<cr>", prefix, key, op, opt)
+endfunction
 
-" call s:map_change_option('p', 'paste')
+call s:map_change_option('p', 'paste')
 " call s:map_change_option('n', 'number')
-" call s:map_change_option('w', 'wrap')
-" call s:map_change_option('h', 'hlsearch')
-" call s:map_change_option('m', 'mouse', 'let &mouse = &mouse == "" ? "a" : ""')
-" call s:map_change_option('t', 'textwidth',
-"     \ 'let &textwidth = input("textwidth (". &textwidth ."): ")<bar>redraw')
-" call s:map_change_option('b', 'background',
-"     \ 'let &background = &background == "dark" ? "light" : "dark"<bar>redraw')
+call s:map_change_option('w', 'wrap')
+call s:map_change_option('h', 'hlsearch')
+call s:map_change_option('m', 'mouse', 'let &mouse = &mouse == "" ? "a" : ""')
+call s:map_change_option('t', 'textwidth',
+    \ 'let &textwidth = input("textwidth (". &textwidth ."): ")<bar>redraw')
+call s:map_change_option('b', 'background',
+    \ 'let &background = &background == "dark" ? "light" : "dark"<bar>redraw')
 
 " https://github.com/mhinz/vim-galore#quickly-edit-your-macros
 " Quickly edit macros, Use it like this <leader>m or "q<leader>m(Note the sign `"`).
@@ -617,19 +618,19 @@ nnoremap <F2> :call ToggleSignColumnAndNumber()<CR>
 " ]p to paste into a newline
 " [p to paste into the line upon cursor
 " https://github.com/tpope/vim-unimpaired/blob/master/plugin/unimpaired.vim#L343
-function! s:putline(how, map) abort
-  let [body, type] = [getreg(v:register), getregtype(v:register)]
-  if type ==# 'V'
-    exe 'normal! "'.v:register.a:how
-  else
-    call setreg(v:register, body, 'l')
-    exe 'normal! "'.v:register.a:how
-    call setreg(v:register, body, type)
-  endif
-    silent! call repeat#set("\<Plug>unimpairedPut".a:map)
-endfunction
-nnoremap <silent> [p :call <SID>putline('[p', 'Above')<CR>
-nnoremap <silent> ]p :call <SID>putline(']p', 'Below')<CR>
+" function! s:putline(how, map) abort
+"   let [body, type] = [getreg(v:register), getregtype(v:register)]
+"   if type ==# 'V'
+"     exe 'normal! "'.v:register.a:how
+"   else
+"     call setreg(v:register, body, 'l')
+"     exe 'normal! "'.v:register.a:how
+"     call setreg(v:register, body, type)
+"   endif
+"     silent! call repeat#set("\<Plug>unimpairedPut".a:map)
+" endfunction
+" nnoremap <silent> [p :call <SID>putline('[p', 'Above')<CR>
+" nnoremap <silent> ]p :call <SID>putline(']p', 'Below')<CR>
 
 " Echo the number under the cursor as binary, useful for bitwise operations
 function! s:echoBinary()
