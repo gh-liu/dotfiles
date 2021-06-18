@@ -1374,4 +1374,4 @@ source ~/.vim/abbr.vim
 " hi! link ShowMarksHLu DiffChange
 
 " Modeline {{{1
-" vim: ts=2 sw=4 sts=4 et foldenable foldmethod=marker foldcolumn=1
+" vim: ts=2 sw=2 sts=4 et foldenable foldmethod=marker foldcolumn=1
