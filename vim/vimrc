@@ -161,7 +161,7 @@ Plug 'mzlogin/vim-markdown-toc'
 " 	let g:vim_backslash#preventers = [
 " 	      \ { -> context_filetype#get_filetype() !=# 'vim' },
 " 	      \]
-Plug 'Shougo/context_filetype.vim'
+" Plug 'Shougo/context_filetype.vim'
 
 " Writing
 " Plug 'junegunn/limelight.vim'
@@ -218,6 +218,8 @@ Plug 'tpope/vim-scriptease'
 
 " Modern database interface for Vim
 " Plug 'tpope/vim-dadbod'
+
+Plug 'matt-deacalion/vim-systemd-syntax'
 
 call plug#end()
 
@@ -1366,6 +1368,14 @@ if has_key(g:plugs, 'asyncomplete.vim')
   "     \ }))
 endif
 
+if has_key(g:plugs, 'vim-scriptease')
+  function s:RTP() abort
+    let plug_path = getcwd()
+    execute 'Runtime' . plug_path . '/**/*.vim'
+  endfunction
+
+  command! RTP call s:RTP()
+endif
 
 " == Abbrs == {{{1
 source ~/.vim/abbr.vim
