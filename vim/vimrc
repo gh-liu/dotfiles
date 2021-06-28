@@ -1374,7 +1374,7 @@ if has_key(g:plugs, 'vim-scriptease')
     execute 'Runtime' . plug_path . '/**/*.vim'
   endfunction
 
-  command! RTP call s:RTP()
+   autocmd FileType vim command! RTP call s:RTP()
 endif
 
 " == Abbrs == {{{1
