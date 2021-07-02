@@ -1128,7 +1128,7 @@ if has_key(g:plugs, 'tagbar')
   let g:tagbar_autofocus = 1
   let g:tagbar_position = 'leftabove vertical'
   let g:tagbar_width = 30
-  let g:tagbar_sort = 0
+  " let g:tagbar_sort = 0
   let g:tagbar_compact = 1
   nnoremap T :TagbarToggle<CR>
 
