@@ -10,3 +10,6 @@ function unsetProxy(){
     unset ALL_PROXY
 }
 setProxy
+
+# https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
+stty -ixon

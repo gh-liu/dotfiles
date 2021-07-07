@@ -12,12 +12,18 @@ git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 # curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
 #     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 
-## zsh plugin
+## ohmyzsh and plugin
+git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
+
 git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-completions
 # git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search
 
+
+mkdir -p ~/tool
+mkdir -p ~/code/golang
+mkdir -p ~/env/golang
 
 # CONFIG
 
@@ -53,3 +59,10 @@ vim +PlugInstall +qall
 
 ## alacritty
 ln -svf $BASE/alacritty/alacritty.yml ~/.alacritty.yml
+
+## autojump
+git clone git://github.com/wting/autojump.git ~/tool/autojump
+cd ~/tool/autojump
+./install.py
+
+# pip install --user tmuxp

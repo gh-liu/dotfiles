@@ -3,13 +3,16 @@ export EDITOR=vim
 # go env
 export GO111MODULE=on
 #export GOPROXY=direct
-# export GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
-# export GOSUMDB=gosum.io+ce6e7565+AY5qEHUk/qmHc5btzW45JVoENfazw8LielDsaI+lEbq6
+export GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
+export GOSUMDB=gosum.io+ce6e7565+AY5qEHUk/qmHc5btzW45JVoENfazw8LielDsaI+lEbq6
 export GOPATH=~/env/golang/gopath
 export GOBIN=$GOPATH/bin
 export GOROOT=~/env/golang/go
 # export PATH=$PATH:$GOBIN:$GOROOT/bin/
 # export GOPRIVATE=
+
+# node env
+export NODE_HOME=~/env/nodejs/node
 
 # docker
 export DOCKER_DATA=~/env/docker/data
@@ -27,6 +30,7 @@ path=(
     $HOME/bin
     $GOPATH/bin                              # golang
     $GOROOT/bin
+    $NODE_HOME/bin                           # nodejs
     $HOME/.local/bin                         # pipx
     $path
   )
