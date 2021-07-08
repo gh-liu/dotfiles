@@ -14,6 +14,10 @@ export GOROOT=~/env/golang/go
 # node env
 export NODE_HOME=~/env/nodejs/node
 
+# java env
+export JAVA_HOME=~/env/java/jdk
+export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+
 # docker
 export DOCKER_DATA=~/env/docker/data
 export DOCKER_CONF=~/env/docker/conf
@@ -30,6 +34,7 @@ path=(
     $HOME/bin
     $GOPATH/bin                              # golang
     $GOROOT/bin
+    $JAVA_HOME/bin                           # java
     $NODE_HOME/bin                           # nodejs
     $HOME/.local/bin                         # pipx
     $path
