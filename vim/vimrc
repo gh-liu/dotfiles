@@ -1002,6 +1002,8 @@ if has_key(g:plugs, 'fzf.vim')
 endif
 
 if has_key(g:plugs, 'coc.nvim')
+  set tagfunc=CocTagFunc
+
   " Make <CR> auto-select the first completion item and notify coc.nvim to
   " format on enter, <cr> could be remapped by other vim plugin
   " inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
@@ -1067,8 +1069,8 @@ if has_key(g:plugs, 'coc.nvim')
 
     augroup coc-conf
       autocmd!
-      nmap <C-a> <C-o>
-      nmap <C-d> <Plug>(coc-definition)
+      " nmap <C-a> <C-o>
+      " nmap <C-d> <Plug>(coc-definition)
 
       autocmd VimEnter * nnoremap <silent><nowait>gh :call CocActionAsync('doHover')<CR>
       autocmd VimEnter * nnoremap <silent><nowait>gd :call CocActionAsync('jumpDefinition')<CR>
@@ -1248,6 +1250,8 @@ if has_key(g:plugs, 'vim-go')
 
   " run go imports on file save
   " let g:go_fmt_command = "goimports"
+
+  let g:go_def_mapping_enabled = 0
 
   let g:go_debug_preserve_layout = 1
   let g:go_debug_windows = {
