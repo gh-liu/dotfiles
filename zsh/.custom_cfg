@@ -9,7 +9,7 @@ function unsetProxy(){
     unset https_proxy
     unset ALL_PROXY
 }
-setProxy
+# setProxy
 
 # # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
 # stty -ixon
@@ -41,3 +41,5 @@ setProxy
 #     echo "WSL ip:" ${wslip}
 #     echo "Current proxy:" $https_proxy
 # }
+#
+# setxkbmap -option ctrl:swapcaps

@@ -221,6 +221,8 @@ Plug 'tpope/vim-scriptease'
 
 Plug 'matt-deacalion/vim-systemd-syntax'
 
+Plug '~/code/vim/dap.vim'
+
 call plug#end()
 
 
@@ -799,6 +801,12 @@ function! s:root()
   endif
 endfunction
 command! Root call s:root()
+
+function! s:file_root() abort
+  let l:root = expand('%:h')
+
+  
+endfunction
 
 " Profile
 function! s:profile(bang)
