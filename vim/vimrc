@@ -128,8 +128,8 @@ Plug 'benmills/vimux'
 " Plug 'prabirshrestha/asyncomplete-ultisnips.vim'
 
 " Lang
-" Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug 'neoclide/coc.nvim', {'branch': 'master', 'do': 'yarn install --frozen-lockfile'}
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" Plug 'neoclide/coc.nvim', {'branch': 'master', 'do': 'yarn install --frozen-lockfile'}
 
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
 " Plug 'gh-liu/gotests.vim'

@@ -2,9 +2,9 @@
 
 ## basic tools
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y vim zsh tmux
+sudo apt install -y vim zsh tmux tmuxp
 sudo apt install -y git ssh docker.io
-sudo apt install -y nodejs npm
+sudo apt install -y python python3-pip
 sudo apt install -y graphviz hugo
 sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
 
@@ -14,6 +14,9 @@ mkdir -p ~/dev/{golang,nodejs}
 mkdir -p ~/env/{golang,nodejs}
 
 ## proxy
+export proxy=http://192.168.102.102:1081
+export http_proxy=$proxy
+export https_proxy=$proxy
 
 ## golang
 cd ~/env/golang/
@@ -23,15 +26,64 @@ GOARCH=$(if [[ $(uname -m) == "x86_64" ]] ; then echo amd64; else echo $(uname -
 
 wget https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz
 
-tar xvf $GOVERSION.linux-$GOARCH.tar.gz && rm $GOVERSION.linux-$GOARCH.tar.gz
+tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz && rm $GOVERSION.linux-$GOARCH.tar.gz
+
+## nodejs
+cd ~/env/nodejs/
+
+NODEJSVERSION=v14.18.1
+NODEJSARCH=x64
+
+wget https://nodejs.org/dist/$NODEJSVERSION/node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
+
+xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
+tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
+
+mv node-$NODEJSVERSION-linux-$NODEJSARCH node
 
 ## dotfiles
-cd ~/tools
-git clone https://github.com/gh-liu/dotfiles.git
+dotfilespath=~/tools/dotfiles
+git clone https://github.com/gh-liu/dotfiles.git $dotfilespath
+### replace PROXY_HTTP in the .common_func
+sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/.common_func
 
 ## oh-my-zsh
 sh -c "$(wget -O- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-## vim config
+git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-completions
 
-## tmux config
+## zsh config
+mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
+for v in $dotfilespath/zsh/.common_*; do
+  ln -svf "$v" ~/
+done
+ln -svf $dotfilespath/zsh/.zshrc ~/.zshrc
+ln -svf $dotfilespath/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
+
+## vim config
+curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+
+mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
+for v in $dotfilespath/vim/*.vim; do
+  ln -svf "$v" ~/.vim
+done
+ln -svf $dotfilespath/vim/vimrc ~/.vimrc
+ln -svf $dotfilespath/vim/UltiSnips ~/.vim/UltiSnips
+ln -svf $dotfilespath/coc/coc-settings.json ~/.vim/coc-settings.json
+
+## tmux
+mkdir -p ~/.tmux/plugins/tpm
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
+mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
+ln -svf $dotfilespath/tmux/tmux.conf ~/.tmux.conf
+
+## autojump
+git clone git://github.com/wting/autojump.git ~/tool/autojump
+~/tool/autojump/install.py
+
+source ~/.zshrc
+vim +PlugInstall +qall

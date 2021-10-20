@@ -8,3 +8,20 @@ peek() { tmux split-window -p 33 "$EDITOR" "$@" }
 
 # https://www.commandlinefu.com/commands/view/9065/what-is-the-use-of-this-switch-
 function manswitch () { man $1 | less -p "^ +$2"; }
+
+# proxy set and unset
+set_proxy(){
+    PROXY_HTTP=http://192.168.102.102:1081
+
+    export http_proxy="${PROXY_HTTP}"
+    export HTTP_PROXY="${PROXY_HTTP}"
+
+    export https_proxy="${PROXY_HTTP}"
+    export HTTPS_proxy="${PROXY_HTTP}"
+}
+unset_proxy(){
+    unset http_proxy
+    unset HTTP_PROXY
+    unset https_proxy
+    unset HTTPS_PROXY
+}
