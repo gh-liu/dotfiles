@@ -7,6 +7,7 @@ sudo apt install -y git ssh docker.io
 sudo apt install -y python python3-pip
 sudo apt install -y graphviz hugo
 sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
+sudo apt install -y autoconf automake pkg-config
 
 ## directories
 tools=~/tools
@@ -90,6 +91,11 @@ cd $tools/autojump
 
 ## ctags
 git clone https://github.com/universal-ctags/ctags.git $tools/ctags
+cd $tools/ctags
+./autogen.sh
+./configure  # --prefix=/where/you/want defaults to /usr/local
+make
+sudo make install
 
 source ~/.zshrc
 vim +PlugInstall +qall
