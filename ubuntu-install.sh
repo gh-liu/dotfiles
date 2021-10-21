@@ -8,6 +8,7 @@ sudo apt install -y python python3-pip
 sudo apt install -y graphviz hugo
 sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
 sudo apt install -y autoconf automake pkg-config
+sudo apt install -y ripgrep silversearcher-ag
 
 ## directories
 tools=~/tools
