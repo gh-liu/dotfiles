@@ -9,7 +9,9 @@ sudo apt install -y graphviz hugo
 sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
 
 ## directories
-mkdir -p ~/tools
+tools=~/tools
+
+mkdir -p $tools
 mkdir -p ~/dev/{golang,nodejs}
 mkdir -p ~/env/{golang,nodejs}
 
@@ -42,7 +44,7 @@ tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-lin
 mv node-$NODEJSVERSION-linux-$NODEJSARCH node
 
 ## dotfiles
-dotfilespath=~/tools/dotfiles
+dotfilespath=$tools/dotfiles
 git clone https://github.com/gh-liu/dotfiles.git $dotfilespath
 ### replace PROXY_HTTP in the .common_func
 sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/.common_func
@@ -82,8 +84,12 @@ mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
 ln -svf $dotfilespath/tmux/tmux.conf ~/.tmux.conf
 
 ## autojump
-git clone git://github.com/wting/autojump.git ~/tool/autojump
-~/tool/autojump/install.py
+git clone git://github.com/wting/autojump.git $tools/autojump
+cd $tools/autojump
+./install.py
+
+## ctags
+git clone https://github.com/universal-ctags/ctags.git $tools/ctags
 
 source ~/.zshrc
 vim +PlugInstall +qall
