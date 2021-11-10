@@ -129,3 +129,6 @@ fi
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 export DISABLE_AUTO_TITLE='true'
+
+# direnv
+eval "$(direnv hook zsh)"
