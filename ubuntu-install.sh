@@ -106,3 +106,11 @@ vim +PlugInstall +qall
 ## protobuf go
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+## wrk
+cd $tools
+# sudo apt-get install build-essential libssl-dev git -y 
+git clone https://github.com/wg/wrk.git wrk 
+cd wrk 
+sudo make 
+sudo cp wrk /usr/local/bin 
