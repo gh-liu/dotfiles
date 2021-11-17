@@ -10,7 +10,7 @@ sudo apt install -y gdb binutils
 sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
 sudo apt install -y autoconf automake pkg-config
 sudo apt install -y ripgrep silversearcher-ag
-sudo apt install -y direnv hugo protobuf-compiler
+sudo apt install -y direnv hugo protobuf-compiler apache2-utils tldr
 
 ## directories
 tools=~/tools

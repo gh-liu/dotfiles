@@ -46,3 +46,6 @@ alias tpll='tmuxp ls'
 # rust
 alias cg='cargo'
 alias cgfmt='cargo-fmt'
+
+# git
+alias gmn='git merge --no-ff'
