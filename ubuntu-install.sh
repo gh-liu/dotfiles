@@ -11,6 +11,7 @@ sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
 sudo apt install -y autoconf automake pkg-config
 sudo apt install -y ripgrep silversearcher-ag
 sudo apt install -y direnv hugo protobuf-compiler apache2-utils tldr ngrep
+sudo apt install -y cgroup-tools
 
 ### install docker by this (https://docs.docker.com/engine/install/ubuntu/)
 
