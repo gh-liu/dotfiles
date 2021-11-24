@@ -1068,13 +1068,8 @@ if has_key(g:plugs, 'coc.nvim')
       \'coc-pairs',
       \'coc-yaml',
       \'coc-json',
-      \'coc-lua',
-      \'coc-jedi',
       \'coc-go',
-      \'coc-tsserver',
       \'coc-prettier',
-      \'coc-eslint',
-      \'coc-vimlsp'
       \]
 
     augroup coc-conf
