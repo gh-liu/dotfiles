@@ -57,6 +57,10 @@ ln -svf $BASE/coc/coc-settings.json ~/.vim/coc-settings.json
 # Make sure that the vim-plug have installed.
 vim +PlugInstall +qall
 
+## nvim
+mkdir -p ~/.config/nvim
+ln -svf $(pwd)/nvim/* ~/.config/nvim
+
 ## alacritty
 ln -svf $BASE/alacritty/alacritty.yml ~/.alacritty.yml
 
