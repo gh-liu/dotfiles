@@ -2,7 +2,7 @@ local packer = nil
 local function init()
   if packer == nil then
     packer = require('packer')
-    packer.init { disable_commands = true }
+    packer.init { disable_commands = true } -- disable creating packer commands
   end
 
   local use = packer.use
@@ -43,8 +43,6 @@ local function init()
       config = [[require('config.lsp_config')]],
     },
     -- 'onsails/lspkind-nvim', -- adds vscode-like pictograms
-    -- 'folke/trouble.nvim',
-    -- 'ray-x/lsp_signature.nvim',
     -- 'kosayoda/nvim-lightbulb',
     {
       'hrsh7th/nvim-cmp',
@@ -59,6 +57,35 @@ local function init()
       config = [[require('config.cmp')]],
       event = 'InsertEnter *',
     }, -- Autocompletion plugin
+  }
+
+  use {
+    "folke/trouble.nvim",
+    -- requires = "kyazdani42/nvim-web-devicons",
+    config = function()
+      require('trouble').setup({
+        icons = false,
+        fold_open = "-", -- icon used for open folds
+        fold_closed = "+", -- icon used for closed folds
+        indent_lines = false, -- add an indent guide below the fold icons
+        signs = {
+            -- icons / text used for a diagnostic
+            error = "error",
+            warning = "warn",
+            hint = "hint",
+            information = "info"
+        },
+        use_lsp_diagnostic_signs = true -- enabling this will use the signs defined in your lsp client
+    })
+    vim.api.nvim_set_keymap('n', '<leader>t', '<cmd>TroubleToggle<cr>', {silent = true})
+    end
+  }
+
+  use {
+    "ray-x/lsp_signature.nvim",
+    config = function()
+      require('lsp_signature').setup()
+    end
   }
 
   use {
@@ -81,6 +108,17 @@ local function init()
     end
   }
 
+  use {
+    'nvim-treesitter/nvim-treesitter',
+    run = ':TSUpdate'
+  }
+
+  use { 
+    "danymat/neogen", 
+    config = [[require('config.neogen')]],
+    requires = "nvim-treesitter/nvim-treesitter"
+  }
+
   -- Git
   use {
     -- { 'tpope/vim-fugitive', cmd = { 'Git' } },
@@ -88,7 +126,7 @@ local function init()
       'TimUntersberger/neogit', 
       requires = 'nvim-lua/plenary.nvim', 
       config = function()
-        require('neogit').setup()
+        require('neogit').setup({disable_signs = false,})
       end
     },
     {
@@ -119,16 +157,41 @@ local function init()
   -- use 'github/copilot.vim'
 
   -- Profiling
-  use { 'dstein64/vim-startuptime', cmd = 'StartupTime', config = [[vim.g.startuptime_tries = 10]] }
+  -- use { 'dstein64/vim-startuptime', cmd = 'StartupTime', config = [[vim.g.startuptime_tries = 10]] }
 
   -- Go dev
   use {'fatih/vim-go', run = ':GoUpdateBinaries',config = [[require('config.vim-go')]]}
 
-  -- use {
-  --   'nvim-treesitter/nvim-treesitter',
-  --   run = ':TSUpdate'
-  -- }
 
+  -- Refactoring
+  -- use { 'ThePrimeagen/refactoring.nvim', opt = true }
+
+  -- Plugin development
+  -- use 'folke/lua-dev.nvim'
+
+  -- Quickfix
+  use 'kevinhwang91/nvim-bqf'
+
+  -- Debugger
+  use {
+    {
+      'mfussenegger/nvim-dap',
+      setup = [[require('config.dap_setup')]],
+      config = [[require('config.dap')]],
+      requires = 'jbyuki/one-small-step-for-vimkind',
+      wants = 'one-small-step-for-vimkind',
+      module = 'dap',
+    },
+    {
+      'rcarriga/nvim-dap-ui',
+      requires = 'nvim-dap',
+      after = 'nvim-dap',
+      config = function()
+        require('dapui').setup()
+      end,
+    },
+  }
+  
 end
 
 local plugins = setmetatable({}, {

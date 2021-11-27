@@ -1,10 +1,9 @@
 require('packer_set')
+require('impatient')
 
 local g = vim.g
 local cmd = vim.cmd
 local o, wo, bo = vim.o, vim.wo, vim.bo
-
--- require('impatient')
 
 local utils = require('utils')
 local opt = utils.opt
