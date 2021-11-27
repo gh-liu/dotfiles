@@ -132,3 +132,5 @@ export DISABLE_AUTO_TITLE='true'
 
 # direnv
 eval "$(direnv hook zsh)"
+
+alias luamake=~/env/lsp/lua-language-server/3rd/luamake/luamake

@@ -40,3 +40,5 @@ path=(
     $path
   )
 export PATH=":$PATH"
+
+export TERM="screen-256color"
