@@ -1,12 +1,12 @@
-require 'packer_set'
+require('packer_set')
 
 local g = vim.g
 local cmd = vim.cmd
 local o, wo, bo = vim.o, vim.wo, vim.bo
 
--- require 'impatient'
+-- require('impatient')
 
-local utils = require 'utils'
+local utils = require('utils')
 local opt = utils.opt
 local map = utils.map
 local autocmd = utils.autocmd
@@ -129,9 +129,9 @@ map('n', '[T', '<cmd>tfirst<cr>')
 map('n', ']T', '<cmd>tlast<cr>')
 
 -- <Leader>[1-9] move to tab [1-9]
-for i=1,9,1 do  
+for i=1,9,1 do
   map('n', '<leader>' .. i, i .. 'gt')
-end  
+end
 
 map('n','<c-a>','<c-o>')
 

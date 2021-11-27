@@ -1,7 +1,7 @@
 local packer = nil
 local function init()
   if packer == nil then
-    packer = require 'packer'
+    packer = require('packer')
     packer.init { disable_commands = true }
   end
 
@@ -22,7 +22,6 @@ local function init()
   use 'sainnhe/gruvbox-material'
   -- use 'joshdick/onedark.vim'
   use 'rakr/vim-one'
-  
 
   -- Undo tree
   use {
@@ -41,12 +40,12 @@ local function init()
   use {
     {
       'neovim/nvim-lspconfig',
-      config = [[require 'config.lsp_config']],
+      config = [[require('config.lsp_config')]],
     },
-    'onsails/lspkind-nvim', -- adds vscode-like pictograms
-    'folke/trouble.nvim',
-    'ray-x/lsp_signature.nvim',
-    'kosayoda/nvim-lightbulb',
+    -- 'onsails/lspkind-nvim', -- adds vscode-like pictograms
+    -- 'folke/trouble.nvim',
+    -- 'ray-x/lsp_signature.nvim',
+    -- 'kosayoda/nvim-lightbulb',
     {
       'hrsh7th/nvim-cmp',
       requires = {
@@ -56,75 +55,79 @@ local function init()
         { 'hrsh7th/cmp-nvim-lua', after = 'nvim-cmp' },
         'L3MON4D3/LuaSnip', -- Snippets plugin
         { 'saadparwaiz1/cmp_luasnip', after = 'nvim-cmp' },
-        -- 'SirVer/ultisnips',
       },
       config = [[require('config.cmp')]],
       event = 'InsertEnter *',
     }, -- Autocompletion plugin
   }
 
-  use 'tpope/vim-repeat'
-  use 'tpope/vim-surround'
-  use 'tpope/vim-abolish'
-  use 'tpope/vim-endwise'
+  use {
+    'windwp/nvim-autopairs',
+    config = function()
+      require('nvim-autopairs').setup{}
+    end
+  }
+
+  -- use 'tpope/vim-repeat'
+  -- use 'tpope/vim-surround'
+  -- use 'tpope/vim-abolish'
+  -- use 'tpope/vim-endwise'
 
   -- Comment
   use {
-    'tpope/vim-commentary',
-    config = [[require('config.commentary')]],
+    'numToStr/Comment.nvim',
+    config = function()
+        require('Comment').setup()
+    end
   }
 
   -- Git
   use {
-    { 'tpope/vim-fugitive', cmd = { 'Git' } },
+    -- { 'tpope/vim-fugitive', cmd = { 'Git' } },
+    { 
+      'TimUntersberger/neogit', 
+      requires = 'nvim-lua/plenary.nvim', 
+      config = function()
+        require('neogit').setup()
+      end
+    },
     {
       'lewis6991/gitsigns.nvim',
       requires = { 'nvim-lua/plenary.nvim' },
       config = [[require('config.gitsigns')]],
     },
   }
-  
-  -- Search
+
+  -- Search  
   use {
-    {
-      'nvim-telescope/telescope.nvim',
-      requires = {
-        'nvim-lua/popup.nvim',
-        'nvim-lua/plenary.nvim',
-        'telescope-frecency.nvim',
-        'telescope-fzf-native.nvim',
-      },
-      -- wants = {
-      --   'popup.nvim',
-      --   'plenary.nvim',
-      --   'telescope-frecency.nvim',
-      --   'telescope-fzf-native.nvim',
-      -- },
-      setup = [[require('config.telescope_setup')]],
-      config = [[require('config.telescope')]],
-      cmd = 'Telescope',
-      module = 'telescope',
-    },
-    {
-      'nvim-telescope/telescope-frecency.nvim',
-      after = 'telescope.nvim',
-      requires = 'tami5/sql.nvim',
-    },
-    {
-      'nvim-telescope/telescope-fzf-native.nvim',
-      run = 'make',
-    },
+    'nvim-telescope/telescope.nvim',
+    requires = { 
+      'nvim-lua/plenary.nvim', 
+      'telescope-fzf-native.nvim',
+      -- 'telescope-frecency.nvim',
+     },
+    setup = [[require('config.telescope_setup')]],
+    config = [[require('config.telescope')]],
   }
+  use {'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+  -- use {
+  --   "nvim-telescope/telescope-frecency.nvim",
+  --   after = 'telescope.nvim',
+  --   requires = {"tami5/sqlite.lua"}
+  -- }
 
   -- use 'github/copilot.vim'
-  
+
   -- Profiling
   use { 'dstein64/vim-startuptime', cmd = 'StartupTime', config = [[vim.g.startuptime_tries = 10]] }
 
   -- Go dev
   use {'fatih/vim-go', run = ':GoUpdateBinaries',config = [[require('config.vim-go')]]}
 
-  -- use 'windwp/nvim-autopairs'
+  -- use {
+  --   'nvim-treesitter/nvim-treesitter',
+  --   run = ':TSUpdate'
+  -- }
 
 end
 

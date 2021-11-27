@@ -1,4 +1,4 @@
-local utils = require 'utils'
+local utils = require('utils')
 local opt = utils.opt
 local map = utils.map
 local autocmd = utils.autocmd
@@ -28,6 +28,8 @@ map('n','g0','<cmd>lua vim.lsp.buf.document_symbol()<cr>', opts)
 map('n','gW','<cmd>lua vim.lsp.buf.workspace_symbol()<cr>', opts)
 map('n','gd','<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
 
+local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 -- Go
 lsp.gopls.setup{
@@ -44,10 +46,11 @@ lsp.gopls.setup{
   init_options = {
     usePlaceholders = true,
   },
+  capabilities = capabilities,
 }
 
 -- Bash
-lsp.bashls.setup{}
+lsp.bashls.setup{capabilities = capabilities,}
 
 -- Lua
 local sumneko_root_path = vim.fn.expand('~') .. [[/env/lsp/lua-language-server]]
@@ -81,5 +84,6 @@ lsp.sumneko_lua.setup {
       },
     },
   },
+  capabilities = capabilities,
 }
 
