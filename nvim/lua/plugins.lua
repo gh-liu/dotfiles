@@ -8,60 +8,123 @@ local function init()
   local use = packer.use
   packer.reset()
 
+  -- Packer
+  use 'wbthomason/packer.nvim'
+
   use 'lewis6991/impatient.nvim'
+
+  use {
+    'junegunn/rainbow_parentheses.vim',
+    config = [[require('config.rainbow_parentheses')]],
+  }
+
+  -- Color scheme
+  use 'sainnhe/gruvbox-material'
+  -- use 'joshdick/onedark.vim'
+  use 'rakr/vim-one'
+  
 
   -- Undo tree
   use {
     'mbbill/undotree',
-    cmd = 'UndotreeToggle',
-    config = [[vim.g.undotree_SetFocusWhenToggle = 1]],
+    -- cmd = 'UndotreeToggle',
+    config = [[require('config.undotree')]],
+  }
+
+  use {
+    'majutsushi/tagbar',
+    -- cmd = 'TagbarToggle',
+    config = [[require('config.tagbar')]],
+  }
+
+  -- Completion
+  use {
+    {
+      'neovim/nvim-lspconfig',
+      config = [[require 'config.lsp_config']],
+    },
+    'onsails/lspkind-nvim', -- adds vscode-like pictograms
+    'folke/trouble.nvim',
+    'ray-x/lsp_signature.nvim',
+    'kosayoda/nvim-lightbulb',
+    {
+      'hrsh7th/nvim-cmp',
+      requires = {
+        'hrsh7th/cmp-nvim-lsp',
+        { 'hrsh7th/cmp-buffer', after = 'nvim-cmp' },
+        { 'hrsh7th/cmp-path', after = 'nvim-cmp' },
+        { 'hrsh7th/cmp-nvim-lua', after = 'nvim-cmp' },
+        'L3MON4D3/LuaSnip', -- Snippets plugin
+        { 'saadparwaiz1/cmp_luasnip', after = 'nvim-cmp' },
+        -- 'SirVer/ultisnips',
+      },
+      config = [[require('config.cmp')]],
+      event = 'InsertEnter *',
+    }, -- Autocompletion plugin
+  }
+
+  use 'tpope/vim-repeat'
+  use 'tpope/vim-surround'
+  use 'tpope/vim-abolish'
+  use 'tpope/vim-endwise'
+
+  -- Comment
+  use {
+    'tpope/vim-commentary',
+    config = [[require('config.commentary')]],
   }
 
   -- Git
   use {
-    { 'tpope/vim-fugitive', cmd = { 'Git', 'Gstatus', 'Gblame', 'Gpush', 'Gpull' }, disable = true },
+    { 'tpope/vim-fugitive', cmd = { 'Git' } },
     {
       'lewis6991/gitsigns.nvim',
       requires = { 'nvim-lua/plenary.nvim' },
       config = [[require('config.gitsigns')]],
     },
-    { 'TimUntersberger/neogit', cmd = 'Neogit', config = [[require('config.neogit')]] },
   }
-
-  -- Completion and linting
-  use {
-    'onsails/lspkind-nvim',
-    'neovim/nvim-lspconfig',
-    'folke/trouble.nvim',
-    'ray-x/lsp_signature.nvim',
-    'kosayoda/nvim-lightbulb',
-  }
-
-  -- Endwise
-  use 'tpope/vim-endwise'
-
-  -- Debugger
+  
+  -- Search
   use {
     {
-      'mfussenegger/nvim-dap',
-      setup = [[require('config.dap_setup')]],
-      config = [[require('config.dap')]],
-      requires = 'jbyuki/one-small-step-for-vimkind',
-      wants = 'one-small-step-for-vimkind',
-      module = 'dap',
+      'nvim-telescope/telescope.nvim',
+      requires = {
+        'nvim-lua/popup.nvim',
+        'nvim-lua/plenary.nvim',
+        'telescope-frecency.nvim',
+        'telescope-fzf-native.nvim',
+      },
+      -- wants = {
+      --   'popup.nvim',
+      --   'plenary.nvim',
+      --   'telescope-frecency.nvim',
+      --   'telescope-fzf-native.nvim',
+      -- },
+      setup = [[require('config.telescope_setup')]],
+      config = [[require('config.telescope')]],
+      cmd = 'Telescope',
+      module = 'telescope',
     },
     {
-      'rcarriga/nvim-dap-ui',
-      requires = 'nvim-dap',
-      after = 'nvim-dap',
-      config = function()
-        require('dapui').setup()
-      end,
+      'nvim-telescope/telescope-frecency.nvim',
+      after = 'telescope.nvim',
+      requires = 'tami5/sql.nvim',
+    },
+    {
+      'nvim-telescope/telescope-fzf-native.nvim',
+      run = 'make',
     },
   }
 
-  -- Color scheme
-  use 'sainnhe/gruvbox-material'
+  -- use 'github/copilot.vim'
+  
+  -- Profiling
+  use { 'dstein64/vim-startuptime', cmd = 'StartupTime', config = [[vim.g.startuptime_tries = 10]] }
+
+  -- Go dev
+  use {'fatih/vim-go', run = ':GoUpdateBinaries',config = [[require('config.vim-go')]]}
+
+  -- use 'windwp/nvim-autopairs'
 
 end
 

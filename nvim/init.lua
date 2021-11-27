@@ -1,8 +1,10 @@
-require 'impatient'
+require 'packer_set'
 
 local g = vim.g
 local cmd = vim.cmd
 local o, wo, bo = vim.o, vim.wo, vim.bo
+
+-- require 'impatient'
 
 local utils = require 'utils'
 local opt = utils.opt
@@ -13,51 +15,47 @@ local autocmd = utils.autocmd
 g.mapleader = [[,]]
 g.maplocalleader = [[,]]
 
--- Disable some built-in plugins we don't want
-local disabled_built_ins = {
-  'gzip',
-  'man',
-  'matchit',
-  'matchparen',
-  'shada_plugin',
-  'tarPlugin',
-  'tar',
-  'zipPlugin',
-  'zip',
-  'netrwPlugin',
-}
-for i = 1, 10 do
-  g['loaded_' .. disabled_built_ins[i]] = 1
-end
-
 -- Settings
 local buffer = { o, bo }
 local window = { o, wo }
+
+opt('mouse', 'nivh')
 opt('textwidth', 100, buffer)
 opt('scrolloff', 7)
+
 opt('wildignore', '*.o,*~,*.pyc')
 opt('wildmode', 'longest,full')
 opt('whichwrap', vim.o.whichwrap .. '<,>,h,l')
+
 opt('inccommand', 'nosplit')
 opt('lazyredraw', true)
 opt('showmatch', true)
+
+opt('magic', true)
+opt('hlsearch', true)
+opt('incsearch', true)
 opt('ignorecase', true)
 opt('smartcase', true)
+
 opt('tabstop', 2, buffer)
 opt('softtabstop', 0, buffer)
 opt('expandtab', true, buffer)
 opt('shiftwidth', 2, buffer)
+
 opt('number', true, window)
 opt('relativenumber', true, window)
+
 opt('smartindent', true, buffer)
 opt('laststatus', 2)
-opt('showmode', false)
+-- opt('showmode', false)
 opt('shada', [['20,<50,s10,h,/100]])
+
 opt('hidden', true)
 opt('shortmess', o.shortmess .. 'c')
+
 opt('joinspaces', false)
 opt('guicursor', [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
-opt('updatetime', 500)
+opt('updatetime', 300)
 opt('conceallevel', 2, window)
 opt('concealcursor', 'nc', window)
 opt('previewheight', 5)
@@ -66,22 +64,30 @@ opt('synmaxcol', 500, buffer)
 opt('display', 'msgsep')
 opt('cursorline', true, window)
 opt('modeline', false, buffer)
-opt('mouse', 'nivh')
+
 opt('signcolumn', 'yes:1', window)
+
+-- opt('splitright', true)
+opt('splitbelow', true)
+
+-- opt('completeopt', 'menuone,noselect') -- Set completeopt to have a better completion experience
 
 -- Colorscheme
 opt('termguicolors', true)
 opt('background', 'dark')
 cmd [[colorscheme gruvbox-material]]
 
--- keybingdings
-
+-- Keybingdings
 -- disable F1
 map('', '<F1>', '<Esc>')
 
 -- Switch ` and '
 map('n', "'", '`')
 map('n', "'", '`')
+
+-- display lines move up or down
+map('n', 'j', 'gj')
+map('n', 'k', 'gk')
 
 -- windows moving
 map('n', '<C-h>', '<C-w>h', {silent = true} )
@@ -127,15 +133,98 @@ for i=1,9,1 do
   map('n', '<leader>' .. i, i .. 'gt')
 end  
 
+map('n','<c-a>','<c-o>')
 
-map('n', 'j', 'gj')
-map('n', 'k', 'gk')
+-- Do not show stupid q: window
+map('n', 'q:', ':q')
 
--- Commands
-cmd [[command! WhatHighlight :call util#syntax_stack()]]
-cmd [[command! PackerInstall packadd packer.nvim | lua require('plugins').install()]]
-cmd [[command! PackerUpdate packadd packer.nvim | lua require('plugins').update()]]
-cmd [[command! PackerSync packadd packer.nvim | lua require('plugins').sync()]]
-cmd [[command! PackerClean packadd packer.nvim | lua require('plugins').clean()]]
-cmd [[command! PackerCompile packadd packer.nvim | lua require('plugins').compile()]]
+-- qq to record, Q to replay
+map('n', 'Q', '@q')
+
+-- same as D
+map('n', 'Y', 'y$')
+
+-- Don't lose selection when shifting sidewards
+map('x', '<', '<gv')
+map('x', '>', '>gv')
+
+-- Change window size
+map('n', '<left>' , '<c-w>>', {silent = true})
+map('n', '<right>' , '<c-w><', {silent = true})
+map('n', '<up>' , '<c-w>-', {silent = true})
+map('n', '<down>' , '<c-w>+', {silent = true})
+
+-- Keep search pattern at the center of the screen
+map('n', 'n', 'nzz', {silent = true})
+map('n', 'N', 'Nzz',   {silent = true})
+
+-- Switch # *
+map('n', '*', '#zz',  {silent = true})
+map('n', '#', '*zz',  {silent = true})
+
+-- moving in cmd-line mode
+map('c', '<C-h>', '<left>')
+map('c', '<C-j>', '<down>')
+map('c', '<C-k>', '<up>')
+map('c', '<C-l>', '<right>')
+map('c', '<C-a>', '<HOME>')
+
+-- move to head or end of line in normal or visual mode
+map('n','H', '^')
+map('n','L','$')
+map('v','H', '^')
+map('v','L', 'g_')
+
+-- Edit alternate file
+map('i', '<C-^>', '<C-o><C-^>')
+
+-- Save
+map('i', '<C-s>', '<C-O>:update<cr>')
+map('n', '<C-s>', ':update<cr>')
+
+-- Exit
+map('i', '<C-q>', '<esc>:q<cr>')
+map('n', '<C-q>', ':q<cr>')
+map('v', '<C-q>', '<esc>')
+map('n', '<Leader>q', ':q<cr>')
+map('n', '<Leader>Q', ':qa!<cr>')
+
+-- <Leader>c Close quickfix/location window
+map('n', '<leader>c', ':cclose<bar>lclose<cr>',  {silent = true})
+
+-- Autocommands
+autocmd('misc_aucmds', {
+  [[BufWinEnter * checktime]],
+  [[TextYankPost * silent! lua vim.highlight.on_yank()]],
+  [[FileType qf set nobuflisted ]],
+}, true)
+
+autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
+
+
+-- Disable some built-in plugins we don't want
+local disabled_built_ins = {
+  'gzip',
+  'man',
+  'matchit',
+  'matchparen',
+  'shada_plugin',
+  'tarPlugin',
+  'tar',
+  'zipPlugin',
+  'zip',
+  -- 'netrwPlugin',
+}
+for i = 1, #disabled_built_ins do
+  g['loaded_' .. disabled_built_ins[i]] = 1
+end
+
+-- build-in plugins settings
+-- netrw
+-- g.netrw_banner = 1
+-- g.netrw_browse_split = 4
+-- g.netrw_altv = 1
+g.netrw_liststyle = 3
+-- g.netrw_winsize = 25
+map('n', '<C-n>', '<cmd>Vexplore<cr>')
 
