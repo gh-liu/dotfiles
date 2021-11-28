@@ -51,12 +51,16 @@ local function init()
         { 'hrsh7th/cmp-buffer', after = 'nvim-cmp' },
         { 'hrsh7th/cmp-path', after = 'nvim-cmp' },
         { 'hrsh7th/cmp-nvim-lua', after = 'nvim-cmp' },
-        'L3MON4D3/LuaSnip', -- Snippets plugin
+        { 
+          'L3MON4D3/LuaSnip',
+          config = [[require('config.luasnip')]],
+         }, -- Snippets plugin
         { 'saadparwaiz1/cmp_luasnip', after = 'nvim-cmp' },
       },
       config = [[require('config.cmp')]],
       event = 'InsertEnter *',
     }, -- Autocompletion plugin
+    -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
   }
 
   use {

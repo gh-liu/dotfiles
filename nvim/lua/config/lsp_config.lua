@@ -9,24 +9,26 @@ local lsp = require "lspconfig"
 vim.lsp.set_log_level("debug")
 
 -- lsp keybingdings
--- go-to-definition
--- find-references
--- hover
--- completion
--- rename
--- format
--- refactor
 local opts = { noremap = true, silent = true }
+-- go-to-definition
 map('n','<c-]>','<cmd>lua vim.lsp.buf.definition()<cr>', opts)
 map('n','<c-d>','<cmd>lua vim.lsp.buf.definition()<cr>', opts)
-map('n','K','<cmd>lua vim.lsp.buf.hover()<cr>', opts)
+map('n','gd','<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
 map('n','gi','<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
-map('n','<c-k>','<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
 map('n','gD','<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
+-- find-references
 map('n','gr','<cmd>lua vim.lsp.buf.references()<cr>', opts)
+-- hover
+map('n','K','<cmd>lua vim.lsp.buf.hover()<cr>', opts)
+map('n','<c-k>','<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
+-- completion
+-- rename
+map('n','<leader>rn','<cmd>lua vim.lsp.buf.rename()<cr>', opts)
+-- format
+-- refactor
+-- something else
 map('n','g0','<cmd>lua vim.lsp.buf.document_symbol()<cr>', opts)
 map('n','gW','<cmd>lua vim.lsp.buf.workspace_symbol()<cr>', opts)
-map('n','gd','<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
 
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
