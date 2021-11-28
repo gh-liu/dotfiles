@@ -51,7 +51,7 @@ alias cgfmt='cargo-fmt'
 alias gmn='git merge --no-ff'
 
 # nvim
-if command -v nvim &> /dev/null
-then
-    alias vim='nvim'
-fi
+# if command -v nvim &> /dev/null
+# then
+#     alias vim='nvim'
+# fi

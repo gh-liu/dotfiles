@@ -43,32 +43,9 @@ echo -e "\n" | yay -S direnv
 echo -e "\n" | yay -S xmind-2020 smartgit wechat-uos
 echo -e "\n" | yay -S wps-office-cn wps-office-mui-zh-cn ttf-wps-fonts
 
-# env
-if [ ! -d "~/env/" ]; then
-    mkdir -p ~/env/
-fi
+## install
 
-## install go
-if [ ! -d "~/env/golang/" ]; then
-    mkdir -p ~/env/golang/
-fi
-cd ~/env/golang/ 
-
-# tool
-if [ ! -d "~/tool/" ]; then
-    mkdir -p ~/tool/
-fi
-
-## install oh-my-zsh
-cd ~/tool
-sh -c "$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
-
-## install antojump
-git clone https://github.com/wting/autojump.git
-cd autojump
-./install.py
-
-
+sh -c "$(wget -O- https://raw.githubusercontent.com/gh-liu/dotfiles/master/install.sh)"
 
 # Clipboard Indicator by Tudmotu
 # Hide Top Bar by tuxor1337    maybe something wrong

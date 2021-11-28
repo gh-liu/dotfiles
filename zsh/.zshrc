@@ -109,28 +109,12 @@ export LANG=en_US.UTF-8
 
 # User configuration
 
-
-if [ -f ~/.common_alias ]; then
-    . ~/.common_alias
-fi
-
-if [ -f ~/.common_env ]; then
-    . ~/.common_env
-fi
-
-if [ -f ~/.common_func ]; then
-    . ~/.common_func
-fi
-
-if [ -f ~/.custom_cfg ]; then
-    . ~/.custom_cfg
-fi
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+for file in ~/zsh.conf/*; do
+    source $file
+done
 
 export DISABLE_AUTO_TITLE='true'
 
 # direnv
 eval "$(direnv hook zsh)"
 
-alias luamake=~/env/lsp/lua-language-server/3rd/luamake/luamake
