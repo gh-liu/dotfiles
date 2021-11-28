@@ -3,6 +3,17 @@ telescope.setup {
   defaults = {
     layout_strategy = 'flex',
     scroll_strategy = 'cycle',
+    mappings = {
+      i = {
+        ['<c-j>'] = require('telescope.actions').move_selection_next,
+        ['<c-k>'] = require('telescope.actions').move_selection_previous,
+        ['<ESC>'] = require('telescope.actions').close,
+      },
+      n = {
+        ['<c-j>'] = require('telescope.actions').move_selection_next,
+        ['<c-k>'] = require('telescope.actions').move_selection_previous,
+      },
+    },
   },
   extensions = {
     fzf = {
