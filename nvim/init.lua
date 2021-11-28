@@ -191,6 +191,9 @@ map('n', '<Leader>Q', ':qa!<cr>')
 -- <Leader>c Close quickfix/location window
 map('n', '<leader>c', ':cclose<bar>lclose<cr>',  {silent = true})
 
+-- Edit $MYVIMRC
+map('n', '<leader>ev', ':tabnew $MYVIMRC<cr>',  {silent = true})
+
 -- Autocommands
 autocmd('misc_aucmds', {
   [[BufWinEnter * checktime]],
@@ -199,6 +202,7 @@ autocmd('misc_aucmds', {
 }, true)
 
 autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
+autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
 
 
 -- Disable some built-in plugins we don't want

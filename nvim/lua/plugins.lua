@@ -109,6 +109,7 @@ local function init()
     'numToStr/Comment.nvim',
     config = function()
         require('Comment').setup()
+        require('config.comment')
     end
   }
 

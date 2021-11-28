@@ -188,6 +188,7 @@ ls.filetype_set("cpp", { "c" })
 -- The directories will have to be structured like eg. <https://github.com/rafamadriz/friendly-snippets> (include
 -- a similar `package.json`)
 
+-- user defined snippets <https://code.visualstudio.com/docs/editor/userdefinedsnippets>.
 require("luasnip/loaders/from_vscode").load({ paths = { "./my-snippets" } }) -- Load snippets from my-snippets folder
 
 -- You can also use lazy loading so you only get in memory snippets of languages you use
