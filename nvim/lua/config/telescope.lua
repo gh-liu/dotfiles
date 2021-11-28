@@ -30,9 +30,11 @@ telescope.setup {
     lsp_definitions = { theme = 'dropdown' },
     lsp_implementations = { theme = 'dropdown' },
     buffers = {
+      show_all_buffers = true,
       sort_lastused = true,
       previewer = false,
     },
+    live_grep = { theme = 'dropdown' },
   },
 }
 

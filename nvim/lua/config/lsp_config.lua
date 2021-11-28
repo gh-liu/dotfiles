@@ -11,7 +11,7 @@ vim.lsp.set_log_level("debug")
 -- lsp keybingdings
 local opts = { noremap = true, silent = true }
 -- go-to-definition
-map('n','<c-]>','<cmd>lua vim.lsp.buf.definition()<cr>', opts)
+-- map('n','<c-]>','<cmd>lua vim.lsp.buf.definition()<cr>', opts)
 map('n','<c-d>','<cmd>lua vim.lsp.buf.definition()<cr>', opts)
 map('n','gd','<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
 map('n','gi','<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
@@ -26,6 +26,10 @@ map('n','<c-k>','<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
 map('n','<leader>rn','<cmd>lua vim.lsp.buf.rename()<cr>', opts)
 -- format
 -- refactor
+map('n','<leader>a','<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
+-- diagnostic
+map('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
+map('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
 -- something else
 map('n','g0','<cmd>lua vim.lsp.buf.document_symbol()<cr>', opts)
 map('n','gW','<cmd>lua vim.lsp.buf.workspace_symbol()<cr>', opts)
@@ -50,6 +54,38 @@ lsp.gopls.setup{
   },
   capabilities = capabilities,
 }
+
+function goimports(timeout_ms)
+  local context = { only = { "source.organizeImports" } }
+  vim.validate { context = { context, "t", true } }
+
+  local params = vim.lsp.util.make_range_params()
+  params.context = context
+
+  -- See the implementation of the textDocument/codeAction callback
+  -- (lua/vim/lsp/handler.lua) for how to do this properly.
+  local result = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, timeout_ms)
+  if not result or next(result) == nil then return end
+  local actions = result[1].result
+  if not actions then return end
+  local action = actions[1]
+
+  -- textDocument/codeAction can return either Command[] or CodeAction[]. If it
+  -- is a CodeAction, it can have either an edit, a command or both. Edits
+  -- should be executed first.
+  if action.edit or type(action.command) == "table" then
+    if action.edit then
+      vim.lsp.util.apply_workspace_edit(action.edit)
+    end
+    if type(action.command) == "table" then
+      vim.lsp.buf.execute_command(action.command)
+    end
+  else
+    vim.lsp.buf.execute_command(action)
+  end
+end
+
+autocmd('goimports', {[[BufWritePre *.go lua goimports(1000)]]}, true)
 
 -- Bash
 lsp.bashls.setup{capabilities = capabilities,}
