@@ -5,8 +5,8 @@
 tools=~/tools
 
 mkdir -p $tools
-mkdir -p ~/dev/{golang,nodejs}
-mkdir -p ~/env/{golang,nodejs}
+mkdir -p ~/dev/{golang,nodejs,python3}
+mkdir -p ~/env/{golang,nodejs,python3}
 
 ## proxy
 
@@ -40,6 +40,17 @@ xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
 tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
 
 mv node-$NODEJSVERSION-linux-$NODEJSARCH node
+
+### python3
+<<COMMENT
+cd ~/env/python3/
+
+PYVERSION=3.9.9
+wget https://www.python.org/ftp/python/$PYVERSION/Python-$PYVERSION.tar.xz
+
+xz -d Python-$PYVERSION.tar.xz
+tar -xvf Python-$PYVERSION.tar && rm Python-$PYVERSION.tar
+COMMENT
 
 ## dotfiles
 
