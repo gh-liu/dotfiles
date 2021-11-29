@@ -1,5 +1,12 @@
 #!/bin/sh
-export EDITOR=vim
+# $EDITOR
+if command -v nvim &> /dev/null
+then
+    export EDITOR=nvim
+else
+    export EDITOR=vim
+fi
+
 export TERM="screen-256color"
 
 # go env

@@ -1,7 +1,0 @@
-#/bin/bash
-currentPath=$(pwd)
-repoRootPath=$(git rev-parse --show-toplevel)
-
-baseRoot=$(basename $repoRootPath)
-baseCurrent=$(echo $currentPath | sed "s:$repoRootPath::g")
-echo "github.com/gh-liu/"$baseRoot$baseCurrent
