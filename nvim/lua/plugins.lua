@@ -171,6 +171,13 @@ local function init()
   -- Refactoring
   -- use { 'ThePrimeagen/refactoring.nvim', opt = true }
 
+  use { 
+    'tpope/vim-rsi',
+    config = function()
+      vim.g.rsi_no_meta = 1
+    end
+  }
+
   -- Plugin development
   -- use 'folke/lua-dev.nvim'
 

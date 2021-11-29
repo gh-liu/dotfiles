@@ -166,7 +166,8 @@ map('c', '<C-h>', '<left>')
 map('c', '<C-j>', '<down>')
 map('c', '<C-k>', '<up>')
 map('c', '<C-l>', '<right>')
-map('c', '<C-a>', '<HOME>')
+-- map('c', '<C-a>', '<HOME>')
+-- map('c', '<C-e>', '<END>')
 
 -- move to head or end of line in normal or visual mode
 map('n','H', '^')
