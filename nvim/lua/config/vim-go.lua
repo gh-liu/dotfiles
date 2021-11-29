@@ -22,6 +22,9 @@ vim.g.go_doc_keywordprg_enabled = 0
 -- complete by nvim-lsp
 vim.g.go_code_completion_enabled = 0
 
+-- disable the default mapping of CTRL-]
+vim.g.go_def_mapping_enabled = 0
+
 vim.g.go_test_show_name = 1
 
 -- run go imports on file save
