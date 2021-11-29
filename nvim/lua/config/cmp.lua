@@ -44,9 +44,9 @@ cmp.setup({
     mapping = {
         ['<cr>'] = cmp.mapping.confirm(),
         ["<Tab>"] = cmp.mapping(select_next, {"i", "s"}),
-        ["<S-Tab>"] = cmp.mapping(select_previous, {"i", "s"}),
-        ["<c-j>"] = cmp.mapping(select_next, {"i", "s"}),
-        ["<c-k>"] = cmp.mapping(select_previous, {"i", "s"})
+        ["<S-Tab>"] = cmp.mapping(select_previous, {"i", "s"})
+        -- ["<c-j>"] = cmp.mapping(select_next, {"i", "s"}),
+        -- ["<c-k>"] = cmp.mapping(select_previous, {"i", "s"})
     },
     sources = {{
         name = 'buffer'
