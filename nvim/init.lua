@@ -1,5 +1,5 @@
 require('packer_set')
-require('impatient')
+-- require('impatient')
 
 local g = vim.g
 local cmd = vim.cmd
@@ -15,8 +15,8 @@ g.mapleader = [[,]]
 g.maplocalleader = [[,]]
 
 -- Settings
-local buffer = { o, bo }
-local window = { o, wo }
+local buffer = {o, bo}
+local window = {o, wo}
 
 opt('mouse', 'nivh')
 opt('textwidth', 100, buffer)
@@ -46,7 +46,7 @@ opt('relativenumber', true, window)
 
 opt('smartindent', true, buffer)
 opt('laststatus', 2)
--- opt('showmode', false)
+opt('showmode', false)
 opt('shada', [['20,<50,s10,h,/100]])
 
 opt('hidden', true)
@@ -77,6 +77,15 @@ opt('background', 'dark')
 cmd [[colorscheme gruvbox-material]]
 
 -- Keybingdings
+local silent = {
+    silent = true
+}
+
+local silent_noremap = {
+    silent = true,
+    noremap = true
+}
+
 -- disable F1
 map('', '<F1>', '<Esc>')
 
@@ -89,18 +98,18 @@ map('n', 'j', 'gj')
 map('n', 'k', 'gk')
 
 -- windows moving
-map('n', '<C-h>', '<C-w>h', {silent = true} )
-map('n', '<C-j>', '<C-w>j', {silent = true} )
-map('n', '<C-k>', '<C-w>k', {silent = true} )
-map('n', '<C-l>', '<C-w>l', {silent = true} )
+map('n', '<C-h>', '<C-w>h', silent)
+map('n', '<C-j>', '<C-w>j', silent)
+map('n', '<C-k>', '<C-w>k', silent)
+map('n', '<C-l>', '<C-w>l', silent)
 
 -- moving in insert mode
-map('i', '<C-h>', '<left>',  {silent = true, noremap = true} )
-map('i', '<C-j>', '<down>',  {silent = true, noremap = true} )
-map('i', '<C-k>', '<up>',    {silent = true, noremap = true} )
-map('i', '<C-l>', '<right>', {silent = true, noremap = true} )
-map('i', '<C-a>', '<HOME>',  {silent = true, noremap = true} )
-map('i', '<C-e>', '<END>',   {silent = true, noremap = true} )
+map('i', '<C-h>', '<left>', silent_noremap)
+map('i', '<C-j>', '<down>', silent_noremap)
+map('i', '<C-k>', '<up>', silent_noremap)
+map('i', '<C-l>', '<right>', silent_noremap)
+map('i', '<C-a>', '<HOME>', silent_noremap)
+map('i', '<C-e>', '<END>', silent_noremap)
 
 map('n', '[w', '<cmd>tabprevious<cr>')
 map('n', ']w', '<cmd>tabnext<cr>')
@@ -128,11 +137,11 @@ map('n', '[T', '<cmd>tfirst<cr>')
 map('n', ']T', '<cmd>tlast<cr>')
 
 -- <Leader>[1-9] move to tab [1-9]
-for i=1,9,1 do
-  map('n', '<leader>' .. i, i .. 'gt')
+for i = 1, 9, 1 do
+    map('n', '<leader>' .. i, i .. 'gt')
 end
 
-map('n','<c-a>','<c-o>')
+map('n', '<c-a>', '<c-o>')
 
 -- Do not show stupid q: window
 map('n', 'q:', ':q')
@@ -148,18 +157,18 @@ map('x', '<', '<gv')
 map('x', '>', '>gv')
 
 -- Change window size
-map('n', '<left>' , '<c-w>>', {silent = true})
-map('n', '<right>' , '<c-w><', {silent = true})
-map('n', '<up>' , '<c-w>-', {silent = true})
-map('n', '<down>' , '<c-w>+', {silent = true})
+map('n', '<left>', '<c-w>>', silent)
+map('n', '<right>', '<c-w><', silent)
+map('n', '<up>', '<c-w>-', silent)
+map('n', '<down>', '<c-w>+', silent)
 
 -- Keep search pattern at the center of the screen
-map('n', 'n', 'nzz', {silent = true})
-map('n', 'N', 'Nzz',   {silent = true})
+map('n', 'n', 'nzz', silent)
+map('n', 'N', 'Nzz', silent)
 
 -- Switch # *
-map('n', '*', '#zz',  {silent = true})
-map('n', '#', '*zz',  {silent = true})
+map('n', '*', '#zz', silent)
+map('n', '#', '*zz', silent)
 
 -- moving in cmd-line mode
 map('c', '<C-h>', '<left>')
@@ -170,10 +179,10 @@ map('c', '<C-l>', '<right>')
 -- map('c', '<C-e>', '<END>')
 
 -- move to head or end of line in normal or visual mode
-map('n','H', '^')
-map('n','L','$')
-map('v','H', '^')
-map('v','L', 'g_')
+map('n', 'H', '^')
+map('n', 'L', '$')
+map('v', 'H', '^')
+map('v', 'L', 'g_')
 
 -- Edit alternate file
 map('i', '<C-^>', '<C-o><C-^>')
@@ -190,37 +199,24 @@ map('n', '<Leader>q', ':q<cr>')
 map('n', '<Leader>Q', ':qa!<cr>')
 
 -- <Leader>c Close quickfix/location window
-map('n', '<leader>c', ':cclose<bar>lclose<cr>',  {silent = true})
+map('n', '<leader>c', ':cclose<bar>lclose<cr>', silent)
 
 -- Edit $MYVIMRC
-map('n', '<leader>ev', ':tabnew $MYVIMRC<cr>',  {silent = true})
+map('n', '<leader>ev', ':tabnew $MYVIMRC<cr>', silent)
 
 -- Autocommands
-autocmd('misc_aucmds', {
-  [[BufWinEnter * checktime]],
-  [[TextYankPost * silent! lua vim.highlight.on_yank()]],
-  [[FileType qf set nobuflisted ]],
-}, true)
+autocmd('misc_aucmds', {[[BufWinEnter * checktime]], [[TextYankPost * silent! lua vim.highlight.on_yank()]],
+                        [[FileType qf set nobuflisted ]]}, true)
 
 autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
 autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
 
-
 -- Disable some built-in plugins we don't want
-local disabled_built_ins = {
-  'gzip',
-  'man',
-  'matchit',
-  'matchparen',
-  'shada_plugin',
-  'tarPlugin',
-  'tar',
-  'zipPlugin',
-  'zip',
-  -- 'netrwPlugin',
+local disabled_built_ins = {'gzip', 'man', 'matchit', 'matchparen', 'shada_plugin', 'tarPlugin', 'tar', 'zipPlugin',
+                            'zip' -- 'netrwPlugin',
 }
 for i = 1, #disabled_built_ins do
-  g['loaded_' .. disabled_built_ins[i]] = 1
+    g['loaded_' .. disabled_built_ins[i]] = 1
 end
 
 -- build-in plugins settings
@@ -234,9 +230,17 @@ map('n', '<C-n>', '<cmd>Vexplore<cr>')
 
 -- functions
 function helptab()
-  if vim.o.buftype == 'help' then
-    vim.cmd([[wincmd T]])
-    vim.api.nvim_buf_set_keymap('0', 'n', 'q', '<cmd>q<cr>', {silent = true, noremap = true})
-  end
+    if vim.o.buftype == 'help' then
+        vim.cmd([[wincmd T]])
+        vim.api.nvim_buf_set_keymap('0', 'n', 'q', '<cmd>q<cr>', {
+            silent = true,
+            noremap = true
+        })
+    end
 end
 autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
+
+vim.cmd [[
+  au VimEnter * ++once lua statusline = require('statusline')
+  au VimEnter * ++once lua vim.o.statusline = '%!v:lua.statusline.status()'
+]]

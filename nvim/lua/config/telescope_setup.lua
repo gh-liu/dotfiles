@@ -1,6 +1,8 @@
 local map = require('utils').map
 
-local silent = { silent = true }
+local silent = {
+    silent = true
+}
 
 -- File Pickers
 map('n', '<c-p>', [[<cmd>Telescope find_files<cr>]], silent)

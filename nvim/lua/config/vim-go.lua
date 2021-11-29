@@ -1,7 +1,6 @@
 -- local utils = require('utils')
 -- local map = utils.map
 -- local autocmd = utils.autocmd
-
 -- Go syntax highlighting
 vim.g.go_highlight_types = 1
 vim.g.go_highlight_fields = 1
