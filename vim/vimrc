@@ -222,6 +222,8 @@ Plug 'tpope/vim-scriptease'
 
 Plug 'matt-deacalion/vim-systemd-syntax'
 
+Plug 'tpope/vim-rsi'
+
 Plug '~/code/vim/dap.vim'
 
 call plug#end()
