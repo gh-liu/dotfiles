@@ -112,11 +112,16 @@ export LANG=en_US.UTF-8
 for file in ~/zsh.conf/*; do
     source $file
 done
+set_proxy
 
 export DISABLE_AUTO_TITLE='true'
 
 # direnv
 eval "$(direnv hook zsh)"
 
-
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
+stty -ixon
+
+# setxkbmap -option ctrl:swapcaps

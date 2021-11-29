@@ -9,6 +9,8 @@ fi
 
 export TERM="screen-256color"
 
+export HOSTIP=$(hostname -I | awk '{print $1}')
+
 # go env
 export GO111MODULE=on
 #export GOPROXY=direct
