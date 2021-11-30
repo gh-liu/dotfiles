@@ -160,13 +160,17 @@ local function init()
     }
 
     -- Comment
+    -- use {
+    --     'numToStr/Comment.nvim',
+    --     config = function()
+    --         require('config.comment')
+    --     end
+    -- }
     use {
-        'numToStr/Comment.nvim',
-        config = function()
-            require('Comment').setup()
-            require('config.comment')
-        end
+        'tpope/vim-commentary',
+        config = [[require('config.vim-commentary')]]
     }
+    use 'JoosepAlviste/nvim-ts-context-commentstring'
 
     -- use {
     --     'windwp/nvim-autopairs',
