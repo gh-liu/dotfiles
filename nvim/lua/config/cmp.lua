@@ -6,7 +6,6 @@ end
 local cmp = require('cmp')
 local luasnip = require('luasnip')
 -- local lspkind = require('lspkind')
-
 local function select_next(fallback)
     if cmp.visible() then
         cmp.select_next_item()
@@ -43,10 +42,9 @@ cmp.setup({
     },
     mapping = {
         ['<cr>'] = cmp.mapping.confirm(),
+        ['<esc>'] = cmp.mapping.close(),
         ["<Tab>"] = cmp.mapping(select_next, {"i", "s"}),
         ["<S-Tab>"] = cmp.mapping(select_previous, {"i", "s"})
-        -- ["<c-j>"] = cmp.mapping(select_next, {"i", "s"}),
-        -- ["<c-k>"] = cmp.mapping(select_previous, {"i", "s"})
     },
     sources = {{
         name = 'buffer'
@@ -62,10 +60,10 @@ cmp.setup({
 })
 
 -- If you want insert `(` after select function or method item
-local cmp_autopairs = require('nvim-autopairs.completion.cmp')
-cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done({
-    map_char = {
-        tex = '{'
-    }
-}))
+-- local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+-- cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done({
+--     map_char = {
+--         tex = '{'
+--     }
+-- }))
 

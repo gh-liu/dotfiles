@@ -90,7 +90,7 @@ lsp.gopls.setup {
     cmd = {'gopls', '--remote=auto'},
     settings = {
         gopls = {
-            -- usePlaceholders = true,
+            -- usePlaceholders = false,
             analyses = {
                 unusedparams = true
             },

@@ -46,6 +46,7 @@ local function init()
     -- 'kosayoda/nvim-lightbulb',
     {
         'hrsh7th/nvim-cmp',
+        after = 'nvim-lspconfig',
         requires = {'hrsh7th/cmp-nvim-lsp', {
             'hrsh7th/cmp-buffer',
             after = 'nvim-cmp'

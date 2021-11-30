@@ -64,6 +64,8 @@ opt('display', 'msgsep')
 opt('cursorline', true, window)
 opt('modeline', false, buffer)
 
+opt('pumheight', 12)
+
 opt('signcolumn', 'yes:1', window)
 
 -- opt('splitright', true)
