@@ -5,8 +5,8 @@
 tools=~/tools
 
 mkdir -p $tools
-mkdir -p ~/dev/{golang,nodejs,python3}
-mkdir -p ~/env/{golang,nodejs,python3}
+mkdir -p ~/dev/{golang,nodejs,python3,lua}
+mkdir -p ~/env/{golang,nodejs,python3,lua}
 
 ## proxy
 
@@ -40,6 +40,20 @@ xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
 tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
 
 mv node-$NODEJSVERSION-linux-$NODEJSARCH node
+
+### lua
+cd ~/env/lua/
+
+LUAVERSION=5.4.3
+
+wget https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz
+tar -zxvf lua-$LUAVERSION.tar.gz
+
+mv lua-$LUAVERSION lua
+cd ~/env/lua/lua
+make all test
+
+sudo ln -svf ~/env/lua/lua/src/lua /usr/bin/lua
 
 ### python3
 <<COMMENT
@@ -92,7 +106,7 @@ COMMENT
 #### config
 
 mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
-ln -svf $(pwd)/zsh/zsh.conf ~/zsh.conf
+ln -svf $(pwd)/zsh/.zsh.conf ~/.zsh.conf
 ln -svf $(pwd)/zsh/.zshrc ~/.zshrc
 ln -svf $(pwd)/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
 source ~/.zshrc
@@ -110,6 +124,19 @@ vim +PlugInstall +qall
 
 ### nvim
 
+#### install 
+
+NVIMVERSION=v0.6.0
+mkdir -p $HOME/tools/nvim
+cd $HOME/tools/nvim
+mkdir $NVIMVERSION
+cd $NVIMVERSION
+wget https://github.com/neovim/neovim/releases/download/$NVIMVERSION/nvim-linux64.tar.gz
+tar -zxvf nvim-linux64.tar.gz -C .
+
+sudo ln -svf $(pwd)/nvim-linux64/bin/nvim /usr/bin/nvim
+
+#### config
 mkdir -p ~/.config
 ln -svf $(pwd)/nvim ~/.config/nvim
 

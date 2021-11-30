@@ -109,7 +109,7 @@ export LANG=en_US.UTF-8
 
 # User configuration
 
-for file in ~/zsh.conf/*; do
+for file in ~/.zsh.conf/*; do
     source $file
 done
 set_proxy
