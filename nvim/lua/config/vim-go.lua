@@ -1,6 +1,8 @@
 -- local utils = require('utils')
 -- local map = utils.map
 -- local autocmd = utils.autocmd
+-- disable gopls
+vim.g.go_gopls_enabled = 0
 -- Go syntax highlighting
 vim.g.go_highlight_types = 1
 vim.g.go_highlight_fields = 1
@@ -13,7 +15,7 @@ vim.g.go_highlight_build_constraints = 1
 vim.g.go_highlight_debug = 0
 
 -- Status line types/signatures
-vim.g.go_auto_type_info = 1
+vim.g.go_auto_type_info = 0
 
 -- disable K
 vim.g.go_doc_keywordprg_enabled = 0

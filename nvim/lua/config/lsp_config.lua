@@ -61,6 +61,30 @@ end
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
+-- local servers = {}
+-- servers['gopls'] = {
+--     cmd = {'gopls', '--remote=auto'},
+--     settings = {
+--         gopls = {
+--             -- usePlaceholders = true,
+--             analyses = {
+--                 unusedparams = true
+--             },
+--             staticcheck = true
+--         }
+--     },
+--     init_options = {
+--         usePlaceholders = true
+--     }
+-- }
+-- -- Use a loop to conveniently call 'setup' on multiple servers and
+-- -- map buffer local keybindings when the language server attaches
+-- for server_name, server_config in pairs(servers) do
+--     server_config['on_attach'] = on_attach
+--     server_config['capabilities'] = capabilities
+--     lsp[server_name].setup(server_config)
+-- end
+
 -- Go
 lsp.gopls.setup {
     cmd = {'gopls', '--remote=auto'},
@@ -120,7 +144,7 @@ end
 
 autocmd('goimports', {[[BufWritePre *.go lua goimports(1000)]]}, true)
 
-lsp.golangci_lint_ls.setup {}
+-- lsp.golangci_lint_ls.setup {}
 
 -- Bash
 lsp.bashls.setup {
@@ -164,14 +188,3 @@ lsp.sumneko_lua.setup {
     on_attach = on_attach
 }
 
--- Use a loop to conveniently call 'setup' on multiple servers and
--- map buffer local keybindings when the language server attaches
--- for _, lsp_name in ipairs(servers) do
---     lsp[lsp_name].setup {
---         on_attach = on_attach,
---         capabilities = capabilities,
---         flags = {
---             debounce_text_changes = 150
---         }
---     }
--- end
