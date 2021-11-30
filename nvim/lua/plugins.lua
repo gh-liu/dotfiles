@@ -13,17 +13,17 @@ local function init()
     -- Packer
     use 'wbthomason/packer.nvim'
 
-    -- use 'lewis6991/impatient.nvim'
-
-    use {
-        'junegunn/rainbow_parentheses.vim',
-        config = [[require('config.rainbow_parentheses')]]
-    }
+    -- -- use 'lewis6991/impatient.nvim'
 
     -- Color scheme
     use 'sainnhe/gruvbox-material'
     -- use 'joshdick/onedark.vim'
     use 'rakr/vim-one'
+
+    use {
+        'junegunn/rainbow_parentheses.vim',
+        config = [[require('config.rainbow_parentheses')]]
+    }
 
     -- Undo tree
     use {
@@ -31,11 +31,18 @@ local function init()
         -- cmd = 'UndotreeToggle',
         config = [[require('config.undotree')]]
     }
-
+    -- Tagbar
     use {
         'majutsushi/tagbar',
         -- cmd = 'TagbarToggle',
         config = [[require('config.tagbar')]]
+    }
+
+    use {
+        'nvim-treesitter/nvim-treesitter',
+        requires = {'nvim-treesitter/nvim-treesitter-textobjects'},
+        config = [[require('config.treesitter')]],
+        run = ':TSUpdate'
     }
 
     -- Completion
@@ -44,7 +51,7 @@ local function init()
         config = [[require('config.lsp_config')]]
     }, -- 'onsails/lspkind-nvim', -- adds vscode-like pictograms
     -- 'kosayoda/nvim-lightbulb',
-    {
+    { -- Autocompletion plugin
         'hrsh7th/nvim-cmp',
         after = 'nvim-lspconfig',
         requires = {'hrsh7th/cmp-nvim-lsp', {
@@ -66,9 +73,10 @@ local function init()
         }},
         config = [[require('config.cmp')]],
         event = 'InsertEnter *'
-    } -- Autocompletion plugin
-    -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
+    }, {"ray-x/lsp_signature.nvim"} -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
     }
+
+    -- -- use 'github/copilot.vim'
 
     use {
         "folke/trouble.nvim",
@@ -94,60 +102,22 @@ local function init()
         end
     }
 
-    use {
-        "ray-x/lsp_signature.nvim",
-        config = function()
-            require('lsp_signature').setup()
-        end
-    }
-
-    use {
-        'windwp/nvim-autopairs',
-        config = function()
-            require('nvim-autopairs').setup {}
-        end
-    }
-
-    -- use 'tpope/vim-repeat'
-    -- use 'tpope/vim-surround'
-    -- use 'tpope/vim-abolish'
-    -- use 'tpope/vim-endwise'
-
-    -- Comment
-    use {
-        'numToStr/Comment.nvim',
-        config = function()
-            require('Comment').setup()
-            require('config.comment')
-        end
-    }
-
-    use {
-        'nvim-treesitter/nvim-treesitter',
-        requires = {'nvim-treesitter/nvim-treesitter-textobjects'},
-        run = ':TSUpdate'
-    }
-
-    use {
-        "danymat/neogen",
-        config = [[require('config.neogen')]],
-        requires = "nvim-treesitter/nvim-treesitter"
-    }
-
-    -- Git
-    use {{
-        'TimUntersberger/neogit',
-        requires = 'nvim-lua/plenary.nvim',
-        config = function()
-            require('neogit').setup({
-                disable_signs = false
-            })
-        end
-    }, {
-        'lewis6991/gitsigns.nvim',
-        requires = {'nvim-lua/plenary.nvim'},
-        config = [[require('config.gitsigns')]]
-    }}
+    -- -- Debugger
+    -- -- use {{
+    -- --     'mfussenegger/nvim-dap',
+    -- --     setup = [[require('config.dap_setup')]],
+    -- --     config = [[require('config.dap')]],
+    -- --     requires = 'jbyuki/one-small-step-for-vimkind',
+    -- --     wants = 'one-small-step-for-vimkind',
+    -- --     module = 'dap'
+    -- -- }, {
+    -- --     'rcarriga/nvim-dap-ui',
+    -- --     requires = 'nvim-dap',
+    -- --     after = 'nvim-dap',
+    -- --     config = function()
+    -- --         require('dapui').setup()
+    -- --     end
+    -- -- }}
 
     -- Search  
     use {
@@ -167,20 +137,48 @@ local function init()
     --   requires = {"tami5/sqlite.lua"}
     -- }
 
-    -- use 'github/copilot.vim'
+    -- Git
+    use {{
+        'TimUntersberger/neogit',
+        requires = 'nvim-lua/plenary.nvim',
+        config = function()
+            require('neogit').setup({
+                disable_signs = false
+            })
+        end
+    }, {
+        'lewis6991/gitsigns.nvim',
+        requires = {'nvim-lua/plenary.nvim'},
+        config = [[require('config.gitsigns')]]
+    }}
 
-    -- Profiling
-    -- use { 'dstein64/vim-startuptime', cmd = 'StartupTime', config = [[vim.g.startuptime_tries = 10]] }
-
-    -- Go dev
+    -- -- Profiling
     use {
-        'fatih/vim-go',
-        run = ':GoUpdateBinaries',
-        config = [[require('config.vim-go')]]
+        'dstein64/vim-startuptime',
+        cmd = 'StartupTime',
+        config = [[vim.g.startuptime_tries = 10]]
     }
 
-    -- Refactoring
-    -- use { 'ThePrimeagen/refactoring.nvim', opt = true }
+    -- Comment
+    use {
+        'numToStr/Comment.nvim',
+        config = function()
+            require('Comment').setup()
+            require('config.comment')
+        end
+    }
+
+    -- use {
+    --     'windwp/nvim-autopairs',
+    --     config = function()
+    --         require('nvim-autopairs').setup {}
+    --     end
+    -- }
+
+    -- -- use 'tpope/vim-repeat'
+    -- -- use 'tpope/vim-surround'
+    -- -- use 'tpope/vim-abolish'
+    -- -- use 'tpope/vim-endwise'
 
     use {
         'tpope/vim-rsi',
@@ -189,28 +187,30 @@ local function init()
         end
     }
 
-    -- Plugin development
-    -- use 'folke/lua-dev.nvim'
+    -- use {
+    --     "danymat/neogen",
+    --     config = [[require('config.neogen')]],
+    --     requires = "nvim-treesitter/nvim-treesitter"
+    -- }
 
-    -- Quickfix
-    -- use 'kevinhwang91/nvim-bqf'
+    -- -- Go dev
+    use {
+        'fatih/vim-go',
+        run = ':GoUpdateBinaries',
+        config = [[require('config.vim-go')]]
+    }
 
-    -- Debugger
-    -- use {{
-    --     'mfussenegger/nvim-dap',
-    --     setup = [[require('config.dap_setup')]],
-    --     config = [[require('config.dap')]],
-    --     requires = 'jbyuki/one-small-step-for-vimkind',
-    --     wants = 'one-small-step-for-vimkind',
-    --     module = 'dap'
-    -- }, {
-    --     'rcarriga/nvim-dap-ui',
-    --     requires = 'nvim-dap',
-    --     after = 'nvim-dap',
-    --     config = function()
-    --         require('dapui').setup()
-    --     end
-    -- }}
+    -- -- Refactoring
+    -- use {
+    --     "ThePrimeagen/refactoring.nvim",
+    --     requires = {{"nvim-lua/plenary.nvim"}, {"nvim-treesitter/nvim-treesitter"}}
+    -- }
+
+    -- -- Plugin development
+    -- -- use 'folke/lua-dev.nvim'
+
+    -- -- Quickfix
+    -- -- use 'kevinhwang91/nvim-bqf'
 
 end
 

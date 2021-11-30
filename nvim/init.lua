@@ -210,8 +210,8 @@ map('n', '<leader>ev', ':tabnew $MYVIMRC<cr>', silent)
 autocmd('misc_aucmds', {[[BufWinEnter * checktime]], [[TextYankPost * silent! lua vim.highlight.on_yank()]],
                         [[FileType qf set nobuflisted ]]}, true)
 
-autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
-autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
+-- autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
+-- autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
 
 -- Disable some built-in plugins we don't want
 local disabled_built_ins = {'gzip', 'man', 'matchit', 'matchparen', 'shada_plugin', 'tarPlugin', 'tar', 'zipPlugin',

@@ -4,11 +4,18 @@ local map = utils.map
 local autocmd = utils.autocmd
 
 local lsp = require "lspconfig"
+local lsp_signature = require('lsp_signature')
+local cmp_nvim_lsp = require('cmp_nvim_lsp')
 
 -- lsp settings
 vim.lsp.set_log_level("debug")
 
 local on_attach = function(client, bufnr)
+    -- ray-x/lsp_signature.nvim
+    lsp_signature.on_attach({
+        hint_enable = false
+    }, bufnr)
+
     local function buf_set_keymap(...)
         vim.api.nvim_buf_set_keymap(bufnr, ...)
     end
@@ -58,7 +65,7 @@ local on_attach = function(client, bufnr)
 
 end
 
-local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
+local capabilities = cmp_nvim_lsp.update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 -- local servers = {}
