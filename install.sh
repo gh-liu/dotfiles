@@ -5,8 +5,8 @@
 tools=~/tools
 
 mkdir -p $tools
-mkdir -p ~/dev/{golang,nodejs,python3}
-mkdir -p ~/env/{golang,nodejs,python3}
+mkdir -p ~/dev/{golang,nodejs,python3,lua}
+mkdir -p ~/env/{golang,nodejs,python3,lua}
 
 ## proxy
 
@@ -40,6 +40,20 @@ xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
 tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
 
 mv node-$NODEJSVERSION-linux-$NODEJSARCH node
+
+### lua
+cd ~/env/lua/
+
+LUAVERSION=5.4.3
+
+wget https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz
+tar -zxvf lua-$LUAVERSION.tar.gz
+
+mv lua-$LUAVERSION lua
+cd ~/env/lua/lua
+make all test
+
+sudo ln -svf ~/env/lua/lua/src/lua /usr/bin/lua
 
 ### python3
 <<COMMENT
