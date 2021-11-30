@@ -124,6 +124,19 @@ vim +PlugInstall +qall
 
 ### nvim
 
+#### install 
+
+NVIMVERSION=v0.6.0
+mkdir -p $HOME/tools/nvim
+cd $HOME/tools/nvim
+mkdir $NVIMVERSION
+cd $NVIMVERSION
+wget https://github.com/neovim/neovim/releases/download/$NVIMVERSION/nvim-linux64.tar.gz
+tar -zxvf nvim-linux64.tar.gz -C .
+
+sudo ln -svf $(pwd)/nvim-linux64/bin/nvim /usr/bin/nvim
+
+#### config
 mkdir -p ~/.config
 ln -svf $(pwd)/nvim ~/.config/nvim
 
