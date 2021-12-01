@@ -157,9 +157,13 @@ sudo make install
 
 ### autojump
 
-git clone git://github.com/wting/autojump.git $tools/autojump
-cd $tools/autojump
-./install.py
+# git clone git://github.com/wting/autojump.git $tools/autojump
+# cd $tools/autojump
+# ./install.py
+
+### z.lua
+
+git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
 
 ### tmuxp
 

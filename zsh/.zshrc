@@ -72,7 +72,7 @@ export UPDATE_ZSH_DAYS=13
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git vagrant web-search extract autojump colored-man-pages zsh-autosuggestions zsh-syntax-highlighting zsh-completions
+plugins=(git vagrant web-search extract colored-man-pages zsh-autosuggestions zsh-syntax-highlighting zsh-completions
 # tmux
 # docker docker-compose 
 # history-substring-search 
@@ -120,6 +120,8 @@ export DISABLE_AUTO_TITLE='true'
 eval "$(direnv hook zsh)"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+[ -d ~/tools/z.lua ] && eval "$(lua ~/tools/z.lua/z.lua --init zsh)"
 
 # # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
 stty -ixon
