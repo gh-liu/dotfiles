@@ -48,9 +48,13 @@ local function init()
         'neovim/nvim-lspconfig',
         config = [[require('config.lsp_config')]]
     }, -- 'onsails/lspkind-nvim', -- adds vscode-like pictograms
-    -- 'kosayoda/nvim-lightbulb',
-    { -- Autocompletion plugin
-        'hrsh7th/nvim-cmp',
+    {
+        'kosayoda/nvim-lightbulb',
+        config = function()
+            vim.cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()]]
+        end
+    }, {
+        'hrsh7th/nvim-cmp', -- Autocompletion plugin
         after = 'nvim-lspconfig',
         requires = {'hrsh7th/cmp-nvim-lsp', {
             'hrsh7th/cmp-buffer',
@@ -149,6 +153,10 @@ local function init()
         requires = {'nvim-lua/plenary.nvim'},
         config = [[require('config.gitsigns')]]
     }}
+    -- use {
+    --     'sindrets/diffview.nvim',
+    --     requires = 'nvim-lua/plenary.nvim'
+    -- }
 
     -- -- Profiling
     use {
