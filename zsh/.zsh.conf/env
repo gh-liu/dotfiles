@@ -51,3 +51,5 @@ path=(
     $path
   )
 export PATH=":$PATH"
+
+export tools=~/tools

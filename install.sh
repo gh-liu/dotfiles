@@ -180,7 +180,7 @@ cd $tools
 some dependencies:
 sudo apt-get install build-essential libssl-dev git -y
 COMMENT
-git clone https://github.com/wg/wrk.git wrk 
+git clone https://github.com/wg/wrk.git $tools/wrk 
 cd wrk 
 sudo make 
 sudo cp wrk /usr/local/bin 
