@@ -11,7 +11,9 @@ map('n', '<leader>w', [[<cmd>Telescope grep_string<cr>]], silent)
 map('n', '<leader>f', [[<cmd>Telescope live_grep<cr>]], silent)
 
 -- Vim Pickers
-map('n', '<leader>b', [[<cmd>Telescope buffers<cr>]], silent)
+-- map('n', '<leader>b', [[<cmd>Telescope buffers<cr>]], silent)
+map('i', '<c-b>', [[<cmd>Telescope buffers<cr>]], silent)
+map('n', '<c-b>', [[<cmd>Telescope buffers<cr>]], silent)
 
 -- Git Pickers
 map('n', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)

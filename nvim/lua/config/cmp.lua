@@ -29,9 +29,9 @@ local function select_previous(fallback)
 end
 
 cmp.setup({
-    completion = {
-        completeopt = 'menu,menuone,noinsert'
-    },
+    -- completion = {
+    --     completeopt = 'menu,menuone,noinsert'
+    -- },
     -- formatting = {
     --   format = lspkind.cmp_format({with_text = false, maxwidth = 50})
     -- },
@@ -41,21 +41,25 @@ cmp.setup({
         end
     },
     mapping = {
-        ['<cr>'] = cmp.mapping.confirm(),
-        ['<esc>'] = cmp.mapping.close(),
+        ['<cr>'] = cmp.mapping.confirm({
+            select = true
+        }),
+        ['<esc>'] = cmp.mapping({
+            i = cmp.mapping.abort(),
+            c = cmp.mapping.close()
+        }),
         ["<Tab>"] = cmp.mapping(select_next, {"i", "s"}),
-        ["<S-Tab>"] = cmp.mapping(select_previous, {"i", "s"})
+        ["<S-Tab>"] = cmp.mapping(select_previous, {"i", "s"}),
+        ['<C-y>'] = cmp.config.disable
     },
     sources = {{
         name = 'buffer'
     }, {
         name = 'nvim_lsp'
     }, {
-        name = 'nvim_lua'
+        name = 'luasnip'
     }, {
         name = 'path'
-    }, {
-        name = 'luasnip'
     }}
 })
 

@@ -28,13 +28,11 @@ local function init()
     -- Undo tree
     use {
         'mbbill/undotree',
-        -- cmd = 'UndotreeToggle',
         config = [[require('config.undotree')]]
     }
     -- Tagbar
     use {
         'majutsushi/tagbar',
-        -- cmd = 'TagbarToggle',
         config = [[require('config.tagbar')]]
     }
 
@@ -170,14 +168,14 @@ local function init()
         'tpope/vim-commentary',
         config = [[require('config.vim-commentary')]]
     }
-    use 'JoosepAlviste/nvim-ts-context-commentstring'
+    -- use 'JoosepAlviste/nvim-ts-context-commentstring'
 
-    -- use {
-    --     'windwp/nvim-autopairs',
-    --     config = function()
-    --         require('nvim-autopairs').setup {}
-    --     end
-    -- }
+    use {
+        'windwp/nvim-autopairs',
+        config = function()
+            require('nvim-autopairs').setup {}
+        end
+    }
 
     -- -- use 'tpope/vim-repeat'
     -- -- use 'tpope/vim-surround'
