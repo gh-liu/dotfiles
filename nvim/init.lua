@@ -246,3 +246,19 @@ vim.cmd [[
   au VimEnter * ++once lua statusline = require('statusline')
   au VimEnter * ++once lua vim.o.statusline = '%!v:lua.statusline.status()'
 ]]
+
+local function map_change_option(...)
+    local prefix = 'co'
+    local key = select(1, ...)
+    local option = select(2, ...)
+
+    vim.api.nvim_set_keymap('n', prefix .. key, ':set ' .. option .. '!<cr>', {})
+end
+
+map_change_option('w', 'warp')
+map_change_option('p', 'paste')
+map_change_option('n', 'number')
+map_change_option('r', 'relativenumber')
+map_change_option('h', 'hlsearch')
+
+autocmd('no_conceallevel', {[[FileType markdown set cole=0]]}, true)
