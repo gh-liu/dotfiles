@@ -262,3 +262,7 @@ map_change_option('r', 'relativenumber')
 map_change_option('h', 'hlsearch')
 
 autocmd('no_conceallevel', {[[FileType markdown set cole=0]]}, true)
+
+vim.cmd[[
+  command FileName :echo fnamemodify(bufname(1), ':p')
+]]
