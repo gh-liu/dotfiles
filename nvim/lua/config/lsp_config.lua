@@ -8,7 +8,7 @@ local lsp_signature = require('lsp_signature')
 local cmp_nvim_lsp = require('cmp_nvim_lsp')
 
 -- lsp settings
-vim.lsp.set_log_level("debug")
+-- vim.lsp.set_log_level("debug")
 
 local on_attach = function(client, bufnr)
     -- ray-x/lsp_signature.nvim
