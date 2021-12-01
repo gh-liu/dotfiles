@@ -12,7 +12,7 @@ export ZSH=~/.oh-my-zsh
 # ZSH_THEME="robbyrussell"
 # ZSH_THEME="af-magic"
 ZSH_THEME="7triones"
-TERM=xterm-256color
+# TERM=xterm-256color
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -112,18 +112,3 @@ export LANG=en_US.UTF-8
 for file in ~/.zsh.conf/*; do
     source $file
 done
-set_proxy
-
-export DISABLE_AUTO_TITLE='true'
-
-# direnv
-eval "$(direnv hook zsh)"
-
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-[ -d ~/tools/z.lua ] && eval "$(lua ~/tools/z.lua/z.lua --init zsh)"
-
-# # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
-stty -ixon
-
-# setxkbmap -option ctrl:swapcaps

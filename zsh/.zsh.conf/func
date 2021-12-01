@@ -15,6 +15,7 @@ function manswitch () { man $1 | less -p "^ +$2"; }
 #     export https_proxy="${PROXY_HTTP}"
 #     export HTTPS_proxy="${PROXY_HTTP}"
 # }
+# set_proxy
 # unset_proxy(){
 #     unset http_proxy
 #     unset HTTP_PROXY

@@ -1,0 +1,15 @@
+export DISABLE_AUTO_TITLE='true'
+
+# direnv
+eval "$(direnv hook zsh)"
+
+# fzf
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# z.lua
+[ -d ~/tools/z.lua ] && eval "$(lua ~/tools/z.lua/z.lua --init zsh)"
+
+# # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
+stty -ixon
+
+# setxkbmap -option ctrl:swapcaps

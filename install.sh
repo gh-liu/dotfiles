@@ -112,7 +112,9 @@ COMMENT
 mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
 ln -svf $(pwd)/zsh/.zsh.conf ~/.zsh.conf
 ln -svf $(pwd)/zsh/.zshrc ~/.zshrc
+
 ln -svf $(pwd)/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
+
 source ~/.zshrc
 
 ### vim
