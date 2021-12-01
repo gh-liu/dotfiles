@@ -10,7 +10,11 @@ mkdir -p ~/env/{golang,nodejs,python3,lua}
 
 ## proxy
 
-export PROXY_HTTP=http://192.168.102.102:1081 # Todo: need set by youself
+echo -n "Enter your proxy:"
+read _PROXY_HTTP
+# echo $_PROXY_HTTP
+
+export proxy=$_PROXY_HTTP # Todo: need set by youself
 export http_proxy=$proxy
 export https_proxy=$proxy
 
@@ -76,7 +80,7 @@ git clone https://github.com/gh-liu/dotfiles.git $dotfilespath
 replace PROXY_HTTP in the .common_func
 COMMENT
 
-sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/zsh.conf/func
+# sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/zsh.conf/func
 
 ### tmux
 
