@@ -10,6 +10,7 @@ sudo apt install -y gdb binutils cgroup-tools
 sudo apt install -y ripgrep silversearcher-ag fd-find
 sudo apt install -y apache2-utils ngrep
 sudo apt install -y python python3-pip
+sudo apt install -y libsqlite3-dev
 sudo apt install -y hugo tldr direnv graphviz protobuf-compiler
 
 ### install docker by this (https://docs.docker.com/engine/install/ubuntu/)
