@@ -78,6 +78,14 @@ opt('termguicolors', true)
 opt('background', 'dark')
 cmd [[colorscheme gruvbox-material]]
 
+-- fold
+opt('foldmethod', 'indent')
+opt('foldlevel', 99)
+cmd [[
+    au FileType tmux setlocal foldmethod=marker
+    nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr>
+    ]]
+
 -- Keybingdings
 local silent = {
     silent = true
