@@ -19,7 +19,7 @@ local buffer = {o, bo}
 local window = {o, wo}
 
 opt('mouse', 'nivh')
-opt('textwidth', 100, buffer)
+-- opt('textwidth', 100, buffer)
 opt('scrolloff', 7)
 
 opt('wildignore', '*.o,*~,*.pyc')
@@ -230,22 +230,24 @@ g.netrw_liststyle = 3
 -- g.netrw_winsize = 25
 map('n', '<C-n>', '<cmd>Vexplore<cr>')
 
--- functions
-function helptab()
-    if vim.o.buftype == 'help' then
-        vim.cmd([[wincmd T]])
-        vim.api.nvim_buf_set_keymap('0', 'n', 'q', '<cmd>q<cr>', {
-            silent = true,
-            noremap = true
-        })
-    end
-end
-autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
-
+-- statusline
 vim.cmd [[
   au VimEnter * ++once lua statusline = require('statusline')
   au VimEnter * ++once lua vim.o.statusline = '%!v:lua.statusline.status()'
 ]]
+
+-- functions
+function helptab()
+    -- if vim.o.buftype == 'help' then
+    vim.cmd([[wincmd T]])
+    vim.api.nvim_buf_set_keymap('0', 'n', 'q', '<cmd>q<cr>', {
+        silent = true,
+        noremap = true
+    })
+    -- end
+end
+-- autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
+autocmd('open_help_tab', {[[FileType help lua helptab()]]}, true)
 
 local function map_change_option(...)
     local prefix = 'co'
@@ -263,6 +265,6 @@ map_change_option('h', 'hlsearch')
 
 autocmd('no_conceallevel', {[[FileType markdown set cole=0]]}, true)
 
-vim.cmd[[
+vim.cmd [[
   command FileName :echo fnamemodify(bufname(1), ':p')
 ]]
