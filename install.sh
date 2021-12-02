@@ -82,6 +82,9 @@ COMMENT
 
 # sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/zsh.conf/func
 
+### bin
+ln -svf $(pwd)/bin ~/bin
+
 ### tmux
 
 #### tpm
