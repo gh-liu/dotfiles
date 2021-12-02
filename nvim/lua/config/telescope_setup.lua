@@ -18,6 +18,9 @@ map('n', '<leader>fr', [[<cmd>Telescope frecency<cr>]], silent)
 map('i', '<c-b>', [[<cmd>Telescope buffers<cr>]], silent)
 map('n', '<c-b>', [[<cmd>Telescope buffers<cr>]], silent)
 
+map('n', '<leader>fh', [[<cmd>Telescope help_tags<cr>]], silent)
+map('n', '<leader>fm', [[<cmd>Telescope marks<cr>]], silent)
+
 -- Git Pickers
 map('n', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)
 map('i', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)

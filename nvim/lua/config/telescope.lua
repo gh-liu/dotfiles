@@ -47,9 +47,14 @@ telescope.setup {
         },
         live_grep = {
             theme = 'dropdown'
+        },
+        file_browser = {
+            -- 🗀📁
+            dir_icon = '🗀'
         }
     }
 }
 
 telescope.load_extension('fzf')
 -- telescope.load_extension("frecency")
+

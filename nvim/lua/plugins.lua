@@ -24,7 +24,7 @@ local function init()
         'junegunn/rainbow_parentheses.vim',
         config = [[require('config.rainbow_parentheses')]]
     }
-    use {'kyazdani42/nvim-web-devicons'}
+    -- use {'kyazdani42/nvim-web-devicons'}
 
     -- Undo tree
     use {
@@ -79,30 +79,14 @@ local function init()
     }, {"ray-x/lsp_signature.nvim"} -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
     }
 
+    -- use 'nvim-lua/lsp-status.nvim'
+
     -- -- use 'github/copilot.vim'
 
     use {
         "folke/trouble.nvim",
-        requires = "nvim-web-devicons",
-        config = function()
-            require('trouble').setup({
-                icons = false,
-                fold_open = "-", -- icon used for open folds
-                fold_closed = "+", -- icon used for closed folds
-                indent_lines = false, -- add an indent guide below the fold icons
-                signs = {
-                    -- icons / text used for a diagnostic
-                    error = "error",
-                    warning = "warn",
-                    hint = "hint",
-                    information = "info"
-                },
-                use_lsp_diagnostic_signs = true -- enabling this will use the signs defined in your lsp client
-            })
-            vim.api.nvim_set_keymap('n', '<leader>t', '<cmd>TroubleToggle<cr>', {
-                silent = true
-            })
-        end
+        -- requires = "nvim-web-devicons",
+        config = [[require('config.trouble')]]
     }
 
     -- -- Debugger
