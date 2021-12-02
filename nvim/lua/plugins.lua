@@ -203,6 +203,12 @@ local function init()
     --     requires = "nvim-treesitter/nvim-treesitter"
     -- }
 
+    -- markdown preview
+    use {"ellisonleao/glow.nvim",
+    config = function ()
+      vim.g.glow_binary_path = vim.env.HOME .. "/bin"
+    end }
+
     -- -- Go dev
     use {
         'fatih/vim-go',
