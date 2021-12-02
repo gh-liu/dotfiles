@@ -23,9 +23,17 @@ map('n', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)
 map('i', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)
 
 -- Neovim LSP Pickers
-map('n', '<leader>r', [[<cmd>Telescope lsp_references<cr>]], silent)
-map('n', '<leader>i', [[<cmd>Telescope lsp_implementations<cr>]], silent)
+-- map('n', '<leader>r', [[<cmd>Telescope lsp_references<cr>]], silent)
+-- map('n', '<leader>i', [[<cmd>Telescope lsp_implementations<cr>]], silent)
 map('n', '<leader>a', [[<cmd>Telescope lsp_code_actions<cr>]], silent)
+map('n', '<leader>dw', [[<cmd>Telescope lsp_workspace_diagnostics<cr>]], silent)
+map('n', '<leader>db', [[<cmd>Telescope lsp_document_diagnostics<cr>]], silent)
+
+-- map('n', '<leader>dD', [[<cmd>Telescope lsp_type_definitions<cr>]], silent)
+map('n', 'gd', [[<cmd>Telescope lsp_definitions<cr>]], silent)
+
+map('n', 'gr', [[<cmd>Telescope lsp_references<cr>]], silent)
+map('n', 'gi', [[<cmd>Telescope lsp_implementations<cr>]], silent)
 
 -- Treesitter Picker
 -- map('n', '<leader>d', [[<cmd>Telescope treesitter<cr>]], silent)
