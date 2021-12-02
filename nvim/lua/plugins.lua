@@ -24,6 +24,7 @@ local function init()
         'junegunn/rainbow_parentheses.vim',
         config = [[require('config.rainbow_parentheses')]]
     }
+    use {'kyazdani42/nvim-web-devicons'}
 
     -- Undo tree
     use {
@@ -82,7 +83,7 @@ local function init()
 
     use {
         "folke/trouble.nvim",
-        -- requires = "kyazdani42/nvim-web-devicons",
+        requires = "nvim-web-devicons",
         config = function()
             require('trouble').setup({
                 icons = false,

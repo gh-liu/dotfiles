@@ -7,8 +7,11 @@ local silent = {
 -- File Pickers
 map('n', '<c-p>', [[<cmd>Telescope find_files<cr>]], silent)
 map('i', '<c-p>', [[<cmd>Telescope find_files<cr>]], silent)
-map('n', '<leader>w', [[<cmd>Telescope grep_string<cr>]], silent)
-map('n', '<leader>f', [[<cmd>Telescope live_grep<cr>]], silent)
+map('n', '<leader>fw', [[<cmd>Telescope grep_string<cr>]], silent)
+map('n', '<leader>ff', [[<cmd>Telescope live_grep<cr>]], silent)
+map('n', '<leader>fb', [[<cmd>Telescope file_browser<cr>]], silent)
+
+map('n', '<leader>fr', [[<cmd>Telescope frecency<cr>]], silent)
 
 -- Vim Pickers
 -- map('n', '<leader>b', [[<cmd>Telescope buffers<cr>]], silent)
