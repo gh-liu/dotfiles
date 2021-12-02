@@ -124,8 +124,7 @@ local function init()
     -- Search  
     use {
         'nvim-telescope/telescope.nvim',
-        requires = {'nvim-lua/plenary.nvim', 'telescope-fzf-native.nvim' -- , 'telescope-frecency.nvim'
-        },
+        requires = {'nvim-lua/plenary.nvim', 'telescope-fzf-native.nvim', {'telescope-frecency.nvim'}},
         setup = [[require('config.telescope_setup')]],
         config = [[require('config.telescope')]]
     }
@@ -133,11 +132,13 @@ local function init()
         'nvim-telescope/telescope-fzf-native.nvim',
         run = 'make'
     }
-    -- use {
-    --   "nvim-telescope/telescope-frecency.nvim",
-    --   after = 'telescope.nvim',
-    --   requires = {"tami5/sqlite.lua"}
-    -- }
+    use {
+        "nvim-telescope/telescope-frecency.nvim",
+        config = function()
+            require"telescope".load_extension("frecency")
+        end,
+        requires = {"tami5/sqlite.lua"}
+    }
 
     -- Git
     use {{
@@ -204,10 +205,12 @@ local function init()
     -- }
 
     -- markdown preview
-    use {"ellisonleao/glow.nvim",
-    config = function ()
-      vim.g.glow_binary_path = vim.env.HOME .. "/bin"
-    end }
+    use {
+        "ellisonleao/glow.nvim",
+        config = function()
+            vim.g.glow_binary_path = vim.env.HOME .. "/bin"
+        end
+    }
 
     -- -- Go dev
     use {

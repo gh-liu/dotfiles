@@ -7,12 +7,14 @@ telescope.setup {
             i = {
                 ['<c-j>'] = require('telescope.actions').move_selection_next,
                 ['<c-k>'] = require('telescope.actions').move_selection_previous,
-                ['<ESC>'] = require('telescope.actions').close
+                ['<ESC>'] = require('telescope.actions').close,
+                ['<c-d>'] = require('telescope.actions').delete_buffer
             },
             n = {
                 ['<c-j>'] = require('telescope.actions').move_selection_next,
                 ['<c-k>'] = require('telescope.actions').move_selection_previous,
-                ['<ESC>'] = require('telescope.actions').close
+                ['<ESC>'] = require('telescope.actions').close,
+                ['<c-d>'] = require('telescope.actions').delete_buffer
             }
         }
     },
