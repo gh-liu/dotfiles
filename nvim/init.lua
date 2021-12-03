@@ -248,16 +248,16 @@ vim.cmd [[
 
 -- functions
 function helptab()
-    -- if vim.o.buftype == 'help' then
-    vim.cmd([[wincmd T]])
-    vim.api.nvim_buf_set_keymap('0', 'n', 'q', '<cmd>q<cr>', {
-        silent = true,
-        noremap = true
-    })
-    -- end
+    if vim.o.buftype == 'help' then
+        vim.cmd([[wincmd T]])
+        vim.api.nvim_buf_set_keymap('0', 'n', 'q', '<cmd>q<cr>', {
+            silent = true,
+            noremap = true
+        })
+    end
 end
--- autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
-autocmd('open_help_tab', {[[FileType help lua helptab()]]}, true)
+autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
+-- autocmd('open_help_tab', {[[FileType help lua helptab()]]}, true)
 
 local function map_change_option(...)
     local prefix = 'co'
