@@ -2,11 +2,11 @@
 
 ## directories
 
-tools=~/tools
+tools=$HOME/tools
 
 mkdir -p $tools
-mkdir -p ~/dev/{golang,nodejs,python3,lua}
-mkdir -p ~/env/{golang,nodejs,python3,lua}
+mkdir -p $HOME/dev/{golang,nodejs,python3,lua}
+mkdir -p $HOME/env/{golang,nodejs,python3,lua}
 
 ## proxy
 
@@ -22,7 +22,7 @@ export https_proxy=$proxy
 
 ### golang
 
-cd ~/env/golang/
+cd $HOME/env/golang/
 
 GOVERSION=$(curl -s 'https://golang.org/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $2}' | tr -d ',"')  # get latest go version
 GOARCH=$(if [[ $(uname -m) == "x86_64" ]] ; then echo amd64; else echo $(uname -m); fi) # get either amd64 or arm64 (darwin/m1)
@@ -33,7 +33,7 @@ tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz && rm $GOVERSION.linux-$GOARCH.tar.gz
 
 ### nodejs
 
-cd ~/env/nodejs/
+cd $HOME/env/nodejs/
 
 NODEJSVERSION=v14.18.1 # Todo: auto get the version
 NODEJSARCH=x64 # Todo: auto get the arch
@@ -46,7 +46,7 @@ tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-lin
 mv node-$NODEJSVERSION-linux-$NODEJSARCH node
 
 ### lua
-cd ~/env/lua/
+cd $HOME/env/lua/
 
 LUAVERSION=5.4.3
 
@@ -54,14 +54,25 @@ wget https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz
 tar -zxvf lua-$LUAVERSION.tar.gz
 
 mv lua-$LUAVERSION lua
-cd ~/env/lua/lua
+cd $HOME/env/lua/lua
 make all test
 
-sudo ln -svf ~/env/lua/lua/src/lua /usr/bin/lua
+sudo ln -svf $HOME/env/lua/lua/src/lua /usr/bin/lua
+
+cd $HOME/env/lua
+LUAROCKSVERSION=3.8.0
+wget https://luarocks.org/releases/luarocks-3.8.0.tar.gz
+tar zxpf luarocks-3.8.0.tar.gz
+mv luarocks-$LUAROCKSVERSION luarocks
+cd luarocks
+
+./configure --with-lua-include=$HOME/env/lua/lua/src
+make
+sudo make install
 
 ### python3
 <<COMMENT
-cd ~/env/python3/
+cd $HOME/env/python3/
 
 PYVERSION=3.9.9
 wget https://www.python.org/ftp/python/$PYVERSION/Python-$PYVERSION.tar.xz
@@ -83,19 +94,19 @@ COMMENT
 # sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/zsh.conf/func
 
 ### bin
-ln -svf $(pwd)/bin ~/bin
+ln -svf $(pwd)/bin $HOME/bin
 
 ### tmux
 
 #### tpm
 
-mkdir -p ~/.tmux/plugins/tpm
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+mkdir -p $HOME/.tmux/plugins/tpm
+git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
 
 #### config
 
-mv -v ~/.tmux.conf ~/.tmux.conf.old 2> /dev/null
-ln -svf $(pwd)/tmux/tmux.conf ~/.tmux.conf
+mv -v $HOME/.tmux.conf $HOME/.tmux.conf.old 2> /dev/null
+ln -svf $(pwd)/tmux/tmux.conf $HOME/.tmux.conf
 
 ### zsh
 
@@ -112,20 +123,20 @@ COMMENT
 
 #### config
 
-mv -v ~/.zshrc ~/.zshrc.old 2> /dev/null
-ln -svf $(pwd)/zsh/.zsh.conf ~/.zsh.conf
-ln -svf $(pwd)/zsh/.zshrc ~/.zshrc
+mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
+ln -svf $(pwd)/zsh/.zsh.conf $HOME/.zsh.conf
+ln -svf $(pwd)/zsh/.zshrc $HOME/.zshrc
 
-ln -svf $(pwd)/zsh/7triones.zsh-theme ~/.oh-my-zsh/themes/7triones.zsh-theme
+ln -svf $(pwd)/zsh/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
 
-source ~/.zshrc
+source $HOME/.zshrc
 
 ### vim
 
 #### config
-mv -v ~/.vimrc ~/.vimrc.old 2> /dev/null
-ln -svf $(pwd)/vim/vimrc ~/.vimrc
-ln -svf $(pwd)/vim/dotvim ~/.vim
+mv -v $HOME/.vimrc $HOME/.vimrc.old 2> /dev/null
+ln -svf $(pwd)/vim/vimrc $HOME/.vimrc
+ln -svf $(pwd)/vim/dotvim $HOME/.vim
 <<COMMENT
 Make sure that the vim-plug have installed.
 COMMENT
@@ -146,12 +157,12 @@ tar -zxvf nvim-linux64.tar.gz -C .
 sudo ln -svf $(pwd)/nvim-linux64/bin/nvim /usr/bin/nvim
 
 #### config
-mkdir -p ~/.config
-ln -svf $(pwd)/nvim ~/.config/nvim
+mkdir -p $HOME/.config
+ln -svf $(pwd)/nvim $HOME/.config/nvim
 
 ### alacritty
 
-ln -svf $(pwd)/alacritty/alacritty.yml ~/.alacritty.yml
+ln -svf $(pwd)/alacritty/alacritty.yml $HOME/.alacritty.yml
 
 ## utils
 
