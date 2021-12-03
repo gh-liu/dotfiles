@@ -42,8 +42,8 @@ telescope.setup {
         },
         buffers = {
             show_all_buffers = true,
-            sort_lastused = true,
-            previewer = false
+            sort_lastused = true
+            -- previewer = false
         },
         live_grep = {
             theme = 'dropdown'

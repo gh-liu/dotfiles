@@ -214,6 +214,8 @@ map('n', '<leader>c', ':cclose<bar>lclose<cr>', silent)
 -- Edit $MYVIMRC
 map('n', '<leader>ev', ':tabnew $MYVIMRC<cr>', silent)
 
+map('i', 'jj', '<Esc>')
+
 -- Autocommands
 autocmd('misc_aucmds', {[[BufWinEnter * checktime]], [[TextYankPost * silent! lua vim.highlight.on_yank()]],
                         [[FileType qf set nobuflisted ]]}, true)

@@ -56,7 +56,7 @@ local function init()
         end
     }, {
         'hrsh7th/nvim-cmp', -- Autocompletion plugin
-        after = 'nvim-lspconfig',
+        -- after = 'nvim-lspconfig',
         requires = {'hrsh7th/cmp-nvim-lsp', {
             'hrsh7th/cmp-buffer',
             after = 'nvim-cmp'
