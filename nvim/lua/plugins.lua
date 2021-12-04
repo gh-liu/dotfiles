@@ -178,9 +178,7 @@ local function init()
 
     use {
         'windwp/nvim-autopairs',
-        config = function()
-            require('nvim-autopairs').setup {}
-        end
+        config = [[require('config.autopairs')]]
     }
 
     -- -- use 'tpope/vim-repeat'
