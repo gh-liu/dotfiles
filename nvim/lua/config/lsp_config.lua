@@ -62,6 +62,7 @@ local on_attach = function(client, bufnr)
     -- buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
     -- buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
     -- buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
+    buf_set_keymap('n', '<leader>F', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
 
 end
 
@@ -96,6 +97,7 @@ local capabilities = cmp_nvim_lsp.update_capabilities(vim.lsp.protocol.make_clie
 lsp.gopls.setup {
     cmd = {'gopls', '--remote=auto'},
     settings = {
+        -- more settings: https://github.com/golang/tools/blob/master/gopls/doc/settings.md
         gopls = {
             -- usePlaceholders = false,
             analyses = {
@@ -150,8 +152,12 @@ function goimports(timeout_ms)
 end
 
 autocmd('goimports', {[[BufWritePre *.go lua goimports(1000)]]}, true)
+autocmd('goautofmt', {[[BufWritePre *.go lua vim.lsp.buf.formatting_sync(nil,500)]]}, true)
 
 -- lsp.golangci_lint_ls.setup {}
+
+-- vim
+require'lspconfig'.vimls.setup {}
 
 -- Bash
 lsp.bashls.setup {

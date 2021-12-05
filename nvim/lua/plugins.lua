@@ -208,17 +208,20 @@ local function init()
     }
 
     -- -- Go dev
-    use {
-        'fatih/vim-go',
-        run = ':GoUpdateBinaries',
-        config = [[require('config.vim-go')]]
-    }
+    -- use {
+    --     'fatih/vim-go',
+    --     run = ':GoUpdateBinaries',
+    --     config = [[require('config.vim-go')]]
+    -- }
 
     -- -- Refactoring
     -- use {
     --     "ThePrimeagen/refactoring.nvim",
     --     requires = {{"nvim-lua/plenary.nvim"}, {"nvim-treesitter/nvim-treesitter"}}
     -- }
+
+    -- -- template
+    -- use 'mattn/vim-sonictemplate'
 
     -- -- Plugin development
     -- -- use 'folke/lua-dev.nvim'
