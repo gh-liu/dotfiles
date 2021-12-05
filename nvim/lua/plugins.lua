@@ -43,6 +43,7 @@ local function init()
         config = [[require('config.treesitter')]],
         run = ':TSUpdate'
     }
+    use 'nvim-treesitter/playground'
 
     -- Completion
     use {{

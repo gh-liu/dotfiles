@@ -4,7 +4,7 @@ vim.api.nvim_command('set foldmethod=expr')
 vim.api.nvim_command('set foldexpr=nvim_treesitter#foldexpr()')
 
 tsconf.setup {
-    ensure_installed = {"go", "gomod", "vim", "bash", "lua", "json", "json5", "yaml", "dockerfile", "toml"},
+    ensure_installed = {"go", "gomod", "vim", "bash", "lua", "json", "json5", "yaml", "dockerfile", "toml", "query"},
     sync_install = false, -- install languages synchronously (only applied to `ensure_installed`)
     ignore_install = {}, -- List of parsers to ignore installing
     highlight = {
