@@ -125,9 +125,9 @@ COMMENT
 
 mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
 ln -svf $(pwd)/zsh/.zsh.conf $HOME/.zsh.conf
-ln -svf $(pwd)/zsh/.zshrc $HOME/.zshrc
+ln -svf $(pwd)/zsh/zshrc.omz $HOME/.zshrc
 
-ln -svf $(pwd)/zsh/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
+ln -svf $(pwd)/zsh/.zsh.theme/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
 
 source $HOME/.zshrc
 
