@@ -35,10 +35,10 @@ local on_attach = function(client, bufnr)
     -- See `:help vim.lsp.*` for documentation on any of the below functions
     -- go-to-definition
     -- buf_set_keymap('n','<c-]>','<cmd>lua vim.lsp.buf.definition()<cr>', opts)
-    buf_set_keymap('n', '<c-d>', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
+    -- buf_set_keymap('n', '<c-d>', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
     -- buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
     -- buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
-    buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
+    -- buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
     -- find-references
     -- buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
     -- hover
@@ -57,8 +57,8 @@ local on_attach = function(client, bufnr)
     buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
     buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
     -- something else
-    buf_set_keymap('n', 'g0', '<cmd>lua vim.lsp.buf.document_symbol()<cr>', opts)
-    buf_set_keymap('n', 'gW', '<cmd>lua vim.lsp.buf.workspace_symbol()<cr>', opts)
+    -- buf_set_keymap('n', 'g0', '<cmd>lua vim.lsp.buf.document_symbol()<cr>', opts)
+    -- buf_set_keymap('n', 'gW', '<cmd>lua vim.lsp.buf.workspace_symbol()<cr>', opts)
     -- buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
     -- buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
     -- buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
