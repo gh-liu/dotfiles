@@ -200,8 +200,3 @@ git clone https://github.com/wg/wrk.git $tools/wrk
 cd wrk 
 sudo make 
 sudo cp wrk /usr/local/bin 
-
-### protobuf go
-
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
