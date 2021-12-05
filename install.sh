@@ -127,7 +127,11 @@ mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
 ln -svf $(pwd)/zsh/.zsh.conf $HOME/.zsh.conf
 ln -svf $(pwd)/zsh/zshrc.omz $HOME/.zshrc
 
-ln -svf $(pwd)/zsh/.zsh.theme/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
+ln -svf $(pwd)/zsh/zsh.theme/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
+
+# zinit & p10k
+# ln -svf $(pwd)/zsh/zshrc.zinit $HOME/.zshrc
+# ln -svf $(pwd)/zsh/zsh.theme/p10k.zsh $HOME/.p10k.zsh
 
 source $HOME/.zshrc
 
