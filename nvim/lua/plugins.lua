@@ -125,18 +125,18 @@ local function init()
         end,
         requires = {"tami5/sqlite.lua"}
     }
-    use {
-        'edolphin-ydf/goimpl.nvim',
-        requires = {{'nvim-telescope/telescope.nvim'}, {'nvim-treesitter/nvim-treesitter'}},
-        config = function()
-            require'telescope'.load_extension 'goimpl'
-            vim.api.nvim_set_keymap('n', '<leader>im', [[<cmd>lua require'telescope'.extensions.goimpl.goimpl{}<CR>]], {
-                noremap = true,
-                silent = true
-            })
+    -- use {
+    --     'edolphin-ydf/goimpl.nvim',
+    --     requires = {{'nvim-telescope/telescope.nvim'}, {'nvim-treesitter/nvim-treesitter'}},
+    --     config = function()
+    --         require'telescope'.load_extension 'goimpl'
+    --         vim.api.nvim_set_keymap('n', '<leader>im', [[<cmd>lua require'telescope'.extensions.goimpl.goimpl{}<CR>]], {
+    --             noremap = true,
+    --             silent = true
+    --         })
 
-        end
-    }
+    --     end
+    -- }
 
     -- Git
     use {{
@@ -213,6 +213,10 @@ local function init()
     --     'fatih/vim-go',
     --     run = ':GoUpdateBinaries',
     --     config = [[require('config.vim-go')]]
+    -- }
+    -- use {
+    --     'ray-x/go.nvim',
+    --     config = [[require('go').setup()]]
     -- }
 
     -- -- Refactoring

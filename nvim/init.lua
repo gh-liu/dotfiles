@@ -262,9 +262,9 @@ autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
 local function map_change_option(...)
     local prefix = 'co'
     local key = select(1, ...)
-    local option = select(2, ...)
-
-    vim.api.nvim_set_keymap('n', prefix .. key, ':set ' .. option .. '!<cr>', {})
+    local opt = select(2, ...)
+    local op = ':set ' .. opt .. '!' .. ' <bar> set ' .. opt .. '?<cr>'
+    vim.api.nvim_set_keymap('n', prefix .. key, op, {})
 end
 
 map_change_option('w', 'warp')

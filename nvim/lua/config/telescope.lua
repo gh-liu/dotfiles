@@ -59,3 +59,8 @@ telescope.load_extension('fzf')
 
 -- local extensions
 telescope.load_extension("dotfiles")
+telescope.load_extension("goimpl")
+vim.api.nvim_set_keymap('n', '<leader>im', [[<cmd>lua require'telescope'.extensions.goimpl.goimpl()<CR>]], {
+    noremap = true,
+    silent = true
+})
