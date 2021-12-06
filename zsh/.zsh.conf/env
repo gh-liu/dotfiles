@@ -1,4 +1,6 @@
 #!/bin/sh
+export OS=`echo \`uname\` | tr '[:upper:]' '[:lower:]'`
+
 # $EDITOR
 if command -v nvim &> /dev/null
 then
