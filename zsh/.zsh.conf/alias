@@ -38,6 +38,8 @@ alias ts='tmux new-session -s'
 alias tl='tmux list-sessions'
 alias tksv='tmux kill-server'
 alias tkss='tmux kill-session -t'
+alias {ton,tn}='tmux set mouse on'
+alias {tof,tf}='tmux set mouse off'
 
 alias tpf='tmuxp freeze'
 alias tpl='tmuxp load'
@@ -51,6 +53,7 @@ alias cgfmt='cargo-fmt'
 alias gmn='git merge --no-ff'
 
 # nvim
+alias v='nvim'
 # if command -v nvim &> /dev/null
 # then
 #     alias vim='nvim'

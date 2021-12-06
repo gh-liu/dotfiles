@@ -20,6 +20,9 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-syntax-highlighting
 # zinit light zsh-users/zsh-completions
 
+zinit snippet OMZP::git
+zinit snippet OMZP::git-flow
+
 zinit ice depth=1;
 zinit light romkatv/powerlevel10k
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
