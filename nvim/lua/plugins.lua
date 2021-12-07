@@ -80,9 +80,17 @@ local function init()
     }, {"ray-x/lsp_signature.nvim"} -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
     }
 
-    -- use 'nvim-lua/lsp-status.nvim'
+    use {
+        'github/copilot.vim',
+        config = function()
+            vim.cmd [[
+            imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
+            let g:copilot_no_tab_map = v:true
+            ]]
+        end
+    }
 
-    -- -- use 'github/copilot.vim'
+    -- use 'nvim-lua/lsp-status.nvim'
 
     use {
         "folke/trouble.nvim",
