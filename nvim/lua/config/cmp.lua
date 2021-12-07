@@ -28,6 +28,22 @@ local function select_previous(fallback)
     end
 end
 
+local function select_next_j(fallback)
+    if cmp.visible() then
+        cmp.select_next_item()
+    else
+        fallback()
+    end
+end
+
+local function select_previous_k(fallback)
+    if cmp.visible() then
+        cmp.select_prev_item()
+    else
+        fallback()
+    end
+end
+
 cmp.setup({
     -- completion = {
     --     completeopt = 'menu,menuone,noinsert'
@@ -50,6 +66,8 @@ cmp.setup({
         }),
         ["<Tab>"] = cmp.mapping(select_next, {"i", "s"}),
         ["<S-Tab>"] = cmp.mapping(select_previous, {"i", "s"}),
+        ["<C-j>"] = cmp.mapping(select_next_j, {"i", "s"}),
+        ["<C-k>"] = cmp.mapping(select_previous_k, {"i", "s"}),
         ['<C-y>'] = cmp.config.disable
     },
     sources = {{
@@ -60,7 +78,10 @@ cmp.setup({
         name = 'luasnip'
     }, {
         name = 'path'
-    }}
+    }},
+    experimental = {
+        -- ghost_text = true
+    }
 })
 
 -- If you want insert `(` after select function or method item

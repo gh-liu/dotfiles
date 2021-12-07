@@ -11,7 +11,7 @@ map('n', '<leader>fw', [[<cmd>Telescope grep_string<cr>]], silent)
 map('n', '<leader>ff', [[<cmd>Telescope live_grep<cr>]], silent)
 map('n', '<leader>fb', [[<cmd>Telescope file_browser<cr>]], silent)
 
-map('n', '<leader>fr', [[<cmd>Telescope frecency<cr>]], silent)
+-- map('n', '<leader>fr', [[<cmd>Telescope frecency<cr>]], silent)
 
 -- Vim Pickers
 -- map('n', '<leader>b', [[<cmd>Telescope buffers<cr>]], silent)

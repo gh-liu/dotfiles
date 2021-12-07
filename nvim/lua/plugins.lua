@@ -18,7 +18,7 @@ local function init()
     -- Color scheme
     use 'sainnhe/gruvbox-material'
     -- use 'joshdick/onedark.vim'
-    use 'rakr/vim-one'
+    -- use 'rakr/vim-one'
 
     use {
         'junegunn/rainbow_parentheses.vim',
@@ -56,8 +56,8 @@ local function init()
             vim.cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()]]
         end
     }, {
-        'hrsh7th/nvim-cmp', -- Autocompletion plugin
-        -- after = 'nvim-lspconfig',
+        -- Autocompletion plugin
+        'hrsh7th/nvim-cmp',
         requires = {'hrsh7th/cmp-nvim-lsp', {
             'hrsh7th/cmp-buffer',
             after = 'nvim-cmp'
@@ -118,7 +118,8 @@ local function init()
     -- Search  
     use {
         'nvim-telescope/telescope.nvim',
-        requires = {'nvim-lua/plenary.nvim', 'telescope-fzf-native.nvim', {'telescope-frecency.nvim'}},
+        requires = {'nvim-lua/plenary.nvim', 'telescope-fzf-native.nvim' -- , {'telescope-frecency.nvim'}
+        },
         setup = [[require('config.telescope_setup')]],
         config = [[require('config.telescope')]]
     }
@@ -126,13 +127,13 @@ local function init()
         'nvim-telescope/telescope-fzf-native.nvim',
         run = 'make'
     }
-    use {
-        "nvim-telescope/telescope-frecency.nvim",
-        config = function()
-            require"telescope".load_extension("frecency")
-        end,
-        requires = {"tami5/sqlite.lua"}
-    }
+    -- use {
+    --     "nvim-telescope/telescope-frecency.nvim",
+    --     config = function()
+    --         require"telescope".load_extension("frecency")
+    --     end,
+    --     requires = {"tami5/sqlite.lua"}
+    -- }
     -- use {
     --     'edolphin-ydf/goimpl.nvim',
     --     requires = {{'nvim-telescope/telescope.nvim'}, {'nvim-treesitter/nvim-treesitter'}},
@@ -185,21 +186,21 @@ local function init()
     }
     -- use 'JoosepAlviste/nvim-ts-context-commentstring'
 
-    use {
-        'windwp/nvim-autopairs',
-        config = [[require('config.autopairs')]]
-    }
-
-    -- -- use 'tpope/vim-repeat'
-    -- -- use 'tpope/vim-surround'
-    -- -- use 'tpope/vim-abolish'
-    -- -- use 'tpope/vim-endwise'
+    -- use 'tpope/vim-repeat'
+    use 'tpope/vim-surround'
+    -- use 'tpope/vim-abolish'
+    -- use 'tpope/vim-endwise'
 
     use {
         'tpope/vim-rsi',
         config = function()
             vim.g.rsi_no_meta = 1
         end
+    }
+
+    use {
+        'windwp/nvim-autopairs',
+        config = [[require('config.autopairs')]]
     }
 
     -- use {
@@ -209,12 +210,12 @@ local function init()
     -- }
 
     -- markdown preview
-    use {
-        "ellisonleao/glow.nvim",
-        config = function()
-            vim.g.glow_binary_path = vim.env.HOME .. "/bin"
-        end
-    }
+    -- use {
+    --     "ellisonleao/glow.nvim",
+    --     config = function()
+    --         vim.g.glow_binary_path = vim.env.HOME .. "/bin"
+    --     end
+    -- }
 
     -- -- Go dev
     -- use {
@@ -241,6 +242,13 @@ local function init()
 
     -- -- Quickfix
     -- -- use 'kevinhwang91/nvim-bqf'
+
+    -- use {
+    --     "max397574/better-escape.nvim",
+    --     config = function()
+    --         require("better_escape").setup()
+    --     end
+    -- }
 
 end
 
