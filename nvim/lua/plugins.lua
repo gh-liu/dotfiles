@@ -39,7 +39,7 @@ local function init()
 
     use {
         'nvim-treesitter/nvim-treesitter',
-        requires = {'nvim-treesitter/nvim-treesitter-textobjects'},
+        requires = {'nvim-treesitter/nvim-treesitter-textobjects', "nvim-treesitter/nvim-treesitter-refactor"},
         config = [[require('config.treesitter')]],
         run = ':TSUpdate'
     }
@@ -92,11 +92,11 @@ local function init()
 
     -- use 'nvim-lua/lsp-status.nvim'
 
-    use {
-        "folke/trouble.nvim",
-        -- requires = "nvim-web-devicons",
-        config = [[require('config.trouble')]]
-    }
+    -- use {
+    --     "folke/trouble.nvim",
+    --     -- requires = "nvim-web-devicons",
+    --     config = [[require('config.trouble')]]
+    -- }
 
     -- -- Debugger
     -- -- use {{
@@ -188,7 +188,7 @@ local function init()
 
     -- use 'tpope/vim-repeat'
     use 'tpope/vim-surround'
-    -- use 'tpope/vim-abolish'
+    use 'tpope/vim-eunuch'
     -- use 'tpope/vim-endwise'
 
     use {

@@ -42,5 +42,18 @@ tsconf.setup {
                 ["[["] = "@function.outer"
             }
         }
+    },
+    refactor = {
+        highlight_definitions = {
+            enable = true
+        },
+        navigation = {
+            enable = true,
+            keymaps = {
+                goto_next_usage = "<leader>3",
+                goto_previous_usage = "<leader>8"
+            }
+        }
+
     }
 }
