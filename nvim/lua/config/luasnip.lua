@@ -1,25 +1,28 @@
 local ls = require("luasnip")
-local lsx = require("luasnip.extras")
-
+-- some shorthands...
+local s = ls.snippet
+local sn = ls.snippet_node
+local t = ls.text_node
+local i = ls.insert_node
+local f = ls.function_node
+local c = ls.choice_node
+local d = ls.dynamic_node
+local r = ls.restore_node
+local l = require("luasnip.extras").lambda
+local rep = require("luasnip.extras").rep
+local p = require("luasnip.extras").partial
+local m = require("luasnip.extras").match
+local n = require("luasnip.extras").nonempty
+local dl = require("luasnip.extras").dynamic_lambda
 local fmt = require("luasnip.extras.fmt").fmt
 local fmta = require("luasnip.extras.fmt").fmta
 local types = require("luasnip.util.types")
 local conds = require("luasnip.extras.expand_conditions")
 
-local snip = ls.snippet
-local sn = ls.snippet_node
-local tn = ls.text_node
-local ino = ls.insert_node
-local fn = ls.function_node
-local cn = ls.choice_node
-local dn = ls.dynamic_node
+local isn = ls.indent_snippet_node
 
-local l = lsx.lambda
-local r = lsx.rep
-local p = lsx.partial
-local m = lsx.match
-local n = lsx.nonempty
-local dl = lsx.dynamic_lambda
+-- If you're reading this file for the first time, best skip to around line 170
+-- where the actual snippet-definitions start.
 
 -- Every unspecified option will be set to the default.
 ls.config.set_config({
@@ -49,26 +52,29 @@ end
 -- 'recursive' dynamic snippet. Expands to some text followed by itself.
 local rec_ls
 rec_ls = function()
-    return sn(nil, cn(1, { -- Order is important, sn(...) first would cause infinite loop of expansion.
-    tn(""), sn(nil, {tn({"", "\t\\item "}), ino(1), dn(2, rec_ls, {})})}))
+    return sn(nil, c(1, { -- Order is important, sn(...) first would cause infinite loop of expansion.
+    t(""), sn(nil, {t({"", "\t\\item "}), i(1), d(2, rec_ls, {})})}))
 end
 
 -- complicated function for dynamicNode.
 local function jdocsnip(args, _, old_state)
-    local nodes = {tn({"/**", " * "}), ino(1, "A short Description"), tn({"", ""})}
+    -- !!! old_state is used to preserve user-input here. DON'T DO IT THAT WAY!
+    -- Using a restoreNode instead is much easier.
+    -- View this only as an example on how old_state functions.
+    local nodes = {t({"/**", " * "}), i(1, "A short Description"), t({"", ""})}
 
     -- These will be merged with the snippet; that way, should the snippet be updated,
     -- some user input eg. text can be referred to in the new snippet.
     local param_nodes = {}
 
     if old_state then
-        nodes[2] = ino(1, old_state.descr:get_text())
+        nodes[2] = i(1, old_state.descr:get_text())
     end
     param_nodes.descr = nodes[2]
 
     -- At least one param.
     if string.find(args[2][1], ", ") then
-        vim.list_extend(nodes, {tn({" * ", ""})})
+        vim.list_extend(nodes, {t({" * ", ""})})
     end
 
     local insert = 2
@@ -79,11 +85,11 @@ local function jdocsnip(args, _, old_state)
             local inode
             -- if there was some text in this parameter, use it as static_text for this new snippet.
             if old_state and old_state[arg] then
-                inode = ino(insert, old_state["arg" .. arg]:get_text())
+                inode = i(insert, old_state["arg" .. arg]:get_text())
             else
-                inode = ino(insert)
+                inode = i(insert)
             end
-            vim.list_extend(nodes, {tn({" * @param " .. arg .. " "}), inode, tn({"", ""})})
+            vim.list_extend(nodes, {t({" * @param " .. arg .. " "}), inode, t({"", ""})})
             param_nodes["arg" .. arg] = inode
 
             insert = insert + 1
@@ -93,12 +99,12 @@ local function jdocsnip(args, _, old_state)
     if args[1][1] ~= "void" then
         local inode
         if old_state and old_state.ret then
-            inode = ino(insert, old_state.ret:get_text())
+            inode = i(insert, old_state.ret:get_text())
         else
-            inode = ino(insert)
+            inode = i(insert)
         end
 
-        vim.list_extend(nodes, {tn({" * ", " * @return "}), inode, tn({"", ""})})
+        vim.list_extend(nodes, {t({" * ", " * @return "}), inode, t({"", ""})})
         param_nodes.ret = inode
         insert = insert + 1
     end
@@ -107,16 +113,16 @@ local function jdocsnip(args, _, old_state)
         local exc = string.gsub(args[3][2], " throws ", "")
         local ins
         if old_state and old_state.ex then
-            ins = ino(insert, old_state.ex:get_text())
+            ins = i(insert, old_state.ex:get_text())
         else
-            ins = ino(insert)
+            ins = i(insert)
         end
-        vim.list_extend(nodes, {tn({" * ", " * @throws " .. exc .. " "}), ins, tn({"", ""})})
+        vim.list_extend(nodes, {t({" * ", " * @throws " .. exc .. " "}), ins, t({"", ""})})
         param_nodes.ex = ins
         insert = insert + 1
     end
 
-    vim.list_extend(nodes, {tn({" */"})})
+    vim.list_extend(nodes, {t({" */"})})
 
     local snip = sn(nil, nodes)
     -- Error on attempting overwrite.
@@ -138,14 +144,19 @@ end
 -- text value is set to the current date in the desired format.
 local date_input = function(args, state, fmt)
     local fmt = fmt or "%Y-%m-%d"
-    return sn(nil, ino(1, os.date(fmt)))
+    return sn(nil, i(1, os.date(fmt)))
 end
 
-ls.snippets = {}
+ls.snippets = {
+    all = {s("td", {t("// TODO ")})},
+    go = {s("func",
+        {t("// "), f(copy, 1), t(" "), i(0), t({" ", "func "}), i(1), t("("), i(2), t({") "}), i(3), t({"{", " "}),
+         t("\t"), i(4), t({"", "}"})})}
+}
 
 -- autotriggered snippets have to be defined in a separate table, luasnip.autosnippets.
 ls.autosnippets = {
-    all = {snip("autotrigger", {tn("autosnippet")})}
+    all = {}
 }
 
 -- in a lua file: search lua-, then c-, then all-snippets.
@@ -171,3 +182,8 @@ ls.filetype_set("cpp", {"c"})
 require("luasnip/loaders/from_vscode").lazy_load({
     paths = {"./my-snippets"}
 }) -- You can pass { paths = "./my-snippets/"} as well
+
+vim.cmd [[
+    imap <silent><expr> <C-j> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<down>'
+    smap <silent><expr> <C-j> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<C-j>'
+]]
