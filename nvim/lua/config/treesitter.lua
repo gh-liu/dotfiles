@@ -55,5 +55,19 @@ tsconf.setup {
             }
         }
 
+    },
+    -- tree_docs = {
+    --     enable = true,
+    --     keymap = {
+    --         doc_node_at_cursor = "<leader>dd",
+    --         doc_all_in_range = "<leader>dd"
+    --     },
+    --     spec_config = {}
+    -- },
+    rainbow = {
+        enable = true,
+        -- disable = { "jsx", "cpp" }, -- list of languages you want to disable the plugin for
+        extended_mode = true,
+        max_file_lines = nil
     }
 }

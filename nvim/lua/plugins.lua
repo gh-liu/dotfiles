@@ -20,10 +20,10 @@ local function init()
     -- use 'joshdick/onedark.vim'
     -- use 'rakr/vim-one'
 
-    use {
-        'junegunn/rainbow_parentheses.vim',
-        config = [[require('config.rainbow_parentheses')]]
-    }
+    -- use {
+    --     'junegunn/rainbow_parentheses.vim',
+    --     config = [[require('config.rainbow_parentheses')]]
+    -- }
     -- use {'kyazdani42/nvim-web-devicons'}
 
     -- Undo tree
@@ -39,10 +39,13 @@ local function init()
 
     use {
         'nvim-treesitter/nvim-treesitter',
-        requires = {'nvim-treesitter/nvim-treesitter-textobjects', "nvim-treesitter/nvim-treesitter-refactor"},
+        requires = {'nvim-treesitter/nvim-treesitter-textobjects', 'nvim-treesitter/nvim-treesitter-refactor'},
         config = [[require('config.treesitter')]],
         run = ':TSUpdate'
     }
+    -- use 'nvim-treesitter/nvim-tree-docs'
+    use 'p00f/nvim-ts-rainbow'
+    -- use 'romgrk/nvim-treesitter-context'
     use 'nvim-treesitter/playground'
 
     -- Completion

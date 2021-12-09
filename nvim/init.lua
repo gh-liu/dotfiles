@@ -86,6 +86,12 @@ cmd [[
     nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr>
     ]]
 
+-- vim.opt.list = true
+-- vim.opt.listchars = {
+--     space = "⋅",
+--     eol = "↴"
+-- }
+
 -- Keybingdings
 local silent = {
     silent = true
