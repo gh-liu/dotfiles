@@ -151,20 +151,16 @@ local function init()
     use {{
         'TimUntersberger/neogit',
         requires = 'nvim-lua/plenary.nvim',
-        config = function()
-            require('neogit').setup({
-                disable_signs = false
-            })
-        end
+        config = [[require('config.neogit')]]
     }, {
         'lewis6991/gitsigns.nvim',
         requires = {'nvim-lua/plenary.nvim'},
         config = [[require('config.gitsigns')]]
     }}
-    -- use {
-    --     'sindrets/diffview.nvim',
-    --     requires = 'nvim-lua/plenary.nvim'
-    -- }
+    use {
+        'sindrets/diffview.nvim',
+        requires = 'nvim-lua/plenary.nvim'
+    }
 
     -- -- Profiling
     use {
@@ -186,7 +182,7 @@ local function init()
     }
     -- use 'JoosepAlviste/nvim-ts-context-commentstring'
 
-    -- use 'tpope/vim-repeat'
+    use 'tpope/vim-repeat'
     use 'tpope/vim-surround'
     use 'tpope/vim-eunuch'
     -- use 'tpope/vim-endwise'
