@@ -64,6 +64,9 @@ tsconf.setup {
     --     },
     --     spec_config = {}
     -- },
+    -- matchup = {
+    --     enable = true
+    -- },
     rainbow = {
         enable = true,
         -- disable = { "jsx", "cpp" }, -- list of languages you want to disable the plugin for

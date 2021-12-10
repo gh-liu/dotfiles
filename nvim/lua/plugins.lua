@@ -48,6 +48,8 @@ local function init()
     -- use 'romgrk/nvim-treesitter-context'
     use 'nvim-treesitter/playground'
 
+    -- use 'andymass/vim-matchup'
+
     -- Completion
     use {{
         'neovim/nvim-lspconfig',

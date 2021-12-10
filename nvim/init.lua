@@ -230,9 +230,7 @@ autocmd('misc_aucmds', {[[BufWinEnter * checktime]], [[TextYankPost * silent! lu
 -- autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
 
 -- Disable some built-in plugins we don't want
-local disabled_built_ins = {'gzip', 'man', 'matchit', 'matchparen', 'shada_plugin', 'tarPlugin', 'tar', 'zipPlugin',
-                            'zip' -- 'netrwPlugin',
-}
+local disabled_built_ins = {'gzip', 'man', 'matchparen', 'shada_plugin', 'tarPlugin', 'tar', 'zipPlugin', 'zip'}
 for i = 1, #disabled_built_ins do
     g['loaded_' .. disabled_built_ins[i]] = 1
 end
