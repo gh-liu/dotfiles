@@ -8,4 +8,3 @@ require('neogit').setup({
     }
 })
 
-map('n', 'G', [[<cmd>Neogit<cr>]])
