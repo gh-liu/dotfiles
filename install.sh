@@ -58,6 +58,7 @@ cd $HOME/env/lua/lua
 make all test
 
 sudo ln -svf $HOME/env/lua/lua/src/lua /usr/bin/lua
+sudo ln -svf $HOME/env/lua/lua/src/luac /usr/bin/luac
 
 cd $HOME/env/lua
 LUAROCKSVERSION=3.8.0
