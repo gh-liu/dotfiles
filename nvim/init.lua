@@ -22,9 +22,9 @@ opt('mouse', 'nivh')
 -- opt('textwidth', 100, buffer)
 opt('scrolloff', 7)
 
-opt('wildignore', '*.o,*~,*.pyc')
-opt('wildmode', 'longest,full')
-opt('whichwrap', vim.o.whichwrap .. '<,>,h,l')
+-- opt('wildignore', '*.o,*~,*.pyc')
+-- opt('wildmode', 'longest,full')
+-- opt('whichwrap', vim.o.whichwrap .. '<,>,h,l')
 
 opt('inccommand', 'nosplit')
 opt('lazyredraw', true)
@@ -53,14 +53,17 @@ opt('hidden', true)
 opt('shortmess', o.shortmess .. 'c')
 
 opt('joinspaces', false)
-opt('guicursor', [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
+-- opt('guicursor', [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
 opt('updatetime', 300)
-opt('conceallevel', 2, window)
-opt('concealcursor', 'nc', window)
+
+-- opt('conceallevel', 2, window)
+-- opt('concealcursor', 'nc', window)
+
 opt('previewheight', 5)
 opt('undofile', true, buffer)
 opt('synmaxcol', 500, buffer)
 opt('display', 'msgsep')
+
 opt('cursorline', true, window)
 opt('modeline', false, buffer)
 

@@ -1,5 +1,7 @@
 local packer = nil
+
 local function init()
+
     if packer == nil then
         packer = require('packer')
         packer.init {
@@ -58,7 +60,7 @@ local function init()
     {
         'kosayoda/nvim-lightbulb',
         config = function()
-            vim.cmd [[autocmd CursorHold,CursorHoldI * lua require'nvim-lightbulb'.update_lightbulb()]]
+            vim.cmd [[autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb()]]
         end
     }, {
         -- Autocompletion plugin
@@ -250,6 +252,8 @@ local function init()
     --         require("better_escape").setup()
     --     end
     -- }
+
+    use 'editorconfig/editorconfig-vim'
 
 end
 
