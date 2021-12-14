@@ -135,10 +135,10 @@ map('n', ']w', '<cmd>tabnext<cr>')
 map('n', '[W', '<cmd>tabfirst<cr>')
 map('n', ']W', '<cmd>tablast<cr>')
 
-map('n', '[b', '<cmd>bprevious<cr>')
-map('n', ']b', '<cmd>bnext<cr>')
-map('n', '[B', '<cmd>bfirst<cr>')
-map('n', ']B', '<cmd>blast<cr>')
+-- map('n', '[b', '<cmd>bprevious<cr>')
+-- map('n', ']b', '<cmd>bnext<cr>')
+-- map('n', '[B', '<cmd>bfirst<cr>')
+-- map('n', ']B', '<cmd>blast<cr>')
 
 map('n', '[l', '<cmd>lprevious<cr>')
 map('n', ']l', '<cmd>lnext<cr>')
@@ -150,10 +150,10 @@ map('n', ']q', '<cmd>cnext<cr>')
 map('n', '[Q', '<cmd>cfirst<cr>')
 map('n', ']Q', '<cmd>clast<cr>')
 
-map('n', '[t', '<cmd>tprevious<cr>')
-map('n', ']t', '<cmd>tnext<cr>')
-map('n', '[T', '<cmd>tfirst<cr>')
-map('n', ']T', '<cmd>tlast<cr>')
+-- map('n', '[t', '<cmd>tprevious<cr>')
+-- map('n', ']t', '<cmd>tnext<cr>')
+-- map('n', '[T', '<cmd>tfirst<cr>')
+-- map('n', ']T', '<cmd>tlast<cr>')
 
 -- <Leader>[1-9] move to tab [1-9]
 for i = 1, 9, 1 do
@@ -224,6 +224,7 @@ map('n', '<leader>c', ':cclose<bar>lclose<cr>', silent)
 map('n', '<leader>ev', ':tabnew $MYVIMRC<cr>', silent)
 
 map('i', 'jj', '<Esc>')
+map('i', 'kk', '<Esc>')
 
 -- Autocommands
 autocmd('misc_aucmds', {[[BufWinEnter * checktime]], [[TextYankPost * silent! lua vim.highlight.on_yank()]],

@@ -82,8 +82,8 @@ local function init()
             'saadparwaiz1/cmp_luasnip',
             after = 'nvim-cmp'
         }},
-        config = [[require('config.cmp')]],
-        event = 'InsertEnter *'
+        config = [[require('config.cmp')]]
+        -- event = 'InsertEnter *'
     }, {"ray-x/lsp_signature.nvim"} -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
     }
 
