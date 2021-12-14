@@ -15,7 +15,7 @@ local function init()
     -- Packer
     use 'wbthomason/packer.nvim'
 
-    -- -- use 'lewis6991/impatient.nvim'
+    use 'lewis6991/impatient.nvim'
 
     -- Color scheme
     use 'sainnhe/gruvbox-material'

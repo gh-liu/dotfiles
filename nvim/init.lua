@@ -1,5 +1,5 @@
 require('packer_set')
--- require('impatient')
+require('impatient')
 
 local g = vim.g
 local cmd = vim.cmd
