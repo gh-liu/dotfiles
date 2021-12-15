@@ -128,8 +128,8 @@ local function status()
         local mode_color, filename_color = update_colors(mode)
         local line_col_segment = filename_segment ~= '' and ' %#StatuslineLineCol#| %l:%#StatuslineLineCol#%c ' or ''
         statuslines[win_id] = string.format(statusline_format, mode_color, mode_name(mode),
-            set_modified_symbol(vim.bo.modified), filename_color, buf_nr, filename_segment, filename_color, get_paste(),
-            get_readonly_space(), vcs(), line_col_segment .. ' %P')
+            set_modified_symbol(vim.bo.modified), filename_color, buf_nr, filename_segment .. ' %y', filename_color,
+            get_paste(), get_readonly_space(), vcs(), line_col_segment .. ' %P')
     else
         -- print(vim.g.statusline_winid, win_getid(winnr()))
     end
