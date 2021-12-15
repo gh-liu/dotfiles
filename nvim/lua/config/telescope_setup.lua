@@ -22,8 +22,8 @@ map('n', '<leader>fh', [[<cmd>Telescope help_tags<cr>]], silent)
 map('n', '<leader>fm', [[<cmd>Telescope marks<cr>]], silent)
 
 -- Git Pickers
-map('n', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)
-map('i', '<c-g>', [[<cmd>Telescope git_files<cr>]], silent)
+map('n', '<c-g>', [[<cmd>Telescope git_status<cr>]], silent)
+map('i', '<c-g>', [[<cmd>Telescope git_status<cr>]], silent)
 
 -- Neovim LSP Pickers
 -- map('n', '<leader>r', [[<cmd>Telescope lsp_references<cr>]], silent)
