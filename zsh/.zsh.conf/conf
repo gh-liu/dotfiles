@@ -4,7 +4,7 @@ export DISABLE_AUTO_TITLE='true'
 eval "$(direnv hook zsh)"
 
 # fzf
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # z.lua
 [ -d ~/tools/z.lua ] && eval "$(lua ~/tools/z.lua/z.lua --init zsh)"
