@@ -15,7 +15,7 @@ local function init()
     -- Packer
     use 'wbthomason/packer.nvim'
 
-    use 'lewis6991/impatient.nvim'
+    use {'lewis6991/impatient.nvim'}
 
     -- Color scheme
     use 'sainnhe/gruvbox-material'
@@ -56,7 +56,7 @@ local function init()
     use {{
         'neovim/nvim-lspconfig',
         config = [[require('config.lsp_config')]]
-    }, -- 'onsails/lspkind-nvim', -- adds vscode-like pictograms
+    }, -- {'onsails/lspkind-nvim'},
     {
         'kosayoda/nvim-lightbulb',
         config = function()
@@ -77,16 +77,18 @@ local function init()
         }, {
             'L3MON4D3/LuaSnip',
             config = [[require('config.luasnip')]]
-        }, -- Snippets plugin
+        }, -- Snippets plugin 
         {
             'saadparwaiz1/cmp_luasnip',
             after = 'nvim-cmp'
         }},
         config = [[require('config.cmp')]]
         -- event = 'InsertEnter *'
-    }, {"ray-x/lsp_signature.nvim"} -- {'rafamadriz/friendly-snippets'}, -- Snippets collection
-    }
+    }}
 
+    use {"ray-x/lsp_signature.nvim"}
+
+    use {'rafamadriz/friendly-snippets'} -- Snippets collection
     use {
         'github/copilot.vim',
         config = function()

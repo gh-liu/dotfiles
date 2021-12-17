@@ -19,9 +19,7 @@ local fmta = require("luasnip.extras.fmt").fmta
 local types = require("luasnip.util.types")
 local conds = require("luasnip.extras.expand_conditions")
 
-local isn = ls.indent_snippet_node
-
--- If you're reading this file for the first time, best skip to around line 170
+-- If you're reading this file for the first time, best skip to around line 190
 -- where the actual snippet-definitions start.
 
 -- Every unspecified option will be set to the default.
@@ -147,6 +145,12 @@ local date_input = function(args, state, fmt)
     return sn(nil, i(1, os.date(fmt)))
 end
 
+ls.filetype_extend("lua", {"c"})
+
+require("luasnip.loaders.from_vscode").load({
+    include = {"go", "lua", "shell"}
+})
+
 ls.snippets = {
     all = {s("td", {t("// TODO ")})},
     go = {s("func",
@@ -154,34 +158,9 @@ ls.snippets = {
          t("\t"), i(4), t({"", "}"})})}
 }
 
--- autotriggered snippets have to be defined in a separate table, luasnip.autosnippets.
 ls.autosnippets = {
     all = {}
 }
-
--- in a lua file: search lua-, then c-, then all-snippets.
-ls.filetype_extend("lua", {"c"})
--- in a cpp file: search c-snippets, then all-snippets only (no cpp-snippets!!).
-ls.filetype_set("cpp", {"c"})
-
---[[
--- Beside defining your own snippets you can also load snippets from "vscode-like" packages
--- that expose snippets in json files, for example <https://github.com/rafamadriz/friendly-snippets>.
--- Mind that this will extend  `ls.snippets` so you need to do it after your own snippets or you
--- will need to extend the table yourself instead of setting a new one.
-]]
-
--- require("luasnip/loaders/from_vscode").load({ include = { "go" } }) -- Load only go snippets
--- The directories will have to be structured like eg. <https://github.com/rafamadriz/friendly-snippets> (include
--- a similar `package.json`)
-
--- user defined snippets <https://code.visualstudio.com/docs/editor/userdefinedsnippets>.
--- require("luasnip/loaders/from_vscode").load() -- Load snippets from my-snippets folder
-
--- You can also use lazy loading so you only get in memory snippets of languages you use
-require("luasnip/loaders/from_vscode").lazy_load({
-    paths = {"./my-snippets"}
-}) -- You can pass { paths = "./my-snippets/"} as well
 
 vim.cmd [[
     imap <silent><expr> <C-j> luasnip#choice_active() ? '<Plug>luasnip-next-choice' : '<down>'

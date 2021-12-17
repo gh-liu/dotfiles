@@ -6,6 +6,7 @@ end
 local cmp = require('cmp')
 local luasnip = require('luasnip')
 -- local lspkind = require('lspkind')
+
 local function select_next(fallback)
     if cmp.visible() then
         cmp.select_next_item()
@@ -49,7 +50,16 @@ cmp.setup({
     --     completeopt = 'menu,menuone,noinsert'
     -- },
     -- formatting = {
-    --   format = lspkind.cmp_format({with_text = false, maxwidth = 50})
+    --     format = require("lspkind").cmp_format({
+    --         with_text = true,
+    --         preset = 'codicons',
+    --         menu = ({
+    --             buffer = "[Buffer]",
+    --             nvim_lsp = "[LSP]",
+    --             luasnip = "[LuaSnip]",
+    --             nvim_lua = "[Lua]"
+    --         })
+    --     })
     -- },
     snippet = {
         expand = function(args)

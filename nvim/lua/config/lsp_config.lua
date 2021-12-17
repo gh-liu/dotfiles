@@ -97,6 +97,7 @@ local capabilities = cmp_nvim_lsp.update_capabilities(vim.lsp.protocol.make_clie
 -- Go
 lsp.gopls.setup {
     cmd = {'gopls', '--remote=auto'},
+    filetypes = {"go", "gomod", "gotmpl"},
     settings = {
         -- more settings: https://github.com/golang/tools/blob/master/gopls/doc/settings.md
         gopls = {

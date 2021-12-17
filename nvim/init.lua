@@ -1,5 +1,4 @@
 require('packer_set')
-require('impatient')
 
 local g = vim.g
 local cmd = vim.cmd
@@ -282,3 +281,6 @@ map_change_option('r', 'relativenumber')
 map_change_option('h', 'hlsearch')
 
 autocmd('no_conceallevel', {[[FileType markdown set cole=0]]}, true)
+autocmd('go_template', {[[BufEnter *.gotmpl set ft=gotmpl]]}, true)
+
+-- require('impatient')
