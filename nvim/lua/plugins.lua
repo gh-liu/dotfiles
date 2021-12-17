@@ -15,7 +15,7 @@ local function init()
     -- Packer
     use 'wbthomason/packer.nvim'
 
-    use {'lewis6991/impatient.nvim'}
+    -- use {'lewis6991/impatient.nvim'}
 
     -- Color scheme
     use 'sainnhe/gruvbox-material'
@@ -45,25 +45,33 @@ local function init()
         config = [[require('config.treesitter')]],
         run = ':TSUpdate'
     }
+    -- use 'nvim-treesitter/playground'
     -- use 'nvim-treesitter/nvim-tree-docs'
     use 'p00f/nvim-ts-rainbow'
     -- use 'romgrk/nvim-treesitter-context'
-    use 'nvim-treesitter/playground'
 
-    -- use 'andymass/vim-matchup'
-
-    -- Completion
-    use {{
+    -- LSP
+    use {
         'neovim/nvim-lspconfig',
         config = [[require('config.lsp_config')]]
-    }, -- {'onsails/lspkind-nvim'},
-    {
+    }
+    -- use {'onsails/lspkind-nvim'}
+    -- use 'nvim-lua/lsp-status.nvim'
+    use {"ray-x/lsp_signature.nvim"}
+    use {
         'kosayoda/nvim-lightbulb',
         config = function()
             vim.cmd [[autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb()]]
         end
-    }, {
-        -- Autocompletion plugin
+    }
+    -- use {
+    --     "folke/trouble.nvim",
+    --     -- requires = "nvim-web-devicons",
+    --     config = [[require('config.trouble')]]
+    -- }
+
+    -- Autocompletion plugin
+    use {
         'hrsh7th/nvim-cmp',
         requires = {'hrsh7th/cmp-nvim-lsp', {
             'hrsh7th/cmp-buffer',
@@ -84,11 +92,9 @@ local function init()
         }},
         config = [[require('config.cmp')]]
         -- event = 'InsertEnter *'
-    }}
-
-    use {"ray-x/lsp_signature.nvim"}
-
+    }
     use {'rafamadriz/friendly-snippets'} -- Snippets collection
+
     use {
         'github/copilot.vim',
         config = function()
@@ -98,14 +104,6 @@ local function init()
             ]]
         end
     }
-
-    -- use 'nvim-lua/lsp-status.nvim'
-
-    -- use {
-    --     "folke/trouble.nvim",
-    --     -- requires = "nvim-web-devicons",
-    --     config = [[require('config.trouble')]]
-    -- }
 
     -- -- Debugger
     -- -- use {{
