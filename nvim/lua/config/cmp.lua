@@ -49,18 +49,18 @@ cmp.setup({
     -- completion = {
     --     completeopt = 'menu,menuone,noinsert'
     -- },
-    -- formatting = {
-    --     format = require("lspkind").cmp_format({
-    --         with_text = true,
-    --         preset = 'codicons',
-    --         menu = ({
-    --             buffer = "[Buffer]",
-    --             nvim_lsp = "[LSP]",
-    --             luasnip = "[LuaSnip]",
-    --             nvim_lua = "[Lua]"
-    --         })
-    --     })
-    -- },
+    formatting = {
+        format = function(entry, vim_item)
+            vim_item.menu = ({
+                buffer = "[Buffer]",
+                nvim_lsp = "[LSP]",
+                nvim_lua = "[Lua]",
+                luasnip = "[LuaSnip]",
+                path = "[Path]"
+            })[entry.source.name]
+            return vim_item
+        end
+    },
     snippet = {
         expand = function(args)
             luasnip.lsp_expand(args.body)
@@ -81,11 +81,11 @@ cmp.setup({
         ['<C-y>'] = cmp.config.disable
     },
     sources = {{
-        name = 'buffer'
-    }, {
         name = 'nvim_lsp'
     }, {
         name = 'luasnip'
+    }, {
+        name = 'buffer'
     }, {
         name = 'path'
     }},
