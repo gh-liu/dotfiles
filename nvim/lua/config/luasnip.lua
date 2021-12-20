@@ -29,8 +29,19 @@ ls.config.set_config({
     updateevents = "TextChanged,TextChangedI",
     ext_opts = {
         [types.choiceNode] = {
+            passive = {
+                virt_text = {{'●', 'Comment'}}
+            },
             active = {
-                virt_text = {{"choiceNode", "Comment"}}
+                virt_text = {{'●', 'Orange'}}
+            }
+        },
+        [types.insertNode] = {
+            passive = {
+                virt_text = {{'●', 'Comment'}}
+            },
+            active = {
+                virt_text = {{'●', 'Blue'}}
             }
         }
     },
