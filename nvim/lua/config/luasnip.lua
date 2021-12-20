@@ -19,14 +19,10 @@ local fmta = require("luasnip.extras.fmt").fmta
 local types = require("luasnip.util.types")
 local conds = require("luasnip.extras.expand_conditions")
 
--- If you're reading this file for the first time, best skip to around line 190
--- where the actual snippet-definitions start.
-
--- Every unspecified option will be set to the default.
 ls.config.set_config({
     history = true,
-    -- Update more often, :h events for more info.
     updateevents = "TextChanged,TextChangedI",
+    delete_check_events = "TextChanged",
     ext_opts = {
         [types.choiceNode] = {
             passive = {
@@ -45,11 +41,9 @@ ls.config.set_config({
             }
         }
     },
-    -- treesitter-hl has 100, use something higher (default is 200).
     ext_base_prio = 300,
-    -- minimal increase in priority.
     ext_prio_increase = 1,
-    enable_autosnippets = true
+    enable_autosnippets = false
 })
 
 -- args is a table, where 1 is the text in Placeholder 1, 2 the text in
