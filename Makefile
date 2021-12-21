@@ -25,3 +25,7 @@ gotools:
 	# bench
 	go install golang.org/x/perf/cmd/benchstat@latest
 	go install github.com/aclements/perflock/cmd/perflock@latest
+
+nvimsupport:
+	pip install pynvim
+	npm i -g neovim
