@@ -47,3 +47,5 @@ map('n', '<leader>gW', [[<cmd>Telescope lsp_dynamic_workspace_symbols<cr>]], sil
 
 -- Extension Pickers
 -- map('n', '<c-e>', [[<cmd>Telescope frecency<cr>]], silent)
+
+map('n', ';', '<cmd>Telescope commands<cr>')

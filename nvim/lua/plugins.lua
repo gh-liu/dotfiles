@@ -135,6 +135,7 @@ local function init()
         'nvim-telescope/telescope-fzf-native.nvim',
         run = 'make'
     }
+    use 'nvim-telescope/telescope-github.nvim'
     -- use {
     --     "nvim-telescope/telescope-frecency.nvim",
     --     config = function()
@@ -206,6 +207,12 @@ local function init()
     use {
         'windwp/nvim-autopairs',
         config = [[require('config.autopairs')]]
+    }
+
+    use {
+        'phaazon/hop.nvim',
+        branch = 'v1',
+        config = [[require('config.hop')]]
     }
 
     -- use {

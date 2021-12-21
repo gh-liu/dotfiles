@@ -20,7 +20,7 @@ local types = require("luasnip.util.types")
 local conds = require("luasnip.extras.expand_conditions")
 
 ls.config.set_config({
-    history = true,
+    history = false,
     updateevents = "TextChanged,TextChangedI",
     delete_check_events = "TextChanged",
     ext_opts = {

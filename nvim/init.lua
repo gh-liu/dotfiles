@@ -4,10 +4,9 @@ local g = vim.g
 local cmd = vim.cmd
 local o, wo, bo = vim.o, vim.wo, vim.bo
 
-local utils = require('utils')
-local opt = utils.opt
-local map = utils.map
-local autocmd = utils.autocmd
+local opt = require('utils').opt
+local map = require('utils').map
+local autocmd = require('utils').autocmd
 
 -- Leader/local leader
 g.mapleader = [[,]]
@@ -83,10 +82,7 @@ cmd [[colorscheme gruvbox-material]]
 -- fold
 -- opt('foldmethod', 'indent')
 opt('foldlevel', 99)
-cmd [[
-    au FileType tmux setlocal foldmethod=marker
-    nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr>
-    ]]
+cmd [[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]]
 
 -- vim.opt.list = true
 -- vim.opt.listchars = {
@@ -226,8 +222,10 @@ map('i', 'jj', '<Esc>')
 map('i', 'kk', '<Esc>')
 
 -- Autocommands
-autocmd('misc_aucmds', {[[BufWinEnter * checktime]], [[TextYankPost * silent! lua vim.highlight.on_yank()]],
-                        [[FileType qf set nobuflisted ]]}, true)
+autocmd('misc_aucmds',
+    {[[BufWinEnter * checktime]],
+     [[TextYankPost * silent! lua vim.highlight.on_yank({higroup="IncSearch", timeout=150})]],
+     [[FileType qf set nobuflisted ]], [[BufReadPost * normal! g`" ]]}, true)
 
 -- autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
 -- autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
@@ -264,7 +262,6 @@ function helptab()
     end
 end
 autocmd('open_help_tab', {[[BufEnter *.txt lua helptab()]]}, true)
--- autocmd('open_help_tab', {[[FileType help lua helptab()]]}, true)
 
 local function map_change_option(...)
     local prefix = 'co'
@@ -280,7 +277,6 @@ map_change_option('n', 'number')
 map_change_option('r', 'relativenumber')
 map_change_option('h', 'hlsearch')
 
-autocmd('no_conceallevel', {[[FileType markdown set cole=0]]}, true)
-autocmd('go_template', {[[BufEnter *.gotmpl set ft=gotmpl]]}, true)
+require('filetype')
 
 -- require('impatient')
