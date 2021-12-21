@@ -89,9 +89,24 @@ cmp.setup({
     }, {
         name = 'path'
     }},
+    -- documentation = {
+    --     border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"}
+    -- },
     experimental = {
         -- ghost_text = true
     }
+})
+
+-- Completions for command mode
+cmp.setup.cmdline(':', {
+    sources = {{
+        name = 'cmdline'
+    }}
+})
+cmp.setup.cmdline('/', {
+    sources = {{
+        name = 'buffer'
+    }}
 })
 
 -- If you want insert `(` after select function or method item

@@ -93,6 +93,7 @@ local function init()
         config = [[require('config.cmp')]]
         -- event = 'InsertEnter *'
     }
+    use "hrsh7th/cmp-cmdline"
     use {'rafamadriz/friendly-snippets'} -- Snippets collection
 
     use {
@@ -167,6 +168,7 @@ local function init()
     use {
         'sindrets/diffview.nvim',
         requires = 'nvim-lua/plenary.nvim'
+        -- config = [[require('diffview').setup {use_icons = false}]]
     }
 
     -- -- Profiling
