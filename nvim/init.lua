@@ -51,11 +51,11 @@ opt('hidden', true)
 opt('shortmess', o.shortmess .. 'c')
 
 opt('joinspaces', false)
--- opt('guicursor', [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
+opt('guicursor', [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
 opt('updatetime', 300)
 
 -- opt('conceallevel', 2, window)
--- opt('concealcursor', 'nc', window)
+opt('concealcursor', 'nc', window)
 
 opt('previewheight', 5)
 opt('undofile', true, buffer)
