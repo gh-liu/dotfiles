@@ -16,6 +16,7 @@ sudo apt install -y hugo tldr direnv graphviz protobuf-compiler
 sudo apt install -y xsel
 
 ### install docker by this (https://docs.docker.com/engine/install/ubuntu/)
+### intsal docker-compose by this (https://docs.docker.com/compose/install/)
 
 ## install
 
