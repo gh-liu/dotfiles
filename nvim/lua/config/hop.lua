@@ -1,8 +1,8 @@
-local map = require('utils').map
+local map = require("utils").map
 
-require('hop').setup {}
+require("hop").setup({})
 
-map('n', '<leader>w', "<cmd>HopWordAC<cr>")
+map("n", "<leader>w", "<cmd>HopWordAC<cr>")
 -- map('n', '<leader>s', "<cmd>HopChar1<cr>")
 -- map('n', '<leader>k', "<cmd>HopLineStartBC<cr>")
 -- map('n', '<leader>j', "<cmd>HopLineStartAC<cr>")

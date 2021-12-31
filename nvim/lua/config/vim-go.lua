@@ -31,4 +31,3 @@ vim.g.go_debug_preserve_layout = 1
 
 -- run go imports on file save
 -- vim.g.go_fmt_command = "goimports"
-

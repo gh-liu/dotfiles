@@ -1,10 +1,10 @@
-local utils = require('utils')
+local utils = require("utils")
 local map = utils.map
 -- local autocmd = utils.autocmd
 
 vim.g.tagbar_autoclose = 1
 vim.g.tagbar_autofocus = 2
-vim.g.tagbar_position = 'leftabove vertical'
+vim.g.tagbar_position = "leftabove vertical"
 vim.g.tagbar_width = 30
 vim.g.tagbar_compact = 1
 vim.g.tagbar_autofocus = 2
@@ -39,4 +39,4 @@ vim.g.tagbar_autofocus = 2
 --   \ },
 --   \ }
 
-map('n', 'T', [[<cmd>TagbarToggle<cr>]])
+map("n", "T", [[<cmd>TagbarToggle<cr>]])

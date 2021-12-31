@@ -1,19 +1,19 @@
 -- copyed from [goimpl.nvim](https://github.com/edolphin-ydf/goimpl.nvim)
-local telescope = require('telescope')
-local actions = require 'telescope.actions'
-local state = require 'telescope.actions.state'
-local actions_set = require 'telescope.actions.set'
-local conf = require'telescope.config'.values
-local finders = require 'telescope.finders'
-local make_entry = require "telescope.make_entry"
-local pickers = require 'telescope.pickers'
-local utils = require 'telescope.utils'
-local ts_utils = require 'nvim-treesitter.ts_utils'
+local telescope = require("telescope")
+local actions = require("telescope.actions")
+local state = require("telescope.actions.state")
+local actions_set = require("telescope.actions.set")
+local conf = require("telescope.config").values
+local finders = require("telescope.finders")
+local make_entry = require("telescope.make_entry")
+local pickers = require("telescope.pickers")
+local utils = require("telescope.utils")
+local ts_utils = require("nvim-treesitter.ts_utils")
 
 local M = {}
 
 local function _get_symbol_kind_name(symbol_kind)
-    return vim.lsp.protocol.SymbolKind[symbol_kind] or "Unknown"
+  return vim.lsp.protocol.SymbolKind[symbol_kind] or "Unknown"
 end
 
 -- containerName
@@ -22,165 +22,188 @@ end
 ---
 -- @param symbols DocumentSymbol[] or SymbolInformation[]
 local function symbols_to_items(symbols, bufnr)
-    -- @private
-    local function _symbols_to_items(_symbols, _items, _bufnr)
-        for _, symbol in ipairs(_symbols) do
-            if symbol.location then -- SymbolInformation type
-                local range = symbol.location.range
-                local kind = _get_symbol_kind_name(symbol.kind)
-                table.insert(_items, {
-                    filename = vim.uri_to_fname(symbol.location.uri),
-                    lnum = range.start.line + 1,
-                    col = range.start.character + 1,
-                    kind = kind,
-                    text = '[' .. kind .. '] ' .. symbol.name,
-                    containerName = symbol.containerName
-                })
-            elseif symbol.selectionRange then -- DocumentSymbole type
-                local kind = M._get_symbol_kind_name(symbol.kind)
-                table.insert(_items, {
-                    -- bufnr = _bufnr,
-                    filename = vim.api.nvim_buf_get_name(_bufnr),
-                    lnum = symbol.selectionRange.start.line + 1,
-                    col = symbol.selectionRange.start.character + 1,
-                    kind = kind,
-                    text = '[' .. kind .. '] ' .. symbol.name,
-                    containerName = symbol.containerName
-                })
-                if symbol.children then
-                    for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
-                        vim.list_extend(_items, v)
-                    end
-                end
-            end
+  -- @private
+  local function _symbols_to_items(_symbols, _items, _bufnr)
+    for _, symbol in ipairs(_symbols) do
+      if symbol.location then -- SymbolInformation type
+        local range = symbol.location.range
+        local kind = _get_symbol_kind_name(symbol.kind)
+        table.insert(_items, {
+          filename = vim.uri_to_fname(symbol.location.uri),
+          lnum = range.start.line + 1,
+          col = range.start.character + 1,
+          kind = kind,
+          text = "[" .. kind .. "] " .. symbol.name,
+          containerName = symbol.containerName,
+        })
+      elseif symbol.selectionRange then -- DocumentSymbole type
+        local kind = M._get_symbol_kind_name(symbol.kind)
+        table.insert(_items, {
+          -- bufnr = _bufnr,
+          filename = vim.api.nvim_buf_get_name(_bufnr),
+          lnum = symbol.selectionRange.start.line + 1,
+          col = symbol.selectionRange.start.character + 1,
+          kind = kind,
+          text = "[" .. kind .. "] " .. symbol.name,
+          containerName = symbol.containerName,
+        })
+        if symbol.children then
+          for _, v in ipairs(_symbols_to_items(symbol.children, _items, _bufnr)) do
+            vim.list_extend(_items, v)
+          end
         end
-        return _items
+      end
     end
-    return _symbols_to_items(symbols, {}, bufnr)
+    return _items
+  end
+  return _symbols_to_items(symbols, {}, bufnr)
 end
 
 local function get_workspace_symbols_requester(bufnr, opts)
-    return function(prompt)
-        local results_lsp, err = vim.lsp.buf_request_sync(bufnr, "workspace/symbol", {
-            query = prompt
-        }, opts.timeout or 10000)
+  return function(prompt)
+    local results_lsp, err =
+      vim.lsp.buf_request_sync(
+        bufnr,
+        "workspace/symbol",
+        {
+          query = prompt,
+        },
+        opts.timeout or 10000
+      )
 
-        assert(not err, err)
+    assert(not err, err)
 
-        local locations = symbols_to_items(results_lsp and results_lsp[1] and results_lsp[1].result or {}, bufnr) or {}
-        locations = utils.filter_symbols(locations, opts) or {}
-        return locations
-    end
+    local locations = symbols_to_items(
+      results_lsp and results_lsp[1] and results_lsp[1].result or {},
+      bufnr
+    ) or {}
+    locations = utils.filter_symbols(locations, opts) or {}
+    return locations
+  end
 end
 
 local function split(inputstr, sep)
-    if sep == nil then
-        sep = "%s"
-    end
-    local t = {}
-    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
-        table.insert(t, str)
-    end
-    return t
+  if sep == nil then
+    sep = "%s"
+  end
+  local t = {}
+  for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+    table.insert(t, str)
+  end
+  return t
 end
 
 local function handle_job_data(data)
-    if not data then
-        return nil
-    end
-    -- Because the nvim.stdout's data will have an extra empty line at end on some OS (e.g. maxOS), we should remove it.
-    if data[#data] == '' then
-        table.remove(data, #data)
-    end
-    if #data < 1 then
-        return nil
-    end
-    return data
+  if not data then
+    return nil
+  end
+  -- Because the nvim.stdout's data will have an extra empty line at end on some OS (e.g. maxOS), we should remove it.
+  if data[#data] == "" then
+    table.remove(data, #data)
+  end
+  if #data < 1 then
+    return nil
+  end
+  return data
 end
 
 local function goimpl(tsnode, packageName, interface)
-    print(packageName)
-    -- get the package source directory
-    local dirname = vim.fn.fnameescape(vim.fn.expand('%:p:h'))
-    -- cmd
-    local implOp = 'impl' .. ' -dir ' .. dirname
-    -- the name of the struct
-    local structName = ts_utils.get_node_text(tsnode)[1]
-    local rec = string.lower(string.sub(structName, 1, 1))
+  print(packageName)
+  -- get the package source directory
+  local dirname = vim.fn.fnameescape(vim.fn.expand("%:p:h"))
+  -- cmd
+  local implOp = "impl" .. " -dir " .. dirname
+  -- the name of the struct
+  local structName = ts_utils.get_node_text(tsnode)[1]
+  local rec = string.lower(string.sub(structName, 1, 1))
 
-    local setup = implOp .. " '" .. rec .. " *" .. structName .. "' " .. packageName .. '.' .. interface
-    local data = vim.fn.systemlist(setup)
+  local setup = implOp
+    .. " '"
+    .. rec
+    .. " *"
+    .. structName
+    .. "' "
+    .. packageName
+    .. "."
+    .. interface
+  local data = vim.fn.systemlist(setup)
+
+  data = handle_job_data(data)
+  if not data or #data == 0 then
+    return
+  end
+
+  -- if not found the '$packageName.$interface' type, then try without the packageName
+  -- this works when in a main package, it's containerName will return the directory name which the interface file exist in.
+  if
+    string.find(data[1], "unrecognized interface:")
+    or string.find(data[1], "couldn't find")
+  then
+    setup = implOp .. " '" .. rec .. " *" .. structName .. "' " .. interface
+    data = vim.fn.systemlist(setup)
 
     data = handle_job_data(data)
     if not data or #data == 0 then
-        return
+      return
     end
+  end
 
-    -- if not found the '$packageName.$interface' type, then try without the packageName
-    -- this works when in a main package, it's containerName will return the directory name which the interface file exist in.
-    if string.find(data[1], "unrecognized interface:") or string.find(data[1], "couldn't find") then
-        setup = implOp .. " '" .. rec .. " *" .. structName .. "' " .. interface
-        data = vim.fn.systemlist(setup)
-
-        data = handle_job_data(data)
-        if not data or #data == 0 then
-            return
-        end
-    end
-
-    local _, _, pos_end_row, _ = tsnode:parent():parent():range()
-    pos_end_row = pos_end_row + 1
-    -- insert an empty line
-    vim.fn.append(pos_end_row, "")
-    pos_end_row = pos_end_row + 1
-    vim.fn.append(pos_end_row, data)
+  local _, _, pos_end_row, _ = tsnode:parent():parent():range()
+  pos_end_row = pos_end_row + 1
+  -- insert an empty line
+  vim.fn.append(pos_end_row, "")
+  pos_end_row = pos_end_row + 1
+  vim.fn.append(pos_end_row, data)
 end
 
 M.goimpl = function(opts)
-    opts = opts or {}
+  opts = opts or {}
 
-    local curr_bufnr = vim.api.nvim_get_current_buf()
-    local tsnode = ts_utils.get_node_at_cursor()
-    if tsnode:type() ~= 'type_identifier' or tsnode:parent():type() ~= 'type_spec' or tsnode:parent():parent():type() ~=
-        'type_declaration' then
-        print("No type identifier found under cursor")
-        return
-    end
+  local curr_bufnr = vim.api.nvim_get_current_buf()
+  local tsnode = ts_utils.get_node_at_cursor()
+  if
+    tsnode:type() ~= "type_identifier"
+    or tsnode:parent():type() ~= "type_spec"
+    or tsnode:parent():parent():type() ~= "type_declaration"
+  then
+    print("No type identifier found under cursor")
+    return
+  end
 
-    local typeNode = tsnode:parent():parent():child(1):child(0)
+  local typeNode = tsnode:parent():parent():child(1):child(0)
 
-    pickers.new(opts, {
-        prompt_title = "Go Impl",
-        finder = finders.new_dynamic {
-            entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts),
-            fn = get_workspace_symbols_requester(curr_bufnr, {
-                symbols = 'interface'
-            })
-        },
-        previewer = conf.qflist_previewer(opts),
-        sorter = conf.generic_sorter(),
-        attach_mappings = function(prompt_bufnr)
-            actions_set.select:replace(function(_, type)
-                local entry = state.get_selected_entry()
-                actions.close(prompt_bufnr)
-                if not entry then
-                    return
-                end
-
-                -- if prompt is eg: sort.Interface, the symbol_name will contain the sort package name,
-                -- so only use the real interface name
-                local symbol_name = split(entry.symbol_name, ".")
-                symbol_name = symbol_name[#symbol_name]
-
-                goimpl(typeNode, entry.value.containerName, symbol_name)
-            end)
-            return true
+  pickers.new(opts, {
+    prompt_title = "Go Impl",
+    finder = finders.new_dynamic({
+      entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts),
+      fn = get_workspace_symbols_requester(curr_bufnr, {
+        symbols = "interface",
+      }),
+    }),
+    previewer = conf.qflist_previewer(opts),
+    sorter = conf.generic_sorter(),
+    attach_mappings = function(prompt_bufnr)
+      actions_set.select:replace(function(_, type)
+        local entry = state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if not entry then
+          return
         end
-    }):find()
+
+        -- if prompt is eg: sort.Interface, the symbol_name will contain the sort package name,
+        -- so only use the real interface name
+        local symbol_name = split(entry.symbol_name, ".")
+        symbol_name = symbol_name[#symbol_name]
+
+        goimpl(typeNode, entry.value.containerName, symbol_name)
+      end)
+      return true
+    end,
+  }):find()
 end
 
-return telescope.register_extension {
-    exports = {
-        goimpl = M.goimpl
-    }
-}
+return telescope.register_extension({
+  exports = {
+    goimpl = M.goimpl,
+  },
+})

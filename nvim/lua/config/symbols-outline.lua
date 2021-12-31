@@ -1,4 +1,4 @@
-local utils = require('utils')
+local utils = require("utils")
 local map = utils.map
 
-map('n', 'T', [[<cmd>SymbolsOutline<cr>]])
+map("n", "T", [[<cmd>SymbolsOutline<cr>]])
