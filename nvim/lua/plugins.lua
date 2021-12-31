@@ -27,7 +27,8 @@ local function init()
 	-- 	"junegunn/rainbow_parentheses.vim",
 	-- 	config = [[require('config.rainbow_parentheses')]],
 	-- })
-	-- use({ "kyazdani42/nvim-web-devicons" })
+	-- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
+	use({ "kyazdani42/nvim-web-devicons" })
 
 	-- ====== Telescope ======
 	use({
