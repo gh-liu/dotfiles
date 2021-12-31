@@ -65,6 +65,17 @@ local function init()
         end
     }
     -- use {
+    --     'simrat39/symbols-outline.nvim',
+    --     setup = function()
+    --         vim.g.symbols_outline = {
+    --             position = 'left'
+    --         }
+    --     end,
+    --     config = function()
+    --         require('config.symbols-outline')
+    --     end
+    -- }
+    -- use {
     --     "folke/trouble.nvim",
     --     -- requires = "nvim-web-devicons",
     --     config = [[require('config.trouble')]]
