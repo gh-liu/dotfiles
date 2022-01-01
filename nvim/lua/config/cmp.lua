@@ -9,7 +9,6 @@ end
 
 local cmp = require("cmp")
 local luasnip = require("luasnip")
--- local lspkind = require('lspkind')
 
 local function select_next(fallback)
   if cmp.visible() then
@@ -56,12 +55,17 @@ cmp.setup({
   formatting = {
     format = function(entry, vim_item)
       vim_item.menu = ({
-        buffer = "[Buffer]",
+        buffer = "[Buf]",
         nvim_lsp = "[LSP]",
         nvim_lua = "[Lua]",
-        luasnip = "[LuaSnip]",
+        luasnip = "[LSnip]",
         path = "[Path]",
       })[entry.source.name]
+
+      vim_item.kind = require("lspkind").presets.default[vim_item.kind]
+        .. " "
+        .. vim_item.kind
+
       return vim_item
     end,
   },

@@ -69,11 +69,14 @@ local function jdocsnip(args, _, old_state)
   -- !!! old_state is used to preserve user-input here. DON'T DO IT THAT WAY!
   -- Using a restoreNode instead is much easier.
   -- View this only as an example on how old_state functions.
-  local nodes =
-    { t({ "/**", " * " }), i(1, "A short Description"), t({
+  local nodes = {
+    t({ "/**", " * " }),
+    i(1, "A short Description"),
+    t({
       "",
       "",
-    }) }
+    }),
+  }
 
   -- These will be merged with the snippet; that way, should the snippet be updated,
   -- some user input eg. text can be referred to in the new snippet.
@@ -177,25 +180,22 @@ require("luasnip.loaders.from_vscode").load({
 ls.snippets = {
   all = { s("td", { t("// TODO ") }) },
   go = {
-    s(
-      "func",
-      {
-        t("// "),
-        f(copy, 1),
-        t(" "),
-        i(0),
-        t({ " ", "func " }),
-        i(1),
-        t("("),
-        i(2),
-        t({ ") " }),
-        i(3),
-        t({ "{", " " }),
-        t("\t"),
-        i(4),
-        t({ "", "}" }),
-      }
-    ),
+    s("func", {
+      t("// "),
+      f(copy, 1),
+      t(" "),
+      i(0),
+      t({ " ", "func " }),
+      i(1),
+      t("("),
+      i(2),
+      t({ ") " }),
+      i(3),
+      t({ "{", " " }),
+      t("\t"),
+      i(4),
+      t({ "", "}" }),
+    }),
   },
 }
 
