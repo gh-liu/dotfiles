@@ -5,7 +5,6 @@ local cmd = vim.cmd
 local o, wo, bo = vim.o, vim.wo, vim.bo
 
 local opt = require("utils").opt
-local autocmd = require("utils").autocmd
 local map = require("utils").map
 
 -- Leader/local leader
@@ -92,52 +91,33 @@ cmd([[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]])
 --     eol = "↴"
 -- }
 
-require("mappings")
-require("filetype")
--- require('impatient')
-
 -- StatusLine
 vim.cmd([[
     au VimEnter * ++once lua statusline = require('statusline')
     au VimEnter * ++once lua vim.o.statusline = '%!v:lua.statusline.status()'
   ]])
 
--- AutoCommands
-autocmd("misc_aucmds", {
-  [[BufWinEnter * checktime]],
-  [[TextYankPost * silent! lua vim.highlight.on_yank({higroup="IncSearch", timeout=150})]],
-  [[FileType qf set nobuflisted ]],
-  [[BufReadPost * normal! g`" ]],
-}, true)
--- autocmd('packer_user_config', {[[BufWritePost plugins.lua source <afile> | PackerCompile]]}, true)
--- autocmd('packer_user_config', {[[BufWritePost init.lua source <afile> | PackerCompile]]}, true)
-function helptab()
-  if vim.o.buftype == "help" then
-    vim.cmd([[wincmd T]])
-    vim.api.nvim_buf_set_keymap("0", "n", "q", "<cmd>q<cr>", {
-      silent = true,
-      noremap = true,
-    })
-  end
-end
-autocmd("open_help_tab", { [[BufEnter *.txt lua helptab()]] }, true)
+require("mappings")
+require("filetype")
+require("autocmd")
+-- require('impatient')
 
--- Disable some built-in plugins we don't want
+-- ====== built-in plugins ======
+-- Disable some we don't want
 local disabled_built_ins = {
-  "gzip",
-  "man",
-  "matchparen",
-  "shada_plugin",
-  "tarPlugin",
-  "tar",
-  "zipPlugin",
-  "zip",
+	"gzip",
+	"man",
+	"matchparen",
+	"shada_plugin",
+	"tarPlugin",
+	"tar",
+	"zipPlugin",
+	"zip",
 }
 for i = 1, #disabled_built_ins do
-  g["loaded_" .. disabled_built_ins[i]] = 1
+	g["loaded_" .. disabled_built_ins[i]] = 1
 end
--- Build-in plugins settings
--- netrw
+-- netrw settings
 -- g.netrw_banner = 1
 -- g.netrw_browse_split = 4
 -- g.netrw_altv = 1
