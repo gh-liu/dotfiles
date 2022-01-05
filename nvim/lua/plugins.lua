@@ -294,6 +294,14 @@ local function init()
     end,
   })
 
+  use({
+    "folke/todo-comments.nvim",
+    requires = "nvim-lua/plenary.nvim",
+    config = function()
+      require("todo-comments").setup({})
+    end,
+  })
+
   -- use({
   -- 	"danymat/neogen",
   -- 	config = [[require('config.neogen')]],
