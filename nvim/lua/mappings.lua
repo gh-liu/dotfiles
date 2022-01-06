@@ -2,12 +2,12 @@ local map = require("utils").map
 
 -- Keybingdings
 local silent = {
-  silent = true,
+	silent = true,
 }
 
 local silent_noremap = {
-  silent = true,
-  noremap = true,
+	silent = true,
+	noremap = true,
 }
 
 -- disable F1
@@ -62,7 +62,7 @@ map("n", "]Q", "<cmd>clast<cr>")
 
 -- <Leader>[1-9] move to tab [1-9]
 for i = 1, 9, 1 do
-  map("n", "<leader>" .. i, i .. "gt")
+	map("n", "<leader>" .. i, i .. "gt")
 end
 
 map("n", "<c-a>", "<c-o>")
@@ -112,8 +112,8 @@ map("v", "L", "g_")
 map("i", "<C-^>", "<C-o><C-^>")
 
 -- Save
-map("i", "<C-s>", "<C-O>:update<cr>")
-map("n", "<C-s>", ":update<cr>")
+map("i", "<C-s>", "<C-O>:update!<cr>")
+map("n", "<C-s>", ":update!<cr>")
 
 -- Exit
 map("i", "<C-q>", "<esc>:q<cr>")
@@ -132,11 +132,11 @@ map("i", "jj", "<Esc>")
 map("i", "kk", "<Esc>")
 
 local function map_change_option(...)
-  local prefix = "co"
-  local key = select(1, ...)
-  local opt = select(2, ...)
-  local op = ":set " .. opt .. "!" .. " <bar> set " .. opt .. "?<cr>"
-  vim.api.nvim_set_keymap("n", prefix .. key, op, {})
+	local prefix = "co"
+	local key = select(1, ...)
+	local opt = select(2, ...)
+	local op = ":set " .. opt .. "!" .. " <bar> set " .. opt .. "?<cr>"
+	vim.api.nvim_set_keymap("n", prefix .. key, op, {})
 end
 
 map_change_option("w", "warp")
