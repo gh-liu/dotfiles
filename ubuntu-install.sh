@@ -5,7 +5,7 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y git ssh
 sudo apt install -y vim zsh tmux tmuxp
 sudo apt install -y autoconf automake pkg-config 
-sudo apt install -y linux-tools-$(uname -r) linux-tools-generic
+sudo apt install -y linux-tools-common linux-tools-$(uname -r) linux-tools-generic
 sudo apt install -y gdb binutils cgroup-tools
 sudo apt install -y ripgrep silversearcher-ag fd-find
 sudo apt install -y apache2-utils ngrep
