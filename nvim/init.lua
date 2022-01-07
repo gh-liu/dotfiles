@@ -92,8 +92,8 @@ cmd([[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]])
 -- }
 
 -- StatusLine
+_G.statusline = require("statusline")
 vim.cmd([[
-    au VimEnter * ++once lua statusline = require('statusline')
     au VimEnter * ++once lua vim.o.statusline = '%!v:lua.statusline.status()'
   ]])
 
