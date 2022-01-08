@@ -101,6 +101,7 @@ local function init()
       )
     end,
   })
+  -- use("arkav/lualine-lsp-progress")
   -- use({
   -- 	"simrat39/symbols-outline.nvim",
   -- 	setup = function()
