@@ -17,7 +17,7 @@ tsconf.setup({
 		"dockerfile",
 		"toml",
 		"query",
-		-- "markdown",
+		"markdown",
 	},
 	sync_install = false, -- install languages synchronously (only applied to `ensure_installed`)
 	ignore_install = {}, -- List of parsers to ignore installing

@@ -115,13 +115,6 @@ map("i", "<C-^>", "<C-o><C-^>")
 map("i", "<C-s>", "<C-O>:update!<cr>")
 map("n", "<C-s>", ":update!<cr>")
 
--- Exit
-map("i", "<C-q>", "<esc>:q<cr>")
-map("n", "<C-q>", ":q<cr>")
-map("v", "<C-q>", "<esc>")
-map("n", "<Leader>q", ":q<cr>")
-map("n", "<Leader>Q", ":qa!<cr>")
-
 -- <Leader>c Close quickfix/location window
 map("n", "<leader>c", ":cclose<bar>lclose<cr>", silent)
 
@@ -144,3 +137,45 @@ map_change_option("p", "paste")
 map_change_option("n", "number")
 map_change_option("r", "relativenumber")
 map_change_option("h", "hlsearch")
+
+function _G.smartquit()
+	local buf_nums = vim.fn.len(vim.fn.getbufinfo({ buflisted = 1 }))
+
+	if buf_nums == 1 then
+		local ok = pcall(vim.cmd, ":silent quit")
+		if not ok then
+			local choice = vim.fn.input("E37: Discard changes?  Y|y = Yes, N|n = No, W|w = Write and quit: ")
+			if choice == "y" then
+				vim.cmd("quit!")
+			elseif choice == "w" then
+				vim.cmd("write")
+				vim.cmd("quit")
+			else
+				vim.fn.feedkeys("\\<ESC>")
+			end
+		end
+	else
+		local ok = pcall(vim.cmd, "bw")
+
+		if not ok then
+			local choice = vim.fn.input("E37: Discard changes?  Y|y = Yes, N|n = No, W|w = Write and quit: ")
+			if choice == "y" then
+				vim.cmd("bw!")
+			elseif choice == "w" then
+				vim.cmd("write")
+				vim.cmd("bw")
+			else
+				vim.fn.feedkeys("\\<ESC>")
+			end
+		end
+	end
+end
+-- Exit
+map("n", "<C-q>", ":call v:lua.smartquit()<cr>")
+map("i", "<C-q>", "<esc>:q<cr>")
+map("v", "<C-q>", "<esc>")
+map("n", "<Leader>q", ":q<cr>")
+map("n", "<Leader>Q", ":qa!<cr>")
+
+-- fold
+vim.cmd([[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]])

@@ -1,32 +1,53 @@
-local packer = nil
+local fn = vim.fn
 
-local function init()
-  if packer == nil then
-    packer = require("packer")
-    packer.init({
-      -- disable creating packer commands
-      disable_commands = true,
-    })
-  end
+-- Automatically install packer
+local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
+if fn.empty(fn.glob(install_path)) > 0 then
+  PACKER_BOOTSTRAP = fn.system({
+    "git",
+    "clone",
+    "--depth",
+    "1",
+    "https://github.com/wbthomason/packer.nvim",
+    install_path,
+  })
+  print("Installing packer close and reopen Neovim...")
+  vim.cmd([[packadd packer.nvim]])
+end
 
-  local use = packer.use
-  packer.reset()
+-- Autocommand that reloads neovim whenever you save the plugins.lua file
+vim.cmd([[
+  augroup packer_user_config
+    autocmd!
+    autocmd BufWritePost plugins.lua source <afile> | PackerSync
+  augroup end
+]])
 
+-- Use a protected call so we don't error out on first use
+local status_ok, packer = pcall(require, "packer")
+if not status_ok then
+  return
+end
+
+-- Have packer use a popup window
+packer.init({
+  display = {
+    open_fn = function()
+      return require("packer.util").float({ border = "rounded" })
+    end,
+  },
+})
+
+return require("packer").startup(function(use)
   -- Packer
   use("wbthomason/packer.nvim")
 
-  -- use {'lewis6991/impatient.nvim'}
+  use({ "lewis6991/impatient.nvim" })
 
   -- ====== UI ======
   -- schemes
   use("sainnhe/gruvbox-material")
-  -- use("joshdick/onedark.vim")
-  -- use("rakr/vim-one")
 
-  -- use({
-  -- 	"junegunn/rainbow_parentheses.vim",
-  -- 	config = [[require('config.rainbow_parentheses')]],
-  -- })
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
 
@@ -53,17 +74,25 @@ local function init()
   -- 	end,
   -- 	requires = { "tami5/sqlite.lua" },
   -- })
-  -- use({
-  -- 	"edolphin-ydf/goimpl.nvim",
-  -- 	requires = { { "nvim-telescope/telescope.nvim" }, { "nvim-treesitter/nvim-treesitter" } },
-  -- 	config = function()
-  -- 		require("telescope").load_extension("goimpl")
-  -- 		vim.api.nvim_set_keymap("n", "<leader>im", [[<cmd>lua require'telescope'.extensions.goimpl.goimpl{}<CR>]], {
-  -- 			noremap = true,
-  -- 			silent = true,
-  -- 		})
-  -- 	end,
-  -- })
+  use({
+    "edolphin-ydf/goimpl.nvim",
+    requires = {
+      { "nvim-telescope/telescope.nvim" },
+      { "nvim-treesitter/nvim-treesitter" },
+    },
+    config = function()
+      require("telescope").load_extension("goimpl")
+      vim.api.nvim_set_keymap(
+        "n",
+        "<leader>im",
+        [[<cmd>lua require('telescope').extensions.goimpl.goimpl{}<CR>]],
+        {
+          noremap = true,
+          silent = true,
+        }
+      )
+    end,
+  })
 
   -- ====== Treesitter ======
   use({
@@ -75,7 +104,7 @@ local function init()
     config = [[require('config.treesitter')]],
     run = ":TSUpdate",
   })
-  -- use("nvim-treesitter/playground")
+  use("nvim-treesitter/playground")
   -- use("nvim-treesitter/nvim-tree-docs")
   use("p00f/nvim-ts-rainbow")
   -- use("romgrk/nvim-treesitter-context")
@@ -157,9 +186,9 @@ local function init()
     "github/copilot.vim",
     config = function()
       vim.cmd([[
-            imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
-            let g:copilot_no_tab_map = v:true
-            ]])
+              imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
+              let g:copilot_no_tab_map = v:true
+              ]])
     end,
   })
 
@@ -276,9 +305,9 @@ local function init()
 
   -- Profiling
   -- use({
-  -- 	"dstein64/vim-startuptime",
-  -- 	cmd = "StartupTime",
-  -- 	config = [[vim.g.startuptime_tries = 10]],
+  --   "dstein64/vim-startuptime",
+  --   cmd = "StartupTime",
+  --   config = [[vim.g.startuptime_tries = 10]],
   -- })
 
   use("tpope/vim-repeat")
@@ -314,13 +343,10 @@ local function init()
 
   -- Quickfix
   -- use("kevinhwang91/nvim-bqf")
-end
 
-local plugins = setmetatable({}, {
-  __index = function(_, key)
-    init()
-    return packer[key]
-  end,
-})
-
-return plugins
+  -- Automatically set up your configuration after cloning packer.nvim
+  -- Put this at the end after all plugins
+  if PACKER_BOOTSTRAP then
+    require("packer").sync()
+  end
+end)
