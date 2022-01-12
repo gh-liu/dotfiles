@@ -142,11 +142,6 @@ return require("packer").startup(function(use)
   -- 		require("config.symbols-outline")
   -- 	end,
   -- })
-  -- use({
-  -- 	"folke/trouble.nvim",
-  -- 	-- requires = "nvim-web-devicons",
-  -- 	config = [[require('config.trouble')]],
-  -- })
 
   --  Autocompletion
   use({
@@ -238,24 +233,6 @@ return require("packer").startup(function(use)
   })
 
   -- ====== Debug ======
-  -- use({
-  -- 	{
-  -- 		"mfussenegger/nvim-dap",
-  -- 		setup = [[require('config.dap_setup')]],
-  -- 		config = [[require('config.dap')]],
-  -- 		requires = "jbyuki/one-small-step-for-vimkind",
-  -- 		wants = "one-small-step-for-vimkind",
-  -- 		module = "dap",
-  -- 	},
-  -- 	{
-  -- 		"rcarriga/nvim-dap-ui",
-  -- 		requires = "nvim-dap",
-  -- 		after = "nvim-dap",
-  -- 		config = function()
-  -- 			require("dapui").setup()
-  -- 		end,
-  -- 	},
-  -- })
 
   -- ====== Git ======
   use({
@@ -278,11 +255,6 @@ return require("packer").startup(function(use)
 
   -- ====== Language Specified ======
   -- -- Go dev
-  -- use({
-  -- 	"fatih/vim-go",
-  -- 	run = ":GoUpdateBinaries",
-  -- 	config = [[require('config.vim-go')]],
-  -- })
   -- use({
   -- 	"ray-x/go.nvim",
   -- 	config = [[require('go').setup()]],
@@ -332,12 +304,6 @@ return require("packer").startup(function(use)
       require("todo-comments").setup({})
     end,
   })
-
-  -- use({
-  -- 	"danymat/neogen",
-  -- 	config = [[require('config.neogen')]],
-  -- 	requires = "nvim-treesitter/nvim-treesitter",
-  -- })
 
   -- template
   -- use("mattn/vim-sonictemplate")
