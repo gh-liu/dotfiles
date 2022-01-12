@@ -47,6 +47,7 @@ return require("packer").startup(function(use)
   -- ====== UI ======
   -- schemes
   use("sainnhe/gruvbox-material")
+  use("tomasiser/vim-code-dark")
 
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
