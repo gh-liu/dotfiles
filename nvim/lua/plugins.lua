@@ -47,7 +47,7 @@ return require("packer").startup(function(use)
   -- ====== UI ======
   -- schemes
   use("sainnhe/gruvbox-material")
-  use("tomasiser/vim-code-dark")
+  -- use("tomasiser/vim-code-dark")
 
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
@@ -114,7 +114,6 @@ return require("packer").startup(function(use)
   -- LSP
   use({
     "neovim/nvim-lspconfig",
-    config = [[require('config.lsp_config')]],
   })
   use({ "onsails/lspkind-nvim" })
   -- use("nvim-lua/lsp-status.nvim")
@@ -315,6 +314,7 @@ return require("packer").startup(function(use)
   -- use("tpope/vim-surround")
   -- use("tpope/vim-eunuch")
   -- use("tpope/vim-endwise")
+  use("tpope/vim-dispatch")
 
   -- provides Readline (Emacs) mappings for insert and command line mode
   -- also be required by tmux-plugins/tmux-yank
