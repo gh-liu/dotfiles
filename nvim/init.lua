@@ -9,3 +9,6 @@ require("statusline")
 -- plugins settings
 require("config.impatient")
 require("config.lsp")
+
+-- lang settings
+require("config.lang.go")
