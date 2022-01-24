@@ -112,8 +112,8 @@ map("v", "L", "g_")
 map("i", "<C-^>", "<C-o><C-^>")
 
 -- Save
-map("i", "<C-s>", "<C-O>:update!<cr>")
-map("n", "<C-s>", ":update!<cr>")
+map("i", "<C-s>", "<C-O>:update<cr>")
+map("n", "<C-s>", ":update<cr>")
 
 -- <Leader>c Close quickfix/location window
 map("n", "<leader>c", ":cclose<bar>lclose<cr>", silent)

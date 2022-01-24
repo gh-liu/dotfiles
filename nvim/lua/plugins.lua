@@ -264,6 +264,9 @@ return require("packer").startup(function(use)
   -- use("folke/lua-dev.nvim")
   use("ckipp01/stylua-nvim")
 
+  -- Clojure dev
+  use("Olical/conjure")
+
   -- -- markdown preview
   -- use({
   -- 	"ellisonleao/glow.nvim",
