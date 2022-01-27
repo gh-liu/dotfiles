@@ -289,7 +289,7 @@ return require("packer").startup(function(use)
   -- use("tpope/vim-surround")
   -- use("tpope/vim-eunuch")
   -- use("tpope/vim-endwise")
-  use("tpope/vim-dispatch")
+  -- use("tpope/vim-dispatch")
 
   -- provides Readline (Emacs) mappings for insert and command line mode
   -- also be required by tmux-plugins/tmux-yank
