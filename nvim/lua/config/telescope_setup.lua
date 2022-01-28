@@ -53,3 +53,7 @@ map(
 -- map('n', '<c-e>', [[<cmd>Telescope frecency<cr>]], silent)
 
 map("n", ";", "<cmd>Telescope commands<cr>")
+
+vim.cmd(
+  [[command! Dotfiles silent lua require('telescope.builtin').git_files({cwd= vim.env.HOME .. "/.config/nvim" })]]
+)

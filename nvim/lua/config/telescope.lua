@@ -55,6 +55,3 @@ telescope.setup({
 })
 
 telescope.load_extension("fzf")
-
--- local extensions
-telescope.load_extension("dotfiles")
