@@ -1,7 +1,9 @@
 -- https://phelipetls.github.io/posts/async-make-in-nvim-with-lua/
 local M = {}
 
-function M.make(arg)
+function M.make(...)
+	local args = { ... }
+
 	local lines = { "" }
 	local winnr = vim.fn.win_getid()
 	local bufnr = vim.api.nvim_win_get_buf(winnr)
@@ -11,8 +13,10 @@ function M.make(arg)
 		return
 	end
 
-	local args = vim.fn.expand(arg)
-	local cmd = vim.fn.expandcmd(makeprg) .. " " .. args
+	local cmd = vim.fn.expandcmd(makeprg)
+	if args and #args > 0 then
+		cmd = vim.list_extend(cmd, args)
+	end
 
 	-- async_make_status
 	local timer = vim.loop.new_timer()
@@ -48,6 +52,8 @@ function M.make(arg)
 			timer:stop()
 
 			vim.api.nvim_command("doautocmd QuickFixCmdPost")
+
+			vim.notify("async make finished", vim.lsp.log_levels.WARN)
 		end
 	end
 
