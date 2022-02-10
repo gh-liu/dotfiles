@@ -214,10 +214,10 @@ return require("packer").startup(function(use)
   -- })
 
   -- Undo tree
-  use({
-    "mbbill/undotree",
-    config = [[require('config.undotree')]],
-  })
+  -- use({
+  --   "mbbill/undotree",
+  --   config = [[require('config.undotree')]],
+  -- })
 
   -- Tagbar
   use({
@@ -271,7 +271,7 @@ return require("packer").startup(function(use)
   use("ckipp01/stylua-nvim")
 
   -- Clojure dev
-  use("Olical/conjure")
+  -- use("Olical/conjure")
 
   -- -- markdown preview
   -- use({
