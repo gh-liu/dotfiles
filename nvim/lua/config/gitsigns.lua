@@ -59,5 +59,5 @@ require("gitsigns").setup({
     ["o ih"] = ":<C-U>Gitsigns select_hunk<CR>",
     ["x ih"] = ":<C-U>Gitsigns select_hunk<CR>",
   },
-  current_line_blame = true,
+  current_line_blame = false,
 })

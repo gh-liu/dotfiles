@@ -59,12 +59,16 @@ return require("packer").startup(function(use)
       "nvim-lua/plenary.nvim",
       "telescope-fzf-native.nvim",
     },
-    setup = [[require('config.telescope_setup')]],
+    setup = [[require('config.telescope-setup')]],
     config = [[require('config.telescope')]],
   })
   use({
     "nvim-telescope/telescope-fzf-native.nvim",
     run = "make",
+  })
+  use({
+    "nvim-telescope/telescope-file-browser.nvim",
+    config = [[require('config.telescope-file-browser')]],
   })
   -- use("nvim-telescope/telescope-github.nvim")
   -- use({ "nvim-telescope/telescope-file-browser.nvim" })

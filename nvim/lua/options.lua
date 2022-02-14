@@ -81,26 +81,27 @@ opt("foldlevel", 99)
 -- }
 
 -- ====== built-in plugins ======
-local map = require("utils").map
+-- local map = require("utils").map
 
 -- Disable some we don't want
 local disabled_built_ins = {
-	"gzip",
-	"man",
-	"matchparen",
-	"shada_plugin",
-	"tarPlugin",
-	"tar",
-	"zipPlugin",
-	"zip",
+  "gzip",
+  "man",
+  "matchparen",
+  "shada_plugin",
+  "tarPlugin",
+  "tar",
+  "zipPlugin",
+  "zip",
+  "netrwPlugin",
 }
 for i = 1, #disabled_built_ins do
-	vim.g["loaded_" .. disabled_built_ins[i]] = 1
+  vim.g["loaded_" .. disabled_built_ins[i]] = 1
 end
 -- netrw settings
 -- g.netrw_banner = 1
 -- g.netrw_browse_split = 4
 -- g.netrw_altv = 1
-vim.g.netrw_liststyle = 3
+-- vim.g.netrw_liststyle = 3
 -- g.netrw_winsize = 25
-map("n", "<C-n>", "<cmd>Vexplore<cr>")
+-- map("n", "<C-n>", "<cmd>Vexplore<cr>")
