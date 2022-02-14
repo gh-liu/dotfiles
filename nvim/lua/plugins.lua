@@ -236,11 +236,11 @@ return require("packer").startup(function(use)
   })
 
   -- ====== Moving ======
-  use({
-    "phaazon/hop.nvim",
-    branch = "v1",
-    config = [[require('config.hop')]],
-  })
+  -- use({
+  --   "phaazon/hop.nvim",
+  --   branch = "v1",
+  --   config = [[require('config.hop')]],
+  -- })
 
   -- ====== Debug ======
 
