@@ -1,4 +1,4 @@
-local opt = require("utils").opt
+local opt = as.opt
 
 opt("background", "dark")
 vim.cmd([[colorscheme gruvbox-material]])

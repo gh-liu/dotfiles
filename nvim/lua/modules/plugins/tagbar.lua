@@ -1,5 +1,4 @@
-local utils = require("utils")
-local map = utils.map
+local map = as.map
 -- local autocmd = utils.autocmd
 
 vim.g.tagbar_autoclose = 1

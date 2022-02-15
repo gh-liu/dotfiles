@@ -1,6 +1,6 @@
 local o, wo, bo = vim.o, vim.wo, vim.bo
 
-local opt = require("utils").opt
+local opt = as.opt
 
 -- Leader/local leader
 vim.g.mapleader = [[,]]
@@ -81,7 +81,6 @@ opt("foldlevel", 99)
 -- }
 
 -- ====== built-in plugins ======
--- local map = require("utils").map
 
 -- Disable some we don't want
 local disabled_built_ins = {

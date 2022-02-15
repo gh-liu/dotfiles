@@ -1,128 +1,130 @@
-local map = require("utils").map
+local map = as.map
 
--- Keybingdings
-local silent = {
-  silent = true,
-}
-
-local silent_noremap = {
-  silent = true,
-  noremap = true,
-}
-
--- disable F1
+-- Basics {{{1
+--
+-- Disable F1
 map("", "<F1>", "<Esc>")
-
 -- Switch ` and '
 map("n", "'", "`")
 map("n", "'", "`")
-
--- display lines move up or down
-map("n", "j", "gj")
-map("n", "k", "gk")
-
--- windows moving
-map("n", "<C-h>", "<C-w>h", silent)
-map("n", "<C-j>", "<C-w>j", silent)
-map("n", "<C-k>", "<C-w>k", silent)
-map("n", "<C-l>", "<C-w>l", silent)
-
--- moving in insert mode
-map("i", "<C-h>", "<left>", silent_noremap)
-map("i", "<C-j>", "<down>", silent_noremap)
-map("i", "<C-k>", "<up>", silent_noremap)
-map("i", "<C-l>", "<right>", silent_noremap)
-map("i", "<C-a>", "<HOME>", silent_noremap)
-map("i", "<C-e>", "<END>", silent_noremap)
-
-map("n", "[w", "<cmd>tabprevious<cr>")
-map("n", "]w", "<cmd>tabnext<cr>")
-map("n", "[W", "<cmd>tabfirst<cr>")
-map("n", "]W", "<cmd>tablast<cr>")
-
--- map('n', '[b', '<cmd>bprevious<cr>')
--- map('n', ']b', '<cmd>bnext<cr>')
--- map('n', '[B', '<cmd>bfirst<cr>')
--- map('n', ']B', '<cmd>blast<cr>')
-
-map("n", "[l", "<cmd>lprevious<cr>")
-map("n", "]l", "<cmd>lnext<cr>")
-map("n", "[L", "<cmd>lfirst<cr>")
-map("n", "]L", "<cmd>llast<cr>")
-
-map("n", "[q", "<cmd>cprevious<cr>")
-map("n", "]q", "<cmd>cnext<cr>")
-map("n", "[Q", "<cmd>cfirst<cr>")
-map("n", "]Q", "<cmd>clast<cr>")
-
--- map('n', '[t', '<cmd>tprevious<cr>')
--- map('n', ']t', '<cmd>tnext<cr>')
--- map('n', '[T', '<cmd>tfirst<cr>')
--- map('n', ']T', '<cmd>tlast<cr>')
 
 -- <Leader>[1-9] move to tab [1-9]
 for i = 1, 9, 1 do
   map("n", "<leader>" .. i, i .. "gt")
 end
+-- Select table
+map("n", "[w", "<cmd>tabprevious<cr>")
+map("n", "]w", "<cmd>tabnext<cr>")
+map("n", "[W", "<cmd>tabfirst<cr>")
+map("n", "]W", "<cmd>tablast<cr>")
+-- Select buffer
+-- map('n', '[b', '<cmd>bprevious<cr>')
+-- map('n', ']b', '<cmd>bnext<cr>')
+-- map('n', '[B', '<cmd>bfirst<cr>')
+-- map('n', ']B', '<cmd>blast<cr>')
+-- Select window
+map("n", "<C-h>", "<C-w>h")
+map("n", "<C-j>", "<C-w>j")
+map("n", "<C-k>", "<C-w>k")
+map("n", "<C-l>", "<C-w>l")
 
-map("n", "<c-a>", "<c-o>")
-
--- Do not show stupid q: window
-map("n", "q:", ":q")
-
--- qq to record, Q to replay
-map("n", "Q", "@q")
-
--- same as D
-map("n", "Y", "y$")
-
--- Don't lose selection when shifting sidewards
-map("x", "<", "<gv")
-map("x", ">", ">gv")
-
--- Change window size
-map("n", "<left>", "<c-w>>", silent)
-map("n", "<right>", "<c-w><", silent)
-map("n", "<up>", "<c-w>-", silent)
-map("n", "<down>", "<c-w>+", silent)
-
--- Keep search pattern at the center of the screen
-map("n", "n", "nzz", silent)
-map("n", "N", "Nzz", silent)
-
--- Switch # *
-map("n", "*", "#zz", silent)
-map("n", "#", "*zz", silent)
-
--- moving in cmd-line mode
+-- Display lines move up or down
+map("n", "j", "gj")
+map("n", "k", "gk")
+-- Moving in insert mode
+map("i", "<C-h>", "<left>")
+map("i", "<C-j>", "<down>")
+map("i", "<C-k>", "<up>")
+map("i", "<C-l>", "<right>")
+map("i", "<C-a>", "<HOME>")
+map("i", "<C-e>", "<END>")
+-- Move to head or end of line in normal or visual mode
+map("n", "H", "^")
+map("n", "L", "$")
+map("v", "H", "^")
+map("v", "L", "g_")
+-- Moving in cmd-line mode
 map("c", "<C-h>", "<left>")
 map("c", "<C-j>", "<down>")
 map("c", "<C-k>", "<up>")
 map("c", "<C-l>", "<right>")
 -- map('c', '<C-a>', '<HOME>')
 -- map('c', '<C-e>', '<END>')
+-- Move selected line / block of text in visual mode
+as.map("x", "K", ":move '<-2<CR>gv=gv")
+as.map("x", "J", ":move '>+1<CR>gv=gv")
+-- Automatically jump to the end of pasted text
+as.map("v", "y", "y`]")
+as.map("v", "p", "p`]")
+as.map("n", "p", "p`]")
 
--- move to head or end of line in normal or visual mode
-map("n", "H", "^")
-map("n", "L", "$")
-map("v", "H", "^")
-map("v", "L", "g_")
+-- select locallist item
+map("n", "[l", "<cmd>lprevious<cr>")
+map("n", "]l", "<cmd>lnext<cr>")
+map("n", "[L", "<cmd>lfirst<cr>")
+map("n", "]L", "<cmd>llast<cr>")
+-- select quickfix item
+map("n", "[q", "<cmd>cprevious<cr>")
+map("n", "]q", "<cmd>cnext<cr>")
+map("n", "[Q", "<cmd>cfirst<cr>")
+map("n", "]Q", "<cmd>clast<cr>")
 
--- Edit alternate file
-map("i", "<C-^>", "<C-o><C-^>")
+-- Keep search pattern at the center of the screen
+map("n", "n", "nzz")
+map("n", "N", "Nzz")
+-- Switch # *
+map("n", "*", "#zz")
+map("n", "#", "*zz")
+
+-- jj/kk exit insert mode
+map("i", "jj", "<Esc>")
+map("i", "kk", "<Esc>")
+
+-- Do not show stupid q: window
+map("n", "q:", ":q")
+
+-- Exit
+map("n", "<C-q>", ":call v:lua.smartquit()<cr>")
+map("i", "<C-q>", "<esc>:q<cr>")
+map("v", "<C-q>", "<esc>")
+map("n", "<Leader>q", ":q<cr>")
+map("n", "<Leader>Q", ":qa!<cr>")
 
 -- Save
 map("i", "<C-s>", "<C-O>:update<cr>")
 map("n", "<C-s>", ":update<cr>")
 
+-- qq to record, Q to replay
+map("n", "Q", "@q")
+
+-- same as D
+map("n", "Y", "y$")
+map("v", "Y", "<ESC>y$gv")
+
+-- jump
+map("n", "<c-a>", "<c-o>")
+
+-- Don't lose selection when shifting sidewards
+map("x", "<", "<gv")
+map("x", ">", ">gv")
+
+-- Change window size
+-- map("n", "<left>", "<c-w>>")
+-- map("n", "<right>", "<c-w><")
+-- map("n", "<up>", "<c-w>-")
+-- map("n", "<down>", "<c-w>+")
+
+-- Edit alternate file
+map("i", "<C-^>", "<C-o><C-^>")
+
 -- <Leader>c Close quickfix/location window
-map("n", "<leader>c", ":cclose<bar>lclose<cr>", silent)
+map("n", "<leader>c", ":cclose<bar>lclose<cr>")
 
 -- Edit $MYVIMRC
-map("n", "<leader>ev", ":tabnew $MYVIMRC<cr>", silent)
+map("n", "<leader>ev", ":tabnew $MYVIMRC<cr>")
 
-map("i", "jj", "<Esc>")
-map("i", "kk", "<Esc>")
+-- fold
+vim.cmd([[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]])
 
 local function map_change_option(...)
   local prefix = "co"
@@ -174,12 +176,3 @@ function _G.smartquit()
     end
   end
 end
--- Exit
-map("n", "<C-q>", ":call v:lua.smartquit()<cr>")
-map("i", "<C-q>", "<esc>:q<cr>")
-map("v", "<C-q>", "<esc>")
-map("n", "<Leader>q", ":q<cr>")
-map("n", "<Leader>Q", ":qa!<cr>")
-
--- fold
-vim.cmd([[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]])

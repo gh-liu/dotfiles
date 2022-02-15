@@ -15,14 +15,6 @@ if fn.empty(fn.glob(install_path)) > 0 then
   vim.cmd([[packadd packer.nvim]])
 end
 
--- Autocommand that reloads neovim whenever you save the plugins.lua file
-vim.cmd([[
-  augroup packer_user_config
-    autocmd!
-    autocmd BufWritePost plugins.lua source <afile> | PackerSync
-  augroup end
-]])
-
 -- Use a protected call so we don't error out on first use
 local status_ok, packer = pcall(require, "packer")
 if not status_ok then
@@ -42,12 +34,22 @@ return require("packer").startup(function(use)
   -- Packer
   use("wbthomason/packer.nvim")
 
+  -- NOTE: this is plugin is unnecessary once https://github.com/neovim/neovim/pull/15436 is merged
   use({ "lewis6991/impatient.nvim" })
 
   -- ====== UI ======
   -- schemes
   use("sainnhe/gruvbox-material")
-  -- use("tomasiser/vim-code-dark")
+
+  -- statusline
+  -- use({
+  --   "feline-nvim/feline.nvim",
+  --   config = function()
+  --     require("feline").setup({
+  --       preset = "noicon",
+  --     })
+  --   end,
+  -- })
 
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
@@ -59,8 +61,8 @@ return require("packer").startup(function(use)
       "nvim-lua/plenary.nvim",
       "telescope-fzf-native.nvim",
     },
-    setup = [[require('config.telescope-setup')]],
-    config = [[require('config.telescope')]],
+    setup = [[require('modules.plugins.telescope-setup')]],
+    config = [[require('modules.plugins.telescope')]],
   })
   use({
     "nvim-telescope/telescope-fzf-native.nvim",
@@ -68,7 +70,7 @@ return require("packer").startup(function(use)
   })
   use({
     "nvim-telescope/telescope-file-browser.nvim",
-    config = [[require('config.telescope-file-browser')]],
+    config = [[require('modules.plugins.telescope-file-browser')]],
   })
   -- use("nvim-telescope/telescope-github.nvim")
   -- use({ "nvim-telescope/telescope-file-browser.nvim" })
@@ -106,10 +108,12 @@ return require("packer").startup(function(use)
       "nvim-treesitter/nvim-treesitter-textobjects",
       "nvim-treesitter/nvim-treesitter-refactor",
     },
-    config = [[require('config.treesitter')]],
+    config = [[require('modules.plugins.treesitter')]],
     run = ":TSUpdate",
   })
-  use("nvim-treesitter/playground")
+  use({
+    "nvim-treesitter/playground",
+  })
   -- use("nvim-treesitter/nvim-tree-docs")
   use("p00f/nvim-ts-rainbow")
   -- use("romgrk/nvim-treesitter-context")
@@ -140,7 +144,6 @@ return require("packer").startup(function(use)
       require("fidget").setup({})
     end,
   })
-  -- use("arkav/lualine-lsp-progress")
   -- use({
   -- 	"simrat39/symbols-outline.nvim",
   -- 	setup = function()
@@ -172,7 +175,7 @@ return require("packer").startup(function(use)
       },
       {
         "L3MON4D3/LuaSnip",
-        config = [[require('config.luasnip')]],
+        config = [[require('modules.plugins.luasnip')]],
       },
       {
         -- Snippets plugin
@@ -180,7 +183,7 @@ return require("packer").startup(function(use)
         after = "nvim-cmp",
       },
     },
-    config = [[require('config.cmp')]],
+    config = [[require('modules.plugins.cmp')]],
     -- event = "InsertEnter *",
   })
   use("hrsh7th/cmp-cmdline")
@@ -206,7 +209,7 @@ return require("packer").startup(function(use)
   -- })
   use({
     "tpope/vim-commentary",
-    config = [[require('config.vim-commentary')]],
+    config = [[require('modules.plugins.vim-commentary')]],
   })
   -- use("JoosepAlviste/nvim-ts-context-commentstring")
 
@@ -214,32 +217,32 @@ return require("packer").startup(function(use)
   -- use({
   -- 	"ThePrimeagen/refactoring.nvim",
   -- 	requires = { { "nvim-lua/plenary.nvim" }, { "nvim-treesitter/nvim-treesitter" } },
-  -- 	config = [[require('config.refactoring')]],
+  -- 	config = [[require('modules.plugins.refactoring')]],
   -- })
 
   -- Undo tree
   -- use({
   --   "mbbill/undotree",
-  --   config = [[require('config.undotree')]],
+  --   config = [[require('modules.plugins.undotree')]],
   -- })
 
   -- Tagbar
   use({
     "majutsushi/tagbar",
-    config = [[require('config.tagbar')]],
+    config = [[require('modules.plugins.tagbar')]],
   })
 
   -- Autopair
   use({
     "windwp/nvim-autopairs",
-    config = [[require('config.autopairs')]],
+    config = [[require('modules.plugins.autopairs')]],
   })
 
   -- ====== Moving ======
   -- use({
   --   "phaazon/hop.nvim",
   --   branch = "v1",
-  --   config = [[require('config.hop')]],
+  --   config = [[require('modules.plugins.hop')]],
   -- })
 
   -- ====== Debug ======
@@ -249,12 +252,12 @@ return require("packer").startup(function(use)
     {
       "TimUntersberger/neogit",
       requires = "nvim-lua/plenary.nvim",
-      config = [[require('config.neogit')]],
+      config = [[require('modules.plugins.neogit')]],
     },
     {
       "lewis6991/gitsigns.nvim",
       requires = { "nvim-lua/plenary.nvim" },
-      config = [[require('config.gitsigns')]],
+      config = [[require('modules.plugins.gitsigns')]],
     },
   })
   use({
@@ -286,14 +289,16 @@ return require("packer").startup(function(use)
   -- })
 
   -- ====== Others ======
+  use({
+    "folke/zen-mode.nvim",
+  })
   use("editorconfig/editorconfig-vim")
 
   -- Profiling
-  -- use({
-  --   "dstein64/vim-startuptime",
-  --   cmd = "StartupTime",
-  --   config = [[vim.g.startuptime_tries = 10]],
-  -- })
+  use({
+    "dstein64/vim-startuptime",
+    config = [[vim.g.startuptime_tries = 10]],
+  })
 
   use("tpope/vim-repeat")
   -- use("tpope/vim-surround")

@@ -16,4 +16,4 @@ vim.cmd([[
       command! -nargs=1 Redir silent call Redir(<f-args>)
 ]])
 
-vim.cmd([[command! AsynMake silent lua require('asyncmake').make()]])
+vim.cmd([[command! AsynMake silent lua require('core.asyncmake').make()]])

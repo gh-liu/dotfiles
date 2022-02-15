@@ -1,14 +1,20 @@
-require("options")
-require("keymaps")
-require("autocmd")
-require("command")
-require("plugins")
-require("colorscheme")
-require("statusline")
+require("core.global")
+
+require("core.options")
+require("core.keymaps")
+
+require("core.autocmd")
+require("core.command")
+
+require("core.colorscheme")
+require("core.statusline")
 
 -- plugins settings
-require("config.impatient")
-require("config.lsp")
+require("modules.plugins")
+require("modules.plugins.impatient")
+
+-- lsp settings
+require("modules.lsp")
 
 -- lang settings
-require("config.lang.go")
+require("modules.lang.go")
