@@ -110,8 +110,33 @@ function as.node_at_cursor()
     :descendant_for_range(line - 1, col, line - 1, col + 1)
 end
 
-function as.parent_childs()
-  for node, field in as.node_at_cursor():parent():iter_children() do
-    print(node:type())
+-- function as.parent_childs()
+--   for node, field in as.node_at_cursor():parent():iter_children() do
+--     print(node:type())
+--   end
+-- end
+
+-- lazy require function
+function as.lazy_require(module)
+  local mt = {}
+
+  mt.__index = function(_, key)
+    if not mt._module then
+      mt._module = require(module)
+    end
+
+    return mt._module[key]
   end
+
+  mt.__newindex = function(_, key, val)
+    if not mt._module then
+      mt._module = require(module)
+    end
+
+    mt._module[key] = val
+  end
+
+  mt.__metatable = false
+
+  return setmetatable({}, mt)
 end
