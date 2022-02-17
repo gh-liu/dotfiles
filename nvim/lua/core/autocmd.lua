@@ -1,45 +1,72 @@
-local autocmd = as.autocmd
+local au = as.au
 
-autocmd("_general", {
-  [[BufWinEnter * checktime]],
-  [[TextYankPost * silent! lua vim.highlight.on_yank({higroup="IncSearch", timeout=150})]],
-  [[FileType qf set nobuflisted ]],
-  [[BufReadPost * normal! g`" ]],
-}, true)
+local cmd = vim.api.nvim_command
 
-function helptab()
-  if vim.o.buftype == "help" then
-    vim.cmd([[wincmd T]])
-    vim.api.nvim_buf_set_keymap("0", "n", "q", "<cmd>q<cr>", {
-      silent = true,
-      noremap = true,
-    })
-  end
+au.BufWinEnter = { "*", [[checktime]] }
+au.BufReadPost = { "*", [[normal! g`"]] }
+
+au.TextYankPost = function()
+  vim.highlight.on_yank({ higroup = "IncSearch", timeout = 120 })
 end
-autocmd("_open_help_tab", { [[BufEnter *.txt lua helptab()]] }, true)
+
+au.BufEnter = {
+  "*.txt",
+  function()
+    if vim.bo.buftype == "help" then
+      cmd([[wincmd T]])
+      local nr = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_keymap(
+        nr,
+        "n",
+        "q",
+        ":q<CR>",
+        { noremap = true, silent = true }
+      )
+    end
+  end,
+}
 
 -- filetype
-vim.api.nvim_command("filetype plugin indent on")
+cmd("filetype plugin indent on")
 
-autocmd("_protobuf", {
-  [[ BufNewFile,BufRead *.proto setfiletype proto ]],
-  [[ FileType proto setlocal shiftwidth=2 expandtab ]],
-}, true)
+au.FileType = { "qf", [[set nobuflisted]] }
 
-autocmd(
-  "_json",
-  { [[FileType json setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab ]] },
-  true
-)
+au.FileType = {
+  "json",
+  [[setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab]],
+}
 
-autocmd("_markdown", { [[FileType markdown setlocal cole=0]] }, true)
+au.FileType = {
+  "markdown",
+  [[setlocal cole=0]],
+}
 
-autocmd("_tmux", { [[FileType tmux setlocal foldmethod=marker]] }, true)
+au.FileType = {
+  "tmux",
+  [[setlocal foldmethod=marker]],
+}
 
-autocmd("_go", { [[ BufNewFile,BufRead *.gotmpl set ft=gotmpl]] }, true)
+au.FileType = {
+  "toml",
+  [[setlocal setlocal commentstring=#\ %s]],
+}
 
+au({ "BufNewFile", "BufRead" }, {
+  "*.gotmpl",
+  [[setfiletype gotmpl]],
+})
 
-function goimports(timeout_ms)
+au.group("__proto", {
+  { { "BufNewFile", "BufRead" }, "*.proto", [[setfiletype proto]] },
+  {
+    "FileType",
+    "proto",
+    [[setlocal shiftwidth=2 expandtab]],
+  },
+})
+
+local function goimports(timeout_ms)
+  timeout_ms = timeout_ms or 1000
   local context = {
     only = { "source.organizeImports" },
   }
@@ -61,10 +88,12 @@ function goimports(timeout_ms)
   if not result or next(result) == nil then
     return
   end
+
   local actions = result[1].result
   if not actions then
     return
   end
+
   local action = actions[1]
 
   -- textDocument/codeAction can return either Command[] or CodeAction[]. If it
@@ -82,4 +111,4 @@ function goimports(timeout_ms)
   end
 end
 
-as.autocmd("goimports", { [[BufWritePre *.go lua goimports(1000)]] }, true)
+au.BufWritePre = { "*.go", goimports, { 1000 } }

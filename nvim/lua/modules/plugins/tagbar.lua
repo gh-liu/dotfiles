@@ -1,5 +1,4 @@
 local map = as.map
--- local autocmd = utils.autocmd
 
 vim.g.tagbar_autoclose = 1
 vim.g.tagbar_autofocus = 2

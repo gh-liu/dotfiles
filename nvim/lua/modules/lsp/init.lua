@@ -71,7 +71,7 @@ for server, config in pairs(servers) do
   local default = {
     capabilities = handler.capabilities,
     on_attach = handler.on_attach,
-    autostart = as.is_lsp_autostart(server),
+    -- autostart = as.is_lsp_autostart(server),
   }
 
   for k, v in pairs(default) do

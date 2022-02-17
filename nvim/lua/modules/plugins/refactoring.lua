@@ -1,25 +1,25 @@
--- Remaps for each of the four debug operations currently offered by the plugin
-vim.api.nvim_set_keymap(
+local map = as.map
+map(
   "v",
   "<Leader>re",
   [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function')<CR>]],
-  { noremap = true, silent = true, expr = false }
+  { expr = false }
 )
-vim.api.nvim_set_keymap(
+map(
   "v",
   "<Leader>rf",
   [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Function To File')<CR>]],
-  { noremap = true, silent = true, expr = false }
+  { expr = false }
 )
-vim.api.nvim_set_keymap(
+map(
   "v",
   "<Leader>rv",
   [[ <Esc><Cmd>lua require('refactoring').refactor('Extract Variable')<CR>]],
-  { noremap = true, silent = true, expr = false }
+  { expr = false }
 )
-vim.api.nvim_set_keymap(
+map(
   "v",
   "<Leader>ri",
   [[ <Esc><Cmd>lua require('refactoring').refactor('Inline Variable')<CR>]],
-  { noremap = true, silent = true, expr = false }
+  { expr = false }
 )

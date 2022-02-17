@@ -5,7 +5,8 @@ table.insert(M, {})
 
 -- LSP
 table.insert(M, {
-  lsp_enabled = true,
+	lsp_enabled = true,
+	-- lsp_autostart_blacklist = { "sumneko_lua" },
 })
 
 -- Completion
