@@ -77,7 +77,7 @@ local S = {
 function S.exec(id)
 	local f = S.__au_fns[id]
 	if f["a"] then
-		f["f"](f["a"])
+		f["f"](unpack(f["a"]))
 	else
 		f["f"]()
 	end
