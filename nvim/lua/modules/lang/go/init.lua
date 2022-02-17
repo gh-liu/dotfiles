@@ -4,25 +4,25 @@ au.FileType = {
   "go",
   function()
     cmd(
-      [[command! -bang    GoAlt  lua require("config.lang.go.alternate").switch("<bang>"=="!", '')]]
+      [[command! -bang    GoAlt  lua require("modules.lang.go.alternate").switch("<bang>"=="!", '')]]
     )
     cmd(
-      [[command! -bang    GoAltV lua require("config.lang.go.alternate").switch("<bang>"=="!", 'vsplit')]]
+      [[command! -bang    GoAltV lua require("modules.lang.go.alternate").switch("<bang>"=="!", 'vsplit')]]
     )
     cmd(
-      [[command! -bang    GoAltS lua require("config.lang.go.alternate").switch("<bang>"=="!", 'split')]]
+      [[command! -bang    GoAltS lua require("modules.lang.go.alternate").switch("<bang>"=="!", 'split')]]
     )
 
-    cmd([[command!    GoLint  lua require("config.lang.go.lint").lint()]])
+    cmd([[command!    GoLint  lua require("modules.lang.go.lint").lint()]])
 
     cmd(
-      [[command! GoAddTest      lua require("config.lang.go.test").fun_test()]]
+      [[command! GoAddTest      lua require("modules.lang.go.test").fun_test()]]
     )
     cmd(
-      [[command! GoAddExpTest   lua require("config.lang.go.test").exported_test()]]
+      [[command! GoAddExpTest   lua require("modules.lang.go.test").exported_test()]]
     )
     cmd(
-      [[command! GoAddAllTest   lua require("config.lang.go.test").all_test()]]
+      [[command! GoAddAllTest   lua require("modules.lang.go.test").all_test()]]
     )
   end,
 }
