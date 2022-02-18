@@ -1,6 +1,6 @@
 local M = {}
 
-local log = require("core.log")
+
 
 M.check_capabilities = function(feature, client_id)
   local clients = vim.lsp.buf_get_clients(client_id or 0)
@@ -20,7 +20,7 @@ M.check_capabilities = function(feature, client_id)
     if #clients == 0 then
       -- log.WARN("LSP: no client attached")
     else
-      log.WARN("LSP: server does not support " .. feature)
+      -- log.WARN("LSP: server does not support " .. feature)
     end
     return false
   end
