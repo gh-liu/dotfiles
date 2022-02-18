@@ -48,12 +48,17 @@ au.FileType = {
 
 au.FileType = {
   "toml",
-  [[setlocal setlocal commentstring=#\ %s]],
+  [[setlocal commentstring=#\ %s]],
 }
 
 au({ "BufNewFile", "BufRead" }, {
   "*.gotmpl",
   [[setfiletype gotmpl]],
+})
+
+au({ "BufEnter", "BufRead" }, {
+  "go.mod",
+  [[setfiletype gomod | setlocal commentstring=\/\/\ %s]],
 })
 
 au.group("__proto", {

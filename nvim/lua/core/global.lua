@@ -193,3 +193,5 @@ function as.lazy_require(module)
 
 	return setmetatable({}, mt)
 end
+
+as.log = as.lazy_require("core.log")
