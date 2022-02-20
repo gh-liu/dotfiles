@@ -1,27 +1,46 @@
 local M = {}
 
-function M.vcs()
-  local branch_sign = ""
+local signs = {}
+signs.Add = " + "
+signs.Changed = " ~ "
+signs.Removed = " - "
+signs.branch = ""
 
-  local git_info = vim.b.gitsigns_status_dict
-  if not git_info or git_info.head == "" then
-    return ""
-  end
+local function get_info(type)
+	local git_info = vim.b.gitsigns_status_dict
+	if not git_info or git_info.head == "" then
+		return ""
+	end
+	local nr = ""
+	if type == "added" then
+		nr = git_info.added and git_info.added or ""
+	end
+	if type == "removed" then
+		nr = git_info.changed and git_info.changed or ""
+	end
+	if type == "changed" then
+		nr = git_info.removed and git_info.removed or ""
+	end
+	if type == "head" then
+		nr = git_info.head and git_info.head or ""
+	end
+	return nr
+end
 
-  local added = git_info.added > 0 and ("+" .. git_info.added .. " ") or ""
+function M.added()
+	return get_info("added"), signs.Add
+end
 
-  local changed = git_info.changed > 0 and ("~" .. git_info.changed .. " ")
-    or ""
+function M.changed()
+	return get_info("removed"), signs.Changed
+end
 
-  local removed = git_info.removed > 0 and ("-" .. git_info.removed .. " ")
-    or ""
+function M.removed()
+	return get_info("changed"), signs.Removed
+end
 
-  local pad = ((added ~= "") or (removed ~= "") or (changed ~= "")) and " "
-    or ""
-
-  local diff_str = string.format("%s%s%s%s", added, removed, changed, pad)
-
-  return string.format("%s%s %s ", diff_str, branch_sign, git_info.head)
+function M.head()
+	return get_info("head"), signs.branch
 end
 
 return M

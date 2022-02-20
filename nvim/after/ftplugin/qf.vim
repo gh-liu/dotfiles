@@ -1,6 +1,6 @@
 " Autosize quickfix to match its minimum content
 " https://vim.fandom.com/wiki/Automatically_fitting_a_quickfix_window_height
-function! s:adjust_heightminheight, maxheight)
+function! s:adjust_height(minheight, maxheight)
   exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
 endfunction
 
@@ -13,7 +13,7 @@ setlocal nowrap
 setlocal signcolumn=yes
 setlocal colorcolumn=
 set nobuflisted " quickfix buffers should not pop up when doing :bn or :bp
-call s:adjust_height(1, 10)
+call s:adjust_height(1, 12)
 setlocal winfixheight
 
-highlight! link QuickFixLine CursorLine(
+highlight! link QuickFixLine CursorLine

@@ -7,7 +7,8 @@ require("core.autocmd")
 require("core.command")
 
 require("core.colorscheme")
-require("core.statusline")
+
+require("modules.statusline.init")
 
 -- plugins settings
 require("modules.plugins")
