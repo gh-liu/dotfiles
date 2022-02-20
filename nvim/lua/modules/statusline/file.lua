@@ -4,9 +4,17 @@ local bo = vim.bo
 
 local M = {}
 
--- file modified color
-vim.cmd([[hi StatuslineFilenameModified guifg=#d75f5f gui=bold guibg=#3a3a3a]])
-vim.cmd([[hi StatuslineFilenameNoMod guifg=#e9e9e9 gui=bold guibg=#3a3a3a]])
+local function win_id()
+	return vim.g.statusline_winid
+end
+
+local function buf_nr()
+	return vim.api.nvim_win_get_buf(win_id())
+end
+
+local function buf_name()
+	return vim.api.nvim_buf_get_name(buf_nr())
+end
 
 -- file name color
 local function filename_color()
@@ -18,20 +26,15 @@ local function filename_color()
 end
 
 -- file name
-function M.file_name()
-	local win_id = api.nvim_get_current_win()
-	-- local buf_nr = api.nvim_win_get_buf(win_id)
-	-- local buf_name = api.nvim_buf_get_name(buf_nr)
-	local buf_name = api.nvim_buf_get_name(0)
+function M.file_nr_name()
+	local file_name = fn.fnamemodify(buf_name(), [[:~:.]])
 
-	local file_name = fn.fnamemodify(buf_name, [[:~:.]])
-
-	local space = math.min(60, math.floor(0.5 * api.nvim_win_get_width(win_id)))
+	local space = math.min(60, math.floor(0.5 * api.nvim_win_get_width(win_id())))
 	if string.len(file_name) > space then
 		file_name = fn.pathshorten(file_name)
 	end
 
-	return file_name
+	return buf_nr(), file_name
 end
 
 -- is file modified
@@ -54,7 +57,7 @@ function M.file_size()
 	local suffix = { "b", "k", "M", "G", "T", "P", "E" }
 	local index = 1
 
-	local fsize = fn.getfsize(api.nvim_buf_get_name(0))
+	local fsize = fn.getfsize(buf_name())
 	if fsize < 0 then
 		fsize = 0
 	end
@@ -67,17 +70,19 @@ function M.file_size()
 end
 
 function M.file_encoding()
-	return ((bo.fenc ~= "" and bo.fenc) or vim.o.enc):upper()
+	local enc = vim.api.nvim_buf_get_option(buf_nr(), "fileencoding")
+	return ((enc ~= "" and enc) or (bo.fenc ~= "" and bo.fenc) or vim.o.enc):upper()
 end
 
 function M.file_format()
-	return ((bo.fileformat ~= "" and bo.fileformat) or vim.o.fileformat):upper()
+	local fileformat = vim.api.nvim_buf_get_option(buf_nr(), "fileformat")
+	return ((fileformat ~= "" and fileformat) or (bo.fileformat ~= "" and bo.fileformat) or vim.o.fileformat):upper()
 end
 
 function M.file_type()
-	local filetype = bo.filetype
+	local filetype = vim.api.nvim_buf_get_option(buf_nr(), "filetype")
 
-	local filename = api.nvim_buf_get_name(0)
+	local filename = buf_name()
 	local extension = fn.fnamemodify(filename, ":e")
 
 	local icon
@@ -95,12 +100,11 @@ function M.file_type()
 end
 
 function M.get_info()
-	-- fileinfo(buf_nr,bufname,set_modified_symbol)
 	local format_str = "%%#StatuslineModified# %s %%#%s#<%s> %s "
 
 	local filename_color = filename_color()
-	local buf_nr = vim.api.nvim_win_get_buf(win_id)
-	local buf_name = M.file_name()
+
+	local buf_nr, buf_name = M.file_nr_name()
 
 	local buf_modified = M.modified_symbol()
 

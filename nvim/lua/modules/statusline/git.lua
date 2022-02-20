@@ -4,7 +4,7 @@ local signs = {}
 signs.Add = " + "
 signs.Changed = " ~ "
 signs.Removed = " - "
-signs.branch = ""
+signs.branch = "  "
 
 local function get_info(type)
 	local git_info = vim.b.gitsigns_status_dict

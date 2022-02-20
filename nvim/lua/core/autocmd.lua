@@ -94,6 +94,10 @@ local function goimports(timeout_ms)
     return
   end
 
+  if result[1] == nil then
+    return
+  end
+
   local actions = result[1].result
   if not actions then
     return

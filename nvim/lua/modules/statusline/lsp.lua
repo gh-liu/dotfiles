@@ -50,15 +50,4 @@ function M.diagnostic_hints()
 	return diagnostics(severities.HINT), signs.HINT
 end
 
-function M.get_info()
-	local format_str =
-		"%%#StatuslineLintError#%s %%#StatuslineLintWarn#%s %%#StatuslineLintChecking#%s %%#StatuslineLintOk#%s "
-	local e, esign = M.diagnostic_errors()
-	local w, wsign = M.diagnostic_warnings()
-	local i, isign = M.diagnostic_info()
-	local h, hsign = M.diagnostic_hints()
-
-	return string.format(format_str, esign .. e, wsign .. w, isign .. i, hsign .. h)
-end
-
 return M
