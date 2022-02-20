@@ -16,19 +16,26 @@ local function set_color()
 	vim.cmd([[hi StatuslineFilenameModified guifg=#d75f5f gui=bold guibg=#3a3a3a]])
 	vim.cmd([[hi StatuslineFilenameNoMod guifg=#e9e9e9 gui=bold guibg=#3a3a3a]])
 
-	-- vim.cmd([[hi StatuslineSeparator guifg=#3a3a3a gui=none guibg=none]])
+	vim.cmd([[hi StatuslineFiletype guibg=#3a3a3a gui=none guifg=#e9e9e9]])
+
+	vim.cmd([[hi StatuslineSeparator guifg=#3a3a3a gui=none guibg=none]])
+
 	vim.cmd([[hi StatuslinePercentage guibg=#3a3a3a gui=none guifg=#dab997]])
 	vim.cmd([[hi StatuslineNormal guibg=#3a3a3a gui=none guifg=#e9e9e9]])
-	-- vim.cmd([[hi StatuslineVC guibg=#3a3a3a gui=none guifg=#a9a9a9]])
-
-	vim.cmd([[hi StatuslineLintChecking guibg=#3a3a3a gui=none guifg=#458588]])
-	vim.cmd([[hi StatuslineLintError guibg=#3a3a3a gui=none guifg=#d75f5f]])
-	vim.cmd([[hi StatuslineLintWarn guibg=#3a3a3a gui=none guifg=#ffcf00]])
-	vim.cmd([[hi StatuslineLintOk guibg=#3a3a3a gui=none guifg=#b8bb26]])
-	-- vim.cmd([[hi StatuslineLint guibg=#e9e9e9 guifg=#3a3a3a]])
 	vim.cmd([[hi StatuslineLineCol guibg=#3a3a3a gui=none guifg=#878787]])
-	-- vim.cmd([[hi StatuslineTS guibg=#3a3a3a gui=none guifg=#878787]])
-	vim.cmd([[hi StatuslineFiletype guibg=#3a3a3a gui=none guifg=#e9e9e9]])
+
+	-- lsp diagnostic color
+	vim.cmd([[hi StatuslineDiagnosticErrors guibg=#3a3a3a gui=none guifg=#458588]])
+	vim.cmd([[hi StatuslineDiagnosticWarnings guibg=#3a3a3a gui=none guifg=#d75f5f]])
+	vim.cmd([[hi StatuslineDiagnosticInfo guibg=#3a3a3a gui=none guifg=#b8bb26]])
+	vim.cmd([[hi StatuslineDiagnosticHints guibg=#3a3a3a gui=none guifg=#ffcf00]])
+	vim.cmd([[hi StatuslineDiagnosticClient guibg=#3a3a3a gui=none guifg=skyblue]])
+
+	-- git color
+	vim.cmd([[hi StatuslineGitAdded guibg=#3a3a3a gui=none guifg=green]])
+	vim.cmd([[hi StatuslineGitChanged guibg=#3a3a3a gui=none guifg=orange]])
+	vim.cmd([[hi StatuslineGitRemoved guibg=#3a3a3a gui=none guifg=red]])
+	vim.cmd([[hi StatuslineGitBranch guibg=#3a3a3a gui=none guifg=#f44d27]])
 end
 
 set_color()
@@ -88,15 +95,15 @@ function _G.statusline()
 
 			lsp_str = string.format(
 				"%%#%s#%s %%#%s#%s %%#%s#%s %%#%s#%s %%#%s#%s ",
-				"StatuslineNormal",
+				"StatuslineDiagnosticClient",
 				clientsign .. client,
-				"StatuslineLintError",
+				"StatuslineDiagnosticErrors",
 				errorssign .. errors,
-				"StatuslineLintWarn",
+				"StatuslineDiagnosticWarnings",
 				warningssign .. warnings,
-				"StatuslineLintChecking",
+				"StatuslineDiagnosticInfo",
 				infosign .. info,
-				"StatuslineLintOk",
+				"StatuslineDiagnosticHints",
 				hintssign .. hints
 			)
 		end
@@ -115,13 +122,13 @@ function _G.statusline()
 
 			git_str = string.format(
 				"%%#%s#%s%%#%s#%s %%#%s#%s %%#%s#%s",
-				"StatuslineLintOk",
+				"StatuslineGitBranch",
 				head,
-				"StatuslineLintWarn",
+				"StatuslineGitAdded",
 				added,
-				"StatuslineLintChecking",
+				"StatuslineGitChanged",
 				changed,
-				"StatuslineLintError",
+				"StatuslineGitRemoved",
 				removed
 			)
 		end
