@@ -72,6 +72,10 @@ for server, config in pairs(servers) do
     capabilities = handler.capabilities,
     on_attach = handler.on_attach,
     -- autostart = as.is_lsp_autostart(server),
+    flags = {
+      -- This will be the default in neovim 0.7+
+      debounce_text_changes = 150,
+    },
   }
 
   for k, v in pairs(default) do
