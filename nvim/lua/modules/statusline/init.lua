@@ -25,10 +25,10 @@ local function set_color()
 	vim.cmd([[hi StatuslineLineCol guibg=#3a3a3a gui=none guifg=#878787]])
 
 	-- lsp diagnostic color
-	vim.cmd([[hi StatuslineDiagnosticErrors guibg=#3a3a3a gui=none guifg=#458588]])
-	vim.cmd([[hi StatuslineDiagnosticWarnings guibg=#3a3a3a gui=none guifg=#d75f5f]])
-	vim.cmd([[hi StatuslineDiagnosticInfo guibg=#3a3a3a gui=none guifg=#b8bb26]])
-	vim.cmd([[hi StatuslineDiagnosticHints guibg=#3a3a3a gui=none guifg=#ffcf00]])
+	vim.cmd([[hi StatuslineDiagnosticErrors guibg=#3a3a3a gui=none guifg=Red]])
+	vim.cmd([[hi StatuslineDiagnosticWarnings guibg=#3a3a3a gui=none guifg=Orange]])
+	vim.cmd([[hi StatuslineDiagnosticInfo guibg=#3a3a3a gui=none guifg=LightBlue]])
+	vim.cmd([[hi StatuslineDiagnosticHints guibg=#3a3a3a gui=none guifg=LightGrey]])
 	vim.cmd([[hi StatuslineDiagnosticClient guibg=#3a3a3a gui=none guifg=skyblue]])
 
 	-- git color
