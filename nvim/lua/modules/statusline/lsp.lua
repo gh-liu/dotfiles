@@ -31,7 +31,7 @@ function M.lsp_client_names()
 end
 
 local function diagnostics(svrt)
-	return vim.tbl_count(vim.diagnostic.get(0, { severity = svrt }))
+	return vim.tbl_count(vim.diagnostic.get(nil, { severity = svrt }))
 end
 
 function M.diagnostic_errors()
