@@ -53,7 +53,7 @@ M.on_attach = function(client, bufnr)
   -- refactor
   -- as.map('n', '<leader>a', '<cmd>lua vim.lsp.buf.code_action()<cr>')
   -- diagnostic
-  -- as.map('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>')
+  as.map("n", "<leader>dd", "<cmd>lua vim.diagnostic.open_float()<CR>")
   -- as.map('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>')
   as.map("n", "[d", "<cmd>lua vim.diagnostic.goto_prev()<CR>")
   as.map("n", "]d", "<cmd>lua vim.diagnostic.goto_next()<CR>")
