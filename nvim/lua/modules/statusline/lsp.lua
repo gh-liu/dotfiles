@@ -31,23 +31,28 @@ function M.lsp_client_names()
 end
 
 local function diagnostics(svrt)
-	return vim.tbl_count(vim.diagnostic.get(nil, { severity = svrt }))
+	return vim.tbl_count(vim.diagnostic.get(0, { severity = svrt })),
+		vim.tbl_count(vim.diagnostic.get(nil, { severity = svrt }))
 end
 
 function M.diagnostic_errors()
-	return diagnostics(severities.Error), signs.Error
+	local current, all = diagnostics(severities.Error)
+	return current, all, signs.Error
 end
 
 function M.diagnostic_warnings()
-	return diagnostics(severities.WARN), signs.WARN
+	local current, all = diagnostics(severities.WARN)
+	return current, all, signs.WARN
 end
 
 function M.diagnostic_info()
-	return diagnostics(severities.INFO), signs.INFO
+	local current, all = diagnostics(severities.INFO)
+	return current, all, signs.INFO
 end
 
 function M.diagnostic_hints()
-	return diagnostics(severities.HINT), signs.HINT
+	local current, all = diagnostics(severities.HINT)
+	return current, all, signs.HINT
 end
 
 return M

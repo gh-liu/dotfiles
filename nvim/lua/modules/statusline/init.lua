@@ -88,23 +88,31 @@ function _G.statusline()
 		local lsp_str = ""
 		if lsp.is_lsp_attached() then
 			local client, clientsign = lsp.lsp_client_names()
-			local errors, errorssign = lsp.diagnostic_errors()
-			local warnings, warningssign = lsp.diagnostic_warnings()
-			local info, infosign = lsp.diagnostic_info()
-			local hints, hintssign = lsp.diagnostic_hints()
+			local cur_errors, all_errors, errorssign = lsp.diagnostic_errors()
+			local cur_warnings, all_warnings, warningssign = lsp.diagnostic_warnings()
+			local cur_info, all_info, infosign = lsp.diagnostic_info()
+			local cur_hints, all_hints, hintssign = lsp.diagnostic_hints()
+
+			local function contact(current, all)
+				local sep = "/"
+				if all == 0 then
+					return string.format("%s", all)
+				end
+				return string.format("%s%s%s", current, sep, all)
+			end
 
 			lsp_str = string.format(
 				"%%#%s#%s %%#%s#%s %%#%s#%s %%#%s#%s %%#%s#%s ",
 				"StatuslineDiagnosticClient",
 				clientsign .. client,
 				"StatuslineDiagnosticErrors",
-				errorssign .. errors,
+				errorssign .. contact(cur_errors, all_errors),
 				"StatuslineDiagnosticWarnings",
-				warningssign .. warnings,
+				warningssign .. contact(cur_warnings, all_warnings),
 				"StatuslineDiagnosticInfo",
-				infosign .. info,
+				infosign .. contact(cur_info, all_info),
 				"StatuslineDiagnosticHints",
-				hintssign .. hints
+				hintssign .. contact(cur_hints, all_hints)
 			)
 		end
 
