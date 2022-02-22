@@ -57,6 +57,7 @@ function _G.statusline()
 	local ftype = ""
 	local fencoding = ""
 	local line_col_segment = ""
+	local fformat = ""
 	if fname ~= "" then
 		local filetype, filetypeicon = file.file_type()
 		-- local filetype = [[%y]]
