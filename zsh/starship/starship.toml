@@ -1,0 +1,61 @@
+# https://starship.rs/config
+
+# Prompt
+
+# format = """$character"""
+right_format = """$git_branch"""
+
+add_newline = false
+
+# Hide the username. The username will only show in certain scenarios
+[username]
+disabled = true
+
+[hostname]
+disabled = true
+
+[localip]
+disabled = true
+
+[directory]
+style = "bold cyan"
+truncate_to_repo = false
+truncation_length = 8
+
+[character]
+# success_symbol = "[➜](bold green)"
+# error_symbol = "[✘](bold red) "
+success_symbol = "[>](bold green)"
+error_symbol = "[x](bold red)"
+vicmd_symbol = "[<](bold green)"
+
+[line_break]
+disabled = true
+
+[package]
+disabled = true
+
+# [memory_usage]
+# disabled = false
+# threshold = -1
+# symbol = " "
+# style = "bold dimmed green"
+
+# Git
+
+[git_branch]
+format = " [$symbol$branch]($style) "
+
+[git_status]
+disabled = true
+
+[git_commit]
+disabled = true
+
+# Language
+
+[golang]
+disabled = true
+
+[lua]
+disabled = true

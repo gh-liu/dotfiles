@@ -126,13 +126,15 @@ COMMENT
 
 mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
 ln -svf $(pwd)/zsh/.zsh.conf $HOME/.zsh.conf
-ln -svf $(pwd)/zsh/zshrc.omz $HOME/.zshrc
+ln -svf $(pwd)/zsh/zshrc $HOME/.zshrc
 
-ln -svf $(pwd)/zsh/zsh.theme/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
+# ohmyzsh
+ln -svf $(pwd)/zsh/ohmyzsh/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
 
-# zinit & p10k
-# ln -svf $(pwd)/zsh/zshrc.zinit $HOME/.zshrc
-# ln -svf $(pwd)/zsh/zsh.theme/p10k.zsh $HOME/.p10k.zsh
+# starship
+sh -c "$(curl -fsSL https://starship.rs/install.sh)"
+ln -svf $(pwd)/zsh/starship/starship.toml $HOME/.config/starship.toml
+# Add the following to the end of ~/.zshrc: `eval "$(starship init zsh)"`
 
 source $HOME/.zshrc
 
