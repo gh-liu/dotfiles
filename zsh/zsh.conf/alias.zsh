@@ -1,0 +1,45 @@
+#!/bin/sh
+
+alias codei=code-insiders
+
+alias cls='clear'
+
+alias ll='ls -ahlF'
+alias ls='ls --color'
+
+alias cat="bat --style="changes,header""
+
+# list the PATH separated by new lines
+alias lspath='echo $PATH | tr ":" "\n"'
+
+# verbose
+alias mkdir='mkdir -v'
+alias mv='mv -v'
+alias cp='cp -v'
+alias rm='rm -v'
+alias ln='ln -v'
+
+# git
+alias g-repo="git config user.name gh-liu && git config user.email liugh.cs@gmail.com"
+alias git-tree='git log --graph --decorate --pretty=oneline --abbrev-commit'
+alias gcn='git commit -v --no-verify'
+alias gmn='git merge --no-ff'
+
+# tmux
+alias ta='tmux attach -t'
+alias ts='tmux new-session -s'
+alias tl='tmux list-sessions'
+
+alias {ton,tn}='tmux set mouse on'
+alias {tof,tf}='tmux set mouse off'
+
+# tmuxp
+alias tpf='tmuxp freeze'
+alias tpl='tmuxp load'
+alias tpll='tmuxp ls'
+
+# nvim
+# alias v='nvim'
+
+# hugo
+alias hugos="hugo server -D --bind="0.0.0.0" --baseURL=http://$(hostname -I | awk '{print $1}'):1313"

@@ -1,64 +1,24 @@
-#!/bin/sh
-
-alias codei=code-insiders
-# alias tx=tmux
-# alias txp=tmuxp
-
-# alias h=htop
-# alias d=docker
-
-# alias tfs='wmctrl -ir $(xdotool getwindowfocus) -b toggle,fullscreen'
-
-alias ls='ls --color'
-alias ll='ls -ahlF'
-alias cls='clear'
-alias cat="bat --style="changes,header""
-
-# list the PATH separated by new lines
-alias lspath='echo $PATH | tr ":" "\n"'
-
-alias pc='proxychains'
-
-# verbose
-alias mkdir='mkdir -v'
-alias mv='mv -v'
-alias cp='cp -v'
-alias rm='rm -v'
-alias ln='ln -v'
-
-# git
-alias g-repo="git config user.name gh-liu && git config user.email liugh.cs@gmail.com"
-alias git-tree='git log --graph --decorate --pretty=oneline --abbrev-commit'
-alias gcn='git commit -v --no-verify'
-alias gmn='git merge --no-ff'
-
-# tmux
-alias ta='tmux attach -t'
-# alias tad='tmux attach -d -t'
-alias ts='tmux new-session -s'
-alias tl='tmux list-sessions'
-# alias tksv='tmux kill-server'
-# alias tkss='tmux kill-session -t'
-alias {ton,tn}='tmux set mouse on'
-alias {tof,tf}='tmux set mouse off'
-
-alias tpf='tmuxp freeze'
-alias tpl='tmuxp load'
-alias tpll='tmuxp ls'
-
-# rust
-# alias cg='cargo'
-# alias cgfmt='cargo-fmt'
 
 # nvim
-alias v='nvim'
-# if command -v nvim &> /dev/null
-# then
-#     alias vim='nvim'
-# fi
+update_nvim () {
+  version=$(curl -s https://api.github.com/repos/neovim/neovim/tags |jq '.[0].name')
+  url="https://github.com/neovim/neovim/releases/download/$version/nvim-linux64.tar.gz"
 
-# hugo
-alias hugos="hugo server -D --bind="0.0.0.0" --baseURL=http://$(hostname -I | awk '{print $1}'):1313"
+	wget url
+
+	tar -zxf nvim-linux64.tar.gz
+	rm nvim-linux64.tar.gz
+
+	mkdir -p ~/.local/bin/nvim
+	sudo rm -rf ~/.local/bin/nvim
+
+	mv nvim-linux64 ~/.local/bin/nvim
+	sudo rm -f /usr/local/bin/nvim
+
+	ln -s ~/.local/bin/nvim/bin/nvim /usr/local/bin/nvim
+
+  nvim --version
+}
 
 # archives
 function extract {

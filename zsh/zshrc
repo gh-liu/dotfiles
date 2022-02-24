@@ -1,10 +1,44 @@
 # You may need to manually set your language environment
 export LANG=en_US.UTF-8
 
+export DISABLE_AUTO_TITLE='true'
+
 # User configuration
 for file in ~/.zsh.conf/*; do
     source $file
 done
 
+tools=$HOME/tools
+mkdir -p $tools
+
 # starship
+# export STARSHIP_CONFIG=$HOME/.config/zsh/config.toml
+if [ ! -f "`which starship`" ]; then
+	echo "Installing starship ..."
+    sh -c "$(curl -fsSL https://starship.rs/install.sh)"
+fi
 eval "$(starship init zsh)"
+
+# direnv
+if [ ! -f "`which direnv`" ]; then
+	echo "Installing direnv ..."
+    sh -c "$(curl -fsSL https://direnv.net/install.sh)"
+fi
+eval "$(direnv hook zsh)"
+
+# fzf
+# if [ -f "`which fzf`" ]; then
+#     [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# fi
+
+# z.lua
+# if type '_zlua' 2>/dev/null | grep -q 'function'; then
+#     echo "Installing z.lua ..."
+#     git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
+# fi
+[ -d $tools/z.lua ] && eval "$(lua $tools/z.lua/z.lua --init zsh)"
+
+# https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
+stty -ixon
+
+# setxkbmap -option ctrl:swapcaps

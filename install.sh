@@ -125,7 +125,7 @@ COMMENT
 #### config
 
 mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
-ln -svf $(pwd)/zsh/.zsh.conf $HOME/.zsh.conf
+ln -svf $(pwd)/zsh/zsh.conf $HOME/.zsh.conf
 ln -svf $(pwd)/zsh/zshrc $HOME/.zshrc
 
 # ohmyzsh
@@ -190,7 +190,7 @@ sudo make install
 
 ### z.lua
 
-git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
+# git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
 
 ### tmuxp
 
