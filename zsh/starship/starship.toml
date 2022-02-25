@@ -2,8 +2,11 @@
 
 # Prompt
 
-# format = """$character"""
-right_format = """$git_branch"""
+format = """
+$directory\
+$character"""
+
+# right_format = """$git_branch"""
 
 add_newline = false
 

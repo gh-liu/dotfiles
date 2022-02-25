@@ -43,3 +43,8 @@ alias tpll='tmuxp ls'
 
 # hugo
 alias hugos="hugo server -D --bind="0.0.0.0" --baseURL=http://$(hostname -I | awk '{print $1}'):1313"
+
+# golang
+
+alias gotc='go tool compile -S -N -l'
+alias gobs='go build -gcflags -S'
