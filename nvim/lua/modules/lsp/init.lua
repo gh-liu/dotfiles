@@ -28,6 +28,7 @@ servers.gopls = {
         unusedparams = true,
       },
       staticcheck = true,
+      gofumpt = true,
     },
   },
   init_options = {
@@ -35,6 +36,7 @@ servers.gopls = {
   },
 }
 handler.setup_auto_format("go")
+-- handler.setup_auto_format("go", [[lua require('modules.lang.format').format_file("gofumpt","-w")]])
 
 -- lua
 local runtime_path = vim.split(package.path, ";")
