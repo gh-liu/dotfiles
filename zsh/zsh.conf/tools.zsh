@@ -23,18 +23,23 @@
 # }
 
 update_go () {
-  set e
-
   cd $GOPATH && cd ..
 
-  GOVERSION=$(curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $2}' | tr -d ',"')  # get latest go version  
+  GOVERSION=$1
+  if [ -z $GOVERSION ]; then
+    GOVERSION=$(curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $2}' | tr -d ',"')  # get latest go version  
+  fi
+
   GOARCH=$(if [[ $(uname -m) == "x86_64" ]] ; then echo amd64; else echo $(uname -m); fi) # get either amd64 or arm64 (darwin/m1)
 
   wget "https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz"
 
+  echo "update golang to $GOVERSION"
+
   OLDVERSION=$(go version | awk '{print $3}')
   echo "old version: $OLDVERSION"
   # bake old version
+  rm -rf $PWD/$OLDVERSION
   mv $PWD/go $PWD/$OLDVERSION
 
   tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz && rm $GOVERSION.linux-$GOARCH.tar.gz
