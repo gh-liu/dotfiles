@@ -63,3 +63,7 @@ alias fmts='gosimports -w . && go mod tidy'
 
 alias gotc='go tool compile -S -N -l'
 alias gobs='go build -gcflags -S'
+
+goasm() {
+        go build -gcflags=-S 2>&1 $@ | grep -v PCDATA | grep -v FUNCDATA | less
+}

@@ -100,6 +100,8 @@ update_nvim () {
 	tar -zxf nvim-linux64.tar.gz
 	rm nvim-linux64.tar.gz
 
+  mkdir -p ~/.local/bin
+  
 	sudo rm -rf ~/.local/bin/nvim
 	mv nvim-linux64 ~/.local/bin/nvim
 

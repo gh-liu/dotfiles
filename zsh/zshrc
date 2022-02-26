@@ -42,3 +42,6 @@ eval "$(direnv hook zsh)"
 stty -ixon
 
 # setxkbmap -option ctrl:swapcaps
+
+# https://superuser.com/questions/523564/emacs-keybindings-in-zsh-not-working-ctrl-a-ctrl-e
+bindkey -e
