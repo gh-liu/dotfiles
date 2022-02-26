@@ -1,5 +1,12 @@
 #!/bin/sh
+# You may need to manually set your language environment
+export LANG=en_US.UTF-8
+export TERM="screen-256color"
+export DISABLE_AUTO_TITLE='true'
+
 export OS=`echo \`uname\` | tr '[:upper:]' '[:lower:]'`
+export HOSTIP=$(hostname -I | awk '{print $1}')
+
 
 # $EDITOR
 if command -v nvim &> /dev/null
@@ -9,49 +16,47 @@ else
     export EDITOR=vim
 fi
 
-export TERM="screen-256color"
-
-export HOSTIP=$(hostname -I | awk '{print $1}')
-
-# go env
+# golang env
 export GO111MODULE=on
 #export GOPROXY=direct
 # export GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
 # export GOSUMDB=gosum.io+ce6e7565+AY5qEHUk/qmHc5btzW45JVoENfazw8LielDsaI+lEbq6
-export GOPATH=~/env/golang/gopath
+
+export GOROOT=$DEV_ENV/golang/go
+export GOPATH=$DEV_ENV/golang/gopath
 export GOBIN=$GOPATH/bin
-export GOROOT=~/env/golang/go
-# export PATH=$PATH:$GOBIN:$GOROOT/bin/
 # export GOPRIVATE=
+export PATH=$PATH:$GOBIN:$GOROOT/bin/
+
+
+# rust
+# curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+export RUSTUP_HOME=$DEV_ENV/rust/rustup
+export CARGO_HOME=$DEV_ENV/rust/cargo
+# export PATH=$PATH:$HOME/.cargo/bin
+
 
 # node env
-export NODE_HOME=~/env/nodejs/node
+export NODE_HOME=$DEV_ENV/nodejs/node
+export PATH=$PATH:$NODE_HOME/bin
+
 
 # java env
-export JAVA_HOME=~/env/java/jdk
+export JAVA_HOME=$DEV_ENV/java/jdk
 export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+export PATH=$PATH:$JAVA_HOME/bin 
 
 # docker
-export DOCKER_DATA=~/env/docker/data
-export DOCKER_CONF=~/env/docker/conf
+export DOCKER_DATA=$DEV_ENV/docker/data
+export DOCKER_CONF=$DEV_ENV/docker/conf
+
 
 # vagrant
-export VGHOME=~/env/vm
+export VGHOME=$DEV_ENV/vm
 
-# vagrant
-export TMUXP=~/.tmuxp
 
-export NOTES_DIR=~/mynotes
+export PATH=$PATH:$HOME/bin:$HOME/.local/bin
 
-path=(
-    $HOME/bin
-    $GOPATH/bin                              # golang
-    $GOROOT/bin
-    $JAVA_HOME/bin                           # java
-    $NODE_HOME/bin                           # nodejs
-    $HOME/.local/bin                         # pipx
-    $path
-  )
-export PATH=":$PATH"
+# Remove duplicate env var
+export PATH=$(echo $PATH | tr : "\n"| sort | uniq | tr "\n" :)
 
-export tools=~/tools
