@@ -22,6 +22,49 @@
 #     echo "unset proxy"
 # }
 
+update_lsp_bin () {
+  go install golang.org/x/tools/gopls@latest
+
+  npm i -g vscode-langservers-extracted
+
+  npm i -g yaml-language-server
+
+  npm i -g bash-language-server
+
+  npm i -g vim-language-server
+}
+
+update_nodejs () {
+  cd $NODE_HOME && cd ..
+
+  NODEJSVERSION=$1
+  if [ -z $NODEJSVERSION ]; then
+    NODEJSVERSION=$(curl -s https://api.github.com/repos/nodejs/node/tags |jq '.[0].name')
+    NODEJSVERSION=${NODEJSVERSION//\"/}
+  fi
+  
+  NODEJSARCH=x64
+
+  wget https://nodejs.org/dist/$NODEJSVERSION/node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
+
+  echo "update nodejs to $NODEJSVERSION"
+
+  OLDVERSION=$(node -v)
+  echo "old version: $OLDVERSION"
+  # bakeup old version
+  rm -rf $PWD/$OLDVERSION
+  mv $PWD/node $PWD/$OLDVERSION
+
+  xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
+  tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
+
+  mv node-$NODEJSVERSION-linux-$NODEJSARCH node
+}
+
+update_npm () {
+  npm install npm@latest -g
+}
+
 update_go () {
   cd $GOPATH && cd ..
 
@@ -38,7 +81,7 @@ update_go () {
 
   OLDVERSION=$(go version | awk '{print $3}')
   echo "old version: $OLDVERSION"
-  # bake old version
+  # bakeup old version
   rm -rf $PWD/$OLDVERSION
   mv $PWD/go $PWD/$OLDVERSION
 

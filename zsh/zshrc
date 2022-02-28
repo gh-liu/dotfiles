@@ -1,4 +1,12 @@
 #!/bin/sh
+# https://superuser.com/questions/523564/emacs-keybindings-in-zsh-not-working-ctrl-a-ctrl-e
+bindkey -e
+
+# https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
+stty -ixon
+
+# setxkbmap -option ctrl:swapcaps
+
 export DEV_ENV=$HOME/env
 export DEV_TOOLS=$HOME/tools
 
@@ -14,6 +22,35 @@ fi
 for file in ~/.zsh.conf/*; do
     source $file
 done
+
+# zinit
+ZINIT_HOME=$DEV_TOOLS/zinit
+if [ ! -f "$ZINIT_HOME/zinit.zsh" ]; then
+    echo "Installing zinit ..."
+    [ ! -d "$ZINIT_HOME" ] && mkdir -p $ZINIT_HOME
+    git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+fi
+source "${ZINIT_HOME}/zinit.zsh"
+
+## plugins
+# zinit light zsh-users/zsh-completions
+zinit light zsh-users/zsh-autosuggestions
+zinit light zsh-users/zsh-syntax-highlighting
+
+# zinit light zdharma-continuum/fast-syntax-highlighting
+
+zinit light jocelynmallon/zshmarks
+
+# https://medium.com/@dannysmith/little-thing-2-speeding-up-zsh-f1860390f92
+autoload -Uz compinit
+for dump in ~/.zcompdump(N.mh+24); do
+  compinit
+done
+compinit -C
+
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
 
 # starship
 # export STARSHIP_CONFIG=$HOME/.config/zsh/config.toml
@@ -34,6 +71,7 @@ eval "$(direnv hook zsh)"
 # if [ -f "`which fzf`" ]; then
 #     [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 # fi
+# export FZF_DEFAULT_OPTS='--height 60% --layout=reverse --border'
 
 # z.lua
 # if type '_zlua' 2>/dev/null | grep -q 'function'; then
@@ -42,10 +80,3 @@ eval "$(direnv hook zsh)"
 # fi
 [ -d $DEV_TOOLS/z.lua ] && eval "$(lua $DEV_TOOLS/z.lua/z.lua --init zsh)"
 
-# https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
-stty -ixon
-
-# setxkbmap -option ctrl:swapcaps
-
-# https://superuser.com/questions/523564/emacs-keybindings-in-zsh-not-working-ctrl-a-ctrl-e
-bindkey -e

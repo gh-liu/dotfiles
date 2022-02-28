@@ -27,13 +27,23 @@ alias ln='ln -v'
 
 # git
 alias g-repo="git config user.name gh-liu && git config user.email liugh.cs@gmail.com"
+
 alias g="git"
 alias git-tree='git log --graph --decorate --pretty=oneline --abbrev-commit'
-alias gcn='git commit -v --no-verify'
+# alias gcn='git commit -v --no-verify'
 alias gmn='git merge --no-ff'
 
 alias gco='git checkout'
 alias gcb='git checkout -b'
+
+alias gcl='git clone '
+alias gst='git status'
+
+alias gb='git branch'
+alias ga='git add '
+
+alias ggl='git pull '
+alias ggp='git push '
 
 # tmux
 alias ta='tmux attach -t'
