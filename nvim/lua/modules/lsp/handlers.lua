@@ -66,7 +66,7 @@ M.on_attach = function(client, bufnr)
   as.map("n", "<leader>F", "<cmd>lua vim.lsp.buf.formatting()<CR>")
   as.map("n", "<leader>L", "<cmd>lua vim.lsp.codelens.run()<CR>")
 
-  print(vim.inspect(client.resolved_capabilities))
+  -- print(vim.inspect(client.resolved_capabilities))
 
   if client.resolved_capabilities["code_lens"] then
     vim.cmd("highlight default link LspCodeLens WarningMsg")
