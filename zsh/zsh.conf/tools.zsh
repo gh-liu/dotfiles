@@ -34,6 +34,23 @@ update_lsp_bin () {
   npm i -g vim-language-server
 }
 
+FZF_HOME="$DEV_TOOLS/fzf"
+update_fzf(){
+  if [ ! -d $FZF_HOME ];then
+    mkdir -p $FZF_HOME
+    git clone --depth 1 https://github.com/junegunn/fzf.git $FZF_HOME
+  else
+    cd $FZF_HOME
+    git pull
+  fi
+
+  $FZF_HOME/install
+
+  if [ ! -f "`which fzf`" ]; then
+    ln -svf $FZF_HOME/bin/fzf ~/.local/bin/fzf
+  fi
+}
+
 update_nodejs () {
   cd $NODE_HOME && cd ..
 
@@ -239,4 +256,14 @@ function manswitch () { man $1 | less -p "^ +$2"; }
 # mkdir and cd
 mc () {
 	mkdir -p -- "$1" && cd -P -- "$1"
+}
+
+function workup {
+    if [[ -n "$TMUX" ]]
+    then
+        return 0
+    fi
+    tmux ls -F '#{session_name}' |
+    fzf --bind=enter:replace-query+print-query |
+    read session && tmux attach -t ${session:-default} || tmux new -s ${session:-default}
 }
