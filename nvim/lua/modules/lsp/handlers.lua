@@ -66,17 +66,23 @@ M.on_attach = function(client, bufnr)
   as.map("n", "<leader>F", "<cmd>lua vim.lsp.buf.formatting()<CR>")
   as.map("n", "<leader>L", "<cmd>lua vim.lsp.codelens.run()<CR>")
 
+  print(vim.inspect(client.resolved_capabilities))
+
   if client.resolved_capabilities["code_lens"] then
     vim.cmd("highlight default link LspCodeLens WarningMsg")
     vim.cmd("highlight default link LspCodeLensText WarningMsg")
     vim.cmd("highlight default link LspCodeLensTextSign LspCodeLensText")
     vim.cmd("highlight default link LspCodeLensTextSeparator Boolean")
-
     -- vim.lsp.codelens.refresh()
     vim.cmd(
       [[autocmd CursorHold,InsertLeave <buffer> lua vim.lsp.codelens.refresh()]]
     )
   end
+
+  -- if client.resolved_capabilities["document_formatting"] then
+  --   local command = "lua vim.lsp.buf.formatting_sync()"
+  --   vim.cmd(string.format("autocmd BufWritePre <buffer> %s", command))
+  -- end
 end
 
 M.setup_auto_format = function(ft, command)
