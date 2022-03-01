@@ -32,6 +32,8 @@ update_lsp_bin () {
   npm i -g bash-language-server
 
   npm i -g vim-language-server
+
+  npm i -g typescript typescript-language-server
 }
 
 FZF_HOME="$DEV_TOOLS/fzf"
