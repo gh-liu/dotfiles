@@ -238,6 +238,9 @@ return require("packer").startup(function(use)
   -- use("folke/lua-dev.nvim")
   use("ckipp01/stylua-nvim")
 
+  -- Rust
+  use("simrat39/rust-tools.nvim")
+
   -- Clojure dev
   -- use("Olical/conjure")
 
