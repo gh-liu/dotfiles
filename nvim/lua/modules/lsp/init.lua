@@ -15,6 +15,7 @@ local servers = {
 	"yamlls",
 	"rust_analyzer",
 	"tsserver",
+	"dockerls",
 }
 
 handler.setup_auto_format("go")

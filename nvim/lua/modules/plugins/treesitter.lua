@@ -1,7 +1,7 @@
 local tsconf = require("nvim-treesitter.configs")
 
-vim.api.nvim_command("set foldmethod=expr")
-vim.api.nvim_command("set foldexpr=nvim_treesitter#foldexpr()")
+-- vim.api.nvim_command("set foldmethod=expr")
+-- vim.api.nvim_command("set foldexpr=nvim_treesitter#foldexpr()")
 
 tsconf.setup({
 	ensure_installed = {
@@ -14,10 +14,13 @@ tsconf.setup({
 		"json",
 		"json5",
 		"yaml",
-		"dockerfile",
 		"toml",
+		"dockerfile",
 		"query",
 		"markdown",
+		"rust",
+		"javascript",
+		"typescript",
 	},
 	sync_install = false, -- install languages synchronously (only applied to `ensure_installed`)
 	ignore_install = {}, -- List of parsers to ignore installing
@@ -72,17 +75,6 @@ tsconf.setup({
 			},
 		},
 	},
-	-- tree_docs = {
-	--     enable = true,
-	--     keymap = {
-	--         doc_node_at_cursor = "<leader>dd",
-	--         doc_all_in_range = "<leader>dd"
-	--     },
-	--     spec_config = {}
-	-- },
-	-- matchup = {
-	--     enable = true
-	-- },
 	rainbow = {
 		enable = true,
 		-- disable = { "jsx", "cpp" }, -- list of languages you want to disable the plugin for

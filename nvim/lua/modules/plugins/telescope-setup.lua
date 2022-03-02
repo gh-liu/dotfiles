@@ -1,9 +1,5 @@
 local map = as.map
 
-local silent = {
-  silent = true,
-}
-
 -- File Pickers
 map("n", "<c-p>", [[<cmd>Telescope find_files<cr>]])
 map("i", "<c-p>", [[<cmd>Telescope find_files<cr>]])
@@ -39,12 +35,7 @@ map("n", "gr", [[<cmd>Telescope lsp_references<cr>]])
 map("n", "gi", [[<cmd>Telescope lsp_implementations<cr>]])
 
 map("n", "<leader>g0", [[<cmd>Telescope lsp_document_symbols<cr>]])
-map(
-  "n",
-  "<leader>gW",
-  [[<cmd>Telescope lsp_dynamic_workspace_symbols<cr>]],
-  silent
-)
+map("n", "<leader>gW", [[<cmd>Telescope lsp_dynamic_workspace_symbols<cr>]])
 
 -- Treesitter Picker
 -- map('n', '<leader>d', [[<cmd>Telescope treesitter<cr>]])
@@ -55,5 +46,5 @@ map(
 map("n", ";", "<cmd>Telescope commands<cr>")
 
 vim.cmd(
-  [[command! Dotfiles silent lua require('telescope.builtin').git_files({cwd= vim.env.HOME .. "/.config/nvim" })]]
+	[[command! Dotfiles silent lua require('telescope.builtin').git_files({cwd= vim.env.HOME .. "/.config/nvim" })]]
 )

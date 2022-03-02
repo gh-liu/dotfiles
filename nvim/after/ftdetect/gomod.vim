@@ -1,0 +1,1 @@
+au BufRead,BufNewFile,BufEnter go.mod set filetype=gomod

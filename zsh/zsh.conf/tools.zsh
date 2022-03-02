@@ -34,6 +34,8 @@ update_lsp_bin () {
   npm i -g vim-language-server
 
   npm i -g typescript typescript-language-server
+
+  npm i -g dockerfile-language-server-nodejs
 }
 
 FZF_HOME="$DEV_TOOLS/fzf"
