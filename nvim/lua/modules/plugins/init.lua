@@ -33,32 +33,41 @@ packer.init({
 return require("packer").startup(function(use)
   -- Packer
   use("wbthomason/packer.nvim")
-
   -- NOTE: this is plugin is unnecessary once https://github.com/neovim/neovim/pull/15436 is merged
   use({ "lewis6991/impatient.nvim" })
+
+  -- require by other plugins
+  use({
+    { "nvim-lua/popup.nvim" },
+    { "nvim-lua/plenary.nvim" },
+  })
 
   -- ====== UI ======
   -- schemes
   use("sainnhe/gruvbox-material")
 
-  -- statusline
-  -- use({
-  --   "feline-nvim/feline.nvim",
-  --   config = function()
-  --     require("feline").setup({
-  --       preset = "noicon",
-  --     })
-  --   end,
-  -- })
-
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
+
+  -- ====== Treesitter ======
+  use({
+    "nvim-treesitter/nvim-treesitter",
+    requires = {
+      "nvim-treesitter/nvim-treesitter-textobjects",
+      "nvim-treesitter/nvim-treesitter-refactor",
+    },
+    config = [[require('modules.plugins.treesitter')]],
+    run = ":TSUpdate",
+  })
+  use({
+    "nvim-treesitter/playground",
+  })
+  use("p00f/nvim-ts-rainbow")
 
   -- ====== Telescope ======
   use({
     "nvim-telescope/telescope.nvim",
     requires = {
-      "nvim-lua/plenary.nvim",
       "telescope-fzf-native.nvim",
     },
     setup = [[require('modules.plugins.telescope-setup')]],
@@ -72,15 +81,7 @@ return require("packer").startup(function(use)
     "nvim-telescope/telescope-file-browser.nvim",
     config = [[require('modules.plugins.telescope-file-browser')]],
   })
-  -- use("nvim-telescope/telescope-github.nvim")
-  -- use({ "nvim-telescope/telescope-file-browser.nvim" })
-  -- use({
-  -- 	"nvim-telescope/telescope-frecency.nvim",
-  -- 	config = function()
-  -- 		require("telescope").load_extension("frecency")
-  -- 	end,
-  -- 	requires = { "tami5/sqlite.lua" },
-  -- })
+
   use({
     "edolphin-ydf/goimpl.nvim",
     requires = {
@@ -101,31 +102,12 @@ return require("packer").startup(function(use)
     end,
   })
 
-  -- ====== Treesitter ======
-  use({
-    "nvim-treesitter/nvim-treesitter",
-    requires = {
-      "nvim-treesitter/nvim-treesitter-textobjects",
-      "nvim-treesitter/nvim-treesitter-refactor",
-    },
-    config = [[require('modules.plugins.treesitter')]],
-    run = ":TSUpdate",
-  })
-  use({
-    "nvim-treesitter/playground",
-  })
-  -- use("nvim-treesitter/nvim-tree-docs")
-  use("p00f/nvim-ts-rainbow")
-  -- use("romgrk/nvim-treesitter-context")
-
   -- ====== Coding ======
   -- LSP
   use({
     "neovim/nvim-lspconfig",
   })
   use({ "onsails/lspkind-nvim" })
-  -- use("nvim-lua/lsp-status.nvim")
-  -- use({ "ray-x/lsp_signature.nvim" })
   use({
     "kosayoda/nvim-lightbulb",
     config = function()
@@ -148,17 +130,6 @@ return require("packer").startup(function(use)
       })
     end,
   })
-  -- use({
-  -- 	"simrat39/symbols-outline.nvim",
-  -- 	setup = function()
-  -- 		vim.g.symbols_outline = {
-  -- 			position = "left",
-  -- 		}
-  -- 	end,
-  -- 	config = function()
-  -- 		require("config.symbols-outline")
-  -- 	end,
-  -- })
 
   --  Autocompletion
   use({
@@ -188,7 +159,6 @@ return require("packer").startup(function(use)
       },
     },
     config = [[require('modules.plugins.cmp')]],
-    -- event = "InsertEnter *",
   })
   use("hrsh7th/cmp-cmdline")
   use({ "rafamadriz/friendly-snippets" })
@@ -200,27 +170,23 @@ return require("packer").startup(function(use)
       vim.cmd([[
               imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
               let g:copilot_no_tab_map = v:true
+              let g:copilot_filetypes = {
+                \ 'TelescopePrompt': v:false,
+                \ }
               ]])
     end,
   })
 
   -- Comment
-  -- use({
-  -- 	"numToStr/Comment.nvim",
-  -- 	config = function()
-  -- 		require("config.comment")
-  -- 	end,
-  -- })
   use({
     "tpope/vim-commentary",
     config = [[require('modules.plugins.vim-commentary')]],
   })
-  -- use("JoosepAlviste/nvim-ts-context-commentstring")
 
   -- Refactoring
   -- use({
   -- 	"ThePrimeagen/refactoring.nvim",
-  -- 	requires = { { "nvim-lua/plenary.nvim" }, { "nvim-treesitter/nvim-treesitter" } },
+  -- 	requires = { { "nvim-treesitter/nvim-treesitter" } },
   -- 	config = [[require('modules.plugins.refactoring')]],
   -- })
 
@@ -255,28 +221,19 @@ return require("packer").startup(function(use)
   use({
     {
       "TimUntersberger/neogit",
-      requires = "nvim-lua/plenary.nvim",
       config = [[require('modules.plugins.neogit')]],
     },
     {
       "lewis6991/gitsigns.nvim",
-      requires = { "nvim-lua/plenary.nvim" },
       config = [[require('modules.plugins.gitsigns')]],
     },
   })
   use({
     "sindrets/diffview.nvim",
-    requires = "nvim-lua/plenary.nvim",
     -- config = [[require('diffview').setup {use_icons = false}]],
   })
 
   -- ====== Language Specified ======
-  -- -- Go dev
-  -- use({
-  -- 	"ray-x/go.nvim",
-  -- 	config = [[require('go').setup()]],
-  -- })
-
   -- Lua dev
   -- use("folke/lua-dev.nvim")
   use("ckipp01/stylua-nvim")
@@ -296,6 +253,7 @@ return require("packer").startup(function(use)
   use({
     "folke/zen-mode.nvim",
   })
+
   use("editorconfig/editorconfig-vim")
 
   -- Profiling
@@ -321,14 +279,10 @@ return require("packer").startup(function(use)
 
   use({
     "folke/todo-comments.nvim",
-    requires = "nvim-lua/plenary.nvim",
     config = function()
       require("todo-comments").setup({})
     end,
   })
-
-  -- template
-  -- use("mattn/vim-sonictemplate")
 
   -- Quickfix
   -- use("kevinhwang91/nvim-bqf")

@@ -2,21 +2,6 @@ _G.as = {}
 
 local cmd = vim.api.nvim_command
 
--- create global variables for config file
---
--- local ok, config = pcall(require, "config")
--- if ok then
--- 	for k, v in pairs(config) do
--- 		local key = "self_" .. k
--- 		if not vim.g[key] then
--- 			if string.match(k, "themes") then
--- 				vim.g[k] = v
--- 			end
--- 			vim.g[key] = v
--- 		end
--- 	end
--- end
-
 -- options
 --
 function as.opt(o, v, scopes)
@@ -109,22 +94,8 @@ as.au = setmetatable({}, {
 	__call = autocmd,
 })
 
--- lsp
---
--- function as.is_lsp_autostart(server)
--- 	local blacklist = vim.g.self_lsp_autostart_blacklist
--- 	if blacklist == nil or #blacklist < 1 then
--- 		return true
--- 	end
--- 	for _, v in pairs(blacklist) do
--- 		if server == v then
--- 			return false
--- 		end
--- 	end
--- 	return true
--- end
-
 -- default option
+--
 function as._default_bool(val, default)
 	if val == true or val == nil and default == nil then
 		return true
@@ -147,13 +118,6 @@ function as._if_nil(val, default)
 	end
 	return val
 end
-
--- pretty print wrapper for lua tables
---
--- function as.pprint(...)
--- 	local objects = vim.tbl_map(vim.inspect, { ... })
--- 	print(table.unpack(objects))
--- end
 
 -- treesitter
 --
