@@ -18,9 +18,6 @@ au.BufEnter = {
 	end,
 }
 
--- filetype
-cmd("filetype plugin indent on")
-
 local function goimports(timeout_ms)
 	timeout_ms = timeout_ms or 1000
 	local context = {
