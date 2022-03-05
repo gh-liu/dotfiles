@@ -271,3 +271,7 @@ function workup {
     fzf --bind=enter:replace-query+print-query |
     read session && tmux attach -t ${session:-default} || tmux new -s ${session:-default}
 }
+
+function time-zsh() {
+  for i in $(seq 1 10); do /usr/bin/time zsh -i -c exit; done
+}

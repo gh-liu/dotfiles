@@ -77,3 +77,8 @@ alias gobs='go build -gcflags -S'
 goasm() {
         go build -gcflags=-S 2>&1 $@ | grep -v PCDATA | grep -v FUNCDATA | less
 }
+
+LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}')
+if [ $LinuxDistro = "Ubuntu" ];then
+        alias suaptup='sudo apt update -y && sudo apt upgrade -y'
+fi
