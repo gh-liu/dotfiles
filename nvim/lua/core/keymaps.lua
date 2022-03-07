@@ -10,7 +10,7 @@ map("n", "'", "`")
 
 -- <Leader>[1-9] move to tab [1-9]
 for i = 1, 9, 1 do
-	map("n", "<leader>" .. i, i .. "gt")
+  map("n", "<leader>" .. i, i .. "gt")
 end
 -- Select tab
 map("n", "[w", "<cmd>tabprevious<cr>")
@@ -127,48 +127,52 @@ map("n", "<leader>ev", ":tabnew $MYVIMRC<cr>")
 vim.cmd([[ nnoremap <silent> <space> @=(foldlevel('.')?'za':"\<space>")<cr> ]])
 
 local function map_change_option(...)
-	local prefix = "co"
-	local key = select(1, ...)
-	local opt = select(2, ...)
-	local op = ":set " .. opt .. "!" .. " <bar> set " .. opt .. "?<cr>"
-	vim.api.nvim_set_keymap("n", prefix .. key, op, {})
+  local prefix = "co"
+  local key = select(1, ...)
+  local opt = select(2, ...)
+  local op = ":set " .. opt .. "!" .. " <bar> set " .. opt .. "?<cr>"
+  vim.api.nvim_set_keymap("n", prefix .. key, op, {})
 end
 
-map_change_option("w", "warp")
+map_change_option("w", "wrap")
 map_change_option("p", "paste")
 map_change_option("n", "number")
 map_change_option("r", "relativenumber")
 map_change_option("h", "hlsearch")
 
 function _G.smartquit()
-	local buf_nums = vim.fn.len(vim.fn.getbufinfo({ buflisted = 1 }))
+  local buf_nums = vim.fn.len(vim.fn.getbufinfo({ buflisted = 1 }))
 
-	if buf_nums == 1 then
-		local ok = pcall(vim.cmd, ":silent quit")
-		if not ok then
-			local choice = vim.fn.input("E37: Discard changes?  Y|y = Yes, N|n = No, W|w = Write and quit: ")
-			if choice == "y" then
-				vim.cmd("quit!")
-			elseif choice == "w" then
-				vim.cmd("write")
-				vim.cmd("quit")
-			else
-				vim.fn.feedkeys("\\<ESC>")
-			end
-		end
-	else
-		local ok = pcall(vim.cmd, "bw")
+  if buf_nums == 1 then
+    local ok = pcall(vim.cmd, ":silent quit")
+    if not ok then
+      local choice = vim.fn.input(
+        "E37: Discard changes?  Y|y = Yes, N|n = No, W|w = Write and quit: "
+      )
+      if choice == "y" then
+        vim.cmd("quit!")
+      elseif choice == "w" then
+        vim.cmd("write")
+        vim.cmd("quit")
+      else
+        vim.fn.feedkeys("\\<ESC>")
+      end
+    end
+  else
+    local ok = pcall(vim.cmd, "bw")
 
-		if not ok then
-			local choice = vim.fn.input("E37: Discard changes?  Y|y = Yes, N|n = No, W|w = Write and quit: ")
-			if choice == "y" then
-				vim.cmd("bw!")
-			elseif choice == "w" then
-				vim.cmd("write")
-				vim.cmd("bw")
-			else
-				vim.fn.feedkeys("\\<ESC>")
-			end
-		end
-	end
+    if not ok then
+      local choice = vim.fn.input(
+        "E37: Discard changes?  Y|y = Yes, N|n = No, W|w = Write and quit: "
+      )
+      if choice == "y" then
+        vim.cmd("bw!")
+      elseif choice == "w" then
+        vim.cmd("write")
+        vim.cmd("bw")
+      else
+        vim.fn.feedkeys("\\<ESC>")
+      end
+    end
+  end
 end

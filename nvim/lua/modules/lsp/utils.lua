@@ -1,7 +1,5 @@
 local M = {}
 
-
-
 M.check_capabilities = function(feature, client_id)
   local clients = vim.lsp.buf_get_clients(client_id or 0)
 

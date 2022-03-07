@@ -13,6 +13,7 @@ vim.cmd([[
         put! = a:cmd
         put = '----'
       endfunction
+      
       command! -nargs=1 Redir silent call Redir(<f-args>)
 ]])
 

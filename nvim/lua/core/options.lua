@@ -92,18 +92,18 @@ opt("display", "msgsep")
 
 -- Disable some we don't want
 local disabled_built_ins = {
-	"gzip",
-	"man",
-	"matchparen",
-	"shada_plugin",
-	"tarPlugin",
-	"tar",
-	"zipPlugin",
-	"zip",
-	"netrwPlugin",
+  "gzip",
+  "man",
+  "matchparen",
+  "shada_plugin",
+  "tarPlugin",
+  "tar",
+  "zipPlugin",
+  "zip",
+  "netrwPlugin",
 }
 for i = 1, #disabled_built_ins do
-	vim.g["loaded_" .. disabled_built_ins[i]] = 1
+  vim.g["loaded_" .. disabled_built_ins[i]] = 1
 end
 -- netrw settings
 -- g.netrw_banner = 1

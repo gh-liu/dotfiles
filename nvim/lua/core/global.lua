@@ -5,118 +5,102 @@ local cmd = vim.api.nvim_command
 -- options
 --
 function as.opt(o, v, scopes)
-	scopes = scopes or { vim.o }
-	for _, s in ipairs(scopes) do
-		s[o] = v
-	end
+  scopes = scopes or { vim.o }
+  for _, s in ipairs(scopes) do
+    s[o] = v
+  end
 end
 
 -- mappings
 --
 function as.map(modes, lhs, rhs, opts)
-	local options = { noremap = true, silent = true }
-	if opts then
-		options = vim.tbl_extend("force", options, opts)
-	end
+  local options = { noremap = true, silent = true }
+  if opts then
+    options = vim.tbl_extend("force", options, opts)
+  end
 
-	if type(modes) == "string" then
-		modes = { modes }
-	end
+  if type(modes) == "string" then
+    modes = { modes }
+  end
 
-	for _, mode in ipairs(modes) do
-		vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-	end
+  for _, mode in ipairs(modes) do
+    vim.api.nvim_set_keymap(mode, lhs, rhs, options)
+  end
 end
 
 -- autocommands
 --
 local function autocmd(this, event, spec)
-	local pattern = "*"
-	local action = spec
-	local ev = event
-	local args = {}
+  local pattern = "*"
+  local action = spec
+  local ev = event
+  local args = {}
 
-	if type(spec) == "table" then
-		pattern = spec[1] or pattern
-		action = spec[2] or action
-		if #spec > 2 then
-			args = vim.tbl_extend("force", args, spec[3])
-		end
-	end
+  if type(spec) == "table" then
+    pattern = spec[1] or pattern
+    action = spec[2] or action
+    if #spec > 2 then
+      args = vim.tbl_extend("force", args, spec[3])
+    end
+  end
 
-	if type(action) == "function" then
-		action = this.set(action, args)
-	end
+  if type(action) == "function" then
+    action = this.set(action, args)
+  end
 
-	ev = type(ev) == "table" and table.concat(ev, ",") or ev
+  ev = type(ev) == "table" and table.concat(ev, ",") or ev
 
-	pattern = type(pattern) == "table" and table.concat(pattern, ",") or pattern
+  pattern = type(pattern) == "table" and table.concat(pattern, ",") or pattern
 
-	cmd("autocmd " .. ev .. " " .. pattern .. " " .. action)
+  cmd("autocmd " .. ev .. " " .. pattern .. " " .. action)
 end
 
 local S = {
-	__au_fns = {},
+  __au_fns = {},
 }
 
 function S.exec(id)
-	local f = S.__au_fns[id]
-	if f["a"] then
-		f["f"](unpack(f["a"]))
-	else
-		f["f"]()
-	end
+  local f = S.__au_fns[id]
+  if f["a"] then
+    f["f"](unpack(f["a"]))
+  else
+    f["f"]()
+  end
 end
 
 function S.set(fn, args)
-	local id = string.format("%p", fn)
-	S.__au_fns[id] = { f = fn, a = args }
+  local id = string.format("%p", fn)
+  S.__au_fns[id] = { f = fn, a = args }
 
-	return string.format('lua as.au.exec("%s")', id)
+  return string.format('lua as.au.exec("%s")', id)
 end
 
 function S.group(grp, cmds)
-	cmd("augroup " .. grp)
-	cmd("autocmd!")
-	if type(cmds) == "function" then
-		cmds(as.au)
-	else
-		for _, au in ipairs(cmds) do
-			autocmd(S, au[1], { au[2], au[3] })
-		end
-	end
-	cmd("augroup END")
+  cmd("augroup " .. grp)
+  cmd("autocmd!")
+  if type(cmds) == "function" then
+    cmds(as.au)
+  else
+    for _, au in ipairs(cmds) do
+      autocmd(S, au[1], { au[2], au[3] })
+    end
+  end
+  cmd("augroup END")
 end
 
 as.au = setmetatable({}, {
-	__index = S,
-	__newindex = autocmd,
-	__call = autocmd,
+  __index = S,
+  __newindex = autocmd,
+  __call = autocmd,
 })
 
 -- default option
 --
-function as._default_bool(val, default)
-	if val == true or val == nil and default == nil then
-		return true
-	elseif val == false and default == nil then
-		return false
-	end
-	return default
-end
-
-function as._default_num(val, default)
-	if val == nil or not tonumber(val) or val <= 0 then
-		return default
-	end
-	return val
-end
-
 function as._if_nil(val, default)
-	if val == nil then
-		return default
-	end
-	return val
+  if val == nil then
+    return default
+  end
+  return val
 end
 
 -- treesitter
@@ -135,25 +119,25 @@ end
 -- lazy require function
 --
 function as.lazy_require(module)
-	local mt = {}
+  local mt = {}
 
-	mt.__index = function(_, key)
-		if not mt._module then
-			mt._module = require(module)
-		end
+  mt.__index = function(_, key)
+    if not mt._module then
+      mt._module = require(module)
+    end
 
-		return mt._module[key]
-	end
+    return mt._module[key]
+  end
 
-	mt.__newindex = function(_, key, val)
-		if not mt._module then
-			mt._module = require(module)
-		end
+  mt.__newindex = function(_, key, val)
+    if not mt._module then
+      mt._module = require(module)
+    end
 
-		mt._module[key] = val
-	end
+    mt._module[key] = val
+  end
 
-	mt.__metatable = false
+  mt.__metatable = false
 
-	return setmetatable({}, mt)
+  return setmetatable({}, mt)
 end

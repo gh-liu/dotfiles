@@ -46,5 +46,5 @@ map("n", "<leader>gW", [[<cmd>Telescope lsp_dynamic_workspace_symbols<cr>]])
 map("n", ";", "<cmd>Telescope commands<cr>")
 
 vim.cmd(
-	[[command! Dotfiles silent lua require('telescope.builtin').git_files({cwd= vim.env.HOME .. "/.config/nvim" })]]
+  [[command! Dotfiles silent lua require('telescope.builtin').git_files({cwd= vim.env.HOME .. "/.config/nvim" })]]
 )

@@ -17,42 +17,42 @@ severities.INFO = vim.diagnostic.severity.INFO
 severities.HINT = vim.diagnostic.severity.HINT
 
 function M.is_lsp_attached()
-	return next(lsp.buf_get_clients(0)) ~= nil
+  return next(lsp.buf_get_clients(0)) ~= nil
 end
 
 function M.lsp_client_names()
-	local clients = {}
+  local clients = {}
 
-	for _, client in pairs(lsp.buf_get_clients(0)) do
-		clients[#clients + 1] = client.name
-	end
+  for _, client in pairs(lsp.buf_get_clients(0)) do
+    clients[#clients + 1] = client.name
+  end
 
-	return table.concat(clients, " "), signs.CLIENT
+  return table.concat(clients, " "), signs.CLIENT
 end
 
 local function diagnostics(svrt)
-	return vim.tbl_count(vim.diagnostic.get(0, { severity = svrt })),
-		vim.tbl_count(vim.diagnostic.get(nil, { severity = svrt }))
+  return vim.tbl_count(vim.diagnostic.get(0, { severity = svrt })),
+    vim.tbl_count(vim.diagnostic.get(nil, { severity = svrt }))
 end
 
 function M.diagnostic_errors()
-	local current, all = diagnostics(severities.Error)
-	return current, all, signs.Error
+  local current, all = diagnostics(severities.Error)
+  return current, all, signs.Error
 end
 
 function M.diagnostic_warnings()
-	local current, all = diagnostics(severities.WARN)
-	return current, all, signs.WARN
+  local current, all = diagnostics(severities.WARN)
+  return current, all, signs.WARN
 end
 
 function M.diagnostic_info()
-	local current, all = diagnostics(severities.INFO)
-	return current, all, signs.INFO
+  local current, all = diagnostics(severities.INFO)
+  return current, all, signs.INFO
 end
 
 function M.diagnostic_hints()
-	local current, all = diagnostics(severities.HINT)
-	return current, all, signs.HINT
+  local current, all = diagnostics(severities.HINT)
+  return current, all, signs.HINT
 end
 
 return M
