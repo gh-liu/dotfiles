@@ -45,6 +45,11 @@ alias ga='git add '
 alias ggl='git pull '
 alias ggp='git push '
 
+alias gbd='git branch -D '
+
+alias glog='git log --oneline --decorate --graph '
+alias gloga='git log --oneline --decorate --graph --all '
+
 # tmux
 alias ta='tmux attach -t'
 alias ts='tmux new-session -s'
