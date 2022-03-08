@@ -3,45 +3,42 @@ if not status_ok then
   return
 end
 
-local handler = require("modules.lsp.handlers")
+vim.lsp.set_log_level("debug")
 
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 local servers = {
-  "bashls",
-  "vimls",
-  "gopls",
-  "sumneko_lua",
-  "jsonls",
-  "yamlls",
-  "rust_analyzer",
-  "tsserver",
-  "dockerls",
+  bashls = true,
+  vimls = true,
+  gopls = true,
+  sumneko_lua = true,
+  jsonls = true,
+  yamlls = true,
+  rust_analyzer = true,
+  tsserver = true,
+  dockerls = true,
 }
 
-handler.setup_auto_format("go")
--- handler.setup_auto_format("go", [[lua require('modules.lang.format').format_file("gofumpt","-w")]])
-handler.setup_auto_format("lua", "lua require('stylua-nvim').format_file()")
-handler.setup_auto_format("json")
+local setup = require("modules.lsp.setup")
 
-for _, server in ipairs(servers) do
-  local default = {
-    capabilities = handler.capabilities,
-    on_attach = handler.on_attach,
-    -- autostart = as.is_lsp_autostart(server),
-    flags = {
-      -- This will be the default in neovim 0.7+
-      debounce_text_changes = 150,
-    },
-  }
+for server, use in pairs(servers) do
+  if not use then
+    return
+  end
 
   local exist, config = pcall(require, "modules.lsp.server." .. server)
-  if exist then
-    for k, v in pairs(default) do
-      config[k] = v
-    end
-  else
+  if not exist then
     config = {}
   end
+
+  config = vim.tbl_deep_extend("force", {
+    on_init = setup.on_init,
+    on_attach = setup.on_attach,
+    capabilities = setup.capabilities,
+    flags = {
+      debounce_text_changes = nil,
+    },
+  }, config)
+
   -- print(vim.inspect(config))
   lspconf[server].setup(config)
 end
