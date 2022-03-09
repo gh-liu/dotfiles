@@ -36,7 +36,7 @@ return require("packer").startup(function(use)
   -- NOTE: this is plugin is unnecessary once https://github.com/neovim/neovim/pull/15436 is merged
   use({ "lewis6991/impatient.nvim" })
 
-  -- require by other plugins
+  -- required by other plugins
   use({
     { "nvim-lua/popup.nvim" },
     { "nvim-lua/plenary.nvim" },
@@ -83,23 +83,12 @@ return require("packer").startup(function(use)
   })
 
   use({
-    "edolphin-ydf/goimpl.nvim",
+    "gh-liu/goimpl.nvim",
     requires = {
       { "nvim-telescope/telescope.nvim" },
       { "nvim-treesitter/nvim-treesitter" },
     },
-    config = function()
-      require("telescope").load_extension("goimpl")
-      vim.api.nvim_set_keymap(
-        "n",
-        "<leader>im",
-        [[<cmd>lua require('telescope').extensions.goimpl.goimpl{}<CR>]],
-        {
-          noremap = true,
-          silent = true,
-        }
-      )
-    end,
+    config = [[require('modules.plugins.goimpl')]],
   })
 
   -- ====== Coding ======
@@ -110,25 +99,11 @@ return require("packer").startup(function(use)
   use({ "onsails/lspkind-nvim" })
   use({
     "kosayoda/nvim-lightbulb",
-    config = function()
-      vim.fn.sign_define(
-        "LightBulbSign",
-        { text = "∆", texthl = "", linehl = "", numhl = "" }
-      )
-      vim.cmd(
-        [[autocmd CursorHold,CursorHoldI * lua require('nvim-lightbulb').update_lightbulb()]]
-      )
-    end,
+    config = [[require('modules.plugins.nvim-lightbulb')]],
   })
   use({
     "j-hui/fidget.nvim",
-    config = function()
-      require("fidget").setup({
-        text = {
-          spinner = "dots",
-        },
-      })
-    end,
+    config = [[require('modules.plugins.fidget')]],
   })
 
   --  Autocompletion
@@ -236,7 +211,7 @@ return require("packer").startup(function(use)
   -- ====== Language Specified ======
   -- Lua dev
   -- use("folke/lua-dev.nvim")
-  use("ckipp01/stylua-nvim")
+  -- use("ckipp01/stylua-nvim")
 
   -- Rust
   use("simrat39/rust-tools.nvim")
@@ -253,15 +228,26 @@ return require("packer").startup(function(use)
   -- })
 
   -- ====== Others ======
+  -- Pretty colors
+  use("norcalli/nvim-colorizer.lua")
   use({
-    "folke/zen-mode.nvim",
+    "norcalli/nvim-terminal.lua",
+    config = function()
+      require("terminal").setup()
+    end,
   })
+
+  -- use({
+  --   "folke/zen-mode.nvim",
+  --   enable = false,
+  -- })
 
   use("editorconfig/editorconfig-vim")
 
   -- Profiling
   use({
     "dstein64/vim-startuptime",
+    cmd = "StartupTime",
     config = [[vim.g.startuptime_tries = 10]],
   })
 
@@ -287,8 +273,22 @@ return require("packer").startup(function(use)
     end,
   })
 
+  -- use("rcarriga/nvim-notify")
+
+  use({
+    "antoinemadec/FixCursorHold.nvim",
+    run = function()
+      vim.g.curshold_updatime = 1000
+    end,
+  })
+
+  use("milisims/nvim-luaref")
+
   -- Quickfix
   -- use("kevinhwang91/nvim-bqf")
+
+  -- Quickfix enhancements. See :help vim-qf
+  use("romainl/vim-qf")
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins

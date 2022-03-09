@@ -141,3 +141,9 @@ function as.lazy_require(module)
 
   return setmetatable({}, mt)
 end
+
+---Pretty print lua table
+function as.dump(...)
+  local objects = vim.tbl_map(vim.inspect, { ... })
+  print(unpack(objects))
+end

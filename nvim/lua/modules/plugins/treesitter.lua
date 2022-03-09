@@ -1,7 +1,8 @@
-local tsconf = require("nvim-treesitter.configs")
+if not pcall(require, "nvim-treesitter") then
+  return
+end
 
--- vim.api.nvim_command("set foldmethod=expr")
--- vim.api.nvim_command("set foldexpr=nvim_treesitter#foldexpr()")
+local tsconf = require("nvim-treesitter.configs")
 
 tsconf.setup({
   ensure_installed = {
@@ -35,12 +36,16 @@ tsconf.setup({
   textobjects = {
     select = {
       enable = true,
-      -- Automatically jump forward to textobj, similar to targets.vim
       lookahead = true,
       keymaps = {
-        -- You can use the capture groups defined in textobjects.scm
         ["af"] = "@function.outer",
         ["if"] = "@function.inner",
+
+        ["ac"] = "@conditional.outer",
+        ["ic"] = "@conditional.inner",
+
+        ["aa"] = "@parameter.outer",
+        ["ia"] = "@parameter.inner",
       },
     },
     swap = {
@@ -56,9 +61,11 @@ tsconf.setup({
       enable = true,
       set_jumps = true, -- whether to set jumps in the jumplist
       goto_next_start = {
+        ["]p"] = "@parameter.inner",
         ["]]"] = "@function.outer",
       },
       goto_previous_start = {
+        ["[p"] = "@parameter.inner",
         ["[["] = "@function.outer",
       },
     },
@@ -68,16 +75,16 @@ tsconf.setup({
       enable = true,
     },
     navigation = {
-      enable = true,
+      enable = false,
       keymaps = {
-        goto_next_usage = "<leader>3",
-        goto_previous_usage = "<leader>8",
+        goto_definition = "gnd", -- mapping to go to definition of symbol under cursor
+        list_definitions = "gnD", -- mapping to list all definitions in current file
       },
     },
   },
   rainbow = {
     enable = true,
-    -- disable = { "jsx", "cpp" }, -- list of languages you want to disable the plugin for
+    -- disable = { "jsx", "cpp" },
     extended_mode = true,
     max_file_lines = nil,
   },

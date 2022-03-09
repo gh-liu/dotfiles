@@ -24,7 +24,7 @@ fa.rust = function()
 end
 
 fa.lua = function()
-  auto_format("lua require('stylua-nvim').format_file()")
+  auto_format("lua require('modules.lang.lua.stylua').format()")
 end
 
 fa.json = function()
