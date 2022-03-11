@@ -13,7 +13,7 @@ au.FileType = {
       [[command! -bang    GoAltS lua require("modules.lang.go.alternate").switch("<bang>"=="!", 'split')]]
     )
 
-    cmd([[command!    GoLint  lua require("modules.lang.go.lint").lint()]])
+    cmd([[command!    GoLint  lua require("modules.lang.go.lint").run()]])
 
     cmd(
       [[command! GoAddTest      lua require("modules.lang.go.test").fun_test()]]
