@@ -10,11 +10,15 @@ end
 local cmp = require("cmp")
 local luasnip = require("luasnip")
 
+local neogen_exist, neogen = pcall(require, "neogen")
+
 local function select_next(fallback)
   if cmp.visible() then
     cmp.select_next_item()
   elseif luasnip.expand_or_jumpable() then
     luasnip.expand_or_jump()
+  elseif neogen_exist and neogen.jumpable() then
+    neogen.jump_next()
   elseif has_words_before() then
     cmp.complete()
   else
@@ -27,6 +31,8 @@ local function select_previous(fallback)
     cmp.select_prev_item()
   elseif luasnip.jumpable(-1) then
     luasnip.jump(-1)
+  elseif neogen_exist and neogen.jumpable() then
+    neogen.jump_prev()
   else
     fallback()
   end
@@ -97,8 +103,16 @@ cmp.setup({
     },
     {
       name = "buffer",
-      keyword_length = 5,
-      max_item_count = 5,
+      option = {
+        -- complete from visible buffers
+        get_bufnrs = function()
+          local bufs = {}
+          for _, win in ipairs(vim.api.nvim_list_wins()) do
+            bufs[vim.api.nvim_win_get_buf(win)] = true
+          end
+          return vim.tbl_keys(bufs)
+        end,
+      },
     },
     {
       name = "path",

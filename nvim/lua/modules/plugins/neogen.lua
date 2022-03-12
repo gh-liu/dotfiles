@@ -1,0 +1,15 @@
+require("neogen").setup({
+  enabled = true,
+  languages = {
+    lua = {
+      template = {
+        annotation_convention = "emmylua",
+      },
+    },
+    go = {
+      template = {
+        annotation_convention = "godoc",
+      },
+    },
+  },
+})

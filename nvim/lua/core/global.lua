@@ -94,6 +94,11 @@ as.au = setmetatable({}, {
   __call = autocmd,
 })
 
+-- user command
+as.command = function(name, fn, opts)
+  vim.api.nvim_add_user_command(name, fn, opts or {})
+end
+
 -- default option
 --
 function as._if_nil(val, default)

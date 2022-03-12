@@ -31,6 +31,10 @@ packer.init({
 })
 
 return require("packer").startup(function(use)
+  local config = function(name)
+    return string.format("require('modules.plugins.%s')", name)
+  end
+
   -- Packer
   use("wbthomason/packer.nvim")
   -- NOTE: this is plugin is unnecessary once https://github.com/neovim/neovim/pull/15436 is merged
@@ -56,7 +60,7 @@ return require("packer").startup(function(use)
       "nvim-treesitter/nvim-treesitter-textobjects",
       "nvim-treesitter/nvim-treesitter-refactor",
     },
-    config = [[require('modules.plugins.treesitter')]],
+    config = config("treesitter"),
     run = ":TSUpdate",
   })
   use({
@@ -70,8 +74,8 @@ return require("packer").startup(function(use)
     requires = {
       "telescope-fzf-native.nvim",
     },
-    setup = [[require('modules.plugins.telescope-setup')]],
-    config = [[require('modules.plugins.telescope')]],
+    setup = config("telescope-setup"),
+    config = config("telescope"),
   })
   use({
     "nvim-telescope/telescope-fzf-native.nvim",
@@ -79,7 +83,7 @@ return require("packer").startup(function(use)
   })
   use({
     "nvim-telescope/telescope-file-browser.nvim",
-    config = [[require('modules.plugins.telescope-file-browser')]],
+    config = config("telescope-file-browser"),
   })
 
   use({
@@ -88,7 +92,7 @@ return require("packer").startup(function(use)
       { "nvim-telescope/telescope.nvim" },
       { "nvim-treesitter/nvim-treesitter" },
     },
-    config = [[require('modules.plugins.goimpl')]],
+    config = config("goimpl"),
   })
 
   -- ====== Coding ======
@@ -99,11 +103,11 @@ return require("packer").startup(function(use)
   use({ "onsails/lspkind-nvim" })
   use({
     "kosayoda/nvim-lightbulb",
-    config = [[require('modules.plugins.nvim-lightbulb')]],
+    config = config("nvim-lightbulb"),
   })
   use({
     "j-hui/fidget.nvim",
-    config = [[require('modules.plugins.fidget')]],
+    config = config("fidget"),
   })
 
   --  Autocompletion
@@ -125,7 +129,7 @@ return require("packer").startup(function(use)
       },
       {
         "L3MON4D3/LuaSnip",
-        config = [[require('modules.plugins.luasnip')]],
+        config = config("luasnip"),
       },
       {
         -- Snippets plugin
@@ -133,7 +137,7 @@ return require("packer").startup(function(use)
         after = "nvim-cmp",
       },
     },
-    config = [[require('modules.plugins.cmp')]],
+    config = config("cmp"),
   })
   use("hrsh7th/cmp-cmdline")
   use({ "rafamadriz/friendly-snippets" })
@@ -155,39 +159,46 @@ return require("packer").startup(function(use)
   -- Comment
   use({
     "tpope/vim-commentary",
-    config = [[require('modules.plugins.vim-commentary')]],
+    config = config("vim-commentary"),
+  })
+
+  -- Annotation generator
+  use({
+    "danymat/neogen",
+    config = config("neogen"),
+    requires = "nvim-treesitter/nvim-treesitter",
   })
 
   -- Refactoring
   -- use({
   -- 	"ThePrimeagen/refactoring.nvim",
   -- 	requires = { { "nvim-treesitter/nvim-treesitter" } },
-  -- 	config = [[require('modules.plugins.refactoring')]],
+  -- 	config = config("refactoring"),
   -- })
 
   -- Undo tree
   -- use({
   --   "mbbill/undotree",
-  --   config = [[require('modules.plugins.undotree')]],
+  --   config = config("undotree"),
   -- })
 
   -- Tagbar
   use({
     "majutsushi/tagbar",
-    config = [[require('modules.plugins.tagbar')]],
+    config = config("tagbar"),
   })
 
   -- Autopair
   use({
     "windwp/nvim-autopairs",
-    config = [[require('modules.plugins.autopairs')]],
+    config = config("autopairs"),
   })
 
   -- ====== Moving ======
   -- use({
   --   "phaazon/hop.nvim",
   --   branch = "v1",
-  --   config = [[require('modules.plugins.hop')]],
+  --   config = config("hop"),
   -- })
 
   -- ====== Debug ======
@@ -196,11 +207,11 @@ return require("packer").startup(function(use)
   use({
     {
       "TimUntersberger/neogit",
-      config = [[require('modules.plugins.neogit')]],
+      config = config("neogit"),
     },
     {
       "lewis6991/gitsigns.nvim",
-      config = [[require('modules.plugins.gitsigns')]],
+      config = config("gitsigns"),
     },
   })
   use({
@@ -210,8 +221,7 @@ return require("packer").startup(function(use)
 
   -- ====== Language Specified ======
   -- Lua dev
-  -- use("folke/lua-dev.nvim")
-  -- use("ckipp01/stylua-nvim")
+  use("folke/lua-dev.nvim")
 
   -- Rust
   use("simrat39/rust-tools.nvim")

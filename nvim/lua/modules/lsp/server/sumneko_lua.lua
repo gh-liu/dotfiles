@@ -2,7 +2,7 @@ local runtime_path = vim.split(package.path, ";")
 table.insert(runtime_path, "lua/?.lua")
 table.insert(runtime_path, "lua/?/init.lua")
 
-return {
+local settings = {
   -- The default `cmd` assumes that the `lua-language-server` binary can be found in $PATH
   settings = {
     Lua = {
@@ -27,3 +27,15 @@ return {
     },
   },
 }
+
+local ok, luadev = pcall(require, "lua-dev")
+if ok then
+  local luadevconf = luadev.setup({
+    lspconfig = {
+      settings = settings,
+    },
+  })
+  settings = luadevconf
+end
+
+return settings
