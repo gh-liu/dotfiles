@@ -91,6 +91,14 @@ M.on_attach = function(client, bufnr)
     ]])
   end
 
+  -- Show diagnostic popup on cursor hover
+  vim.cmd([[
+    augroup lsp_diagnostic_popup
+      au! * <buffer>
+      autocmd CursorHold <buffer> lua vim.diagnostic.open_float(nil, { focusable = false })
+    augroup END
+  ]])
+
   local filetype_attach = require("modules.lsp.filetype_attach")
   filetype_attach[filetype](client)
 end
