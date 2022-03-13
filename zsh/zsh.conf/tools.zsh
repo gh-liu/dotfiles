@@ -158,8 +158,12 @@ update_gotools () {
 
 # nvim
 update_nvim () {
-  version=$(curl -s https://api.github.com/repos/neovim/neovim/tags |jq '.[0].name')
-  version=${version//\"/}
+  version=$1
+  if [ -z $version ]; then
+    version=$(curl -s https://api.github.com/repos/neovim/neovim/tags |jq '.[0].name')
+    version=${version//\"/}
+  fi
+
   echo "update nvim to $version"
 
   url="https://github.com/neovim/neovim/releases/download/$version/nvim-linux64.tar.gz"

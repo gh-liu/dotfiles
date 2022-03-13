@@ -157,9 +157,13 @@ return require("packer").startup(function(use)
   })
 
   -- Comment
+  -- use({
+  --   "tpope/vim-commentary",
+  --   config = config("vim-commentary"),
+  -- })
   use({
-    "tpope/vim-commentary",
-    config = config("vim-commentary"),
+    "numToStr/Comment.nvim",
+    config = config("comment"),
   })
 
   -- Annotation generator
@@ -283,7 +287,10 @@ return require("packer").startup(function(use)
     end,
   })
 
-  -- use("rcarriga/nvim-notify")
+  -- use({
+  --   "rcarriga/nvim-notify",
+  --   config = config("nvim-notify"),
+  -- })
 
   use({
     "antoinemadec/FixCursorHold.nvim",

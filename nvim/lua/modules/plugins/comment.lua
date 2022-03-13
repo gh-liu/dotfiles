@@ -5,4 +5,9 @@ local opts = {
 }
 vim.api.nvim_set_keymap("v", "<C-_>", "gc", opts)
 vim.api.nvim_set_keymap("n", "<C-_>", "gcc", opts)
-vim.api.nvim_set_keymap("i", "<C-_>", "<C-O>gcc", opts)
+vim.api.nvim_set_keymap(
+  "i",
+  "<C-_>",
+  "<cmd>lua require('Comment.api').toggle_current_linewise()<cr>",
+  opts
+)
