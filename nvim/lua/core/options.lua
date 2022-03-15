@@ -87,11 +87,3 @@ opt("undofile", true, buffer)
 opt("previewheight", 5)
 
 opt("display", "msgsep")
-
--- netrw settings
--- g.netrw_banner = 1
--- g.netrw_browse_split = 4
--- g.netrw_altv = 1
--- vim.g.netrw_liststyle = 3
--- g.netrw_winsize = 25
--- map("n", "<C-n>", "<cmd>Vexplore<cr>")

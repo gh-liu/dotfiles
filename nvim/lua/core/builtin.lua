@@ -18,3 +18,11 @@ vim.g.loaded_rrhelper = 1
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.g.loaded_netrwSettings = 1
+
+-- netrw settings
+-- g.netrw_banner = 1
+-- g.netrw_browse_split = 4
+-- g.netrw_altv = 1
+-- vim.g.netrw_liststyle = 3
+-- g.netrw_winsize = 25
+-- map("n", "<C-n>", "<cmd>Vexplore<cr>")

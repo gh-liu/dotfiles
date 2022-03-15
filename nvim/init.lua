@@ -1,26 +1,26 @@
-pcall(require, "impatient")
+local present, impatient = pcall(require, "impatient")
 
-require("core.global")
+if present then
+  impatient.enable_profile()
+end
 
-require("core.options")
+local modules = {
+  "core.global",
+  "core.options",
+  "core.keymaps",
+  "core.autocmd",
+  "core.command",
+  "core.colorscheme",
+  "core.builtin",
+  "modules.statusline",
+  "modules.plugins",
+  "modules.lsp",
+  "modules.lang.go",
+}
 
-require("core.keymaps")
-
-require("core.autocmd")
-
-require("core.command")
-
-require("core.colorscheme")
-
-require("core.disable_builtin")
-
-require("modules.statusline")
-
--- plugins settings
-require("modules.plugins")
-
--- lsp settings
-require("modules.lsp")
-
--- lang settings
-require("modules.lang.go")
+for _, module in ipairs(modules) do
+  local ok, err = pcall(require, module)
+  if not ok then
+    error("Error loading " .. module .. "\n\n" .. err)
+  end
+end

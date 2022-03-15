@@ -48,7 +48,8 @@ return require("packer").startup(function(use)
 
   -- ====== UI ======
   -- schemes
-  use("sainnhe/gruvbox-material")
+  use("Mofiqul/vscode.nvim")
+  use({ "ellisonleao/gruvbox.nvim" })
 
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
@@ -100,7 +101,7 @@ return require("packer").startup(function(use)
   use({
     "neovim/nvim-lspconfig",
   })
-  use({ "onsails/lspkind-nvim" })
+  use({ "onsails/lspkind-nvim", event = "BufRead" })
   use({
     "kosayoda/nvim-lightbulb",
     config = config("nvim-lightbulb"),
@@ -113,6 +114,7 @@ return require("packer").startup(function(use)
   --  Autocompletion
   use({
     "hrsh7th/nvim-cmp",
+    event = "InsertEnter",
     requires = {
       "hrsh7th/cmp-nvim-lsp",
       {
@@ -280,24 +282,25 @@ return require("packer").startup(function(use)
     end,
   })
 
-  use({
-    "folke/todo-comments.nvim",
-    config = function()
-      require("todo-comments").setup({})
-    end,
-  })
+  -- use({
+  --   "folke/todo-comments.nvim",
+  --   config = function()
+  --     require("todo-comments").setup({})
+  --   end,
+  -- })
 
   -- use({
   --   "rcarriga/nvim-notify",
   --   config = config("nvim-notify"),
   -- })
 
-  use({
-    "antoinemadec/FixCursorHold.nvim",
-    run = function()
-      vim.g.curshold_updatime = 1000
-    end,
-  })
+  -- use({
+  --   "antoinemadec/FixCursorHold.nvim",
+  --   run = function()
+  --     vim.g.curshold_updatime = 1000
+  --   end,
+  -- })
+  use("nathom/filetype.nvim")
 
   use("milisims/nvim-luaref")
 
