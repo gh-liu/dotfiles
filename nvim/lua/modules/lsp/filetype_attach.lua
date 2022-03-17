@@ -19,15 +19,15 @@ fa.go = function(client)
   auto_format()
 end
 
-fa.rust = function()
+fa.rust = function(client)
   auto_format()
 end
 
-fa.lua = function()
+fa.lua = function(client)
   auto_format("lua require('modules.lang.lua.stylua').format()")
 end
 
-fa.json = function()
+fa.json = function(client)
   auto_format()
 end
 

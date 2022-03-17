@@ -1,7 +1,10 @@
+local util = require("lspconfig.util")
+
 return {
   cmd = { "gopls", "--remote=auto" },
   filetypes = { "go", "gomod", "gotmpl" },
   single_file_support = true,
+  root_dir = util.root_pattern("go.work", "go.mod", ".git"),
   settings = {
     -- more settings: https://github.com/golang/tools/blob/master/gopls/doc/settings.md
     gopls = {
@@ -10,7 +13,6 @@ return {
         unusedparams = true,
       },
       staticcheck = true,
-      gofumpt = true,
     },
   },
   init_options = {
