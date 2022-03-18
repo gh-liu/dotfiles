@@ -35,8 +35,19 @@ require("gitsigns").setup({
   on_attach = function(bufnr)
     local gs = package.loaded.gitsigns
 
-    local function map(mode, l, r, opts)
-      as.map(mode, l, r, opts)
+    local function map(modes, lhs, rhs, opts)
+      opts = vim.tbl_extend(
+        "force",
+        { noremap = true, silent = true },
+        opts or {}
+      )
+      if type(modes) == "string" then
+        modes = { modes }
+      end
+
+      for _, mode in ipairs(modes) do
+        vim.api.nvim_buf_set_keymap(bufnr, mode, lhs, rhs, opts)
+      end
     end
 
     -- Navigation
