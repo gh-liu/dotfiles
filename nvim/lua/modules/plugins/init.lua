@@ -101,7 +101,7 @@ return require("packer").startup(function(use)
   use({
     "neovim/nvim-lspconfig",
   })
-  use({ "onsails/lspkind-nvim", event = "BufRead" })
+  -- use({ "onsails/lspkind-nvim", event = "BufRead" })
   use({
     "kosayoda/nvim-lightbulb",
     config = config("nvim-lightbulb"),
@@ -189,9 +189,14 @@ return require("packer").startup(function(use)
   -- })
 
   -- Tagbar
+  -- use({
+  --   "majutsushi/tagbar",
+  --   config = config("tagbar"),
+  -- })
+
   use({
-    "majutsushi/tagbar",
-    config = config("tagbar"),
+    "simrat39/symbols-outline.nvim",
+    config = config("symbols-outline"),
   })
 
   -- Autopair
@@ -221,8 +226,8 @@ return require("packer").startup(function(use)
     },
   })
   use({
-    "sindrets/diffview.nvim",
     -- config = [[require('diffview').setup {use_icons = false}]],
+    "sindrets/diffview.nvim",
   })
 
   -- ====== Language Specified ======
