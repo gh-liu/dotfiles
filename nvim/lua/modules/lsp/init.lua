@@ -3,11 +3,13 @@ if not status_ok then
   return
 end
 
-vim.lsp.set_log_level("debug")
+local load_lsp_conf = function(conf)
+  return require("modules.lsp." .. conf)
+end
 
-vim.diagnostic.config({
-  virtual_text = false,
-})
+-- vim.lsp.set_log_level("debug")
+
+load_lsp_conf("diagnostic")
 
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 local servers = {
@@ -22,7 +24,7 @@ local servers = {
   dockerls = true,
 }
 
-local setup = require("modules.lsp.setup")
+local setup = load_lsp_conf("setup")
 
 for server, use in pairs(servers) do
   if not use then

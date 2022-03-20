@@ -64,7 +64,7 @@ cmp.setup({
         buffer = "[Buf]",
         nvim_lsp = "[LSP]",
         nvim_lua = "[Lua]",
-        luasnip = "[LSnip]",
+        luasnip = "[Snip]",
         path = "[Path]",
       })[entry.source.name]
 
