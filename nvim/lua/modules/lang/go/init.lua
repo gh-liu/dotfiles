@@ -1,8 +1,8 @@
-local au = as.au
-local cmd = vim.api.nvim_command
-au.FileType = {
-  "go",
-  function()
+local api = vim.api
+local cmd = api.nvim_command
+
+api.nvim_create_autocmd("FileType", {
+  callback = function()
     cmd(
       [[command! -bang    GoAlt  lua require("modules.lang.go.alternate").switch("<bang>"=="!", '')]]
     )
@@ -32,4 +32,4 @@ au.FileType = {
       [[command! -nargs=* -range GoRemoveTags lua require("modules.lang.go.tags").rm(<f-args>)]]
     )
   end,
-}
+})

@@ -103,10 +103,6 @@ return require("packer").startup(function(use)
   })
   -- use({ "onsails/lspkind-nvim", event = "BufRead" })
   use({
-    "kosayoda/nvim-lightbulb",
-    config = config("nvim-lightbulb"),
-  })
-  use({
     "j-hui/fidget.nvim",
     config = config("fidget"),
   })

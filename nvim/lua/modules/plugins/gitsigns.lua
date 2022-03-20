@@ -48,7 +48,7 @@ gitsigns.setup({
   max_file_length = 1000000000,
   signs = {
     add = { show_count = false, text = "┃" },
-    change = { show_count = false, text = "┃" },
+    change = { show_count = false, text = "¦" },
     delete = { show_count = true },
     topdelete = { show_count = true },
     changedelete = { show_count = true },

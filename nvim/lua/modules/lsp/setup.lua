@@ -67,13 +67,24 @@ M.on_attach = function(client, bufnr)
   -- print(vim.inspect(client.resolved_capabilities))
 
   if client.resolved_capabilities.document_highlight then
-    vim.cmd([[
-      augroup lsp_highlight
-        autocmd! * <buffer>
-        autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
-        autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
-      augroup END
-    ]])
+    local lsp_highlight = vim.api.nvim_create_augroup(
+      "lsp_highlight",
+      { clear = false }
+    )
+    vim.api.nvim_create_autocmd("CursorHold", {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.buf.document_highlight()
+      end,
+      group = lsp_highlight,
+    })
+    vim.api.nvim_create_autocmd("CursorMoved", {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.util.buf_clear_references(0)
+      end,
+      group = lsp_highlight,
+    })
   end
 
   if client.resolved_capabilities.code_lens then
@@ -81,23 +92,37 @@ M.on_attach = function(client, bufnr)
     vim.cmd("highlight default link LspCodeLensText WarningMsg")
     vim.cmd("highlight default link LspCodeLensTextSign LspCodeLensText")
     vim.cmd("highlight default link LspCodeLensTextSeparator Boolean")
-    -- vim.lsp.codelens.refresh()
-    vim.cmd([[
-      augroup lsp_codelens
-        au! * <buffer>
-        autocmd BufEnter ++once         <buffer> lua vim.lsp.codelens.refresh()
-        autocmd BufWritePost,CursorHold <buffer> lua vim.lsp.codelens.refresh()
-      augroup END
-    ]])
+
+    local lsp_codelens = vim.api.nvim_create_augroup(
+      "lsp_codelens",
+      { clear = false }
+    )
+    vim.api.nvim_create_autocmd("BufEnter", {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.codelens.refresh()
+      end,
+      group = lsp_codelens,
+      once = true,
+    })
+    vim.api.nvim_create_autocmd({ "BufWritePost", "CursorHold" }, {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.codelens.refresh()
+      end,
+      group = lsp_codelens,
+    })
   end
 
   -- Show diagnostic popup on cursor hover
-  vim.cmd([[
-    augroup lsp_diagnostic_popup
-      au! * <buffer>
-      autocmd CursorHold <buffer> lua vim.diagnostic.open_float(nil, { focusable = false })
-    augroup END
-  ]])
+  vim.api.nvim_create_autocmd("CursorHold", {
+    buffer = bufnr,
+    callback = function()
+      vim.diagnostic.open_float(nil, { focusable = false, scope = "cursor" })
+    end,
+  })
+
+  require("modules.lsp.extensions").lightbulb(client, bufnr)
 
   local filetype_attach = require("modules.lsp.filetype_attach")
   filetype_attach[filetype](client)

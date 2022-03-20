@@ -1,25 +1,25 @@
-local au = as.au
+local api = vim.api
 
-local cmd = vim.api.nvim_command
+api.nvim_create_autocmd("BufWinEnter", { command = [[checktime]] })
+api.nvim_create_autocmd("BufReadPost", { command = [[normal! g`"]] })
 
-au.BufWinEnter = { "*", [[checktime]] }
-au.BufReadPost = { "*", [[normal! g`"]] }
+api.nvim_create_autocmd("TextYankPost", {
+  callback = function()
+    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 120 })
+  end,
+})
 
-au.TextYankPost = function()
-  vim.highlight.on_yank({ higroup = "IncSearch", timeout = 120 })
-end
-
-au.BufEnter = {
-  "*.txt",
-  function()
+api.nvim_create_autocmd("BufEnter", {
+  pattern = "*.txt",
+  callback = function()
     if vim.bo.buftype == "help" then
-      cmd([[wincmd T]])
+      api.nvim_command([[wincmd T]])
     end
   end,
-}
+})
 
 function OrgImports(wait_ms)
-  local params = vim.lsp.util.make_range_params()
+  local params = vim.lsp.util.make_range_params(0)
   params.context = { only = { "source.organizeImports" } }
   local result = vim.lsp.buf_request_sync(
     0,
@@ -38,4 +38,9 @@ function OrgImports(wait_ms)
   end
 end
 
-au.BufWritePre = { "*.go", OrgImports, { 1000 } }
+api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*.go",
+  callback = function()
+    OrgImports(1000)
+  end,
+})

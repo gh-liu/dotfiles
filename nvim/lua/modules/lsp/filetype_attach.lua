@@ -1,18 +1,19 @@
 local fa = {}
 
-local auto_format = function(command)
-  if not command then
-    command = ":lua vim.lsp.buf.formatting_sync()"
+local auto_format = function(cmd)
+  if not cmd then
+    cmd = ":lua vim.lsp.buf.formatting_sync()"
   end
-  vim.cmd(string.format(
-    [[
-    augroup lsp_buf_format
-      au! BufWritePre <buffer>
-      autocmd BufWritePre <buffer> %s
-    augroup END
-  ]],
-    command
-  ))
+
+  local lsp_buf_format = vim.api.nvim_create_augroup(
+    "lsp_buf_format",
+    { clear = true }
+  )
+
+  vim.api.nvim_create_autocmd(
+    "BufWritePre",
+    { buffer = 0, command = cmd, group = lsp_buf_format }
+  )
 end
 
 fa.go = function(client)
