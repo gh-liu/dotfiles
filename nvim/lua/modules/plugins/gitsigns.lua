@@ -87,5 +87,5 @@ gitsigns.setup({
     "⒛",
   },
   _refresh_staged_on_update = false,
-  word_diff = true,
+  -- word_diff = true,
 })

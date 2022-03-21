@@ -128,9 +128,14 @@ cmp.setup({
 
 -- Completions for command mode
 cmp.setup.cmdline(":", {
-  sources = { {
-    name = "cmdline",
-  } },
+  sources = {
+    {
+      name = "cmdline",
+    },
+    {
+      name = "path",
+    },
+  },
 })
 cmp.setup.cmdline("/", {
   sources = { {
