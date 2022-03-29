@@ -138,6 +138,7 @@ return require("packer").startup(function(use)
     config = config("cmp"),
   })
   use("hrsh7th/cmp-cmdline")
+  use("hrsh7th/cmp-nvim-lsp-signature-help")
   use({ "rafamadriz/friendly-snippets" })
 
   -- Copilot
@@ -246,13 +247,19 @@ return require("packer").startup(function(use)
 
   -- ====== Others ======
   -- Pretty colors
-  use("norcalli/nvim-colorizer.lua")
   use({
-    "norcalli/nvim-terminal.lua",
+    "norcalli/nvim-colorizer.lua",
+    cmd = { "ColorizerAttachToBuffer", "ColorizerToggle" },
     config = function()
-      require("terminal").setup()
+      require("colorizer").setup()
     end,
   })
+  -- use({
+  --   "norcalli/nvim-terminal.lua",
+  --   config = function()
+  --     require("terminal").setup()
+  --   end,
+  -- })
 
   -- use({
   --   "folke/zen-mode.nvim",
