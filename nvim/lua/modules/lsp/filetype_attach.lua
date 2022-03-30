@@ -1,3 +1,6 @@
+-- local create_autocmd = vim.api.nvim_create_autocmd
+local create_autocmd = as.create_autocmd
+
 local fa = {}
 
 local auto_format = function(cmd)
@@ -10,7 +13,7 @@ local auto_format = function(cmd)
     end
   end
 
-  vim.api.nvim_create_autocmd("BufWritePre", opt)
+  create_autocmd("BufWritePre", opt)
 end
 
 fa.go = function(client)

@@ -1,3 +1,5 @@
+local create_autocmd = as.create_autocmd
+
 local M = {}
 
 local lightbulb_line = nil
@@ -74,14 +76,14 @@ M.lightbulb = function(client, bufnr)
     end
 
     -- auto command
-    local light_bulb = vim.api.nvim_create_augroup(
-      "light_bulb",
-      { clear = true }
-    )
-    vim.api.nvim_create_autocmd(events, {
+    -- local light_bulb = vim.api.nvim_create_augroup(
+    --   "light_bulb",
+    --   { clear = true }
+    -- )
+    create_autocmd(events, {
       buffer = bufnr,
       callback = request,
-      group = light_bulb,
+      -- group = light_bulb,
     })
   end
 end

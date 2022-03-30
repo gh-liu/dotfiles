@@ -1,4 +1,4 @@
-local api = vim.api
+local create_autocmd = as.create_autocmd
 
 local mode = require("modules.statusline.mode")
 local file = require("modules.statusline.file")
@@ -52,7 +52,7 @@ end
 
 set_color()
 
-api.nvim_create_autocmd("ColorScheme", { callback = set_color })
+create_autocmd("ColorScheme", { callback = set_color })
 
 local statuslines = {}
 function _G.statusline()

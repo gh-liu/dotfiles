@@ -1,19 +1,19 @@
-local api = vim.api
+local create_autocmd = as.create_autocmd
 
-api.nvim_create_autocmd("BufWinEnter", { command = [[checktime]] })
-api.nvim_create_autocmd("BufReadPost", { command = [[normal! g`"]] })
+create_autocmd("BufWinEnter", { command = [[checktime]] })
+create_autocmd("BufReadPost", { command = [[normal! g`"]] })
 
-api.nvim_create_autocmd("TextYankPost", {
+create_autocmd("TextYankPost", {
   callback = function()
     vim.highlight.on_yank({ higroup = "IncSearch", timeout = 120 })
   end,
 })
 
-api.nvim_create_autocmd("BufEnter", {
+create_autocmd("BufEnter", {
   pattern = "*.txt",
   callback = function()
     if vim.bo.buftype == "help" then
-      api.nvim_command([[wincmd T]])
+      vim.api.nvim_command([[wincmd T]])
     end
   end,
 })
@@ -38,7 +38,7 @@ function OrgImports(wait_ms)
   end
 end
 
-api.nvim_create_autocmd("BufWritePre", {
+create_autocmd("BufWritePre", {
   pattern = "*.go",
   callback = function()
     OrgImports(1000)

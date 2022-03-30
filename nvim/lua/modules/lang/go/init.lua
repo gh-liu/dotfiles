@@ -1,7 +1,8 @@
-local api = vim.api
-local cmd = api.nvim_command
+local create_autocmd = as.create_autocmd
 
-api.nvim_create_autocmd("FileType", {
+local cmd = vim.api.nvim_command
+
+create_autocmd("FileType", {
   callback = function()
     cmd(
       [[command! -bang    GoAlt  lua require("modules.lang.go.alternate").switch("<bang>"=="!", '')]]

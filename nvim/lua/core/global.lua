@@ -28,6 +28,10 @@ function as.map(modes, lhs, rhs, opts)
   end
 end
 
+function as.create_autocmd(event, opts)
+  vim.api.nvim_create_autocmd(event, opts)
+end
+
 -- user command
 as.command = function(name, fn, opts)
   vim.api.nvim_add_user_command(name, fn, opts or {})
