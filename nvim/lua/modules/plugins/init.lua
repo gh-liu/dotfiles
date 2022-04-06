@@ -318,6 +318,8 @@ return require("packer").startup(function(use)
   -- Quickfix enhancements. See :help vim-qf
   use("romainl/vim-qf")
 
+  use({ "nathangrigg/vim-beancount", config = config("beancount") })
+
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
   if PACKER_BOOTSTRAP then
