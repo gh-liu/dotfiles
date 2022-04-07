@@ -145,8 +145,8 @@ return require("packer").startup(function(use)
   use({
     "github/copilot.vim",
     config = function()
+      -- imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
       vim.cmd([[
-              imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
               let g:copilot_no_tab_map = v:true
               let g:copilot_filetypes = {
                 \ 'TelescopePrompt': v:false,
@@ -319,6 +319,13 @@ return require("packer").startup(function(use)
   use("romainl/vim-qf")
 
   use({ "nathangrigg/vim-beancount", config = config("beancount") })
+
+  -- use({
+  --   "max397574/better-escape.nvim",
+  --   config = function()
+  --     require("better_escape").setup()
+  --   end,
+  -- })
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
