@@ -102,7 +102,7 @@ function M.file_type()
   icon.hl = { fg = icon_color }
 
   filetype = " " .. filetype
-  filetype = filetype:gsub("%a", string.upper, 1)
+  -- filetype = filetype:gsub("%a", string.upper, 1)
   -- filetype = filetype:upper()
 
   return filetype, icon
