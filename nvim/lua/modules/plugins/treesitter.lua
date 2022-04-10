@@ -5,25 +5,7 @@ end
 local tsconf = require("nvim-treesitter.configs")
 
 tsconf.setup({
-  -- ensure_installed = {
-  --   "comment",
-  --   "go",
-  --   "gomod",
-  --   "vim",
-  --   "bash",
-  --   "lua",
-  --   "json",
-  --   "json5",
-  --   "yaml",
-  --   "toml",
-  --   "dockerfile",
-  --   "query",
-  --   "markdown",
-  --   "rust",
-  --   "javascript",
-  --   "typescript",
-  -- },
-  ensure_installed = "maintained",
+  ensure_installed = "all",
   sync_install = false, -- install languages synchronously (only applied to `ensure_installed`)
   ignore_install = {}, -- List of parsers to ignore installing
   highlight = {

@@ -18,14 +18,7 @@ function as.map(modes, lhs, rhs, opts)
   if opts then
     options = vim.tbl_extend("force", options, opts)
   end
-
-  if type(modes) == "string" then
-    modes = { modes }
-  end
-
-  for _, mode in ipairs(modes) do
-    vim.api.nvim_set_keymap(mode, lhs, rhs, options)
-  end
+  vim.keymap.set(modes, lhs, rhs, options)
 end
 
 function as.create_autocmd(event, opts)

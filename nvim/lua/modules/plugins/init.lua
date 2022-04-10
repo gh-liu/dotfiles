@@ -141,12 +141,14 @@ return require("packer").startup(function(use)
   use("hrsh7th/cmp-nvim-lsp-signature-help")
   use({ "rafamadriz/friendly-snippets" })
 
+  -- use("aspeddro/lsp_menu.nvim")
+
   -- Copilot
   use({
     "github/copilot.vim",
     config = function()
-      -- imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
       vim.cmd([[
+              imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
               let g:copilot_no_tab_map = v:true
               let g:copilot_filetypes = {
                 \ 'TelescopePrompt': v:false,
@@ -230,6 +232,7 @@ return require("packer").startup(function(use)
   -- ====== Language Specified ======
   -- Lua dev
   use("folke/lua-dev.nvim")
+  use("milisims/nvim-luaref")
 
   -- Rust
   use("simrat39/rust-tools.nvim")
@@ -310,15 +313,13 @@ return require("packer").startup(function(use)
   -- })
   use("nathom/filetype.nvim")
 
-  use("milisims/nvim-luaref")
-
   -- Quickfix
   -- use("kevinhwang91/nvim-bqf")
 
   -- Quickfix enhancements. See :help vim-qf
   use("romainl/vim-qf")
 
-  use({ "nathangrigg/vim-beancount", config = config("beancount") })
+  -- use({ "nathangrigg/vim-beancount", config = config("beancount") })
 
   -- use({
   --   "max397574/better-escape.nvim",

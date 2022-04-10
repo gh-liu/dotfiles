@@ -13,17 +13,7 @@ local luasnip = require("luasnip")
 local neogen_exist, neogen = pcall(require, "neogen")
 
 local function select_next(fallback)
-  if vim.b._copilot.suggestions ~= nil then
-    vim.fn.feedkeys(
-      vim.api.nvim_replace_termcodes(
-        vim.fn["copilot#Accept"](),
-        true,
-        true,
-        true
-      ),
-      ""
-    )
-  elseif cmp.visible() then
+  if cmp.visible() then
     cmp.select_next_item()
   elseif luasnip.expand_or_jumpable() then
     luasnip.expand_or_jump()
