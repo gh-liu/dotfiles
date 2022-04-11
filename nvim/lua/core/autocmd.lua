@@ -1,4 +1,4 @@
-local create_autocmd = as.create_autocmd
+local create_autocmd = vim.api.nvim_create_autocmd
 
 create_autocmd("BufWinEnter", { command = [[checktime]] })
 create_autocmd("BufReadPost", { command = [[normal! g`"]] })
@@ -44,3 +44,16 @@ create_autocmd("BufWritePre", {
     OrgImports(1000)
   end,
 })
+
+local toggle_line_num_on_insert = vim.api.nvim_create_augroup(
+  "toggle_line_num_on_insert",
+  { clear = false }
+)
+create_autocmd(
+  "InsertEnter",
+  { command = [[set norelativenumber]], group = toggle_line_num_on_insert }
+)
+create_autocmd(
+  "InsertLeave",
+  { command = [[set relativenumber]], group = toggle_line_num_on_insert }
+)

@@ -8,66 +8,69 @@ local cmd = vim.api.nvim_command
 vim.g.mapleader = [[,]]
 vim.g.maplocalleader = [[,]]
 
--- Settings
 local buffer = { o, bo }
 local window = { o, wo }
 
-opt("termguicolors", true)
-opt("lazyredraw", true)
-opt("splitbelow", true)
+-- MISC
+opt("hidden", true) -- Hide unused buffers
+opt("cc", 80) -- Set an 80 column boarder for good coding style
+-- opt("lazyredraw", true)
 opt("updatetime", 200)
-opt("showmatch", true)
-opt("hidden", true)
 
-opt("shortmess", o.shortmess .. "c")
--- opt("shada", [['20,<50,s10,h,/100]])
+-- PANE
+opt("splitbelow", true) -- Always add new pane below
+opt("splitright", true) -- Always add new pane on right
 
+-- search and replace
+opt("ignorecase", true) -- Case insensitive matching
+opt("smartcase", true)
+opt("hlsearch", true) -- Highlight search results
+opt("inccommand", "split") -- Show replace result in a split screen before applying
+opt("magic", true)
+opt("incsearch", true)
+opt("synmaxcol", 500, buffer)
+
+-- tab and indentation
+opt("tabstop", 2, buffer) -- Number of columns occupied by a tab character
+opt("shiftwidth", 2, buffer) -- Width for
+opt("softtabstop", 0, buffer) -- How far cursor travels by pressing tab
+opt("expandtab", true, buffer) -- Converts tab to whitespace
+opt("autoindent", true, buffer) -- Indent a new line the same amound as the line before it
+-- opt("smartindent", true, buffer)
+
+-- mouse and cursor
 opt("mouse", "nivh")
-
+opt("cursorline", true, window) -- Highlight current cursorline
+opt("guicursor", [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
+-- scrolloff
 opt("scrolloff", 7)
 opt("sidescrolloff", 7)
 
-opt("wrap", false)
-opt("whichwrap", vim.o.whichwrap .. "<,>,h,l")
-
-opt("cursorline", true, window)
-opt("guicursor", [[n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50]])
-
--- opt('wildignore', '*.o,*~,*.pyc')
--- opt('wildmode', 'longest,full')
-
--- search
-opt("magic", true)
-opt("hlsearch", true)
-opt("incsearch", true)
-opt("ignorecase", true)
-opt("smartcase", true)
-opt("synmaxcol", 500, buffer)
-
--- indent
-opt("tabstop", 2, buffer)
-opt("softtabstop", 0, buffer)
-opt("expandtab", true, buffer)
-opt("shiftwidth", 2, buffer)
-opt("smartindent", true, buffer)
-
--- signcolumn
+-- sign column
 opt("signcolumn", "yes:1", window)
+-- line number
 opt("number", true, window)
 opt("relativenumber", true, window)
+
+-- TERM SETTINGS
+opt("termguicolors", true)
+
+-- fold
+opt("foldlevel", 3)
+opt("foldmethod", "indent")
 
 -- status line
 opt("laststatus", 2)
 opt("showmode", false)
 opt("modeline", false, buffer)
 
+-- wrap
+opt("wrap", false)
+opt("whichwrap", vim.o.whichwrap .. "<,>,h,l")
+
 -- popup menu
 opt("pumheight", 12)
 -- opt('completeopt', 'menuone,noselect') -- Set completeopt to have a better completion experience
-
--- fold
-opt("foldmethod", "indent")
-opt("foldlevel", 99)
 
 -- conceal
 -- opt('conceallevel', 2, window)
@@ -85,5 +88,6 @@ cmd("filetype plugin indent on")
 
 opt("undofile", true, buffer)
 opt("previewheight", 5)
-
 opt("display", "msgsep")
+opt("showmatch", true)
+opt("shortmess", o.shortmess .. "c")

@@ -1,5 +1,5 @@
 -- local create_autocmd = vim.api.nvim_create_autocmd
-local create_autocmd = as.create_autocmd
+local create_autocmd = vim.api.nvim_create_autocmd
 
 local fa = {}
 

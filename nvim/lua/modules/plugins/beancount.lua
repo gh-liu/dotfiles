@@ -1,4 +1,4 @@
-local create_autocmd = as.create_autocmd
+local create_autocmd = vim.api.nvim_create_autocmd
 
 create_autocmd("BufEnter", {
   pattern = { "*.beancount", "*.bean" },
