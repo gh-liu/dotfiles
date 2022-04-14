@@ -55,9 +55,6 @@ local function select_previous_k(fallback)
 end
 
 cmp.setup({
-  -- completion = {
-  --     completeopt = 'menu,menuone,noinsert'
-  -- },
   formatting = {
     format = function(entry, vim_item)
       vim_item.menu = ({
@@ -80,7 +77,7 @@ cmp.setup({
       luasnip.lsp_expand(args.body)
     end,
   },
-  mapping = {
+  mapping = cmp.mapping.preset.insert({
     ["<cr>"] = cmp.mapping.confirm({
       select = true,
     }),
@@ -93,7 +90,7 @@ cmp.setup({
     ["<C-j>"] = cmp.mapping(select_next_j, { "i", "s" }),
     ["<C-k>"] = cmp.mapping(select_previous_k, { "i", "s" }),
     ["<C-y>"] = cmp.config.disable,
-  },
+  }),
   sources = {
     {
       name = "nvim_lsp",
@@ -119,29 +116,30 @@ cmp.setup({
       name = "path",
     },
   },
-  -- documentation = {
-  --     border = {"╭", "─", "╮", "│", "╯", "─", "╰", "│"}
-  -- },
-  experimental = {
-    -- ghost_text = true
+  window = {
+    -- completion = cmp.config.window.bordered(),
+    documentation = {
+      border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
+    },
   },
 })
 
--- Completions for command mode
-cmp.setup.cmdline(":", {
+-- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline("/", {
+  mapping = cmp.mapping.preset.cmdline(),
   sources = {
-    {
-      name = "cmdline",
-    },
-    {
-      name = "path",
-    },
+    { name = "buffer" },
   },
 })
-cmp.setup.cmdline("/", {
-  sources = { {
-    name = "buffer",
-  } },
+
+-- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+cmp.setup.cmdline(":", {
+  mapping = cmp.mapping.preset.cmdline(),
+  sources = cmp.config.sources({
+    { name = "path" },
+  }, {
+    { name = "cmdline" },
+  }),
 })
 
 -- If you want insert `(` after select function or method item
