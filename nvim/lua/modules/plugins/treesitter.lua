@@ -7,7 +7,7 @@ local tsconf = require("nvim-treesitter.configs")
 tsconf.setup({
   ensure_installed = "all",
   sync_install = false, -- install languages synchronously (only applied to `ensure_installed`)
-  ignore_install = {}, -- List of parsers to ignore installing
+  ignore_install = { "swift", "phpdoc" }, -- List of parsers to ignore installing
   highlight = {
     enable = true,
     disable = {},

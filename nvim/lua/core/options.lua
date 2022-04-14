@@ -16,6 +16,7 @@ opt("hidden", true) -- Hide unused buffers
 opt("cc", 80) -- Set an 80 column boarder for good coding style
 -- opt("lazyredraw", true)
 opt("updatetime", 200)
+opt("textwidth", 80)
 
 -- PANE
 opt("splitbelow", true) -- Always add new pane below
