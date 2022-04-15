@@ -23,7 +23,8 @@ end
 
 -- user command
 as.command = function(name, fn, opts)
-  vim.api.nvim_add_user_command(name, fn, opts or {})
+  -- https://github.com/neovim/neovim/issues/14090#issuecomment-1094488198
+  vim.api.nvim_create_user_command(name, fn, opts or {})
 end
 
 -- default option
