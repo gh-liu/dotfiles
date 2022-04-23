@@ -26,6 +26,17 @@ sudo apt install -y build-essential libssl-dev
 ### install docker(https://docs.docker.com/engine/install/ubuntu/)
 ### intsall docker-compose(https://docs.docker.com/compose/install/)
 ### install stylua(https://github.com/JohnnyMorganz/StyLua)
+
+curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+sudo apt update
+sudo apt install gh
+
+# apt proxy
+# sudo touch /etc/apt/apt.conf.d/proxy.conf
+# sudo vi /etc/apt/apt.conf.d/proxy.conf
+# Acquire::http::Proxy "http://user:password@proxy.server:port/";
+# Acquire::https::Proxy "http://user:password@proxy.server:port/";
 fi
 
 
