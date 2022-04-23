@@ -10,12 +10,12 @@ local modules = {
   "core.keymaps",
   "core.autocmd",
   "core.command",
-  "core.colorscheme",
   "core.builtin",
   "modules.statusline",
   "modules.plugins",
   "modules.lsp",
   "modules.lang.go",
+  "core.colorscheme",
 }
 
 for _, module in ipairs(modules) do
