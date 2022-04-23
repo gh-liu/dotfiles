@@ -7,6 +7,8 @@ export DISABLE_AUTO_TITLE='true'
 export OS=`echo \`uname\` | tr '[:upper:]' '[:lower:]'`
 export HOSTIP=$(hostname -I | awk '{print $1}')
 
+export tools=$HOME/tools
+
 
 # $EDITOR
 if command -v nvim &> /dev/null

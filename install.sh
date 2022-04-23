@@ -1,179 +1,82 @@
 #!/bin/bash
 
+platform=$(lsb_release -d | awk -F"\t" '{print $2}' | awk '{print $1}')
+
+# check if ubuntu
+if [ $platform == "Ubuntu" ]; then
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl jq git ssh
+sudo apt install -y zsh tmux tmuxp
+sudo apt install -y linux-tools-common linux-tools-$(uname -r) linux-tools-generic
+
+sudo apt install -y ripgrep silversearcher-ag fd-find
+sudo apt install -y xsel hugo direnv graphviz
+
+sudo apt install -y build-essential libssl-dev 
+
+# sudo apt install -y autoconf automake pkg-config 
+# sudo apt install -y apache2-utils ngrep
+# sudo apt install -y gdb binutils cgroup-tools
+# sudo apt install -y python python3-pip
+# sudo apt install -y libsqlite3-dev libevent-dev
+# sudo apt install -y tldr protobuf-compiler
+# sudo apt install -y pax-utils elfutils prelink
+# sudo apt install -y ttf-mscorefonts-installer
+
+### install docker(https://docs.docker.com/engine/install/ubuntu/)
+### intsall docker-compose(https://docs.docker.com/compose/install/)
+### install stylua(https://github.com/JohnnyMorganz/StyLua)
+fi
+
+
 ## directories
-
 tools=$HOME/tools
-
 mkdir -p $tools
 mkdir -p $HOME/dev/{golang,nodejs,python3,lua}
 mkdir -p $HOME/env/{golang,nodejs,python3,lua}
 
 ## proxy
-
 echo -n "Enter your proxy:"
 read _PROXY_HTTP
-# echo $_PROXY_HTTP
-
 export proxy=$_PROXY_HTTP # Todo: need set by youself
 export http_proxy=$proxy
 export https_proxy=$proxy
 
-## dev env 
-
-### golang
-
-cd $HOME/env/golang/
-
-GOVERSION=$(curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $2}' | tr -d ',"')  # get latest go version
-GOARCH=$(if [[ $(uname -m) == "x86_64" ]] ; then echo amd64; else echo $(uname -m); fi) # get either amd64 or arm64 (darwin/m1)
-
-wget https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz
-
-tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz && rm $GOVERSION.linux-$GOARCH.tar.gz
-
-### nodejs
-
-cd $HOME/env/nodejs/
-
-NODEJSVERSION=v14.18.1 # Todo: auto get the version
-NODEJSARCH=x64 # Todo: auto get the arch
-
-wget https://nodejs.org/dist/$NODEJSVERSION/node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
-
-xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
-tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
-
-mv node-$NODEJSVERSION-linux-$NODEJSARCH node
-
-### lua
-cd $HOME/env/lua/
-
-LUAVERSION=5.4.3
-
-wget https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz
-tar -zxvf lua-$LUAVERSION.tar.gz
-
-mv lua-$LUAVERSION lua
-cd $HOME/env/lua/lua
-make all test
-
-sudo ln -svf $HOME/env/lua/lua/src/lua /usr/bin/lua
-sudo ln -svf $HOME/env/lua/lua/src/luac /usr/bin/luac
-
-cd $HOME/env/lua
-LUAROCKSVERSION=3.8.0
-wget https://luarocks.org/releases/luarocks-3.8.0.tar.gz
-tar zxpf luarocks-3.8.0.tar.gz
-mv luarocks-$LUAROCKSVERSION luarocks
-cd luarocks
-
-./configure --with-lua-include=$HOME/env/lua/lua/src
-make
-sudo make install
-
-### python3
-<<COMMENT
-cd $HOME/env/python3/
-
-PYVERSION=3.9.9
-wget https://www.python.org/ftp/python/$PYVERSION/Python-$PYVERSION.tar.xz
-
-xz -d Python-$PYVERSION.tar.xz
-tar -xvf Python-$PYVERSION.tar && rm Python-$PYVERSION.tar
-COMMENT
-
 ## dotfiles
-
 dotfilespath=$tools/dotfiles
-
 git clone https://github.com/gh-liu/dotfiles.git $dotfilespath
 
-<<COMMENT
-replace PROXY_HTTP in the .common_func
-COMMENT
-
-# sed -i "s#PROXY_HTTP=.*#PROXY_HTTP=$proxy#g" $dotfilespath/zsh/zsh.conf/func
-
-### bin
-ln -svf $(pwd)/bin $HOME/bin
-
 ### tmux
-
 #### tpm
-
 mkdir -p $HOME/.tmux/plugins/tpm
 git clone https://github.com/tmux-plugins/tpm $HOME/.tmux/plugins/tpm
 
-#### config
-
+#### tmux config
 mv -v $HOME/.tmux.conf $HOME/.tmux.conf.old 2> /dev/null
-ln -svf $(pwd)/tmux/tmux.conf $HOME/.tmux.conf
+ln -svf $dotfilespath/tmux/tmux.conf $HOME/.tmux.conf
 
-### zsh
-
-#### ohmyzsh and plugin
-
-git clone https://github.com/ohmyzsh/ohmyzsh.git ~/.oh-my-zsh
-
-git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-completions
-<<COMMENT
-git clone https://github.com/zsh-users/zsh-history-substring-search ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-history-substring-search
-COMMENT
-
-#### config
-
+### zsh config
 mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
-ln -svf $(pwd)/zsh/zsh.conf $HOME/.zsh.conf
-ln -svf $(pwd)/zsh/zshrc $HOME/.zshrc
+ln -svf $dotfilespath/zsh/zsh.conf $HOME/.zsh.conf
+ln -svf $dotfilespath/zsh/zshrc $HOME/.zshrc
 
-# ohmyzsh
-ln -svf $(pwd)/zsh/ohmyzsh/7triones.zsh-theme $HOME/.oh-my-zsh/themes/7triones.zsh-theme
-
-# starship
+#### starship
+ln -svf $dotfilespath/zsh/starship/starship.toml $HOME/.config/starship.toml
 sh -c "$(curl -fsSL https://starship.rs/install.sh)"
-ln -svf $(pwd)/zsh/starship/starship.toml $HOME/.config/starship.toml
-# Add the following to the end of ~/.zshrc: `eval "$(starship init zsh)"`
 
 source $HOME/.zshrc
 
-### vim
-
-#### config
-mv -v $HOME/.vimrc $HOME/.vimrc.old 2> /dev/null
-ln -svf $(pwd)/vim/vimrc $HOME/.vimrc
-ln -svf $(pwd)/vim/dotvim $HOME/.vim
-<<COMMENT
-Make sure that the vim-plug have installed.
-COMMENT
-vim +PlugInstall +qall
-
-### nvim
-
-#### install 
-
-NVIMVERSION=v0.6.0
-mkdir -p $HOME/tools/nvim
-cd $HOME/tools/nvim
-mkdir $NVIMVERSION
-cd $NVIMVERSION
-wget https://github.com/neovim/neovim/releases/download/$NVIMVERSION/nvim-linux64.tar.gz
-tar -zxvf nvim-linux64.tar.gz -C .
-
-sudo ln -svf $(pwd)/nvim-linux64/bin/nvim /usr/bin/nvim
-
-#### config
+### nvim config
 mkdir -p $HOME/.config
-ln -svf $(pwd)/nvim $HOME/.config/nvim
+ln -svf $dotfilespath/nvim $HOME/.config/nvim
 
-### alacritty
+### utils
+git clone https://github.com/wg/wrk.git $tools/wrk 
+cd $tools/wrk  
+sudo make 
+sudo cp wrk /usr/local/bin 
 
-ln -svf $(pwd)/alacritty/alacritty.yml $HOME/.alacritty.yml
-
-## utils
-
-### ctags
+git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
 
 git clone https://github.com/universal-ctags/ctags.git $tools/ctags
 cd $tools/ctags
@@ -181,29 +84,3 @@ cd $tools/ctags
 ./configure  # --prefix=/where/you/want defaults to /usr/local
 make
 sudo make install
-
-### autojump
-
-# git clone git://github.com/wting/autojump.git $tools/autojump
-# cd $tools/autojump
-# ./install.py
-
-### z.lua
-
-# git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
-
-### tmuxp
-
-pip install --user tmuxp
-
-### wrk
-
-cd $tools
-<<COMMENT
-some dependencies:
-sudo apt-get install build-essential libssl-dev git -y
-COMMENT
-git clone https://github.com/wg/wrk.git $tools/wrk 
-cd wrk 
-sudo make 
-sudo cp wrk /usr/local/bin 
