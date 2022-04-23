@@ -37,6 +37,8 @@ sudo apt install gh
 # sudo vi /etc/apt/apt.conf.d/proxy.conf
 # Acquire::http::Proxy "http://user:password@proxy.server:port/";
 # Acquire::https::Proxy "http://user:password@proxy.server:port/";
+
+# https://askubuntu.com/questions/33774/how-do-i-remap-the-caps-lock-and-ctrl-keys
 fi
 
 
@@ -70,6 +72,8 @@ ln -svf $dotfilespath/tmux/tmux.conf $HOME/.tmux.conf
 mv -v $HOME/.zshrc $HOME/.zshrc.old 2> /dev/null
 ln -svf $dotfilespath/zsh/zsh.conf $HOME/.zsh.conf
 ln -svf $dotfilespath/zsh/zshrc $HOME/.zshrc
+
+chsh -s $(which zsh)
 
 #### starship
 ln -svf $dotfilespath/zsh/starship/starship.toml $HOME/.config/starship.toml
