@@ -152,6 +152,7 @@ return require("packer").startup(function(use)
               let g:copilot_no_tab_map = v:true
               let g:copilot_filetypes = {
                 \ 'TelescopePrompt': v:false,
+                \ 'c': v:false,
                 \ }
               ]])
     end,

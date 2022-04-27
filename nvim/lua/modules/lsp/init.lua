@@ -22,6 +22,8 @@ local servers = {
   rust_analyzer = true,
   tsserver = true,
   dockerls = true,
+  dotls = true,
+  clangd = true,
 }
 
 local setup = load_lsp_conf("setup")

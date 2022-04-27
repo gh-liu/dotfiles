@@ -57,7 +57,7 @@ opt("relativenumber", true, window)
 opt("termguicolors", true)
 
 -- fold
-opt("foldlevel", 3)
+opt("foldlevel", 999)
 opt("foldmethod", "indent")
 
 -- status line
