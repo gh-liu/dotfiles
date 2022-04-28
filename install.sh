@@ -77,7 +77,8 @@ chsh -s $(which zsh)
 
 #### starship
 ln -svf $dotfilespath/zsh/starship/starship.toml $HOME/.config/starship.toml
-sh -c "$(curl -fsSL https://starship.rs/install.sh)"
+# starship will be installed in zshrc.
+# sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 
 source $HOME/.zshrc
 
@@ -90,8 +91,6 @@ git clone https://github.com/wg/wrk.git $tools/wrk
 cd $tools/wrk
 sudo make
 sudo cp wrk /usr/local/bin
-
-git clone https://github.com/skywind3000/z.lua.git $tools/z.lua
 
 git clone https://github.com/universal-ctags/ctags.git $tools/ctags
 cd $tools/ctags

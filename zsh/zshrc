@@ -74,9 +74,9 @@ fi
 export FZF_DEFAULT_OPTS='--height 60% --layout=reverse --border'
 
 # z.lua
-# if type '_zlua' 2>/dev/null | grep -q 'function'; then
-#     echo "Installing z.lua ..."
-#     git clone https://github.com/skywind3000/z.lua.git $DEV_TOOLS/z.lua
-# fi
-[ -d $DEV_TOOLS/z.lua ] && eval "$(lua $DEV_TOOLS/z.lua/z.lua --init zsh)"
+if [ ! -d $DEV_TOOLS/z.lua ]; then
+    echo "Installing z.lua ..."
+    git clone https://github.com/skywind3000/z.lua.git $DEV_TOOLS/z.lua
+fi
+eval "$(lua $DEV_TOOLS/z.lua/z.lua --init zsh)"
 
