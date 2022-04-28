@@ -72,6 +72,7 @@ if [ ! -f "`which fzf`" ]; then
     echo "Installing fzf ..."
     git clone https://github.com/junegunn/fzf.git $DEV_TOOLS/fzf
     $DEV_TOOLS/fzf/install
+    ln -svf $DEV_TOOLS/fzf/bin/fzf ~/.local/bin/fzf
 fi
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 export FZF_DEFAULT_OPTS='--height 60% --layout=reverse --border'
