@@ -1,19 +1,19 @@
-update_nodejs () {
+function update_nodejs() {
   mkdir -p $NODE_HOME && cd $NODE_HOME && cd ..
 
   NODEJSVERSION=$1
   if [ -z $NODEJSVERSION ]; then
-    NODEJSVERSION=$(curl -s https://api.github.com/repos/nodejs/node/tags |jq '.[0].name')
+    NODEJSVERSION=$(curl -s https://api.github.com/repos/nodejs/node/tags | jq '.[0].name')
     NODEJSVERSION=${NODEJSVERSION//\"/}
   fi
-  
+
   NODEJSARCH=x64
 
   wget https://nodejs.org/dist/$NODEJSVERSION/node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
 
   echo "update nodejs to $NODEJSVERSION"
 
-# todo 
+  # todo
   OLDVERSION=$(node -v)
   echo "old version: $OLDVERSION"
   # bakeup old version
@@ -26,7 +26,7 @@ update_nodejs () {
   mv node-$NODEJSVERSION-linux-$NODEJSARCH node
 }
 
-update_npm () {
+function update_npm() {
   # todo not found
   npm install npm@latest -g
 }

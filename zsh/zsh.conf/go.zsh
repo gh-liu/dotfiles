@@ -1,26 +1,26 @@
-update_go () {
-  update_lsp_bin () {
-  go install golang.org/x/tools/gopls@latest
+function update_go() {
+  update_lsp_bin() {
+    go install golang.org/x/tools/gopls@latest
 
-  npm i -g vscode-langservers-extracted
+    npm i -g vscode-langservers-extracted
 
-  npm i -g yaml-language-server
+    npm i -g yaml-language-server
 
-  npm i -g bash-language-server
+    npm i -g bash-language-server
 
-  npm i -g vim-language-server
+    npm i -g vim-language-server
 
-  npm i -g typescript typescript-language-server
+    npm i -g typescript typescript-language-server
 
-  npm i -g dockerfile-language-server-nodejs
-} && cd $GOPATH && cd ..
+    npm i -g dockerfile-language-server-nodejs
+  } && cd $GOPATH && cd ..
 
   GOVERSION=$1
   if [ -z $GOVERSION ]; then
-    GOVERSION=$(curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $2}' | tr -d ',"')  # get latest go version  
+    GOVERSION=$(curl -s 'https://go.dev/dl/?mode=json' | grep '"version"' | sed 1q | awk '{print $2}' | tr -d ',"') # get latest go version
   fi
 
-  GOARCH=$(if [[ $(uname -m) == "x86_64" ]] ; then echo amd64; else echo $(uname -m); fi) # get either amd64 or arm64 (darwin/m1)
+  GOARCH=$(if [[ $(uname -m) == "x86_64" ]]; then echo amd64; else echo $(uname -m); fi) # get either amd64 or arm64 (darwin/m1)
 
   wget "https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz"
 
@@ -37,12 +37,12 @@ update_go () {
   echo "install $GOVERSION in $PWD success."
 }
 
-update_gotools () {
+function update_gotools() {
   # cd $GOBIN
   # echo enter $PWD
 
-	export GOPROXY=https://goproxy.io 
-	local go_tools=(
+  export GOPROXY=https://goproxy.io
+  local go_tools=(
     "golang.org/x/tools/gopls"
     "github.com/uudashr/gopkgs/cmd/gopkgs"
     "github.com/ramya-rao-a/go-outline"
@@ -72,13 +72,31 @@ update_gotools () {
     "golang.org/x/perf/cmd/benchstat"
     "github.com/aclements/perflock/cmd/perflock"
     "mvdan.cc/gofumpt"
-	)
+  )
 
-	echo "update go tools"
-	for tool in $go_tools; do
-		GO111MODULE=on go install $tool@latest
+  echo "update go tools"
+  for tool in $go_tools; do
+    GO111MODULE=on go install $tool@latest
     echo "update tool: [$tool@latest] success."
-	done
+  done
 
   # cd -
+}
+
+# golang
+alias fmtf='gofumpt -l -w . && go mod tidy'
+alias fmts='gosimports -w . && go mod tidy'
+
+alias gotc='go tool compile -S -N -l'
+alias gobs='go build -gcflags -S'
+
+function goasm() {
+  go build -gcflags=-S $@ 2>&1 | grep -v PCDATA | grep -v FUNCDATA | less
+}
+
+function gocover() {
+  local t=$(mktemp -t)
+  go test $COVERFLAGS -coverprofile=$t $@ &&
+    go tool cover -func=$t &&
+    unlink $t
 }
