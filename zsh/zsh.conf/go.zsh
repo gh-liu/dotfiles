@@ -1,19 +1,5 @@
 function update_go() {
-  update_lsp_bin() {
-    go install golang.org/x/tools/gopls@latest
-
-    npm i -g vscode-langservers-extracted
-
-    npm i -g yaml-language-server
-
-    npm i -g bash-language-server
-
-    npm i -g vim-language-server
-
-    npm i -g typescript typescript-language-server
-
-    npm i -g dockerfile-language-server-nodejs
-  } && cd $GOPATH && cd ..
+  mkdir -p $GOPATH && cd $GOPATH && cd ..
 
   GOVERSION=$1
   if [ -z $GOVERSION ]; then

@@ -14,7 +14,7 @@ if [ $platform == "Ubuntu" ]; then
 
     sudo apt install -y build-essential libssl-dev
 
-    # sudo apt install -y autoconf automake pkg-config
+    sudo apt install -y autoconf automake pkg-config
     # sudo apt install -y apache2-utils ngrep
     # sudo apt install -y gdb binutils cgroup-tools
     # sudo apt install -y python python3-pip
@@ -45,8 +45,15 @@ fi
 ## directories
 tools=$HOME/tools
 mkdir -p $tools
-mkdir -p $HOME/dev/{golang,nodejs,python3,lua}
-mkdir -p $HOME/env/{golang,nodejs,python3,lua}
+mkdir -p $HOME/dev/golang
+mkdir -p $HOME/dev/nodejs
+mkdir -p $HOME/dev/python3
+mkdir -p $HOME/dev/lua
+
+mkdir -p $HOME/env/golang
+mkdir -p $HOME/dev/nodejs
+mkdir -p $HOME/dev/python3
+mkdir -p $HOME/dev/lua
 
 ## proxy
 echo -n "Enter your proxy:"
@@ -72,6 +79,8 @@ ln -svf $dotfilespath/tmux/tmux.conf $HOME/.tmux.conf
 mv -v $HOME/.zshrc $HOME/.zshrc.old 2>/dev/null
 ln -svf $dotfilespath/zsh/zsh.conf $HOME/.zsh.conf
 ln -svf $dotfilespath/zsh/zshrc $HOME/.zshrc
+touch $HOME/.zsh.conf/custom.zsh
+echo PROXY_HTTP=$proxy >$HOME/.zsh.conf/custom.zsh
 
 chsh -s $(which zsh)
 
@@ -81,6 +90,10 @@ ln -svf $dotfilespath/zsh/starship/starship.toml $HOME/.config/starship.toml
 # sh -c "$(curl -fsSL https://starship.rs/install.sh)"
 
 source $HOME/.zshrc
+update_go
+update_lua
+update_nvim
+update_nodejs
 
 ### nvim config
 mkdir -p $HOME/.config
