@@ -12,12 +12,15 @@ function update_go() {
 
   echo "update golang to $GOVERSION"
 
-  # todo if old version is same as current
-  OLDVERSION=$(go version | awk '{print $3}')
-  echo "old version: $OLDVERSION"
-  # bakeup old version
-  rm -rf $PWD/$OLDVERSION
-  mv $PWD/go $PWD/$OLDVERSION
+  if cmd_exist go; then
+    OLDVERSION=$(go version | awk '{print $3}')
+    if [ ! "$OLDVERSION" = "$GOVERSION" ]; then
+      echo "old version: $OLDVERSION"
+      # bakeup old version
+      rm -rf $PWD/$OLDVERSION
+      mv $PWD/go $PWD/$OLDVERSION
+    fi
+  fi
 
   tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz && rm $GOVERSION.linux-$GOARCH.tar.gz
   echo "install $GOVERSION in $PWD success."

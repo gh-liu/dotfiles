@@ -13,12 +13,15 @@ function update_nodejs() {
 
   echo "update nodejs to $NODEJSVERSION"
 
-  # todo
-  OLDVERSION=$(node -v)
-  echo "old version: $OLDVERSION"
-  # bakeup old version
-  rm -rf $PWD/$OLDVERSION
-  mv $PWD/node $PWD/$OLDVERSION
+  if cmd_exist node; then
+    OLDVERSION=$(node -v)
+    if [ ! "$OLDVERSION" = "$NODEJSVERSION" ]; then
+      echo "old version: $OLDVERSION"
+      # bakeup old version
+      rm -rf $PWD/$OLDVERSION
+      mv $PWD/node $PWD/$OLDVERSION
+    fi
+  fi
 
   xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
   tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar && rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
