@@ -29,4 +29,7 @@ return {
     saturation = 1.0,
     brightness = 1.2,
   },
+  keys = {
+    { key = "f", mods = "SHIFT|CTRL", action = "ToggleFullScreen" },
+  },
 }
