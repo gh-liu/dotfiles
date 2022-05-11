@@ -23,7 +23,6 @@ map("i", "<c-g>", [[<cmd>Telescope git_status<cr>]])
 -- Neovim LSP Pickers
 -- map('n', '<leader>r', [[<cmd>Telescope lsp_references<cr>]])
 -- map('n', '<leader>i', [[<cmd>Telescope lsp_implementations<cr>]])
-map("n", "<leader>a", [[<cmd>Telescope lsp_code_actions<cr>]])
 map("n", "<leader>dw", [[<cmd>Telescope diagnostics<cr>]])
 map("n", "<leader>db", [[<cmd>Telescope diagnostics bufnr=0<cr>]])
 

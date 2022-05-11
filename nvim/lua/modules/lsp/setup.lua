@@ -51,7 +51,7 @@ M.on_attach = function(client, bufnr)
   -- format
   -- as.map('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>')
   -- refactor
-  -- as.map('n', '<leader>a', '<cmd>lua vim.lsp.buf.code_action()<cr>')
+  as.map("n", "<leader>a", "<cmd>lua vim.lsp.buf.code_action()<cr>")
   -- diagnostic
   as.map("n", "<leader>dd", "<cmd>lua vim.diagnostic.open_float()<CR>")
   -- as.map('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>')
