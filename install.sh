@@ -10,7 +10,7 @@ LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}'
 
 if [ $LinuxDistro = "Ubuntu" ]; then
     sudo apt update && sudo apt upgrade -y
-    sudo apt install -y curl jq bat git ssh
+    sudo apt install -y curl jq bat git git-flow ssh
     sudo apt install -y zsh tmux tmuxp
     sudo apt install -y linux-tools-common linux-tools-$(uname -r) linux-tools-generic
 

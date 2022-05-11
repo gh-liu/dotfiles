@@ -1,3 +1,4 @@
 nvim/plugin
 vim/dotvim/plugged
 zsh/zsh.conf/custom.zsh
+.vscode
