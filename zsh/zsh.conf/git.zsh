@@ -2,7 +2,7 @@
 alias g-repo="git config user.name gh-liu && git config user.email liugh.cs@gmail.com"
 
 alias g="git"
-alias git-tree='git log --graph --decorate --pretty=oneline --abbrev-commit'
+
 # alias gcn='git commit -v --no-verify'
 alias gmn='git merge --no-ff'
 
@@ -22,3 +22,7 @@ alias gbd='git branch -D '
 
 alias glog='git log --oneline --decorate --graph '
 alias gloga='git log --oneline --decorate --graph --all '
+alias glogg='git log --graph --decorate --pretty=oneline --abbrev-commit'
+
+# git flow
+# https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/git-flow/git-flow.plugin.zsh
