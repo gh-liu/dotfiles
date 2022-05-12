@@ -15,7 +15,7 @@ return {
       staticcheck = true,
     },
   },
-  init_options = {
-    usePlaceholders = true,
-  },
+  -- init_options = {
+  --   usePlaceholders = true,
+  -- },
 }

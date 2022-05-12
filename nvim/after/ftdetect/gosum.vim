@@ -1,1 +1,0 @@
-au BufRead,BufNewFile go.sum set filetype=gosum

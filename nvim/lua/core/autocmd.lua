@@ -9,6 +9,7 @@ create_autocmd("TextYankPost", {
   end,
 })
 
+-- open help page in a window
 create_autocmd("BufEnter", {
   pattern = "*.txt",
   callback = function()
@@ -18,8 +19,9 @@ create_autocmd("BufEnter", {
   end,
 })
 
+-- To get your imports ordered on save
 function OrgImports(wait_ms)
-  local params = vim.lsp.util.make_range_params(0)
+  local params = vim.lsp.util.make_range_params()
   params.context = { only = { "source.organizeImports" } }
   local result = vim.lsp.buf_request_sync(
     0,
@@ -45,6 +47,7 @@ create_autocmd("BufWritePre", {
   end,
 })
 
+-- toggle line num on or exit insert mode
 local toggle_line_num_on_insert = vim.api.nvim_create_augroup(
   "toggle_line_num_on_insert",
   { clear = false }
@@ -56,4 +59,18 @@ create_autocmd(
 create_autocmd(
   "InsertLeave",
   { command = [[set relativenumber]], group = toggle_line_num_on_insert }
+)
+
+-- trim trailing white space
+local trim_trailing = vim.api.nvim_create_augroup(
+  "trim_trailing",
+  { clear = true }
+)
+create_autocmd(
+  "BufWritePre",
+  { command = [[%s/\s\+$//e]], group = trim_trailing }
+)
+create_autocmd(
+  "BufWritePre",
+  { command = [[%s/\s\+$//e]], group = trim_trailing }
 )

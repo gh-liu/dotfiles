@@ -6,10 +6,7 @@ map("i", "<c-p>", [[<cmd>Telescope find_files<cr>]])
 map("n", "<leader>fw", [[<cmd>Telescope grep_string<cr>]])
 map("n", "<leader>ff", [[<cmd>Telescope live_grep<cr>]])
 
--- map('n', '<leader>fr', [[<cmd>Telescope frecency<cr>]])
-
 -- Vim Pickers
--- map('n', '<leader>b', [[<cmd>Telescope buffers<cr>]])
 map("i", "<c-b>", [[<cmd>Telescope buffers<cr>]])
 map("n", "<c-b>", [[<cmd>Telescope buffers<cr>]])
 
@@ -21,8 +18,6 @@ map("n", "<c-g>", [[<cmd>Telescope git_status<cr>]])
 map("i", "<c-g>", [[<cmd>Telescope git_status<cr>]])
 
 -- Neovim LSP Pickers
--- map('n', '<leader>r', [[<cmd>Telescope lsp_references<cr>]])
--- map('n', '<leader>i', [[<cmd>Telescope lsp_implementations<cr>]])
 map("n", "<leader>dw", [[<cmd>Telescope diagnostics<cr>]])
 map("n", "<leader>db", [[<cmd>Telescope diagnostics bufnr=0<cr>]])
 

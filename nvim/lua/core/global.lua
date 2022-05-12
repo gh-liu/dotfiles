@@ -1,6 +1,6 @@
 _G.as = {}
 
-local cmd = vim.api.nvim_command
+-- local cmd = vim.api.nvim_command
 
 -- options
 --

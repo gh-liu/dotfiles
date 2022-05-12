@@ -35,8 +35,8 @@ return require("packer").startup(function(use)
     return string.format("require('modules.plugins.%s')", name)
   end
 
-  -- Packer
   use("wbthomason/packer.nvim")
+
   -- NOTE: this is plugin is unnecessary once https://github.com/neovim/neovim/pull/15436 is merged
   use({ "lewis6991/impatient.nvim" })
 
@@ -57,24 +57,24 @@ return require("packer").startup(function(use)
   -- ====== Treesitter ======
   use({
     "nvim-treesitter/nvim-treesitter",
-    requires = {
-      "nvim-treesitter/nvim-treesitter-textobjects",
-      "nvim-treesitter/nvim-treesitter-refactor",
-    },
     config = config("treesitter"),
     run = ":TSUpdate",
   })
   use({
     "nvim-treesitter/playground",
   })
+  use({
+    "nvim-treesitter/nvim-treesitter-refactor",
+  })
+  use({
+    "nvim-treesitter/nvim-treesitter-textobjects",
+  })
   use("p00f/nvim-ts-rainbow")
+  use("theHamsta/nvim-treesitter-pairs")
 
   -- ====== Telescope ======
   use({
     "nvim-telescope/telescope.nvim",
-    requires = {
-      "telescope-fzf-native.nvim",
-    },
     setup = config("telescope-setup"),
     config = config("telescope"),
   })
@@ -110,38 +110,37 @@ return require("packer").startup(function(use)
   --  Autocompletion
   use({
     "hrsh7th/nvim-cmp",
-    event = "InsertEnter",
-    requires = {
-      "hrsh7th/cmp-nvim-lsp",
-      {
-        "hrsh7th/cmp-buffer",
-        after = "nvim-cmp",
-      },
-      {
-        "hrsh7th/cmp-path",
-        after = "nvim-cmp",
-      },
-      {
-        "hrsh7th/cmp-nvim-lua",
-        after = "nvim-cmp",
-      },
-      {
-        "L3MON4D3/LuaSnip",
-        config = config("luasnip"),
-      },
-      {
-        -- Snippets plugin
-        "saadparwaiz1/cmp_luasnip",
-        after = "nvim-cmp",
-      },
-    },
+    requires = {},
     config = config("cmp"),
   })
-  use("hrsh7th/cmp-cmdline")
-  use("hrsh7th/cmp-nvim-lsp-signature-help")
+  use({
+    "hrsh7th/cmp-nvim-lsp",
+    after = "nvim-cmp",
+  })
+  use({ "hrsh7th/cmp-nvim-lsp-signature-help" })
+  use({
+    "hrsh7th/cmp-buffer",
+    after = "nvim-cmp",
+  })
+  use({
+    "hrsh7th/cmp-path",
+    after = "nvim-cmp",
+  })
+  use({
+    "hrsh7th/cmp-nvim-lua",
+    after = "nvim-cmp",
+  })
+  use({ "hrsh7th/cmp-cmdline" })
+  use({
+    -- Snippets plugin
+    "saadparwaiz1/cmp_luasnip",
+    after = "nvim-cmp",
+  })
+  use({
+    "L3MON4D3/LuaSnip",
+    config = config("luasnip"),
+  })
   use({ "rafamadriz/friendly-snippets" })
-
-  -- use("aspeddro/lsp_menu.nvim")
 
   -- Copilot
   use({
@@ -174,13 +173,6 @@ return require("packer").startup(function(use)
     config = config("neogen"),
     requires = "nvim-treesitter/nvim-treesitter",
   })
-
-  -- Refactoring
-  -- use({
-  -- 	"ThePrimeagen/refactoring.nvim",
-  -- 	requires = { { "nvim-treesitter/nvim-treesitter" } },
-  -- 	config = config("refactoring"),
-  -- })
 
   -- Undo tree
   -- use({
@@ -216,18 +208,16 @@ return require("packer").startup(function(use)
 
   -- ====== Git ======
   use({
-    {
-      "TimUntersberger/neogit",
-      config = config("neogit"),
-    },
-    {
-      "lewis6991/gitsigns.nvim",
-      config = config("gitsigns"),
-    },
+    "TimUntersberger/neogit",
+    config = config("neogit"),
   })
   use({
-    -- config = [[require('diffview').setup {use_icons = false}]],
     "sindrets/diffview.nvim",
+    -- config = [[require('diffview').setup {use_icons = false}]],
+  })
+  use({
+    "lewis6991/gitsigns.nvim",
+    config = config("gitsigns"),
   })
 
   -- ====== Language Specified ======
@@ -236,7 +226,7 @@ return require("packer").startup(function(use)
   use("milisims/nvim-luaref")
 
   -- Rust
-  use("simrat39/rust-tools.nvim")
+  -- use("simrat39/rust-tools.nvim")
 
   -- Clojure dev
   -- use("Olical/conjure")
@@ -312,13 +302,14 @@ return require("packer").startup(function(use)
   --     vim.g.curshold_updatime = 1000
   --   end,
   -- })
-  use("nathom/filetype.nvim")
+
+  -- use("nathom/filetype.nvim")
 
   -- Quickfix
   -- use("kevinhwang91/nvim-bqf")
 
   -- Quickfix enhancements. See :help vim-qf
-  use("romainl/vim-qf")
+  -- use("romainl/vim-qf")
 
   -- use({ "nathangrigg/vim-beancount", config = config("beancount") })
 

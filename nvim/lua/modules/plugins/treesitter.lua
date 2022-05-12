@@ -52,17 +52,22 @@ tsconf.setup({
         ["[["] = "@function.outer",
       },
     },
+    lsp_interop = {
+      enable = false,
+    },
   },
   refactor = {
     highlight_definitions = {
       enable = true,
     },
+    highlight_current_scope = {
+      enable = false,
+    },
     navigation = {
       enable = false,
-      keymaps = {
-        goto_definition = "gnd", -- mapping to go to definition of symbol under cursor
-        list_definitions = "gnD", -- mapping to list all definitions in current file
-      },
+    },
+    smart_rename = {
+      enable = false,
     },
   },
   rainbow = {
@@ -70,5 +75,8 @@ tsconf.setup({
     -- disable = { "jsx", "cpp" },
     extended_mode = true,
     max_file_lines = nil,
+  },
+  pairs = {
+    enable = true,
   },
 })
