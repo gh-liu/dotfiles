@@ -26,3 +26,16 @@ alias glogg='git log --graph --decorate --pretty=oneline --abbrev-commit'
 
 # git flow
 # https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/git-flow/git-flow.plugin.zsh
+
+# develop -> feature
+alias gffs='git flow feature start'
+# feature -> develop
+alias gfff='git flow feature finish'
+
+# develop -> release
+alias gfrs='git flow release start'
+# release -> develop
+alias gfrf='git flow release finish'
+
+alias gfhs='git flow hotfix start'
+alias gfhf='git flow hotfix finish'
