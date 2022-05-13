@@ -25,7 +25,8 @@ fa.rust = function(client)
 end
 
 fa.lua = function(client)
-  auto_format("lua require('modules.lang.lua.stylua').format()")
+  -- auto_format("lua require('modules.lang.lua.stylua').format()")
+  auto_format()
 end
 
 fa.json = function(client)

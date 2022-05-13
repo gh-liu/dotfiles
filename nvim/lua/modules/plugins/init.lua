@@ -101,6 +101,7 @@ return require("packer").startup(function(use)
   use({
     "neovim/nvim-lspconfig",
   })
+  use({ "jose-elias-alvarez/null-ls.nvim", config = config("null-ls") })
   -- use({ "onsails/lspkind-nvim", event = "BufRead" })
   use({
     "j-hui/fidget.nvim",
@@ -283,6 +284,8 @@ return require("packer").startup(function(use)
       vim.g.rsi_no_meta = 1
     end,
   })
+
+  -- use({ "ThePrimeagen/refactoring.nvim" })
 
   -- use({
   --   "folke/todo-comments.nvim",
