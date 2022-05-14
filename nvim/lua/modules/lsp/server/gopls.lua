@@ -8,11 +8,12 @@ return {
   settings = {
     -- more settings: https://github.com/golang/tools/blob/master/gopls/doc/settings.md
     gopls = {
-      usePlaceholders = false,
-      analyses = {
-        unusedparams = true,
-      },
-      staticcheck = true,
+      gofumpt = true,
+      --   usePlaceholders = false,
+      --   analyses = {
+      --     unusedparams = true,
+      --   },
+      --   staticcheck = true,
     },
   },
   -- init_options = {
