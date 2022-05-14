@@ -84,3 +84,5 @@ if [ ! -d $DEV_TOOLS/z.lua ]; then
 fi
 eval "$(lua $DEV_TOOLS/z.lua/z.lua --init zsh)"
 
+
+alias luamake=/home/allen/tools/sumneko_lua/lua-language-server/3rd/luamake/luamake

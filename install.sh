@@ -24,7 +24,7 @@ if [ $LinuxDistro = "Ubuntu" ]; then
     sudo apt install -y ca-certificates gnupg lsb-release
 
     sudo apt install -y gh
-
+    sudo apt install -y zip unzip
     sudo apt install -y clangd-12
     # sudo apt install -y apache2-utils ngrep
     # sudo apt install -y gdb binutils cgroup-tools

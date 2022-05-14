@@ -27,3 +27,29 @@ cd luarocks
 make
 sudo make install
 }
+
+update_stylua(){
+cd $HOME/tools/stylua
+wget https://github.com/JohnnyMorganz/StyLua/releases/download/v0.13.1/stylua-linux.zip
+unzip stylua-linux.zip && rm stylua-linux.zip
+chmod +x $(pwd)/stylua
+mkdir -p $HOME/bin
+ln -svf $(pwd)/stylua $HOME/bin/stylua
+}
+
+update_sumneko(){
+    sudo apt install -y ninja-build
+    # clone project
+    mkdir -p $HOME/tools/sumneko_lua && cd $HOME/tools/sumneko_lua
+    git clone  --depth=1 https://github.com/sumneko/lua-language-server
+    cd lua-language-server
+    git submodule update --depth 1 --init --recursive
+
+    cd 3rd/luamake
+    ./compile/install.sh
+    cd ../..
+    ./3rd/luamake/luamake rebuild
+
+    mkdir -p $HOME/bin 
+    ln -svf $(pwd)/bin/lua-language-server $HOME/bin/lua-language-server
+}
