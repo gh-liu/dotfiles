@@ -23,6 +23,8 @@ if [ $LinuxDistro = "Ubuntu" ]; then
 
     sudo apt install -y ca-certificates gnupg lsb-release
 
+    sudo apt install -y gh
+
     sudo apt install -y clangd-12
     # sudo apt install -y apache2-utils ngrep
     # sudo apt install -y gdb binutils cgroup-tools
@@ -48,12 +50,7 @@ if [ $LinuxDistro = "Ubuntu" ]; then
     curl -SL https://github.com/docker/compose/releases/download/$version/docker-compose-linux-x86_64 -o $DOCKER_CONFIG/cli-plugins/docker-compose
     chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
 
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo \
-        "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages \ 
-        stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-    sudo apt update
-    sudo apt install -y gh
+
 
     # apt proxy
     sudo touch /etc/apt/apt.conf.d/proxy.conf
@@ -78,7 +75,7 @@ git clone https://github.com/gh-liu/dotfiles.git $dotfilespath
 ### nvim config
 rm -rf $HOME/.config/nvim
 mkdir -p $HOME/.config/nvim
-ln -svf $dotfilespath/nvim $HOME/.config/nvim
+ln -svf $dotfilespath/nvim $HOME/.config/
 
 ### tmux
 #### tpm
