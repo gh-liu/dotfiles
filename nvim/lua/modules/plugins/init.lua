@@ -107,6 +107,7 @@ return require("packer").startup(function(use)
     "j-hui/fidget.nvim",
     config = config("fidget"),
   })
+  use({ 'aspeddro/lsp_menu.nvim' })
 
   --  Autocompletion
   use({
@@ -284,6 +285,11 @@ return require("packer").startup(function(use)
       vim.g.rsi_no_meta = 1
     end,
   })
+  -- use({ "/home/sr/dev/lua/telescope-golangci-lint",
+  --   config = function()
+  --     require 'telescope'.load_extension 'golangci_lint'
+  --   end,
+  -- })
 
   -- use({ "ThePrimeagen/refactoring.nvim" })
 
