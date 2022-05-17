@@ -285,11 +285,6 @@ return require("packer").startup(function(use)
       vim.g.rsi_no_meta = 1
     end,
   })
-  -- use({ "/home/sr/dev/lua/telescope-golangci-lint",
-  --   config = function()
-  --     require 'telescope'.load_extension 'golangci_lint'
-  --   end,
-  -- })
 
   -- use({ "ThePrimeagen/refactoring.nvim" })
 
