@@ -226,6 +226,7 @@ return require("packer").startup(function(use)
   -- Lua dev
   use("folke/lua-dev.nvim")
   use("milisims/nvim-luaref")
+  use("bfredl/nvim-luadev")
 
   -- Rust
   -- use("simrat39/rust-tools.nvim")
@@ -323,6 +324,11 @@ return require("packer").startup(function(use)
   --     require("better_escape").setup()
   --   end,
   -- })
+  --
+  -- use { 'nvim-orgmode/orgmode', config = function()
+  --   require('orgmode').setup({})
+  -- end
+  -- }
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins

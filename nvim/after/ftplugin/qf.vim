@@ -19,3 +19,5 @@ call s:adjust_height(1, 12)
 setlocal winfixheight
 
 highlight! link QuickFixLine CursorLine
+
+nnoremap <buffer> q :lclose <bar> cclose <CR>

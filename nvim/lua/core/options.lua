@@ -92,3 +92,19 @@ opt("previewheight", 5)
 opt("display", "msgsep")
 opt("showmatch", true)
 opt("shortmess", o.shortmess .. "c")
+
+-- ToggleMouse = function()
+--   if vim.o.mouse == 'a' then
+--     vim.wo.signcolumn = 'no'
+--     vim.o.mouse = 'v'
+--     vim.wo.number = false
+--     print 'Mouse disabled'
+--   else
+--     vim.wo.signcolumn = 'yes'
+--     vim.o.mouse = 'a'
+--     vim.wo.number = true
+--     print 'Mouse enabled'
+--   end
+-- end
+--
+-- vim.keymap.set('n', '<leader>bm', ToggleMouse)

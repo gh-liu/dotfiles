@@ -21,20 +21,19 @@ create_autocmd("BufEnter", {
 
 -- To get your imports ordered on save
 function OrgImports(wait_ms)
-  local params = vim.lsp.util.make_range_params(0, "utf-16")
-  params.context = { only = { "source.organizeImports" } }
-  local result = vim.lsp.buf_request_sync(
-    0,
-    "textDocument/codeAction",
-    params,
-    wait_ms
-  )
-  -- print(vim.inspect(result))
-  for _, res in pairs(result or {}) do
-    for _, r in pairs(res.result or {}) do
-      if r.kind == "source.organizeImports" then
+  local clients = vim.lsp.get_active_clients()
+  for _, client in pairs(clients) do
+    if client.config.name == "gopls" then
+      local offset_encoding = "utf-16"
+      local method = "textDocument/codeAction"
+      local bufnr = vim.api.nvim_get_current_buf()
+      local params = vim.lsp.util.make_range_params(0, offset_encoding)
+      params.context = { only = { "source.organizeImports" } }
+
+      local ret = client.request_sync(method, params, wait_ms, bufnr) or {}
+      for _, r in pairs(ret.result or {}) do
         if r.edit then
-          vim.lsp.util.apply_workspace_edit(r.edit, "utf-16")
+          vim.lsp.util.apply_workspace_edit(r.edit, offset_encoding)
         else
           vim.lsp.buf.execute_command(r.command)
         end
@@ -46,7 +45,7 @@ end
 create_autocmd("BufWritePre", {
   pattern = "*.go",
   callback = function()
-    OrgImports(1000)
+    OrgImports(5000)
   end,
 })
 
