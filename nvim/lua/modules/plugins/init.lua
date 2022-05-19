@@ -86,6 +86,7 @@ return require("packer").startup(function(use)
     "nvim-telescope/telescope-file-browser.nvim",
     config = config("telescope-file-browser"),
   })
+  use({ "nvim-telescope/telescope-github.nvim" })
 
   use({
     "gh-liu/goimpl.nvim",
