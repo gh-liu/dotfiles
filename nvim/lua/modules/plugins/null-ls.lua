@@ -17,7 +17,7 @@ local sources = {
   -- }),
   -- b.formatting.goimports,
 
-  -- b.diagnostics.golangci_lint,
+  b.diagnostics.golangci_lint,
 
   b.code_actions.gitsigns,
 }

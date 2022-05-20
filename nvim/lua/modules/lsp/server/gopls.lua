@@ -10,6 +10,7 @@ return {
     gopls = {
       gofumpt = true,
       staticcheck = true,
+      analyses = { unusedwrite = true }
     },
   },
   -- init_options = {
