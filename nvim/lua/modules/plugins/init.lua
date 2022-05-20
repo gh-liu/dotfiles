@@ -288,6 +288,13 @@ return require("packer").startup(function(use)
     end,
   })
 
+  use { "mfussenegger/nvim-dap",
+    -- config = config("dap"),
+  }
+  use { "rcarriga/nvim-dap-ui",
+    -- config = config("dapui"),
+  }
+
   -- use({ "ThePrimeagen/refactoring.nvim" })
 
   -- use({
