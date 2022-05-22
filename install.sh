@@ -122,3 +122,6 @@ update_go
 update_lua
 update_nvim
 update_nodejs
+
+# change the timezone
+# sudo ln -s /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
