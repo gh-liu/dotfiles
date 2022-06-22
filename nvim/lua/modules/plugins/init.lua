@@ -48,8 +48,10 @@ return require("packer").startup(function(use)
 
   -- ====== UI ======
   -- schemes
-  use("Mofiqul/vscode.nvim")
+  use({ "catppuccin/nvim" })
+  use({ "Mofiqul/vscode.nvim" })
   use({ "ellisonleao/gruvbox.nvim" })
+  use({ "projekt0n/github-nvim-theme" })
 
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
@@ -108,7 +110,7 @@ return require("packer").startup(function(use)
     "j-hui/fidget.nvim",
     config = config("fidget"),
   })
-  use({ 'aspeddro/lsp_menu.nvim' })
+  use({ "aspeddro/lsp_menu.nvim" })
 
   --  Autocompletion
   use({
@@ -146,19 +148,19 @@ return require("packer").startup(function(use)
   use({ "rafamadriz/friendly-snippets" })
 
   -- Copilot
-  use({
-    "github/copilot.vim",
-    config = function()
-      vim.cmd([[
-              imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
-              let g:copilot_no_tab_map = v:true
-              let g:copilot_filetypes = {
-                \ 'TelescopePrompt': v:false,
-                \ 'c': v:false,
-                \ }
-              ]])
-    end,
-  })
+  -- use({
+  --   "github/copilot.vim",
+  --   config = function()
+  --     vim.cmd([[
+  --             imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
+  --             let g:copilot_no_tab_map = v:true
+  --             let g:copilot_filetypes = {
+  --               \ 'TelescopePrompt': v:false,
+  --               \ 'c': v:false,
+  --               \ }
+  --             ]])
+  --   end,
+  -- })
 
   -- Comment
   -- use({
@@ -288,12 +290,16 @@ return require("packer").startup(function(use)
     end,
   })
 
-  use { "mfussenegger/nvim-dap",
-    -- config = config("dap"),
-  }
-  use { "rcarriga/nvim-dap-ui",
-    -- config = config("dapui"),
-  }
+  -- use({
+  --   "mfussenegger/nvim-dap",
+  --   -- config = config("dap"),
+  -- })
+  -- use({
+  --   "rcarriga/nvim-dap-ui",
+  --   -- config = config("dapui"),
+  -- })
+
+  -- use {"numToStr/FTerm.nvim"}
 
   -- use({ "ThePrimeagen/refactoring.nvim" })
 

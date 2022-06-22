@@ -6,4 +6,8 @@ opt("background", "dark")
 -- vim.g.vscode_style = "dark"
 -- vim.cmd([[colorscheme vscode]])
 
-vim.cmd([[colorscheme gruvbox]])
+-- vim.cmd([[colorscheme gruvbox]])
+
+-- vim.cmd([[colorscheme github_*]])
+
+vim.cmd([[colorscheme catppuccin]])

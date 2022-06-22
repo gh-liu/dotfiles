@@ -17,6 +17,7 @@ local sources = {
   -- }),
   -- b.formatting.goimports,
 
+  b.formatting.mdformat,
   b.diagnostics.golangci_lint,
 }
 
