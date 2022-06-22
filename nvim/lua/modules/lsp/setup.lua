@@ -5,10 +5,12 @@ local M = {}
 M.capabilities = vim.lsp.protocol.make_client_capabilities()
 M.capabilities.textDocument.completion.completionItem.snippetSupport = true
 M.capabilities.textDocument.completion.completionItem.preselectSupport = true
-M.capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
+M.capabilities.textDocument.completion.completionItem.insertReplaceSupport =
+  true
 M.capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
 M.capabilities.textDocument.completion.completionItem.deprecatedSupport = true
-M.capabilities.textDocument.completion.completionItem.commitCharactersSupport = true
+M.capabilities.textDocument.completion.completionItem.commitCharactersSupport =
+  true
 M.capabilities.textDocument.completion.completionItem.tagSupport = {
   valueSet = { 1 },
 }
@@ -105,9 +107,19 @@ M.on_attach = function(client, bufnr)
   local filetype_attach = require("modules.lsp.filetype_attach")
   filetype_attach[filetype](client)
 
-  require('lsp_menu').on_attach(client, bufnr)
-  vim.keymap.set('n', '<leader>ca', require 'lsp_menu'.codeaction.run, { buffer = bufnr })
-  vim.keymap.set('n', '<leader>cl', require 'lsp_menu'.codelens.run, { buffer = bufnr })
+  require("lsp_menu").on_attach(client, bufnr)
+  vim.keymap.set(
+    "n",
+    "<leader>ca",
+    require("lsp_menu").codeaction.run,
+    { buffer = bufnr }
+  )
+  vim.keymap.set(
+    "n",
+    "<leader>cl",
+    require("lsp_menu").codelens.run,
+    { buffer = bufnr }
+  )
 end
 
 M.on_init = function(client)

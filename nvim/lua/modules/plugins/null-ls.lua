@@ -53,7 +53,7 @@ local git_sign = {
       end
       return actions
     end,
-  }
+  },
 }
 null_ls.register(git_sign)
 

@@ -64,7 +64,7 @@ tsconf.setup({
       enable = false,
     },
     navigation = {
-      enable  = true,
+      enable = true,
       keymaps = {
         goto_next_usage = "<leader>j",
         goto_previous_usage = "<leader>k",
