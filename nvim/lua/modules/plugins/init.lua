@@ -46,6 +46,12 @@ return require("packer").startup(function(use)
     { "nvim-lua/plenary.nvim" },
   })
 
+  -- ====== Notification ======
+  use({
+    "rcarriga/nvim-notify",
+    config = config("nvim-notify"),
+  })
+
   -- ====== UI ======
   -- schemes
   use({ "catppuccin/nvim" })
@@ -308,11 +314,6 @@ return require("packer").startup(function(use)
   --   config = function()
   --     require("todo-comments").setup({})
   --   end,
-  -- })
-
-  -- use({
-  --   "rcarriga/nvim-notify",
-  --   config = config("nvim-notify"),
   -- })
 
   -- use({
