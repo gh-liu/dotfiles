@@ -33,8 +33,8 @@ local ViMode = {
   end,
   static = {
     mode_names = {
-      n = "N",
-      no = "N?",
+      n = "Normal",
+      no = "N·Operator Pending",
       nov = "N?",
       noV = "N?",
       ["no\22"] = "N?",
@@ -42,31 +42,31 @@ local ViMode = {
       niR = "Nr",
       niV = "Nv",
       nt = "Nt",
-      v = "V",
+      v = "Visual",
       vs = "Vs",
-      V = "V_",
+      V = "V·Line",
       Vs = "Vs",
-      ["\22"] = "^V",
-      ["\22s"] = "^V",
-      s = "S",
-      S = "S_",
-      ["\19"] = "^S",
-      i = "I",
+      ["\22"] = "V·Block",
+      ["\22s"] = "V·Block",
+      s = "Select",
+      S = "S·Line",
+      ["\19"] = "S·Block",
+      i = "Insert",
       ic = "Ic",
       ix = "Ix",
-      R = "R",
+      R = "Replace",
       Rc = "Rc",
       Rx = "Rx",
       Rv = "Rv",
       Rvc = "Rv",
       Rvx = "Rv",
-      c = "C",
-      cv = "Ex",
-      r = "...",
-      rm = "M",
-      ["r?"] = "?",
-      ["!"] = "!",
-      t = "T",
+      c = "Command",
+      cv = "Vim Ex",
+      r = "Prompt",
+      rm = "More",
+      ["r?"] = "Confirm",
+      ["!"] = "Shell",
+      t = "Terminal",
     },
     mode_colors = {
       n = "red",
@@ -109,6 +109,10 @@ local FileIcon = {
   init = function(self)
     local filename = self.filename
     local extension = vim.fn.fnamemodify(filename, ":e")
+    if filename == "" then
+      self.icon, self.icon_color = "",""
+      return
+    end
     self.icon, self.icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
   end,
   provider = function(self)
