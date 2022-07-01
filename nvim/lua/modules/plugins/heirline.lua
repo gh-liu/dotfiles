@@ -195,6 +195,8 @@ local ScrollBar = {
   hl = { fg = "blue", bg = "bright_bg" },
 }
 
+local signs = require("core.config").lsp_icons
+
 local LSPActive = {
   condition = conditions.lsp_attached,
   -- update = { 'LspAttach', 'LspDetach' },
@@ -208,19 +210,21 @@ local LSPActive = {
     for i, server in pairs(vim.lsp.buf_get_clients(0)) do
       table.insert(names, server.name)
     end
-    return " [" .. table.concat(names, " ") .. "]"
+    return signs.CLIENT .. "[" .. table.concat(names, " ") .. "]"
   end,
   hl       = { fg = "green", bold = true },
 }
+
+
 
 local Diagnostics = {
   condition = conditions.has_diagnostics,
 
   static = {
-    error_icon = vim.fn.sign_getdefined("DiagnosticSignError")[1].text,
-    warn_icon = vim.fn.sign_getdefined("DiagnosticSignWarn")[1].text,
-    info_icon = vim.fn.sign_getdefined("DiagnosticSignInfo")[1].text,
-    hint_icon = vim.fn.sign_getdefined("DiagnosticSignHint")[1].text,
+    error_icon = signs.Error,
+    warn_icon = signs.WARN,
+    info_icon = signs.INFO,
+    hint_icon = signs.HINT,
   },
 
   init = function(self)

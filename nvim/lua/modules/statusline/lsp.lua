@@ -3,12 +3,8 @@ local M = {}
 local lsp = vim.lsp
 -- local diagnostic = vim.diagnostic
 
-local signs = {}
-signs.Error = "  "
-signs.WARN = "  "
-signs.INFO = "  "
-signs.HINT = "  "
-signs.CLIENT = "  "
+
+local signs = require("core.config").lsp_icons
 
 local severities = {}
 severities.Error = vim.diagnostic.severity.ERROR
