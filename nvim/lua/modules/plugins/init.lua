@@ -62,6 +62,16 @@ return require("packer").startup(function(use)
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
 
+  use({ 'rebelot/heirline.nvim',
+    config = config("heirline"),
+  })
+
+  -- use({ 'feline-nvim/feline.nvim',
+  --   config = function()
+  --     require('feline').setup()
+  --   end,
+  -- })
+
   -- ====== Treesitter ======
   use({
     "nvim-treesitter/nvim-treesitter",
@@ -117,6 +127,10 @@ return require("packer").startup(function(use)
     config = config("fidget"),
   })
   use({ "aspeddro/lsp_menu.nvim" })
+  -- winbar
+  use({
+    "SmiteshP/nvim-navic",
+  })
 
   --  Autocompletion
   use({
@@ -296,10 +310,10 @@ return require("packer").startup(function(use)
     end,
   })
 
-  -- use({
-  --   "mfussenegger/nvim-dap",
-  --   -- config = config("dap"),
-  -- })
+  use({
+    "mfussenegger/nvim-dap",
+    -- config = config("dap"),
+  })
   -- use({
   --   "rcarriga/nvim-dap-ui",
   --   -- config = config("dapui"),

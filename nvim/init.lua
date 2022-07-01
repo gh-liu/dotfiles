@@ -11,7 +11,6 @@ local modules = {
   "core.autocmd",
   "core.command",
   "core.builtin",
-  "modules.statusline",
   "modules.plugins",
   "modules.lsp",
   "modules.lang.go",

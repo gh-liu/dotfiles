@@ -61,7 +61,7 @@ opt("foldlevel", 999)
 opt("foldmethod", "indent")
 
 -- status line
-opt("laststatus", 2)
+opt("laststatus", 3)
 opt("showmode", false)
 opt("modeline", false, buffer)
 
