@@ -58,19 +58,15 @@ return require("packer").startup(function(use)
   use({ "Mofiqul/vscode.nvim" })
   use({ "ellisonleao/gruvbox.nvim" })
   use({ "projekt0n/github-nvim-theme" })
+  -- winbar
+  use({
+    "SmiteshP/nvim-navic",
+  })
 
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
 
-  use({ 'rebelot/heirline.nvim',
-    config = config("heirline"),
-  })
-
-  -- use({ 'feline-nvim/feline.nvim',
-  --   config = function()
-  --     require('feline').setup()
-  --   end,
-  -- })
+  use({ "rebelot/heirline.nvim", config = config("heirline") })
 
   -- ====== Treesitter ======
   use({
@@ -104,7 +100,7 @@ return require("packer").startup(function(use)
     "nvim-telescope/telescope-file-browser.nvim",
     config = config("telescope-file-browser"),
   })
-  use({ "nvim-telescope/telescope-github.nvim" })
+  -- use({ "nvim-telescope/telescope-github.nvim" })
 
   use({
     "gh-liu/goimpl.nvim",
@@ -127,10 +123,6 @@ return require("packer").startup(function(use)
     config = config("fidget"),
   })
   use({ "aspeddro/lsp_menu.nvim" })
-  -- winbar
-  use({
-    "SmiteshP/nvim-navic",
-  })
 
   --  Autocompletion
   use({
@@ -167,48 +159,26 @@ return require("packer").startup(function(use)
   })
   use({ "rafamadriz/friendly-snippets" })
 
-  -- Copilot
-  -- use({
-  --   "github/copilot.vim",
-  --   config = function()
-  --     vim.cmd([[
-  --             imap <silent><script><expr> <C-L> copilot#Accept("\<right>")
-  --             let g:copilot_no_tab_map = v:true
-  --             let g:copilot_filetypes = {
-  --               \ 'TelescopePrompt': v:false,
-  --               \ 'c': v:false,
-  --               \ }
-  --             ]])
-  --   end,
-  -- })
-
   -- Comment
-  -- use({
-  --   "tpope/vim-commentary",
-  --   config = config("vim-commentary"),
-  -- })
   use({
     "numToStr/Comment.nvim",
     config = config("comment"),
   })
 
-  -- Annotation generator
+  -- ====== Debug ======
   use({
-    "danymat/neogen",
-    config = config("neogen"),
-    requires = "nvim-treesitter/nvim-treesitter",
+    "mfussenegger/nvim-dap",
+    config = config("dap"),
+  })
+  use({
+    "rcarriga/nvim-dap-ui",
+    config = config("dapui"),
   })
 
   -- Undo tree
   -- use({
   --   "mbbill/undotree",
   --   config = config("undotree"),
-  -- })
-
-  -- Tagbar
-  -- use({
-  --   "majutsushi/tagbar",
-  --   config = config("tagbar"),
   -- })
 
   use({
@@ -223,13 +193,11 @@ return require("packer").startup(function(use)
   })
 
   -- ====== Moving ======
-  -- use({
-  --   "phaazon/hop.nvim",
-  --   branch = "v1",
-  --   config = config("hop"),
-  -- })
-
-  -- ====== Debug ======
+  use({
+    "phaazon/hop.nvim",
+    branch = "v2",
+    config = config("hop"),
+  })
 
   -- ====== Git ======
   use({
@@ -238,7 +206,6 @@ return require("packer").startup(function(use)
   })
   use({
     "sindrets/diffview.nvim",
-    -- config = [[require('diffview').setup {use_icons = false}]],
   })
   use({
     "lewis6991/gitsigns.nvim",
@@ -254,17 +221,6 @@ return require("packer").startup(function(use)
   -- Rust
   -- use("simrat39/rust-tools.nvim")
 
-  -- Clojure dev
-  -- use("Olical/conjure")
-
-  -- -- markdown preview
-  -- use({
-  -- 	"ellisonleao/glow.nvim",
-  -- 	config = function()
-  -- 		vim.g.glow_binary_path = vim.env.HOME .. "/bin"
-  -- 	end,
-  -- })
-
   -- ====== Others ======
   -- Pretty colors
   use({
@@ -274,19 +230,8 @@ return require("packer").startup(function(use)
       require("colorizer").setup()
     end,
   })
-  -- use({
-  --   "norcalli/nvim-terminal.lua",
-  --   config = function()
-  --     require("terminal").setup()
-  --   end,
-  -- })
 
-  -- use({
-  --   "folke/zen-mode.nvim",
-  --   enable = false,
-  -- })
-
-  use("editorconfig/editorconfig-vim")
+  -- use("editorconfig/editorconfig-vim")
 
   -- Profiling
   use({
@@ -310,24 +255,11 @@ return require("packer").startup(function(use)
     end,
   })
 
-  use({
-    "mfussenegger/nvim-dap",
-    -- config = config("dap"),
-  })
+  -- Annotation generator
   -- use({
-  --   "rcarriga/nvim-dap-ui",
-  --   -- config = config("dapui"),
-  -- })
-
-  -- use {"numToStr/FTerm.nvim"}
-
-  -- use({ "ThePrimeagen/refactoring.nvim" })
-
-  -- use({
-  --   "folke/todo-comments.nvim",
-  --   config = function()
-  --     require("todo-comments").setup({})
-  --   end,
+  --   "danymat/neogen",
+  --   config = config("neogen"),
+  --   requires = "nvim-treesitter/nvim-treesitter",
   -- })
 
   -- use({
@@ -337,27 +269,12 @@ return require("packer").startup(function(use)
   --   end,
   -- })
 
-  -- use("nathom/filetype.nvim")
-
-  -- Quickfix
-  -- use("kevinhwang91/nvim-bqf")
-
-  -- Quickfix enhancements. See :help vim-qf
-  -- use("romainl/vim-qf")
-
-  -- use({ "nathangrigg/vim-beancount", config = config("beancount") })
-
   -- use({
   --   "max397574/better-escape.nvim",
   --   config = function()
   --     require("better_escape").setup()
   --   end,
   -- })
-  --
-  -- use { 'nvim-orgmode/orgmode', config = function()
-  --   require('orgmode').setup({})
-  -- end
-  -- }
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins

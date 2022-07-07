@@ -25,7 +25,6 @@ end
 
 require("heirline").load_colors(setup_colors())
 
-
 -- vim mode
 local ViMode = {
   init = function(self)
@@ -82,14 +81,14 @@ local ViMode = {
       r = "orange",
       ["!"] = "red",
       t = "red",
-    }
+    },
   },
   provider = function(self)
     return "%2(" .. self.mode_names[self.mode] .. "%)"
   end,
   hl = function(self)
     local mode = self.mode:sub(1, 1) -- get only the first mode character
-    return { fg = self.mode_colors[mode], bold = true, }
+    return { fg = self.mode_colors[mode], bold = true }
   end,
   update = {
     "ModeChanged",
@@ -110,22 +109,28 @@ local FileIcon = {
     local filename = self.filename
     local extension = vim.fn.fnamemodify(filename, ":e")
     if filename == "" then
-      self.icon, self.icon_color = "",""
+      self.icon, self.icon_color = "", ""
       return
     end
-    self.icon, self.icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
+    self.icon, self.icon_color = require("nvim-web-devicons").get_icon_color(
+      filename,
+      extension,
+      { default = true }
+    )
   end,
   provider = function(self)
     return self.icon and (self.icon .. " ")
   end,
   hl = function(self)
     return { fg = self.icon_color }
-  end
+  end,
 }
 local FileName = {
   provider = function(self)
     local filename = vim.fn.fnamemodify(self.filename, ":.")
-    if filename == "" then return "[No Name]" end
+    if filename == "" then
+      return "[No Name]"
+    end
     if not conditions.width_percent_below(#filename, 0.25) then
       filename = vim.fn.pathshorten(filename)
     end
@@ -135,13 +140,21 @@ local FileName = {
 }
 local FileFlags = {
   {
-    provider = function() if vim.bo.modified then return "[+]" end end,
-    hl = { fg = "green" }
-
-  }, {
-    provider = function() if (not vim.bo.modifiable) or vim.bo.readonly then return "" end end,
-    hl = { fg = "orange" }
-  }
+    provider = function()
+      if vim.bo.modified then
+        return "[+]"
+      end
+    end,
+    hl = { fg = "green" },
+  },
+  {
+    provider = function()
+      if not vim.bo.modifiable or vim.bo.readonly then
+        return ""
+      end
+    end,
+    hl = { fg = "orange" },
+  },
 }
 local FileNameModifer = {
   hl = function()
@@ -152,11 +165,12 @@ local FileNameModifer = {
   end,
 }
 
-FileNameBlock = utils.insert(FileNameBlock,
+FileNameBlock = utils.insert(
+  FileNameBlock,
   FileIcon,
   utils.insert(FileNameModifer, FileName), -- a new table where FileName is a child of FileNameModifier
   unpack(FileFlags), -- A small optimisation, since their parent does nothing
-  { provider = '%<' }-- this means that the statusline is cut here when there's not enough space
+  { provider = "%<" } -- this means that the statusline is cut here when there's not enough space
 )
 
 local FileType = {
@@ -167,15 +181,15 @@ local FileType = {
 }
 local FileEncoding = {
   provider = function()
-    local enc = (vim.bo.fenc ~= '' and vim.bo.fenc) or vim.o.enc -- :h 'enc'
-    return enc ~= 'utf-8' and enc:upper()
-  end
+    local enc = (vim.bo.fenc ~= "" and vim.bo.fenc) or vim.o.enc -- :h 'enc'
+    return enc ~= "utf-8" and enc:upper()
+  end,
 }
 local FileFormat = {
   provider = function()
     local fmt = vim.bo.fileformat
-    return fmt ~= 'unix' and fmt:upper()
-  end
+    return fmt ~= "unix" and fmt:upper()
+  end,
 }
 
 local Ruler = {
@@ -188,7 +202,7 @@ local Ruler = {
 -- I take no credits for this! :lion:
 local ScrollBar = {
   static = {
-    sbar = { '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█' }
+    sbar = { "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█" },
   },
   provider = function(self)
     local curr_line = vim.api.nvim_win_get_cursor(0)[1]
@@ -216,10 +230,8 @@ local LSPActive = {
     end
     return signs.CLIENT .. "[" .. table.concat(names, " ") .. "]"
   end,
-  hl       = { fg = "green", bold = true },
+  hl = { fg = "green", bold = true },
 }
-
-
 
 local Diagnostics = {
   condition = conditions.has_diagnostics,
@@ -232,10 +244,22 @@ local Diagnostics = {
   },
 
   init = function(self)
-    self.errors = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.ERROR })
-    self.warnings = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
-    self.hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
-    self.info = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.INFO })
+    self.errors = #vim.diagnostic.get(
+      0,
+      { severity = vim.diagnostic.severity.ERROR }
+    )
+    self.warnings = #vim.diagnostic.get(
+      0,
+      { severity = vim.diagnostic.severity.WARN }
+    )
+    self.hints = #vim.diagnostic.get(
+      0,
+      { severity = vim.diagnostic.severity.HINT }
+    )
+    self.info = #vim.diagnostic.get(
+      0,
+      { severity = vim.diagnostic.severity.INFO }
+    )
   end,
 
   update = { "DiagnosticChanged", "BufEnter" },
@@ -278,24 +302,25 @@ local Git = {
 
   init = function(self)
     self.status_dict = vim.b.gitsigns_status_dict
-    self.has_changes = self.status_dict.added ~= 0 or self.status_dict.removed ~= 0 or self.status_dict.changed ~= 0
+    self.has_changes = self.status_dict.added ~= 0
+      or self.status_dict.removed ~= 0
+      or self.status_dict.changed ~= 0
   end,
 
   hl = { fg = "orange" },
-
 
   { -- git branch name
     provider = function(self)
       return " " .. self.status_dict.head
     end,
-    hl = { bold = true }
+    hl = { bold = true },
   },
   -- You could handle delimiters, icons and counts similar to Diagnostics
   {
     condition = function(self)
       return self.has_changes
     end,
-    provider = "("
+    provider = "(",
   },
   {
     provider = function(self)
@@ -350,14 +375,30 @@ local Align = { provider = "%=" }
 local Space = { provider = " " }
 
 local DefaultStatusline = {
-  ViMode, Space, FileNameBlock, Space, Git, Align,
-  LSPActive, Space, Diagnostics, Space, FileType, Space, Ruler, Space, ScrollBar
+  ViMode,
+  Space,
+  FileNameBlock,
+  Space,
+  Git,
+  Align,
+  LSPActive,
+  Space,
+  Diagnostics,
+  Space,
+  FileType,
+  Space,
+  Ruler,
+  Space,
+  ScrollBar,
 }
 local InactiveStatusline = {
   condition = function()
     return not conditions.is_active()
   end,
-  FileType, Space, FileName, Align,
+  FileType,
+  Space,
+  FileName,
+  Align,
 }
 local SpecialStatusline = {
   condition = function()
@@ -366,7 +407,10 @@ local SpecialStatusline = {
       filetype = { "^git.*", "fugitive" },
     })
   end,
-  FileType, Space, HelpFileName, Align
+  FileType,
+  Space,
+  HelpFileName,
+  Align,
 }
 local TerminalStatusline = {
   condition = function()
@@ -376,9 +420,12 @@ local TerminalStatusline = {
   hl = { bg = "dark_red" },
 
   -- Quickly add a condition to the ViMode to only show it when buffer is active!
-  { condition = conditions.is_active, ViMode, Space }, FileType, Space, TerminalName, Align,
+  { condition = conditions.is_active, ViMode, Space },
+  FileType,
+  Space,
+  TerminalName,
+  Align,
 }
-
 
 local StatusLines = {
   hl = function()
@@ -391,7 +438,10 @@ local StatusLines = {
 
   init = utils.pick_child_on_condition,
 
-  SpecialStatusline, TerminalStatusline, InactiveStatusline, DefaultStatusline, -- order them from stricter to looser conditions.
+  SpecialStatusline,
+  TerminalStatusline,
+  InactiveStatusline,
+  DefaultStatusline, -- order them from stricter to looser conditions.
 }
 
 require("heirline").setup(StatusLines)
