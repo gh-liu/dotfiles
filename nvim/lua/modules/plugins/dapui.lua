@@ -31,14 +31,14 @@ require("dapui").setup({
       size = 40, -- 40 columns
       position = "left",
     },
-    {
-      elements = {
-        "repl",
-        "console",
-      },
-      size = 0.25, -- 25% of total lines
-      position = "bottom",
-    },
+    -- {
+    --   elements = {
+    --     "repl",
+    --     "console",
+    --   },
+    --   size = 0.25, -- 25% of total lines
+    --   position = "bottom",
+    -- },
   },
   floating = {
     max_height = nil, -- These can be integers or a float between 0 and 1.
@@ -67,3 +67,7 @@ end
 dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
+
+vim.api.nvim_create_user_command("DAPREPL",[[lua require("dapui").float_element("repl")]],{})
+vim.api.nvim_create_user_command("DAPCONSOLE",[[lua require("dapui").float_element("console")]],{})
+-- require("dapui").eval(<expression>)
