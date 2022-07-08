@@ -13,6 +13,7 @@ local modules = {
   "core.builtin",
   "modules.plugins",
   "modules.lsp",
+  "modules.dap",
   "modules.lang.go",
   "core.colorscheme",
 }

@@ -168,7 +168,7 @@ return require("packer").startup(function(use)
   -- ====== Debug ======
   use({
     "mfussenegger/nvim-dap",
-    config = config("dap"),
+    -- config = config("dap"),
   })
   use({
     "rcarriga/nvim-dap-ui",
@@ -225,7 +225,8 @@ return require("packer").startup(function(use)
   -- Pretty colors
   use({
     "norcalli/nvim-colorizer.lua",
-    cmd = { "ColorizerAttachToBuffer", "ColorizerToggle" },
+    -- cmd = { "ColorizerAttachToBuffer", "ColorizerToggle" },
+    event = 'BufRead',
     config = function()
       require("colorizer").setup()
     end,
