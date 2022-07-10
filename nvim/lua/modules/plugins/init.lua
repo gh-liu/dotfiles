@@ -101,6 +101,7 @@ return require("packer").startup(function(use)
     config = config("telescope-file-browser"),
   })
   -- use({ "nvim-telescope/telescope-github.nvim" })
+  use({ "nvim-telescope/telescope-ui-select.nvim" })
 
   use({
     "gh-liu/goimpl.nvim",
@@ -174,6 +175,7 @@ return require("packer").startup(function(use)
     "rcarriga/nvim-dap-ui",
     config = config("dapui"),
   })
+  use("nvim-telescope/telescope-dap.nvim")
 
   -- Undo tree
   -- use({
@@ -226,7 +228,7 @@ return require("packer").startup(function(use)
   use({
     "norcalli/nvim-colorizer.lua",
     -- cmd = { "ColorizerAttachToBuffer", "ColorizerToggle" },
-    event = 'BufRead',
+    event = "BufRead",
     config = function()
       require("colorizer").setup()
     end,

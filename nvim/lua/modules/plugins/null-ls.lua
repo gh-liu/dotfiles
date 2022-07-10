@@ -88,15 +88,17 @@ local gomodifytags = {
       local replace_buf = function(ps)
         local output = ps.action_output
         vim.lsp.util.apply_text_edits(
-          { {
-            range = u.range.to_lsp({
-              row = 1,
-              col = 1,
-              end_row = vim.tbl_count(ps.content) + 1,
-              end_col = 1,
-            }),
-            newText = output:gsub("[\r\n]$", ""),
-          } },
+          {
+            {
+              range = u.range.to_lsp({
+                row = 1,
+                col = 1,
+                end_row = vim.tbl_count(ps.content) + 1,
+                end_col = 1,
+              }),
+              newText = output:gsub("[\r\n]$", ""),
+            },
+          },
           ps.bufnr,
           nclient.get_offset_encoding()
         )
@@ -117,7 +119,9 @@ local gomodifytags = {
 
           if save_on_return then
             vim.schedule(function()
-              vim.cmd(params.bufnr .. "bufdo! silent keepjumps noautocmd update")
+              vim.cmd(
+                params.bufnr .. "bufdo! silent keepjumps noautocmd update"
+              )
             end)
           end
         end
@@ -130,7 +134,10 @@ local gomodifytags = {
         local stdin = ac.stdin or false
         assert(
           vim.fn.executable(command) > 0,
-          string.format("command %s is not executable (make sure it's installed and on your $PATH)", command)
+          string.format(
+            "command %s is not executable (make sure it's installed and on your $PATH)",
+            command
+          )
         )
 
         local client = vim.lsp.get_client_by_id(params.client_id)
@@ -205,7 +212,14 @@ local gomodifytags = {
             title = "[gomodifytags] Clear struct tags",
             command = command,
             on_output = replace_buf,
-            args = { "-file", ps.bufname, "-struct", typ, "-skip-unexported", "-clear-tags" },
+            args = {
+              "-file",
+              ps.bufname,
+              "-struct",
+              typ,
+              "-skip-unexported",
+              "-clear-tags",
+            },
           },
         }
         return actions

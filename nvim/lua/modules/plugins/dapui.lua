@@ -54,7 +54,6 @@ require("dapui").setup({
   },
 })
 
-
 -- UI
 local dap = require("dap")
 local dapui = require("dapui")
@@ -68,6 +67,14 @@ dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
 
-vim.api.nvim_create_user_command("DAPREPL",[[lua require("dapui").float_element("repl")]],{})
-vim.api.nvim_create_user_command("DAPCONSOLE",[[lua require("dapui").float_element("console")]],{})
+vim.api.nvim_create_user_command(
+  "DAPREPL",
+  [[lua require("dapui").float_element("repl")]],
+  {}
+)
+vim.api.nvim_create_user_command(
+  "DAPCONSOLE",
+  [[lua require("dapui").float_element("console")]],
+  {}
+)
 -- require("dapui").eval(<expression>)
