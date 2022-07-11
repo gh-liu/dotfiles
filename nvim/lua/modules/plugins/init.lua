@@ -117,7 +117,7 @@ return require("packer").startup(function(use)
   use({
     "neovim/nvim-lspconfig",
   })
-  use({ "jose-elias-alvarez/null-ls.nvim", config = config("null-ls") })
+  use({ "jose-elias-alvarez/null-ls.nvim", config = config("nullls") })
   -- use({ "onsails/lspkind-nvim", event = "BufRead" })
   use({
     "j-hui/fidget.nvim",
