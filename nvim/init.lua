@@ -12,9 +12,9 @@ local modules = {
   "core.command",
   "core.builtin",
   "modules.plugins",
+  "core.colorscheme",
   "modules.lsp",
   "modules.dap",
-  "core.colorscheme",
 }
 
 for _, module in ipairs(modules) do
