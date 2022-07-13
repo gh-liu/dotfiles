@@ -101,7 +101,12 @@ return require("packer").startup(function(use)
     config = config("telescope-file-browser"),
   })
   -- use({ "nvim-telescope/telescope-github.nvim" })
-  use({ "nvim-telescope/telescope-ui-select.nvim" })
+  use({
+    "nvim-telescope/telescope-ui-select.nvim",
+    config = function()
+      require("telescope").load_extension("ui-select")
+    end,
+  })
 
   use({
     "gh-liu/goimpl.nvim",
