@@ -124,6 +124,13 @@ return require("packer").startup(function(use)
     config = config("fidget"),
   })
   use({ "aspeddro/lsp_menu.nvim" })
+  use({
+    "kosayoda/nvim-lightbulb",
+    config = function()
+      -- vim.fn.sign_define('LightBulbSign', { text = "↑", texthl = "", linehl = "", numhl = "" })
+      require("nvim-lightbulb").setup({ autocmd = { enabled = true } })
+    end,
+  })
 
   --  Autocompletion
   use({
@@ -265,12 +272,12 @@ return require("packer").startup(function(use)
   --   requires = "nvim-treesitter/nvim-treesitter",
   -- })
 
-  -- use({
-  --   "antoinemadec/FixCursorHold.nvim",
-  --   run = function()
-  --     vim.g.curshold_updatime = 1000
-  --   end,
-  -- })
+  use({
+    "antoinemadec/FixCursorHold.nvim",
+    run = function()
+      vim.g.curshold_updatime = 1000
+    end,
+  })
 
   -- use({
   --   "max397574/better-escape.nvim",

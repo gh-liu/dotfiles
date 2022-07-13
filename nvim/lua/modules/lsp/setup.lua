@@ -102,8 +102,6 @@ M.on_attach = function(client, bufnr)
     end,
   })
 
-  require("modules.lsp.extensions").lightbulb(client, bufnr)
-
   local filetype_attach = require("modules.lsp.filetype_attach")
   filetype_attach[filetype](client)
 
