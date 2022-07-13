@@ -26,7 +26,7 @@ require("dapui").setup({
         { id = "scopes", size = 0.25 },
         "breakpoints",
         "stacks",
-        "watches",
+        -- "watches",
       },
       size = 40, -- 40 columns
       position = "left",
@@ -41,16 +41,12 @@ require("dapui").setup({
     -- },
   },
   floating = {
-    max_height = nil, -- These can be integers or a float between 0 and 1.
-    max_width = nil, -- Floats will be treated as percentage of your screen.
+    max_height = 0.9, -- These can be integers or a float between 0 and 1.
+    max_width = 0.5, -- Floats will be treated as percentage of your screen.
     border = "single", -- Border style. Can be "single", "double" or "rounded"
     mappings = {
       close = { "q", "<Esc>" },
     },
-  },
-  windows = { indent = 1 },
-  render = {
-    max_type_length = nil, -- Can be integer or nil.
   },
 })
 
@@ -67,14 +63,25 @@ dap.listeners.before.event_exited["dapui_config"] = function()
   dapui.close()
 end
 
-vim.api.nvim_create_user_command(
-  "DAPREPL",
-  [[lua require("dapui").float_element("repl")]],
-  {}
-)
-vim.api.nvim_create_user_command(
-  "DAPCONSOLE",
-  [[lua require("dapui").float_element("console")]],
-  {}
-)
--- require("dapui").eval(<expression>)
+local mappings = {
+  ["<M-c>"] = dap.continue,
+  ["<M-right>"] = dap.step_over,
+  ["<M-down>"] = dap.step_into,
+  ["<M-up>"] = dap.step_out,
+  ["<M-x>"] = dap.toggle_breakpoint,
+  ["<M-t>"] = function()
+    dapui.toggle({ reset = true })
+  end,
+  ["<M-k>"] = dapui.eval,
+  ["<M-m>"] = dapui.float_element,
+  ["<M-v>"] = function()
+    dapui.float_element("scopes")
+  end,
+  ["<M-r>"] = function()
+    dapui.float_element("repl")
+  end,
+  ["<M-q>"] = dap.terminate,
+}
+for keys, fn in pairs(mappings) do
+  vim.api.nvim_set_keymap("n", keys, "", { callback = fn, noremap = true })
+end

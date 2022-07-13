@@ -8,22 +8,20 @@ vim.fn.sign_define(
   "DapStopped",
   { text = "➔", texthl = "PurpleSign", linehl = "", numhl = "" }
 )
-local dapClose = function()
-  require("dap").disconnect()
-  require("dap").repl.close()
-  require("dap").close()
 
-  local present, dapui = pcall(require, "dapui")
-  if present then
-    dapui.close()
-  end
+dap.listeners.after.event_terminated["liu"] = function()
+  dap.repl.close()
 end
-as.map("n", "<F4>", dapClose)
-as.map("n", "<F5>", require("dap").continue)
-as.map("n", "<F9>", require("dap").toggle_breakpoint)
-as.map("n", "<F10>", require("dap").step_over)
-as.map("n", "<F11>", require("dap").step_into)
-as.map("n", "<F12>", require("dap").step_out)
+dap.listeners.before.event_exited["liu"] = function()
+  dap.repl.close()
+end
+
+as.map("n", "<F4>", dap.terminate)
+as.map("n", "<F5>", dap.continue)
+as.map("n", "<F9>", dap.toggle_breakpoint)
+as.map("n", "<F10>", dap.step_over)
+as.map("n", "<F11>", dap.step_into)
+as.map("n", "<F12>", dap.step_out)
 
 local adapters = {
   go = true,
