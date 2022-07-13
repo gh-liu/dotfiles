@@ -23,7 +23,11 @@ local sources = {
 
 null_ls.setup({ sources = sources })
 
-
-for _, file in ipairs(vim.fn.readdir(vim.fn.stdpath('config')..'/lua/modules/plugins/nullls/code_actions', [[v:val =~ '\.lua$']])) do
-  require('modules.plugins.nullls.code_actions.'..file:gsub('%.lua$', ''))
+for _, file in ipairs(
+  vim.fn.readdir(
+    vim.fn.stdpath("config") .. "/lua/modules/plugins/nullls/code_actions",
+    [[v:val =~ '\.lua$']]
+  )
+) do
+  require("modules.plugins.nullls.code_actions." .. file:gsub("%.lua$", ""))
 end

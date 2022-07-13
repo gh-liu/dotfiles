@@ -32,4 +32,3 @@ local git_sign = {
   },
 }
 null_ls.register(git_sign)
-

@@ -31,21 +31,17 @@ local gomodifytags = {
     fn = function(params)
       local replace_buf = function(ps)
         local output = ps.action_output
-        vim.lsp.util.apply_text_edits(
+        vim.lsp.util.apply_text_edits({
           {
-            {
-              range = u.range.to_lsp({
-                row = 1,
-                col = 1,
-                end_row = vim.tbl_count(ps.content) + 1,
-                end_col = 1,
-              }),
-              newText = output:gsub("[\r\n]$", ""),
-            },
+            range = u.range.to_lsp({
+              row = 1,
+              col = 1,
+              end_row = vim.tbl_count(ps.content) + 1,
+              end_col = 1,
+            }),
+            newText = output:gsub("[\r\n]$", ""),
           },
-          ps.bufnr,
-          nclient.get_offset_encoding()
-        )
+        }, ps.bufnr, nclient.get_offset_encoding())
       end
 
       local make_cli_handler = function(ac)
@@ -193,4 +189,3 @@ local gomodifytags = {
   },
 }
 null_ls.register(gomodifytags)
-
