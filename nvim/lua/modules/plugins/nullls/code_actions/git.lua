@@ -1,7 +1,9 @@
 local null_ls = require("null-ls")
-local methods = require("null-ls.methods")
-local CODE_ACTION = methods.internal.CODE_ACTION
-local git_sign = {
+
+local CODE_ACTION = null_ls.methods.CODE_ACTION
+
+local M = {}
+M.git_sign = {
   method = CODE_ACTION,
   filetypes = {},
   generator = {
@@ -31,4 +33,6 @@ local git_sign = {
     end,
   },
 }
-null_ls.register(git_sign)
+-- null_ls.register(git_sign)
+
+return M

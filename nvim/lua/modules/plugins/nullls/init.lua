@@ -3,6 +3,8 @@
 local null_ls = require("null-ls")
 
 local b = null_ls.builtins
+local exagit = require("modules.plugins.nullls.code_actions.git")
+local exago = require("modules.plugins.nullls.code_actions.go")
 
 -- local with_root_file = function(...)
 --   local files = { ... }
@@ -19,15 +21,17 @@ local sources = {
 
   b.formatting.mdformat,
   b.diagnostics.golangci_lint,
+  exagit.git_sign,
+  exago.gomodifytags,
 }
 
 null_ls.setup({ sources = sources })
 
-for _, file in ipairs(
-  vim.fn.readdir(
-    vim.fn.stdpath("config") .. "/lua/modules/plugins/nullls/code_actions",
-    [[v:val =~ '\.lua$']]
-  )
-) do
-  require("modules.plugins.nullls.code_actions." .. file:gsub("%.lua$", ""))
-end
+-- for _, file in ipairs(
+--   vim.fn.readdir(
+--     vim.fn.stdpath("config") .. "/lua/modules/plugins/nullls/code_actions",
+--     [[v:val =~ '\.lua$']]
+--   )
+-- ) do
+--   require("modules.plugins.nullls.code_actions." .. file:gsub("%.lua$", ""))
+-- end

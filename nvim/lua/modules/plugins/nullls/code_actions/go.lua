@@ -7,6 +7,8 @@ local u = require("null-ls.utils")
 local nclient = require("null-ls.client")
 local methods = require("null-ls.methods")
 
+local CODE_ACTION = null_ls.methods.CODE_ACTION
+
 local extract_struct_name = function(params)
   local linenr = params.row
   local line = params.content[linenr]
@@ -18,8 +20,10 @@ local prompt_tag_name = function()
 end
 
 local save_on_return = true
-local CODE_ACTION = methods.internal.CODE_ACTION
-local gomodifytags = {
+
+local M = {}
+
+M.gomodifytags = {
   name = "gomodifytags",
   meta = {
     url = "https://github.com/fatih/gomodifytags",
@@ -188,4 +192,5 @@ local gomodifytags = {
     end,
   },
 }
-null_ls.register(gomodifytags)
+-- null_ls.register(gomodifytags)
+return M
