@@ -1,34 +1,29 @@
 local M = {}
-M.progress = function(handler)
-  if type(handler) ~= "function" then
-    return
-  end
 
-  vim.lsp.handlers["$/progress"] = function(err, msg, info)
-    handler(err, msg, info)
+M.setup = function()
+  -- Workaround to handle pyright: Unsupported command or any other commands that are sent
+  -- from null-ls to other lsp clients
+  -- @see https://github.com/jose-elias-alvarez/null-ls.nvim/issues/197#issuecomment-922792992
+  local default_exe_handler = vim.lsp.handlers["workspace/executeCommand"]
+  vim.lsp.handlers["workspace/executeCommand"] =
+    function(err, result, ctx, config)
+      -- supress NULL_LS error msg
+      local prefix = "NULL_LS"
 
-    print("err: " .. vim.inspect(err))
-    print("msg: " .. vim.inspect(msg))
-    print("info:" .. vim.inspect(info))
+      if err and ctx.params.command:sub(1, #prefix) == prefix then
+        return
+      end
 
-    -- msg = {
-    -- 	token = "",
-    -- 	value = {
-    -- 		kind = "", // begin report end
-    -- 		message = "",
-    -- 		title = ""
-    -- 		percentage = 13
-    -- 	}
-    -- }
+      return default_exe_handler(err, result, ctx, config)
+    end
 
-    -- info = {
-    -- 	client_id = 1,
-    -- 	method = ""
-    -- }
-
-    local client_id = info.client_id
-    local client_name = vim.lsp.get_client_by_id(info.client_id).name
-  end
+  vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+    vim.lsp.handlers.hover,
+    { border = "rounded" }
+  )
+  vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+    vim.lsp.handlers.signature_help,
+    { border = "rounded" }
+  )
 end
-
 return M

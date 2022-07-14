@@ -238,9 +238,9 @@ local Diagnostics = {
 
   static = {
     error_icon = signs.Error,
-    warn_icon = signs.WARN,
-    info_icon = signs.INFO,
-    hint_icon = signs.HINT,
+    warn_icon = signs.Warn,
+    info_icon = signs.Info,
+    hint_icon = signs.Hint,
   },
 
   init = function(self)

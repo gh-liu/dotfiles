@@ -1,14 +1,24 @@
-vim.diagnostic.config({
-  severity_sort = true,
-  virtual_text = false,
-  update_in_insert = true,
-})
+local M = {}
 
-local function set_lsp_sign(name, text)
-  vim.fn.sign_define(name, { text = text, texthl = name })
+M.setup = function()
+  vim.diagnostic.config({
+    severity_sort = true,
+    virtual_text = { spacing = 4, prefix = "●" },
+    update_in_insert = true,
+  })
+
+  -- ○ ●
+  local lsp_signs = require("core.config").lsp_icons
+  local signs = {
+    Error = lsp_signs.Error,
+    Warn = lsp_signs.Warn,
+    Hint = lsp_signs.Hint,
+    Info = lsp_signs.Info,
+  }
+
+  for type, icon in pairs(signs) do
+    local hl = "DiagnosticSign" .. type
+    vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
+  end
 end
-
-set_lsp_sign("DiagnosticSignError", "●")
-set_lsp_sign("DiagnosticSignWarn", "●")
-set_lsp_sign("DiagnosticSignInfo", "●")
-set_lsp_sign("DiagnosticSignHint", "○")
+return M

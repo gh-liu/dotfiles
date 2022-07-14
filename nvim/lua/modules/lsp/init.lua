@@ -9,7 +9,8 @@ end
 
 -- vim.lsp.set_log_level("debug")
 
-load_lsp_conf("diagnostic")
+load_lsp_conf("diagnostic").setup()
+load_lsp_conf("handlers").setup()
 
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 local servers = {

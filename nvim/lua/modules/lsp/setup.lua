@@ -2,25 +2,26 @@ local create_autocmd = vim.api.nvim_create_autocmd
 
 local M = {}
 
-M.capabilities = vim.lsp.protocol.make_client_capabilities()
-M.capabilities.textDocument.completion.completionItem.snippetSupport = true
-M.capabilities.textDocument.completion.completionItem.preselectSupport = true
-M.capabilities.textDocument.completion.completionItem.insertReplaceSupport =
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+capabilities.textDocument.completion.completionItem.preselectSupport = true
+capabilities.textDocument.completion.completionItem.insertReplaceSupport = true
+capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
+capabilities.textDocument.completion.completionItem.deprecatedSupport = true
+capabilities.textDocument.completion.completionItem.commitCharactersSupport =
   true
-M.capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
-M.capabilities.textDocument.completion.completionItem.deprecatedSupport = true
-M.capabilities.textDocument.completion.completionItem.commitCharactersSupport =
-  true
-M.capabilities.textDocument.completion.completionItem.tagSupport = {
+capabilities.textDocument.completion.completionItem.tagSupport = {
   valueSet = { 1 },
 }
-M.capabilities.textDocument.completion.completionItem.resolveSupport = {
+capabilities.textDocument.completion.completionItem.resolveSupport = {
   properties = {
     "documentation",
     "detail",
     "additionalTextEdits",
   },
 }
+
+M.capabilities = capabilities
 
 M.on_attach = function(client, bufnr)
   local filetype = vim.api.nvim_buf_get_option(0, "filetype")
@@ -35,16 +36,16 @@ M.on_attach = function(client, bufnr)
   -- Mappings.
   -- See `:help vim.lsp.*` for documentation on any of the below functions
   -- hover
-  as.map("n", "K", "<cmd>lua vim.lsp.buf.hover()<cr>")
-  as.map("n", "<c-k>", "<cmd>lua vim.lsp.buf.signature_help()<cr>")
+  as.map("n", "K", vim.lsp.buf.hover)
+  as.map("n", "<c-k>", vim.lsp.buf.signature_help)
   -- rename
-  as.map("n", "<leader>rn", "<cmd>lua vim.lsp.buf.rename()<cr>")
+  as.map("n", "<leader>rn", vim.lsp.buf.rename)
   -- diagnostic
-  as.map("n", "[d", "<cmd>lua vim.diagnostic.goto_prev()<CR>")
-  as.map("n", "]d", "<cmd>lua vim.diagnostic.goto_next()<CR>")
-  as.map("n", "<leader>dd", "<cmd>lua vim.diagnostic.open_float()<CR>")
+  as.map("n", "[d", vim.diagnostic.goto_prev)
+  as.map("n", "]d", vim.diagnostic.goto_next)
+  as.map("n", "<leader>dd", vim.diagnostic.open_float)
   -- something else
-  as.map("n", "<leader>F", "<cmd>lua vim.lsp.buf.formatting()<CR>")
+  as.map("n", "<leader>F", vim.lsp.buf.formatting)
 
   if client.resolved_capabilities.document_highlight then
     local lsp_highlight = vim.api.nvim_create_augroup(
@@ -119,8 +120,8 @@ M.on_attach = function(client, bufnr)
     { buffer = bufnr }
   )
 
-  local navic = require("nvim-navic")
-  navic.attach(client, bufnr)
+  -- local navic = require("nvim-navic")
+  -- navic.attach(client, bufnr)
 end
 
 M.on_init = function(client)

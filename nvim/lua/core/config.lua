@@ -28,11 +28,15 @@ M.symbol_icons = {
   TypeParameter = "T",
 }
 
+-- Error = "  ",
+-- WARN = "  ",
+-- INFO = "  ",
+-- HINT = "  ",
 M.lsp_icons = {
-  Error = "  ",
-  WARN = "  ",
-  INFO = "  ",
-  HINT = "  ",
+  Error = " ",
+  Warn = " ",
+  Info = " ",
+  Hint = " ",
   CLIENT = "  ",
 }
 
