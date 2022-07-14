@@ -5,11 +5,11 @@ local t = ls.text_node
 local i = ls.insert_node
 
 return {
-	s("pcall", {
-		t({ "local ok, _ = pcall(require, '" }),
-		i(1),
-		t({ "')", "if not ok then", "\t" }),
-		i(0),
-		t({ "", "end" }),
-	}),
+  s("pcall", {
+    t({ "local ok, _ = pcall(require, '" }),
+    i(1),
+    t({ "')", "if not ok then", "\t" }),
+    i(0),
+    t({ "", "end" }),
+  }),
 }

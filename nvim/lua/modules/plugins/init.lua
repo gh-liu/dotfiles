@@ -109,12 +109,20 @@ return require("packer").startup(function(use)
   })
 
   use({
-    "gh-liu/goimpl.nvim",
+    "edolphin-ydf/goimpl.nvim",
     requires = {
       { "nvim-telescope/telescope.nvim" },
       { "nvim-treesitter/nvim-treesitter" },
     },
-    config = config("goimpl"),
+    config = function()
+      require("telescope").load_extension("goimpl")
+      vim.keymap.set(
+        "n",
+        "<leader>im",
+        require("telescope").extensions.goimpl.goimpl,
+        {}
+      )
+    end,
   })
 
   -- ====== Coding ======
