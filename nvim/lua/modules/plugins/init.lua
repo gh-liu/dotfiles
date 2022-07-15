@@ -305,6 +305,12 @@ return require("packer").startup(function(use)
       require("nvim-surround").setup({})
     end,
   })
+  
+  use({
+    "lukas-reineke/indent-blankline.nvim",
+    event = "BufReadPre",
+    cmd = { "IndentBlanklineToggle" },
+  })
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins

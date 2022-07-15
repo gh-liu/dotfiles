@@ -19,6 +19,8 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 vim.g.loaded_netrwSettings = 1
 
+vim.g.did_load_filetypes = 1
+
 -- netrw settings
 -- g.netrw_banner = 1
 -- g.netrw_browse_split = 4

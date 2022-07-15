@@ -79,4 +79,5 @@ end
 function as.dump(...)
   local objects = vim.tbl_map(vim.inspect, { ... })
   print(unpack(objects))
+  return ...
 end
