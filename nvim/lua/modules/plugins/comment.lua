@@ -3,11 +3,17 @@ require("Comment").setup()
 local opts = {
   silent = true,
 }
-as.map("v", "<C-_>", "gc", opts)
-as.map("n", "<C-_>", "gcc", opts)
-as.map(
-  "i",
+
+vim.keymap.set(
+  { "i", "n" },
   "<C-_>",
-  "<cmd>lua require('Comment.api').toggle_current_linewise()<cr>",
+  require("Comment.api").toggle_current_linewise,
+  opts
+)
+
+vim.keymap.set(
+  "x",
+  "<C-_>",
+  '<ESC><CMD>lua require("Comment.api").toggle_linewise_op(vim.fn.visualmode())<CR>',
   opts
 )
