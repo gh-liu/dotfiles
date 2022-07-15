@@ -131,7 +131,7 @@ local function map_change_option(...)
   local key = select(1, ...)
   local opt = select(2, ...)
   local op = ":set " .. opt .. "!" .. " <bar> set " .. opt .. "?<cr>"
-  vim.api.nvim_set_keymap("n", prefix .. key, op, {})
+  map("n", prefix .. key, op, {})
 end
 
 map_change_option("w", "wrap")

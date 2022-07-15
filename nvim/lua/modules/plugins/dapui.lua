@@ -83,5 +83,5 @@ local mappings = {
   ["<M-q>"] = dap.terminate,
 }
 for keys, fn in pairs(mappings) do
-  vim.api.nvim_set_keymap("n", keys, "", { callback = fn, noremap = true })
+  as.map("n", keys, fn, { noremap = true })
 end

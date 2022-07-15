@@ -3,9 +3,9 @@ require("Comment").setup()
 local opts = {
   silent = true,
 }
-vim.api.nvim_set_keymap("v", "<C-_>", "gc", opts)
-vim.api.nvim_set_keymap("n", "<C-_>", "gcc", opts)
-vim.api.nvim_set_keymap(
+as.map("v", "<C-_>", "gc", opts)
+as.map("n", "<C-_>", "gcc", opts)
+as.map(
   "i",
   "<C-_>",
   "<cmd>lua require('Comment.api').toggle_current_linewise()<cr>",
