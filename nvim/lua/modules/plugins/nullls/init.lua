@@ -23,6 +23,7 @@ local sources = {
   b.diagnostics.golangci_lint,
   exagit.git_sign,
   exago.gomodifytags,
+  exago.gotests,
 }
 
 null_ls.setup({ sources = sources })
