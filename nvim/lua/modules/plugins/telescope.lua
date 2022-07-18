@@ -1,4 +1,43 @@
 local telescope = require("telescope")
+
+local map = as.map
+
+-- File Pickers
+map({ "n", "i" }, "<c-p>", [[<cmd>Telescope find_files<cr>]])
+map("n", "<leader>fw", [[<cmd>Telescope grep_string<cr>]])
+map("n", "<leader>ff", [[<cmd>Telescope live_grep<cr>]])
+
+-- Vim Pickers
+map({ "n", "i" }, "<c-b>", [[<cmd>Telescope buffers<cr>]])
+
+map("n", "<leader>fh", [[<cmd>Telescope help_tags<cr>]])
+map("n", "<leader>fm", [[<cmd>Telescope marks<cr>]])
+
+-- Git Pickers
+map({ "n", "i" }, "<c-g>", [[<cmd>Telescope git_status<cr>]])
+
+-- Neovim LSP Pickers
+map("n", "<leader>dw", [[<cmd>Telescope diagnostics<cr>]])
+map("n", "<leader>db", [[<cmd>Telescope diagnostics bufnr=0<cr>]])
+
+map("n", "<c-d>", [[<cmd>Telescope lsp_definitions<cr>]])
+map("n", "gd", [[<cmd>Telescope lsp_definitions<cr>]])
+map("n", "gD", [[<cmd>Telescope lsp_type_definitions<cr>]])
+
+map("n", "gr", [[<cmd>Telescope lsp_references<cr>]])
+map("n", "gi", [[<cmd>Telescope lsp_implementations<cr>]])
+
+map("n", "<leader>g0", [[<cmd>Telescope lsp_document_symbols<cr>]])
+map("n", "<leader>gW", [[<cmd>Telescope lsp_dynamic_workspace_symbols<cr>]])
+
+map("n", ";", "<cmd>Telescope commands<cr>")
+
+as.command("Dotfiles", function()
+  require("telescope.builtin").git_files({
+    cwd = vim.env.HOME .. "/.config/nvim",
+  })
+end)
+
 telescope.setup({
   defaults = {
     layout_strategy = "flex",

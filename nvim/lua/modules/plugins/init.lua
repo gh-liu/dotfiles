@@ -89,7 +89,6 @@ return require("packer").startup(function(use)
   -- ====== Telescope ======
   use({
     "nvim-telescope/telescope.nvim",
-    setup = config("telescope-setup"),
     config = config("telescope"),
   })
   use({
@@ -305,7 +304,7 @@ return require("packer").startup(function(use)
       require("nvim-surround").setup({})
     end,
   })
-  
+
   use({
     "lukas-reineke/indent-blankline.nvim",
     event = "BufReadPre",
