@@ -48,7 +48,7 @@ local inlay_hints_get_callback = function(opts)
     print(err)
     print(as.dump(result))
     print(as.dump(ctx))
-    
+
     -- I'm pretty sure this only happens for unsupported items.
     if err or type(result) == "number" then
       return
