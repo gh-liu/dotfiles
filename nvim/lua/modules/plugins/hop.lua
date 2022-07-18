@@ -1,6 +1,8 @@
 local map = as.map
+local hop = require("hop")
+local direction = require("hop.hint").HintDirection
 
-require("hop").setup({
+hop.setup({
   keys = "etovxqpdygfblzhckisuran",
 })
 
@@ -15,27 +17,32 @@ map("n", "<leader>w", "<cmd>HopWordAC<cr>")
 -- map('v', '<leader>h', "<cmd>HopWordBC<cr>")
 -- map('v', '<leader>l', "<cmd>HopWordAC<cr>")
 
-map(
-  "o",
-  "f",
-  "<cmd>lua require'hop'.hint_char1({ direction = require'hop.hint'.HintDirection.AFTER_CURSOR, current_line_only = true })<cr>",
-  {}
-)
-map(
-  "o",
-  "F",
-  "<cmd>lua require'hop'.hint_char1({ direction = require'hop.hint'.HintDirection.BEFORE_CURSOR, current_line_only = true })<cr>",
-  {}
-)
-map(
-  "o",
-  "t",
-  "<cmd>lua require'hop'.hint_char1({ direction = require'hop.hint'.HintDirection.AFTER_CURSOR, current_line_only = true, hint_offset = -1 })<cr>",
-  {}
-)
-map(
-  "o",
-  "T",
-  "<cmd>lua require'hop'.hint_char1({ direction = require'hop.hint'.HintDirection.BEFORE_CURSOR, current_line_only = true, hint_offset = 1 })<cr>",
-  {}
-)
+map("o", "f", function()
+  hop.hint_char1({
+    direction = direction.AFTER_CURSOR,
+    current_line_only = true,
+  })
+end)
+
+map("o", "F", function()
+  hop.hint_char1({
+    direction = direction.BEFORE_CURSOR,
+    current_line_only = true,
+  })
+end)
+
+map("o", "t", function()
+  hop.hint_char1({
+    direction = direction.AFTER_CURSOR,
+    current_line_only = true,
+    hint_offset = -1,
+  })
+end)
+
+map("o", "T", function()
+  hop.hint_char1({
+    direction = direction.BEFORE_CURSOR,
+    current_line_only = true,
+    hint_offset = -1,
+  })
+end)
