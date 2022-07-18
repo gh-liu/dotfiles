@@ -33,6 +33,11 @@ fa.json = function(client)
   auto_format()
 end
 
+fa.on_attach = function(client, bufnr)
+  local filetype = vim.api.nvim_buf_get_option(bufnr, "filetype")
+  fa[filetype](client)
+end
+
 local filetype_attach = setmetatable(fa, {
   __index = function()
     return function() end

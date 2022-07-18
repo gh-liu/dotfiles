@@ -17,13 +17,24 @@ M.setup = function()
       return default_exe_handler(err, result, ctx, config)
     end
 
+  local float_options = {
+    border = "rounded",
+    max_width = math.ceil(vim.api.nvim_win_get_width(0) * 0.6),
+    max_height = math.ceil(vim.api.nvim_win_get_height(0) * 0.8),
+  }
+
   vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
     vim.lsp.handlers.hover,
-    { border = "rounded" }
+    float_options
   )
   vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
     vim.lsp.handlers.signature_help,
-    { border = "rounded" }
+    float_options
+  )
+  vim.lsp.handlers["textDocument/show_line_diagnostics"] = vim.lsp.with(
+    vim.lsp.handlers.show_line_diagnostics,
+    float_options
   )
 end
+
 return M

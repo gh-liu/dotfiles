@@ -1,3 +1,5 @@
+local create_autocmd = vim.api.nvim_create_autocmd
+
 local M = {}
 
 M.setup = function()
@@ -20,5 +22,15 @@ M.setup = function()
     local hl = "DiagnosticSign" .. type
     vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
   end
+end
+
+M.on_attach = function(client, bufnr)
+  -- Show diagnostic popup on cursor hover
+  create_autocmd("CursorHold", {
+    buffer = bufnr,
+    callback = function()
+      vim.diagnostic.open_float(nil, { focusable = false, scope = "cursor" })
+    end,
+  })
 end
 return M

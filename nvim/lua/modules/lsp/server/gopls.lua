@@ -11,6 +11,9 @@ return {
       gofumpt = true,
       staticcheck = true,
       analyses = { unusedwrite = true },
+      hints = {
+        constantValues = true,
+      },
     },
   },
   -- init_options = {
