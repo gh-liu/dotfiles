@@ -23,24 +23,27 @@ as.map("n", "<F10>", dap.step_over)
 as.map("n", "<F11>", dap.step_into)
 as.map("n", "<F12>", dap.step_out)
 
-local adapters = {
-  go = true,
+local configurations = {
+  go = { use = true, adapter = "go" },
+  rust = { use = true, adapter = "lldb" },
 }
 
-for ad, use in pairs(adapters) do
-  if not use then
+for c, conf in pairs(configurations) do
+  if not conf or not conf.use then
     return
   end
 
-  local exist, config = pcall(require, "modules.dap.adapters." .. ad)
+  local exist, adapter = pcall(require, "modules.dap.adapters." .. conf.adapter)
   if not exist then
     return
   end
+  dap.adapters[conf.adapter] = adapter
 
-  dap.adapters[ad] = config.adapter
-  if config.configuration then
-    dap.configurations[ad] = config.configuration
+  local conf_exist, configuration = pcall(require, "modules.dap.configurations." .. c)
+  if not conf_exist then
+    return
   end
+  dap.configurations[c] = configuration
 end
 
 require("dap.ext.vscode").load_launchjs()
