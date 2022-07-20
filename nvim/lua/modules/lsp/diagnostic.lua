@@ -10,7 +10,7 @@ M.setup = function()
   })
 
   -- ○ ●
-  local lsp_signs = require("core.config").lsp_icons
+  local lsp_signs = require("core.config").icons.lsp
   local signs = {
     Error = lsp_signs.Error,
     Warn = lsp_signs.Warn,

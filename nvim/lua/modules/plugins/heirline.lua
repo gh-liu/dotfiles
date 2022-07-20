@@ -213,7 +213,7 @@ local ScrollBar = {
   hl = { fg = "blue", bg = "bright_bg" },
 }
 
-local signs = require("core.config").lsp_icons
+local signs = require("core.config").icons.lsp
 
 local LSPActive = {
   condition = conditions.lsp_attached,
