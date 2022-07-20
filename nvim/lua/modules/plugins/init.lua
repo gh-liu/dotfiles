@@ -162,6 +162,7 @@ return require("packer").startup(function(use)
     after = "nvim-cmp",
   })
   use({ "hrsh7th/cmp-nvim-lsp-signature-help" })
+  use({"hrsh7th/cmp-nvim-lsp-document-symbol"})
   use({
     "hrsh7th/cmp-buffer",
     after = "nvim-cmp",
@@ -316,6 +317,12 @@ return require("packer").startup(function(use)
     "lukas-reineke/indent-blankline.nvim",
     event = "BufReadPre",
     cmd = { "IndentBlanklineToggle" },
+  })
+
+  use({
+    "akinsho/toggleterm.nvim",
+    tag = "v2.*",
+    config = config("toggleterm"),
   })
 
   -- Automatically set up your configuration after cloning packer.nvim
