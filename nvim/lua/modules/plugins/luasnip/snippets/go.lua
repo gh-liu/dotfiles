@@ -23,5 +23,11 @@ return {
     i(4),
     t({ "", "}" }),
   }),
+  s(
+    { trig = 'pr', name = 'print var', dscr = 'Print a variable' },
+    fmt('fmt.Println({})', {
+      i(1, 'value'),
+    })
+  ),
 },
   nil

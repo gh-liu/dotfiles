@@ -46,3 +46,8 @@ require("luasnip.loaders.from_vscode").lazy_load()
 
 local path = vim.fn.stdpath("config") .. "/lua/modules/plugins/luasnip/snippets"
 require("luasnip.loaders.from_lua").load({ paths = path })
+
+-- TODO:
+-- set keybinds for both INSERT and VISUAL.
+vim.keymap.set({"i","n"}, "<M-n>", function() ls.change_choice(1) end, {})
+vim.keymap.set({"i","n"}, "<M-p>", function() ls.change_choice(-1) end, {})

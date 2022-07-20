@@ -41,6 +41,8 @@ end
 local function select_next_j(fallback)
   if cmp.visible() then
     cmp.select_next_item()
+  elseif luasnip.choice_active() then
+    luasnip.change_choice(1)
   else
     fallback()
   end
@@ -49,6 +51,8 @@ end
 local function select_previous_k(fallback)
   if cmp.visible() then
     cmp.select_prev_item()
+  elseif luasnip.choice_active() then
+    luasnip.change_choice(-1)
   else
     fallback()
   end
