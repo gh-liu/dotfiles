@@ -1,13 +1,16 @@
-
 return {
   {
-    name = 'Launch',
-    type = 'lldb',
-    request = 'launch',
+    name = "Launch",
+    type = "lldb",
+    request = "launch",
     program = function()
-      return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+      return vim.fn.input(
+        "Path to executable: ",
+        vim.fn.getcwd() .. "/",
+        "file"
+      )
     end,
-    cwd = '${workspaceFolder}',
+    cwd = "${workspaceFolder}",
     stopOnEntry = false,
     args = {},
 
@@ -25,4 +28,3 @@ return {
     -- runInTerminal = false,
   },
 }
-

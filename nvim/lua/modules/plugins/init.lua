@@ -143,6 +143,7 @@ return require("packer").startup(function(use)
       require("nvim-lightbulb").setup({ autocmd = { enabled = true } })
     end,
   })
+  use({ "lvimuser/lsp-inlayhints.nvim" })
 
   -- use({
   --   "glepnir/lspsaga.nvim",

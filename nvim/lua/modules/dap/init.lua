@@ -39,7 +39,10 @@ for c, conf in pairs(configurations) do
   end
   dap.adapters[conf.adapter] = adapter
 
-  local conf_exist, configuration = pcall(require, "modules.dap.configurations." .. c)
+  local conf_exist, configuration = pcall(
+    require,
+    "modules.dap.configurations." .. c
+  )
   if not conf_exist then
     return
   end
