@@ -2,26 +2,24 @@ local create_autocmd = vim.api.nvim_create_autocmd
 local M = {}
 
 M.on_attach = function(client, bufnr)
+  -- https://github.com/neovim/nvim-lspconfig/wiki/UI-Customization#highlight-symbol-under-cursor
   if client.resolved_capabilities.document_highlight then
-    local lsp_highlight = vim.api.nvim_create_augroup(
-      "lsp_highlight",
-      { clear = false }
-    )
-
-    create_autocmd("CursorHold", {
-      buffer = bufnr,
-      callback = function()
-        vim.lsp.buf.document_highlight()
-      end,
-      group = lsp_highlight,
+    vim.api.nvim_create_augroup("lsp_document_highlight", {
+      clear = false,
     })
-
-    create_autocmd("CursorMoved", {
+    vim.api.nvim_clear_autocmds({
       buffer = bufnr,
-      callback = function()
-        vim.lsp.util.buf_clear_references(0)
-      end,
-      group = lsp_highlight,
+      group = "lsp_document_highlight",
+    })
+    vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+      group = "lsp_document_highlight",
+      buffer = bufnr,
+      callback = vim.lsp.buf.document_highlight,
+    })
+    vim.api.nvim_create_autocmd("CursorMoved", {
+      group = "lsp_document_highlight",
+      buffer = bufnr,
+      callback = vim.lsp.buf.clear_references,
     })
   end
 end

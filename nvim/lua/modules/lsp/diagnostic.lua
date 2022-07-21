@@ -1,11 +1,17 @@
 local create_autocmd = vim.api.nvim_create_autocmd
 
+local config = as.lazy_require("core.config")
+
 local M = {}
 
 M.setup = function()
   vim.diagnostic.config({
     severity_sort = true,
-    virtual_text = { spacing = 4, prefix = "●" },
+    virtual_text = {
+      spacing = 4,
+      prefix = "x",
+      -- source = "always",
+    },
     update_in_insert = true,
   })
 
@@ -26,10 +32,30 @@ end
 
 M.on_attach = function(client, bufnr)
   -- Show diagnostic popup on cursor hover
-  create_autocmd("CursorHold", {
+  create_autocmd({ "CursorHold" }, {
     buffer = bufnr,
     callback = function()
       vim.diagnostic.open_float(nil, { focusable = false, scope = "cursor" })
+    end,
+  })
+
+  create_autocmd("CursorHold", {
+    buffer = bufnr,
+    callback = function()
+      local opts = {
+        focusable = false,
+        close_events = {
+          "BufLeave",
+          "CursorMoved",
+          "InsertEnter",
+          "FocusLost",
+        },
+        border = config.border.rounded,
+        source = "always",
+        prefix = " ",
+        scope = "cursor",
+      }
+      vim.diagnostic.open_float(nil, opts)
     end,
   })
 end

@@ -21,11 +21,13 @@ if not status_ok then
   return
 end
 
+local config = as.lazy_require("core.config")
+
 -- Have packer use a popup window
 packer.init({
   display = {
     open_fn = function()
-      return require("packer.util").float({ border = "rounded" })
+      return require("packer.util").float({ border = config.border.rounded })
     end,
   },
 })
@@ -162,7 +164,7 @@ return require("packer").startup(function(use)
     after = "nvim-cmp",
   })
   use({ "hrsh7th/cmp-nvim-lsp-signature-help" })
-  use({"hrsh7th/cmp-nvim-lsp-document-symbol"})
+  -- use({ "hrsh7th/cmp-nvim-lsp-document-symbol" })
   use({
     "hrsh7th/cmp-buffer",
     after = "nvim-cmp",
@@ -176,6 +178,7 @@ return require("packer").startup(function(use)
     after = "nvim-cmp",
   })
   use({ "hrsh7th/cmp-cmdline" })
+  use({ "dmitmel/cmp-cmdline-history" })
   use({
     -- Snippets plugin
     "saadparwaiz1/cmp_luasnip",
@@ -246,6 +249,7 @@ return require("packer").startup(function(use)
   use("folke/lua-dev.nvim")
   use("milisims/nvim-luaref")
   use("bfredl/nvim-luadev")
+  -- use { 'rafcamlet/nvim-luapad', requires = "antoinemadec/FixCursorHold.nvim" }
 
   -- Rust
   -- use("simrat39/rust-tools.nvim")

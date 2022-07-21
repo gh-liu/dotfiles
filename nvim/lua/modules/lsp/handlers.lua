@@ -1,5 +1,7 @@
 local M = {}
 
+local config = as.lazy_require("core.config")
+
 M.setup = function()
   -- Workaround to handle pyright: Unsupported command or any other commands that are sent
   -- from null-ls to other lsp clients
@@ -18,7 +20,7 @@ M.setup = function()
     end
 
   local float_options = {
-    border = "rounded",
+    border = config.border.rounded,
     max_width = math.ceil(vim.api.nvim_win_get_width(0) * 0.6),
     max_height = math.ceil(vim.api.nvim_win_get_height(0) * 0.8),
   }

@@ -24,9 +24,9 @@ return {
     t({ "", "}" }),
   }),
   s(
-    { trig = 'pr', name = 'print var', dscr = 'Print a variable' },
-    fmt('fmt.Println({})', {
-      i(1, 'value'),
+    { trig = "pr", name = "print var", dscr = "Print a variable" },
+    fmt("fmt.Println({})", {
+      i(1, "value"),
     })
   ),
 },

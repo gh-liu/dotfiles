@@ -10,15 +10,13 @@ end
 local cmp = require("cmp")
 local luasnip = require("luasnip")
 
-local neogen_exist, neogen = pcall(require, "neogen")
+local config = as.lazy_require("core.config")
 
 local function select_next(fallback)
   if cmp.visible() then
     cmp.select_next_item()
-  elseif luasnip.expand_or_jumpable() then
+  elseif luasnip.expand_or_locally_jumpable() then
     luasnip.expand_or_jump()
-  elseif neogen_exist and neogen.jumpable() then
-    neogen.jump_next()
   elseif has_words_before() then
     cmp.complete()
   else
@@ -31,8 +29,6 @@ local function select_previous(fallback)
     cmp.select_prev_item()
   elseif luasnip.jumpable(-1) then
     luasnip.jump(-1)
-  elseif neogen_exist and neogen.jumpable() then
-    neogen.jump_prev()
   else
     fallback()
   end
@@ -67,11 +63,11 @@ cmp.setup({
         nvim_lua = "[Lua]",
         luasnip = "[Snip]",
         path = "[Path]",
+        cmdline = "[Cmd]",
+        cmdline_history = "[CmdH]",
       })[entry.source.name]
 
-      vim_item.kind = as.lazy_require("core.config").symbol_icons[vim_item.kind]
-        .. " "
-        .. vim_item.kind
+      vim_item.kind = config.icons.kinds[vim_item.kind] .. " " .. vim_item.kind
 
       return vim_item
     end,
@@ -89,10 +85,10 @@ cmp.setup({
       i = cmp.mapping.abort(),
       c = cmp.mapping.close(),
     }),
-    ["<Tab>"] = cmp.mapping(select_next, { "i", "s" }),
-    ["<S-Tab>"] = cmp.mapping(select_previous, { "i", "s" }),
-    ["<C-j>"] = cmp.mapping(select_next_j, { "i", "s" }),
-    ["<C-k>"] = cmp.mapping(select_previous_k, { "i", "s" }),
+    ["<Tab>"] = cmp.mapping(select_next, { "i", "s", "c" }),
+    ["<S-Tab>"] = cmp.mapping(select_previous, { "i", "s", "c" }),
+    ["<C-j>"] = cmp.mapping(select_next_j, { "i", "s", "c" }),
+    ["<C-k>"] = cmp.mapping(select_previous_k, { "i", "s", "c" }),
     ["<C-y>"] = cmp.config.disable,
   }),
   sources = {
@@ -121,38 +117,27 @@ cmp.setup({
     },
   },
   window = {
-    -- completion = cmp.config.window.bordered(),
-    documentation = {
-      border = { "╭", "─", "╮", "│", "╯", "─", "╰", "│" },
-    },
+    completion = { border = config.border.rounded },
+    documentation = { border = config.border.rounded },
   },
 })
 
--- Use buffer source for `/` (if you enabled `native_menu`, this won't work anymore).
-cmp.setup.cmdline("/", {
-  mapping = cmp.mapping.preset.cmdline(),
-  sources = {
+local search_opts = {
+  view = { entries = { name = "custom", selection_order = "near_cursor" } },
+  sources = cmp.config.sources({
+    { name = "nvim_lsp_document_symbol" },
+  }, {
     { name = "buffer" },
-  },
-})
+  }),
+}
+cmp.setup.cmdline("/", search_opts)
+cmp.setup.cmdline("?", search_opts)
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
 cmp.setup.cmdline(":", {
-  mapping = cmp.mapping.preset.cmdline(),
   sources = cmp.config.sources({
+    { name = "cmdline", keyword_pattern = [=[[^[:blank:]\!]*]=] },
+    { name = "cmdline_history" },
     { name = "path" },
-  }, {
-    { name = "cmdline" },
   }),
 })
-
--- If you want insert `(` after select function or method item
-local cmp_autopairs = require("nvim-autopairs.completion.cmp")
-cmp.event:on(
-  "confirm_done",
-  cmp_autopairs.on_confirm_done({
-    map_char = {
-      tex = "{",
-    },
-  })
-)
