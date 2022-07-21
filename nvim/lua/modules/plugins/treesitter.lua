@@ -66,8 +66,8 @@ tsconf.setup({
     navigation = {
       enable = true,
       keymaps = {
-        goto_next_usage = "<leader>j",
-        goto_previous_usage = "<leader>k",
+        goto_next_usage = "<M-j>",
+        goto_previous_usage = "<M-k>",
       },
     },
     smart_rename = {

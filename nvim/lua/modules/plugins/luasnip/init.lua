@@ -2,9 +2,9 @@ local ls = require("luasnip")
 local types = require("luasnip.util.types")
 
 ls.config.set_config({
-  history = true,
-  updateevents = "TextChanged,TextChangedI",
-  delete_check_events = "TextChanged",
+  history = false,
+  region_check_events = "CursorMoved,CursorHold,InsertEnter",
+  delete_check_events = "InsertLeave",
   ext_opts = {
     [types.choiceNode] = {
       passive = {
@@ -54,3 +54,7 @@ require("luasnip.loaders.from_lua").load({ paths = path })
 -- vim.keymap.set({ "i", "n" }, "<M-p>", function()
 --   ls.change_choice(-1)
 -- end, {})
+
+as.command("LuaSnipEdit", function()
+  require("luasnip.loaders.from_lua").edit_snippet_files()
+end)
