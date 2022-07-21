@@ -64,7 +64,7 @@ cmp.setup({
         luasnip = "[Snip]",
         path = "[Path]",
         cmdline = "[Cmd]",
-        cmdline_history = "[CmdH]",
+        cmdline_history = "[CHis]",
       })[entry.source.name]
 
       vim_item.kind = config.icons.kinds[vim_item.kind] .. " " .. vim_item.kind
