@@ -56,6 +56,7 @@ end
 
 cmp.setup({
   formatting = {
+    -- fields = { "kind", "abbr", "menu" },
     format = function(entry, vim_item)
       vim_item.menu = ({
         buffer = "[Buf]",
@@ -79,7 +80,9 @@ cmp.setup({
   },
   mapping = cmp.mapping.preset.insert({
     ["<cr>"] = cmp.mapping.confirm({
-      select = true,
+      -- select = true,
+      behavior = cmp.ConfirmBehavior.Replace,
+      select = false,
     }),
     ["<esc>"] = cmp.mapping({
       i = cmp.mapping.abort(),
@@ -117,8 +120,16 @@ cmp.setup({
     },
   },
   window = {
-    completion = { border = config.border.rounded },
-    documentation = { border = config.border.rounded },
+    completion = {
+      border = config.border.rounded,
+      scrollbar = "┃",
+      winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+    },
+    documentation = {
+      border = config.border.rounded,
+      scrollbar = "┃",
+      winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+    },
   },
 })
 
