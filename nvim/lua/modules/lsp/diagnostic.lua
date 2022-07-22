@@ -9,13 +9,13 @@ M.setup = function()
     severity_sort = true,
     virtual_text = {
       spacing = 4,
-      prefix = "x",
+      -- prefix = "x",
       -- source = "always",
     },
-    update_in_insert = true,
+    update_in_insert = false,
   })
 
-  -- ○ ●
+  -- signs
   local lsp_signs = require("core.config").icons.lsp
   local signs = {
     Error = lsp_signs.Error,
@@ -32,13 +32,6 @@ end
 
 M.on_attach = function(client, bufnr)
   -- Show diagnostic popup on cursor hover
-  create_autocmd({ "CursorHold" }, {
-    buffer = bufnr,
-    callback = function()
-      vim.diagnostic.open_float(nil, { focusable = false, scope = "cursor" })
-    end,
-  })
-
   create_autocmd("CursorHold", {
     buffer = bufnr,
     callback = function()

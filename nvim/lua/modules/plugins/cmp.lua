@@ -81,7 +81,7 @@ cmp.setup({
   mapping = cmp.mapping.preset.insert({
     ["<cr>"] = cmp.mapping.confirm({
       -- select = true,
-      behavior = cmp.ConfirmBehavior.Replace,
+      -- behavior = cmp.ConfirmBehavior.Replace,
       select = false,
     }),
     ["<esc>"] = cmp.mapping({
