@@ -246,7 +246,8 @@ return require("packer").startup(function(use)
 
   -- ====== Language Specified ======
   -- Lua dev
-  use("folke/lua-dev.nvim")
+  use({ "ii14/emmylua-nvim" })
+  -- use("folke/lua-dev.nvim")
   use("milisims/nvim-luaref")
   use("bfredl/nvim-luadev")
   -- use { 'rafcamlet/nvim-luapad', requires = "antoinemadec/FixCursorHold.nvim" }

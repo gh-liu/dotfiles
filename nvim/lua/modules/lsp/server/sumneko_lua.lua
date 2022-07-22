@@ -28,14 +28,14 @@ local settings = {
   },
 }
 
-local ok, luadev = pcall(require, "lua-dev")
-if ok then
-  local luadevconf = luadev.setup({
-    lspconfig = {
-      settings = settings,
-    },
-  })
-  settings = luadevconf
-end
+-- local ok, luadev = pcall(require, "lua-dev")
+-- if ok then
+--   local luadevconf = luadev.setup({
+--     lspconfig = {
+--       settings = settings,
+--     },
+--   })
+--   settings = luadevconf
+-- end
 
 return settings
