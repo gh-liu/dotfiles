@@ -254,6 +254,9 @@ return require("packer").startup(function(use)
   -- Rust
   -- use("simrat39/rust-tools.nvim")
 
+  -- zig
+  use("ziglang/zig.vim")
+
   -- ====== Others ======
   -- Pretty colors
   use({

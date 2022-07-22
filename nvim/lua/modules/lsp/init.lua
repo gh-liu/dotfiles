@@ -25,6 +25,7 @@ local servers = {
   dockerls = true,
   dotls = true,
   clangd = true,
+  zls = true,
 }
 
 local capabilities = vim.lsp.protocol.make_client_capabilities()
