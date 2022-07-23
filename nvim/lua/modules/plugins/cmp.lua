@@ -10,7 +10,7 @@ end
 local cmp = require("cmp")
 local luasnip = require("luasnip")
 
-local config = as.lazy_require("core.config")
+local config = gh.lazy_require("core.config")
 
 local function select_next(fallback)
   if cmp.visible() then

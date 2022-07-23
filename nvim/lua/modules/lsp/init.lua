@@ -64,16 +64,16 @@ local on_attach = function(client, bufnr)
   -- Mappings.
   -- See `:help vim.lsp.*` for documentation on any of the below functions
   -- hover
-  as.map("n", "K", vim.lsp.buf.hover)
-  as.map("n", "<c-k>", vim.lsp.buf.signature_help)
+  gh.map("n", "K", vim.lsp.buf.hover)
+  gh.map("n", "<c-k>", vim.lsp.buf.signature_help)
   -- rename
-  as.map("n", "<leader>rn", vim.lsp.buf.rename)
+  gh.map("n", "<leader>rn", vim.lsp.buf.rename)
   -- diagnostic
-  as.map("n", "[d", vim.diagnostic.goto_prev)
-  as.map("n", "]d", vim.diagnostic.goto_next)
-  as.map("n", "<leader>dd", vim.diagnostic.open_float)
+  gh.map("n", "[d", vim.diagnostic.goto_prev)
+  gh.map("n", "]d", vim.diagnostic.goto_next)
+  gh.map("n", "<leader>dd", vim.diagnostic.open_float)
   -- something else
-  as.map("n", "<leader>F", vim.lsp.buf.formatting)
+  gh.map("n", "<leader>F", vim.lsp.buf.formatting)
 
   load_lsp_conf("code_lens").on_attach(client, bufnr)
   load_lsp_conf("diagnostic").on_attach(client, bufnr)

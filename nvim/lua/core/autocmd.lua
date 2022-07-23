@@ -76,3 +76,38 @@ create_autocmd(
   "BufWritePre",
   { command = [[%s/\s\+$//e]], group = trim_trailing }
 )
+
+-- Cursorline highlighting control
+local cursorline_group = vim.api.nvim_create_augroup(
+  "CursorLineControl",
+  { clear = true }
+)
+local set_cursorline = function(event, value, pattern)
+  create_autocmd(event, {
+    group = cursorline_group,
+    pattern = pattern,
+    callback = function()
+      vim.opt_local.cursorline = value
+    end,
+  })
+end
+set_cursorline("WinLeave", false)
+set_cursorline("WinEnter", true)
+set_cursorline("FileType", false, "TelescopePrompt")
+
+-- signcolumn control
+local signcolumn_group = vim.api.nvim_create_augroup(
+  "SigncolumnControl",
+  { clear = true }
+)
+local set_cursorline = function(event, value, pattern)
+  create_autocmd(event, {
+    group = signcolumn_group,
+    pattern = pattern,
+    callback = function()
+      vim.opt_local.signcolumn = value
+    end,
+  })
+end
+set_cursorline("FileType", "no", { "TelescopePrompt", "Outline" })
+set_cursorline({ "BufWinEnter", "InsertEnter" }, "auto:2-5", {})

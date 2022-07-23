@@ -46,8 +46,8 @@ local inlay_hints_get_callback = function(opts)
 
   return mk_handler(function(err, result, ctx, _)
     print(err)
-    print(as.dump(result))
-    print(as.dump(ctx))
+    print(gh.dump(result))
+    print(gh.dump(ctx))
 
     -- I'm pretty sure this only happens for unsupported items.
     if err or type(result) == "number" then
@@ -164,6 +164,20 @@ M.show_line_hints = function()
     params,
     inlay_hints_get_callback({ highlight = "LspCodeLens", prefix = "» " })
   )
+end
+
+local create_autocmd = vim.api.nvim_create_autocmd
+M.setup = function()
+  local show_line_hints = vim.api.nvim_create_augroup(
+    "ShowLineHints",
+    { clear = false }
+  )
+  create_autocmd({ "CursorHold", "CursorHoldI", "CursorMoved" }, {
+    callback = function()
+      M.show_line_hints()
+    end,
+    group = show_line_hints,
+  })
 end
 
 return M

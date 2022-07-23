@@ -43,7 +43,7 @@ require("dapui").setup({
   floating = {
     max_height = 0.9, -- These can be integers or a float between 0 and 1.
     max_width = 0.5, -- Floats will be treated as percentage of your screen.
-    border = as.lazy_require("core.config").border.rounded, -- Border style. Can be "single", "double" or "rounded"
+    border = gh.lazy_require("core.config").border.rounded, -- Border style. Can be "single", "double" or "rounded"
     mappings = {
       close = { "q", "<Esc>" },
     },
@@ -83,5 +83,5 @@ local mappings = {
   ["<M-q>"] = dap.terminate,
 }
 for keys, fn in pairs(mappings) do
-  as.map("n", keys, fn, { noremap = true })
+  gh.map("n", keys, fn, { noremap = true })
 end

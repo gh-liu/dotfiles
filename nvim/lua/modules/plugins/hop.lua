@@ -1,4 +1,4 @@
-local map = as.map
+local map = gh.map
 local hop = require("hop")
 local direction = require("hop.hint").HintDirection
 

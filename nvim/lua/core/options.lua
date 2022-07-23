@@ -98,7 +98,7 @@ end
 -----------------------------------------------------------------------------//
 -- Wild and file globbing stuff in command mode {{{1
 -----------------------------------------------------------------------------//
--- opt.wildcharm = fn.char2nr(as.replace_termcodes([[<Tab>]]))
+-- opt.wildcharm = fn.char2nr(gh.replace_termcodes([[<Tab>]]))
 opt.wildmode = "longest:full,full" -- Shows a menu bar as opposed to an enormous list
 opt.wildignorecase = true -- Ignore case when completing file names and directories
 -- Binary
@@ -117,7 +117,7 @@ opt.conceallevel = 2
 opt.breakindentopt = "sbr"
 opt.linebreak = true -- lines wrap at words rather than random characters
 opt.synmaxcol = 1024 -- don't syntax highlight long lines
-opt.signcolumn = "auto:2-5"
+opt.signcolumn = "no"
 opt.number = true
 opt.relativenumber = true
 opt.ruler = false
@@ -223,6 +223,40 @@ opt.sidescroll = 1
 -----------------------------------------------------------------------------//
 opt.mouse = "a"
 opt.mousefocus = true
+--}}}
+-----------------------------------------------------------------------------//
+-- Builtin {{{1
+-----------------------------------------------------------------------------//
+vim.g.loaded_gzip = 1
+vim.g.loaded_zip = 1
+vim.g.loaded_zipPlugin = 1
+vim.g.loaded_tar = 1
+vim.g.loaded_tarPlugin = 1
+
+vim.g.loaded_getscript = 1
+vim.g.loaded_getscriptPlugin = 1
+vim.g.loaded_vimball = 1
+vim.g.loaded_vimballPlugin = 1
+vim.g.loaded_2html_plugin = 1
+
+vim.g.loaded_matchit = 1
+vim.g.loaded_matchparen = 1
+vim.g.loaded_logiPat = 1
+vim.g.loaded_rrhelper = 1
+
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+vim.g.loaded_netrwSettings = 1
+
+-- netrw settings
+-- g.netrw_banner = 1
+-- g.netrw_browse_split = 4
+-- g.netrw_altv = 1
+-- vim.g.netrw_liststyle = 3
+-- g.netrw_winsize = 25
+-- map("n", "<C-n>", "<cmd>Vexplore<cr>")
+
+vim.g.did_load_filetypes = 1
 --}}}
 -----------------------------------------------------------------------------//
 

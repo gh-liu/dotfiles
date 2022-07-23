@@ -1,6 +1,6 @@
 local create_autocmd = vim.api.nvim_create_autocmd
 
-local config = as.lazy_require("core.config")
+local config = gh.lazy_require("core.config")
 
 local M = {}
 

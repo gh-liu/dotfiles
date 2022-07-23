@@ -3,7 +3,7 @@ local M = {}
 
 M.on_attach = function(client, bufnr)
   -- https://github.com/neovim/nvim-lspconfig/wiki/UI-Customization#highlight-symbol-under-cursor
-  if client.resolved_capabilities.document_highlight then
+  if client.server_capabilities.documentHighlightProvider then
     vim.api.nvim_create_augroup("lsp_document_highlight", {
       clear = false,
     })

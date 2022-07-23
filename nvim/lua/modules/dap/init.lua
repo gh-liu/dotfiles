@@ -16,12 +16,12 @@ dap.listeners.before.event_exited["liu"] = function()
   dap.repl.close()
 end
 
-as.map("n", "<F4>", dap.terminate)
-as.map("n", "<F5>", dap.continue)
-as.map("n", "<F9>", dap.toggle_breakpoint)
-as.map("n", "<F10>", dap.step_over)
-as.map("n", "<F11>", dap.step_into)
-as.map("n", "<F12>", dap.step_out)
+gh.map("n", "<F4>", dap.terminate)
+gh.map("n", "<F5>", dap.continue)
+gh.map("n", "<F9>", dap.toggle_breakpoint)
+gh.map("n", "<F10>", dap.step_over)
+gh.map("n", "<F11>", dap.step_into)
+gh.map("n", "<F12>", dap.step_out)
 
 local configurations = {
   go = { use = true, adapter = "go" },

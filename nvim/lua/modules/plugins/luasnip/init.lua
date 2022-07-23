@@ -32,7 +32,7 @@ ls.config.set_config({
   -- luasnip uses this function to get the currently active filetype. This
   -- is the (rather uninteresting) default, but it's possible to use
   -- eg. treesitter for getting the current filetype by setting ft_func to
-  -- require("luasnip.extras.filetype_functions").from_cursor (requires
+  -- require("luasnip.extrgh.filetype_functions").from_cursor (requires
   -- `nvim-treesitter/nvim-treesitter`). This allows correctly resolving
   -- the current filetype in eg. a markdown-code block or `vim.cmd()`.
   ft_func = function()
@@ -55,6 +55,6 @@ require("luasnip.loaders.from_lua").load({ paths = path })
 --   ls.change_choice(-1)
 -- end, {})
 
-as.command("LuaSnipEdit", function()
+gh.command("LuaSnipEdit", function()
   require("luasnip.loaders.from_lua").edit_snippet_files()
 end)

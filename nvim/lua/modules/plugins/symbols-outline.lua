@@ -1,4 +1,4 @@
-local codicons = as.lazy_require("core.config").icons.codicons
+local codicons = gh.lazy_require("core.config").icons.codicons
 
 vim.g.symbols_outline = {
   highlight_hovered_item = false,
@@ -59,4 +59,4 @@ vim.g.symbols_outline = {
   },
 }
 
-as.map("n", "T", [[<cmd>SymbolsOutline<cr>]])
+gh.map("n", "T", [[<cmd>SymbolsOutline<cr>]])

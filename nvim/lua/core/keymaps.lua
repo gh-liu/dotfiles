@@ -1,4 +1,4 @@
-local map = as.map
+local map = gh.map
 
 -- Basics {{{1
 --
@@ -51,12 +51,12 @@ vim.cmd([[
   cnoremap     <C-l> <right>
 ]])
 -- Move selected line / block of text in visual mode
-as.map("x", "K", ":move '<-2<CR>gv=gv")
-as.map("x", "J", ":move '>+1<CR>gv=gv")
+gh.map("x", "K", ":move '<-2<CR>gv=gv")
+gh.map("x", "J", ":move '>+1<CR>gv=gv")
 -- Automatically jump to the end of pasted text
-as.map("v", "y", "y`]")
-as.map("v", "p", "p`]")
-as.map("n", "p", "p`]")
+gh.map("v", "y", "y`]")
+gh.map("v", "p", "p`]")
+gh.map("n", "p", "p`]")
 
 -- select locallist item
 map("n", "[l", "<cmd>lprevious<cr>")
@@ -84,7 +84,6 @@ map("i", "kk", "<Esc>")
 map("n", "q:", ":q")
 
 -- Exit
-map("n", "<C-q>", ":call v:lua.smartquit()<cr>")
 map("i", "<C-q>", "<esc>:q<cr>")
 map("v", "<C-q>", "<esc>")
 map("n", "<Leader>q", ":q<cr>")
@@ -140,7 +139,7 @@ map_change_option("n", "number")
 map_change_option("r", "relativenumber")
 map_change_option("h", "hlsearch")
 
-function _G.smartquit()
+local function smartquit()
   local buf_nums = vim.fn.len(vim.fn.getbufinfo({ buflisted = 1 }))
 
   if buf_nums == 1 then
@@ -176,3 +175,5 @@ function _G.smartquit()
     end
   end
 end
+
+map("n", "<C-q>", smartquit)

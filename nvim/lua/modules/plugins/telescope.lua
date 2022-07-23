@@ -1,6 +1,6 @@
 local telescope = require("telescope")
 
-local map = as.map
+local map = gh.map
 
 -- File Pickers
 map({ "n", "i" }, "<c-p>", [[<cmd>Telescope find_files<cr>]])
@@ -32,7 +32,7 @@ map("n", "<leader>gW", [[<cmd>Telescope lsp_dynamic_workspace_symbols<cr>]])
 
 map("n", ";", "<cmd>Telescope commands<cr>")
 
-as.command("Dotfiles", function()
+gh.command("Dotfiles", function()
   require("telescope.builtin").git_files({
     cwd = vim.env.HOME .. "/.config/nvim",
   })

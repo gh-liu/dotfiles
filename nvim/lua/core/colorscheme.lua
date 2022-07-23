@@ -1,6 +1,6 @@
-local opt = as.opt
+local opt = vim.opt
 
-opt("background", "dark")
+opt.background = "dark"
 
 -- config for Mofiqul/vscode.nvim
 -- vim.g.vscode_style = "dark"

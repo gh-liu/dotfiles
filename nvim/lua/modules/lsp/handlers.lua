@@ -1,6 +1,6 @@
 local M = {}
 
-local config = as.lazy_require("core.config")
+local config = gh.lazy_require("core.config")
 
 M.setup = function()
   -- Workaround to handle pyright: Unsupported command or any other commands that are sent

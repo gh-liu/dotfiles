@@ -5,7 +5,7 @@ require("notify").setup({
     if vim.api.nvim_win_is_valid(win) then
       vim.api.nvim_win_set_config(
         win,
-        { border = as.lazy_require("core.config").border.rounded }
+        { border = gh.lazy_require("core.config").border.rounded }
       )
     end
   end,

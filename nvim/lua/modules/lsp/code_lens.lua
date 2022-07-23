@@ -2,7 +2,7 @@ local create_autocmd = vim.api.nvim_create_autocmd
 local M = {}
 
 M.on_attach = function(client, bufnr)
-  if client.resolved_capabilities.code_lens then
+  if client.server_capabilities.codeLensProvider then
     vim.cmd("highlight! link LspCodeLens LspDiagnosticsHint")
     vim.cmd("highlight! link LspCodeLensText LspDiagnosticsInformation")
     vim.cmd("highlight! link LspCodeLensTextSign LspDiagnosticsSignInformation")

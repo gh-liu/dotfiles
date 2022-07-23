@@ -21,7 +21,7 @@ if not status_ok then
   return
 end
 
-local config = as.lazy_require("core.config")
+local config = gh.lazy_require("core.config")
 
 -- Have packer use a popup window
 packer.init({

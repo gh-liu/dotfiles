@@ -10,7 +10,6 @@ local modules = {
   "core.keymaps",
   "core.autocmd",
   "core.command",
-  "core.builtin",
   "modules.plugins",
   "core.colorscheme",
   "modules.lsp",

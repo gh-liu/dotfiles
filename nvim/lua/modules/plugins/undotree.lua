@@ -1,4 +1,4 @@
-local map = as.map
+local map = gh.map
 -- local autocmd = utils.autocmd
 
 vim.g.undotree_SetFocusWhenToggle = 1

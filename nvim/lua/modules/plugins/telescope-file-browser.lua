@@ -8,7 +8,7 @@ require("telescope").setup({
 
 require("telescope").load_extension("file_browser")
 
-as.map(
+gh.map(
   "n",
   "<C-n>",
   [[:Telescope file_browser path=%:p:h <cr>]],

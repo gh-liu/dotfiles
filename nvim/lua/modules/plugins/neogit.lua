@@ -7,4 +7,4 @@ neogit.setup({
   },
 })
 
-as.map("n", "<leader>gg", neogit.open)
+gh.map("n", "<leader>gg", neogit.open)

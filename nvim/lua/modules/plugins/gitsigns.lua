@@ -48,7 +48,7 @@ local function on_attach(bufnr)
   map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
 end
 
-local config = as.lazy_require("core.config")
+local config = gh.lazy_require("core.config")
 
 gitsigns.setup({
   max_file_length = 40000,
