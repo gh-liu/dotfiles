@@ -1,6 +1,8 @@
 local fn = vim.fn
 
--- Automatically install packer
+-----------------------------------------------------------------------------//
+-- Automatically install packer {{{
+-----------------------------------------------------------------------------//
 local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
 if fn.empty(fn.glob(install_path)) > 0 then
   PACKER_BOOTSTRAP = fn.system({
@@ -14,6 +16,7 @@ if fn.empty(fn.glob(install_path)) > 0 then
   print("Installing packer close and reopen Neovim...")
   vim.cmd([[packadd packer.nvim]])
 end
+-- }}}
 
 -- Use a protected call so we don't error out on first use
 local status_ok, packer = pcall(require, "packer")
@@ -33,28 +36,25 @@ packer.init({
 })
 
 return require("packer").startup(function(use)
-  local config = function(name)
+  local require_conf = function(name)
     return string.format("require('modules.plugins.%s')", name)
   end
 
   use("wbthomason/packer.nvim")
-
   -- NOTE: this is plugin is unnecessary once https://github.com/neovim/neovim/pull/15436 is merged
   use({ "lewis6991/impatient.nvim" })
 
-  -- required by other plugins
+  -----------------------------------------------------------------------------//
+  -- libs {{{1
+  -----------------------------------------------------------------------------//
   use({
     { "nvim-lua/popup.nvim" },
     { "nvim-lua/plenary.nvim" },
   })
-
-  -- ====== Notification ======
-  use({
-    "rcarriga/nvim-notify",
-    config = config("nvim-notify"),
-  })
-
-  -- ====== UI ======
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- UI {{{1
+  -----------------------------------------------------------------------------//
   -- schemes
   use({ "catppuccin/nvim" })
   use({ "Mofiqul/vscode.nvim" })
@@ -64,16 +64,23 @@ return require("packer").startup(function(use)
   use({
     "SmiteshP/nvim-navic",
   })
-
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
+  -- status line
+  use({ "rebelot/heirline.nvim", config = require_conf("heirline") })
+  use({
+    "lukas-reineke/indent-blankline.nvim",
+    event = "BufReadPre",
+    cmd = { "IndentBlanklineToggle" },
+  })
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- tree-sitter {{{1
+  -----------------------------------------------------------------------------//
 
-  use({ "rebelot/heirline.nvim", config = config("heirline") })
-
-  -- ====== Treesitter ======
   use({
     "nvim-treesitter/nvim-treesitter",
-    config = config("treesitter"),
+    config = require_conf("treesitter"),
     run = ":TSUpdate",
   })
   use({
@@ -87,11 +94,13 @@ return require("packer").startup(function(use)
   })
   use("p00f/nvim-ts-rainbow")
   use("theHamsta/nvim-treesitter-pairs")
-
-  -- ====== Telescope ======
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- telescope {{{1
+  -----------------------------------------------------------------------------//
   use({
     "nvim-telescope/telescope.nvim",
-    config = config("telescope"),
+    config = require_conf("telescope"),
   })
   use({
     "nvim-telescope/telescope-fzf-native.nvim",
@@ -99,7 +108,7 @@ return require("packer").startup(function(use)
   })
   use({
     "nvim-telescope/telescope-file-browser.nvim",
-    config = config("telescope-file-browser"),
+    config = require_conf("telescope-file-browser"),
   })
   -- use({ "nvim-telescope/telescope-github.nvim" })
   use({
@@ -108,13 +117,8 @@ return require("packer").startup(function(use)
       require("telescope").load_extension("ui-select")
     end,
   })
-
   use({
     "edolphin-ydf/goimpl.nvim",
-    requires = {
-      { "nvim-telescope/telescope.nvim" },
-      { "nvim-treesitter/nvim-treesitter" },
-    },
     config = function()
       require("telescope").load_extension("goimpl")
       vim.keymap.set(
@@ -126,38 +130,55 @@ return require("packer").startup(function(use)
     end,
   })
 
-  -- ====== Coding ======
-  -- LSP
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- lsp {{{1
+  -----------------------------------------------------------------------------//
   use({
     "neovim/nvim-lspconfig",
   })
-  use({ "jose-elias-alvarez/null-ls.nvim", config = config("nullls") })
-  -- use({ "onsails/lspkind-nvim", event = "BufRead" })
+  use({ "jose-elias-alvarez/null-ls.nvim", config = require_conf("nullls") })
+  use({
+    "simrat39/symbols-outline.nvim",
+    config = require_conf("symbols-outline"),
+  })
   use({
     "j-hui/fidget.nvim",
-    config = config("fidget"),
+    config = require_conf("fidget"),
   })
   use({ "aspeddro/lsp_menu.nvim" })
   use({
     "kosayoda/nvim-lightbulb",
     config = function()
-      -- vim.fn.sign_define('LightBulbSign', { text = "↑", texthl = "", linehl = "", numhl = "" })
       require("nvim-lightbulb").setup({ autocmd = { enabled = true } })
     end,
   })
-  use({ "lvimuser/lsp-inlayhints.nvim" })
-
+  use({
+    "lvimuser/lsp-inlayhints.nvim",
+    config = function()
+      require("lsp_lines").setup()
+    end,
+  })
+  use({
+    "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
+    config = function()
+      require("lsp_lines").setup()
+    end,
+  })
   -- use({
   --   "glepnir/lspsaga.nvim",
   --   branch = "main",
   --   config = config("lspsaga"),
   -- })
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- completion {{{1
+  -----------------------------------------------------------------------------//
 
-  --  Autocompletion
   use({
     "hrsh7th/nvim-cmp",
     requires = {},
-    config = config("cmp"),
+    config = require_conf("cmp"),
   })
   use({
     "hrsh7th/cmp-nvim-lsp",
@@ -186,79 +207,67 @@ return require("packer").startup(function(use)
   })
   use({
     "L3MON4D3/LuaSnip",
-    config = config("luasnip"),
+    config = require_conf("luasnip"),
   })
   use({ "rafamadriz/friendly-snippets" })
-
-  -- Comment
-  use({
-    "numToStr/Comment.nvim",
-    config = config("comment"),
-  })
-
-  -- ====== Debug ======
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- dap {{{1
+  -----------------------------------------------------------------------------//
   use({
     "mfussenegger/nvim-dap",
     -- config = config("dap"),
   })
   use({
     "rcarriga/nvim-dap-ui",
-    config = config("dapui"),
+    config = require_conf("dapui"),
   })
-  use("nvim-telescope/telescope-dap.nvim")
-
-  -- Undo tree
-  -- use({
-  --   "mbbill/undotree",
-  --   config = config("undotree"),
-  -- })
-
-  use({
-    "simrat39/symbols-outline.nvim",
-    config = config("symbols-outline"),
-  })
-
-  -- Autopair
-  use({
-    "windwp/nvim-autopairs",
-    config = config("autopairs"),
-  })
-
-  -- ====== Moving ======
-  use({
-    "phaazon/hop.nvim",
-    branch = "v2",
-    config = config("hop"),
-  })
-
-  -- ====== Git ======
+  -- use("nvim-telescope/telescope-dap.nvim")
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- git {{{1
+  -----------------------------------------------------------------------------//
   use({
     "TimUntersberger/neogit",
-    config = config("neogit"),
+    config = require_conf("neogit"),
   })
   use({
     "sindrets/diffview.nvim",
   })
   use({
     "lewis6991/gitsigns.nvim",
-    config = config("gitsigns"),
+    config = require_conf("gitsigns"),
   })
-
-  -- ====== Language Specified ======
-  -- Lua dev
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- move {{{1
+  -----------------------------------------------------------------------------//
+  use({
+    "phaazon/hop.nvim",
+    branch = "v2",
+    config = require_conf("hop"),
+  })
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- lang dev {{{1
+  -----------------------------------------------------------------------------//
+  -- Lua
   use({ "ii14/emmylua-nvim" })
   -- use("folke/lua-dev.nvim")
   use("milisims/nvim-luaref")
   use("bfredl/nvim-luadev")
-  -- use { 'rafcamlet/nvim-luapad', requires = "antoinemadec/FixCursorHold.nvim" }
-
   -- Rust
   -- use("simrat39/rust-tools.nvim")
-
   -- zig
   use("ziglang/zig.vim")
-
-  -- ====== Others ======
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- misc {{{1
+  -----------------------------------------------------------------------------//
+  use({
+    "rcarriga/nvim-notify",
+    config = require_conf("nvim-notify"),
+  })
   -- Pretty colors
   use({
     "norcalli/nvim-colorizer.lua",
@@ -268,16 +277,56 @@ return require("packer").startup(function(use)
       require("colorizer").setup()
     end,
   })
-
-  -- use("editorconfig/editorconfig-vim")
-
-  -- Profiling
+  use({
+    "numToStr/Comment.nvim",
+    config = require_conf("comment"),
+  })
+  use({
+    "windwp/nvim-autopairs",
+    config = require_conf("autopairs"),
+  })
   use({
     "dstein64/vim-startuptime",
     cmd = "StartupTime",
     config = [[vim.g.startuptime_tries = 10]],
   })
-
+  -- Annotation generator
+  -- use({
+  --   "danymat/neogen",
+  --   config = config("neogen"),
+  --   requires = "nvim-treesitter/nvim-treesitter",
+  -- })
+  use({
+    "antoinemadec/FixCursorHold.nvim",
+    run = function()
+      vim.g.curshold_updatime = 1000
+    end,
+  })
+  use({
+    "kylechui/nvim-surround",
+    config = function()
+      require("nvim-surround").setup({})
+    end,
+  })
+  use({
+    "akinsho/toggleterm.nvim",
+    tag = "v2.*",
+    config = require_conf("toggleterm"),
+  })
+  -- use({
+  --   "max397574/better-escape.nvim",
+  --   config = function()
+  --     require("better_escape").setup()
+  --   end,
+  -- })
+  -- use({
+  --   "mbbill/undotree",
+  --   config = config("undotree"),
+  -- })
+  -- }}}
+  -----------------------------------------------------------------------------//
+  -- tpope {{{
+  -----------------------------------------------------------------------------//
   use("tpope/vim-repeat")
   -- use("tpope/vim-surround")
   -- use("tpope/vim-eunuch")
@@ -292,46 +341,7 @@ return require("packer").startup(function(use)
       vim.g.rsi_no_meta = 1
     end,
   })
-
-  -- Annotation generator
-  -- use({
-  --   "danymat/neogen",
-  --   config = config("neogen"),
-  --   requires = "nvim-treesitter/nvim-treesitter",
-  -- })
-
-  use({
-    "antoinemadec/FixCursorHold.nvim",
-    run = function()
-      vim.g.curshold_updatime = 1000
-    end,
-  })
-
-  -- use({
-  --   "max397574/better-escape.nvim",
-  --   config = function()
-  --     require("better_escape").setup()
-  --   end,
-  -- })
-
-  use({
-    "kylechui/nvim-surround",
-    config = function()
-      require("nvim-surround").setup({})
-    end,
-  })
-
-  use({
-    "lukas-reineke/indent-blankline.nvim",
-    event = "BufReadPre",
-    cmd = { "IndentBlanklineToggle" },
-  })
-
-  use({
-    "akinsho/toggleterm.nvim",
-    tag = "v2.*",
-    config = config("toggleterm"),
-  })
+  -- }}}
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
@@ -339,3 +349,5 @@ return require("packer").startup(function(use)
     require("packer").sync()
   end
 end)
+
+-- vim:foldmethod=marker

@@ -13,6 +13,13 @@ _G.gh = {}
 
 -- mappings
 --
+-- Modes
+--   normal_mode = "n",
+--   insert_mode = "i",
+--   visual_mode = "v",
+--   visual_block_mode = "x",
+--   term_mode = "t",
+--   command_mode = "c",
 function gh.map(modes, lhs, rhs, opts)
   local options = { noremap = true, silent = true }
   if opts then

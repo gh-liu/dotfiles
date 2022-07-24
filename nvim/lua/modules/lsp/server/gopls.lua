@@ -13,6 +13,8 @@ return {
       analyses = { unusedwrite = true },
       hints = {
         constantValues = true,
+        functionTypeParameters = true,
+        parameterNames = true,
       },
     },
   },

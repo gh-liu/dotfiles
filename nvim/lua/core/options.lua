@@ -20,6 +20,7 @@ opt.shortmess = {
   c = true,
   W = true, -- Don't show [w] or written when writing
 }
+-- }}}
 -----------------------------------------------------------------------------//
 -- Timings {{{1
 -----------------------------------------------------------------------------//
@@ -27,6 +28,7 @@ opt.updatetime = 300
 opt.timeout = true
 opt.timeoutlen = 500
 opt.ttimeoutlen = 10
+-- }}}
 -----------------------------------------------------------------------------//
 -- Window splitting and buffers {{{1
 -----------------------------------------------------------------------------//
@@ -45,6 +47,7 @@ opt.fillchars = {
   foldsep = "│",
   foldclose = "▸",
 }
+-- }}}
 -----------------------------------------------------------------------------//
 -- Diff {{{1
 -----------------------------------------------------------------------------//
@@ -59,6 +62,7 @@ opt.diffopt = opt.diffopt
     "algorithm:histogram",
     "indent-heuristic",
   }
+-- }}}
 -----------------------------------------------------------------------------//
 -- Format Options {{{1
 -----------------------------------------------------------------------------//
@@ -77,6 +81,7 @@ opt.formatoptions = {
   l = true,
   v = true,
 }
+-- }}}
 -----------------------------------------------------------------------------//
 -- Folds {{{1
 -----------------------------------------------------------------------------//
@@ -84,6 +89,7 @@ opt.formatoptions = {
 -- opt.foldlevelstart = 3
 -- opt.foldexpr = 'nvim_treesitter#foldexpr()'
 -- opt.foldmethod = 'expr'
+-- }}}
 -----------------------------------------------------------------------------//
 -- Grepprg {{{1
 -----------------------------------------------------------------------------//
@@ -95,6 +101,7 @@ elseif vim.fn.executable("ag") then
   vim.o.grepprg = [[ag --nogroup --nocolor --vimgrep]]
   opt.grepformat = opt.grepformat ^ { "%f:%l:%c:%m" }
 end
+-- }}}
 -----------------------------------------------------------------------------//
 -- Wild and file globbing stuff in command mode {{{1
 -----------------------------------------------------------------------------//
@@ -110,6 +117,7 @@ opt.wildignore = {
 }
 opt.wildoptions = "pum"
 opt.pumblend = 3 -- Make popup window translucent
+-- }}}
 -----------------------------------------------------------------------------//
 -- Display {{{1
 -----------------------------------------------------------------------------//
@@ -124,6 +132,7 @@ opt.ruler = false
 opt.cmdheight = 2 -- Set command line height to two lines
 opt.showbreak = [[↪ ]] -- Options include -> '…', '↳ ', '→','↪ '
 opt.cc = "80"
+-- }}}
 -----------------------------------------------------------------------------//
 -- List chars {{{1
 -----------------------------------------------------------------------------//
@@ -136,8 +145,9 @@ opt.listchars = {
   trail = "•", -- BULLET (U+2022, UTF-8: E2 80 A2)
   space = "⋅",
 }
+-- }}}
 -----------------------------------------------------------------------------//
--- Indentation
+-- Indentation {{{1
 -----------------------------------------------------------------------------//
 opt.wrap = true
 opt.wrapmargin = 2
@@ -147,17 +157,21 @@ opt.shiftround = true
 opt.expandtab = true
 opt.shiftwidth = 2
 opt.whichwrap = "b,s,<,>,h,l"
+-- }}}
 -----------------------------------------------------------------------------//
-opt.gdefault = true
+-- Misc {{{1
+-----------------------------------------------------------------------------//
 opt.pumheight = 15
 opt.confirm = true -- make vim prompt me to save before doing destructive things
 -- opt.completeopt = { 'menuone', 'noselect' }
+opt.gdefault = true
 opt.hlsearch = true
 opt.autowriteall = true -- automatically :write before running commands and changing files
 opt.clipboard = { "unnamedplus" }
 opt.laststatus = 3
 opt.termguicolors = true
 -- opt.guifont = 'Fira Code Regular Nerd Font Complete Mono:h14'
+-- }}}
 -----------------------------------------------------------------------------//
 -- Cursor {{{1
 -----------------------------------------------------------------------------//
@@ -170,6 +184,7 @@ opt.guicursor = {
 
 opt.cursorline = true
 opt.cursorlineopt = "screenline,number"
+-- }}}
 -----------------------------------------------------------------------------//
 -- Title {{{1
 -----------------------------------------------------------------------------//
@@ -177,6 +192,7 @@ opt.cursorlineopt = "screenline,number"
 -- opt.titleold = fn.fnamemodify(vim.loop.os_getenv('SHELL'), ':t')
 -- opt.title = true
 -- opt.titlelen = 70
+-- }}}
 -----------------------------------------------------------------------------//
 -- Utilities {{{1
 -----------------------------------------------------------------------------//

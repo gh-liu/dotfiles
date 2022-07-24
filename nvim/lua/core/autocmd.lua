@@ -9,6 +9,12 @@ create_autocmd("TextYankPost", {
   end,
 })
 
+create_autocmd({ "VimResized" }, {
+  callback = function()
+    vim.cmd("tabdo wincmd =")
+  end,
+})
+
 -- open help page in a window
 create_autocmd("BufEnter", {
   pattern = "*.txt",
@@ -110,4 +116,4 @@ local set_cursorline = function(event, value, pattern)
   })
 end
 set_cursorline("FileType", "no", { "TelescopePrompt", "Outline" })
-set_cursorline({ "BufWinEnter", "InsertEnter" }, "auto:2-5", {})
+set_cursorline({ "BufWinEnter", "InsertEnter" }, "yes:2", {})
