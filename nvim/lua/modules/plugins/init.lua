@@ -61,9 +61,9 @@ return require("packer").startup(function(use)
   use({ "ellisonleao/gruvbox.nvim" })
   use({ "projekt0n/github-nvim-theme" })
   -- winbar
-  use({
-    "SmiteshP/nvim-navic",
-  })
+  -- use({
+  --   "SmiteshP/nvim-navic",
+  -- })
   -- Donwload a patched font and install it first(https://github.com/ryanoasis/nerd-fonts)
   use({ "kyazdani42/nvim-web-devicons" })
   -- status line

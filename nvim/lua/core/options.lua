@@ -86,7 +86,7 @@ opt.formatoptions = {
 -- Folds {{{1
 -----------------------------------------------------------------------------//
 -- opt.foldopen = opt.foldopen + 'search'
--- opt.foldlevelstart = 3
+opt.foldlevelstart = 3
 -- opt.foldexpr = 'nvim_treesitter#foldexpr()'
 -- opt.foldmethod = 'expr'
 -- }}}

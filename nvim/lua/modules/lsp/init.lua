@@ -53,6 +53,24 @@ else
   }
 end
 
+local lsp_keymaps = function(bufnr)
+  local opts = {}
+  opts.buffer = bufnr
+  -- Mappings.
+  -- See `:help vim.lsp.*` for documentation on any of the below functions
+  -- hover
+  gh.map("n", "K", vim.lsp.buf.hover, opts)
+  gh.map("n", "<c-k>", vim.lsp.buf.signature_help, opts)
+  -- rename
+  gh.map("n", "<leader>rn", vim.lsp.buf.rename, opts)
+  -- diagnostic
+  gh.map("n", "[d", vim.diagnostic.goto_prev, opts)
+  gh.map("n", "]d", vim.diagnostic.goto_next, opts)
+  gh.map("n", "<leader>dd", vim.diagnostic.open_float, opts)
+  -- something else
+  gh.map("n", "<leader>F", vim.lsp.buf.formatting, opts)
+end
+
 local on_attach = function(client, bufnr)
   local function buf_set_option(...)
     vim.api.nvim_buf_set_option(bufnr, ...)
@@ -61,19 +79,7 @@ local on_attach = function(client, bufnr)
   -- Enable completion triggered by <c-x><c-o>
   buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
 
-  -- Mappings.
-  -- See `:help vim.lsp.*` for documentation on any of the below functions
-  -- hover
-  gh.map("n", "K", vim.lsp.buf.hover)
-  gh.map("n", "<c-k>", vim.lsp.buf.signature_help)
-  -- rename
-  gh.map("n", "<leader>rn", vim.lsp.buf.rename)
-  -- diagnostic
-  gh.map("n", "[d", vim.diagnostic.goto_prev)
-  gh.map("n", "]d", vim.diagnostic.goto_next)
-  gh.map("n", "<leader>dd", vim.diagnostic.open_float)
-  -- something else
-  gh.map("n", "<leader>F", vim.lsp.buf.formatting)
+  lsp_keymaps(bufnr)
 
   load_lsp_conf("code_lens").on_attach(client, bufnr)
   load_lsp_conf("diagnostic").on_attach(client, bufnr)
