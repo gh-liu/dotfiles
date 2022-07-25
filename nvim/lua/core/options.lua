@@ -53,15 +53,15 @@ opt.fillchars = {
 -----------------------------------------------------------------------------//
 -- Use in vertical diff mode, blank lines to keep sides aligned, Ignore whitespace changes
 opt.diffopt = opt.diffopt
-  + {
-    "vertical",
-    "iwhite",
-    "hiddenoff",
-    "foldcolumn:0",
-    "context:4",
-    "algorithm:histogram",
-    "indent-heuristic",
-  }
+    + {
+      "vertical",
+      "iwhite",
+      "hiddenoff",
+      "foldcolumn:0",
+      "context:4",
+      "algorithm:histogram",
+      "indent-heuristic",
+    }
 -- }}}
 -----------------------------------------------------------------------------//
 -- Format Options {{{1
@@ -152,6 +152,7 @@ opt.listchars = {
 opt.wrap = true
 opt.wrapmargin = 2
 opt.textwidth = 80
+opt.tabstop = 2
 opt.autoindent = true
 opt.shiftround = true
 opt.expandtab = true
