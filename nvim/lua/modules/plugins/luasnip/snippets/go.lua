@@ -29,5 +29,8 @@ return {
       i(1, "value"),
     })
   ),
+  s("ctx", {
+    t("ctx context.Context"),
+  }),
 },
   nil
