@@ -85,15 +85,15 @@ tsconf.setup({
   },
 })
 
--- local foldexpr_group = vim.api.nvim_create_augroup(
---   "foldExprControl",
---   { clear = true }
--- )
--- vim.api.nvim_create_autocmd("FileType", {
---   group = foldexpr_group,
---   pattern = { "go", "javascript", "lua", "rust", "json", "yaml" },
---   callback = function()
---     vim.opt_local.foldmethod = "expr"
---     vim.opt_local.foldexpr = "nvim_treesitter#foldexpr()"
---   end,
--- })
+local foldexpr_group = vim.api.nvim_create_augroup(
+  "foldExprControl",
+  { clear = true }
+)
+vim.api.nvim_create_autocmd("FileType", {
+  group = foldexpr_group,
+  pattern = { "go", "javascript", "lua", "rust", "json", "yaml" },
+  callback = function()
+    vim.opt_local.foldmethod = "expr"
+    vim.opt_local.foldexpr = "nvim_treesitter#foldexpr()"
+  end,
+})
