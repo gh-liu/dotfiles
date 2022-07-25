@@ -53,15 +53,15 @@ opt.fillchars = {
 -----------------------------------------------------------------------------//
 -- Use in vertical diff mode, blank lines to keep sides aligned, Ignore whitespace changes
 opt.diffopt = opt.diffopt
-    + {
-      "vertical",
-      "iwhite",
-      "hiddenoff",
-      "foldcolumn:0",
-      "context:4",
-      "algorithm:histogram",
-      "indent-heuristic",
-    }
+  + {
+    "vertical",
+    "iwhite",
+    "hiddenoff",
+    "foldcolumn:0",
+    "context:4",
+    "algorithm:histogram",
+    "indent-heuristic",
+  }
 -- }}}
 -----------------------------------------------------------------------------//
 -- Format Options {{{1

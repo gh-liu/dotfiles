@@ -7,12 +7,12 @@ local M = {}
 M.setup = function()
   vim.diagnostic.config({
     severity_sort = true,
-    virtual_text = false,
-    -- virtual_text = {
-    --   spacing = 4,
-    --   -- prefix = "x",
-    --   -- source = "always",
-    -- },
+    -- virtual_text = false,
+    virtual_text = {
+      spacing = 4,
+      -- prefix = "x",
+      -- source = "always",
+    },
     update_in_insert = false,
   })
 

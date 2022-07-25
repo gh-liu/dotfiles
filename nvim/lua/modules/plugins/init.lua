@@ -155,16 +155,14 @@ return require("packer").startup(function(use)
   })
   use({
     "lvimuser/lsp-inlayhints.nvim",
-    config = function()
-      require("lsp_lines").setup()
-    end,
+    config = require_conf("lsp-inlayhints"),
   })
-  use({
-    "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
-    config = function()
-      require("lsp_lines").setup()
-    end,
-  })
+  -- use({
+  --   "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
+  --   config = function()
+  --     require("lsp_lines").setup()
+  --   end,
+  -- })
   -- use({
   --   "glepnir/lspsaga.nvim",
   --   branch = "main",
