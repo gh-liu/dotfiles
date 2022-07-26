@@ -65,7 +65,7 @@ vim.api.nvim_create_autocmd({ "CursorHold" }, {
     if luasnip.expand_or_jumpable() then
       -- ask maintainer for option to make this silent
       -- luasnip.unlink_current()
-      vim.cmd [[silent! lua require("luasnip").unlink_current()]]
+      vim.cmd([[silent! lua require("luasnip").unlink_current()]])
     end
   end,
 })

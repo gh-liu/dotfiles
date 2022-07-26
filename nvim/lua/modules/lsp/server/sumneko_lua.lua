@@ -1,20 +1,13 @@
-local runtime_path = vim.split(package.path, ";")
-table.insert(runtime_path, "lua/?.lua")
-table.insert(runtime_path, "lua/?/init.lua")
-
 local settings = {
-  -- The default `cmd` assumes that the `lua-language-server` binary can be found in $PATH
   settings = {
     Lua = {
       runtime = {
         -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
         version = "LuaJIT",
-        -- Setup your lua path
-        path = runtime_path,
       },
       diagnostics = {
         -- Get the language server to recognize the `vim` global
-        globals = { "vim", "as" },
+        globals = { "vim", "gh" },
       },
       workspace = {
         -- Make the server aware of Neovim runtime files
