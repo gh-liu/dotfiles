@@ -11,6 +11,7 @@ end
 
 load_lsp_conf("diagnostic").setup()
 load_lsp_conf("handlers").setup()
+load_lsp_conf("commands").setup()
 
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md
 local servers = {

@@ -1,5 +1,4 @@
-local on_attach = function(bufnr)
-end
+local on_attach = function(bufnr) end
 
 require("aerial").setup({
   default_direction = "prefer_left",

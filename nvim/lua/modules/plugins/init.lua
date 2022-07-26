@@ -142,10 +142,10 @@ return require("packer").startup(function(use)
   --   "simrat39/symbols-outline.nvim",
   --   config = require_conf("symbols-outline"),
   -- })
-  use {
-    'stevearc/aerial.nvim',
+  use({
+    "stevearc/aerial.nvim",
     config = require_conf("aerial"),
-  }
+  })
   use({
     "j-hui/fidget.nvim",
     config = require_conf("fidget"),
@@ -263,7 +263,7 @@ return require("packer").startup(function(use)
   use("milisims/nvim-luaref")
   use("bfredl/nvim-luadev")
   -- Rust
-  -- use("simrat39/rust-tools.nvim")
+  use("simrat39/rust-tools.nvim")
   -- zig
   use("ziglang/zig.vim")
   -- }}}
