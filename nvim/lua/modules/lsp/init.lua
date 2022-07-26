@@ -69,6 +69,7 @@ local lsp_keymaps = function(bufnr)
   gh.map("n", "<leader>dd", vim.diagnostic.open_float, opts)
   -- something else
   gh.map("n", "<leader>F", vim.lsp.buf.formatting, opts)
+  gh.map("n", "<leader>cl", vim.lsp.codelens.run, opts)
 end
 
 local on_attach = function(client, bufnr)

@@ -146,7 +146,11 @@ return require("packer").startup(function(use)
     "j-hui/fidget.nvim",
     config = require_conf("fidget"),
   })
-  use({ "aspeddro/lsp_menu.nvim" })
+  -- use({ "aspeddro/lsp_menu.nvim" })
+  use({
+    "weilbith/nvim-code-action-menu",
+    config = require_conf("nvim-code-action-menu"),
+  })
   use({
     "kosayoda/nvim-lightbulb",
     config = function()

@@ -106,7 +106,7 @@ local signcolumn_group = vim.api.nvim_create_augroup(
   "SigncolumnControl",
   { clear = true }
 )
-local set_cursorline = function(event, value, pattern)
+local set_signcolumn = function(event, value, pattern)
   create_autocmd(event, {
     group = signcolumn_group,
     pattern = pattern,
@@ -115,5 +115,18 @@ local set_cursorline = function(event, value, pattern)
     end,
   })
 end
-set_cursorline("FileType", "no", { "TelescopePrompt", "Outline" })
-set_cursorline({ "BufWinEnter", "InsertEnter" }, "yes:2", {})
+set_signcolumn("FileType", "no", { "TelescopePrompt", "Outline" })
+set_signcolumn({ "BufWinEnter", "InsertEnter" }, "yes:2", {})
+
+-- wrap control
+local wrap_group = vim.api.nvim_create_augroup("WrapControl", { clear = true })
+local set_warp = function(event, value, pattern)
+  create_autocmd(event, {
+    group = wrap_group,
+    pattern = pattern,
+    callback = function()
+      vim.opt_local.wrap = value
+    end,
+  })
+end
+set_warp("FileType", false, { "TelescopePrompt", "code-action-menu-menu" })
