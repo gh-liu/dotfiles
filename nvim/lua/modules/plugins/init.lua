@@ -138,10 +138,14 @@ return require("packer").startup(function(use)
     "neovim/nvim-lspconfig",
   })
   use({ "jose-elias-alvarez/null-ls.nvim", config = require_conf("nullls") })
-  use({
-    "simrat39/symbols-outline.nvim",
-    config = require_conf("symbols-outline"),
-  })
+  -- use({
+  --   "simrat39/symbols-outline.nvim",
+  --   config = require_conf("symbols-outline"),
+  -- })
+  use {
+    'stevearc/aerial.nvim',
+    config = require_conf("aerial"),
+  }
   use({
     "j-hui/fidget.nvim",
     config = require_conf("fidget"),
