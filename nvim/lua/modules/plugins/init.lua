@@ -73,6 +73,18 @@ return require("packer").startup(function(use)
     event = "BufReadPre",
     cmd = { "IndentBlanklineToggle" },
   })
+
+  use({
+    "nvim-telescope/telescope-ui-select.nvim",
+    config = function()
+      require("telescope").load_extension("ui-select")
+    end,
+  })
+  -- use({ "hood/popui.nvim",
+  --   config = function()
+  --     vim.ui.select = require "popui.ui-overrider"
+  --     vim.ui.input = require "popui.input-overrider"
+  --   end })
   -- }}}
   -----------------------------------------------------------------------------//
   -- tree-sitter {{{1
@@ -111,12 +123,6 @@ return require("packer").startup(function(use)
     config = require_conf("telescope-file-browser"),
   })
   -- use({ "nvim-telescope/telescope-github.nvim" })
-  use({
-    "nvim-telescope/telescope-ui-select.nvim",
-    config = function()
-      require("telescope").load_extension("ui-select")
-    end,
-  })
   use({
     "edolphin-ydf/goimpl.nvim",
     config = function()
@@ -263,7 +269,9 @@ return require("packer").startup(function(use)
   use("milisims/nvim-luaref")
   use("bfredl/nvim-luadev")
   -- Rust
-  use("simrat39/rust-tools.nvim")
+  -- use({ "simrat39/rust-tools.nvim",
+  --   config = require_conf("rust-tools"),
+  -- })
   -- zig
   use("ziglang/zig.vim")
   -- }}}

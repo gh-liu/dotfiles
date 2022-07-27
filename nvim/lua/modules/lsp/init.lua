@@ -37,11 +37,11 @@ else
   capabilities.textDocument.completion.completionItem.snippetSupport = true
   capabilities.textDocument.completion.completionItem.preselectSupport = true
   capabilities.textDocument.completion.completionItem.insertReplaceSupport =
-    true
+  true
   capabilities.textDocument.completion.completionItem.labelDetailsSupport = true
   capabilities.textDocument.completion.completionItem.deprecatedSupport = true
   capabilities.textDocument.completion.completionItem.commitCharactersSupport =
-    true
+  true
   capabilities.textDocument.completion.completionItem.tagSupport = {
     valueSet = { 1 },
   }
