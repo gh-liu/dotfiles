@@ -21,12 +21,11 @@ local opts = {
       ["rust-analyzer"] = {
         -- enable clippy on save
         checkOnSave = {
-          command = "clippy"
+          command = "clippy",
         },
-      }
-    }
+      },
+    },
   },
 }
 
-require('rust-tools').setup(opts)
-
+require("rust-tools").setup(opts)

@@ -53,15 +53,15 @@ opt.fillchars = {
 -----------------------------------------------------------------------------//
 -- Use in vertical diff mode, blank lines to keep sides aligned, Ignore whitespace changes
 opt.diffopt = opt.diffopt
-    + {
-      "vertical",
-      "iwhite",
-      "hiddenoff",
-      "foldcolumn:0",
-      "context:4",
-      "algorithm:histogram",
-      "indent-heuristic",
-    }
+  + {
+    "vertical",
+    "iwhite",
+    "hiddenoff",
+    "foldcolumn:0",
+    "context:4",
+    "algorithm:histogram",
+    "indent-heuristic",
+  }
 -- }}}
 -----------------------------------------------------------------------------//
 -- Format Options {{{1
@@ -75,6 +75,7 @@ opt.formatoptions = {
   n = true, -- Recognize numbered lists
   t = false, -- autowrap lines using text width value
   j = true, -- remove a comment leader when joining lines.
+  o = false,
   -- Only break if the line was not longer than 'textwidth' when the insert
   -- started and only at a white character that has been entered during the
   -- current insert command.

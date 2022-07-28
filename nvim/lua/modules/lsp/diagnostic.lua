@@ -12,6 +12,7 @@ M.setup = function()
       spacing = 4,
       -- prefix = "x",
       -- source = "always",
+      severity = vim.diagnostic.severity.INFO,
     },
     update_in_insert = false,
   })
