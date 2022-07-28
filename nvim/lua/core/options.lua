@@ -139,12 +139,14 @@ opt.cc = "80"
 -----------------------------------------------------------------------------//
 opt.list = true -- invisible chars
 opt.listchars = {
-  eol = nil, -- eol = "↴",
+  -- eol = nil,
+  eol = "↴",
   tab = "  ", -- Alternatives: '▷▷', -- tab = "▸\\",
   extends = "›", -- Alternatives: … »
   precedes = "‹", -- Alternatives: … «
   trail = "•", -- BULLET (U+2022, UTF-8: E2 80 A2)
   space = "⋅",
+  -- multispace = "---+",
 }
 -- }}}
 -----------------------------------------------------------------------------//
