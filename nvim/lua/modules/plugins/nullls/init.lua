@@ -20,6 +20,7 @@ local sources = {
   -- b.formatting.goimports,
 
   b.formatting.mdformat,
+  b.formatting.shfmt,
   b.diagnostics.golangci_lint,
   exagit.git_sign,
   exago.gomodifytags,
