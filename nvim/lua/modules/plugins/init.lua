@@ -168,10 +168,18 @@ return require("packer").startup(function(use)
       require("nvim-lightbulb").setup({ autocmd = { enabled = true } })
     end,
   })
-  use({
-    "lvimuser/lsp-inlayhints.nvim",
-    config = require_conf("lsp-inlayhints"),
-  })
+  -- use({
+  --   "lvimuser/lsp-inlayhints.nvim",
+  --   config = require_conf("lsp-inlayhints"),
+  -- })
+  -- use({
+  --   "simrat39/inlay-hints.nvim",
+  --   config = function()
+  --     require("inlay-hints").setup({
+  --       only_current_line = true,
+  --     })
+  --   end,
+  -- })
   -- use({
   --   "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
   --   config = function()

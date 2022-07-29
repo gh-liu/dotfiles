@@ -24,6 +24,11 @@ M.on_attach = function(client, bufnr)
   if navic_exist then
     navic.attach(client, bufnr)
   end
+
+  local inlay_hints_exist, inlay_hints = pcall(require, "inlay-hints")
+  if inlay_hints_exist then
+    inlay_hints.on_attach(client, bufnr)
+  end
 end
 
 return M

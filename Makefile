@@ -3,7 +3,7 @@ help: ## Display this help message
 
 .PHONY: format_lua
 format_lua:
-	@ stylua nvim/lua/**/*.lua
+	stylua nvim/lua/**/*.lua
 	
 .PHONY: update_go
 update_go:
