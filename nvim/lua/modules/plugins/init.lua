@@ -306,11 +306,11 @@ return require("packer").startup(function(use)
     config = [[vim.g.startuptime_tries = 10]],
   })
   -- Annotation generator
-  -- use({
-  --   "danymat/neogen",
-  --   config = config("neogen"),
-  --   requires = "nvim-treesitter/nvim-treesitter",
-  -- })
+  use({
+    "danymat/neogen",
+    config = require_conf("neogen"),
+    requires = "nvim-treesitter/nvim-treesitter",
+  })
   use({
     "antoinemadec/FixCursorHold.nvim",
     run = function()
