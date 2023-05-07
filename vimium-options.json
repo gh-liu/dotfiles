@@ -1,0 +1,21 @@
+{
+  "settingsVersion": "1.67.4",
+  "exclusionRules": [],
+  "filterLinkHints": false,
+  "waitForEnterForFilteredHints": true,
+  "hideHud": false,
+  "keyMappings": "unmapAll\n\n# Navigating the page\nmap j scrollDown\nmap k scrollUp\nmap gg scrollToTop\nmap G scrollToBottom\nmap d scrollPageDown\nmap u scrollPageUp\nmap l scrollLeft\nmap h scrollRight\nmap i enterInsertMode\nmap v enterVisualMode\nmap F LinkHints.activateMode\nmap f LinkHints.activateModeToOpenInNewTab\n \n# Using the vomnibar\nmap O Vomnibar.activate\nmap o Vomnibar.activateInNewTab\nmap b Vomnibar.activateBookmarksInNewTab\nmap B Vomnibar.activateBookmarks\n \n# Using find\nmap / enterFindMode\nmap n performFind\nmap N performBackwardsFind\n \n# Navigating history\nmap J goBack\nmap K goForward\n \n# Manipulating tabs\nmap c createTab\nmap H previousTab # or use ctrl-tab \nmap L nextTab\nmap ^ visitPreviousTab\nmap <a-p >togglePinTab\nmap x removeTab\n \n# Miscellaneous\nmap g? showHelp",
+  "linkHintCharacters": "sadfjklewcmpgh",
+  "linkHintNumbers": "0123456789",
+  "newTabUrl": "about:newtab",
+  "nextPatterns": "next,more,newer,>,›,→,»,≫,>>",
+  "previousPatterns": "prev,previous,back,older,<,‹,←,«,≪,<<",
+  "regexFindMode": false,
+  "ignoreKeyboardLayout": false,
+  "scrollStepSize": 60,
+  "smoothScroll": true,
+  "grabBackFocus": false,
+  "searchEngines": "w: https://www.wikipedia.org/w/index.php?title=Special:Search&search=%s Wikipedia\nb: https://www.baidu.com/s?wd=%s BaiDu\ng: https://www.google.com/search?q=%s Google",
+  "searchUrl": "https://www.google.com/search?q=",
+  "userDefinedLinkHintCss": "div > .vimiumHintMarker {\n/* linkhint boxes */\nbackground: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#FFF785),\n  color-stop(100%,#FFC542));\nborder: 1px solid #E3BE23;\n}\n\ndiv > .vimiumHintMarker span {\n/* linkhint text */\ncolor: black;\nfont-weight: bold;\nfont-size: 12px;\n}\n\ndiv > .vimiumHintMarker > .matchingCharacter {\n}"
+}

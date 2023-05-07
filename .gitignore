@@ -1,0 +1,10 @@
+xdg_config/zsh/.zcompdump
+xdg_config/zsh/.zsh_history
+xdg_config/zsh/.zsh_sessions/
+xdg_config/zsh/.zcompcache/
+xdg_config/zsh/zsh-conf/custom.zsh
+
+xdg_config/tmux/plugins/
+
+xdg_config/nvim/lazy-lock.json
+
