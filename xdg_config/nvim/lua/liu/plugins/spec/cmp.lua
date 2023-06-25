@@ -167,23 +167,18 @@ local cmp = {
 				}),
 			})
 
-			cmp.setup.filetype("dap-repl", {
-				mapping = cmp.mapping.preset.cmdline(),
-				sources = cmp.config.sources({
-					{
-						name = "omni",
-					},
-				}, {
-					{
-						name = "buffer",
-						option = {
-							get_bufnrs = function()
-								return vim.api.nvim_list_bufs()
-							end,
-						},
-					},
-				}),
-			})
+			-- cmp.setup.filetype("dap-repl", {
+			-- 	sources = cmp.config.sources({
+			-- 		{
+			-- 			name = "buffer",
+			-- 			option = {
+			-- 				get_bufnrs = function()
+			-- 					return vim.api.nvim_list_bufs()
+			-- 				end,
+			-- 			},
+			-- 		},
+			-- 	}),
+			-- })
 		end,
 	},
 	-- snip

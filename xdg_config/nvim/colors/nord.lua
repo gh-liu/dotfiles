@@ -315,7 +315,8 @@ local diagnostic = {
 highlights = vim.tbl_extend("force", highlights, diagnostic)
 
 local lsp = {
-	LspReferenceText = { bg = gray },
+	-- LspReferenceText = { reverse = true },
+	LspReferenceText = { fg = foreground, bg = gray },
 	LspReferenceRead = { link = "LspReferenceText" },
 	LspReferenceWrite = { link = "LspReferenceText" },
 	-- lsp inlayhint

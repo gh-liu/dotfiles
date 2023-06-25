@@ -150,5 +150,19 @@ local ui = {
 			})
 		end,
 	},
+	{
+		"vigoux/notifier.nvim",
+		event = "VeryLazy",
+		config = function()
+			require("notifier").setup({})
+
+			set_hls({
+				-- NotifierTitle = {},
+				-- NotifierIcon = {},
+				NotifierContent = {link = "LspInlayHint"},
+				NotifierContentDim = {link = "LspInlayHint"},
+			})
+		end,
+	},
 }
 return ui

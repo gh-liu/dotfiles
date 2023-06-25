@@ -153,8 +153,10 @@ local motion = {
 		"folke/flash.nvim",
 		-- event = "VeryLazy",
 		opts = {
-			char = {
-				enabled = false,
+			modes = {
+				char = {
+					enabled = false,
+				},
 			},
 		},
 		keys = {

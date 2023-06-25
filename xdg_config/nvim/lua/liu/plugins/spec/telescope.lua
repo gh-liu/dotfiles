@@ -39,7 +39,7 @@ return {
 
 			vim.keymap.set("n", "<leader>sm", builtin.marks, { desc = "[S]earch [M]ark" })
 			vim.keymap.set("n", "<leader>sj", builtin.jumplist, { desc = "[S]et [J]umplist" })
-			-- vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
+			vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
 			vim.keymap.set("n", "<leader>sr", builtin.registers, { desc = "[S]earch [R]egisters" })
 			vim.keymap.set("n", "<leader>st", builtin.filetypes, { desc = "[S]et File[t]ype" })
 
