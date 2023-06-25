@@ -39,14 +39,6 @@ wezterm.on("toggle-tabbar", function(window, pane)
 end)
 
 -- Config
-local function wsl_domains()
-	local wsl_domains = wezterm.default_wsl_domains()
-	for idx, dom in ipairs(wsl_domains) do
-		dom.default_cwd = "~"
-	end
-
-	return wsl_domains
-end
 local config = {
 	check_for_updates = false,
 	font_size = 13.0,
@@ -94,11 +86,14 @@ local config = {
 	disable_default_key_bindings = true,
 	-- leader = { key = "f", mods = "CTRL" },
 	keys = {
-		{ key = "f", mods = "LEADER|CTRL", action = wezterm.action.SendKey({ key = "f", mods = "CTRL" }) },
+		-- toggle leader-key
 		{ key = "f", mods = "CTRL|SHIFT", action = wezterm.action.EmitEvent("toggle-leader") },
+		-- send CTRL-F key
+		{ key = "f", mods = "LEADER|CTRL", action = wezterm.action.SendKey({ key = "f", mods = "CTRL" }) },
+		-- toggle leader-tabbar
 		{ key = "t", mods = "LEADER", action = wezterm.action.EmitEvent("toggle-tabbar") },
-		-- { key = "Enter", mods = "ALT", action = "ToggleFullScreen" },
-		{ key = "l", mods = "LEADER|SHIFT", action = act.ShowLauncher },
+		-- show launcher
+		-- { key = "l", mods = "LEADER|SHIFT", action = act.ShowLauncher },
 		-- pane
 		{ key = "-", mods = "LEADER", action = act({ SplitVertical = { domain = "CurrentPaneDomain" } }) },
 		{ key = "|", mods = "LEADER|SHIFT", action = act({ SplitHorizontal = { domain = "CurrentPaneDomain" } }) },
@@ -123,19 +118,48 @@ local config = {
 		{ key = "7", mods = "LEADER", action = act({ ActivateTab = 6 }) },
 		{ key = "8", mods = "LEADER", action = act({ ActivateTab = 7 }) },
 		{ key = "9", mods = "LEADER", action = act({ ActivateTab = 8 }) },
-		-- copy, paste
-		{ key = "x", mods = "CMD|SHIFT", action = act.ActivateCopyMode },
-		{ key = "c", mods = "CMD|SHIFT", action = act.CopyTo("Clipboard") },
-		{ key = "v", mods = "CMD|SHIFT", action = act.PasteFrom("Clipboard") },
-		-- { key = "Insert", mods = "SHIFT", action = act.PasteFrom("Clipboard") },
 		-- scroll bar
 		-- { key = "j", mods = "ALT", action = act.ScrollByLine(1) },
 		-- { key = "k", mods = "ALT", action = act.ScrollByLine(-1) },
 	},
 	audible_bell = "Disabled",
-	wsl_domains = wsl_domains(),
 }
+
+if wezterm.target_triple == "aarch64-apple-darwin" or wezterm.target_triple == "x86_64-apple-darwin" then
+	local keys = {
+		-- copy, paste
+		{ key = "x", mods = "CMD|SHIFT", action = act.ActivateCopyMode },
+		{ key = "c", mods = "CMD|SHIFT", action = act.CopyTo("Clipboard") },
+		{ key = "v", mods = "CMD|SHIFT", action = act.PasteFrom("Clipboard") },
+	}
+	for _, key in ipairs(keys) do
+		table.insert(config.keys, key)
+	end
+end
+
 if wezterm.target_triple == "x86_64-pc-windows-msvc" then
 	config.default_prog = { "wsl.exe", "--cd", "~" }
+	config.font = wezterm.font("FiraCode NF")
+
+	local keys = {
+		{ key = "Enter", mods = "ALT", action = "ToggleFullScreen" },
+		{ key = "Insert", mods = "SHIFT", action = act.PasteFrom("Clipboard") },
+		{ key = "x", mods = "ALT|SHIFT", action = act.ActivateCopyMode },
+		{ key = "c", mods = "ALT|SHIFT", action = act.CopyTo("Clipboard") },
+		{ key = "v", mods = "ALT|SHIFT", action = act.PasteFrom("Clipboard") },
+	}
+	for _, key in ipairs(keys) do
+		table.insert(config.keys, key)
+	end
+
+	local function wsl_domains()
+		local wsl_domains = wezterm.default_wsl_domains()
+		for idx, dom in ipairs(wsl_domains) do
+			dom.default_cwd = "~"
+		end
+
+		return wsl_domains
+	end
+	config.wsl_domains = wsl_domains()
 end
 return config
