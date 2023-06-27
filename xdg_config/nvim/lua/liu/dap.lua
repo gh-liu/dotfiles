@@ -96,7 +96,7 @@ autocmd("User", {
 			dap.run_last()
 		end, {})
 
-		attach_maps()
+		-- attach_maps()
 
 		-- dap.repl.open(replwinopts)
 	end,
@@ -108,7 +108,8 @@ autocmd("User", {
 	pattern = { "DAPTerminated" },
 	callback = function()
 		vim.g.debuging = nil
-		detach_maps()
+
+		-- detach_maps()
 
 		-- dap.repl.close()
 	end,
@@ -443,5 +444,55 @@ autocmd("User", {
 
 -- }}}
 
+-- Hydra {{{1
+local ok, Hydra = pcall(require, "hydra")
+if ok then
+	local hint = [[
+     ^ ^Step^ ^ ^      ^ ^     Action
+ ----^-^-^-^--^-^----  ^-^-------------------
+     ^ ^back^ ^ ^     ^_b_: toggle breakpoint
+     ^ ^ _N_^ ^        _B_: clear breakpoints
+ out _o_ ^ ^ _i_ into  _c_: continue
+     ^ ^ _n_ ^ ^       _x_: terminate
+     ^ ^over ^ ^     ^^_K_: eval
+
+     ^ ^  _<Esc>_/_q_: exit
+]]
+	-- local Hydra = require("hydra")
+	local dap = require("dap")
+	local dapui = require("dapui")
+
+	local dap_hydra = Hydra({
+		hint = hint,
+		config = {
+			color = "pink",
+			invoke_on_body = true,
+			hint = {
+				position = "middle-right",
+				border = config.borders,
+			},
+		},
+		name = "dap",
+		mode = { "n", "x" },
+		body = "<leader>D",
+		heads = {
+			{ "c", dap.continue, { desc = "continue", silent = true } },
+			{ "x", dap.terminate, { desc = "terminate", silent = true } },
+			{ "n", dap.step_over, { desc = "step_over", silent = true } },
+			{ "N", dap.step_back, { desc = "step back", silent = true } },
+			{ "i", dap.step_into, { desc = "step_into", silent = true } },
+			{ "o", dap.step_out, { desc = "step_out", silent = true } },
+
+			{ "b", dap.toggle_breakpoint, { desc = "breakpoint", silent = true } },
+			{ "B", dap.clear_breakpoints, { desc = "clear breakpoints", silent = true } },
+
+			{ "K", dapui.eval, { desc = "eval", silent = true } },
+
+			{ "q", nil, { exit = true, nowait = true } },
+			{ "<Esc>", nil, { exit = true, nowait = true } },
+		},
+	})
+end
+-- }}}
 
 -- vim: set foldmethod=marker foldlevel=1:

@@ -1,29 +1,42 @@
+local api = vim.api
 local setmap = function(mode, lhs, rhs, opts)
 	opts = opts or { silent = true }
 	vim.keymap.set(mode, lhs, rhs, opts)
 end
 
-local function toggle_opt(op, option, val)
-	if not val then
+local function toggle_opt(op, option, opts)
+	if not opts then
 		return setmap("n", ("co" .. op), (":set " .. option .. "!" .. "<bar> set " .. option .. "?<cr>"))
 	else
-		local vv = val
-		return setmap("n", "co" .. op, function()
-			vim.o[option], vv = vv, vim.o[option]
-			vim.cmd(string.format("set %s?", option))
-		end)
+		if opts.val then
+			local vv = opts.val
+			return setmap("n", "co" .. op, function()
+				vim.o[option], vv = vv, vim.o[option]
+				vim.cmd(string.format("set %s?", option))
+			end)
+		end
+
+		if opts.option then
+			local vals = { opts.option, option }
+			local idx = 0
+			return setmap("n", "co" .. op, function()
+				local val = vals[idx % 2 + 1]
+				vim.cmd(string.format("set %s | set %s?", val, val))
+				idx = idx + 1
+			end)
+		end
 	end
 end
 
 toggle_opt("w", "wrap")
 toggle_opt("p", "paste")
 toggle_opt("f", "fen")
-toggle_opt("h", "hlsearch")
+toggle_opt("h", "hlsearch", { option = "nohlsearch" })
 toggle_opt("c", "cursorcolumn")
-toggle_opt("C", "cursorbind")
-toggle_opt("S", "scrollbind")
-toggle_opt("m", "mouse", "a")
-toggle_opt("t", "laststatus", 0)
+-- toggle_opt("C", "cursorbind")
+-- toggle_opt("S", "scrollbind")
+toggle_opt("m", "mouse", { val = "a" })
+toggle_opt("t", "laststatus", { val = 0 })
 -- toggle_opt("i", "smartcase")
 -- toggle_opt("n", "number")
 -- toggle_opt("r", "relativenumber")
@@ -45,6 +58,8 @@ setmap("c", "<C-e>", rtf("<END>", "c"))
 
 setmap("i", "<C-a>", "<HOME>")
 setmap("i", "<C-e>", "<END>")
+setmap("i", "<C-f>", "<right>")
+setmap("i", "<C-b>", "<left>")
 
 -- Remap for dealing with word wrap
 setmap({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
@@ -64,10 +79,20 @@ setmap("x", "Y", "<ESC>y$gv")
 
 setmap("n", "n", "nzzzv")
 setmap("n", "N", "Nzzzv")
-setmap("n", "*", "#zz")
-setmap("n", "#", "*zz")
 setmap("n", "<C-d>", "<C-d>zz")
 setmap("n", "<C-u>", "<C-u>zz")
+
+local function stay_here(op)
+	return function()
+		local sview = vim.fn.winsaveview()
+		local args = string.format("keepjumps keeppatterns execute %q", string.format("sil normal! %s", op))
+		vim.api.nvim_command(args)
+		vim.fn.winrestview(sview)
+		-- TODO highlight current word
+	end
+end
+vim.keymap.set("n", "*", stay_here("*"), { noremap = true, silent = true })
+-- vim.keymap.set("n", "#", stay_here("#"), { noremap = true, silent = true })
 
 setmap("n", "[b", ":bprev<cr>")
 setmap("n", "]b", ":bnext<cr>")

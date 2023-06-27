@@ -73,28 +73,65 @@ local ts = {
 		end,
 	},
 	{
-		url = "https://gitlab.com/HiPhish/nvim-ts-rainbow2",
-		event = "VeryLazy",
+		"hiphish/rainbow-delimiters.nvim",
+		opts = {},
 		config = function()
-			set_hls({
-				TSRainbowRed = { fg = "#BF616A" },
-				TSRainbowBlue = { fg = "#5E81AC" },
-				TSRainbowCyan = { fg = "#8FBCBB" },
-				TSRainbowGreen = { fg = "#A3BE8C" },
-				TSRainbowOrange = { fg = "#D08770" },
-				TSRainbowViolet = { fg = "#B48EAD" },
-				TSRainbowYellow = { fg = "#EBCB8B" },
-			})
-			require("nvim-treesitter.configs").setup({
-				rainbow = {
-					enable = true,
-					disable = {},
-					query = "rainbow-parens",
-					strategy = require("ts-rainbow.strategy.global"),
+			local rainbow_delimiters = require("rainbow-delimiters")
+
+			vim.g.rainbow_delimiters = {
+				strategy = {
+					[""] = rainbow_delimiters.strategy["global"],
+					vim = rainbow_delimiters.strategy["local"],
 				},
+				query = {
+					[""] = "rainbow-delimiters",
+					lua = "rainbow-blocks",
+				},
+				highlight = {
+					"RainbowDelimiterRed",
+					"RainbowDelimiterYellow",
+					"RainbowDelimiterBlue",
+					"RainbowDelimiterOrange",
+					"RainbowDelimiterGreen",
+					"RainbowDelimiterViolet",
+					"RainbowDelimiterCyan",
+				},
+			}
+
+			set_hls({
+				RainbowDelimiterRed = { fg = "#BF616A" },
+				RainbowDelimiterBlue = { fg = "#5E81AC" },
+				RainbowDelimiterCyan = { fg = "#8FBCBB" },
+				RainbowDelimiterGreen = { fg = "#A3BE8C" },
+				RainbowDelimiterOrange = { fg = "#D08770" },
+				RainbowDelimiterViolet = { fg = "#B48EAD" },
+				RainbowDelimiterYellow = { fg = "#EBCB8B" },
 			})
 		end,
 	},
+	-- {
+	-- 	url = "https://gitlab.com/HiPhish/nvim-ts-rainbow2",
+	-- 	event = "VeryLazy",
+	-- 	config = function()
+	-- 		set_hls({
+	-- 			TSRainbowRed = { fg = "#BF616A" },
+	-- 			TSRainbowBlue = { fg = "#5E81AC" },
+	-- 			TSRainbowCyan = { fg = "#8FBCBB" },
+	-- 			TSRainbowGreen = { fg = "#A3BE8C" },
+	-- 			TSRainbowOrange = { fg = "#D08770" },
+	-- 			TSRainbowViolet = { fg = "#B48EAD" },
+	-- 			TSRainbowYellow = { fg = "#EBCB8B" },
+	-- 		})
+	-- 		require("nvim-treesitter.configs").setup({
+	-- 			rainbow = {
+	-- 				enable = true,
+	-- 				disable = {},
+	-- 				query = "rainbow-parens",
+	-- 				strategy = require("ts-rainbow.strategy.global"),
+	-- 			},
+	-- 		})
+	-- 	end,
+	-- },
 	{
 		"IndianBoy42/tree-sitter-just",
 		ft = "just",

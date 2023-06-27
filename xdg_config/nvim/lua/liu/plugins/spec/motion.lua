@@ -10,6 +10,7 @@ local motion = {
 	},
 	{
 		"chrisgrieser/nvim-various-textobjs",
+		enabled = false,
 		event = "VeryLazy",
 		config = function()
 			require("various-textobjs").setup({
@@ -28,8 +29,8 @@ local motion = {
 			-- map("?", '<cmd>lua require("various-textobjs").diagnostic()<CR>')
 			-- map("%", '<cmd>lua require("various-textobjs").toNextClosingBracket()<CR>')
 
-			map("is", '<cmd>lua require("various-textobjs").subword(true)<CR>')
-			map("as", '<cmd>lua require("various-textobjs").subword(false)<CR>')
+			-- map("is", '<cmd>lua require("various-textobjs").subword(true)<CR>')
+			-- map("as", '<cmd>lua require("various-textobjs").subword(false)<CR>')
 
 			map("iI", '<cmd>lua require("various-textobjs").indentation(true, true)<CR>')
 			map("aI", '<cmd>lua require("various-textobjs").indentation(false, false)<CR>')
@@ -151,7 +152,7 @@ local motion = {
 	},
 	{
 		"folke/flash.nvim",
-		-- event = "VeryLazy",
+		event = "VeryLazy",
 		opts = {
 			modes = {
 				char = {
@@ -168,6 +169,7 @@ local motion = {
 						search = { forward = true, wrap = false, multi_window = true },
 					})
 				end,
+				desc = "Forward search only",
 			},
 			{
 				"<leader>F",
@@ -177,6 +179,15 @@ local motion = {
 						search = { forward = false, wrap = false, multi_window = true },
 					})
 				end,
+				desc = "Backward search only",
+			},
+			{
+				"r",
+				mode = "o",
+				function()
+					require("flash").remote()
+				end,
+				desc = "Remote Flash",
 			},
 			{
 				"<leader>ll",
@@ -188,6 +199,7 @@ local motion = {
 						pattern = "^",
 					})
 				end,
+				desc = "Jump to a line",
 			},
 		},
 		config = function(_, opts)
@@ -196,6 +208,38 @@ local motion = {
 			set_hls({
 				FlashBackdrop = { fg = config.colors.gray },
 			})
+		end,
+	},
+	{
+		"chaoren/vim-wordmotion",
+		event = "VeryLazy",
+		init = function()
+			vim.g.wordmotion_nomap = true
+			vim.g.wordmotion_prefix = ","
+
+			local ok, Hydra = pcall(require, "hydra")
+			if ok then
+				Hydra({
+					name = "Quick words",
+					config = {
+						color = "pink",
+						hint = { type = "statusline" },
+					},
+					mode = { "n", "x", "o" },
+					body = ",",
+					heads = {
+						{ "w", "<Plug>WordMotion_w", { desc = "WordMotion_w" } },
+						{ "b", "<Plug>WordMotion_b", { desc = "WordMotion_b" } },
+						{ "e", "<Plug>WordMotion_e", { desc = "WordMotion_e" } },
+						{ "ge", "<Plug>WordMotion_ge", { desc = "WordMotion_ge" } },
+						{ "aw", "<Plug>WordMotion_aw", { mode = { "x", "o" }, desc = false } },
+						{ "iw", "<Plug>WordMotion_iw", { mode = { "x", "o" }, desc = false } },
+
+						{ "q", nil, { exit = true, nowait = true } },
+						{ "<Esc>", nil, { exit = true, nowait = true } },
+					},
+				})
+			end
 		end,
 	},
 }

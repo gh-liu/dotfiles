@@ -1,3 +1,52 @@
+local ls = require("luasnip")
+local s = ls.snippet
+local sn = ls.snippet_node
+local isn = ls.indent_snippet_node
+local t = ls.text_node
+local i = ls.insert_node
+local f = ls.function_node
+local c = ls.choice_node
+local d = ls.dynamic_node
+local r = ls.restore_node
+local events = require("luasnip.util.events")
+local ai = require("luasnip.nodes.absolute_indexer")
+local extras = require("luasnip.extras")
+local l = extras.lambda
+local rep = extras.rep
+local p = extras.partial
+local m = extras.match
+local n = extras.nonempty
+local dl = extras.dynamic_lambda
+local fmt = require("luasnip.extras.fmt").fmt
+local fmta = require("luasnip.extras.fmt").fmta
+local conds = require("luasnip.extras.expand_conditions")
+local postfix = require("luasnip.extras.postfix").postfix
+local types = require("luasnip.util.types")
+local parse = require("luasnip.util.parser").parse_snippet
+local ms = ls.multi_snippet
+local k = require("luasnip.nodes.key_indexer").new_key
+
+-- uuid {{{
+local function fn(args, parent, user_args)
+	-- https://gist.github.com/jrus/3197011
+	local random = math.random
+	local function uuid()
+		local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
+		return string.gsub(template, "[xy]", function(c)
+			local v = (c == "x") and random(0, 0xf) or random(8, 0xb)
+			return string.format("%x", v)
+		end)
+	end
+	return uuid()
+end
+ls.add_snippets("all", {
+	s("uuid", {
+		f(fn),
+		i(0),
+	}),
+})
+-- }}}
+
 -- todo-comments {{{1
 -- https://github.com/L3MON4D3/LuaSnip/wiki/Cool-Snippets#all---todo-commentsnvim-snippets
 local calculate_comment_string = require("Comment.ft").calculate
@@ -13,11 +62,13 @@ local get_cstring = function(ctype)
 	-- create a `{left, right}` table for it
 	return { left, right }
 end
+
 _G.luasnip = {}
 _G.luasnip.vars = {
 	username = "liugh",
 	email = "liugh.cs@gmail.com",
 }
+
 --- Options for marks to be used in a TODO comment
 local marks = {
 	signature = function()
@@ -42,6 +93,7 @@ local marks = {
 		return t("")
 	end,
 }
+
 local todo_snippet_nodes = function(aliases, opts)
 	local aliases_nodes = vim.tbl_map(function(alias)
 		return i(nil, alias) -- generate choices for [name-of-comment]
@@ -50,6 +102,7 @@ local todo_snippet_nodes = function(aliases, opts)
 	for _, mark in pairs(marks) do
 		table.insert(sigmark_nodes, mark())
 	end
+
 	-- format them into the actual snippet
 	local comment_node = fmta("<> <>: <> <> <><>", {
 		f(function()
@@ -65,17 +118,18 @@ local todo_snippet_nodes = function(aliases, opts)
 	})
 	return comment_node
 end
+
 --- Generate a TODO comment snippet with an automatic description and docstring
 ---@param context table merged with the generated context table `trig` must be specified
 ---@param aliases string[]|string of aliases for the todo comment (ex.: {FIX, ISSUE, FIXIT, BUG})
 ---@param opts table merged with the snippet opts table
 local todo_snippet = function(context, aliases, opts)
-	opts = opts or {}
-	aliases = type(aliases) == "string" and { aliases } or aliases -- if we do not have aliases, be smart about the function parameters
 	context = context or {}
 	if not context.trig then
 		return error("context doesn't include a `trig` key which is mandatory", 2) -- all we need from the context is the trigger
 	end
+	aliases = type(aliases) == "string" and { aliases } or aliases -- if we do not have aliases, be smart about the function parameters
+	opts = opts or {}
 	opts.ctype = opts.ctype or 1 -- comment type can be passed in the `opts` table, but if it is not, we have to ensure, it is defined
 	local alias_string = table.concat(aliases, "|") -- `choice_node` documentation
 	context.name = context.name or (alias_string .. " comment") -- generate the `name` of the snippet if not defined
@@ -84,6 +138,7 @@ local todo_snippet = function(context, aliases, opts)
 	local comment_node = todo_snippet_nodes(aliases, opts) -- nodes from the previously defined function for their generation
 	return s(context, comment_node, opts) -- the final todo-snippet constructed from our parameters
 end
+
 local todo_snippet_specs = {
 	{ { trig = "todo" }, "TODO" },
 	{ { trig = "fix" }, { "FIX", "BUG", "ISSUE", "FIXIT" } },

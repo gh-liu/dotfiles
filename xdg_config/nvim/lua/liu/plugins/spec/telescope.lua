@@ -221,7 +221,7 @@ return {
 					local client_id = args.data.client_id
 					local client = vim.lsp.get_client_by_id(client_id)
 					if client.name == "gopls" then
-						vim.keymap.set("n", "gI", function()
+						vim.keymap.set("n", "<leader>gi", function()
 							require("telescope").extensions.goimpl.goimpl({})
 						end, {
 							buffer = bufnr,

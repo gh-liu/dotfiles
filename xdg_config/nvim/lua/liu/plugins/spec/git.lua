@@ -5,7 +5,7 @@ local git = {
 		config = function()
 			-- toggle summary window
 			local fugitivebuf = -1
-			vim.keymap.set("n", "<leader>g", function()
+			vim.keymap.set("n", "<leader>gg", function()
 				if fugitivebuf > 0 then
 					vim.api.nvim_buf_delete(fugitivebuf, { force = true })
 					fugitivebuf = -1

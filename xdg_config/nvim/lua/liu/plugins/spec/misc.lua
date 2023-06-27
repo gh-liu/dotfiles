@@ -280,6 +280,56 @@ return {
 		end,
 	},
 	{
+		"anuvyklack/hydra.nvim",
+		event = "VeryLazy",
+		opts = {},
+		config = function(_, opts)
+			local Hydra = require("hydra")
+			local cmd = require("hydra.keymap-util").cmd
+			local pcmd = require("hydra.keymap-util").pcmd
+
+			Hydra({
+				name = "Windows",
+				config = {
+					-- invoke_on_body = true,
+				},
+				mode = { "n" },
+				body = "<C-w>",
+				heads = {
+					{ "h", "<C-w>h" },
+					{ "j", "<C-w>j" },
+					{ "k", pcmd("wincmd k", "E11", "close") },
+					{ "l", "<C-w>l" },
+
+					{ "s", pcmd("split", "E36") },
+					{ "<C-s>", pcmd("split", "E36"), { desc = false } },
+					{ "v", pcmd("vsplit", "E36") },
+					{ "<C-v>", pcmd("vsplit", "E36"), { desc = false } },
+
+					{ "x", cmd("quit") },
+
+					{ "q", nil, { exit = true, nowait = true } },
+					{ "<Esc>", nil, { exit = true, nowait = true } },
+				},
+			})
+
+			Hydra({
+				name = "Folds",
+				mode = { "n" },
+				config = {},
+				body = "z",
+				heads = {
+					-- { "a", "za", { desc = "-" } },
+					{ "j", "zj", { desc = "↓" } },
+					{ "k", "zk", { desc = "↑" } },
+
+					{ "q", nil, { exit = true, nowait = true } },
+					{ "<Esc>", nil, { exit = true, nowait = true } },
+				},
+			})
+		end,
+	},
+	{
 		"famiu/bufdelete.nvim",
 		-- event = "VeryLazy",
 		keys = {

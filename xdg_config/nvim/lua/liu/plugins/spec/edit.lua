@@ -158,10 +158,10 @@ local edit = {
 			-- vim.keymap.set("x", "sr", require("substitute.range").visual, { noremap = true })
 			-- vim.keymap.set("n", "srr", require("substitute.range").word, { noremap = true })
 			-- exchange
-			vim.keymap.set("n", "sx", require("substitute.exchange").operator, { noremap = true })
-			vim.keymap.set("n", "sxx", require("substitute.exchange").line, { noremap = true })
-			-- vim.keymap.set("x", "X", require("substitute.exchange").visual, { noremap = true })
-			-- vim.keymap.set("n", "xc", require("substitute.exchange").cancel, { noremap = true })
+			vim.keymap.set("n", "cx", require("substitute.exchange").operator, { noremap = true })
+			vim.keymap.set("n", "cxx", require("substitute.exchange").line, { noremap = true })
+			vim.keymap.set("x", "X", require("substitute.exchange").visual, { noremap = true })
+			vim.keymap.set("n", "cxc", require("substitute.exchange").cancel, { noremap = true })
 		end,
 	},
 	{
@@ -169,6 +169,11 @@ local edit = {
 		keys = {
 			{ "ga", "<Plug>(EasyAlign)", mode = "x" },
 		},
+	},
+	{
+		"tommcdo/vim-lion",
+		event = "VeryLazy",
+		init = function() end,
 	},
 	{
 		"dhruvasagar/vim-table-mode",

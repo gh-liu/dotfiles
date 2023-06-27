@@ -6,7 +6,10 @@ local general = augroup("UserGeneralSettings", { clear = true })
 autocmd("TextYankPost", {
 	pattern = "*",
 	callback = function()
-		vim.highlight.on_yank({ timeout = vim.o.updatetime })
+		vim.highlight.on_yank({
+			timeout = vim.o.updatetime,
+			priority = vim.highlight.priorities.user + 1,
+		})
 	end,
 	group = general,
 	desc = "Highlight when yanking",

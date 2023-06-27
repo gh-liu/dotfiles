@@ -168,8 +168,8 @@ autocmd("LspAttach", {
 		local client = vim.lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
-			if vim.lsp.buf.inlay_hint then
-				vim.lsp.buf.inlay_hint(bufnr, nil)
+			if vim.lsp.inlay_hint then
+				vim.lsp.inlay_hint(bufnr, true)
 				return
 			end
 		end
@@ -192,12 +192,16 @@ autocmd("LspAttach", {
 			vim.api.nvim_create_autocmd({ "CursorHold" }, {
 				group = "UserLspDocumentHighlight",
 				buffer = bufnr,
-				callback = vim.lsp.buf.document_highlight,
+				callback = function()
+					vim.lsp.buf.document_highlight()
+				end,
 			})
 			vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
 				group = "UserLspDocumentHighlight",
 				buffer = bufnr,
-				callback = vim.lsp.buf.clear_references,
+				callback = function()
+					vim.lsp.buf.clear_references(bufnr)
+				end,
 			})
 		end
 	end,
