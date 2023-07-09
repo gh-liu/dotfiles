@@ -62,6 +62,7 @@ local config = {
 		saturation = 1.0,
 		brightness = 1.2,
 	},
+	window_close_confirmation = "NeverPrompt",
 	-- default_cursor_style = "BlinkingBar",
 	-- cursor_blink_rate = 400,
 	-- https://wezfurlong.org/wezterm/config/lua/config/window_decorations.html
@@ -108,6 +109,7 @@ local config = {
 		{ key = "c", mods = "LEADER", action = act({ SpawnTab = "CurrentPaneDomain" }) },
 		{ key = "n", mods = "LEADER|CTRL", action = act.ActivateTabRelative(-1) },
 		{ key = "p", mods = "LEADER|CTRL", action = act.ActivateTabRelative(1) },
+		{ key = "w", mods = "CMD", action = wezterm.action.CloseCurrentTab({ confirm = false }) },
 		{ key = "x", mods = "LEADER|SHIFT", action = act({ CloseCurrentTab = { confirm = false } }) },
 		{ key = "1", mods = "LEADER", action = act({ ActivateTab = 0 }) },
 		{ key = "2", mods = "LEADER", action = act({ ActivateTab = 1 }) },
@@ -127,6 +129,8 @@ local config = {
 
 if wezterm.target_triple == "aarch64-apple-darwin" or wezterm.target_triple == "x86_64-apple-darwin" then
 	local keys = {
+		{ key = "q", mods = "CMD", action = wezterm.action.QuitApplication },
+		{ key = "h", mods = "CMD", action = wezterm.action.HideApplication },
 		-- copy, paste
 		{ key = "x", mods = "CMD|SHIFT", action = act.ActivateCopyMode },
 		{ key = "c", mods = "CMD|SHIFT", action = act.CopyTo("Clipboard") },
