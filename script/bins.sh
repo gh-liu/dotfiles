@@ -87,11 +87,13 @@ function update_tmux() {
 
 bins() {
 	export GOPROXY=https://goproxy.io
-	go install golang.org/x/tools/gopls@latest
+	if [[ $OS == linux ]]; then
+		go install golang.org/x/tools/gopls@latest
+		go install github.com/go-delve/delve/cmd/dlv@latest
+	fi
 	go install mvdan.cc/gofumpt@latest
 	go install github.com/josharian/impl@latest
 	go install github.com/fatih/gomodifytags@latest
-	go install github.com/go-delve/delve/cmd/dlv@latest
 	go install mvdan.cc/sh/v3/cmd/shfmt@latest
 	go install github.com/gohugoio/hugo@latest
 	go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest

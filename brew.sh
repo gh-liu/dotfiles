@@ -10,10 +10,14 @@ brew install --HEAD neovim
 brew install tmux
 brew install starship
 
+brew install emacs
+
 brew install fzf
 brew install gh
 
 brew install go
+brew install gopls
+brew install delve
 brew install golangci-lint
 
 brew install node
@@ -31,11 +35,15 @@ brew install ripgrep
 brew install stylua
 
 brew install --cask nutstore
+brew install --cask dropbox
 brew install --cask spotify
 brew install --cask google-chrome
 brew install --cask microsoft-edge
 brew install --cask obsidian
 brew install --cask snipaste
 brew install --cask alfred
+brew install --cask discord
+brew install --cask rectangle
+brew install --cask alfred
+# brew install --cask hiddenbar
 # brew install --cask craft
-
