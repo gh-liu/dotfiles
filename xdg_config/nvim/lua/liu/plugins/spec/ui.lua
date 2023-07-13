@@ -56,6 +56,7 @@ local ui = {
 	},
 	{
 		"rebelot/heirline.nvim",
+		enabled = true,
 		config = function()
 			-- require("liu.config.statusline")
 		end,
@@ -113,6 +114,7 @@ local ui = {
 	},
 	{
 		"lewis6991/satellite.nvim",
+		enabled = false,
 		event = "VeryLazy",
 		opts = {
 			current_only = true,
@@ -159,10 +161,11 @@ local ui = {
 			set_hls({
 				-- NotifierTitle = {},
 				-- NotifierIcon = {},
-				NotifierContent = {link = "LspInlayHint"},
-				NotifierContentDim = {link = "LspInlayHint"},
+				NotifierContent = { link = "LspInlayHint" },
+				NotifierContentDim = { link = "LspInlayHint" },
 			})
 		end,
 	},
 }
+
 return ui

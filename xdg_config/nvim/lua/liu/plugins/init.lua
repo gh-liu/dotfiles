@@ -19,7 +19,7 @@ require("lazy").setup("liu.plugins.spec", {
 	},
 	install = {
 		missing = true,
-		colorscheme = { "nord" },
+		colorscheme = { vim.g.colors_name },
 	},
 	ui = {
 		border = config.borders,

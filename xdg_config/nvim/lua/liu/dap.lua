@@ -51,11 +51,11 @@ local function attach_maps()
 	-- map("<F10>", dap.step_over, "step_over")
 	-- map("<F9>", dap.step_back, "step_back")
 
-	stack_map.set("dap", {
-		{ "n", "<leader>do", dap.step_out, { desc = "step_out" } },
-		{ "n", "<leader>di", dap.step_into, { desc = "step_into" } },
-		{ "n", "<C-s>", dap.step_over, { desc = "step_over" } },
-	})
+	-- stack_map.set("dap", {
+	-- 	{ "n", "<leader>do", dap.step_out, { desc = "step_out" } },
+	-- 	{ "n", "<leader>di", dap.step_into, { desc = "step_into" } },
+	-- 	{ "n", "<C-s>", dap.step_over, { desc = "step_over" } },
+	-- })
 end
 
 local function detach_maps()
@@ -65,7 +65,7 @@ local function detach_maps()
 	-- del_map("<F10>")
 	-- del_map("<F9>")
 
-	stack_map.del("dap")
+	-- stack_map.del("dap")
 end
 
 -- Event {{{2
@@ -454,7 +454,7 @@ if ok then
      ^ ^ _N_^ ^        _B_: clear breakpoints
  out _o_ ^ ^ _i_ into  _c_: continue
      ^ ^ _n_ ^ ^       _x_: terminate
-     ^ ^over ^ ^     ^^_K_: eval
+     ^ ^over ^ ^     _r_: run last
 
      ^ ^  _<Esc>_/_q_: exit
 ]]
@@ -474,10 +474,12 @@ if ok then
 		},
 		name = "dap",
 		mode = { "n", "x" },
-		body = "<leader>D",
+		body = "<C-s>",
 		heads = {
 			{ "c", dap.continue, { desc = "continue", silent = true } },
 			{ "x", dap.terminate, { desc = "terminate", silent = true } },
+			{ "r", dap.run_last, { desc = "run last", silent = true } },
+
 			{ "n", dap.step_over, { desc = "step_over", silent = true } },
 			{ "N", dap.step_back, { desc = "step back", silent = true } },
 			{ "i", dap.step_into, { desc = "step_into", silent = true } },
@@ -486,13 +488,24 @@ if ok then
 			{ "b", dap.toggle_breakpoint, { desc = "breakpoint", silent = true } },
 			{ "B", dap.clear_breakpoints, { desc = "clear breakpoints", silent = true } },
 
-			{ "K", dapui.eval, { desc = "eval", silent = true } },
-
 			{ "q", nil, { exit = true, nowait = true } },
 			{ "<Esc>", nil, { exit = true, nowait = true } },
 		},
 	})
 end
+-- }}}
+
+-- Hover {{{
+require("hover").register({
+	name = "DAP",
+	enabled = function()
+		return vim.g.debuging == 1
+	end,
+	execute = function(done)
+		dapui.eval(nil, {})
+	end,
+	priority = 1001,
+})
 -- }}}
 
 -- vim: set foldmethod=marker foldlevel=1:

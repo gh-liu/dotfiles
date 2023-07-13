@@ -29,6 +29,7 @@ local edit = {
 			npairs.setup({
 				-- enable_check_bracket_line = false,
 				-- ignored_next_char = "[%w%.]",
+				disable_filetype = { "TelescopePrompt" },
 				fast_wrap = {
 					map = "<M-l>",
 					end_key = "l",

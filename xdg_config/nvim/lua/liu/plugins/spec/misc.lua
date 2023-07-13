@@ -1,3 +1,9 @@
+local function getcwd()
+	local cwd = vim.fn.getcwd(0)
+	local dir = vim.fn.fnamemodify(cwd, ":~")
+	return dir
+end
+
 return {
 	{ "tpope/vim-repeat", event = "VeryLazy" },
 	{ "tpope/vim-sleuth", event = "VeryLazy" },
@@ -288,35 +294,46 @@ return {
 			local cmd = require("hydra.keymap-util").cmd
 			local pcmd = require("hydra.keymap-util").pcmd
 
-			Hydra({
-				name = "Windows",
-				config = {
-					-- invoke_on_body = true,
-				},
-				mode = { "n" },
-				body = "<C-w>",
-				heads = {
-					{ "h", "<C-w>h" },
-					{ "j", "<C-w>j" },
-					{ "k", pcmd("wincmd k", "E11", "close") },
-					{ "l", "<C-w>l" },
+			-- Hydra({
+			-- 	name = "Windows",
+			-- 	config = {
+			-- 		invoke_on_body = true,
+			-- 	},
+			-- 	mode = "n",
+			-- 	body = "<C-w>",
+			-- 	heads = {
+			-- 		{ ">", cmd("vertical resize +5") },
+			-- 		{ "<", cmd("vertical resize -5") },
+			-- 		{ "+", cmd("resize +5") },
+			-- 		{ "-", cmd("resize -5") },
 
-					{ "s", pcmd("split", "E36") },
-					{ "<C-s>", pcmd("split", "E36"), { desc = false } },
-					{ "v", pcmd("vsplit", "E36") },
-					{ "<C-v>", pcmd("vsplit", "E36"), { desc = false } },
+			-- 		{ "H", cmd("WinShift left") },
+			-- 		{ "J", cmd("WinShift down") },
+			-- 		{ "K", cmd("WinShift up") },
+			-- 		{ "L", cmd("WinShift right") },
 
-					{ "x", cmd("quit") },
+			-- 		{ "s", pcmd("split", "E36") },
+			-- 		{ "<C-s>", pcmd("split", "E36"), { desc = false } },
+			-- 		{ "v", pcmd("vsplit", "E36") },
+			-- 		{ "<C-v>", pcmd("vsplit", "E36"), { desc = false } },
 
-					{ "q", nil, { exit = true, nowait = true } },
-					{ "<Esc>", nil, { exit = true, nowait = true } },
-				},
-			})
+			-- 		{ "o", "<C-w>o", { exit = true, desc = "remain only" } },
+			-- 		{ "<C-o>", "<C-w>o", { exit = true, desc = false } },
+
+			-- 		{ "x", cmd("quit") },
+
+			-- 		{ "q", nil, { exit = true, nowait = true } },
+			-- 		{ "<Esc>", nil, { exit = true, nowait = true } },
+			-- 	},
+			-- })
 
 			Hydra({
 				name = "Folds",
 				mode = { "n" },
-				config = {},
+				config = {
+					color = "pink",
+					hint = { type = "statusline" },
+				},
 				body = "z",
 				heads = {
 					-- { "a", "za", { desc = "-" } },
@@ -328,6 +345,12 @@ return {
 				},
 			})
 		end,
+	},
+	{
+		"sindrets/winshift.nvim",
+		-- event = "VeryLazy",
+		cmd = { "WinShift" },
+		opts = {},
 	},
 	{
 		"famiu/bufdelete.nvim",
@@ -350,5 +373,51 @@ return {
 		},
 		-- config = true,
 		cmd = "Glow",
+	},
+	{
+		"epwalsh/obsidian.nvim",
+		event = "VeryLazy",
+		cond = function()
+			local cwd = vim.fn.getcwd(0)
+			local dir = vim.fn.fnamemodify(cwd, ":~") .. "/.obsidian"
+			return vim.fn.isdirectory(dir) == 1
+		end,
+		opts = {
+			dir = getcwd(),
+			note_id_func = function(title)
+				local suffix = ""
+				if title ~= nil then
+					suffix = title:gsub(" ", "-"):gsub("[^A-Za-z0-9-]", ""):lower()
+				else
+					for _ = 1, 4 do
+						suffix = suffix .. string.char(math.random(65, 90))
+					end
+				end
+				return tostring(os.date("%Y%m%d@%H:%M:%S")) .. "-" .. suffix
+			end,
+			follow_url_func = function(url)
+				vim.ui.open(url)
+			end,
+		},
+		config = function(_, opts)
+			require("obsidian").setup(opts)
+
+			vim.keymap.set("n", "gf", function()
+				if require("obsidian").util.cursor_on_markdown_link() then
+					return "<cmd>ObsidianFollowLink<CR>"
+				else
+					return "gf"
+				end
+			end, { noremap = false, expr = true })
+		end,
+	},
+	{
+		"utilyre/sentiment.nvim",
+		enabled = true,
+		event = "VeryLazy",
+		opts = {},
+		init = function()
+			-- vim.g.loaded_matchparen = 1
+		end,
 	},
 }
