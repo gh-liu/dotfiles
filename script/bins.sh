@@ -7,16 +7,14 @@ function git_clone_or_update() {
 }
 
 function update_luals() {
-	repo="LuaLS/lua-language-server"
-	url="https://api.github.com/repos/$repo/tags"
-	versionStr=$(eval "curl -s $url | jq '.[0].name'")
-	version=$(echo $versionStr | tr -d '"')
-
 	echo "========================================"
+	url="https://api.github.com/repos/LuaLS/lua-language-server/tags"
+	version=$(eval "curl -s $url | jq -r '.[0].name'")
 	echo "Installing luals-$version..."
 
-	mkdir -p $LIU_TOOLS/luals
-	cd $LIU_TOOLS/luals
+	[ -d $HOME/tools/luals ] && rm -rf $HOME/tools/luals
+	mkdir -p $HOME/tools/luals
+	cd $HOME/tools/luals
 
 	pkg="lua-language-server-$version-linux-x64.tar.gz"
 	wget https://github.com/LuaLS/lua-language-server/releases/download/$version/$pkg -q --show-progres

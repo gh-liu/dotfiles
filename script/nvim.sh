@@ -25,18 +25,15 @@ function update_vim() {
 }
 
 function update_nvim() {
-	version=$1
+	echo "========================================BEGIN"
 
-	if [ -z $version ]; then
-		version=$(curl -s https://api.github.com/repos/neovim/neovim/tags | jq '.[0].name')
-		version=${version//\"/}
-	fi
-
-	echo "========================================"
+	version=$(curl -s https://api.github.com/repos/neovim/neovim/tags | jq -f '.[0].name')
 	echo "updating nvim to $version..."
 
-	url="https://github.com/neovim/neovim/releases/download/$version/nvim-linux64.tar.gz"
+	NVIMINSTALLHOME=$HOME/tool/nvim
+	mkdir -p $NVIMINSTALLHOME && cd $NVIMINSTALLHOME
 
+	url="https://github.com/neovim/neovim/releases/download/$version/nvim-linux64.tar.gz"
 	wget $url -q --show-progress
 
 	tar -zxf nvim-linux64.tar.gz
@@ -50,14 +47,6 @@ function update_nvim() {
 	sudo rm -f /usr/local/bin/nvim
 	sudo ln -s ~/.local/bin/nvim/bin/nvim /usr/local/bin/nvim
 
-	if cmd_exist pip; then
-		pip install pynvim
-	fi
-
-	if cmd_exist npm; then
-		npm i -g neovim
-	fi
-
 	[ ! -z "$ISWSL" ] && install_win32yank
 
 	nvim --version
@@ -65,18 +54,19 @@ function update_nvim() {
 	# nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
 	nvim --headless "+Lazy! sync" +qa
 
-	echo "========================================"
-
+	echo "========================================END"
 }
 
 function install_win32yank() {
-	echo "========================================"
+	echo "========================================BEGIN"
 	echo "install win32yank"
+
 	curl -sLo/tmp/win32yank.zip https://github.com/equalsraf/win32yank/releases/download/v0.0.4/win32yank-x64.zip
 	unzip -p /tmp/win32yank.zip win32yank.exe >/tmp/win32yank.exe
 	chmod +x /tmp/win32yank.exe
 	sudo mv /tmp/win32yank.exe /usr/local/bin/
-	echo "========================================"
+
+	echo "========================================END"
 }
 
 update_nvim $@
