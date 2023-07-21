@@ -286,7 +286,9 @@ return {
 		end,
 	},
 	{
-		"anuvyklack/hydra.nvim",
+		-- dir = "~/dev/lua/hydra.nvim",
+		"gh-liu/hydra.nvim",
+		-- "anuvyklack/hydra.nvim",
 		event = "VeryLazy",
 		opts = {},
 		config = function(_, opts)

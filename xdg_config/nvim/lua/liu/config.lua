@@ -2,21 +2,16 @@ _G.config = {
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
 	-- fold_markers = { "►", "" },
 	fold_markers = { "", "" },
-	-- icons = { error = "E", warn = "W", info = "I", hint = "H" },
-	icons = {
-		-- Error = " ",
-		-- Warn = "",
-		-- Info = " ",
-		-- Hint = "",
-
-		Error = "",
-		Warn = "",
-		Info = "",
-		Hint = "",
-	},
+	icons = { Error = "E", Warn = "W", Info = "I", Hint = "H" },
+	-- icons = {
+	-- 	Error = "",
+	-- 	Warn = "",
+	-- 	Info = "",
+	-- 	Hint = "",
+	-- },
 	debug_icons = {
-		--       ﰇ
-		bug = "",
+		-- bug = "",
+		bug = "$",
 	},
 	colors = {
 		gray = "#616E88",
