@@ -127,6 +127,14 @@ local config = {
 	audible_bell = "Disabled",
 }
 
+config.ssh_domains = {
+	{
+		name = "bobx",
+		remote_address = "127.0.0.1:6000",
+		username = "liu",
+	},
+}
+
 if wezterm.target_triple == "aarch64-apple-darwin" or wezterm.target_triple == "x86_64-apple-darwin" then
 	local keys = {
 		{ key = "q", mods = "CMD", action = wezterm.action.QuitApplication },
