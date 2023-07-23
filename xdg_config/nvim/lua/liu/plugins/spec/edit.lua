@@ -173,7 +173,11 @@ local edit = {
 	},
 	{
 		"tommcdo/vim-lion",
-		event = "VeryLazy",
+		-- event = "VeryLazy",
+		keys = {
+			{ "gl", mode = { "n", "x" } },
+			{ "gL", mode = { "n", "x" } },
+		},
 		init = function() end,
 	},
 	{

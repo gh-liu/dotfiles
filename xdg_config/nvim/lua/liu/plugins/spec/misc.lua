@@ -8,6 +8,14 @@ return {
 	{ "tpope/vim-repeat", event = "VeryLazy" },
 	{ "tpope/vim-sleuth", event = "VeryLazy" },
 	{
+		"tpope/vim-dispatch",
+		-- event = "VeryLazy",
+		init = function()
+			vim.g.dispatch_no_maps = 1
+		end,
+		cmd = { "Make", "Dispatch", "Start" },
+	},
+	{
 		"tpope/vim-dadbod",
 		cmd = { "DB" },
 		ft = { "sql" },
@@ -420,6 +428,67 @@ return {
 		opts = {},
 		init = function()
 			-- vim.g.loaded_matchparen = 1
+		end,
+	},
+	{
+		"saecki/crates.nvim",
+		event = { "BufRead Cargo.toml" },
+		init = function()
+			vim.api.nvim_create_autocmd("BufRead", {
+				group = vim.api.nvim_create_augroup("UserSetCargoCmpSource", { clear = true }),
+				pattern = "Cargo.toml",
+				callback = function()
+					local cmp = require("cmp")
+					cmp.setup.buffer({ sources = { { name = "crates" } } })
+				end,
+			})
+		end,
+		config = function()
+			require("crates").setup({
+				popup = {
+					border = config.borders,
+				},
+				null_ls = {
+					enabled = true,
+					name = "crates.nvim",
+				},
+			})
+
+			-- Hover {{{
+			local crates = require("crates")
+			local fns = {
+				popup = { fn = crates.show_popup, priority = 1010 },
+				versions = { fn = crates.show_versions_popup, priority = 1009 },
+				features = { fn = crates.show_features_popup, priority = 1008 },
+				dependencies = { fn = crates.show_dependencies_popup, priority = 1007 },
+			}
+			for key, val in pairs(fns) do
+				require("hover").register({
+					name = string.format("Crates: %s", key),
+					enabled = function()
+						return vim.fn.expand("%:t") == "Cargo.toml"
+					end,
+					execute = function(done)
+						val.fn()
+					end,
+					priority = val.priority,
+				})
+			end
+			-- }}}
+		end,
+	},
+	{
+		"rgroli/other.nvim",
+		cmd = { "Other", "OtherVSplit" },
+		config = function()
+			require("other-nvim").setup({
+				mappings = {
+					"golang",
+				},
+				style = {
+					border = config.borders,
+				},
+			})
 		end,
 	},
 }

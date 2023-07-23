@@ -1,16 +1,45 @@
 return {
 	{
 		"ThePrimeagen/harpoon",
-		event = "VeryLazy",
+		-- event = "VeryLazy",
+		keys = {
+			{
+				"<C-y>",
+				function()
+					local mark = require("harpoon.mark")
+					mark.add_file()
+				end,
+			},
+			{
+				"<C-e>",
+				function()
+					local ui = require("harpoon.ui")
+					ui.toggle_quick_menu()
+				end,
+			},
+			{
+				"<C-h>",
+				function()
+					local ui = require("harpoon.ui")
+					ui.nav_prev()
+				end,
+			},
+			{
+				"<C-l>",
+				function()
+					local ui = require("harpoon.ui")
+					ui.nav_next()
+				end,
+			},
+		},
 		config = function()
 			require("harpoon").setup()
-			local mark = require("harpoon.mark")
-			local ui = require("harpoon.ui")
-
-			vim.keymap.set("n", "<C-y>", mark.add_file)
-			vim.keymap.set("n", "<C-e>", ui.toggle_quick_menu)
-			vim.keymap.set("n", "<C-h>", ui.nav_prev)
-			vim.keymap.set("n", "<C-l>", ui.nav_next)
+			-- local mark = require("harpoon.mark")
+			-- local ui = require("harpoon.ui")
+			-- vim.keymap.set("n", "<C-y>", mark.add_file)
+			-- vim.keymap.set("n", "<C-e>", ui.toggle_quick_menu)
+			-- vim.keymap.set("n", "<C-h>", ui.nav_prev)
+			-- vim.keymap.set("n", "<C-l>", ui.nav_next)
 
 			set_hls({ HarpoonBorder = { link = "FloatBorder" } })
 

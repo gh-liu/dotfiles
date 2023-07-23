@@ -160,3 +160,6 @@ local opts = {
 local desc = "fixing that stupid typo when trying to [save]exit"
 setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", opts)
 setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", opts)
+
+setmap("n", "<leader>g;", "mcA;<ESC>`c")
+setmap("n", "<leader>g,", "mcA,<ESC>`c")
