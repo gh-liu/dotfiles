@@ -86,7 +86,7 @@ function update_zsh_plugins() {
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 source $HOME/.zsh-plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-bindkey '^ ' forward-word
+bindkey '^f' forward-word
 
 # https://github.com/zsh-users/zsh-syntax-highlighting
 source $HOME/.zsh-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
