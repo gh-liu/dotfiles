@@ -225,7 +225,7 @@ return {
 		event = "VeryLazy",
 		keys = {
 			{
-				"<leader>ww",
+				"<leader>W",
 				function()
 					require("dropbar.api").pick()
 				end,

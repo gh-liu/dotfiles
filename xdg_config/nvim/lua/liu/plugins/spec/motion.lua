@@ -226,7 +226,7 @@ local motion = {
 						hint = { type = "statusline" },
 					},
 					mode = { "n", "x", "o" },
-					body = ",",
+					body = "<leader>",
 					heads = {
 						{ "w", "<Plug>WordMotion_w", { desc = "WordMotion_w" } },
 						{ "b", "<Plug>WordMotion_b", { desc = "WordMotion_b" } },

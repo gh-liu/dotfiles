@@ -77,6 +77,7 @@ local edit = {
 			comment_ft.set("gowork", { "// %s" })
 			comment_ft.set("http", { "# %s" })
 			comment_ft.set("just", { "# %s" })
+			comment_ft.set("hurl", { "# %s" })
 		end,
 	},
 	{

@@ -44,10 +44,12 @@ autocmd("LspAttach", {
 		-- nmap("K", vim.lsp.buf.hover, "Hover Documentation")
 		-- nmap("<C-k>", vim.lsp.buf.signature_help, "Signature Documentation")
 
-		nmap("<leader>wa", function()
+		vim.api.nvim_create_user_command("LspAddWorkspaceFolder", function(opts)
 			vim.lsp.buf.add_workspace_folder()
-		end)
-		nmap("<leader>wr", function()
+		end, {
+			nargs = 0,
+		})
+		vim.api.nvim_create_user_command("LspDeleteWorkspaceFolder", function(opts)
 			local wsfs = vim.lsp.buf.list_workspace_folders()
 
 			vim.ui.select(wsfs, {
@@ -58,10 +60,14 @@ autocmd("LspAttach", {
 			}, function(choice)
 				vim.lsp.buf.remove_workspace_folder(choice)
 			end)
-		end)
-		nmap("<leader>wl", function()
+		end, {
+			nargs = 0,
+		})
+		vim.api.nvim_create_user_command("LspListWorkspaceFolder", function(opts)
 			vim.print(vim.lsp.buf.list_workspace_folders())
-		end)
+		end, {
+			nargs = 0,
+		})
 	end,
 })
 
