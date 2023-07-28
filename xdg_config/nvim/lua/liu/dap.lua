@@ -118,6 +118,13 @@ autocmd("User", {
 })
 -- }}}
 
+-- helper funcs {{{2
+local function input_args()
+	local argument_string = vim.fn.input("Program arg(s) (enter nothing to leave it null): ")
+	return vim.fn.split(argument_string, " ", true)
+end
+-- }}}
+
 -- Golang {{{2
 local function get_closest_testfunc()
 	local parser = vim.treesitter.get_parser(0)
@@ -158,12 +165,41 @@ dap.configurations.go = {
 		buildFlags = "-tags=debug",
 	},
 	{
+		name = "Nvim: Launch file with args",
+		type = "delve",
+		request = "launch",
+		mode = "debug",
+		program = "${file}",
+		args = function()
+			return input_args()
+		end,
+		buildFlags = "-tags=debug",
+	},
+	{
 		name = "Nvim: Launch package",
 		type = "delve",
 		request = "launch",
 		mode = "debug",
 		program = "${fileDirname}",
 		buildFlags = "-tags=debug",
+	},
+	{
+		name = "Nvim: Launch package with args",
+		type = "delve",
+		request = "launch",
+		mode = "debug",
+		program = "${fileDirname}",
+		args = function()
+			return input_args()
+		end,
+		buildFlags = "-tags=debug",
+	},
+	{
+		name = "Nvim: Launch test(go.mod)",
+		type = "delve",
+		request = "launch",
+		mode = "test",
+		program = "./${relativeFileDirname}",
 	},
 	{
 		name = "Nvim: Launch test function",
@@ -223,10 +259,14 @@ dap.configurations.rust = {
 		end,
 		cwd = "${workspaceFolder}",
 		stopOnEntry = false,
-		args = {},
+		args = function()
+			return input_args()
+		end,
 		runInTerminal = false,
 	},
 }
+dap.configurations.c = dap.configurations.rust
+dap.configurations.cpp = dap.configurations.rust
 -- }}}
 
 -- Nlua {{{
