@@ -491,4 +491,8 @@ return {
 			})
 		end,
 	},
+	{
+		"Olical/nfnl",
+		ft = "fennel",
+	},
 }
