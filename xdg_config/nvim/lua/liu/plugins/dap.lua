@@ -3,25 +3,26 @@ if not ok then
 	return
 end
 
-vim.fn.sign_define("DapBreakpoint", { text = "●", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
-vim.fn.sign_define("DapBreakpointCondition", { text = "○", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
-vim.fn.sign_define("DapStopped", { text = "→", texthl = "String", linehl = "", numhl = "" })
+local fn = vim.fn
+local api = vim.api
+local map = vim.keymap
+local cmd = vim.cmd
 
-local autocmd = vim.api.nvim_create_autocmd
-local augroup = vim.api.nvim_create_augroup
+fn.sign_define("DapBreakpoint", { text = "●", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
+fn.sign_define("DapBreakpointCondition", { text = "○", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
+fn.sign_define("DapStopped", { text = "→", texthl = "String", linehl = "", numhl = "" })
 
-local create_cmd = vim.api.nvim_create_user_command
-local del_cmd = vim.api.nvim_del_user_command
+local autocmd = api.nvim_create_autocmd
+local augroup = api.nvim_create_augroup
+
+local create_cmd = api.nvim_create_user_command
+local del_cmd = api.nvim_del_user_command
 
 local map = function(lhs, rhs, desc)
 	if desc then
 		desc = "[DAP] " .. desc
 	end
-	vim.keymap.set("n", lhs, rhs, { silent = true, desc = desc })
-end
-
-local del_map = function(lhs)
-	vim.keymap.del("n", lhs)
+	map.set("n", lhs, rhs, { silent = true, desc = desc })
 end
 
 -- DAP {{{1
@@ -38,52 +39,28 @@ end, "toggle dap repl")
 
 map("<Leader>db", dap.toggle_breakpoint, "toggle_breakpoint")
 map("<leader>B", function()
-	local input = vim.fn.input("[DAP] Condition > ")
+	local input = fn.input("[DAP] Condition > ")
 	if input then
 		dap.set_breakpoint(input)
 	end
 end)
 
-local function attach_maps()
-	-- map("<F5>", dap.continue, "continue")
-	-- map("<F12>", dap.step_out, "step_out")
-	-- map("<F11>", dap.step_into, "step_into")
-	-- map("<F10>", dap.step_over, "step_over")
-	-- map("<F9>", dap.step_back, "step_back")
-
-	-- stack_map.set("dap", {
-	-- 	{ "n", "<leader>do", dap.step_out, { desc = "step_out" } },
-	-- 	{ "n", "<leader>di", dap.step_into, { desc = "step_into" } },
-	-- 	{ "n", "<C-s>", dap.step_over, { desc = "step_over" } },
-	-- })
-end
-
-local function detach_maps()
-	-- del_map("<F5>")
-	-- del_map("<F12>")
-	-- del_map("<F11>")
-	-- del_map("<F10>")
-	-- del_map("<F9>")
-
-	-- stack_map.del("dap")
-end
-
 -- Event {{{2
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
 dap.listeners.before["event_initialized"]["user"] = function(session, body)
-	vim.cmd([[doautocmd User DAPInitialized]])
+	cmd([[doautocmd User DAPInitialized]])
 end
 
 dap.listeners.after["event_stopped"]["user"] = function(session, body)
-	vim.cmd([[doautocmd User DAPStopped]])
+	cmd([[doautocmd User DAPStopped]])
 end
 
 dap.listeners.after["event_exited"]["user"] = function(session, body)
-	vim.cmd([[doautocmd User DAPExited]])
+	cmd([[doautocmd User DAPExited]])
 end
 
 dap.listeners.after["event_terminated"]["user"] = function(session, body)
-	vim.cmd([[doautocmd User DAPTerminated]])
+	cmd([[doautocmd User DAPTerminated]])
 end
 
 local group = augroup("UserDAPSettings", { clear = true })
@@ -95,10 +72,6 @@ autocmd("User", {
 		create_cmd("DapRunLast", function()
 			dap.run_last()
 		end, {})
-
-		-- attach_maps()
-
-		-- dap.repl.open(replwinopts)
 	end,
 	group = group,
 	desc = "DAP Initialized",
@@ -108,10 +81,6 @@ autocmd("User", {
 	pattern = { "DAPTerminated" },
 	callback = function()
 		vim.g.debuging = nil
-
-		-- detach_maps()
-
-		-- dap.repl.close()
 	end,
 	group = group,
 	desc = "DAP Terminated",
@@ -120,8 +89,8 @@ autocmd("User", {
 
 -- helper funcs {{{2
 local function input_args()
-	local argument_string = vim.fn.input("Program arg(s) (enter nothing to leave it null): ")
-	return vim.fn.split(argument_string, " ", true)
+	local argument_string = fn.input("Program arg(s) (enter nothing to leave it null): ")
+	return fn.split(argument_string, " ", true)
 end
 -- }}}
 
@@ -133,7 +102,7 @@ local function get_closest_testfunc()
 	local query = vim.treesitter.query.get("go", "test")
 
 	local closet_node, type
-	for pattern, match, metadata in query:iter_matches(root, 0, 0, vim.api.nvim_win_get_cursor(0)[1]) do
+	for pattern, match, metadata in query:iter_matches(root, 0, 0, api.nvim_win_get_cursor(0)[1]) do
 		for id, node in pairs(match) do
 			local name = query.captures[id]
 			if name == "testfuncname" or name == "benchfuncname" or name == "fuzzfuncname" then
@@ -214,20 +183,20 @@ dap.configurations.go = {
 				args = {
 					"-test.run=none",
 					"-test.bench",
-					vim.fn.input({ prompt = "Function to bench: ", default = func_name }),
+					fn.input({ prompt = "Function to bench: ", default = func_name }),
 				}
 			elseif type == "fuzzfuncname" then
 				args = {
 					"-test.run=none",
 					"-test.fuzz",
-					vim.fn.input({ prompt = "Function to fuzz: ", default = func_name }),
+					fn.input({ prompt = "Function to fuzz: ", default = func_name }),
 					"-test.fuzzcachedir",
 					"./testdata",
 				}
 			else
 				args = {
 					"-test.run",
-					vim.fn.input({ prompt = "Function to test: ", default = func_name }),
+					fn.input({ prompt = "Function to test: ", default = func_name }),
 				}
 			end
 			return table.insert(args, "-v")
@@ -248,10 +217,10 @@ dap.configurations.rust = {
 		type = "lldb",
 		request = "launch",
 		program = function()
-			local metadata_json = vim.fn.system("cargo metadata --format-version 1 --no-deps")
-			local metadata = vim.fn.json_decode(metadata_json)
+			local metadata_json = fn.system("cargo metadata --format-version 1 --no-deps")
+			local metadata = fn.json_decode(metadata_json)
 			if not metadata then
-				return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+				return fn.input("Path to executable: ", fn.getcwd() .. "/", "file")
 			end
 			local target_name = metadata.packages[1].targets[1].name
 			local target_dir = metadata.target_directory
@@ -273,19 +242,20 @@ dap.configurations.cpp = dap.configurations.rust
 local nvim_instance
 dap.adapters.nlua = function(cb, config)
 	if nvim_instance then
-		vim.fn.jobstop(nvim_instance)
+		fn.jobstop(nvim_instance)
 		nvim_instance = nil
 	end
 
 	local args = { vim.v.progpath, "--embed", "--headless" }
 	local env = nil
-	nvim_instance = vim.fn.jobstart(args, { rpc = true, env = env })
+	nvim_instance = fn.jobstart(args, { rpc = true, env = env })
 	assert(nvim_instance, "Could not create neovim instance with jobstart!")
 
-	local mode = vim.fn.rpcrequest(nvim_instance, "nvim_get_mode")
+	local mode = fn.rpcrequest(nvim_instance, "nvim_get_mode")
 	assert(not mode.blocking, "Neovim is waiting for input at startup. Aborting.")
 
-	local server = vim.fn.rpcrequest(nvim_instance, "nvim_exec_lua", [[return require"osv".launch(...)]], { opts })
+	local opts = {}
+	local server = fn.rpcrequest(nvim_instance, "nvim_exec_lua", [[return require"osv".launch(...)]], { opts })
 	vim.wait(200)
 	assert(server, "Could not launch osv server!")
 
@@ -296,7 +266,7 @@ dap.adapters.nlua = function(cb, config)
 
 	dap.listeners.after["setBreakpoints"]["osv"] = function(session, body)
 		vim.schedule(function()
-			vim.fn.rpcnotify(nvim_instance, "nvim_command", "luafile " .. vim.fn.expand("%:p"))
+			fn.rpcnotify(nvim_instance, "nvim_command", "luafile " .. fn.expand("%:p"))
 		end)
 	end
 end
@@ -421,11 +391,7 @@ local groups = {
 	DapUIUnavailable = { fg = colors.gray },
 	DapUIWinSelect = { fg = colors.cyan, bold = true },
 }
-
-for group, opt in pairs(groups) do
-	vim.api.nvim_set_hl(0, group, opt)
-end
--- }}}
+set_hls(groups)
 
 -- Event {{{2
 local uigroup = augroup("UserDAPUISettings", { clear = true })
@@ -439,7 +405,7 @@ autocmd("User", {
 			dapui.eval(nil, opts)
 		end)
 		map("<Leader>E", function()
-			local input = vim.fn.input("[DAP] Expression > ")
+			local input = fn.input("[DAP] Expression > ")
 			if input then
 				dapui.eval(input, opts)
 			end
@@ -519,15 +485,12 @@ if ok then
 			{ "c", dap.continue, { desc = "continue", silent = true } },
 			{ "x", dap.terminate, { desc = "terminate", silent = true } },
 			{ "r", dap.run_last, { desc = "run last", silent = true } },
-
 			{ "n", dap.step_over, { desc = "step_over", silent = true } },
 			{ "N", dap.step_back, { desc = "step back", silent = true } },
 			{ "i", dap.step_into, { desc = "step_into", silent = true } },
 			{ "o", dap.step_out, { desc = "step_out", silent = true } },
-
 			{ "b", dap.toggle_breakpoint, { desc = "breakpoint", silent = true } },
 			{ "B", dap.clear_breakpoints, { desc = "clear breakpoints", silent = true } },
-
 			{ "q", nil, { exit = true, nowait = true } },
 			{ "<Esc>", nil, { exit = true, nowait = true } },
 		},
@@ -536,16 +499,19 @@ end
 -- }}}
 
 -- Hover {{{
-require("hover").register({
-	name = "DAP",
-	enabled = function()
-		return vim.g.debuging == 1
-	end,
-	execute = function(done)
-		dapui.eval(nil, {})
-	end,
-	priority = 1001,
-})
+local ok, hover = pcall(require, "hover")
+if ok then
+	hover.register({
+		name = "DAP",
+		enabled = function()
+			return vim.g.debuging == 1
+		end,
+		execute = function(done)
+			dapui.eval(nil, {})
+		end,
+		priority = 1001,
+	})
+end
 -- }}}
 
 -- vim: set foldmethod=marker foldlevel=1:

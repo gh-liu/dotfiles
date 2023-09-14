@@ -1,1 +1,0 @@
-setlocal mouse=a
