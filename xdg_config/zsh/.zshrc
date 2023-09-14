@@ -80,6 +80,9 @@ function update_zsh_plugins() {
 	git_clone_or_update https://github.com/agkozak/zsh-z $HOME/.zsh-plugins/zsh-z
 	git_clone_or_update https://github.com/jocelynmallon/zshmarks $HOME/.zsh-plugins/zshmarks
 	git_clone_or_update https://github.com/jeffreytse/zsh-vi-mode $HOME/.zsh-plugins/zsh-vi-mode
+
+	git_clone_or_update https://github.com/hutusi/git-paging.git $HOME/.zsh-plugins/git-paging
+	ln -svf $HOME/.zsh-plugins/git-paging/git-* $HOME/.local/bin
 }
 
 # https://github.com/zsh-users/zsh-autosuggestions
@@ -136,7 +139,6 @@ function zvm_config() {
 }
 source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
 zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
-
 # }}}
 
 # {{{1 Zsh Directory Stack
