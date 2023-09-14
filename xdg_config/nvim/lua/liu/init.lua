@@ -51,7 +51,14 @@ _G.config = {
 	},
 }
 
-local nvim_set_hl = vim.api.nvim_set_hl
+local fn = vim.fn
+local api = vim.api
+local cmd = vim.cmd
+local keymap = vim.keymap
+local lsp = vim.lsp
+local vimg = vim.g
+
+local nvim_set_hl = api.nvim_set_hl
 ---@param highlights table
 _G.set_hls = function(highlights)
 	for group, opts in pairs(highlights) do
@@ -63,13 +70,13 @@ end
 _G.set_cmds = function(cmds)
 	for key, value in pairs(cmds) do
 		if type(value) == "string" then
-			vim.api.nvim_create_user_command(key, function()
-				vim.cmd(value)
+			api.nvim_create_user_command(key, function()
+				cmd(value)
 			end, {})
 		end
 
 		if type(value) == "function" then
-			vim.api.nvim_create_user_command(key, value, {})
+			api.nvim_create_user_command(key, value, {})
 		end
 	end
 end
@@ -143,7 +150,7 @@ require("lazy").setup(
 			opts = {},
 			init = function()
 				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
-				vim.g.loaded_matchparen = 1
+				vimg.loaded_matchparen = 1
 			end,
 		},
 		{
@@ -153,7 +160,7 @@ require("lazy").setup(
 			config = function()
 				local rainbow_delimiters = require("rainbow-delimiters")
 
-				vim.g.rainbow_delimiters = {
+				vimg.rainbow_delimiters = {
 					strategy = {
 						[""] = rainbow_delimiters.strategy["global"],
 						vim = rainbow_delimiters.strategy["local"],
@@ -223,7 +230,7 @@ require("lazy").setup(
 			event = "LspAttach",
 			opts = { autocmd = { enabled = true } },
 			config = function(_, opts)
-				vim.fn.sign_define(
+				fn.sign_define(
 					"LightBulbSign",
 					{ text = config.icons.Hint, texthl = "WarningMsg", linehl = "", numhl = "" }
 				)
@@ -308,7 +315,7 @@ require("lazy").setup(
 			config = function(_, opts)
 				require("treesitter-context").setup(opts)
 
-				vim.keymap.set("n", "<leader>cj", function()
+				keymap.set("n", "<leader>cj", function()
 					require("treesitter-context").go_to_context()
 				end, { silent = true })
 
@@ -437,7 +444,7 @@ require("lazy").setup(
 
 				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
 
-				vim.api.nvim_create_autocmd(
+				api.nvim_create_autocmd(
 					"User",
 					{ pattern = "TelescopePreviewerLoaded", command = "setlocal number" }
 				)
@@ -448,7 +455,7 @@ require("lazy").setup(
 			event = "VeryLazy",
 			build = "make",
 			cond = function()
-				return vim.fn.executable("make") == 1
+				return fn.executable("make") == 1
 			end,
 			config = function()
 				require("telescope").load_extension("fzf")
@@ -460,14 +467,14 @@ require("lazy").setup(
 			config = function()
 				require("telescope").load_extension("goimpl")
 
-				vim.api.nvim_create_autocmd("LspAttach", {
-					group = vim.api.nvim_create_augroup("User-lspattach-gopls-setup-goimpl", { clear = true }),
+				api.nvim_create_autocmd("LspAttach", {
+					group = api.nvim_create_augroup("User-lspattach-gopls-setup-goimpl", { clear = true }),
 					callback = function(args)
 						local bufnr = args.buf
 						local client_id = args.data.client_id
-						local client = vim.lsp.get_client_by_id(client_id)
+						local client = lsp.get_client_by_id(client_id)
 						if client.name == "gopls" then
-							vim.keymap.set("n", "<leader>gi", function()
+							keymap.set("n", "<leader>gi", function()
 								require("telescope").extensions.goimpl.goimpl({})
 							end, {
 								buffer = bufnr,
@@ -586,10 +593,10 @@ require("lazy").setup(
 		{
 			"monaqa/dial.nvim",
 			keys = {
-				{ "<C-a>", "<Plug>(dial-increment)", mode = "n" },
-				{ "<C-x>", "<Plug>(dial-decrement)", mode = "n" },
-				{ "<C-a>", "<Plug>(dial-increment)", mode = "x" },
-				{ "<C-x>", "<Plug>(dial-decrement)", mode = "x" },
+				{ "<C-a>",  "<Plug>(dial-increment)",  mode = "n" },
+				{ "<C-x>",  "<Plug>(dial-decrement)",  mode = "n" },
+				{ "<C-a>",  "<Plug>(dial-increment)",  mode = "x" },
+				{ "<C-x>",  "<Plug>(dial-decrement)",  mode = "x" },
 				{ "g<C-a>", "g<Plug>(dial-increment)", mode = "x" },
 				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = "x" },
 			},
@@ -634,15 +641,15 @@ require("lazy").setup(
 					highlight_substituted_text = { timer = vim.o.updatetime },
 				})
 				-- operator
-				vim.keymap.set("n", "s", require("substitute").operator, { noremap = true })
-				vim.keymap.set("n", "ss", require("substitute").line, { noremap = true })
-				vim.keymap.set("n", "S", require("substitute").eol, { noremap = true })
-				vim.keymap.set("x", "s", require("substitute").visual, { noremap = true })
+				keymap.set("n", "s", require("substitute").operator, { noremap = true })
+				keymap.set("n", "ss", require("substitute").line, { noremap = true })
+				keymap.set("n", "S", require("substitute").eol, { noremap = true })
+				keymap.set("x", "s", require("substitute").visual, { noremap = true })
 				-- exchange
-				vim.keymap.set("n", "cx", require("substitute.exchange").operator, { noremap = true })
-				vim.keymap.set("n", "cxx", require("substitute.exchange").line, { noremap = true })
-				vim.keymap.set("x", "X", require("substitute.exchange").visual, { noremap = true })
-				vim.keymap.set("n", "cxc", require("substitute.exchange").cancel, { noremap = true })
+				keymap.set("n", "cx", require("substitute.exchange").operator, { noremap = true })
+				keymap.set("n", "cxx", require("substitute.exchange").line, { noremap = true })
+				keymap.set("x", "X", require("substitute.exchange").visual, { noremap = true })
+				keymap.set("n", "cxc", require("substitute.exchange").cancel, { noremap = true })
 			end,
 		},
 		{
@@ -729,17 +736,17 @@ require("lazy").setup(
 			"wellle/targets.vim",
 			event = "VeryLazy",
 			config = function()
-				-- https://github.com/wellle/targets.vim#gtargets_seekranges
+				-- https://github.com/wellle/targets.vimgtargets_seekranges
 				-- Only consider targets around cursor
-				vim.g.targets_seekRanges = "cc cr cb cB lc ac Ac lr lb ar ab lB Ar aB Ab AB"
+				vimg.targets_seekRanges = "cc cr cb cB lc ac Ac lr lb ar ab lB Ar aB Ab AB"
 			end,
 		},
 		{
 			"chaoren/vim-wordmotion",
 			event = "VeryLazy",
 			init = function()
-				vim.g.wordmotion_nomap = true
-				vim.g.wordmotion_prefix = ","
+				vimg.wordmotion_nomap = true
+				vimg.wordmotion_prefix = ","
 
 				local ok, Hydra = pcall(require, "hydra")
 				if ok then
@@ -749,14 +756,14 @@ require("lazy").setup(
 						mode = { "n", "x", "o" },
 						body = "<leader>",
 						heads = {
-							{ "w", "<Plug>WordMotion_w", { desc = "WordMotion_w" } },
-							{ "b", "<Plug>WordMotion_b", { desc = "WordMotion_b" } },
-							{ "e", "<Plug>WordMotion_e", { desc = "WordMotion_e" } },
-							{ "ge", "<Plug>WordMotion_ge", { desc = "WordMotion_ge" } },
-							{ "aw", "<Plug>WordMotion_aw", { mode = { "x", "o" }, desc = false } },
-							{ "iw", "<Plug>WordMotion_iw", { mode = { "x", "o" }, desc = false } },
-							{ "q", nil, { exit = true, nowait = true } },
-							{ "<Esc>", nil, { exit = true, nowait = true } },
+							{ "w",     "<Plug>WordMotion_w",  { desc = "WordMotion_w" } },
+							{ "b",     "<Plug>WordMotion_b",  { desc = "WordMotion_b" } },
+							{ "e",     "<Plug>WordMotion_e",  { desc = "WordMotion_e" } },
+							{ "ge",    "<Plug>WordMotion_ge", { desc = "WordMotion_ge" } },
+							{ "aw",    "<Plug>WordMotion_aw", { mode = { "x", "o" }, desc = false } },
+							{ "iw",    "<Plug>WordMotion_iw", { mode = { "x", "o" }, desc = false } },
+							{ "q",     nil,                   { exit = true, nowait = true } },
+							{ "<Esc>", nil,                   { exit = true, nowait = true } },
 						},
 					})
 				end
@@ -806,19 +813,19 @@ require("lazy").setup(
 			config = function()
 				-- Toggle summary window {{{3
 				local fugitivebuf = -1
-				vim.keymap.set("n", "<leader>gg", function()
+				keymap.set("n", "<leader>gg", function()
 					if fugitivebuf > 0 then
-						vim.api.nvim_buf_delete(fugitivebuf, { force = true })
+						api.nvim_buf_delete(fugitivebuf, { force = true })
 						fugitivebuf = -1
 					else
-						vim.cmd.G()
+						cmd.G()
 					end
 				end, { silent = true })
-				vim.api.nvim_create_autocmd("User", {
+				api.nvim_create_autocmd("User", {
 					pattern = { "FugitiveIndex" },
 					callback = function(data)
 						fugitivebuf = data.buf
-						vim.api.nvim_create_autocmd("BufDelete", {
+						api.nvim_create_autocmd("BufDelete", {
 							callback = function()
 								fugitivebuf = -1
 							end,
@@ -876,7 +883,7 @@ require("lazy").setup(
 						local function map(mode, l, r, opts)
 							opts = opts or {}
 							opts.buffer = bufnr
-							vim.keymap.set(mode, l, r, opts)
+							keymap.set(mode, l, r, opts)
 						end
 
 						-- Text object
@@ -902,13 +909,13 @@ require("lazy").setup(
 						map("n", "<leader>hS", gs.stage_buffer, { desc = "Stage buffer" })
 						map("n", "<leader>hs", gs.stage_hunk, { desc = "Stage hunk" })
 						map("v", "<leader>hs", function()
-							gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") })
+							gs.stage_hunk({ fn.line("."), fn.line("v") })
 						end, { desc = "Stage hunk" })
 
 						map("n", "<leader>hR", gs.reset_buffer, { desc = "Reset buffer" })
 						map("n", "<leader>hr", gs.reset_hunk, { desc = "Reset hunk" })
 						map("v", "<leader>hr", function()
-							gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") })
+							gs.reset_hunk({ fn.line("."), fn.line("v") })
 						end, { desc = "Reset hunk" })
 
 						map("n", "<leader>hd", gs.diffthis)
@@ -937,8 +944,8 @@ require("lazy").setup(
 			"rhysd/git-messenger.vim",
 			cmd = { "GitMessenger" },
 			config = function()
-				vim.g.git_messenger_no_default_mappings = true
-				vim.g.git_messenger_floating_win_opts = { border = config.borders }
+				vimg.git_messenger_no_default_mappings = true
+				vimg.git_messenger_floating_win_opts = { border = config.borders }
 			end,
 		},
 		{
@@ -951,14 +958,14 @@ require("lazy").setup(
 					default_commands = true,
 				})
 
-				vim.api.nvim_create_autocmd("User", {
+				api.nvim_create_autocmd("User", {
 					pattern = "GitConflictDetected",
 					callback = function(args)
 						vim.notify("[Git] Conflict detected!", vim.log.levels.WARN)
 
 						local bufnr = args.buf
 						local map = function(lhs, rhs)
-							vim.keymap.set("n", lhs, rhs)
+							keymap.set("n", lhs, rhs)
 						end
 
 						map("Co", "<Plug>(git-conflict-ours)")
@@ -970,7 +977,7 @@ require("lazy").setup(
 					end,
 				})
 
-				vim.api.nvim_create_autocmd("User", {
+				api.nvim_create_autocmd("User", {
 					pattern = "GitConflictResolved",
 					callback = function(args)
 						vim.notify("[Git] Conflict resolved!", vim.log.levels.WARN)
@@ -1000,10 +1007,11 @@ require("lazy").setup(
 
 				local next_move = require("nvim-next.move")
 
+				local diagnostic = vim.diagnostic
 				local prev_diag_item, next_diag_item =
-					next_move.make_repeatable_pair(vim.diagnostic.goto_prev, vim.diagnostic.goto_next)
-				vim.keymap.set("n", "[d", prev_diag_item)
-				vim.keymap.set("n", "]d", next_diag_item)
+						next_move.make_repeatable_pair(diagnostic.goto_prev, diagnostic.goto_next)
+				keymap.set("n", "[d", prev_diag_item)
+				keymap.set("n", "]d", next_diag_item)
 
 				local make_repeatable_cmd_pair = function(prev, next)
 					local checkerr = function(status)
@@ -1012,21 +1020,21 @@ require("lazy").setup(
 						end
 					end
 					return next_move.make_repeatable_pair(function(_)
-						local status, _ = pcall(vim.cmd, prev)
+						local status, _ = pcall(cmd, prev)
 						checkerr(status)
 					end, function(_)
-						local status, _ = pcall(vim.cmd, next)
+						local status, _ = pcall(cmd, next)
 						checkerr(status)
 					end)
 				end
 
 				local prev_qf_item, next_qf_item = make_repeatable_cmd_pair("cprev", "cnext")
-				vim.keymap.set("n", "]q", next_qf_item, { desc = "repeat: next quickfix" })
-				vim.keymap.set("n", "[q", prev_qf_item, { desc = "repeat: prev quickfix" })
+				keymap.set("n", "]q", next_qf_item, { desc = "repeat: next quickfix" })
+				keymap.set("n", "[q", prev_qf_item, { desc = "repeat: prev quickfix" })
 
 				local prev_ll_item, next_ll_item = make_repeatable_cmd_pair("lprev", "lnext")
-				vim.keymap.set("n", "]l", next_ll_item, { desc = "repeat: next local quickfix" })
-				vim.keymap.set("n", "[l", prev_ll_item, { desc = "repeat: prev local quickfix" })
+				keymap.set("n", "]l", next_ll_item, { desc = "repeat: next local quickfix" })
+				keymap.set("n", "[l", prev_ll_item, { desc = "repeat: prev local quickfix" })
 			end,
 		},
 		{
@@ -1082,8 +1090,8 @@ require("lazy").setup(
 				})
 
 				-- Setup keymaps
-				vim.keymap.set("n", "K", require("hover").hover, { desc = "hover.nvim" })
-				vim.keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
+				keymap.set("n", "K", require("hover").hover, { desc = "hover.nvim" })
+				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
 			end,
 		},
 		{
@@ -1093,17 +1101,17 @@ require("lazy").setup(
 			keys = {
 				{
 					"<leader>u",
-					vim.cmd.UndotreeToggle,
+					cmd.UndotreeToggle,
 					desc = "Undotree: Toggle",
 					noremap = true,
 					silent = true,
 				},
 			},
 			config = function()
-				vim.g.undotree_WindowLayout = 2
-				vim.g.undotree_DiffAutoOpen = 1
-				vim.g.undotree_ShortIndicators = 1
-				vim.g.undotree_SetFocusWhenToggle = 1
+				vimg.undotree_WindowLayout = 2
+				vimg.undotree_DiffAutoOpen = 1
+				vimg.undotree_ShortIndicators = 1
+				vimg.undotree_SetFocusWhenToggle = 1
 			end,
 		},
 		{
@@ -1127,7 +1135,7 @@ require("lazy").setup(
 						end
 
 						for _, pattern in ipairs({ "fugitive:///" }) do
-							local fname = vim.api.nvim_buf_get_name(buf)
+							local fname = api.nvim_buf_get_name(buf)
 							if string.match(fname, pattern) then
 								return false
 							end
@@ -1141,7 +1149,7 @@ require("lazy").setup(
 							return false
 						end
 
-						return not vim.api.nvim_win_get_config(win).zindex
+						return not api.nvim_win_get_config(win).zindex
 					end,
 				},
 				icons = {
@@ -1156,14 +1164,14 @@ require("lazy").setup(
 							if not menu then
 								return
 							end
-							local cursor = vim.api.nvim_win_get_cursor(menu.win)
+							local cursor = api.nvim_win_get_cursor(menu.win)
 							local component = menu.entries[cursor[1]]:first_clickable(cursor[2])
 							if component then
 								menu:click_on(component, nil, 1, "l")
 							end
 						end,
 						["q"] = function()
-							vim.cmd.quit()
+							cmd.quit()
 						end,
 					},
 					win_configs = {
@@ -1189,10 +1197,10 @@ require("lazy").setup(
 		{
 			"stevearc/oil.nvim",
 			init = function()
-				vim.api.nvim_create_user_command("OilSSH", function(opts)
+				api.nvim_create_user_command("OilSSH", function(opts)
 					local url = opts.fargs[1]
 					local r = string.gsub(url, ":/", "//")
-					vim.cmd(string.format("Oil oil-ssh://%s", r))
+					cmd(string.format("Oil oil-ssh://%s", r))
 				end, { nargs = 1 })
 			end,
 			cmd = { "Oil" },
@@ -1212,10 +1220,10 @@ require("lazy").setup(
 					keymaps = {
 						["q"] = {
 							callback = function()
-								-- vim.cmd.bd()
-								for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-									if vim.api.nvim_buf_get_name(bufnr):match("oil://.*") then
-										vim.api.nvim_buf_delete(bufnr, { force = true })
+								-- cmd.bd()
+								for _, bufnr in ipairs(api.nvim_list_bufs()) do
+									if api.nvim_buf_get_name(bufnr):match("oil://.*") then
+										api.nvim_buf_delete(bufnr, { force = true })
 									end
 								end
 							end,
@@ -1237,7 +1245,7 @@ require("lazy").setup(
 			"tpope/vim-dispatch",
 			-- event = "VeryLazy",
 			init = function()
-				vim.g.dispatch_no_maps = 1
+				vimg.dispatch_no_maps = 1
 			end,
 			cmd = { "Make", "Dispatch", "Start" },
 		},
@@ -1246,7 +1254,7 @@ require("lazy").setup(
 			cmd = { "DB" },
 			ft = { "sql" },
 			config = function()
-				vim.cmd([[
+				cmd([[
 				 nmap <expr> Q db#op_exec()
 				 xmap <expr> Q db#op_exec()
 				]])
@@ -1270,8 +1278,8 @@ require("lazy").setup(
 			"saecki/crates.nvim",
 			event = { "BufRead Cargo.toml" },
 			init = function()
-				vim.api.nvim_create_autocmd("BufRead", {
-					group = vim.api.nvim_create_augroup("UserSetCargoCmpSource", { clear = true }),
+				api.nvim_create_autocmd("BufRead", {
+					group = api.nvim_create_augroup("UserSetCargoCmpSource", { clear = true }),
 					pattern = "Cargo.toml",
 					callback = function()
 						local cmp = require("cmp")
@@ -1302,7 +1310,7 @@ require("lazy").setup(
 					require("hover").register({
 						name = string.format("Crates: %s", key),
 						enabled = function()
-							return vim.fn.expand("%:t") == "Cargo.toml"
+							return fn.expand("%:t") == "Cargo.toml"
 						end,
 						execute = function(done)
 							val.fn()
@@ -1337,7 +1345,7 @@ require("lazy").setup(
 		},
 		install = {
 			missing = true,
-			colorscheme = { vim.g.colors_name },
+			colorscheme = { vimg.colors_name },
 		},
 		ui = {
 			border = config.borders,
@@ -1357,7 +1365,7 @@ require("lazy").setup(
 			},
 		},
 	}
-	-- }}}
+-- }}}
 )
 -- }}}
 
@@ -1397,7 +1405,7 @@ vim.wo.signcolumn = "yes"
 
 vim.o.pumheight = 12
 
-vim.cmd([[
+cmd([[
 	set guicursor=n-v:block,i-c-ci-ve:ver25,r-cr:hor20,o:hor50
 	  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
 	  \,sm:block-blinkwait175-blinkoff150-blinkon175
@@ -1410,7 +1418,7 @@ vim.o.clipboard = "unnamedplus"
 local mapopts = { silent = true, noremap = true }
 local setmap = function(mode, lhs, rhs, opts)
 	opts = opts or mapopts
-	vim.keymap.set(mode, lhs, rhs, opts)
+	keymap.set(mode, lhs, rhs, opts)
 end
 
 -- Toggle Opt{{{2
@@ -1422,7 +1430,7 @@ local function toggle_opt(op, option, opts)
 			local vv = opts.val
 			return setmap("n", "co" .. op, function()
 				vim.o[option], vv = vv, vim.o[option]
-				vim.cmd(string.format("set %s?", option))
+				cmd(string.format("set %s?", option))
 			end)
 		end
 
@@ -1431,7 +1439,7 @@ local function toggle_opt(op, option, opts)
 			local idx = 0
 			return setmap("n", "co" .. op, function()
 				local val = vals[idx % 2 + 1]
-				vim.cmd(string.format("set %s | set %s?", val, val))
+				cmd(string.format("set %s | set %s?", val, val))
 				idx = idx + 1
 			end)
 		end
@@ -1439,7 +1447,7 @@ local function toggle_opt(op, option, opts)
 		if opts.fns then
 			local idx = 0
 			return setmap("n", "co" .. op, function()
-				vim.cmd(string.format("set %s! | set %s?", option, option))
+				cmd(string.format("set %s! | set %s?", option, option))
 
 				local fn = opts.fns[idx % 2 + 1]
 				fn()
@@ -1458,8 +1466,8 @@ toggle_opt("w", "wrap", {
 			setmap({ "n", "x" }, "j", "gj")
 		end,
 		function()
-			vim.keymap.del({ "n", "x" }, "k")
-			vim.keymap.del({ "n", "x" }, "j")
+			keymap.del({ "n", "x" }, "k")
+			keymap.del({ "n", "x" }, "j")
 		end,
 	},
 })
@@ -1475,9 +1483,9 @@ setmap("i", "<C-f>", "<right>")
 setmap("i", "<C-b>", "<left>")
 
 local function rtf(keys, mode)
-	local tkeys = vim.api.nvim_replace_termcodes(keys, true, true, true)
+	local tkeys = api.nvim_replace_termcodes(keys, true, true, true)
 	return function()
-		return vim.api.nvim_feedkeys(tkeys, mode, false)
+		return api.nvim_feedkeys(tkeys, mode, false)
 	end
 end
 setmap("c", "<C-a>", rtf("<HOME>", "c"))
@@ -1563,12 +1571,12 @@ setmap("n", "<C-w>O", ":tabonly<CR>")
 -- }}}
 
 -- Cmds {{{1
-vim.api.nvim_create_user_command("FindAndReplace", function(opts)
+api.nvim_create_user_command("FindAndReplace", function(opts)
 	if #opts.fargs ~= 2 then
 		vim.print("Two argument required.")
 	end
-	vim.api.nvim_command(string.format("silent cdo s/%s/%s", opts.fargs[1], opts.fargs[2]))
-	vim.api.nvim_command("silent cfdo update")
+	api.nvim_command(string.format("silent cdo s/%s/%s", opts.fargs[1], opts.fargs[2]))
+	api.nvim_command("silent cfdo update")
 end, {
 	nargs = "*",
 	desc = "Find and Replace (after quickfix)",
@@ -1576,8 +1584,8 @@ end, {
 -- }}}
 
 -- Autocmds {{{1
-local autocmd = vim.api.nvim_create_autocmd
-local augroup = vim.api.nvim_create_augroup
+local autocmd = api.nvim_create_autocmd
+local augroup = api.nvim_create_augroup
 
 local general = augroup("UserGeneralSettings", { clear = true })
 autocmd("TextYankPost", {
@@ -1600,7 +1608,7 @@ autocmd("FocusGained", {
 	callback = function()
 		-- normal buffer
 		if vim.o.bt == "" then
-			vim.cmd("checktime")
+			cmd("checktime")
 		end
 	end,
 	group = general,
@@ -1620,14 +1628,14 @@ autocmd("BufEnter", {
 })
 autocmd({ "BufWinLeave", "BufLeave", "InsertLeave", "FocusLost" }, {
 	callback = function()
-		vim.cmd("silent! w")
+		cmd("silent! w")
 	end,
 	group = general,
 	desc = "Auto Save when leaving insert mode, buffer or window",
 })
 autocmd("ModeChanged", {
 	callback = function()
-		local cmdtype = vim.fn.getcmdtype()
+		local cmdtype = fn.getcmdtype()
 		if cmdtype == "/" or cmdtype == "?" then
 			vim.opt.hlsearch = true
 		else
@@ -1640,8 +1648,8 @@ autocmd("ModeChanged", {
 -- :h last-position-jump
 autocmd("BufReadPost", {
 	callback = function()
-		if vim.fn.line("'\"") > 1 and vim.fn.line("'\"") <= vim.fn.line("$") then
-			vim.cmd('normal! g`"')
+		if fn.line("'\"") > 1 and fn.line("'\"") <= fn.line("$") then
+			cmd('normal! g`"')
 		end
 	end,
 	group = general,
@@ -1652,7 +1660,7 @@ autocmd("BufWinEnter", {
 	pattern = { "*.txt" },
 	callback = function()
 		if vim.o.filetype == "help" then
-			vim.cmd.wincmd("T")
+			cmd.wincmd("T")
 		end
 	end,
 	desc = "Open help file in a new table",
@@ -1661,43 +1669,44 @@ autocmd("BufWinEnter", {
 
 -- Diagnostic {{{1
 -- https://neovim.io/doc/user/diagnostic.html
-vim.diagnostic.config({
-	underline = { severity = { min = vim.diagnostic.severity.INFO } },
-	signs = { severity = { min = vim.diagnostic.severity.INFO } },
+local diagnostic = vim.diagnostic
+diagnostic.config({
+	underline = { severity = { min = diagnostic.severity.INFO } },
+	signs = { severity = { min = diagnostic.severity.INFO } },
 	float = { source = true, border = config.borders, show_header = false },
 	severity_sort = true,
 	virtual_text = false,
 	update_in_insert = false,
 })
 
-vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
-vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
--- vim.keymap.set("n", "<leader>dd", vim.diagnostic.open_float)
--- vim.keymap.set("n", "<leader>dq", vim.diagnostic.setloclist)
+keymap.set("n", "[d", diagnostic.goto_prev)
+keymap.set("n", "]d", diagnostic.goto_next)
+-- keymap.set("n", "<leader>dd", diagnostic.open_float)
+-- keymap.set("n", "<leader>dq", diagnostic.setloclist)
 
-vim.fn.sign_define("DiagnosticSignError", { text = config.icons.Error, texthl = "DiagnosticSignError" })
-vim.fn.sign_define("DiagnosticSignWarn", { text = config.icons.Warn, texthl = "DiagnosticSignWarn" })
-vim.fn.sign_define("DiagnosticSignInfo", { text = config.icons.Info, texthl = "DiagnosticSignInfo" })
-vim.fn.sign_define("DiagnosticSignHint", { text = config.icons.Hint, texthl = "DiagnosticSignHint" })
+fn.sign_define("DiagnosticSignError", { text = config.icons.Error, texthl = "DiagnosticSignError" })
+fn.sign_define("DiagnosticSignWarn", { text = config.icons.Warn, texthl = "DiagnosticSignWarn" })
+fn.sign_define("DiagnosticSignInfo", { text = config.icons.Info, texthl = "DiagnosticSignInfo" })
+fn.sign_define("DiagnosticSignHint", { text = config.icons.Hint, texthl = "DiagnosticSignHint" })
 
 local ok, hover = pcall(require, "hover")
 if ok then
 	hover.register({
 		name = "Diagnostic",
 		enabled = function()
-			local diags = vim.diagnostic.get(0)
+			local diags = diagnostic.get(0)
 			if #diags == 0 then
 				return false
 			end
 
-			local pos = vim.api.nvim_win_get_cursor(0)
+			local pos = api.nvim_win_get_cursor(0)
 			local lnum = pos[1] - 1
 			local col = pos[2]
-			local line_length = #vim.api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
+			local line_length = #api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
 			local ds = vim.tbl_filter(function(d)
 				return d.lnum == lnum
-					and math.min(d.col, line_length - 1) <= col
-					and (d.end_col >= col or d.end_lnum > lnum)
+						and math.min(d.col, line_length - 1) <= col
+						and (d.end_col >= col or d.end_lnum > lnum)
 			end, diags)
 
 			if vim.tbl_isempty(ds) then
@@ -1706,7 +1715,7 @@ if ok then
 			return true
 		end,
 		execute = function(done)
-			vim.diagnostic.open_float()
+			diagnostic.open_float()
 		end,
 		priority = 1000,
 	})
@@ -1715,10 +1724,10 @@ end
 
 -- Lsp {{{1
 -- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
-vim.lsp.set_log_level("OFF")
+lsp.set_log_level("OFF")
 
--- local autocmd = vim.api.nvim_create_autocmd
--- local augroup = vim.api.nvim_create_augroup
+-- local autocmd = api.nvim_create_autocmd
+-- local augroup = api.nvim_create_augroup
 
 -- keymaps
 autocmd("LspAttach", {
@@ -1726,33 +1735,33 @@ autocmd("LspAttach", {
 	callback = function(args)
 		local bufnr = args.buf
 
-		vim.bo[bufnr].omnifunc = "v:lua.vim.lsp.omnifunc"
-		-- vim.bo[bufnr].tagfunc = "v:lua.vim.lsp.tagfunc"
-		-- vim.bo[bufnr].formatexpr = "v:lua.vim.lsp.formatexpr(#{timeout_ms:250})"
+		vim.bo[bufnr].omnifunc = "v:lua.lsp.omnifunc"
+		-- vim.bo[bufnr].tagfunc = "v:lua.lsp.tagfunc"
+		-- vim.bo[bufnr].formatexpr = "v:lua.lsp.formatexpr(#{timeout_ms:250})"
 
 		local nmap = function(keys, func, desc)
 			if desc then
 				desc = "LSP: " .. desc
 			end
-			vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
+			keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
 		end
 
-		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local client = lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/rename") then
-			nmap("<leader>rn", vim.lsp.buf.rename, "[R]e[n]ame")
+			nmap("<leader>rn", lsp.buf.rename, "[R]e[n]ame")
 		end
 
-		nmap("<leader>ca", vim.lsp.buf.code_action, "[C]ode [A]ction")
-		nmap("<leader>cl", vim.lsp.codelens.run, "[C]ode [L]en")
+		nmap("<leader>ca", lsp.buf.code_action, "[C]ode [A]ction")
+		nmap("<leader>cl", lsp.codelens.run, "[C]ode [L]en")
 
-		-- nmap("gd", vim.lsp.buf.definition, "[G]oto [D]efinition")
-		-- nmap("<leader>vd", "<cmd>vsplit | lua vim.lsp.buf.definition()<CR>", "[G]oto [D]efinition")
-		-- nmap("gD", vim.lsp.buf.type_definition, "[G]oto Type [D]efinition")
+		-- nmap("gd", lsp.buf.definition, "[G]oto [D]efinition")
+		-- nmap("<leader>vd", "<cmd>vsplit | lua lsp.buf.definition()<CR>", "[G]oto [D]efinition")
+		-- nmap("gD", lsp.buf.type_definition, "[G]oto Type [D]efinition")
 
-		-- nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+		-- nmap('gD', lsp.buf.declaration, '[G]oto [D]eclaration')
 
-		-- nmap("K", vim.lsp.buf.hover, "Hover Documentation")
-		-- nmap("<C-k>", vim.lsp.buf.signature_help, "Signature Documentation")
+		-- nmap("K", lsp.buf.hover, "Hover Documentation")
+		-- nmap("<C-k>", lsp.buf.signature_help, "Signature Documentation")
 	end,
 })
 
@@ -1761,14 +1770,14 @@ autocmd("LspAttach", {
 	group = augroup("UserLspAttachWorkspaceFolderCmds", { clear = true }),
 	callback = function(args)
 		local bufnr = args.buf
-		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local client = lsp.get_client_by_id(args.data.client_id)
 
-		vim.api.nvim_create_user_command("LspAddWorkspaceFolder", function(opts)
-			vim.lsp.buf.add_workspace_folder()
+		api.nvim_create_user_command("LspAddWorkspaceFolder", function(opts)
+			lsp.buf.add_workspace_folder()
 		end, { nargs = 0 })
 
-		vim.api.nvim_create_user_command("LspDeleteWorkspaceFolder", function(opts)
-			local wsfs = vim.lsp.buf.list_workspace_folders()
+		api.nvim_create_user_command("LspDeleteWorkspaceFolder", function(opts)
+			local wsfs = lsp.buf.list_workspace_folders()
 
 			vim.ui.select(wsfs, {
 				prompt = "Remove Workspace Folder",
@@ -1776,12 +1785,12 @@ autocmd("LspAttach", {
 					return "Remove: " .. item
 				end,
 			}, function(choice)
-				vim.lsp.buf.remove_workspace_folder(choice)
+				lsp.buf.remove_workspace_folder(choice)
 			end)
 		end, { nargs = 0 })
 
-		vim.api.nvim_create_user_command("LspListWorkspaceFolder", function(opts)
-			vim.print(vim.lsp.buf.list_workspace_folders())
+		api.nvim_create_user_command("LspListWorkspaceFolder", function(opts)
+			vim.print(lsp.buf.list_workspace_folders())
 		end, { nargs = 0 })
 	end,
 })
@@ -1790,12 +1799,12 @@ autocmd("LspAttach", {
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachCodelens", { clear = true }),
 	callback = function(args)
-		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local client = lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/codeLens") then
 			local bufnr = args.buf
 			autocmd({ "CursorHold", "InsertLeave" }, {
 				callback = function()
-					vim.lsp.codelens.refresh()
+					lsp.codelens.refresh()
 				end,
 				buffer = 0,
 			})
@@ -1807,11 +1816,11 @@ autocmd("LspAttach", {
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachInlayHint", { clear = true }),
 	callback = function(args)
-		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local client = lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
-			if vim.lsp.inlay_hint then
-				vim.lsp.inlay_hint(bufnr, true)
+			if lsp.inlay_hint then
+				lsp.inlay_hint(bufnr, true)
 				return
 			end
 		end
@@ -1822,28 +1831,28 @@ autocmd("LspAttach", {
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachDocumentHighlight", { clear = true }),
 	callback = function(args)
-		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		local client = lsp.get_client_by_id(args.data.client_id)
 		local bufnr = args.buf
 		if client.server_capabilities.documentHighlightProvider then
-			vim.api.nvim_create_augroup("UserLspDocumentHighlight", {
+			api.nvim_create_augroup("UserLspDocumentHighlight", {
 				clear = false,
 			})
-			vim.api.nvim_clear_autocmds({
+			api.nvim_clear_autocmds({
 				buffer = bufnr,
 				group = "UserLspDocumentHighlight",
 			})
-			vim.api.nvim_create_autocmd({ "CursorHold" }, {
+			api.nvim_create_autocmd({ "CursorHold" }, {
 				group = "UserLspDocumentHighlight",
 				buffer = bufnr,
 				callback = function()
-					vim.lsp.buf.document_highlight()
+					lsp.buf.document_highlight()
 				end,
 			})
-			vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+			api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
 				group = "UserLspDocumentHighlight",
 				buffer = bufnr,
 				callback = function()
-					vim.lsp.buf.clear_references()
+					lsp.buf.clear_references()
 				end,
 			})
 		end
@@ -1851,14 +1860,14 @@ autocmd("LspAttach", {
 })
 
 -- handlers {{{
-local oldhover = vim.lsp.handlers.hover
-local oldsignature = vim.lsp.handlers.signature_help
-vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(oldhover, { border = config.borders })
-vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(oldsignature, { border = config.borders })
--- vim.lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
--- 	local bufnr = vim.api.nvim_get_current_buf()
--- 	local ns = vim.lsp.diagnostic.get_namespace(ctx.client_id)
--- 	vim.diagnostic.reset(ns, bufnr)
+local oldhover = lsp.handlers.hover
+local oldsignature = lsp.handlers.signature_help
+lsp.handlers["textDocument/hover"] = lsp.with(oldhover, { border = config.borders })
+lsp.handlers["textDocument/signatureHelp"] = lsp.with(oldsignature, { border = config.borders })
+-- lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
+-- 	local bufnr = api.nvimget_current_buf()
+-- 	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
+-- 	diagnostic.reset(ns, bufnr)
 
 -- 	vim.notify("Diagnostic: refresh", vim.log.levels.WARN)
 -- 	return true
