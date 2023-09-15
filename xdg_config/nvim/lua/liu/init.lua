@@ -184,7 +184,7 @@ require("lazy").setup(
 					RainbowDelimiterRed = { fg = config.colors.red },
 					RainbowDelimiterBlue = { fg = config.colors.blue },
 					RainbowDelimiterCyan = { fg = config.colors.cyan },
-					RainbowDelimiterGreen = { fg = config.colors.blue },
+					RainbowDelimiterGreen = { fg = config.colors.green },
 					RainbowDelimiterOrange = { fg = config.colors.orange },
 					RainbowDelimiterViolet = { fg = config.colors.magenta },
 					RainbowDelimiterYellow = { fg = config.colors.yellow },
