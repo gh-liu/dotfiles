@@ -752,9 +752,12 @@ require("lazy").setup(
 				if ok then
 					Hydra({
 						name = "Quick words",
-						config = {},
+						config = {
+							color = "pink",
+							invoke_on_body = true,
+						},
 						mode = { "n", "x", "o" },
-						body = "<leader>",
+						body = "<leader>w",
 						heads = {
 							{ "w",     "<Plug>WordMotion_w",  { desc = "WordMotion_w" } },
 							{ "b",     "<Plug>WordMotion_b",  { desc = "WordMotion_b" } },
@@ -1055,12 +1058,17 @@ require("lazy").setup(
 				Hydra({
 					name = "Folds",
 					mode = { "n" },
-					config = {},
+					config = {
+						color = "pink",
+					},
 					body = "z",
 					heads = {
 						{ "a", "za", { desc = "-" } },
 						{ "j", "zj", { desc = "↓" } },
 						{ "k", "zk", { desc = "↑" } },
+
+						{ "O", "zO", { desc = "Open all" } },
+						{ "C", "zC", { desc = "Close all" } },
 
 						{ "q", nil, { exit = true, nowait = true } },
 						{ "<Esc>", nil, { exit = true, nowait = true } },
