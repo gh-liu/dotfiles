@@ -665,7 +665,7 @@ require("lazy").setup(
 				{
 					"<leader>F",
 					function()
-						require("conform").format()
+						require("conform").format({ lsp_fallback = true })
 					end,
 				},
 			},
@@ -681,6 +681,11 @@ require("lazy").setup(
 				-- 	timeout_ms = 500,
 				-- },
 			},
+			config = function(_, opts)
+				require("conform").setup(opts)
+
+				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+			end,
 		},
 		{
 			"junegunn/vim-easy-align",
