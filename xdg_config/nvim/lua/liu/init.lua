@@ -1065,6 +1065,7 @@ require("lazy").setup(
 					mode = { "n" },
 					config = {
 						color = "pink",
+						timeout = 600,
 					},
 					body = "z",
 					heads = {
@@ -1074,6 +1075,26 @@ require("lazy").setup(
 
 						{ "O", "zO", { desc = "Open all" } },
 						{ "C", "zC", { desc = "Close all" } },
+
+						{ "q", nil, { exit = true, nowait = true } },
+						{ "<Esc>", nil, { exit = true, nowait = true } },
+					},
+				})
+
+				Hydra({
+					name = "Windows",
+					mode = { "n" },
+					config = {
+						color = "pink",
+						timeout = 600,
+					},
+					body = "<C-w>",
+					heads = {
+						{ ">", "<C-w>>", { desc = "fatter" } },
+						{ "<", "<C-w><", { desc = "thinner" } },
+
+						{ "+", "<C-w>+", { desc = "higher" } },
+						{ "-", "<C-w>-", { desc = "shorter" } },
 
 						{ "q", nil, { exit = true, nowait = true } },
 						{ "<Esc>", nil, { exit = true, nowait = true } },
