@@ -296,6 +296,8 @@ require("dap.ext.vscode").load_launchjs()
 -- DAPUI {{{1
 local dapui = require("dapui")
 
+local left_element_width = 35
+
 -- Settings {{{2
 dapui.setup({
 	controls = { enabled = false },
@@ -331,14 +333,81 @@ dapui.setup({
 				},
 			},
 			position = "left",
-			size = 35,
+			size = left_element_width,
 		},
 		{
 			elements = {
-				-- {
-				-- 	id = "console",
-				-- 	size = 0.5,
-				-- },
+				{
+					id = "console",
+					size = 0.5,
+				},
+				{
+					id = "repl",
+					size = 0.5,
+				},
+			},
+			position = "bottom",
+			size = 10,
+		},
+		-- {layout = 3}
+		{
+			elements = {
+				{
+					id = "scopes",
+					size = 1,
+				},
+			},
+			position = "left",
+			size = left_element_width,
+		},
+		-- {layout = 4}
+		{
+			elements = {
+				{
+					id = "breakpoints",
+					size = 1,
+				},
+			},
+			position = "left",
+			size = left_element_width,
+		},
+		-- {layout = 5}
+		{
+			elements = {
+				{
+					id = "stacks",
+					size = 1,
+				},
+			},
+			position = "left",
+			size = left_element_width,
+		},
+		-- {layout = 6}
+		{
+			elements = {
+				{
+					id = "watches",
+					size = 1,
+				},
+			},
+			position = "left",
+			size = left_element_width,
+		},
+
+		-- {layout = 7}
+		{
+			elements = {
+				{
+					id = "console",
+					size = 1,
+				},
+			},
+			position = "bottom",
+			size = 10,
+		},
+		-- {layout = 8}
+		{
+			elements = {
 				{
 					id = "repl",
 					size = 1,
@@ -398,8 +467,6 @@ local uigroup = augroup("UserDAPUISettings", { clear = true })
 autocmd("User", {
 	pattern = "DAPInitialized",
 	callback = function()
-		-- dapui.open({ layout = 2 })
-
 		local opts = { enter = true }
 		map("<Leader>de", function()
 			dapui.eval(nil, opts)
@@ -411,20 +478,34 @@ autocmd("User", {
 			end
 		end)
 
-		create_cmd("DapUI", function()
-			dapui.toggle()
+		-- create_cmd("DapUI", function()
+		-- 	dapui.toggle({ layout = 1, reset = true })
+		-- end, {})
+
+		create_cmd("DapUIScopes", function()
+			-- dapui.float_element("scopes", opts)
+			dapui.toggle({ layout = 3, reset = true })
 		end, {})
 		create_cmd("DapUIBreakpoints", function()
-			dapui.float_element("breakpoints", opts)
-		end, {})
-		create_cmd("DapUIWatches", function()
-			dapui.float_element("watches", opts)
+			-- dapui.float_element("breakpoints", opts)
+			dapui.toggle({ layout = 4, reset = true })
 		end, {})
 		create_cmd("DapUIStacks", function()
-			dapui.float_element("stacks", opts)
+			-- dapui.float_element("stacks", opts)
+			dapui.toggle({ layout = 5, reset = true })
 		end, {})
-		create_cmd("DapUIScopes", function()
-			dapui.float_element("scopes", opts)
+		create_cmd("DapUIWatches", function()
+			-- dapui.float_element("watches", opts)
+			dapui.toggle({ layout = 6, reset = true })
+		end, {})
+
+		create_cmd("DapUIConsole", function()
+			-- dapui.float_element("console", opts)
+			dapui.toggle({ layout = 7, reset = true })
+		end, {})
+		create_cmd("DapUIRepl", function()
+			-- dapui.float_element("repl", opts)
+			dapui.toggle({ layout = 8, reset = true })
 		end, {})
 	end,
 	group = uigroup,
@@ -436,7 +517,7 @@ autocmd("User", {
 	callback = function()
 		dapui.close()
 
-		del_cmd("DapUI")
+		-- del_cmd("DapUI")
 		del_cmd("DapUIBreakpoints")
 		del_cmd("DapUIWatches")
 		del_cmd("DapUIStacks")
@@ -454,15 +535,21 @@ autocmd("User", {
 local ok, Hydra = pcall(require, "hydra")
 if ok then
 	local hint = [[
-     ^ ^Step^ ^ ^      ^ ^     Action
- ----^-^-^-^--^-^----  ^-^-------------------
-     ^ ^back^ ^ ^     ^_b_: toggle breakpoint
-     ^ ^ _N_^ ^        _B_: clear breakpoints
- out _o_ ^ ^ _i_ into  _c_: continue
-     ^ ^ _n_ ^ ^       _x_: terminate
-     ^ ^over ^ ^     _r_: run last
+    ^ ^Step^ ^ ^       ^ ^    Action
+ ---^-^----^-^-^----  -^-^------------------
+    ^ ^_<C-p>_: back   ^ ^_b_: toggle breakpoint
+    ^ ^_<C-n>_: over   ^ ^_B_: clear breakpoints
+    ^ ^_do_: step out  ^ ^_C_: continue
+    ^ ^_di_: step into ^ ^_X_: terminate
+                   ^ ^_r_: run last
+    ^ ^UI
+ ---^-^---------------^-^-------------------
+    ^ ^_dv_: vars     ^ ^_dr_: repl
+    ^ ^_dw_: watches  ^ ^_dc_: console
+    ^ ^_db_: breakpoints
+    ^ ^_ds_: stacktraces
 
-     ^ ^  _<Esc>_/_q_: exit
+		   ^ ^_<Esc>_/_q_: exit
 ]]
 	-- local Hydra = require("hydra")
 	local dap = require("dap")
@@ -482,15 +569,59 @@ if ok then
 		mode = { "n", "x" },
 		body = "<C-s>",
 		heads = {
-			{ "c", dap.continue, { desc = "continue", silent = true } },
-			{ "x", dap.terminate, { desc = "terminate", silent = true } },
+			{ "C", dap.continue, { desc = "continue", silent = true } },
+			{ "X", dap.terminate, { desc = "terminate", silent = true } },
 			{ "r", dap.run_last, { desc = "run last", silent = true } },
-			{ "n", dap.step_over, { desc = "step_over", silent = true } },
-			{ "N", dap.step_back, { desc = "step back", silent = true } },
-			{ "i", dap.step_into, { desc = "step_into", silent = true } },
-			{ "o", dap.step_out, { desc = "step_out", silent = true } },
+			{ "<C-n>", dap.step_over, { desc = "step_over", silent = true } },
+			{ "<C-p>", dap.step_back, { desc = "step back", silent = true } },
+			{ "di", dap.step_into, { desc = "step_into", silent = true } },
+			{ "do", dap.step_out, { desc = "step_out", silent = true } },
 			{ "b", dap.toggle_breakpoint, { desc = "breakpoint", silent = true } },
 			{ "B", dap.clear_breakpoints, { desc = "clear breakpoints", silent = true } },
+
+			{
+				"dv",
+				function()
+					dapui.toggle({ layout = 3, reset = true })
+				end,
+				{ desc = "vars ui", silent = true },
+			},
+			{
+				"db",
+				function()
+					dapui.toggle({ layout = 4, reset = true })
+				end,
+				{ desc = "breakpoints ui", silent = true },
+			},
+			{
+				"ds",
+				function()
+					dapui.toggle({ layout = 5, reset = true })
+				end,
+				{ desc = "stacktraces ui", silent = true },
+			},
+			{
+				"dw",
+				function()
+					dapui.toggle({ layout = 6, reset = true })
+				end,
+				{ desc = "watchs ui", silent = true },
+			},
+			{
+				"dc",
+				function()
+					dapui.toggle({ layout = 7, reset = true })
+				end,
+				{ desc = "console ui", silent = true },
+			},
+			{
+				"dr",
+				function()
+					dapui.toggle({ layout = 8, reset = true })
+				end,
+				{ desc = "repl ui", silent = true },
+			},
+
 			{ "q", nil, { exit = true, nowait = true } },
 			{ "<Esc>", nil, { exit = true, nowait = true } },
 		},
