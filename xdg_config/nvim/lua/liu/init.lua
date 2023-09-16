@@ -1541,7 +1541,15 @@ setmap("x", ">", ">gv")
 -- keep the old word in the clipboard
 setmap("x", "p", '"_dP')
 -- changing a word, use dot do repeat
-setmap("n", "cn", "*``cgn")
+setmap("n", "cn", [[*``"_cgn]])
+-- changing a selection, use dot do repeat
+-- "ry -- copy the selection to `r` register
+-- let @/=escape(@r, '/') -- add the current selection from `r` register to the "search register"
+-- "_ -- next operation store the text in the _ register
+-- cgn -- replace the closest match to the search
+setmap("x", "cn", [["ry<cmd>let @/=escape(@r, '/')<cr>"_cgn]] )
+-- use the substitute function to replace the newline character with \n
+-- setmap("x", "cn", [[y<cmd>substitute(escape(@", '/'), '\n', '\\n', 'g')<cr>"_cgn]] )
 
 setmap("n", "<leader>g;", "mqA;<ESC>`q")
 setmap("n", "<leader>g,", "mqA,<ESC>`q")
