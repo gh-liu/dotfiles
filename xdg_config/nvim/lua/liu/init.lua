@@ -1310,9 +1310,21 @@ require("lazy").setup(
 		},
 		{
 			"pwntester/octo.nvim",
-			event = "VeryLazy",
+			cond = function()
+				return fn.executable("gh") == 1
+			end,
+			-- event = "VeryLazy",
 			cmd = { "Octo" },
-			opts = {},
+			opts = {
+				enable_builtin = true,
+				timeout = 3000,
+			},
+			config = function(_, opts)
+				require("octo").setup(opts)
+
+				vim.treesitter.language.register("markdown", "octo")
+			end,
+
 			-- config = function() end,
 		},
 
