@@ -17,6 +17,7 @@ keymap.set("n", "<leader>sr", builtin.registers, { desc = "[S]earch [R]egisters"
 keymap.set("n", "<leader>st", builtin.filetypes, { desc = "[S]et File[t]ype" })
 
 keymap.set("n", "<leader>;", builtin.commands, { desc = "List Commands" })
+keymap.set("n", "<leader>:", builtin.command_history, { desc = "List Commands History" })
 
 keymap.set("n", "<leader>ds", builtin.treesitter, { desc = "Treesitter [D]ocument [S]ymbols" })
 
