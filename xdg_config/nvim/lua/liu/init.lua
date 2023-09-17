@@ -250,17 +250,17 @@ require("lazy").setup(
 				local diagnostics = builtins["diagnostics"]
 				-- local hover = builtins["hover"]
 				-- local completion = builtins["completion"]
-				-- local actions = builtins["code_actions"]
+				local actions = builtins["code_actions"]
 
-				-- local function filter_actions(title)
-				-- 	return (nil == title:lower():match("blame"))
-				-- end
+				local function filter_actions(title)
+					return (nil == title:lower():match("blame"))
+				end
 
 				local sources = {
-					-- actions.gitsigns.with({
-					-- 	disabled_filetypes = { "harpoon" },
-					-- 	config = { filter_actions = filter_actions },
-					-- }),
+					actions.gitsigns.with({
+						disabled_filetypes = { "harpoon" },
+						config = { filter_actions = filter_actions },
+					}),
 					diagnostics.golangci_lint,
 					-- formatting.stylua,
 					-- formatting.shfmt.with({
