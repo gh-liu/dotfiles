@@ -271,6 +271,16 @@ require("lazy").setup(
 				return setup({ sources = sources, border = config.borders })
 			end,
 		},
+		{
+			"smjonas/inc-rename.nvim",
+			event = "LspAttach",
+			opts = {
+				input_buffer_type = "dressing",
+			},
+			config = function(_, opts)
+				require("inc_rename").setup(opts)
+			end,
+		},
 		-- }}}
 
 		-- DAP {{{2
