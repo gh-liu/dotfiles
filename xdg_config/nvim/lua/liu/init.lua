@@ -1518,6 +1518,10 @@ cmd([[
 ]])
 
 vim.o.clipboard = "unnamedplus"
+
+-- Avoid showing the intro when starting Neovim
+vim.opt.shortmess:append("I")
+
 -- }}}
 
 -- Remaps {{{1
