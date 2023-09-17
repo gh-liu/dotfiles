@@ -1300,6 +1300,13 @@ require("lazy").setup(
 			opts = {},
 			config = function() end,
 		},
+		{
+			"pwntester/octo.nvim",
+			event = "VeryLazy",
+			cmd = { "Octo" },
+			opts = {},
+			-- config = function() end,
+		},
 
 		-- }}}
 
