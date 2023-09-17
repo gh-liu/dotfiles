@@ -18,6 +18,12 @@ autocmd("LspAttach", {
 		local client = vim.lsp.get_client_by_id(args.data.client_id)
 		-- if client.server_capabilities.foldingRangeProvider then
 		if client.supports_method(method) then
+			local cur_win = api.nvim_get_current_win()
+			local win_foldexpr = api.nvim_win_get_option(cur_win, "foldmethod")
+			if win_foldexpr == "marker" then
+				return
+			end
+
 			update_lsp_foldexpr()
 
 			autocmd({ "InsertLeave", "TextChanged" }, {
