@@ -46,7 +46,6 @@ api.nvim_create_autocmd("DiagnosticChanged", {
 			keymap.set("n", l, r, { buffer = args.buf, desc = desc })
 		end
 
-
 		map("<leader>sd", function()
 			vim.ui.select({ "ALL", "ERROR", "WARN", "INFO", "HINT" }, {
 				prompt = "Select Diagnostic",

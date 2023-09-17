@@ -444,10 +444,7 @@ require("lazy").setup(
 
 				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
 
-				api.nvim_create_autocmd(
-					"User",
-					{ pattern = "TelescopePreviewerLoaded", command = "setlocal number" }
-				)
+				api.nvim_create_autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
 			end,
 		},
 		{
@@ -593,10 +590,10 @@ require("lazy").setup(
 		{
 			"monaqa/dial.nvim",
 			keys = {
-				{ "<C-a>",  "<Plug>(dial-increment)",  mode = "n" },
-				{ "<C-x>",  "<Plug>(dial-decrement)",  mode = "n" },
-				{ "<C-a>",  "<Plug>(dial-increment)",  mode = "x" },
-				{ "<C-x>",  "<Plug>(dial-decrement)",  mode = "x" },
+				{ "<C-a>", "<Plug>(dial-increment)", mode = "n" },
+				{ "<C-x>", "<Plug>(dial-decrement)", mode = "n" },
+				{ "<C-a>", "<Plug>(dial-increment)", mode = "x" },
+				{ "<C-x>", "<Plug>(dial-decrement)", mode = "x" },
 				{ "g<C-a>", "g<Plug>(dial-increment)", mode = "x" },
 				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = "x" },
 			},
@@ -764,14 +761,14 @@ require("lazy").setup(
 						mode = { "n", "x", "o" },
 						body = "<leader>w",
 						heads = {
-							{ "w",     "<Plug>WordMotion_w",  { desc = "WordMotion_w" } },
-							{ "b",     "<Plug>WordMotion_b",  { desc = "WordMotion_b" } },
-							{ "e",     "<Plug>WordMotion_e",  { desc = "WordMotion_e" } },
-							{ "ge",    "<Plug>WordMotion_ge", { desc = "WordMotion_ge" } },
-							{ "aw",    "<Plug>WordMotion_aw", { mode = { "x", "o" }, desc = false } },
-							{ "iw",    "<Plug>WordMotion_iw", { mode = { "x", "o" }, desc = false } },
-							{ "q",     nil,                   { exit = true, nowait = true } },
-							{ "<Esc>", nil,                   { exit = true, nowait = true } },
+							{ "w", "<Plug>WordMotion_w", { desc = "WordMotion_w" } },
+							{ "b", "<Plug>WordMotion_b", { desc = "WordMotion_b" } },
+							{ "e", "<Plug>WordMotion_e", { desc = "WordMotion_e" } },
+							{ "ge", "<Plug>WordMotion_ge", { desc = "WordMotion_ge" } },
+							{ "aw", "<Plug>WordMotion_aw", { mode = { "x", "o" }, desc = false } },
+							{ "iw", "<Plug>WordMotion_iw", { mode = { "x", "o" }, desc = false } },
+							{ "q", nil, { exit = true, nowait = true } },
+							{ "<Esc>", nil, { exit = true, nowait = true } },
 						},
 					})
 				end
@@ -1017,7 +1014,7 @@ require("lazy").setup(
 
 				local diagnostic = vim.diagnostic
 				local prev_diag_item, next_diag_item =
-						next_move.make_repeatable_pair(diagnostic.goto_prev, diagnostic.goto_next)
+					next_move.make_repeatable_pair(diagnostic.goto_prev, diagnostic.goto_next)
 				keymap.set("n", "[d", prev_diag_item)
 				keymap.set("n", "]d", next_diag_item)
 
@@ -1406,7 +1403,7 @@ require("lazy").setup(
 			},
 		},
 	}
--- }}}
+	-- }}}
 )
 -- }}}
 
@@ -1554,7 +1551,7 @@ setmap("n", "cn", [[*``"_cgn]])
 -- let @/=escape(@r, '/') -- add the current selection from `r` register to the "search register"
 -- "_ -- next operation store the text in the _ register
 -- cgn -- replace the closest match to the search
-setmap("x", "cn", [["ry<cmd>let @/=escape(@r, '/')<cr>"_cgn]] )
+setmap("x", "cn", [["ry<cmd>let @/=escape(@r, '/')<cr>"_cgn]])
 -- use the substitute function to replace the newline character with \n
 -- setmap("x", "cn", [[y<cmd>substitute(escape(@", '/'), '\n', '\\n', 'g')<cr>"_cgn]] )
 
@@ -1754,8 +1751,8 @@ if ok then
 			local line_length = #api.nvim_buf_get_lines(0, lnum, lnum + 1, true)[1]
 			local ds = vim.tbl_filter(function(d)
 				return d.lnum == lnum
-						and math.min(d.col, line_length - 1) <= col
-						and (d.end_col >= col or d.end_lnum > lnum)
+					and math.min(d.col, line_length - 1) <= col
+					and (d.end_col >= col or d.end_lnum > lnum)
 			end, diags)
 
 			if vim.tbl_isempty(ds) then

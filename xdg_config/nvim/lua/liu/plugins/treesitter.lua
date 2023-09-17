@@ -103,8 +103,8 @@ function M.goto_adjacent_usage(bufnr, delta)
 	ts_utils.goto_node(usages[target_index])
 end
 
-vim.keymap.set("n","<leader>n",M.goto_next_usage)
-vim.keymap.set("n","<leader>p",M.goto_previous_usage)
+vim.keymap.set("n", "<leader>n", M.goto_next_usage)
+vim.keymap.set("n", "<leader>p", M.goto_previous_usage)
 -- }}}
 
 -- vim: foldmethod=marker
