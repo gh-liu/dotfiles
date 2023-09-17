@@ -228,13 +228,18 @@ require("lazy").setup(
 		{
 			"kosayoda/nvim-lightbulb",
 			event = "LspAttach",
-			opts = { autocmd = { enabled = true } },
+			opts = {
+				autocmd = {
+					enabled = true,
+				},
+				priority = 100,
+				sign = {
+					enabled = true,
+					text = "💡",
+					hl = "LightBulbSign",
+				},
+			},
 			config = function(_, opts)
-				fn.sign_define(
-					"LightBulbSign",
-					{ text = config.icons.Hint, texthl = "WarningMsg", linehl = "", numhl = "" }
-				)
-
 				require("nvim-lightbulb").setup(opts)
 			end,
 		},
@@ -1366,7 +1371,7 @@ require("lazy").setup(
 		-- Lang {{{2
 		{
 			"romainl/vim-qf",
-			init = function (self)
+			init = function(self)
 				vimg.qf_mapping_ack_style = 1
 			end,
 			ft = "qf",
