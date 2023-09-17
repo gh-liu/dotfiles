@@ -797,6 +797,29 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"petertriho/cmp-git",
+			cond = function()
+				return fn.executable("git") == 1
+			end,
+			ft = { "gitcommit", "octo" },
+			opts = {},
+			config = function(self, opts)
+				require("cmp_git").setup(opts)
+
+				local cmp = require("cmp")
+
+				cmp.setup.filetype(self.ft, {
+					sources = cmp.config.sources({
+						{ name = "git" },
+					}, {
+						{ name = "buffer" },
+					}, {
+						{ name = "luasnip" },
+					}),
+				})
+			end,
+		},
+		{
 			"windwp/nvim-autopairs",
 			event = "InsertEnter",
 			opts = {

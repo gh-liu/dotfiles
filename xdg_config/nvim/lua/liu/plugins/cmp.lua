@@ -78,6 +78,7 @@ local source_labels = {
 	path = "[PATH]",
 	cmdline = "[CMD]",
 	omni = "[OMNI]",
+	git = "[GIT]",
 }
 
 local function has_words_before()
