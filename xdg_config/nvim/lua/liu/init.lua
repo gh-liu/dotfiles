@@ -1293,9 +1293,20 @@ require("lazy").setup(
 		},
 		{
 			"akinsho/toggleterm.nvim",
-			event = "VeryLazy",
-			opts = {},
-			config = function() end,
+			-- event = "VeryLazy",
+			keys = { [[<c-\>]] },
+			opts = {
+				open_mapping = [[<c-\>]],
+				on_open = function(t)
+					vim.o.ch = 0
+				end,
+				on_close = function(t)
+					vim.o.ch = 1
+				end,
+			},
+			config = function(_, opts)
+				require("toggleterm").setup(opts)
+			end,
 		},
 		{
 			"pwntester/octo.nvim",
