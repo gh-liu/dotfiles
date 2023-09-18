@@ -277,6 +277,20 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"Wansmer/symbol-usage.nvim",
+			event = "LspAttach",
+			opts = {
+				hl = { link = "LspInlayHint" },
+				vt_position = "end_of_line",
+				references = { enabled = true, include_declaration = false },
+				definition = { enabled = false },
+				implementation = { enabled = false },
+			},
+			config = function(_, opts)
+				require("symbol-usage").setup(opts)
+			end,
+		},
+		{
 			"smjonas/inc-rename.nvim",
 			event = "LspAttach",
 			opts = {
