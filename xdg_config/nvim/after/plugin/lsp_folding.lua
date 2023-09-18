@@ -64,6 +64,7 @@ local function update_folds(bufnr, ranges)
 	for _, winid in ipairs(vim.fn.win_findbuf(bufnr)) do
 		vim.api.nvim_win_set_option(winid, "foldexpr", "luaeval('lsp_foldexpr('..v:lnum..')')")
 		vim.api.nvim_win_set_option(winid, "foldmethod", "expr")
+		vim.api.nvim_win_set_option(winid, "foldlevel", 9)
 	end
 end
 
