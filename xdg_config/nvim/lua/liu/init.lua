@@ -1550,7 +1550,8 @@ vim.o.clipboard = "unnamedplus"
 
 -- Avoid showing the intro when starting Neovim
 vim.opt.shortmess:append("I")
-
+-- Filling `foldtext` with space
+vim.opt.fillchars:append("fold: ")
 -- }}}
 
 -- Remaps {{{1
