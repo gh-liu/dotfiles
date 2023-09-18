@@ -1635,6 +1635,10 @@ setmap("c", "<C-a>", rtf("<HOME>", "c"))
 setmap("c", "<C-e>", rtf("<END>", "c"))
 setmap("c", "<C-b>", rtf("<left>", "c"))
 setmap("c", "<C-f>", rtf("<right>", "c"))
+
+-- not
+setmap("c", "<C-j>", rtf("<down>", "c"))
+setmap("c", "<C-k>", rtf("<up>", "c"))
 -- }}}
 
 -- Text {{{2
