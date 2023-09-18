@@ -1540,6 +1540,9 @@ vim.wo.signcolumn = "yes"
 
 vim.o.pumheight = 12
 
+-- Open the command-line window in command-line Mode.
+vim.o.cedit = "<C-Y>"
+
 cmd([[
 	set guicursor=n-v:block,i-c-ci-ve:ver25,r-cr:hor20,o:hor50
 	  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
