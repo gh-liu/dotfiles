@@ -1328,15 +1328,18 @@ require("lazy").setup(
 			-- event = "VeryLazy",
 			keys = { [[<c-\>]] },
 			opts = {
-				open_mapping = [[<c-\>]],
 				on_open = function(t)
 					vim.o.ch = 0
 				end,
 				on_close = function(t)
 					vim.o.ch = 1
 				end,
+				-- shades terminal to be darker than other window
+				-- shade_terminals = false,
+				shading_factor = "-6",
 			},
-			config = function(_, opts)
+			config = function(self, opts)
+				opts.open_mapping = self.keys[1]
 				require("toggleterm").setup(opts)
 			end,
 		},
