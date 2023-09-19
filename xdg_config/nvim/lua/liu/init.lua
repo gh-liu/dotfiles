@@ -1569,6 +1569,12 @@ cmd([[
 
 vim.o.clipboard = "unnamedplus"
 
+-- vim.o.foldcolumn = "1"
+vim.o.foldlevel = 99
+vim.o.foldlevelstart = 99
+vim.o.foldmethod = "expr"
+vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+
 -- Avoid showing the intro when starting Neovim
 vim.opt.shortmess:append("I")
 -- Filling `foldtext` with space

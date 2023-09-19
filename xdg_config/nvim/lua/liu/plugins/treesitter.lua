@@ -36,32 +36,6 @@ require("nvim-treesitter.configs").setup({
 	incremental_selection = { enable = false },
 })
 
--- Folding {{{1
-local group = api.nvim_create_augroup("UserTreesitterFold", { clear = true })
-api.nvim_create_autocmd("FileType", {
-	pattern = {
-		"c",
-		"lua",
-		"vim",
-		"go",
-		"rust",
-		"json",
-		"yaml",
-		"toml",
-		"markdown",
-	},
-	command = "setl foldlevel=9 | setl foldmethod=expr | setl foldexpr=nvim_treesitter#foldexpr()",
-	group = group,
-	desc = "Set fold options",
-})
-api.nvim_create_autocmd({ "BufRead" }, {
-	pattern = { "*" },
-	command = "normal zx",
-	group = group,
-	desc = "Update folds when starting to edit a new buffer",
-})
--- }}}
-
 -- Navigation {{{1
 -- copied from nvim-treesitter-refactor/navigation.lua
 local ts_utils = require("nvim-treesitter.ts_utils")
