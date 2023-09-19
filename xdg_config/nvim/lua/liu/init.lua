@@ -1129,26 +1129,6 @@ require("lazy").setup(
 						{ "<Esc>", nil, { exit = true, nowait = true } },
 					},
 				})
-
-				Hydra({
-					name = "Windows",
-					mode = { "n" },
-					config = {
-						color = "pink",
-						timeout = 600,
-					},
-					body = "<C-w>",
-					heads = {
-						{ ">", "<C-w>>", { desc = "fatter" } },
-						{ "<", "<C-w><", { desc = "thinner" } },
-
-						{ "+", "<C-w>+", { desc = "higher" } },
-						{ "-", "<C-w>-", { desc = "shorter" } },
-
-						{ "q", nil, { exit = true, nowait = true } },
-						{ "<Esc>", nil, { exit = true, nowait = true } },
-					},
-				})
 			end,
 		},
 		-- }}}
@@ -1378,6 +1358,18 @@ require("lazy").setup(
 			end,
 
 			-- config = function() end,
+		},
+		{
+			"simeji/winresizer",
+			init = function(self)
+				-- disable the start key
+				-- https://github.com/simeji/winresizer/pull/19#issuecomment-925097954
+				-- vimg.winresizer_start_key = "<NOP>"
+
+				vimg.winresizer_start_key = self.keys[1]
+			end,
+			keys = { "<leader>e" },
+			cmd = { "WinResizerStartResize" },
 		},
 		{
 			"ojroques/nvim-osc52",
