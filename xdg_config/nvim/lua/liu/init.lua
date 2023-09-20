@@ -280,11 +280,17 @@ require("lazy").setup(
 			"Wansmer/symbol-usage.nvim",
 			event = "LspAttach",
 			opts = {
+				kinds = {
+					vim.lsp.protocol.SymbolKind.Function,
+					vim.lsp.protocol.SymbolKind.Method,
+					vim.lsp.protocol.SymbolKind.Struct,
+					vim.lsp.protocol.SymbolKind.Interface,
+				},
 				hl = { link = "LspInlayHint" },
 				vt_position = "end_of_line",
 				references = { enabled = true, include_declaration = false },
 				definition = { enabled = false },
-				implementation = { enabled = false },
+				implementation = { enabled = true },
 			},
 			config = function(_, opts)
 				require("symbol-usage").setup(opts)
