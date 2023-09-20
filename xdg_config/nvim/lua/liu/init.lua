@@ -809,7 +809,20 @@ require("lazy").setup(
 				end
 			end,
 		},
-
+		{
+			"sustech-data/wildfire.nvim",
+			-- event = "VeryLazy",
+			keys = { "<CR>", "<CR>", "<BS>" },
+			config = function(self, _)
+				require("wildfire").setup({
+					keymaps = {
+						init_selection = self.keys[1],
+						node_incremental = self.keys[2],
+						node_decremental = self.keys[3],
+					},
+				})
+			end,
+		},
 		-- }}}
 
 		-- Completion {{{2
