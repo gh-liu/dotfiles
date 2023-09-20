@@ -1523,62 +1523,82 @@ require("lazy").setup(
 -- }}}
 
 -- Sets {{{1
-vim.o.termguicolors = true
-
 vim.o.mouse = ""
-
-vim.o.hlsearch = false
-vim.o.incsearch = true
-
-vim.o.ignorecase = true
-vim.o.smartcase = true
-
-vim.o.undofile = true
-vim.o.undodir = os.getenv("HOME") .. "/.vim/undodir"
-
-vim.o.updatetime = 200
-vim.o.timeout = true
-vim.o.timeoutlen = 300
-
-vim.o.wrap = false
-vim.o.whichwrap = "b,s,<,>,h,l"
-
-vim.o.cursorline = true
-
-vim.o.scrolloff = 3
-
-vim.o.laststatus = 3
+vim.o.clipboard = "unnamedplus"
+-- Open the command-line window in command-line Mode.
+vim.o.cedit = "<C-Y>"
 
 vim.o.splitright = true
 vim.o.splitbelow = false
 
+-- UI {{{2
+vim.o.termguicolors = true
+
 vim.wo.number = true
 vim.wo.relativenumber = true
+
 vim.wo.signcolumn = "yes"
+
+vim.o.laststatus = 3
+vim.o.showmode = false
+vim.o.showcmd = false
 
 vim.o.pumheight = 12
 
--- Open the command-line window in command-line Mode.
-vim.o.cedit = "<C-Y>"
+vim.o.scrolloff = 3
 
+vim.o.cursorline = true
 cmd([[
 	set guicursor=n-v:block,i-c-ci-ve:ver25,r-cr:hor20,o:hor50
 	  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
 	  \,sm:block-blinkwait175-blinkoff150-blinkon175
 ]])
+-- }}}
 
-vim.o.clipboard = "unnamedplus"
+-- Search{{{2
+vim.o.hlsearch = false
+vim.o.incsearch = true
 
+vim.o.ignorecase = true
+vim.o.smartcase = true
+vim.o.infercase = true
+
+if fn.executable("rg") == 1 then
+	vim.o.grepprg = "rg --vimgrep"
+end
+-- }}}
+
+-- Undo {{{2
+vim.o.undofile = true
+vim.o.undodir = os.getenv("HOME") .. "/.vim/undodir"
+-- }}}
+
+-- Time {{{2
+vim.o.timeout = true
+vim.o.timeoutlen = 300
+vim.o.updatetime = 300
+-- }}}
+
+-- wrap {{{2
+vim.o.wrap = false
+vim.o.whichwrap = "b,s,<,>,h,l"
+-- }}}
+
+-- Folding{{{2
 -- vim.o.foldcolumn = "1"
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
 vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+-- Filling `foldtext` with space
+vim.opt.fillchars:append("fold: ")
+vim.opt.fillchars:append("foldopen:")
+vim.opt.fillchars:append("foldclose:")
+-- vim.opt.fillchars:append("foldsep:|")
+-- }}}
 
 -- Avoid showing the intro when starting Neovim
 vim.opt.shortmess:append("I")
--- Filling `foldtext` with space
-vim.opt.fillchars:append("fold: ")
 -- }}}
 
 -- Remaps {{{1
