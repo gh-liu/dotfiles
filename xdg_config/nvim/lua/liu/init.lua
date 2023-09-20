@@ -468,6 +468,7 @@ require("lazy").setup(
 					},
 					pickers = {
 						buffers = { mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_buffer } } },
+						live_grep = { mappings = { [{ "i" }] = { ["<c-d>"] = actions.to_fuzzy_refine } } },
 						find_files = {
 							hidden = true,
 							no_ignore = true,
