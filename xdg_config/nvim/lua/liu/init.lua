@@ -1066,7 +1066,7 @@ require("lazy").setup(
 				api.nvim_create_autocmd("User", {
 					pattern = "GitConflictResolved",
 					callback = function(args)
-						vim.notify("[Git] Conflict resolved!", vim.log.levels.WARN)
+						vim.notify("[Git] Conflict resolved!", vim.log.levels.INFO)
 					end,
 				})
 			end,
