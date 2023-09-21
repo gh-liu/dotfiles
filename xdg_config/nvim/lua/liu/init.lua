@@ -692,8 +692,12 @@ require("lazy").setup(
 
 		{
 			"stevearc/conform.nvim",
+			init = function(self)
+				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+			end,
 			-- enabled = false,
 			-- event = "VeryLazy",
+			lazy = true,
 			keys = {
 				{
 					"<leader>F",
@@ -716,8 +720,6 @@ require("lazy").setup(
 			},
 			config = function(_, opts)
 				require("conform").setup(opts)
-
-				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
 			end,
 		},
 		{
