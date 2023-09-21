@@ -721,6 +721,19 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"danymat/neogen",
+			cmd = { "Neogen" },
+			config = function(self, opts)
+				local neogen = require("neogen")
+				neogen.setup({
+					snippet_engine = "luasnip",
+					languages = {
+						lua = { template = { annotation_convention = "emmylua" } },
+					},
+				})
+			end,
+		},
+		{
 			"junegunn/vim-easy-align",
 			-- enabled = false,
 			-- event = "VeryLazy",
