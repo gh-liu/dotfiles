@@ -593,7 +593,7 @@ require("lazy").setup(
 			"numToStr/Comment.nvim",
 			-- event = "VeryLazy",
 			lazy = true,
-			keys = { "gc", "gb" },
+			keys = { { "gc", mode = { "n", "x" } }, { "gb", mode = { "n", "x" } } },
 			config = function()
 				require("Comment").setup({
 					ignore = "^$",
