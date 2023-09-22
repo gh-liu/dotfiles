@@ -102,18 +102,21 @@ require("lazy").setup(
 		-- Libs {{{2
 		{
 			"nvim-lua/plenary.nvim",
-			event = "VeryLazy",
+			lazy = true,
+			-- event = "VeryLazy",
 		},
 		-- }}}
 
 		-- UIs {{{2
 		{
 			"nvim-tree/nvim-web-devicons",
-			event = "VeryLazy",
+			lazy = true,
+			-- event = "VeryLazy",
 		},
 		{
 			"rebelot/heirline.nvim",
-			event = "VeryLazy",
+			lazy = true,
+			-- event = "VeryLazy",
 		},
 		{
 			"stevearc/dressing.nvim",
@@ -588,7 +591,9 @@ require("lazy").setup(
 		},
 		{
 			"numToStr/Comment.nvim",
-			event = "VeryLazy",
+			-- event = "VeryLazy",
+			lazy = true,
+			keys = { "gc", "gb" },
 			config = function()
 				require("Comment").setup({
 					ignore = "^$",
