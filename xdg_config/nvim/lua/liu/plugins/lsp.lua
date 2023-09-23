@@ -1,6 +1,8 @@
 require("lspconfig.ui.windows").default_options.border = config.borders
 
 local servers = {
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#gopls
+	-- go install golang.org/x/tools/gopls@latest
 	gopls = {
 		-- https://github.com/golang/tools/blob/master/gopls/doc/settings.md
 		gopls = {
@@ -28,6 +30,8 @@ local servers = {
 			buildFlags = { "-tags", "debug" },
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#rust_analyzer
+	-- rustup component add rust-analyzer
 	rust_analyzer = {
 		-- https://rust-analyzer.github.io/manual.html#configuration
 		["rust-analyzer"] = {
@@ -72,6 +76,8 @@ local servers = {
 			},
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#lua_ls
+	-- Download from https://github.com/LuaLS/lua-language-server/releases
 	lua_ls = {
 		-- https://github.com/LuaLS/lua-language-server/wiki/Settings
 		Lua = {
@@ -82,8 +88,14 @@ local servers = {
 			diagnostics = { globals = { "vim" } },
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#vimls
+	-- npm install -g vim-language-server
 	vimls = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#bashls
+	-- npm i -g bash-language-server
 	bashls = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#jsonls
+	-- npm install -g vscode-langservers-extracted
 	jsonls = {
 		-- https://code.visualstudio.com/docs/getstarted/settings serach `json.`
 		json = {
@@ -92,6 +104,8 @@ local servers = {
 			validate = { enable = true },
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#yamlls
+	-- npm install -g yaml-language-server
 	yamlls = {
 		-- https://github.com/redhat-developer/yaml-language-server#language-server-settings
 		yaml = {
@@ -100,9 +114,12 @@ local servers = {
 			validate = { enable = true },
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#tsserver
+	-- npm install -g typescript typescript-language-server
 	tsserver = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#zls
+	-- Download from https://zig.pm/zls/downloads/x86_64-linux/bin/zls
 	zls = {
-		-- Download from https://zig.pm/zls/downloads/x86_64-linux/bin/zls
 		-- https://github.com/zigtools/zls#configuration-options
 		zls = {
 			enable_inlay_hints = false,
