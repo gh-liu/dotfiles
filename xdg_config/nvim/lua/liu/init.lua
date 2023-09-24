@@ -1781,18 +1781,14 @@ setmap("n", "]l", ":lnext<cr>")
 -- }}}
 
 -- Delete Mark{{{
-local function mapdm(c)
-	local mark = string.char(c)
-	local l = string.format("dm%s", mark)
-	local r = string.format(":delm %s<CR>", mark)
-	setmap("n", l, r)
-end
-for i = 65, 90 do -- A-Z
-	mapdm(i)
-end
-for i = 97, 122 do -- a-z
-	mapdm(i)
-end
+vim.keymap.set("n", "dm", function()
+	local mark = vim.fn.getcharstr()
+	local ditgit = string.byte(mark)
+	if (ditgit >= 65 and ditgit <= 90) or (ditgit >= 97 and ditgit <= 122) then
+		vim.api.nvim_command(string.format(":delm %s<CR>", mark))
+	end
+end, { noremap = true })
+-- use M jump to mark
 setmap("n", "M", "g'")
 -- }}}
 
