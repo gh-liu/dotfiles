@@ -1453,6 +1453,26 @@ require("lazy").setup(
 				}
 			end,
 		},
+		{
+			"luckasRanarison/nvim-devdocs",
+			cmd = {
+				"DevdocsFetch",
+				"DevdocsOpenFloat",
+				"DevdocsOpenCurrentFloat",
+			},
+			-- event = "VeryLazy",
+			opts = {
+				float_win = { -- passed to nvim_open_win(), see :h api-floatwin
+					relative = "editor",
+					height = 25,
+					width = 100,
+					border = config.borders,
+				},
+				after_open = function(bufnr)
+					keymap.set("n", "q", ":close<CR>", { silent = true, buffer = bufnr })
+				end,
+			},
+		},
 		-- }}}
 
 		-- Lang {{{2
