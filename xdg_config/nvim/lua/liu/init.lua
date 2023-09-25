@@ -315,14 +315,65 @@ require("lazy").setup(
 		{
 			"mfussenegger/nvim-dap",
 			-- event = "VeryLazy",
-			keys = { { "<C-s>" } }, -- invoke hydra for dap
+			keys = { "<C-s>" }, -- invoke debuging key layer
 			cmd = { "DapContinue", "DapToggleBreakpoint" },
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
 				"jbyuki/one-small-step-for-vimkind",
 			},
-			config = function()
+			config = function(self, opts)
 				load_plugin_config("dap")
+
+				local dap = require("dap")
+				local dapui = require("dapui")
+
+				local ok, libmodal = pcall(require, "libmodal")
+				if ok then
+					local DESC = "Debuging mode"
+					local layer = libmodal.layer.new({})
+					local function map(lhs, rhs)
+						layer:map("n", lhs, rhs, {})
+					end
+
+					-- map("C", dap.continue)
+					-- map("X", dap.terminate)
+					-- map("R", dap.run_last)
+					map("<C-n>", dap.step_over)
+					map("<C-p>", dap.step_back)
+					map("di", dap.step_into)
+					map("do", dap.step_out)
+					map("b", dap.toggle_breakpoint)
+					map("B", dap.clear_breakpoints)
+
+					map("dv", function()
+						dapui.toggle({ layout = 3, reset = true })
+					end)
+					map("db", function()
+						dapui.toggle({ layout = 4, reset = true })
+					end)
+					map("ds", function()
+						dapui.toggle({ layout = 5, reset = true })
+					end)
+					map("dw", function()
+						dapui.toggle({ layout = 6, reset = true })
+					end)
+					map("dc", function()
+						dapui.toggle({ layout = 7, reset = true })
+					end)
+					map("dr", function()
+						dapui.toggle({ layout = 8, reset = true })
+					end)
+
+					layer:map("n", "q", function()
+						layer:exit()
+						vim.g.libmodalActiveLayerName = nil
+					end, {})
+					local function mode()
+						vim.g.libmodalActiveLayerName = "Debuging"
+						layer:enter()
+					end
+					keymap.set("n", self.keys[1], "", { callback = mode, desc = DESC })
+				end
 			end,
 		},
 		-- }}}
@@ -801,32 +852,35 @@ require("lazy").setup(
 		},
 		{
 			"chaoren/vim-wordmotion",
-			event = "VeryLazy",
+			keys = { "<leader>ww" },
+			-- event = "VeryLazy",
 			init = function()
 				vimg.wordmotion_nomap = true
 				vimg.wordmotion_prefix = ","
-
-				local ok, Hydra = pcall(require, "hydra")
+			end,
+			config = function(self, opts)
+				local ok, libmodal = pcall(require, "libmodal")
 				if ok then
-					Hydra({
-						name = "Quick words",
-						config = {
-							color = "pink",
-							invoke_on_body = true,
-						},
-						mode = { "n", "x", "o" },
-						body = "<leader>w",
-						heads = {
-							{ "w", "<Plug>WordMotion_w", { desc = "WordMotion_w" } },
-							{ "b", "<Plug>WordMotion_b", { desc = "WordMotion_b" } },
-							{ "e", "<Plug>WordMotion_e", { desc = "WordMotion_e" } },
-							{ "ge", "<Plug>WordMotion_ge", { desc = "WordMotion_ge" } },
-							{ "aw", "<Plug>WordMotion_aw", { mode = { "x", "o" }, desc = false } },
-							{ "iw", "<Plug>WordMotion_iw", { mode = { "x", "o" }, desc = false } },
-							{ "q", nil, { exit = true, nowait = true } },
-							{ "<Esc>", nil, { exit = true, nowait = true } },
-						},
-					})
+					local DESC = "Enter word motion mode"
+					local layer = libmodal.layer.new({})
+					local function map(modes, lhs, rhs)
+						for _, mod in ipairs(modes) do
+							layer:map(mod, lhs, rhs, {})
+						end
+					end
+					map({ "n", "x", "o" }, "w", "<Plug>WordMotion_w")
+					map({ "x", "o" }, "iw", "<Plug>WordMotion_w")
+					map({ "n", "x", "o" }, "b", "<Plug>WordMotion_b")
+
+					layer:map("n", "q", function()
+						layer:exit()
+						vim.g.libmodalActiveLayerName = nil
+					end, {})
+					local function mode()
+						vim.g.libmodalActiveLayerName = "SubWord"
+						layer:enter()
+					end
+					keymap.set("n", self.keys[1], "", { callback = mode, desc = DESC })
 				end
 			end,
 		},
@@ -1144,42 +1198,41 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"gh-liu/hydra.nvim",
-			-- "anuvyklack/hydra.nvim",
-			event = "VeryLazy",
-			opts = {},
-			config = function(_, opts)
-				-- set_hls({
-				-- 	HydraRed = { fg = config.colors.red },
-				-- 	HydraBlue = { fg = config.colors.blue },
-				-- 	HydraTeal = { fg = config.colors.cyan },
-				-- 	HydraPink = { fg = config.colors.red },
-				-- 	HydraAmaranth = { fg = config.colors.magenta },
-				-- })
-
-				local Hydra = require("hydra")
-				Hydra({
-					name = "Folds",
-					mode = { "n" },
-					config = {
-						color = "pink",
-						timeout = 600,
-					},
-					body = "z",
-					heads = {
-						{ "a", "za", { desc = "-" } },
-						{ "j", "zj", { desc = "↓" } },
-						{ "k", "zk", { desc = "↑" } },
-
-						{ "O", "zO", { desc = "Open all" } },
-						{ "C", "zC", { desc = "Close all" } },
-
-						{ "q", nil, { exit = true, nowait = true } },
-						{ "<Esc>", nil, { exit = true, nowait = true } },
-					},
-				})
+			"Iron-E/nvim-libmodal",
+			lazy = true,
+			keys = {
+				"<leader>zj",
+			},
+			-- event = "VeryLazy",
+			config = function(self, opts)
+				local libmodal = require("libmodal")
+				do
+					local DESC = "Enter flod mode"
+					local function mode()
+						libmodal.layer.enter({
+							n = {
+								j = {
+									rhs = "zj",
+									noremap = true,
+								},
+								k = {
+									rhs = "zk",
+									noremap = true,
+								},
+							},
+						}, "q")
+					end
+					keymap.set("n", self.keys[1], "", { callback = mode, desc = DESC })
+				end
 			end,
 		},
+		-- {
+		-- 	"Iron-E/nvim-tabmode",
+		-- 	cmd = "TabmodeEnter", -- don't load until using this command
+		-- 	config = true, -- automatically call `bufmode.setup()`; not needed if you specify `opts`
+		-- 	keys = { { "<Leader><Tab>", desc = "Enter buffer mode", mode = "n" } }, -- don't load until pressing these keys
+		-- 	-- opts = {}, (put `setup` options here, e.g. `opts = {enter_mapping = false}`
+		-- },
 		-- }}}
 
 		-- Misc {{{2

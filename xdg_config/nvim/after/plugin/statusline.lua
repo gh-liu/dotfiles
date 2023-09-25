@@ -91,9 +91,18 @@ local ViMode = {
 		},
 	},
 	provider = function(self)
+		if vim.g.libmodalActiveModeName then
+			return ("%2(" .. vim.g.libmodalActiveModeName .. "%)")
+		end
+
 		return ("%2(" .. self.mode_names[self.mode] .. "%)")
 	end,
 	hl = function(self)
+		if vim.g.libmodalActiveModeName then
+			local mode = vim.g.libmodalActiveModeName
+			return { fg = "cyan", bold = true }
+		end
+
 		local mode = self.mode:sub(1, 1)
 		return { fg = self.mode_colors[mode], bold = true }
 	end,
@@ -388,6 +397,18 @@ local LeapSign = {
 	},
 }
 
+local LibmodalLayer = {
+	condition = function()
+		return vim.g.libmodalActiveLayerName
+	end,
+	{
+		provider = function()
+			return "*" .. vim.g.libmodalActiveLayerName .. "*"
+		end,
+		hl = { fg = "yellow", bg = "back_ground", bold = true },
+	},
+}
+
 local DAPMessages = {
 	condition = function()
 		return vim.g.debuging and require("dap").session()
@@ -447,6 +468,7 @@ local DefaultStatusline = {
 	Git,
 	Align,
 	LeapSign,
+	LibmodalLayer,
 	Space,
 	DAPMessages,
 	Space,
