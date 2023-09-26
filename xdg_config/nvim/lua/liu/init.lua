@@ -1386,31 +1386,13 @@ require("lazy").setup(
 		},
 		{
 			"stevearc/oil.nvim",
-			init = function()
-				api.nvim_create_user_command("OilSSH", function(opts)
-					local url = opts.fargs[1]
-					local r = string.gsub(url, ":/", "//")
-					cmd(string.format("Oil oil-ssh://%s", r))
-				end, { nargs = 1 })
-			end,
-			cmd = { "Oil" },
-			keys = {
-				{
-					"-",
-					function()
-						require("oil").open()
-					end,
-					desc = "[oil]Open parent directory",
-					noremap = true,
-					silent = true,
-				},
-			},
-			config = function()
+			cmd = { "Oil", "OilSSH" },
+			keys = { "-" },
+			config = function(self, opts)
 				require("oil").setup({
 					keymaps = {
 						["q"] = {
 							callback = function()
-								-- cmd.bd()
 								for _, bufnr in ipairs(api.nvim_list_bufs()) do
 									if api.nvim_buf_get_name(bufnr):match("oil://.*") then
 										api.nvim_buf_delete(bufnr, { force = true })
@@ -1424,6 +1406,16 @@ require("lazy").setup(
 						border = config.borders,
 					},
 				})
+
+				keymap.set("n", "-", function()
+					require("oil").open()
+				end)
+
+				api.nvim_create_user_command("OilSSH", function(opts)
+					local url = opts.fargs[1]
+					local r = string.gsub(url, ":/", "//")
+					cmd(string.format("Oil oil-ssh://%s", r))
+				end, { nargs = 1 })
 			end,
 		},
 		{
