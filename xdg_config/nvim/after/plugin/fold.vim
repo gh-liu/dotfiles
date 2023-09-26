@@ -17,5 +17,5 @@ function MyFoldText()
     let padding = repeat(" ",5-len(foldsize))
 
     " return '+' . v:folddashes . '(' . v:foldlevel . ') ' . linecount . padding . sub
-    return [['+' . v:folddashes . '(' . v:foldlevel . ') ' . linecount . padding . sub, "PreProc"],["...","NonText"]]
+    return [[sub, "PreProc"], ["...","NonText"], [' +' . v:folddashes . '(' . v:foldlevel . ') ' . linecount . padding, "NonText"]]
   endfunction
