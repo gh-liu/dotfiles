@@ -281,14 +281,9 @@ require("lazy").setup(
 		},
 		{
 			"Wansmer/symbol-usage.nvim",
+			enabled = true,
 			event = "LspAttach",
 			opts = {
-				kinds = {
-					vim.lsp.protocol.SymbolKind.Function,
-					vim.lsp.protocol.SymbolKind.Method,
-					vim.lsp.protocol.SymbolKind.Struct,
-					vim.lsp.protocol.SymbolKind.Interface,
-				},
 				hl = { link = "LspInlayHint" },
 				vt_position = "end_of_line",
 				references = { enabled = true, include_declaration = false },
@@ -296,6 +291,36 @@ require("lazy").setup(
 				implementation = { enabled = true },
 			},
 			config = function(_, opts)
+				local SymbolKind = vim.lsp.protocol.SymbolKind
+
+				opts = vim.tbl_extend("force", opts, {
+					filetypes = {
+						go = {
+							kinds = {
+								SymbolKind.Function,
+								SymbolKind.Method,
+								SymbolKind.Interface,
+								SymbolKind.Struct,
+							},
+							kinds_filter = {
+								[SymbolKind.Method] = {
+									function(data)
+										if data.parent.kind == SymbolKind.Interface then
+											return false
+										end
+										return true
+									end,
+								},
+							},
+						},
+						lua = {
+							kinds = {
+								SymbolKind.Function,
+							},
+						},
+					},
+				})
+
 				require("symbol-usage").setup(opts)
 			end,
 		},
