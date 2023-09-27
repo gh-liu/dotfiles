@@ -689,12 +689,12 @@ require("lazy").setup(
 			config = function()
 				require("nvim-surround").setup({
 					keymaps = {
-						insert = false,
-						insert_line = false,
 						normal = "ys",
 						normal_cur = "yss",
-						normal_line = "yS",
+						normal_line = false,
 						normal_cur_line = false,
+						insert = false,
+						insert_line = false,
 						visual = "gs",
 						visual_line = false,
 						delete = "ds",
