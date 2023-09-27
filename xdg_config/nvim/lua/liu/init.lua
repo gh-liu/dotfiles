@@ -791,6 +791,7 @@ require("lazy").setup(
 				formatters_by_ft = {
 					go = { "gofumpt" },
 					lua = { "stylua" },
+					zig = { "zigfmt" },
 					rust = { "rustfmt" },
 					sh = { "shfmt" },
 				},
@@ -2200,5 +2201,8 @@ lsp.handlers["textDocument/signatureHelp"] = lsp.with(oldsignature, { border = c
 -- }}}
 
 -- }}}
+
+-- disable automatic code formating
+vim.g.zig_fmt_autosave = 0
 
 -- vim: foldmethod=marker
