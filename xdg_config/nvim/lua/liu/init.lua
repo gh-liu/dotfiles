@@ -1496,6 +1496,7 @@ require("lazy").setup(
 		},
 		{
 			"ojroques/nvim-osc52",
+			enabled = false,
 			cond = function()
 				return os.getenv("SSH_CLIENT")
 			end,
