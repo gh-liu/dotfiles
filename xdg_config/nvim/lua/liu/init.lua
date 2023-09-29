@@ -2061,7 +2061,7 @@ lsp.set_log_level("OFF")
 -- local autocmd = api.nvim_create_autocmd
 -- local augroup = api.nvim_create_augroup
 
--- keymaps
+-- keymaps {{{2
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachKeymaps", { clear = true }),
 	callback = function(args)
@@ -2096,8 +2096,9 @@ autocmd("LspAttach", {
 		-- nmap("<C-k>", lsp.buf.signature_help, "Signature Documentation")
 	end,
 })
+-- }}}
 
--- workspace
+-- workspace {{{2
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachWorkspaceFolderCmds", { clear = true }),
 	callback = function(args)
@@ -2126,8 +2127,9 @@ autocmd("LspAttach", {
 		end, { nargs = 0 })
 	end,
 })
+-- }}}
 
--- codelens
+-- codelens {{{2
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachCodelens", { clear = true }),
 	callback = function(args)
@@ -2143,8 +2145,9 @@ autocmd("LspAttach", {
 		end
 	end,
 })
+-- }}}
 
--- inlayhint
+-- inlayhint{{{2
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachInlayHint", { clear = true }),
 	callback = function(args)
@@ -2158,14 +2161,15 @@ autocmd("LspAttach", {
 		end
 	end,
 })
+-- }}}
 
--- document highlight
+-- document highlight{{{2
 autocmd("LspAttach", {
 	group = augroup("UserLspAttachDocumentHighlight", { clear = true }),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		local bufnr = args.buf
-		if client.server_capabilities.documentHighlightProvider then
+		if client.supports_method("textDocument/documentHighlight") then
 			api.nvim_create_augroup("UserLspDocumentHighlight", {
 				clear = false,
 			})
@@ -2190,8 +2194,9 @@ autocmd("LspAttach", {
 		end
 	end,
 })
+-- }}}
 
--- handlers {{{
+-- handlers {{{2
 local oldhover = lsp.handlers.hover
 local oldsignature = lsp.handlers.signature_help
 lsp.handlers["textDocument/hover"] = lsp.with(oldhover, { border = config.borders })
