@@ -194,6 +194,11 @@ require("lazy").setup(
 				})
 			end,
 		},
+		{
+			"folke/twilight.nvim",
+			cmd = { "Twilight" },
+			opts = {},
+		},
 		--}}}
 
 		-- LSP {{{2
