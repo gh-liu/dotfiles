@@ -3,7 +3,7 @@
 " v:foldend	line number of last line in the fold
 " v:folddashes	a string that contains dashes to represent the foldlevel.
 " v:foldlevel	the foldlevel of the fold
-set foldtext=MyFoldText()
+" set foldtext=MyFoldText()
 
 function MyFoldText()
   let line = getline(v:foldstart)
