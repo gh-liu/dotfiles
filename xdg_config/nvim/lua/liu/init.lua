@@ -164,10 +164,12 @@ require("lazy").setup(
 				local rainbow_delimiters = require("rainbow-delimiters")
 
 				vimg.rainbow_delimiters = {
+					-- defines how to perform the highlighting of delimiters
+					-- global, local
 					strategy = {
 						[""] = rainbow_delimiters.strategy["global"],
-						vim = rainbow_delimiters.strategy["local"],
 					},
+					-- defines what to match
 					query = {
 						[""] = "rainbow-delimiters",
 						lua = "rainbow-blocks",
@@ -181,6 +183,8 @@ require("lazy").setup(
 						"RainbowDelimiterViolet",
 						"RainbowDelimiterCyan",
 					},
+					-- zig is slow
+					blacklist = { "zig" },
 				}
 
 				set_hls({
@@ -1257,13 +1261,6 @@ require("lazy").setup(
 				end
 			end,
 		},
-		-- {
-		-- 	"Iron-E/nvim-tabmode",
-		-- 	cmd = "TabmodeEnter", -- don't load until using this command
-		-- 	config = true, -- automatically call `bufmode.setup()`; not needed if you specify `opts`
-		-- 	keys = { { "<Leader><Tab>", desc = "Enter buffer mode", mode = "n" } }, -- don't load until pressing these keys
-		-- 	-- opts = {}, (put `setup` options here, e.g. `opts = {enter_mapping = false}`
-		-- },
 		-- }}}
 
 		-- Misc {{{2
