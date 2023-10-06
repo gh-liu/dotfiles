@@ -129,6 +129,18 @@ local servers = {
 			inlay_hints_hide_redundant_param_names_last_token = false,
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#pyright
+	-- npm install -g pyright
+	pyright = {
+		-- https://microsoft.github.io/pyright/#/settings
+		python = {
+			analysis = {
+				autoSearchPaths = true,
+				diagnosticMode = "openFilesOnly",
+				useLibraryCodeForTypes = true,
+			},
+		},
+	},
 }
 
 -- setup neodev BEFORE lspconfig
