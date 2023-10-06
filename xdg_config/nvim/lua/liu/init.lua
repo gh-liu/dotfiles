@@ -1899,6 +1899,8 @@ setmap("ca", "%%", "expand('%:p:h')", { expr = true })
 -- }}}
 
 setmap("n", "<C-w>O", ":tabonly<CR>")
+
+setmap("x", "/", "<Esc>/\\%V")
 -- }}}
 
 -- Cmds {{{1
