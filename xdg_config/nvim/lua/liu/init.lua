@@ -1894,6 +1894,8 @@ local opts = {
 }
 setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", opts)
 setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", opts)
+
+setmap("ca", "%%", "expand('%:p:h')", { expr = true })
 -- }}}
 
 setmap("n", "<C-w>O", ":tabonly<CR>")
