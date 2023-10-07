@@ -790,27 +790,66 @@ require("lazy").setup(
 			lazy = true,
 			keys = {
 				{
-					"<leader>F",
+					"<leader>=",
 					function()
 						require("conform").format({ lsp_fallback = true })
 					end,
 				},
 			},
+			cmd = { "Format", "FormatEnable", "FormatDisable" },
 			opts = {
 				formatters_by_ft = {
 					go = { "gofumpt" },
-					lua = { "stylua" },
 					zig = { "zigfmt" },
 					rust = { "rustfmt" },
+					lua = { "stylua" },
 					sh = { "shfmt" },
+					json = { "jq" },
+					just = { "just" },
 				},
-				-- format_on_save = {
-				-- 	lsp_fallback = true,
-				-- 	timeout_ms = 500,
-				-- },
 			},
-			config = function(_, opts)
+			config = function(self, opts)
+				opts.format_on_save = function(bufnr)
+					-- Disable with a global or buffer-local variable
+					if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+						return
+					end
+					return { timeout_ms = 500, lsp_fallback = true }
+				end
 				require("conform").setup(opts)
+
+				do
+					vim.api.nvim_create_user_command(self.cmd[2], function()
+						vim.b.disable_autoformat = false
+						vim.g.disable_autoformat = false
+					end, {
+						desc = "Re-enable autoformat-on-save",
+					})
+
+					vim.api.nvim_create_user_command(self.cmd[3], function(args)
+						if args.bang then
+							-- FormatDisable! will disable formatting just for this buffer
+							vim.b.disable_autoformat = true
+						else
+							vim.g.disable_autoformat = true
+						end
+					end, {
+						desc = "Disable autoformat-on-save",
+						bang = true,
+					})
+				end
+
+				vim.api.nvim_create_user_command(self.cmd[1], function(args)
+					local range = nil
+					if args.count ~= -1 then
+						local end_line = vim.api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
+						range = {
+							start = { args.line1, 0 },
+							["end"] = { args.line2, end_line:len() },
+						}
+					end
+					require("conform").format({ async = true, lsp_fallback = true, range = range })
+				end, { range = true })
 			end,
 		},
 		{
