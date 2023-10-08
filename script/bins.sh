@@ -7,12 +7,12 @@ function git_clone_or_update() {
 }
 
 function update_luals() {
-	echo "========================================"
+	echo "========================================BEGIN"
 	url="https://api.github.com/repos/LuaLS/lua-language-server/tags"
-	version=$(eval "curl -s $url | jq -r '.[0].name'")
+	version=$(curl -s $url | jq -r '.[0].name')
 	echo "Installing luals-$version..."
 
-	[ -d $HOME/tools/luals ] && rm -rf $HOME/tools/luals
+	[ -d $HOME/tools/luals ] && mv $HOME/tools/luals $HOME/tools/luals$(date +%s)
 	mkdir -p $HOME/tools/luals
 	cd $HOME/tools/luals
 
@@ -22,8 +22,25 @@ function update_luals() {
 
 	tar -zxvf ./$pkg
 	ln -svf $(pwd)/bin/lua-language-server $HOME/.local/bin/lua-language-server
+	echo "========================================END"
+}
 
-	echo "========================================"
+function update_marksman() {
+	echo "========================================BEGIN"
+	url="https://api.github.com/repos/artempyanykh/marksman/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	echo "Installing marksman-$version..."
+
+	[ -d $HOME/tools/marksman ] && mv $HOME/tools/marksman $HOME/tools/marksman$(date +%s)
+	mkdir -p $HOME/tools/marksman
+	cd $HOME/tools/marksman
+
+	wget https://github.com/artempyanykh/marksman/releases/download/$version/marksman-linux-x64 -q --show-progres
+	test $? -eq 1 && echo "fial to download" && return
+
+	chmod +x $(pwd)/marksman-linux-x64
+	ln -svf $(pwd)/marksman-linux-x64 $HOME/.local/bin/marksman
+	echo "========================================END"
 }
 
 function update_fzf() {
@@ -40,9 +57,8 @@ function update_fzf() {
 }
 
 function update_wrk() {
-	PWD=$(pwd)
-
 	echo "========================================"
+	PWD=$(pwd)
 	echo "Installing wrk..."
 
 	git_clone_or_update https://github.com/wg/wrk.git $LIU_TOOLS/wrk
@@ -53,22 +69,20 @@ function update_wrk() {
 	mkdir -p $HOME/.local/bin
 	ln -svf $LIU_TOOLS/wrk/wrk $HOME/.local/bin/wrk
 
-	echo "========================================"
-
 	cd $PWD
+	echo "========================================"
 }
 
 function update_tmux() {
+	echo "========================================"
 	PWD=$(pwd)
 
-	echo "========================================"
-	echo "Installing tmux..."
-
-	mkdir -p $XDG_CONFIG_HOME/tmux/plugins/tpm
-	git_clone_or_update https://github.com/tmux-plugins/tpm $XDG_CONFIG_HOME/tmux/plugins/tpm
+	url="https://api.github.com/repos/LuaLS/lua-language-server/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	echo "Installing tmux-$version..."
 
 	mkdir $LIU_TOOLS/tmux && cd $LIU_TOOLS/tmux
-	wget https://github.com/tmux/tmux/releases/download/3.3a/tmux-3.3a.tar.gz
+	wget https://github.com/tmux/tmux/releases/download/$version/tmux-$version.tar.gz
 	test $? -eq 1 && echo "fial to download tmux" && return
 
 	tar -zxvf ./tmux-3.3a.tar.gz
@@ -78,9 +92,12 @@ function update_tmux() {
 
 	mkdir -p $HOME/.local/bin
 	ln -svf $(pwd)/tmux $HOME/.local/bin/tmux
-	echo "========================================"
+
+	# mkdir -p $XDG_CONFIG_HOME/tmux/plugins/tpm
+	# git_clone_or_update https://github.com/tmux-plugins/tpm $XDG_CONFIG_HOME/tmux/plugins/tpm
 
 	cd $PWD
+	echo "========================================"
 }
 
 bins() {
@@ -94,12 +111,14 @@ bins() {
 	go install github.com/fatih/gomodifytags@latest
 	go install mvdan.cc/sh/v3/cmd/shfmt@latest
 	go install github.com/gohugoio/hugo@latest
-	go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 	npm i -g vim-language-server
 	npm i -g bash-language-server
+	npm i -g vscode-langservers-extracted # jsonls
 	npm i -g yaml-language-server
-	npm i -g vscode-langservers-extracted
+	npm i -g typescript typescript-language-server
+	npm i -g pyright
 
 	cargo install fd
 	cargo install bat
@@ -113,6 +132,9 @@ bins() {
 case $1 in
 "luals")
 	update_luals
+	;;
+"mdls")
+	update_marksman
 	;;
 "tmux")
 	update_tmux
