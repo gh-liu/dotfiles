@@ -141,6 +141,9 @@ local servers = {
 			},
 		},
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#marksman
+	-- Download from https://github.com/artempyanykh/marksman/releases
+	marksman = {},
 }
 
 -- setup neodev BEFORE lspconfig
