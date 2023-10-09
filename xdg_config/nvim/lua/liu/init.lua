@@ -1586,6 +1586,19 @@ require("lazy").setup(
 				end,
 			},
 		},
+		{
+			"ellisonleao/glow.nvim",
+			cond = function()
+				return fn.executable("glow") == 1
+			end,
+			enabled = true,
+			opts = {
+				border = config.borders,
+				-- width_ratio = 0.8,
+				-- height_ratio = 0.8,
+			},
+			cmd = "Glow",
+		},
 		-- }}}
 
 		-- Lang {{{2

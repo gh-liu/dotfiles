@@ -111,6 +111,7 @@ bins() {
 	go install github.com/fatih/gomodifytags@latest
 	go install mvdan.cc/sh/v3/cmd/shfmt@latest
 	go install github.com/gohugoio/hugo@latest
+	go install github.com/charmbracelet/glow@latest
 	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 	npm i -g vim-language-server
