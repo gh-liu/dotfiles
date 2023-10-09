@@ -926,6 +926,7 @@ require("lazy").setup(
 		},
 		{
 			"chaoren/vim-wordmotion",
+			enabled = true,
 			keys = { "<leader>ww" },
 			-- event = "VeryLazy",
 			init = function()
@@ -943,8 +944,10 @@ require("lazy").setup(
 						end
 					end
 					map({ "n", "x", "o" }, "w", "<Plug>WordMotion_w")
-					map({ "x", "o" }, "iw", "<Plug>WordMotion_w")
 					map({ "n", "x", "o" }, "b", "<Plug>WordMotion_b")
+					map({ "n", "x", "o" }, "e", "<Plug>WordMotion_e")
+					map({ "x", "o" }, "iw", "<Plug>WordMotion_iw")
+					map({ "x", "o" }, "aw", "<Plug>WordMotion_aw")
 
 					layer:map("n", "q", function()
 						layer:exit()
