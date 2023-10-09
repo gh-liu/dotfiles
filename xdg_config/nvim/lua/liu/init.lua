@@ -1592,6 +1592,20 @@ require("lazy").setup(
 			},
 			cmd = "Glow",
 		},
+		{
+			"AckslD/nvim-FeMaco.lua",
+			opts = {
+				prepare_buffer = function(opts)
+					local buf = vim.api.nvim_create_buf(false, false)
+
+					vim.keymap.set("n", "q", ":quit<CR>", { buffer = buf })
+
+					return vim.api.nvim_open_win(buf, true, opts)
+				end,
+				post_open_float = function(winnr) end,
+			},
+			cmd = "FeMaco",
+		},
 		-- }}}
 
 		-- Lang {{{2
