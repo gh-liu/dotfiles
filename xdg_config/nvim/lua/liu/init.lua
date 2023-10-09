@@ -2210,26 +2210,38 @@ autocmd("LspAttach", {
 		local client = lsp.get_client_by_id(args.data.client_id)
 		local bufnr = args.buf
 		if client.supports_method("textDocument/documentHighlight") then
-			api.nvim_create_augroup("UserLspDocumentHighlight", {
+			local aug = api.nvim_create_augroup("UserLspDocumentHighlight", {
 				clear = false,
 			})
-			api.nvim_clear_autocmds({
-				buffer = bufnr,
-				group = "UserLspDocumentHighlight",
-			})
-			api.nvim_create_autocmd({ "CursorHold" }, {
-				group = "UserLspDocumentHighlight",
-				buffer = bufnr,
+			do
+				api.nvim_clear_autocmds({
+					buffer = bufnr,
+					group = aug,
+				})
+				api.nvim_create_autocmd({ "CursorHold" }, {
+					group = aug,
+					buffer = bufnr,
+					callback = function()
+						lsp.buf.document_highlight()
+					end,
+				})
+				api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+					group = aug,
+					buffer = bufnr,
+					callback = function()
+						lsp.buf.clear_references()
+					end,
+				})
+			end
+
+			autocmd("LspDetach", {
 				callback = function()
-					lsp.buf.document_highlight()
+					api.nvim_clear_autocmds({
+						group = aug,
+						buffer = bufnr,
+					})
 				end,
-			})
-			api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-				group = "UserLspDocumentHighlight",
 				buffer = bufnr,
-				callback = function()
-					lsp.buf.clear_references()
-				end,
 			})
 		end
 	end,
