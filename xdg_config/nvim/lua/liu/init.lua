@@ -1,3 +1,12 @@
+local fn = vim.fn
+local api = vim.api
+local cmd = vim.cmd
+local keymap = vim.keymap
+local lsp = vim.lsp
+local vimg = vim.g
+local autocmd = api.nvim_create_autocmd
+local augroup = api.nvim_create_augroup
+
 -- Global Things {{{1
 _G.config = {
 	colors = {
@@ -50,13 +59,6 @@ _G.config = {
 		TypeParameter = "",
 	},
 }
-
-local fn = vim.fn
-local api = vim.api
-local cmd = vim.cmd
-local keymap = vim.keymap
-local lsp = vim.lsp
-local vimg = vim.g
 
 local nvim_set_hl = api.nvim_set_hl
 ---@param highlights table
@@ -1281,6 +1283,30 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"mfussenegger/nvim-lint",
+			event = "VeryLazy",
+			config = function(self, opts)
+				local linters_by_ft = {
+					go = { "golangcilint" },
+				}
+				require("lint").linters_by_ft = linters_by_ft
+
+				autocmd("FileType", {
+					pattern = vim.tbl_keys(linters_by_ft),
+					callback = function(ev)
+						-- vim.print(ev)
+						autocmd({ "BufWritePost" }, {
+							callback = function()
+								require("lint").try_lint()
+							end,
+							buffer = ev.buf,
+						})
+					end,
+					desc = "setup nvim-lint for ft",
+				})
+			end,
+		},
+		{
 			"mbbill/undotree",
 			-- event = "VeryLazy",
 			cmd = { "UndotreeToggle" },
@@ -1883,9 +1909,6 @@ end, {
 -- }}}
 
 -- Autocmds {{{1
-local autocmd = api.nvim_create_autocmd
-local augroup = api.nvim_create_augroup
-
 local general = augroup("UserGeneralSettings", { clear = true })
 autocmd("TextYankPost", {
 	pattern = "*",
