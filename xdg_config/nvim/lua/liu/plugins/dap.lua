@@ -33,6 +33,7 @@ local replwinopts = {
 	winfixheight = true,
 }
 
+-- maps and cmds {{{2
 map("<Leader>dr", function()
 	dap.repl.toggle(replwinopts)
 end, "toggle dap repl")
@@ -44,6 +45,10 @@ map("<leader>B", function()
 		dap.set_breakpoint(input)
 	end
 end)
+create_cmd("DAPClearBreakpoints", function()
+	dap.clear_breakpoints()
+end, {})
+-- }}}
 
 -- Event {{{2
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
@@ -87,14 +92,26 @@ autocmd("User", {
 })
 -- }}}
 
--- helper funcs {{{2
+-- Repl {{{2
+local repl = require("dap.repl")
+repl.commands = vim.tbl_extend("force", repl.commands, {
+	exit = { ".q" },
+	custom_commands = {
+		[".restart"] = dap.run_last,
+	},
+})
+-- }}}
+
+-- LANG {{{2
+
+-- helper funcs {{{3
 local function input_args()
 	local argument_string = fn.input("Program arg(s) (enter nothing to leave it null): ")
 	return fn.split(argument_string, " ", true)
 end
 -- }}}
 
--- Golang {{{2
+-- Golang {{{3
 local function get_closest_testfunc()
 	local parser = vim.treesitter.get_parser(0)
 	local root = (parser:parse()[1]):root()
@@ -205,7 +222,7 @@ dap.configurations.go = {
 }
 -- }}}
 
--- Rust {{{2
+-- Rust {{{3
 dap.adapters.lldb = {
 	name = "lldb",
 	type = "executable",
@@ -238,7 +255,7 @@ dap.configurations.c = dap.configurations.rust
 dap.configurations.cpp = dap.configurations.rust
 -- }}}
 
--- Nlua {{{
+-- Nlua {{{3
 local nvim_instance
 dap.adapters.nlua = function(cb, config)
 	if nvim_instance then
@@ -280,14 +297,6 @@ dap.configurations.lua = {
 }
 -- }}}
 
--- Repl {{{2
-local repl = require("dap.repl")
-repl.commands = vim.tbl_extend("force", repl.commands, {
-	exit = { ".q" },
-	custom_commands = {
-		[".restart"] = dap.run_last,
-	},
-})
 -- }}}
 
 require("dap.ext.vscode").load_launchjs()
@@ -531,5 +540,53 @@ autocmd("User", {
 
 -- }}}
 
+-- libmodal {{{2
+local ok, libmodal = pcall(require, "libmodal")
+if ok then
+	local DESC = "Debuging mode"
+	local layer = libmodal.layer.new({})
+	local function map(lhs, rhs)
+		layer:map("n", lhs, rhs, {})
+	end
+
+	-- map("C", dap.continue)
+	-- map("X", dap.terminate)
+	-- map("R", dap.run_last)
+	map("<C-n>", dap.step_over)
+	map("<C-p>", dap.step_back)
+	map("di", dap.step_into)
+	map("do", dap.step_out)
+
+	map("dv", function()
+		dapui.toggle({ layout = 3, reset = true })
+	end)
+	map("db", function()
+		dapui.toggle({ layout = 4, reset = true })
+	end)
+	map("ds", function()
+		dapui.toggle({ layout = 5, reset = true })
+	end)
+	map("dw", function()
+		dapui.toggle({ layout = 6, reset = true })
+	end)
+	map("dc", function()
+		dapui.toggle({ layout = 7, reset = true })
+	end)
+	map("dr", function()
+		dapui.toggle({ layout = 8, reset = true })
+	end)
+
+	layer:map("n", "q", function()
+		layer:exit()
+		vim.g.libmodalActiveLayerName = nil
+	end, {})
+	local function mode()
+		vim.g.libmodalActiveLayerName = "Debuging"
+		layer:enter()
+	end
+	vim.keymap.set("n", "<leader>D", "", { callback = mode, desc = DESC })
+end
+
+-- }}}
 
 -- vim: set foldmethod=marker foldlevel=1:

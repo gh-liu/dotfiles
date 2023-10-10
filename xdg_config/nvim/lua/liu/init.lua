@@ -350,7 +350,12 @@ require("lazy").setup(
 		{
 			"mfussenegger/nvim-dap",
 			-- event = "VeryLazy",
-			keys = { "<C-s>" }, -- invoke debuging key layer
+			keys = {
+				"<leader>D",
+				"<leader>db",
+				"<leader>B",
+				"<leader>dr",
+			},
 			cmd = { "DapContinue", "DapToggleBreakpoint" },
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
@@ -358,57 +363,6 @@ require("lazy").setup(
 			},
 			config = function(self, opts)
 				load_plugin_config("dap")
-
-				local dap = require("dap")
-				local dapui = require("dapui")
-
-				local ok, libmodal = pcall(require, "libmodal")
-				if ok then
-					local DESC = "Debuging mode"
-					local layer = libmodal.layer.new({})
-					local function map(lhs, rhs)
-						layer:map("n", lhs, rhs, {})
-					end
-
-					-- map("C", dap.continue)
-					-- map("X", dap.terminate)
-					-- map("R", dap.run_last)
-					map("<C-n>", dap.step_over)
-					map("<C-p>", dap.step_back)
-					map("di", dap.step_into)
-					map("do", dap.step_out)
-					map("b", dap.toggle_breakpoint)
-					map("B", dap.clear_breakpoints)
-
-					map("dv", function()
-						dapui.toggle({ layout = 3, reset = true })
-					end)
-					map("db", function()
-						dapui.toggle({ layout = 4, reset = true })
-					end)
-					map("ds", function()
-						dapui.toggle({ layout = 5, reset = true })
-					end)
-					map("dw", function()
-						dapui.toggle({ layout = 6, reset = true })
-					end)
-					map("dc", function()
-						dapui.toggle({ layout = 7, reset = true })
-					end)
-					map("dr", function()
-						dapui.toggle({ layout = 8, reset = true })
-					end)
-
-					layer:map("n", "q", function()
-						layer:exit()
-						vim.g.libmodalActiveLayerName = nil
-					end, {})
-					local function mode()
-						vim.g.libmodalActiveLayerName = "Debuging"
-						layer:enter()
-					end
-					keymap.set("n", self.keys[1], "", { callback = mode, desc = DESC })
-				end
 			end,
 		},
 		-- }}}
