@@ -1304,14 +1304,6 @@ require("lazy").setup(
 			"Bekaboo/dropbar.nvim",
 			enabled = true,
 			event = "VeryLazy",
-			keys = {
-				{
-					"<leader>dp",
-					function()
-						require("dropbar.api").pick()
-					end,
-				},
-			},
 			opts = {
 				general = {
 					---@type boolean|fun(buf: integer, win: integer): boolean
@@ -1365,6 +1357,13 @@ require("lazy").setup(
 					},
 				},
 			},
+			config = function(self, opts)
+				require("dropbar").setup(opts)
+
+				keymap.set("n", "<leader>P", function()
+					require("dropbar.api").pick()
+				end)
+			end,
 		},
 		{
 			"rgroli/other.nvim",
