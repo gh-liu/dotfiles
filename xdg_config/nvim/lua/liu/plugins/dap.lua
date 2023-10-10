@@ -531,20 +531,5 @@ autocmd("User", {
 
 -- }}}
 
--- Hover {{{
-local ok, hover = pcall(require, "hover")
-if ok then
-	hover.register({
-		name = "DAP",
-		enabled = function()
-			return vim.g.debuging == 1
-		end,
-		execute = function(done)
-			dapui.eval(nil, {})
-		end,
-		priority = 1001,
-	})
-end
--- }}}
 
 -- vim: set foldmethod=marker foldlevel=1:
