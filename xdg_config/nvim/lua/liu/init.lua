@@ -221,9 +221,9 @@ require("lazy").setup(
 			event = "LspAttach",
 			opts = {
 				sources = {
-					["null-ls"] = {
-						ignore = true,
-					},
+					-- ["null-ls"] = {
+					-- 	ignore = true,
+					-- },
 				},
 			},
 			config = function(_, opts)
@@ -257,6 +257,7 @@ require("lazy").setup(
 		},
 		{
 			"jose-elias-alvarez/null-ls.nvim",
+			enabled = false,
 			event = "VeryLazy",
 			config = function()
 				local nls = require("null-ls")
@@ -1610,10 +1611,10 @@ require("lazy").setup(
 					popup = {
 						border = config.borders,
 					},
-					null_ls = {
-						enabled = true,
-						name = "crates.nvim",
-					},
+					-- null_ls = {
+					-- 	enabled = true,
+					-- 	name = "crates.nvim",
+					-- },
 				})
 
 				-- Hover {{{
