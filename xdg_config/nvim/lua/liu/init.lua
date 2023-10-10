@@ -1980,7 +1980,7 @@ diagnostic.config({
 
 keymap.set("n", "[d", diagnostic.goto_prev)
 keymap.set("n", "]d", diagnostic.goto_next)
--- keymap.set("n", "<leader>dd", diagnostic.open_float)
+keymap.set("n", "<leader>dp", diagnostic.open_float)
 -- keymap.set("n", "<leader>dq", diagnostic.setloclist)
 
 fn.sign_define("DiagnosticSignError", { text = config.icons.Error, texthl = "DiagnosticSignError" })
