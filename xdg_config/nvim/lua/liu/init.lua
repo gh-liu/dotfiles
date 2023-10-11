@@ -580,39 +580,29 @@ require("lazy").setup(
 		},
 		{
 			"ThePrimeagen/harpoon",
-			-- event = "VeryLazy",
-			keys = function()
+			keys = {
+				"<C-y>",
+				"<C-e>",
+				"<C-h>",
+				"<C-l>",
+			},
+			config = function(self, opts)
+				require("harpoon").setup()
+
 				local mark = require("harpoon.mark")
 				local ui = require("harpoon.ui")
-				return {
-					{
-						"<C-y>",
-						function()
-							mark.add_file()
-						end,
-					},
-					{
-						"<C-e>",
-						function()
-							ui.toggle_quick_menu()
-						end,
-					},
-					{
-						"<C-h>",
-						function()
-							ui.nav_prev()
-						end,
-					},
-					{
-						"<C-l>",
-						function()
-							ui.nav_next()
-						end,
-					},
-				}
-			end,
-			config = function()
-				require("harpoon").setup()
+				keymap.set("n", self.keys[1], function()
+					mark.add_file()
+				end)
+				keymap.set("n", self.keys[2], function()
+					ui.toggle_quick_menu()
+				end)
+				keymap.set("n", self.keys[3], function()
+					ui.nav_prev()
+				end)
+				keymap.set("n", self.keys[4], function()
+					ui.nav_next()
+				end)
 
 				set_hls({ HarpoonBorder = { link = "FloatBorder" } })
 			end,
