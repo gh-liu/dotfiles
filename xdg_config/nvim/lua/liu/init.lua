@@ -122,7 +122,18 @@ require("lazy").setup(
 		},
 		{
 			"stevearc/dressing.nvim",
-			event = "VeryLazy",
+			-- event = "VeryLazy",
+			lazy = true,
+			init = function()
+				vim.ui.select = function(...)
+					require("lazy").load({ plugins = { "dressing.nvim" } })
+					return vim.ui.select(...)
+				end
+				vim.ui.input = function(...)
+					require("lazy").load({ plugins = { "dressing.nvim" } })
+					return vim.ui.input(...)
+				end
+			end,
 			opts = {
 				input = {
 					enabled = true,
@@ -136,9 +147,9 @@ require("lazy").setup(
 					},
 				},
 			},
-			config = function(_, opts)
-				require("dressing").setup(opts)
-			end,
+			-- config = function(_, opts)
+			-- 	require("dressing").setup(opts)
+			-- end,
 		},
 		{
 			"szw/vim-maximizer",
@@ -736,7 +747,6 @@ require("lazy").setup(
 			"tpope/vim-abolish",
 			event = "VeryLazy",
 		},
-
 		{
 			"stevearc/conform.nvim",
 			init = function(self)
