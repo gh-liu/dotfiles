@@ -17,6 +17,38 @@ function update_go() {
 	echo "========================================END"
 }
 
+function update_zig() {
+	echo "========================================BEGIN"
+	echo "zig.........................................."
+	VERSION=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."version"')
+	echo "updating to $VERSION ..."
+
+	ZIGINSTALLHOME=$HOME/env/zig
+	mkdir -p $ZIGINSTALLHOME && cd $ZIGINSTALLHOME
+	[ -d "$(pwd)/zig" ] && mv $(pwd)/zig $(pwd)/zig$(date +%s)
+
+	wget $(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball') -q --show-progress
+	test $? -eq 1 && echo "fial to download" && return
+	tar xvJf zig-linux-x86_64-$VERSION.tar.xz
+	rm zig-linux-x86_64-$VERSION.tar.xz
+	mv zig-linux-x86_64-$VERSION zig
+
+	echo "zls.........................................."
+	ZLSINSTALLHOME=$HOME/env/zig/zls
+	if [ -d $ZLSINSTALLHOME ]; then
+		cd $ZLSINSTALLHOME
+		git pull
+	else
+		mkdir -p $ZLSINSTALLHOME && cd $ZLSINSTALLHOME
+		git clone https://github.com/zigtools/zls .
+	fi
+	zig build -Doptimize=ReleaseSafe
+	chmod +x $(pwd)/zig-out/bin/zls
+	sudo ln -svf $(pwd)/zig-out/bin/zls /usr/bin/zls
+
+	echo "========================================END"
+}
+
 function update_rust() {
 	echo "========================================BEGIN"
 	echo "rust........................................."
