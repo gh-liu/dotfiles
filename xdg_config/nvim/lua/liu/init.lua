@@ -349,6 +349,7 @@ require("lazy").setup(
 		},
 		{
 			"smjonas/inc-rename.nvim",
+			enabled = false,
 			event = "LspAttach",
 			opts = {
 				input_buffer_type = "dressing",
@@ -478,7 +479,6 @@ require("lazy").setup(
 			ft = "just",
 			opts = {},
 		},
-
 		-- }}}
 
 		-- Fuzzy Finder {{{2
@@ -541,7 +541,8 @@ require("lazy").setup(
 		},
 		{
 			"nvim-telescope/telescope-fzf-native.nvim",
-			event = "VeryLazy",
+			-- event = "VeryLazy",
+			lazy = true,
 			build = "make",
 			cond = function()
 				return fn.executable("make") == 1
@@ -580,36 +581,36 @@ require("lazy").setup(
 		{
 			"ThePrimeagen/harpoon",
 			-- event = "VeryLazy",
-			keys = {
-				{
-					"<C-y>",
-					function()
-						local mark = require("harpoon.mark")
-						mark.add_file()
-					end,
-				},
-				{
-					"<C-e>",
-					function()
-						local ui = require("harpoon.ui")
-						ui.toggle_quick_menu()
-					end,
-				},
-				{
-					"<C-h>",
-					function()
-						local ui = require("harpoon.ui")
-						ui.nav_prev()
-					end,
-				},
-				{
-					"<C-l>",
-					function()
-						local ui = require("harpoon.ui")
-						ui.nav_next()
-					end,
-				},
-			},
+			keys = function()
+				local mark = require("harpoon.mark")
+				local ui = require("harpoon.ui")
+				return {
+					{
+						"<C-y>",
+						function()
+							mark.add_file()
+						end,
+					},
+					{
+						"<C-e>",
+						function()
+							ui.toggle_quick_menu()
+						end,
+					},
+					{
+						"<C-h>",
+						function()
+							ui.nav_prev()
+						end,
+					},
+					{
+						"<C-l>",
+						function()
+							ui.nav_next()
+						end,
+					},
+				}
+			end,
 			config = function()
 				require("harpoon").setup()
 
@@ -646,7 +647,10 @@ require("lazy").setup(
 			"numToStr/Comment.nvim",
 			-- event = "VeryLazy",
 			lazy = true,
-			keys = { { "gc", mode = { "n", "x" } }, { "gb", mode = { "n", "x" } } },
+			keys = {
+				{ "gc", mode = { "n", "x" } },
+				{ "gb", mode = { "n", "x" } },
+			},
 			config = function()
 				require("Comment").setup({
 					ignore = "^$",
@@ -663,22 +667,9 @@ require("lazy").setup(
 		{
 			"kylechui/nvim-surround",
 			event = "VeryLazy",
-			config = function()
-				require("nvim-surround").setup({
-					keymaps = {
-						normal = "ys",
-						normal_cur = "yss",
-						normal_line = false,
-						normal_cur_line = false,
-						insert = false,
-						insert_line = false,
-						visual = "gs",
-						visual_line = false,
-						delete = "ds",
-						change = "cs",
-						change_line = false,
-					},
-				})
+			opts = {},
+			config = function(self, opts)
+				require("nvim-surround").setup(opts)
 			end,
 		},
 		{
@@ -943,6 +934,7 @@ require("lazy").setup(
 		},
 		{
 			"sustech-data/wildfire.nvim",
+			enabled = false,
 			event = "VeryLazy",
 			config = function(self, _)
 				require("wildfire").setup({})
@@ -1224,11 +1216,11 @@ require("lazy").setup(
 
 				local next_move = require("nvim-next.move")
 
-				local diagnostic = vim.diagnostic
-				local prev_diag_item, next_diag_item =
-					next_move.make_repeatable_pair(diagnostic.goto_prev, diagnostic.goto_next)
-				keymap.set("n", "[d", prev_diag_item)
-				keymap.set("n", "]d", next_diag_item)
+				-- local diagnostic = vim.diagnostic
+				-- local prev_diag_item, next_diag_item =
+				-- 	next_move.make_repeatable_pair(diagnostic.goto_prev, diagnostic.goto_next)
+				-- keymap.set("n", "[d", prev_diag_item)
+				-- keymap.set("n", "]d", next_diag_item)
 
 				local make_repeatable_cmd_pair = function(prev, next)
 					local checkerr = function(status)
@@ -1423,7 +1415,10 @@ require("lazy").setup(
 		},
 		{
 			"rgroli/other.nvim",
-			cmd = { "Other", "OtherVSplit" },
+			cmd = {
+				"Other",
+				"OtherVSplit",
+			},
 			config = function()
 				require("other-nvim").setup({
 					mappings = {
@@ -1437,7 +1432,10 @@ require("lazy").setup(
 		},
 		{
 			"stevearc/oil.nvim",
-			cmd = { "Oil", "OilSSH" },
+			cmd = {
+				"Oil",
+				"OilSSH",
+			},
 			keys = { "-" },
 			config = function(self, opts)
 				require("oil").setup({
@@ -1471,7 +1469,10 @@ require("lazy").setup(
 		},
 		{
 			"lambdalisue/suda.vim",
-			cmd = { "SudaRead", "SudaWrite" },
+			cmd = {
+				"SudaRead",
+				"SudaWrite",
+			},
 		},
 		{ "tpope/vim-sleuth", event = "VeryLazy" },
 		{
@@ -1541,7 +1542,7 @@ require("lazy").setup(
 
 				vimg.winresizer_start_key = self.keys[1]
 			end,
-			keys = { "<leader>e" },
+			keys = { "<leader>wr" },
 			cmd = { "WinResizerStartResize" },
 		},
 		{
