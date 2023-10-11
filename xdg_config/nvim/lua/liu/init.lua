@@ -1000,9 +1000,12 @@ require("lazy").setup(
 			config = function()
 				-- Toggle summary window {{{3
 				local fugitivebuf = -1
+				local exit = function()
+					api.nvim_buf_delete(fugitivebuf, { force = true })
+				end
 				keymap.set("n", "<leader>gg", function()
 					if fugitivebuf > 0 then
-						api.nvim_buf_delete(fugitivebuf, { force = true })
+						exit()
 						fugitivebuf = -1
 					else
 						cmd.G()
@@ -1018,6 +1021,10 @@ require("lazy").setup(
 							end,
 							buffer = data.buf,
 						})
+
+						keymap.set("n", "q", function()
+							exit()
+						end, { buffer = fugitivebuf })
 					end,
 				})
 				-- }}}
