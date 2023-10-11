@@ -2033,6 +2033,20 @@ diagnostic.config({
 
 keymap.set("n", "[d", diagnostic.goto_prev)
 keymap.set("n", "]d", diagnostic.goto_next)
+local err_opts = { severity = vim.diagnostic.severity["ERROR"] }
+keymap.set("n", "[e", function()
+	diagnostic.goto_prev(err_opts)
+end)
+keymap.set("n", "]e", function()
+	diagnostic.goto_next(err_opts)
+end)
+local warn_opts = { severity = vim.diagnostic.severity["WARN"] }
+keymap.set("n", "[w", function()
+	diagnostic.goto_prev(warn_opts)
+end)
+keymap.set("n", "]w", function()
+	diagnostic.goto_next(warn_opts)
+end)
 keymap.set("n", "<leader>dp", diagnostic.open_float)
 -- keymap.set("n", "<leader>dq", diagnostic.setloclist)
 
