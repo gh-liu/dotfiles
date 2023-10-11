@@ -840,7 +840,20 @@ require("lazy").setup(
 			},
 			init = function() end,
 		},
-
+		{
+			"cshuaimin/ssr.nvim",
+			keys = {
+				{
+					"<leader>R",
+					function()
+						require("ssr").open()
+					end,
+					mode = { "n", "x" },
+					desc = "Structural Search + Replace",
+				},
+			},
+			otps = {},
+		},
 		-- }}}
 
 		-- Motion {{{2
