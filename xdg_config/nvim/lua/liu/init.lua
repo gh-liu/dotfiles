@@ -541,14 +541,28 @@ require("lazy").setup(
 		},
 		{
 			"nvim-telescope/telescope-fzf-native.nvim",
-			-- event = "VeryLazy",
-			lazy = true,
+			event = "VeryLazy",
+			-- lazy = true,
 			build = "make",
 			cond = function()
 				return fn.executable("make") == 1
 			end,
 			config = function()
 				require("telescope").load_extension("fzf")
+			end,
+		},
+		{
+			"nvim-telescope/telescope-frecency.nvim",
+			-- event = "VeryLazy",
+			-- lazy = true,
+			keys = {
+				{
+					"1<leader>so",
+					"<Cmd>Telescope frecency <CR>",
+				},
+			},
+			config = function()
+				require("telescope").load_extension("frecency")
 			end,
 		},
 		{
