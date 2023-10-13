@@ -994,7 +994,7 @@ require("lazy").setup(
 			opts = {
 				check_ts = true,
 				fast_wrap = {
-					map = "<M-l>",
+					map = "<c-l>",
 					-- end_key = "$",
 					-- before_key = "h",
 					-- after_key = "l",
