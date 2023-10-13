@@ -10,6 +10,8 @@ local sn = ls.sn
 local ts = vim.treesitter
 local get_node_text = ts.get_node_text
 
+local snips = {}
+
 -- return error
 do
 	local query_name = "LuaSnip_Go_Func_Result"
@@ -133,7 +135,8 @@ do
 		end, { index })
 	end
 
-	return {
+	table.insert(
+		snips,
 		s("efi", {
 			i(1, { "val" }),
 			t(", "),
@@ -149,6 +152,52 @@ do
 			d(5, ret_vals_sn, { 2, 3 }),
 			t({ "", "}" }),
 			i(0),
-		}),
-	}
+		})
+	)
 end
+
+-- method with receiver
+do
+	local query_name = "LuaSnip_Go_Method_With_Receiver"
+	ts.query.set(
+		"go",
+		query_name,
+		[[(type_declaration (type_spec name :(type_identifier) @struct_name type: (struct_type)))]]
+	)
+
+	local function method_receiver()
+		local parser = vim.treesitter.get_parser()
+		local tree = parser:trees()[1]
+		local query = ts.query.get("go", query_name)
+
+		local choices = {}
+		for _, node in query:iter_captures(tree:root(), 0) do
+			local type = get_node_text(node, 0)
+			local rec = string.lower(type):sub(0, 1)
+			table.insert(choices, t(rec .. " *" .. type))
+		end
+		return sn(nil, {
+			c(1, choices, {}),
+		})
+	end
+
+	table.insert(
+		snips,
+		s("methi", {
+			t("func ("),
+			d(1, method_receiver),
+			t(") "),
+			i(2, { "method" }),
+			t("("),
+			i(3),
+			t(") "),
+			i(4),
+			t({ " {", "" }),
+			t("\t"),
+			i(0),
+			t({ "", "}" }),
+		})
+	)
+end
+
+return snips
