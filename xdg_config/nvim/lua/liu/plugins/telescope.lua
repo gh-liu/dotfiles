@@ -12,7 +12,11 @@ keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" }
 
 keymap.set("n", "<leader>sm", builtin.marks, { desc = "[S]earch [M]ark" })
 keymap.set("n", "<leader>sj", builtin.jumplist, { desc = "[S]et [J]umplist" })
-keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
+keymap.set("n", "<leader>sh", function()
+	local word = vim.fn.expand("<cword>")
+	builtin.help_tags({ default_text = word })
+end, { desc = "[S]earch [H]elp" })
+
 keymap.set("n", "<leader>sr", builtin.registers, { desc = "[S]earch [R]egisters" })
 keymap.set("n", "<leader>st", builtin.filetypes, { desc = "[S]et File[t]ype" })
 
