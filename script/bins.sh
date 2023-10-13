@@ -129,6 +129,7 @@ bins() {
 	cargo install zoxide
 	cargo install ripgrep
 	cargo install stylua
+	cargo install starship --locked
 }
 
 case $1 in

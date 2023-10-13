@@ -1,16 +1,19 @@
 # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
 # setxkbmap -option ctrl:swapcaps
 
-# {{{1 Options
+# Options {{{1
 # https://zsh.sourceforge.io/Doc/Release/Options.html
-# Append history to the history file (no overwriting)
-setopt appendhistory
-# Remove command lines from the history list when the first character on the
-# line is a space, or when one of the expanded aliases contains a leading space
-setopt histignorespace
+setopt APPEND_HISTORY
+setopt HIST_IGNORE_SPACE
+
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
+for index ({1..9}) alias "$index"="cd +${index}"; unset index
+alias d='dirs -v'
 # }}}
 
-# {{{1 Envs
+# Envs {{{1
 export SHELL=$(which zsh)
 
 export LC_ALL=en_US.UTF-8
@@ -45,26 +48,9 @@ fi
 export LIU_ENV=$HOME/env
 export LIU_DEV=$HOME/dev
 export LIU_TOOLS=$HOME/tools
-
-export PROXYCHAINS_CONF_FILE=$XDG_CONFIG_HOME/proxychains/proxychains.conf
 # }}}
 
-# {{{1 BindKeys
-# bindkey -e # emacs mode
-# bindkey -v # vi mode
-# bindkey "^?" backward-delete-char # https://zsh.sourceforge.io/Intro/intro_11.html
-# use `showkey -a` to print the key codes
-# bindkey "^k" up-line-or-history
-# bindkey "^j" down-line-or-history
-# bindkey "^p" up-line-or-history
-# bindkey "^n" down-line-or-history
-# bindkey '^a' beginning-of-line
-# bindkey '^e' end-of-line
-# bindkey '^h' backward-char
-# bindkey '^l' forward-char
-# }}}
-
-# {{{1 Plugins
+# Plugins {{{1
 function git_clone_or_update() {
 	git clone "$1" "$2" 2>/dev/null && echo 'Clone status: Success' || (
 		cd "$2"
@@ -76,9 +62,8 @@ function update_zsh_plugins() {
 	git_clone_or_update https://github.com/zsh-users/zsh-autosuggestions $HOME/.zsh-plugins/zsh-autosuggestions
 	git_clone_or_update https://github.com/zsh-users/zsh-syntax-highlighting $HOME/.zsh-plugins/zsh-syntax-highlighting
 	git_clone_or_update https://github.com/zsh-users/zsh-completions.git $HOME/.zsh-plugins/zsh-completions
+	# git_clone_or_update https://github.com/marlonrichert/zsh-autocomplete.git $HOME/.zsh-plugins/zsh-autocomplete
 
-	git_clone_or_update https://github.com/agkozak/zsh-z $HOME/.zsh-plugins/zsh-z
-	git_clone_or_update https://github.com/jocelynmallon/zshmarks $HOME/.zsh-plugins/zshmarks
 	git_clone_or_update https://github.com/jeffreytse/zsh-vi-mode $HOME/.zsh-plugins/zsh-vi-mode
 
 	git_clone_or_update https://github.com/hutusi/git-paging.git $HOME/.zsh-plugins/git-paging
@@ -86,48 +71,16 @@ function update_zsh_plugins() {
 }
 
 # https://github.com/zsh-users/zsh-autosuggestions
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=12
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 source $HOME/.zsh-plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-bindkey '^f' forward-word
+bindkey '^l' forward-word
 
 # https://github.com/zsh-users/zsh-syntax-highlighting
 source $HOME/.zsh-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-# completion https://thevaluable.dev/zsh-completion-guide-examples
-if [[ $OS == darwin ]]; then
-    if type brew &>/dev/null
-    then
-	FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-
-	autoload -Uz compinit
-	compinit
-    fi
-fi
-source $ZDOTDIR/zsh-conf/completion.zsh
-
-# https://github.com/agkozak/zsh-z
-# source $HOME/.zsh-plugins/zsh-z/zsh-z.plugin.zsh
-
-# https://github.com/jocelynmallon/zshmarks
-source $HOME/.zsh-plugins/zshmarks/init.zsh
-fmarks() {
-    if [[ -f "$BOOKMARKS_FILE" ]]; then
-        lines=$(cat $BOOKMARKS_FILE)
-        bookmarkpath=$(echo $lines | fzf | cut -d "|" -f1)
-        bookmarkpath="${bookmarkpath/'$HOME'/$HOME}" # replace $HOME in string
-        cd $bookmarkpath
-    else
-        echo "BOOKMARKS_FILE does not exist"
-    fi
-}
-# alias bm="bookmark"
-# alias bmj="jump"
-# alias bmd="deletemark"
-# alias bml="fmarks"
-alias m="fmarks"
-alias ma="bookmark"
-alias md="deletemark"
+# https://github.com/zsh-users/zsh-completions
+fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
 
 # https://github.com/jeffreytse/zsh-vi-mode
 function zvm_config() {
@@ -138,19 +91,51 @@ function zvm_config() {
     # ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
 }
 source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
+# zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
 # }}}
 
-# {{{1 Zsh Directory Stack
-# https://zsh.sourceforge.io/Intro/intro_6.html
-setopt AUTO_PUSHD           # Push the current directory visited on the stack.
-setopt PUSHD_IGNORE_DUPS    # Do not store duplicates in the stack.
-setopt PUSHD_SILENT         # Do not print the directory stack after pushd or popd.
-for index ({1..9}) alias "$index"="cd +${index}"; unset index
-alias d='dirs -v'
+# Completion {{{1
+# completion https://thevaluable.dev/zsh-completion-guide-examples
+if [[ $OS == darwin ]]; then
+    if type brew &>/dev/null
+    then
+	FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+    fi
+fi
+
+fpath=($XDG_CONFIG_HOME/zsh/zsh-completions $fpath)
+
+setopt MENU_COMPLETE # Automatically highlight first element of completion menu
+
+# Should be called before compinit
+zmodload zsh/complist
+bindkey -M menuselect 'H' vi-backward-char
+bindkey -M menuselect 'K' vi-up-line-or-history
+bindkey -M menuselect 'J' vi-down-line-or-history
+bindkey -M menuselect 'L' vi-forward-char
+# bindkey -M menuselect '^xg' clear-screen
+bindkey -M menuselect 'U' undo
+
+_comp_options+=(globdots) # With hidden files
+autoload -U +X bashcompinit && bashcompinit
+autoload -U +X compinit && compinit
+# autoload -U compinit && compinit
+
+zstyle ':completion:*' menu select
+zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}-- %D %d --%f'
+zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
+zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
+
+## case-insensitive (uppercase from lowercase) completion
+# zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+## case-insensitive (all) completion
+#zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+## case-insensitive,partial-word and then substring completion
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
+
 # }}}
 
-# {{{1 User Configuration
+# User Configuration {{{1
 sources=(
     'functions'
     'aliases'
@@ -165,15 +150,13 @@ done
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 # }}}
 
-# {{{1 Golang
+# Langs {{{1
+# Golang {{{2
 export GO111MODULE=on
-# export GOPROXY=https://goproxy.io,https://proxy.golang.org,direct
-# export GOSUMDB=gosum.io+ce6e7565+AY5qEHUk/qmHc5btzW45JVoENfazw8LielDsaI+lEbq6
 export GOPATH=$LIU_ENV/golang/gopath
 export GOBIN=$GOPATH/bin
 export PATH=$PATH:$GOBIN
-export PATH=$PATH:$HOME/env/golang/go/bin
-
+export PATH=$PATH:$LIU_ENV/golang/go/bin
 
 alias gotc='go tool compile -S -N -l'
 alias gobs='go build -gcflags -S'
@@ -196,7 +179,7 @@ function gopprof() {
 }
 # }}}
 
-# {{{1 Rust
+# Rust {{{2
 export RUSTUP_HOME=$LIU_ENV/rust/rustup
 
 export CARGO_HOME=$LIU_ENV/rust/cargo
@@ -204,8 +187,9 @@ export CARGO_BIN=$LIU_ENV/rust/cargo/bin
 export PATH=$PATH:$CARGO_BIN
 # }}}
 
-# Nodejs {{{
-export PATH=$PATH:$HOME/env/nodejs/node/bin
+# Nodejs {{{2
+export PATH=$PATH:$LIU_ENV/nodejs/node/bin
+# }}}
 # }}}
 
 # {{{1 Path
@@ -222,18 +206,18 @@ fi
 # export PATH=$(echo $PATH | tr : "\n" | sort | uniq | tr "\n" :)
 # }}}
 
-# {{{1 Tools Configuration
+# Tools {{{1
 ## starship
+# curl -sS https://starship.rs/install.sh | sh
 export STARSHIP_CONFIG=$ZDOTDIR/starship/starship.toml
 [ -f "$(which starship)" ] && eval "$(starship init zsh)"
 
 ## direnv
+# curl -sfL https://direnv.net/install.sh | bash
 [ -f "$(which direnv)" ] && eval "$(direnv hook zsh)"
 
 ## fzf
 export FZF_DEFAULT_OPTS='--height 50% --border --reverse'
-### https://minsw.github.io/fzf-color-picker
-### https://github.com/ianchesal/nord-fzf
 ### https://github.com/junegunn/fzf/blob/master/ADVANCED.md#color-themes
 export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 --color=fg:#e5e9f0,bg:#2E3440,hl:#81a1c1
@@ -244,9 +228,6 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 
 ## zoxide
 [ -f "$(which zoxide)" ] && eval "$(zoxide init zsh)" # must be added after compinit is called.
-
-## tmuxp
-export TMUXP_CONFIGDIR=$XDG_CONFIG_HOME/tmuxp
 # }}}
 
-## vim: foldmethod=marker foldlevel=3
+## vim: foldmethod=marker foldlevel=0
