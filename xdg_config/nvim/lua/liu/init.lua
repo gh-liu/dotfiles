@@ -422,6 +422,7 @@ require("lazy").setup(
 			"nvim-treesitter/nvim-treesitter-textobjects",
 			event = "VeryLazy",
 			config = function(_, opts)
+				---@diagnostic disable-next-line: missing-fields
 				require("nvim-treesitter.configs").setup({
 					textobjects = {
 						select = {
@@ -473,6 +474,10 @@ require("lazy").setup(
 					},
 				})
 			end,
+		},
+		{
+			"JoosepAlviste/nvim-ts-context-commentstring",
+			event = "VeryLazy",
 		},
 		{
 			"IndianBoy42/tree-sitter-just",
