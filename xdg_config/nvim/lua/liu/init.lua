@@ -1774,7 +1774,7 @@ local setmap = function(mode, lhs, rhs, opts)
 	keymap.set(mode, lhs, rhs, opts)
 end
 
--- Toggle Opt{{{2
+-- Toggle Option{{{2
 local function toggle_opt(op, option, opts)
 	if not opts then
 		return setmap("n", ("co" .. op), (":set " .. option .. "!" .. "<bar> set " .. option .. "?<cr>"))
@@ -1829,28 +1829,6 @@ toggle_opt("m", "mouse", { val = "a" })
 toggle_opt("t", "laststatus", { val = 0 })
 -- }}}
 
--- Emacs like {{{2
-setmap("i", "<C-a>", "<HOME>")
-setmap("i", "<C-e>", "<END>")
-setmap("i", "<C-f>", "<right>")
-setmap("i", "<C-b>", "<left>")
-
-local function rtf(keys, mode)
-	local tkeys = api.nvim_replace_termcodes(keys, true, true, true)
-	return function()
-		return api.nvim_feedkeys(tkeys, mode, false)
-	end
-end
-setmap("c", "<C-a>", rtf("<HOME>", "c"))
-setmap("c", "<C-e>", rtf("<END>", "c"))
-setmap("c", "<C-b>", rtf("<left>", "c"))
-setmap("c", "<C-f>", rtf("<right>", "c"))
-
--- not
-setmap("c", "<C-j>", rtf("<down>", "c"))
-setmap("c", "<C-k>", rtf("<up>", "c"))
--- }}}
-
 -- Text {{{2
 setmap("n", "Y", "y$")
 setmap("x", "Y", "<ESC>y$gv")
@@ -1874,8 +1852,18 @@ setmap("x", "cn", [["ry<cmd>let @/=escape(@r, '/')<cr>"_cgn]])
 -- use the substitute function to replace the newline character with \n
 -- setmap("x", "cn", [[y<cmd>substitute(escape(@", '/'), '\n', '\\n', 'g')<cr>"_cgn]] )
 
-setmap("n", "<leader>g;", "mqA;<ESC>`q")
-setmap("n", "<leader>g,", "mqA,<ESC>`q")
+setmap("n", "<leader>g;", "mqA;<ESC>`q", { silent = true })
+setmap("n", "<leader>g,", "mqA,<ESC>`q", { silent = true })
+-- add undo break-points
+setmap("i", ",", ",<c-g>u")
+setmap("i", ";", ";<c-g>u")
+setmap("i", ".", ".<c-g>u")
+-- }}}
+
+-- Search {{{2
+
+-- search in selected area
+setmap("x", "/", "<Esc>/\\%V")
 -- }}}
 
 -- Exit {{{2
@@ -1886,17 +1874,39 @@ setmap("n", "<C-q>", ":quit<CR>")
 -- }}}
 
 -- Movement {{{2
--- HJKL as amplified versions of hjkl
+-- HL as amplified versions of hl
 setmap({ "n", "x", "o" }, "H", "^")
 setmap({ "n", "x", "o" }, "L", "$")
 -- Keep cursor in the center
-setmap("n", "<C-d>", "<C-d>zz")
-setmap("n", "<C-u>", "<C-u>zz")
 setmap("n", "n", "nzzzv")
 setmap("n", "N", "Nzzzv")
+setmap("n", "<C-d>", "<C-d>zz")
+setmap("n", "<C-u>", "<C-u>zz")
 -- }}}
 
--- QF {{{
+-- Emacs like {{{2
+setmap("i", "<C-a>", "<HOME>")
+setmap("i", "<C-e>", "<END>")
+setmap("i", "<C-f>", "<right>")
+setmap("i", "<C-b>", "<left>")
+
+local function rtf(keys, mode)
+	local tkeys = api.nvim_replace_termcodes(keys, true, true, true)
+	return function()
+		return api.nvim_feedkeys(tkeys, mode, false)
+	end
+end
+setmap("c", "<C-a>", rtf("<HOME>", "c"))
+setmap("c", "<C-e>", rtf("<END>", "c"))
+setmap("c", "<C-b>", rtf("<left>", "c"))
+setmap("c", "<C-f>", rtf("<right>", "c"))
+
+-- not
+setmap("c", "<C-j>", rtf("<down>", "c"))
+setmap("c", "<C-k>", rtf("<up>", "c"))
+-- }}}
+
+-- QF {{{2
 setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | tabclose | catch | endtry <cr>")
 
 setmap("n", "[q", "<cmd>try | cprev | catch | silent! clast | catch | endtry<cr>zv")
@@ -1906,7 +1916,19 @@ setmap("n", "[l", ":lprev<cr>")
 setmap("n", "]l", ":lnext<cr>")
 -- }}}
 
--- Delete Mark{{{
+-- Buffers {{{
+setmap("n", "[b", "<cmd>bprevious<cr>")
+setmap("n", "]b", "<cmd>bnext<cr>")
+-- switch to alternate file
+setmap("n", "<leader>bb", "<cmd>e #<cr>")
+-- }}}
+
+-- Tabs {{{2
+setmap("n", "<C-w>O", ":tabonly<CR>")
+-- }}}
+
+-- Marks {{{2
+-- delete mark
 vim.keymap.set("n", "dm", function()
 	local mark = vim.fn.getcharstr()
 	local ditgit = string.byte(mark)
@@ -1918,7 +1940,7 @@ end, { noremap = true })
 setmap("n", "M", "g'")
 -- }}}
 
--- Abbrev{{{
+-- Abbrev{{{2
 local opts = {
 	expr = true,
 	desc = "fixing that stupid typo when trying to [save]exit",
@@ -1929,10 +1951,6 @@ setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))
 
 setmap("ca", "%%", "expand('%:p:h')", { expr = true })
 -- }}}
-
-setmap("n", "<C-w>O", ":tabonly<CR>")
-
-setmap("x", "/", "<Esc>/\\%V")
 -- }}}
 
 -- Cmds {{{1
@@ -2041,24 +2059,21 @@ diagnostic.config({
 	update_in_insert = false,
 })
 
-keymap.set("n", "[d", diagnostic.goto_prev)
-keymap.set("n", "]d", diagnostic.goto_next)
-local err_opts = { severity = vim.diagnostic.severity["ERROR"] }
-keymap.set("n", "[e", function()
-	diagnostic.goto_prev(err_opts)
-end)
-keymap.set("n", "]e", function()
-	diagnostic.goto_next(err_opts)
-end)
-local warn_opts = { severity = vim.diagnostic.severity["WARN"] }
-keymap.set("n", "[w", function()
-	diagnostic.goto_prev(warn_opts)
-end)
-keymap.set("n", "]w", function()
-	diagnostic.goto_next(warn_opts)
-end)
 keymap.set("n", "<leader>dp", diagnostic.open_float)
 -- keymap.set("n", "<leader>dq", diagnostic.setloclist)
+local diagnostic_goto = function(next, severity)
+	local go = next and diagnostic.goto_next or vim.diagnostic.goto_prev
+	severity = severity and diagnostic.severity[severity] or nil
+	return function()
+		go({ severity = severity })
+	end
+end
+setmap("n", "]d", diagnostic_goto(true))
+setmap("n", "[d", diagnostic_goto(false))
+setmap("n", "]e", diagnostic_goto(true, "ERROR"))
+setmap("n", "[e", diagnostic_goto(false, "ERROR"))
+setmap("n", "]w", diagnostic_goto(true, "WARN"))
+setmap("n", "[w", diagnostic_goto(false, "WARN"))
 
 fn.sign_define("DiagnosticSignError", { text = config.icons.Error, texthl = "DiagnosticSignError" })
 fn.sign_define("DiagnosticSignWarn", { text = config.icons.Warn, texthl = "DiagnosticSignWarn" })
