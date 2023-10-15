@@ -109,6 +109,8 @@ bins() {
 	go install mvdan.cc/gofumpt@latest
 	go install github.com/josharian/impl@latest
 	go install github.com/fatih/gomodifytags@latest
+	go install golang.org/x/tools/cmd/goimports@latest
+
 	go install mvdan.cc/sh/v3/cmd/shfmt@latest
 	go install github.com/gohugoio/hugo@latest
 	go install github.com/charmbracelet/glow@latest

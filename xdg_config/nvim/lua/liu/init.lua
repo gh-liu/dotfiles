@@ -766,7 +766,7 @@ require("lazy").setup(
 			cmd = { "Format", "FormatEnable", "FormatDisable" },
 			opts = {
 				formatters_by_ft = {
-					go = { "gofumpt" },
+					go = { "goimports", "gofumpt" },
 					zig = { "zigfmt" },
 					rust = { "rustfmt" },
 					lua = { "stylua" },
