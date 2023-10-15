@@ -2182,10 +2182,17 @@ autocmd("LspAttach", {
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
-			if lsp.inlay_hint then
-				lsp.inlay_hint(bufnr, true)
-				return
-			end
+			local inlay_hint = lsp.inlay_hint
+			inlay_hint(bufnr, nil)
+
+			api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
+				inlay_hint(bufnr, nil)
+			end, {})
+
+			api.nvim_buf_create_user_command(bufnr, "InlayHintRefresh", function(opts)
+				inlay_hint(bufnr, false)
+				inlay_hint(bufnr, true)
+			end, {})
 		end
 	end,
 })
