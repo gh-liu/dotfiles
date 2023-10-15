@@ -155,6 +155,9 @@ case $1 in
 "rust")
 	update_rust
 	;;
+"zig")
+	update_zig
+	;;
 "nodejs")
 	update_nodejs
 	;;

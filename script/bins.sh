@@ -124,13 +124,15 @@ bins() {
 	npm i -g typescript typescript-language-server
 	npm i -g pyright
 
-	cargo install fd
 	cargo install bat
 	cargo install exa
 	cargo install just
+	cargo install stylua
 	cargo install zoxide
 	cargo install ripgrep
-	cargo install stylua
+	cargo install fd-find
+	cargo install tealdeer
+	cargo install git-delta
 	cargo install starship --locked
 }
 

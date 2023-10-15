@@ -9,10 +9,9 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 which exa &>/dev/null && alias ls="exa"
-which fdfind &>/dev/null && alias fd="fdfind"
 which bat &>/dev/null && alias cat="bat --theme=\"Nord\" --style=\"changes\""
 
-which bat &>/dev/null && alias codei=code-insiders
+which code-insiders &>/dev/null && alias codei=code-insiders
 
 alias mkdir='mkdir -v'
 alias mv='mv -v'
