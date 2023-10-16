@@ -773,6 +773,7 @@ require("lazy").setup(
 					sh = { "shfmt" },
 					json = { "jq" },
 					just = { "just" },
+					proto = { "buf" },
 				},
 			},
 			config = function(self, opts)
@@ -1319,6 +1320,7 @@ require("lazy").setup(
 			config = function(self, opts)
 				local linters_by_ft = {
 					go = { "golangcilint" },
+					proto = { "buf_lint" },
 				}
 				require("lint").linters_by_ft = linters_by_ft
 

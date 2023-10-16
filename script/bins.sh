@@ -111,10 +111,13 @@ bins() {
 	go install github.com/fatih/gomodifytags@latest
 	go install golang.org/x/tools/cmd/goimports@latest
 
+	go install github.com/bufbuild/buf-language-server/cmd/bufls@latest
+
 	go install mvdan.cc/sh/v3/cmd/shfmt@latest
 	go install github.com/gohugoio/hugo@latest
 	go install github.com/charmbracelet/glow@latest
 	go install github.com/abhinav/tmux-fastcopy@latest
+
 	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 	npm i -g vim-language-server
@@ -123,6 +126,8 @@ bins() {
 	npm i -g yaml-language-server
 	npm i -g typescript typescript-language-server
 	npm i -g pyright
+
+	npm i -g @bufbuild/buf
 
 	cargo install bat
 	cargo install exa

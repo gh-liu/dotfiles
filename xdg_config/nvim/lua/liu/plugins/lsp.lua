@@ -144,6 +144,9 @@ local servers = {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#marksman
 	-- Download from https://github.com/artempyanykh/marksman/releases
 	marksman = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#bufls
+	-- go install github.com/bufbuild/buf-language-server/cmd/bufls@latest
+	bufls = {},
 }
 
 -- setup neodev BEFORE lspconfig
