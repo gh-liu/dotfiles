@@ -2231,6 +2231,70 @@ autocmd("LspAttach", {
 				})
 			end
 
+			do
+				local function move_to_highlight(is_closer)
+					local lsp = vim.lsp
+					local util = vim.lsp.util
+
+					local win = api.nvim_get_current_win()
+					local params = util.make_position_params()
+					local lnum, col = unpack(api.nvim_win_get_cursor(win))
+					lnum = lnum - 1
+					local cursor = {
+						start = { line = lnum, character = col },
+					}
+					local results = lsp.buf_request_sync(0, "textDocument/documentHighlight", params)
+					if not results then
+						return
+					end
+					local closest = nil
+					for _, response in pairs(results) do
+						local result = response.result
+						for _, highlight in pairs(result or {}) do
+							local range = highlight.range
+							local cursor_inside_range = (
+								range.start.line <= lnum
+								and range.start.character < col
+								and range["end"].line >= lnum
+								and range["end"].character > col
+							)
+							if
+								not cursor_inside_range
+								and is_closer(cursor, range)
+								and (closest == nil or is_closer(range, closest))
+							then
+								closest = range
+							end
+						end
+					end
+					if closest then
+						api.nvim_win_set_cursor(win, { closest.start.line + 1, closest.start.character })
+					end
+				end
+
+				local function is_before(x, y)
+					if x.start.line < y.start.line then
+						return true
+					elseif x.start.line == y.start.line then
+						return x.start.character < y.start.character
+					else
+						return false
+					end
+				end
+
+				local function next_highlight()
+					return move_to_highlight(is_before)
+				end
+
+				local function prev_highlight()
+					return move_to_highlight(function(x, y)
+						return is_before(y, x)
+					end)
+				end
+				vim.keymap.set("n", "]v", next_highlight, { buffer = bufnr })
+				vim.keymap.set("n", "[v", prev_highlight, { buffer = bufnr })
+			end
+
 			autocmd("LspDetach", {
 				callback = function()
 					api.nvim_clear_autocmds({
