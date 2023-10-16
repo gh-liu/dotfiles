@@ -1000,7 +1000,7 @@ require("lazy").setup(
 			opts = {
 				check_ts = true,
 				fast_wrap = {
-					map = '<M-l>',
+					map = "<M-l>",
 					-- end_key = "$",
 					-- before_key = "h",
 					-- after_key = "l",
@@ -1909,7 +1909,7 @@ setmap("c", "<C-k>", rtf("<up>", "c"))
 -- }}}
 
 -- QF {{{2
-setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | tabclose | catch | endtry <cr>")
+setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 
 setmap("n", "[q", "<cmd>try | cprev | catch | silent! clast | catch | endtry<cr>zv")
 setmap("n", "]q", "<cmd>try | cnext | catch | silent! cfirst | catch | endtry<cr>zv")
