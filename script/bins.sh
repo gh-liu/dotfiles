@@ -112,6 +112,8 @@ bins() {
 	go install golang.org/x/tools/cmd/goimports@latest
 
 	go install github.com/bufbuild/buf-language-server/cmd/bufls@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 	go install mvdan.cc/sh/v3/cmd/shfmt@latest
 	go install github.com/gohugoio/hugo@latest
@@ -139,6 +141,26 @@ bins() {
 	cargo install tealdeer
 	cargo install git-delta
 	cargo install starship --locked
+}
+
+function update_protobuf() {
+	echo "========================================BEGIN"
+	url="https://api.github.com/repos/protocolbuffers/protobuf/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	version="${version:1}"
+	echo "Installing protobuf-$version..."
+
+	[ -d $HOME/tools/protobuf ] && mv $HOME/tools/protobuf $HOME/tools/protobuf$(date +%s)
+	mkdir -p $HOME/tools/protobuf
+	cd $HOME/tools/protobuf
+
+	pkg="protoc-$version-linux-x86_64.zip"
+	wget https://github.com/protocolbuffers/protobuf/releases/download/v$version/$pkg -q --show-progres
+	test $? -eq 1 && echo "fial to download" && return
+
+	unzip ./$pkg
+	ln -svf $(pwd)/bin/protoc $HOME/.local/bin/protoc
+	echo "========================================END"
 }
 
 case $1 in

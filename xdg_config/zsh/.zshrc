@@ -177,6 +177,11 @@ function gotrace() {
 function gopprof() {
 	go tool pprof -http=$HOSTIP:7788 -no_browser $@
 }
+
+function goprotoc() {
+    protoc --go_out=. --go_opt=paths=source_relative \
+	--go-grpc_out=. --go-grpc_opt=paths=source_relative $@
+}
 # }}}
 
 # Rust {{{2
