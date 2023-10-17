@@ -28,20 +28,20 @@ export TERM=xterm-256color
 
 export OS=$(echo $(uname) | tr '[:upper:]' '[:lower:]')
 if [[ $OS == darwin ]]; then
-    export HOSTIP=$(ipconfig getifaddr en0)
+	export HOSTIP=$(ipconfig getifaddr en0)
 fi
 
 if [[ $OS == linux ]]; then
-    export HOSTIP=$(hostname -I | awk '{print $1}')
-    export LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}')
+	export HOSTIP=$(hostname -I | awk '{print $1}')
+	export LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}')
 fi
 
 # $EDITOR
 if command -v nvim &>/dev/null; then
-    export EDITOR=nvim
-    export MANPAGER='nvim +Man!'
+	export EDITOR=nvim
+	export MANPAGER='nvim +Man!'
 else
-    export EDITOR=vim
+	export EDITOR=vim
 fi
 
 # user directions
@@ -84,11 +84,11 @@ fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
 
 # https://github.com/jeffreytse/zsh-vi-mode
 function zvm_config() {
-    ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
+	ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
 
-    ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
-    ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
-    # ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
+	ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
+	ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
+	# ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
 }
 source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
 # zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
@@ -97,10 +97,9 @@ source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
 # Completion {{{1
 # completion https://thevaluable.dev/zsh-completion-guide-examples
 if [[ $OS == darwin ]]; then
-    if type brew &>/dev/null
-    then
-	FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-    fi
+	if type brew &>/dev/null; then
+		FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+	fi
 fi
 
 fpath=($XDG_CONFIG_HOME/zsh/zsh-completions $fpath)
@@ -137,14 +136,14 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*' 'l:|=* r:
 
 # User Configuration {{{1
 sources=(
-    'functions'
-    'aliases'
-    'git'
-    'tmux'
+	'functions'
+	'aliases'
+	'git'
+	'tmux'
 )
 
 for s in "${sources[@]}"; do
-    source $ZDOTDIR/zsh-conf/${s}.zsh
+	source $ZDOTDIR/zsh-conf/${s}.zsh
 done
 
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
@@ -174,13 +173,29 @@ function gotrace() {
 	go tool trace -http=$HOSTIP:7777 $@
 }
 
+function gotrace2() {
+	local t=$(mktemp -t)
+	local ip=$1
+	local port=$2
+	wget "http://$ip:$port/debug/pprof/trace" --output-document $t
+	go tool trace -http=$HOSTIP:7777 $t
+	unlink $t
+}
+
 function gopprof() {
 	go tool pprof -http=$HOSTIP:7788 -no_browser $@
 }
 
+function gopprof2() {
+	local ip=$1
+	local port=$2
+	local typ=$3
+	go tool pprof -http=$HOSTIP:7788 -no_browser "http://$ip:$port/debug/pprof/$typ"
+}
+
 function goprotoc() {
-    protoc --go_out=. --go_opt=paths=source_relative \
-	--go-grpc_out=. --go-grpc_opt=paths=source_relative $@
+	protoc --go_out=. --go_opt=paths=source_relative \
+		--go-grpc_out=. --go-grpc_opt=paths=source_relative $@
 }
 # }}}
 
@@ -204,7 +219,7 @@ typeset -U path
 export PATH=$PATH:$HOME/bin:$HOME/.local/bin
 
 if [[ $OS == darwin ]]; then
-    export PATH=$PATH:/opt/homebrew/bin
+	export PATH=$PATH:/opt/homebrew/bin
 fi
 
 # Remove duplicate env var
