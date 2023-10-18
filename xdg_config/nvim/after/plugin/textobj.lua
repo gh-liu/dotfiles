@@ -1,3 +1,6 @@
+if true then
+	return
+end
 -- https://thevaluable.dev/vim-create-text-objects/
 -- vim.cmd([[
 -- 	onoremap <silent> il :<c-u>normal! $v^<cr>
