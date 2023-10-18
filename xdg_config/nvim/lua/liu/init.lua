@@ -1238,7 +1238,7 @@ require("lazy").setup(
 		{ "tpope/vim-repeat", event = "VeryLazy" },
 		{
 			"ghostbuster91/nvim-next",
-			-- enabled = false,
+			enabled = false,
 			event = "VeryLazy",
 			config = function(_, opts)
 				local nvim_next_builtins = require("nvim-next.builtins")
