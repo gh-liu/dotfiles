@@ -897,11 +897,31 @@ require("lazy").setup(
 		},
 		{
 			"wellle/targets.vim",
+			enabled = false,
 			event = "VeryLazy",
 			config = function()
 				-- https://github.com/wellle/targets.vimgtargets_seekranges
 				-- Only consider targets around cursor
 				vimg.targets_seekRanges = "cc cr cb cB lc ac Ac lr lb ar ab lB Ar aB Ab AB"
+			end,
+		},
+		{
+			"echasnovski/mini.ai",
+			event = "VeryLazy",
+			config = function(self, opts)
+				local ai = require("mini.ai")
+				ai.setup({
+					n_lines = 500,
+					-- search_method = "cover",
+					custom_textobjects = {
+						o = ai.gen_spec.treesitter({
+							a = { "@block.outer", "@conditional.outer", "@loop.outer" },
+							i = { "@block.inner", "@conditional.inner", "@loop.inner" },
+						}, {}),
+						f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
+						c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }, {}),
+					},
+				})
 			end,
 		},
 		{
