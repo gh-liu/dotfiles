@@ -779,6 +779,7 @@ require("lazy").setup(
 					rust = { "rustfmt" },
 					lua = { "stylua" },
 					sh = { "shfmt" },
+					zsh = { "shfmt" },
 					json = { "jq" },
 					just = { "just" },
 					proto = { "buf" },
