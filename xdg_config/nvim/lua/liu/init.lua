@@ -1997,8 +1997,11 @@ end, {
 -- }}}
 
 -- Autocmds {{{1
-local general = augroup("UserGeneralSettings", { clear = true })
+local function user_augroup(name)
+	return vim.api.nvim_create_augroup("user_" .. name, { clear = true })
+end
 autocmd("TextYankPost", {
+	group = user_augroup("highlight_yank"),
 	pattern = "*",
 	callback = function()
 		vim.highlight.on_yank({
@@ -2006,44 +2009,43 @@ autocmd("TextYankPost", {
 			priority = vim.highlight.priorities.user + 1,
 		})
 	end,
-	group = general,
 	desc = "Highlight when yanking",
 })
 autocmd("VimResized", {
-	group = general,
+	group = user_augroup("resize_splits"),
 	command = "wincmd =",
 	desc = "Equalize Splits",
 })
-autocmd("FocusGained", {
+autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
+	group = user_augroup("checktime"),
 	callback = function()
 		-- normal buffer
 		if vim.o.bt == "" then
 			cmd("checktime")
 		end
 	end,
-	group = general,
 	desc = "Update file when there are changes",
 })
-autocmd("BufWritePre", {
-	group = general,
-	command = "%s/\\s\\+$//e",
-	desc = "Trim Trailing",
-})
+-- autocmd("BufWritePre", {
+-- 	command = "%s/\\s\\+$//e",
+-- 	desc = "Trim Trailing",
+-- })
 autocmd("BufEnter", {
+	group = user_augroup("disable_newline_comment"),
 	callback = function()
 		vim.opt.formatoptions:remove({ "c", "r", "o" })
 	end,
-	group = general,
 	desc = "Disable New Line Comment",
 })
 autocmd({ "BufWinLeave", "BufLeave", "InsertLeave", "FocusLost" }, {
+	group = user_augroup("auto_save"),
 	callback = function()
 		cmd("silent! w")
 	end,
-	group = general,
 	desc = "Auto Save when leaving insert mode, buffer or window",
 })
 autocmd("ModeChanged", {
+	group = user_augroup("switch_highlight_when_searching"),
 	callback = function()
 		local cmdtype = fn.getcmdtype()
 		if cmdtype == "/" or cmdtype == "?" then
@@ -2052,21 +2054,25 @@ autocmd("ModeChanged", {
 			vim.opt.hlsearch = false
 		end
 	end,
-	group = general,
 	desc = "Highlighting matched words when searching",
 })
 -- :h last-position-jump
 autocmd("BufReadPost", {
-	callback = function()
-		if fn.line("'\"") > 1 and fn.line("'\"") <= fn.line("$") then
-			cmd('normal! g`"')
+	group = user_augroup("last_loc"),
+	callback = function(ev)
+		local mark = api.nvim_buf_get_mark(ev.buf, '"')
+		local lcount = api.nvim_buf_line_count(ev.buf)
+		if mark[1] > 0 and mark[1] <= lcount then
+			pcall(api.nvim_win_set_cursor, 0, mark)
 		end
+		-- if fn.line("'\"") > 1 and fn.line("'\"") <= fn.line("$") then
+		-- 	cmd('normal! g`"')
+		-- end
 	end,
-	group = general,
 	desc = "Go To The Last Cursor Position",
 })
 autocmd("BufWinEnter", {
-	group = augroup("UserOpenHelpInTab", {}),
+	group = user_augroup("open_help_in_newtab"),
 	pattern = { "*.txt" },
 	callback = function()
 		if vim.o.filetype == "help" then
@@ -2075,6 +2081,17 @@ autocmd("BufWinEnter", {
 	end,
 	desc = "Open help file in a new table",
 })
+autocmd({ "BufWritePre" }, {
+	group = user_augroup("auto_create_dir"),
+	callback = function(event)
+		if event.match:match("^%w%w+://") then
+			return
+		end
+		local file = vim.loop.fs_realpath(event.match) or event.match
+		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
+	end,
+})
+
 -- }}}
 
 -- Diagnostic {{{1
