@@ -109,6 +109,7 @@ source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
 # }}}
 
 # Completion {{{1
+# https://zsh.sourceforge.io/Doc/Release/Completion-System.html
 # completion https://thevaluable.dev/zsh-completion-guide-examples
 if [[ $OS == darwin ]]; then
 	if type brew &>/dev/null; then
@@ -129,11 +130,6 @@ bindkey -M menuselect 'L' vi-forward-char
 # bindkey -M menuselect '^xg' clear-screen
 bindkey -M menuselect 'U' undo
 
-_comp_options+=(globdots) # With hidden files
-autoload -U +X bashcompinit && bashcompinit
-autoload -U +X compinit && compinit
-# autoload -U compinit && compinit
-
 zstyle ':completion:*' menu select
 zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}-- %D %d --%f'
 zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
@@ -146,6 +142,9 @@ zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 ## case-insensitive,partial-word and then substring completion
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 
+_comp_options+=(globdots) # With hidden files
+autoload -U +X bashcompinit && bashcompinit
+autoload -U +X compinit && compinit
 # }}}
 
 # User Configuration {{{1
