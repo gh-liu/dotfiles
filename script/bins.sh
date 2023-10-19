@@ -120,6 +120,9 @@ bins() {
 	go install github.com/charmbracelet/glow@latest
 	go install github.com/abhinav/tmux-fastcopy@latest
 
+	go install github.com/jesseduffield/lazygit@latest
+	go install github.com/jesseduffield/lazydocker@latest
+
 	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 	npm i -g vim-language-server
