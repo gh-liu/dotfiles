@@ -3,14 +3,28 @@
 
 # Options {{{1
 # https://zsh.sourceforge.io/Doc/Release/Options.html
+setopt EXTENDED_HISTORY
 setopt APPEND_HISTORY
+# setopt INC_APPEND_HISTORY
 setopt HIST_IGNORE_SPACE
+setopt HIST_IGNORE_DUPS
+# setopt HIST_VERIFY # !!
 
 setopt AUTO_PUSHD
 setopt PUSHD_IGNORE_DUPS
 setopt PUSHD_SILENT
-for index ({1..9}) alias "$index"="cd +${index}"; unset index
+# for index ({1..9}) alias "$index"="cd +${index}"; unset index
 alias d='dirs -v'
+
+setopt NO_CASE_GLOB
+
+setopt AUTO_CD
+
+# setopt CORRECT
+# setopt CORRECT_ALL
+
+# revert the options: emulate -LR zsh
+# list the options: emulate -lLR zsh
 # }}}
 
 # Envs {{{1
@@ -19,7 +33,7 @@ export SHELL=$(which zsh)
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-export HISTFILE=$HOME/.zsh_history
+export HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 export HISTSIZE=100000
 export SAVEHIST=100000
 
