@@ -1,3 +1,4 @@
+#!/bin/zsh
 function extract {
 	if [ -z "$1" ]; then
 		echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"

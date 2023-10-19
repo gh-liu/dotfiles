@@ -1,3 +1,4 @@
+#!/bin/zsh
 if [[ $LinuxDistro == Ubuntu ]]; then
 	alias sai='sudo apt install '
 	alias sau="sudo apt update -y && sudo apt upgrade -y"

@@ -1,5 +1,6 @@
-#!/bin/bash
-# git
+#!/bin/zsh
+# aliases{{{1
+# git{{{2
 alias g-repo="git config user.name gh-liu && git config user.email liugh.cs@gmail.com"
 
 alias g="git"
@@ -31,8 +32,9 @@ alias gstp='git stash pop '
 alias gstaa='git stash apply '
 
 alias gccs='git config credential.helper store'
+# }}}
 
-# git flow
+# git flow {{{2
 # https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/git-flow/git-flow.plugin.zsh
 alias gf='git flow'
 
@@ -55,3 +57,7 @@ alias gfbf='git flow bugfix finish'
 alias gfhs='git flow hotfix start'
 #  hotfix-> main
 alias gfhf='git flow hotfix finish'
+# }}}
+# }}}
+
+# vim: foldmethod=marker

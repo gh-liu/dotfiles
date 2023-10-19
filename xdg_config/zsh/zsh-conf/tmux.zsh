@@ -1,4 +1,5 @@
-# tmux
+#!/bin/zsh
+# aliases{{{1
 alias ta='tmux attach -t'
 alias ts='tmux new-session -s'
 alias tl='tmux list-sessions'
@@ -8,11 +9,15 @@ alias tl='tmux list-sessions'
 alias {tmon,tn}='tmux set mouse on && echo "tmux: set mouse on"'
 alias {tmof,tf}='tmux set mouse off && echo "tmux: set mouse off"'
 
+# tmuxp{{{2
 alias tp='tmuxp'
 alias tpf='tmuxp freeze --force'
 alias tpl='tmuxp load'
 alias tpls='tmuxp ls'
+# }}}
+# }}}
 
+# functions{{{1
 # tmux new a session and switch to
 tmuxns() {
 	tmux new-session -d -s $1 && tmux switch -t $1
@@ -48,3 +53,6 @@ ftmux() {
 }
 
 alias f='ftmux'
+# }}}
+
+# vim: foldmethod=marker
