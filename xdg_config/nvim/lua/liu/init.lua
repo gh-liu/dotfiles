@@ -1345,19 +1345,14 @@ require("lazy").setup(
 		},
 		{
 			"mfussenegger/nvim-lint",
-			event = "VeryLazy",
-			config = function(self, opts)
-				local linters_by_ft = {
-					go = { "golangcilint" },
-					proto = { "buf_lint" },
-				}
-				require("lint").linters_by_ft = linters_by_ft
-
+			lazy = true,
+			-- event = "VeryLazy",
+			init = function(self)
+				local linters_by_ft = self.opts.linters_by_ft
 				autocmd("FileType", {
 					pattern = vim.tbl_keys(linters_by_ft),
 					callback = function(ev)
-						-- vim.print(ev)
-						autocmd({ "BufWritePost" }, {
+						autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
 							callback = function()
 								require("lint").try_lint()
 							end,
@@ -1366,6 +1361,15 @@ require("lazy").setup(
 					end,
 					desc = "setup nvim-lint for ft",
 				})
+			end,
+			opts = {
+				linters_by_ft = {
+					go = { "golangcilint" },
+					proto = { "buf_lint" },
+				},
+			},
+			config = function(self, opts)
+				require("lint").linters_by_ft = opts.linters_by_ft
 			end,
 		},
 		{
