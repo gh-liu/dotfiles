@@ -2164,9 +2164,8 @@ autocmd("LspAttach", {
 
 		-- nmap("gd", lsp.buf.definition, "[G]oto [D]efinition")
 		-- nmap("<leader>vd", "<cmd>vsplit | lua lsp.buf.definition()<CR>", "[G]oto [D]efinition")
-		-- nmap("gD", lsp.buf.type_definition, "[G]oto Type [D]efinition")
 
-		-- nmap('gD', lsp.buf.declaration, '[G]oto [D]eclaration')
+		nmap("gD", lsp.buf.declaration, "[G]oto [D]eclaration")
 
 		-- nmap("K", lsp.buf.hover, "Hover Documentation")
 		-- nmap("<C-k>", lsp.buf.signature_help, "Signature Documentation")

@@ -33,7 +33,8 @@ api.nvim_create_autocmd("LspAttach", {
 			keymap.set("n", l, r, { buffer = args.buf, desc = desc })
 		end
 		map("gd", builtin.lsp_definitions, "[G]oto [D]efinition")
-		map("gD", builtin.lsp_type_definitions, "[G]oto Type [D]efinition")
+		map("gy", builtin.lsp_type_definitions, "[G]oto T[y]pe Definition")
+
 		map("gr", builtin.lsp_references, "[G]oto [R]eferences")
 		map("gi", builtin.lsp_implementations, "[G]oto [I]mplementation")
 
