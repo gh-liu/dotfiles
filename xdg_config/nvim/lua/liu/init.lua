@@ -2382,6 +2382,8 @@ autocmd("LspAttach", {
 						group = aug,
 						buffer = bufnr,
 					})
+					vim.keymap.del("n", "]v", { buffer = bufnr })
+					vim.keymap.del("n", "[v", { buffer = bufnr })
 				end,
 				buffer = bufnr,
 			})
