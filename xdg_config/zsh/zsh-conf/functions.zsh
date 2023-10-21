@@ -103,3 +103,7 @@ function ssh-copy-id2() {
 		ssh-copy-id $Name
 	fi
 }
+
+function t() {
+	command time --format 'real %es\nuser %Us\nsys  %Ss\nrss  %Mk' "$@"
+}
