@@ -1691,6 +1691,7 @@ require("lazy").setup(
 					pattern = "Cargo.toml",
 					callback = function()
 						local cmp = require("cmp")
+						---@diagnostic disable-next-line: missing-fields
 						cmp.setup.buffer({ sources = { { name = "crates" } } })
 					end,
 				})
@@ -1700,10 +1701,9 @@ require("lazy").setup(
 					popup = {
 						border = config.borders,
 					},
-					-- null_ls = {
-					-- 	enabled = true,
-					-- 	name = "crates.nvim",
-					-- },
+					src = {
+						cmp = { enabled = true },
+					},
 				})
 			end,
 		},
