@@ -1718,10 +1718,11 @@ require("lazy").setup(
 					end,
 				})
 
-				local actions = require("crates.actions")
 				vim.api.nvim_create_autocmd("BufRead", {
 					pattern = "Cargo.toml",
 					callback = function()
+						local actions = require("crates.actions")
+
 						local command = "crates.run_action"
 						vim.lsp.commands[command] = function(cmd, ctx)
 							local action = actions.get_actions()[cmd.data]
