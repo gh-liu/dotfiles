@@ -1684,6 +1684,7 @@ require("lazy").setup(
 		},
 		{
 			"saecki/crates.nvim",
+			lazy = true,
 			event = { "BufRead Cargo.toml" },
 			init = function()
 				api.nvim_create_autocmd("BufRead", {
@@ -1693,6 +1694,46 @@ require("lazy").setup(
 						local cmp = require("cmp")
 						---@diagnostic disable-next-line: missing-fields
 						cmp.setup.buffer({ sources = { { name = "crates" } } })
+					end,
+				})
+
+				local actions = require("crates.actions")
+				vim.api.nvim_create_autocmd("BufRead", {
+					pattern = "Cargo.toml",
+					callback = function()
+						local command = "crates.run_action"
+						vim.lsp.commands[command] = function(cmd, ctx)
+							local action = actions.get_actions()[cmd.data]
+							if action then
+								vim.api.nvim_buf_call(ctx.bufnr, action)
+							end
+						end
+						local api = vim.api
+						local server = require("liu.plugins.lsp2").server({
+							capabilities = {
+								codeActionProvider = true,
+							},
+							handlers = {
+								---@param params lsp.CodeActionParams
+								["textDocument/codeAction"] = function(_, params)
+									local function format_title(name)
+										return name:sub(1, 1):upper() .. name:gsub("_", " "):sub(2)
+									end
+
+									local code_actions = {}
+									for key, action in pairs(actions.get_actions()) do
+										table.insert(code_actions, {
+											title = format_title(key),
+											kind = "refactor.rewrite",
+											command = command,
+											data = key,
+										})
+									end
+									return code_actions
+								end,
+							},
+						})
+						vim.lsp.start({ name = "crates_ls", cmd = server })
 					end,
 				})
 			end,
