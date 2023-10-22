@@ -103,7 +103,10 @@ function update_tmux() {
 bins() {
 	export GOPROXY=https://goproxy.io
 	if [[ $OS == linux ]]; then
-		go install golang.org/x/tools/gopls@latest
+		local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
+		go install golang.org/x/tools/gopls@$GOPLSVERSION
+		# go install golang.org/x/tools/gopls@latest
+
 		go install github.com/go-delve/delve/cmd/dlv@latest
 	fi
 	go install mvdan.cc/gofumpt@latest
