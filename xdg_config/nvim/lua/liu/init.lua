@@ -1025,6 +1025,7 @@ require("lazy").setup(
 		},
 		{
 			"windwp/nvim-autopairs",
+			enabled = false,
 			event = "InsertEnter",
 			opts = {
 				check_ts = true,
@@ -1044,6 +1045,26 @@ require("lazy").setup(
 				local cmp = require("cmp")
 				cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
 			end,
+		},
+		{
+			"echasnovski/mini.pairs",
+			enabled = true,
+			event = "InsertEnter",
+			opts = {},
+			keys = {
+				{
+					"<leader>tp",
+					function()
+						vim.g.minipairs_disable = not vim.g.minipairs_disable
+						if vim.g.minipairs_disable then
+							vim.notify("Disabled auto pairs", vim.log.levels.WARN)
+						else
+							vim.notify("Enabled auto pairs", vim.log.levels.WARN)
+						end
+					end,
+					desc = "[T]oggle auto [P]airs",
+				},
+			},
 		},
 		-- }}}
 
