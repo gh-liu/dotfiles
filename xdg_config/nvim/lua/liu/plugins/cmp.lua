@@ -1,13 +1,16 @@
 local api = vim.api
+
 -- Luasnip {{{1
 local ls = require("luasnip")
 local types = require("luasnip.util.types")
 
 ls.config.setup({
-	history = true,
+	keep_roots = false,
+	link_roots = false,
+	link_children = true,
 	update_events = { "InsertLeave" },
 	region_check_events = { "InsertEnter" },
-	delete_check_events = { "InsertLeave" },
+	delete_check_events = { "TextChanged" },
 	-- store_selection_keys = "<Tab>",
 	enable_autosnippets = false,
 	ext_opts = {
@@ -44,12 +47,6 @@ ls.config.setup({
 	},
 })
 
-local from_lua = require("luasnip.loaders.from_lua")
-require("luasnip.loaders.from_lua").load({ paths = (vim.fn.stdpath("config") .. "/snippets/luasnip") })
-vim.api.nvim_create_user_command("LuaSnipEdit", from_lua.edit_snippet_files, {})
-
-require("luasnip.loaders.from_vscode").lazy_load()
-
 set_hls({
 	LuasnipInsertNodeActive = {
 		fg = config.colors.green,
@@ -64,6 +61,12 @@ set_hls({
 		fg = config.colors.blue,
 	},
 })
+
+local from_lua = require("luasnip.loaders.from_lua")
+from_lua.load({ paths = (vim.fn.stdpath("config") .. "/snippets/luasnip") })
+vim.api.nvim_create_user_command("LuaSnipEdit", from_lua.edit_snippet_files, {})
+
+require("luasnip.loaders.from_vscode").lazy_load()
 
 -- }}}
 
@@ -205,3 +208,5 @@ cmp.setup.cmdline(":", {
 })
 
 -- }}}
+
+-- vim: foldmethod=marker
