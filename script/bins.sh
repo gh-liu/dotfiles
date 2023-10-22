@@ -147,6 +147,8 @@ bins() {
 	cargo install tealdeer
 	cargo install git-delta
 	cargo install starship --locked
+
+	cargo install cargo-nextest
 }
 
 function update_protobuf() {
