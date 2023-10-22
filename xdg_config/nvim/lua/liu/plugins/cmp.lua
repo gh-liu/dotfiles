@@ -89,6 +89,7 @@ local function has_words_before()
 	return ((col ~= 0) and (((api.nvim_buf_get_lines(0, (line - 1), line, true))[1]):sub(col, col):match("%s") == nil))
 end
 
+---@diagnostic disable-next-line: missing-fields
 cmp.setup({
 	snippet = {
 		expand = function(args)
@@ -96,7 +97,9 @@ cmp.setup({
 		end,
 	},
 	window = {
+		---@diagnostic disable-next-line: missing-fields
 		completion = { border = config.borders },
+		---@diagnostic disable-next-line: missing-fields
 		documentation = { border = config.borders },
 	},
 	sources = {
@@ -106,6 +109,7 @@ cmp.setup({
 		{ name = "buffer", keyword_length = 3 }, -- don't complete from buffer right away
 		{ name = "path" },
 	},
+	---@diagnostic disable-next-line: missing-fields
 	formatting = {
 		fields = { "abbr", "kind", "menu" },
 		format = function(entry, item)
