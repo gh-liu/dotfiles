@@ -979,6 +979,10 @@ require("lazy").setup(
 				require("wildfire").setup({})
 			end,
 		},
+		{
+			"airblade/vim-matchquote",
+			event = "VeryLazy",
+		},
 		-- }}}
 
 		-- Completion {{{2
