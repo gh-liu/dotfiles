@@ -1050,6 +1050,9 @@ require("lazy").setup(
 			"echasnovski/mini.pairs",
 			enabled = true,
 			event = "InsertEnter",
+			init = function(self)
+				vim.g.minipairs_disable = true
+			end,
 			opts = {},
 			keys = {
 				{
@@ -1891,6 +1894,11 @@ vim.opt.fillchars:append("fold: ")
 vim.opt.fillchars:append("foldopen:")
 vim.opt.fillchars:append("foldclose:")
 -- vim.opt.fillchars:append("foldsep:|")
+-- }}}
+
+-- show match {{{2
+vim.o.showmatch = true
+vim.o.matchtime = 1
 -- }}}
 
 -- Avoid showing the intro when starting Neovim
