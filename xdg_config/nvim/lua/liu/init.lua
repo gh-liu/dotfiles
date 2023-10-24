@@ -2255,11 +2255,27 @@ fn.sign_define("DiagnosticSignHint", { text = config.icons.Hint, texthl = "Diagn
 -- }}}
 
 -- Lsp {{{1
+
+-- Log Levels {{{2
 -- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
 lsp.set_log_level("OFF")
-
--- local autocmd = api.nvim_create_autocmd
--- local augroup = api.nvim_create_augroup
+api.nvim_create_user_command("LspSetLogLevel", function(opts)
+	local levels = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF" }
+	vim.ui.select(levels, {
+		prompt = "Set Lsp Log Level",
+		format_item = function(item)
+			return item
+		end,
+	}, function(choice)
+		if choice then
+			lsp.set_log_level(choice)
+			vim.notify("Set: " .. choice, vim.log.levels.WARN)
+		end
+	end)
+end, {
+	desc = "Set Lsp Log Level",
+})
+-- }}}
 
 -- keymaps {{{2
 autocmd("LspAttach", {
