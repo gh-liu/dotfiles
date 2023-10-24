@@ -2092,7 +2092,9 @@ local opts = {
 setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", opts)
 setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", opts)
 
-setmap("ca", "%%", "expand('%:p:h')", { expr = true })
+setmap("ca", "%H", "expand('%:p:h')", { expr = true })
+setmap("ca", "%P", "expand('%:p')", { expr = true })
+setmap("ca", "%T", "expand('%:t')", { expr = true })
 -- }}}
 -- }}}
 
