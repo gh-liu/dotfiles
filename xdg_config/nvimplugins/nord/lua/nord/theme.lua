@@ -143,7 +143,7 @@ theme.set_highlights = function()
   local ts = {
     ["@text"] = {},
     ["@text.literal"] = { link = "Comment" },
-    ["@text.reference"] = { link = "Identifier" },
+    ["@text.reference"] = { link = "LspReferenceText" },
     ["@text.title"] = { link = "Title" },
     ["@text.uri"] = { link = "Underlined" },
     ["@text.underline"] = { link = "Underlined" },
