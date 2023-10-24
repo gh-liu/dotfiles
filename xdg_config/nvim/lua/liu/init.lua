@@ -1847,6 +1847,7 @@ vim.o.showmode = false
 vim.o.showcmd = false
 
 vim.o.pumheight = 12
+vim.o.pumblend = 18
 
 vim.o.scrolloff = 3
 
