@@ -2149,13 +2149,13 @@ autocmd("BufEnter", {
 	end,
 	desc = "Disable New Line Comment",
 })
-autocmd({ "BufWinLeave", "BufLeave", "InsertLeave", "FocusLost" }, {
-	group = user_augroup("auto_save"),
-	callback = function()
-		cmd("silent! w")
-	end,
-	desc = "Auto Save when leaving insert mode, buffer or window",
-})
+-- autocmd({ "BufWinLeave", "BufLeave", "InsertLeave", "FocusLost" }, {
+-- 	group = user_augroup("auto_save"),
+-- 	callback = function()
+-- 		cmd("silent! w")
+-- 	end,
+-- 	desc = "Auto Save when leaving insert mode, buffer or window",
+-- })
 autocmd("ModeChanged", {
 	group = user_augroup("switch_highlight_when_searching"),
 	callback = function()
