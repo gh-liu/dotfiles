@@ -864,7 +864,7 @@ require("lazy").setup(
 					desc = "Structural Search + Replace",
 				},
 			},
-			otps = {},
+			opts = {},
 		},
 		-- }}}
 
