@@ -2155,14 +2155,14 @@ autocmd("BufReadPost", {
 	desc = "Go To The Last Cursor Position",
 })
 autocmd("BufWinEnter", {
-	group = user_augroup("open_help_in_newtab"),
+	group = user_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
 	callback = function()
 		if vim.o.filetype == "help" then
-			cmd.wincmd("T")
+			cmd.wincmd("L")
 		end
 	end,
-	desc = "Open help file in a new table",
+	desc = "Open help file in right split",
 })
 autocmd({ "BufWritePre" }, {
 	group = user_augroup("auto_create_dir"),
