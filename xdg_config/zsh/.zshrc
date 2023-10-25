@@ -38,7 +38,7 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 
 # https://github.com/neovim/neovim/wiki/FAQ#colors-arent-displayed-correctly
-export TERM=xterm-256color
+# export TERM=xterm-256color
 
 export OS=$(echo $(uname) | tr '[:upper:]' '[:lower:]')
 if [[ $OS == darwin ]]; then
