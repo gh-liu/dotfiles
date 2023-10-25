@@ -49,6 +49,31 @@ function update_zig() {
 	echo "========================================END"
 }
 
+function update_ocaml() {
+	echo "========================================BEGIN"
+	url="https://api.github.com/repos/ocaml/opam/tags"
+	version=$(curl -s $url | jq -r '.[2].name')
+	echo "Installing opam-$version..."
+
+	[ -d $HOME/env/ocaml ] && mv $HOME/env/ocaml $HOME/env/ocaml_$(date +%s)
+	mkdir -p $HOME/env/ocaml
+	cd $HOME/env/ocaml
+
+	pkg="opam-$version-x86_64-linux"
+	wget https://github.com/ocaml/opam/releases/download/$version/opam-$version-x86_64-linux
+	test $? -eq 1 && echo "fial to download" && return
+
+	chmod +x $(pwd)/$pkg
+	ln -svf $(pwd)/$pkg $HOME/.local/bin/opam
+	if [ ! -d $HOME/env/ocaml ]; then
+		mkdir $HOME/env/ocaml/.opam
+		opam init
+	fi
+
+	opam install dune ocaml-lsp-server odoc ocamlformat utop
+	echo "========================================END"
+}
+
 function update_rust() {
 	echo "========================================BEGIN"
 	echo "rust........................................."
