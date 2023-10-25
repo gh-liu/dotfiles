@@ -2236,23 +2236,19 @@ fn.sign_define("DiagnosticSignHint", { text = config.icons.Hint, texthl = "Diagn
 -- Lsp {{{1
 
 -- Log Levels {{{2
--- Levels by name: "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF"
 lsp.set_log_level("OFF")
+
+local levels = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF" }
 api.nvim_create_user_command("LspSetLogLevel", function(opts)
-	local levels = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF" }
-	vim.ui.select(levels, {
-		prompt = "Set Lsp Log Level",
-		format_item = function(item)
-			return item
-		end,
-	}, function(choice)
-		if choice then
-			lsp.set_log_level(choice)
-			vim.notify("Set: " .. choice, vim.log.levels.WARN)
-		end
-	end)
+	local level = unpack(opts.fargs)
+	lsp.set_log_level(level)
+	vim.notify("Set: " .. level, vim.log.levels.WARN)
 end, {
 	desc = "Set Lsp Log Level",
+	nargs = 1,
+	complete = function()
+		return levels
+	end,
 })
 -- }}}
 
