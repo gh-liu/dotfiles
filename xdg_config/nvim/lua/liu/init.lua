@@ -937,39 +937,39 @@ require("lazy").setup(
 		{
 			"chaoren/vim-wordmotion",
 			enabled = true,
-			keys = { "<leader>ww" },
-			-- event = "VeryLazy",
 			init = function()
 				vimg.wordmotion_nomap = true
 				vimg.wordmotion_prefix = ","
-			end,
-			config = function(self, opts)
-				local ok, libmodal = pcall(require, "libmodal")
-				if ok then
-					local DESC = "Enter word motion mode"
-					local layer = libmodal.layer.new({})
-					local function map(modes, lhs, rhs)
-						for _, mod in ipairs(modes) do
-							layer:map(mod, lhs, rhs, {})
-						end
-					end
-					map({ "n", "x", "o" }, "w", "<Plug>WordMotion_w")
-					map({ "n", "x", "o" }, "b", "<Plug>WordMotion_b")
-					map({ "n", "x", "o" }, "e", "<Plug>WordMotion_e")
-					map({ "x", "o" }, "iw", "<Plug>WordMotion_iw")
-					map({ "x", "o" }, "aw", "<Plug>WordMotion_aw")
 
-					layer:map("n", "q", function()
-						layer:exit()
-						vim.g.libmodalActiveLayerName = nil
-					end, {})
-					local function mode()
-						vim.g.libmodalActiveLayerName = "SubWord"
-						layer:enter()
-					end
-					keymap.set("n", self.keys[1], "", { callback = mode, desc = DESC })
-				end
+				-- user define
+				vim.g.wordmotion_disable = true
 			end,
+			keys = {
+				{
+					"<leader>tw",
+					function()
+						vim.g.wordmotion_disable = not vim.g.wordmotion_disable
+						if vim.g.wordmotion_disable then
+							vim.keymap.del({ "n", "x", "o" }, "w")
+							vim.keymap.del({ "n", "x", "o" }, "b")
+							vim.keymap.del({ "n", "x", "o" }, "e")
+							vim.keymap.del({ "x", "o" }, "iw")
+							vim.keymap.del({ "x", "o" }, "aw")
+
+							vim.notify("Disabled word motion", vim.log.levels.WARN)
+						else
+							vim.keymap.set({ "n", "x", "o" }, "w", "<Plug>WordMotion_w")
+							vim.keymap.set({ "n", "x", "o" }, "b", "<Plug>WordMotion_b")
+							vim.keymap.set({ "n", "x", "o" }, "e", "<Plug>WordMotion_e")
+							vim.keymap.set({ "x", "o" }, "iw", "<Plug>WordMotion_iw")
+							vim.keymap.set({ "x", "o" }, "aw", "<Plug>WordMotion_aw")
+
+							vim.notify("Enabled word motion", vim.log.levels.WARN)
+						end
+					end,
+					desc = "[T]oggle [W]ord motion",
+				},
+			},
 		},
 		{
 			"sustech-data/wildfire.nvim",
