@@ -1316,31 +1316,7 @@ require("lazy").setup(
 		{
 			"Iron-E/nvim-libmodal",
 			lazy = true,
-			keys = {
-				"<leader>zj",
-			},
 			-- event = "VeryLazy",
-			config = function(self, opts)
-				local libmodal = require("libmodal")
-				do
-					local DESC = "Enter flod mode"
-					local function mode()
-						libmodal.layer.enter({
-							n = {
-								j = {
-									rhs = "zj",
-									noremap = true,
-								},
-								k = {
-									rhs = "zk",
-									noremap = true,
-								},
-							},
-						}, "q")
-					end
-					keymap.set("n", self.keys[1], "", { callback = mode, desc = DESC })
-				end
-			end,
 		},
 		-- }}}
 
