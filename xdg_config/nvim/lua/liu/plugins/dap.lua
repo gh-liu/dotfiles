@@ -28,27 +28,11 @@ end
 -- DAP {{{1
 local dap = require("dap")
 
-local replwinopts = {
-	height = 10,
-	winfixheight = true,
-}
+dap.set_log_level("ERROR")
 
--- maps and cmds {{{2
-map("<Leader>dr", function()
-	dap.repl.toggle(replwinopts)
-end, "toggle dap repl")
-
-map("<Leader>db", dap.toggle_breakpoint, "toggle_breakpoint")
-map("<leader>B", function()
-	local input = fn.input("[DAP] Condition > ")
-	if input then
-		dap.set_breakpoint(input)
-	end
-end)
 create_cmd("DAPClearBreakpoints", function()
 	dap.clear_breakpoints()
 end, {})
--- }}}
 
 -- Event {{{2
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
@@ -588,53 +572,48 @@ autocmd("User", {
 
 -- }}}
 
--- libmodal {{{2
-local ok, libmodal = pcall(require, "libmodal")
-if ok then
-	local DESC = "Debuging mode"
-	local layer = libmodal.layer.new({})
-	local function map(lhs, rhs)
-		layer:map("n", lhs, rhs, {})
+-- map {{{1
+map("<Leader>db", dap.toggle_breakpoint, "toggle_breakpoint")
+map("<leader>B", function()
+	local input = fn.input("[DAP] Condition > ")
+	if input then
+		dap.set_breakpoint(input)
 	end
+end)
+map("<leader>dn", [[:lua require("dap").step_over()<CR>]], "Step over")
+map("<leader>dN", [[:lua require("dap").step_back()<CR>]], "Step back")
+map("<leader>di", [[:lua require("dap").step_into()<CR>]], "Step into")
+map("<leader>do", [[:lua require("dap").step_out()<CR>]], "Step out")
+map("<leader>dc", [[:lua require("dap").continue()<CR>]], "Continue")
+map("<leader>dC", [[:lua require("dap").run_to_cursor()<CR>]], "Run to cursor")
+map("<leader>dj", [[:lua require("dap").down()<CR>]], "Go down in current stacktrace without stepping")
+map("<leader>dk", [[:lua require("dap").up()<CR>]], "Go up in current stacktrace without stepping")
+map("<leader>df", [[:lua require("dap").focus_frame()<CR>]], "Jump/focus the current frame")
+map("<Leader>dr", function()
+	dap.repl.toggle({
+		height = 10,
+		winfixheight = true,
+	})
+end, "Toggle dap repl")
 
-	-- map("C", dap.continue)
-	-- map("X", dap.terminate)
-	-- map("R", dap.run_last)
-	map("<C-n>", dap.step_over)
-	map("<C-p>", dap.step_back)
-	map("di", dap.step_into)
-	map("do", dap.step_out)
-
-	map("dv", function()
-		dapui.toggle({ layout = 3, reset = true })
-	end)
-	map("db", function()
-		dapui.toggle({ layout = 4, reset = true })
-	end)
-	map("ds", function()
-		dapui.toggle({ layout = 5, reset = true })
-	end)
-	map("dw", function()
-		dapui.toggle({ layout = 6, reset = true })
-	end)
-	map("dc", function()
-		dapui.toggle({ layout = 7, reset = true })
-	end)
-	map("dr", function()
-		dapui.toggle({ layout = 8, reset = true })
-	end)
-
-	layer:map("n", "q", function()
-		layer:exit()
-		vim.g.libmodalActiveLayerName = nil
-	end, {})
-	local function mode()
-		vim.g.libmodalActiveLayerName = "Debuging"
-		layer:enter()
-	end
-	vim.keymap.set("n", "<leader>D", "", { callback = mode, desc = DESC })
-end
-
+map("<leader>dV", function()
+	dapui.toggle({ layout = 3, reset = true })
+end, "Dap ui scopes")
+map("<leader>dB", function()
+	dapui.toggle({ layout = 4, reset = true })
+end, "Dap ui breakpoints")
+map("<leader>dS", function()
+	dapui.toggle({ layout = 5, reset = true })
+end, "Dap ui stacks")
+map("<leader>dW", function()
+	dapui.toggle({ layout = 6, reset = true })
+end, "Dap ui watches")
+-- map("<leader>dc", function()
+-- 	dapui.toggle({ layout = 7, reset = true })
+-- end, "Dap ui console")
+-- map("<leader>dR", function()
+-- 	dapui.toggle({ layout = 8, reset = true })
+-- end, "Dap ui repl")
 -- }}}
 
--- vim: set foldmethod=marker:
+-- vim: set foldmethod=marker

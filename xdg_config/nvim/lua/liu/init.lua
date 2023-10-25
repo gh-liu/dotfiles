@@ -363,14 +363,14 @@ require("lazy").setup(
 		-- DAP {{{2
 		{
 			"mfussenegger/nvim-dap",
-			-- event = "VeryLazy",
 			keys = {
-				"<leader>D",
+				"<leader>dc",
 				"<leader>db",
-				"<leader>B",
-				"<leader>dr",
 			},
-			cmd = { "DapContinue", "DapToggleBreakpoint" },
+			cmd = {
+				"DapContinue",
+				"DapToggleBreakpoint",
+			},
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
 				"jbyuki/one-small-step-for-vimkind",
