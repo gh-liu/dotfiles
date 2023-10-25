@@ -498,6 +498,24 @@ require("lazy").setup(
 		{
 			"nvim-telescope/telescope.nvim",
 			event = "VeryLazy",
+			dependencies = {
+				{
+					"nvim-telescope/telescope-fzf-native.nvim",
+					cond = function()
+						return fn.executable("make") == 1
+					end,
+					build = "make",
+					config = function()
+						require("telescope").load_extension("fzf")
+					end,
+				},
+				{
+					"nvim-telescope/telescope-frecency.nvim",
+					config = function()
+						require("telescope").load_extension("frecency")
+					end,
+				},
+			},
 			config = function()
 				local borders = config.borders
 				local actions = require("telescope.actions")
@@ -550,32 +568,6 @@ require("lazy").setup(
 				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
 
 				api.nvim_create_autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
-			end,
-		},
-		{
-			"nvim-telescope/telescope-fzf-native.nvim",
-			event = "VeryLazy",
-			-- lazy = true,
-			build = "make",
-			cond = function()
-				return fn.executable("make") == 1
-			end,
-			config = function()
-				require("telescope").load_extension("fzf")
-			end,
-		},
-		{
-			"nvim-telescope/telescope-frecency.nvim",
-			-- event = "VeryLazy",
-			-- lazy = true,
-			keys = {
-				{
-					"1<leader>so",
-					"<Cmd>Telescope frecency <CR>",
-				},
-			},
-			config = function()
-				require("telescope").load_extension("frecency")
 			end,
 		},
 		{
