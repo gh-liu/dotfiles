@@ -1953,7 +1953,8 @@ setmap("x", ">", ">gv")
 -- keep the old word in the clipboard
 setmap("x", "p", '"_dP')
 -- changing a word, use dot do repeat
-setmap("n", "cn", [[*``"_cgn]])
+-- setmap("n", "cn", [[*``"_cgn]])
+setmap("n", "cn", [[:normal "ryiw<CR> | :let @/=escape(@r, '/')<CR>"_cgn]])
 -- changing a selection, use dot do repeat
 -- "ry -- copy the selection to `r` register
 -- let @/=escape(@r, '/') -- add the current selection from `r` register to the "search register"
