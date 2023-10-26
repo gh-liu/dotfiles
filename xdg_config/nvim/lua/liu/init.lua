@@ -2162,9 +2162,11 @@ autocmd("BufReadPost", {
 autocmd("BufWinEnter", {
 	group = user_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
-	callback = function()
+	callback = function(ev)
 		if vim.o.filetype == "help" then
 			cmd.wincmd("L")
+
+			vim.keymap.set("n", "<leader>tt", ":wincmd T<CR>", { buffer = ev.buf })
 		end
 	end,
 	desc = "Open help file in right split",
