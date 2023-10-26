@@ -909,7 +909,11 @@ require("lazy").setup(
 		},
 		{
 			"echasnovski/mini.ai",
-			event = "VeryLazy",
+			-- event = "VeryLazy",
+			keys = {
+				{ "i", mode = { "o", "x" } },
+				{ "a", mode = { "o", "x" } },
+			},
 			config = function(self, opts)
 				local ai = require("mini.ai")
 				ai.setup({
