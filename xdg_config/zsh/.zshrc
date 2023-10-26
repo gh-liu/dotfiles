@@ -225,10 +225,7 @@ export PATH=$PATH:$LIU_ENV/nodejs/node/bin
 # }}}
 
 # OCaml{{{2
-
 export OPAMROOT=$LIU_ENV/ocaml/.opam
-export OPAMBIN=$OPAMROOT/default/bin
-export PATH=$PATH:$OPAMBIN
 
 # BEGIN opam configuration
 # This is useful if you're using opam as it adds:
@@ -238,6 +235,7 @@ export PATH=$PATH:$OPAMBIN
 [[ ! -r $HOME/.opam/opam-init/init.zsh ]] || source $HOME/.opam/opam-init/init.zsh >/dev/null 2>/dev/null
 # END opam configuration
 
+[ -f "$(which opam)" ] && eval $(opam config env)
 # }}}
 # }}}
 
