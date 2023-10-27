@@ -162,6 +162,20 @@ done
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 # }}}
 
+# {{{1 Path
+# https://zsh.sourceforge.io/Guide/zshguide02.html#l24
+typeset -U path
+
+export PATH=$PATH:$HOME/bin:$HOME/.local/bin
+
+if [[ $OS == darwin ]]; then
+	export PATH=$PATH:/opt/homebrew/bin
+fi
+
+# Remove duplicate env var
+# export PATH=$(echo $PATH | tr : "\n" | sort | uniq | tr "\n" :)
+# }}}
+
 # Langs {{{1
 # Golang {{{2
 export GO111MODULE=on
@@ -237,20 +251,6 @@ export OPAMROOT=$LIU_ENV/ocaml/.opam
 
 [ -f "$(which opam)" ] && eval $(opam config env)
 # }}}
-# }}}
-
-# {{{1 Path
-# https://zsh.sourceforge.io/Guide/zshguide02.html#l24
-typeset -U path
-
-export PATH=$PATH:$HOME/bin:$HOME/.local/bin
-
-if [[ $OS == darwin ]]; then
-	export PATH=$PATH:/opt/homebrew/bin
-fi
-
-# Remove duplicate env var
-# export PATH=$(echo $PATH | tr : "\n" | sort | uniq | tr "\n" :)
 # }}}
 
 # Tools {{{1
