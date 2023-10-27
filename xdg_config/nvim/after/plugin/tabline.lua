@@ -3,7 +3,7 @@ local extract_highlight_colors = function(color_group, scope)
 		return nil
 	end
 
-	local color = vim.api.nvim_get_hl_by_name(color_group, true)
+	local color = vim.api.nvim_get_hl(0, { name = color_group })
 	if color.background ~= nil then
 		color.bg = string.format("#%06x", color.background)
 		color.background = nil
