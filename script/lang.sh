@@ -65,7 +65,7 @@ function update_ocaml() {
 
 	chmod +x $(pwd)/$pkg
 	ln -svf $(pwd)/$pkg $HOME/.local/bin/opam
-	if [ ! -d $HOME/env/ocaml ]; then
+	if [ ! -d $HOME/env/ocaml/.opam ]; then
 		mkdir $HOME/env/ocaml/.opam
 		opam init
 	fi
@@ -185,6 +185,9 @@ case $1 in
 	;;
 "nodejs")
 	update_nodejs
+	;;
+"ocaml")
+	update_ocaml
 	;;
 *)
 	echo "select one language"
