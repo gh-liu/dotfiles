@@ -2494,14 +2494,14 @@ local oldhover = lsp.handlers.hover
 local oldsignature = lsp.handlers.signature_help
 lsp.handlers["textDocument/hover"] = lsp.with(oldhover, { border = config.borders })
 lsp.handlers["textDocument/signatureHelp"] = lsp.with(oldsignature, { border = config.borders })
--- lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
--- 	local bufnr = api.nvimget_current_buf()
--- 	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
--- 	diagnostic.reset(ns, bufnr)
 
--- 	vim.notify("Diagnostic: refresh", vim.log.levels.WARN)
--- 	return true
--- end
+lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
+	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
+	diagnostic.reset(ns, api.nvimget_current_buf())
+
+	vim.notify("Lsp Workspace Diagnostic Refresh.", vim.log.levels.WARN)
+	return true
+end
 -- }}}
 
 -- }}}
