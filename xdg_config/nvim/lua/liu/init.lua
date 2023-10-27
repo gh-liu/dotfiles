@@ -2082,6 +2082,25 @@ end, {
 	nargs = "*",
 	desc = "Find and Replace (after quickfix)",
 })
+
+api.nvim_create_user_command("R", function(opts)
+	if #opts.fargs < 2 then
+		vim.print("Arguments required.")
+	end
+	local old = vim.fn.getreg("r")
+
+	vim.cmd([[redir @r]])
+	local cmd = table.concat(opts.fargs, " ")
+	vim.cmd("silent " .. cmd)
+	vim.cmd([[redir END]])
+
+	vim.cmd([[vertical new | normal "rp]])
+
+	vim.fn.setreg("r", old)
+end, {
+	nargs = "*",
+	desc = "Save the Output of Vim Command To a Empty Buffer",
+})
 -- }}}
 
 -- Autocmds {{{1
