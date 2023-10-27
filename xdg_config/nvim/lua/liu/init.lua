@@ -23,40 +23,51 @@ _G.config = {
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
 	fold_markers = { "", "" },
 	icons = {
-		Error = "E",
-		Warn = "W",
-		Info = "I",
-		Hint = "H",
-	},
-	debug_icons = {
-		bug = "",
-	},
-	kind_icons = {
-		Text = "",
-		Method = "",
-		Function = "",
-		Constructor = "",
-		Field = "",
-		Variable = "",
-		Class = "",
-		Interface = "",
-		Module = "",
-		Property = "",
-		Unit = "",
-		Value = "",
-		Enum = "",
-		Keyword = "",
-		Snippet = "",
-		Color = "",
-		File = "",
-		Reference = "",
-		Folder = "",
-		EnumMember = "",
-		Constant = "",
-		Struct = "",
-		Event = "",
-		Operator = "",
-		TypeParameter = "",
+		diagnostics = {
+			ERROR = "E",
+			WARN = "W",
+			INFO = "I",
+			HINT = "H",
+		},
+		symbol_kinds = {
+			Array = "󰅪",
+			Class = "",
+			Color = "󰏘",
+			Constant = "󰏿",
+			Constructor = "",
+			Enum = "",
+			EnumMember = "",
+			Event = "",
+			Field = "󰜢",
+			File = "󰈙",
+			Folder = "󰉋",
+			Function = "󰆧",
+			Interface = "",
+			Keyword = "󰌋",
+			Method = "󰆧",
+			Module = "",
+			Operator = "󰆕",
+			Property = "󰜢",
+			Reference = "󰈇",
+			Snippet = "",
+			Struct = "",
+			Text = "",
+			TypeParameter = "",
+			Unit = "",
+			Value = "",
+			Variable = "󰀫",
+		},
+		arrows = {
+
+			right = "",
+			left = "",
+			up = "",
+			down = "",
+		},
+		bug = "",
+		git = "",
+		search = "",
+		vertical_bar = "│",
 	},
 }
 
@@ -2244,10 +2255,10 @@ setmap("n", "[e", diagnostic_goto(false, "ERROR"))
 setmap("n", "]w", diagnostic_goto(true, "WARN"))
 setmap("n", "[w", diagnostic_goto(false, "WARN"))
 
-fn.sign_define("DiagnosticSignError", { text = config.icons.Error, texthl = "DiagnosticSignError" })
-fn.sign_define("DiagnosticSignWarn", { text = config.icons.Warn, texthl = "DiagnosticSignWarn" })
-fn.sign_define("DiagnosticSignInfo", { text = config.icons.Info, texthl = "DiagnosticSignInfo" })
-fn.sign_define("DiagnosticSignHint", { text = config.icons.Hint, texthl = "DiagnosticSignHint" })
+fn.sign_define("DiagnosticSignError", { text = config.icons.diagnostics.ERROR, texthl = "DiagnosticSignError" })
+fn.sign_define("DiagnosticSignWarn", { text = config.icons.diagnostics.WARN, texthl = "DiagnosticSignWarn" })
+fn.sign_define("DiagnosticSignInfo", { text = config.icons.diagnostics.INFO, texthl = "DiagnosticSignInfo" })
+fn.sign_define("DiagnosticSignHint", { text = config.icons.diagnostics.HINT, texthl = "DiagnosticSignHint" })
 
 -- }}}
 
