@@ -134,9 +134,28 @@ function M.word_dir_component()
 	local cmd = vim.fn.pathshorten(vim.fn.getcwd(0))
 
 	return table.concat({
-		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, cmd),
+		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, "%<"..cmd),
 		string.format("%%#StatuslineModeSeparator#%s", "|"),
 	})
+end
+
+function M.file_name_component()
+	local result = {}
+
+	local filename = vim.api.nvim_buf_get_name(0)
+	local extension = vim.fn.fnamemodify(filename, ":e")
+	-- local icon, icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
+
+	table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("Normal"), vim.fn.fnamemodify(filename, ":.")))
+
+	if vim.bo.modified then
+		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("ErrorMsg"), "[+]"))
+	end
+	if not vim.bo.modifiable or vim.bo.readonly then
+		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("WarningMsg"), ""))
+	end
+
+	return table.concat(result)
 end
 
 --- Git status (if any).
@@ -147,7 +166,7 @@ function M.git_component()
 		return ""
 	end
 
-	return string.format("%s %s", config.icons.git, head)
+	return string.format("%%#%s#%s %s",M.get_or_create_hl("DiffChange"), config.icons.git, head)
 end
 
 --- Lsp clients (if any).
@@ -315,6 +334,7 @@ function M.render()
 		concat_components({
 			M.mode_component(),
 			M.word_dir_component(),
+			M.file_name_component(),
 			M.git_component(),
 		}),
 		"%#StatusLine#%=",
