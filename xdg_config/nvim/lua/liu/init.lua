@@ -433,67 +433,9 @@ require("lazy").setup(
 		{
 			"nvim-treesitter/nvim-treesitter-textobjects",
 			enabled = true,
+			lazy = true,
 			event = "VeryLazy",
-			config = function(_, opts)
-				---@diagnostic disable-next-line: missing-fields
-				require("nvim-treesitter.configs").setup({
-					textobjects = {
-						select = {
-							enable = false,
-							-- Automatically jump forward to textobj, similar to targets.vim
-							lookahead = true,
-							keymaps = {
-								["aa"] = "@parameter.outer",
-								["ia"] = "@parameter.inner",
-								["af"] = "@function.outer",
-								["if"] = "@function.inner",
-								["ac"] = "@class.outer",
-								["ic"] = { query = "@class.inner", desc = "Select inner part of a class region" },
-							},
-							selection_modes = {
-								["@parameter.outer"] = "v", -- charwise
-								["@function.outer"] = "V", -- linewise
-								["@class.outer"] = "<c-v>", -- blockwise
-							},
-							include_surrounding_whitespace = true,
-						},
-						move = {
-							enable = true,
-							set_jumps = true, -- whether to set jumps in the jumplist
-							goto_next_start = {
-								["]f"] = "@function.outer",
-								-- ["]c"] = "@class.outer",
-								-- You can use regex matching (i.e. lua pattern) and/or pass a list in a "query" key to group multiple queires.
-								-- ["]o"] = "@loop.*",
-								-- ["]o"] = { query = { "@loop.inner", "@loop.outer" } }
-							},
-							goto_next_end = {
-								["]F"] = "@function.outer",
-								-- ["]C"] = "@class.outer",
-							},
-							goto_previous_start = {
-								["[f"] = "@function.outer",
-								-- ["[c"] = "@class.outer",
-							},
-							goto_previous_end = {
-								["[F"] = "@function.outer",
-								-- ["[C"] = "@class.outer",
-							},
-							-- Below will go to either the start or the end, whichever is closer.
-							-- Use if you want more granular movements
-							-- Make it even more gradual by adding multiple queries and regex.
-							goto_next = {},
-							goto_previous = {},
-						},
-						swap = {
-							enable = false,
-						},
-						lsp_interop = {
-							enable = false,
-						},
-					},
-				})
-			end,
+			config = function(_, opts) end,
 		},
 		{
 			"JoosepAlviste/nvim-ts-context-commentstring",
