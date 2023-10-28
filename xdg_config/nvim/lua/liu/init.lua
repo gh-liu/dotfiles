@@ -128,6 +128,7 @@ require("lazy").setup(
 		},
 		{
 			"rebelot/heirline.nvim",
+			enabled = false,
 			lazy = true,
 			-- event = "VeryLazy",
 		},

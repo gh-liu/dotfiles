@@ -1,563 +1,335 @@
-local ok, _ = pcall(require, "heirline")
-if not ok then
+if false then
 	return
 end
 
-local conditions = require("heirline.conditions")
-local utils = require("heirline.utils")
+-- Do not display the command that produced the quickfix list.
+-- https://neovim.io/doc/user/filetype.html#ft-qf-plugin
+vim.g.qf_disable_statusline = 1
 
-local function setup_colors()
-	return {
-		back_ground = "#4C566A",
-		fore_ground = "#D8DEE9",
-		gray = "#3B4252",
-		green = "#A3BE8C",
-		blue = "#5E81AC",
-		cyan = "#88C0D0",
-		red = "#BF616A",
-		orange = "#D08770",
-		yellow = "#EBCB8B",
-		magenta = "#B48EAD",
-		-- error = "#BF616A",
-		-- warn = "#EBCB8B",
-		-- info = "#88C0D0",
-		-- hint = "#5E81AC",
-	}
+local M = {}
+
+local colors = {
+	gray = "#3B4252",
+	green = "#A3BE8C",
+	blue = "#5E81AC",
+	cyan = "#88C0D0",
+	red = "#BF616A",
+	orange = "#D08770",
+	yellow = "#EBCB8B",
+	magenta = "#B48EAD",
+	-- error = "#BF616A",
+	-- warn = "#EBCB8B",
+	-- info = "#88C0D0",
+	-- hint = "#5E81AC",
+}
+
+---@type table<string, boolean>
+local statusline_hls = {}
+
+---@param hl string
+---@return string
+function M.get_or_create_hl(hl)
+	local hl_name = "Statusline" .. hl
+
+	if not statusline_hls[hl] then
+		local bg_hl = vim.api.nvim_get_hl(0, { name = "StatusLine" })
+		local fg_hl = vim.api.nvim_get_hl(0, { name = hl })
+		vim.api.nvim_set_hl(0, hl_name, { bg = ("#%06x"):format(bg_hl.bg), fg = ("#%06x"):format(fg_hl.fg) })
+		statusline_hls[hl] = true
+	end
+
+	return hl_name
 end
 
-require("heirline").load_colors(setup_colors())
+local statusline_hl = vim.api.nvim_get_hl(0, { name = "StatusLine" })
 
-local dot = "\194\183"
-local ViMode = {
-	init = function(self)
-		self.mode = vim.fn.mode(1)
+local mode_colors = {
+	ModeNormal = colors.red,
+	ModePENDING = colors.magenta,
+	ModeVisual = colors.blue,
+	ModeInsert = colors.green,
+	ModeSELECT = colors.purple,
+	ModeCOMMAND = colors.orange,
+	ModeTERMINAL = colors.cyan,
+	ModeEX = colors.yellow,
+	ModeSeparator = colors.gray,
+	ModeUNKNOWN = colors.gray,
+}
+for k, v in pairs(mode_colors) do
+	vim.api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = ("#%06x"):format(statusline_hl.bg) })
+end
 
-		if not self.once then
-			vim.cmd("au ModeChanged *:*o redrawstatus")
+--- Current mode.
+---@return string
+function M.mode_component()
+	-- Note that: \19 = ^S and \22 = ^V.
+	local mode_to_str = {
+		["n"] = "NORMAL",
+		["no"] = "OP-PENDING",
+		["nov"] = "OP-PENDING",
+		["noV"] = "OP-PENDING",
+		["no\22"] = "OP-PENDING",
+		["niI"] = "NORMAL",
+		["niR"] = "NORMAL",
+		["niV"] = "NORMAL",
+		["nt"] = "NORMAL",
+		["ntT"] = "NORMAL",
+		["v"] = "VISUAL",
+		["vs"] = "VISUAL",
+		["V"] = "VISUAL",
+		["Vs"] = "VISUAL",
+		["\22"] = "VISUAL",
+		["\22s"] = "VISUAL",
+		["s"] = "SELECT",
+		["S"] = "SELECT",
+		["\19"] = "SELECT",
+		["i"] = "INSERT",
+		["ic"] = "INSERT",
+		["ix"] = "INSERT",
+		["R"] = "REPLACE",
+		["Rc"] = "REPLACE",
+		["Rx"] = "REPLACE",
+		["Rv"] = "VIRT REPLACE",
+		["Rvc"] = "VIRT REPLACE",
+		["Rvx"] = "VIRT REPLACE",
+		["c"] = "COMMAND",
+		["cv"] = "VIM EX",
+		["ce"] = "EX",
+		["r"] = "PROMPT",
+		["rm"] = "MORE",
+		["r?"] = "CONFIRM",
+		["!"] = "SHELL",
+		["t"] = "TERMINAL",
+	}
+
+	local mode = mode_to_str[vim.api.nvim_get_mode().mode] or "UNKNOWN"
+
+	local hl = "ModeUNKNOWN"
+	if mode:find("NORMAL") then
+		hl = "ModeNormal"
+	elseif mode:find("PENDING") then
+		hl = "ModePending"
+	elseif mode:find("VISUAL") then
+		hl = "ModeVisual"
+	elseif mode:find("INSERT") then
+		hl = "ModeInsert"
+	elseif mode:find("SELECT") then
+		hl = "ModeSELECT"
+	elseif mode:find("COMMAND") then
+		hl = "ModeCommand"
+	elseif mode:find("TERMINAL") then
+		hl = "ModeTERMINAL"
+	elseif mode:find("EX") then
+		hl = "ModeEX"
+	end
+
+	return table.concat({
+		string.format("%%#Statusline%s#%s", hl, mode),
+		string.format("%%#StatuslineModeSeparator#%s", "|"),
+	})
+end
+
+function M.word_dir_component()
+	local icon = (vim.fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. " "
+	local cmd = vim.fn.pathshorten(vim.fn.getcwd(0))
+
+	return table.concat({
+		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, cmd),
+		string.format("%%#StatuslineModeSeparator#%s", "|"),
+	})
+end
+
+--- Git status (if any).
+---@return string
+function M.git_component()
+	local head = vim.b.gitsigns_head
+	if not head then
+		return ""
+	end
+
+	return string.format("%s %s", config.icons.git, head)
+end
+
+--- Lsp clients (if any).
+---@return string
+function M.lsp_clients_component()
+	local names = {}
+	for _, server in pairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
+		table.insert(names, server.name)
+	end
+	if #names == 0 then
+		return ""
+	end
+	local clients = "[" .. table.concat(names, " ") .. "]"
+
+	return string.format("%%#%s# %s", M.get_or_create_hl("MoreMsg"), clients)
+end
+
+--- Lsp progress status (if any).
+---@type table<string, string?>
+local progress_status = {
+	client = nil,
+	kind = nil,
+	title = nil,
+}
+
+vim.api.nvim_create_autocmd("LspProgress", {
+	group = vim.api.nvim_create_augroup("user_statusline", { clear = true }),
+	desc = "Update LSP progress in statusline",
+	pattern = { "begin", "end" },
+	callback = function(args)
+		-- This should in theory never happen, but I've seen weird errors.
+		if not args.data then
+			return
 		end
-		self.once = true
-	end,
-	static = {
-		mode_names = {
-			n = "Normal",
-			no = "N" .. dot .. "Operator Pending",
-			nov = "N?",
-			noV = "N?",
-			["no\22"] = "N?",
-			niI = "Ni",
-			niR = "Nr",
-			niV = "Nv",
-			nt = "Nt",
-			v = "Visual",
-			vs = "Vs",
-			V = "V" .. dot .. "Line",
-			Vs = "Vs",
-			["\22"] = "V" .. dot .. "Block",
-			["\22s"] = "V" .. dot .. "Block",
-			s = "Select",
-			S = "S" .. dot .. "Line",
-			["\19"] = "S" .. dot .. "Block",
-			i = "Insert",
-			ic = "Ic",
-			ix = "Ix",
-			R = "Replace",
-			Rc = "Rc",
-			Rx = "Rx",
-			Rv = "Rv",
-			Rvc = "Rv",
-			Rvx = "Rv",
-			c = "Command",
-			cv = "Vim Ex",
-			r = "Prompt",
-			rm = "More",
-			["r?"] = "Confirm",
-			["!"] = "Shell",
-			t = "Terminal",
-		},
-		mode_colors = {
-			n = "red",
-			i = "green",
-			v = "cyan",
-			V = "cyan",
-			["\22"] = "cyan",
-			c = "orange",
-			s = "purple",
-			S = "purple",
-			["\19"] = "purple",
-			R = "orange",
-			r = "orange",
-			["!"] = "red",
-			t = "red",
-		},
-	},
-	provider = function(self)
-		return ("%2(" .. self.mode_names[self.mode] .. "%)")
-	end,
-	hl = function(self)
-		local mode = self.mode:sub(1, 1)
-		return { fg = self.mode_colors[mode], bold = true }
-	end,
-	update = {
-		"ModeChanged",
-	},
-}
 
-local WorkDir = {
-	init = function(self)
-		self.icon = (vim.fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. " "
-		local cwd = vim.fn.getcwd(0)
-		self.cwd = vim.fn.fnamemodify(cwd, ":~")
-		if not conditions.width_percent_below(#self.cwd, 0.27) then
-			self.cwd = vim.fn.pathshorten(self.cwd)
-		end
-	end,
-	hl = { fg = "blue", bold = true },
-	flexible = 1,
-	{
-		provider = function(self)
-			local trail = self.cwd:sub(-1) == "/" and "" or "/"
-			return self.icon .. self.cwd .. trail .. " "
-		end,
-	},
-	{
-		provider = function(self)
-			local cwd = vim.fn.pathshorten(self.cwd)
-			local trail = self.cwd:sub(-1) == "/" and "" or "/"
-			return self.icon .. cwd .. trail .. " "
-		end,
-	},
-	{
-		provider = "",
-	},
-}
+		progress_status = {
+			client = vim.lsp.get_client_by_id(args.data.client_id).name,
+			kind = args.data.result.value.kind,
+			title = args.data.result.value.title,
+		}
 
-local FileNameBlock = {
-	init = function(self)
-		self.filename = vim.api.nvim_buf_get_name(0)
-	end,
-}
-local FileIcon = {
-	init = function(self)
-		local filename = self.filename
-		local extension = vim.fn.fnamemodify(filename, ":e")
-		self.icon, self.icon_color =
-			require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
-	end,
-	provider = function(self)
-		return self.icon and (self.icon .. " ")
-	end,
-	hl = function(self)
-		return { fg = self.icon_color }
-	end,
-}
-local FileName = {
-	init = function(self)
-		self.lfilename = vim.fn.fnamemodify(self.filename, ":.")
-		if self.lfilename == "" then
-			self.lfilename = "[No Name]"
-		end
-	end,
-	hl = { fg = utils.get_highlight("Directory").fg },
-
-	flexible = 2,
-
-	{
-		provider = function(self)
-			return self.lfilename
-		end,
-	},
-	{
-		provider = function(self)
-			return vim.fn.pathshorten(self.lfilename)
-		end,
-	},
-}
-local FileFlags = {
-	{
-		condition = function()
-			return vim.bo.modified
-		end,
-		provider = "[+]",
-		hl = { fg = "green" },
-	},
-	{
-		condition = function()
-			return not vim.bo.modifiable or vim.bo.readonly
-		end,
-		provider = "",
-		hl = { fg = "orange" },
-	},
-}
--- the filename color will change if the buffer is modified.
-local FileNameModifer = {
-	hl = function()
-		if vim.bo.modified then
-			-- use `force` because we need to override the child's hl foreground
-			return { fg = "cyan", bold = true, force = true }
-		end
-	end,
-}
-FileNameBlock =
-	utils.insert(FileNameBlock, FileIcon, utils.insert(FileNameModifer, FileName), FileFlags, { provider = "%<" })
-
-local FileType = {
-	provider = function()
-		return string.upper(vim.bo.filetype)
-	end,
-	hl = { fg = utils.get_highlight("Type").fg, bold = true },
-	-- hl = function()
-	-- 	local _, color = require("nvim-web-devicons").get_icon_color_by_filetype(vim.bo.filetype, { default = true })
-	-- 	return { fg = color, bold = true }
-	-- end,
-}
-
-local FileEncoding = {
-	provider = function()
-		local enc = (vim.bo.fenc ~= "" and vim.bo.fenc) or vim.o.enc -- :h 'enc'
-		return enc ~= "utf-8" and enc:upper()
-	end,
-}
-local FileFormat = {
-	provider = function()
-		local fmt = vim.bo.fileformat
-		return fmt ~= "unix" and fmt:upper()
-	end,
-}
-
-local FileSize = {
-	provider = function()
-		-- stackoverflow, compute human readable file size
-		local suffix = { "b", "k", "M", "G", "T", "P", "E" }
-		local fsize = vim.fn.getfsize(vim.api.nvim_buf_get_name(0))
-		fsize = (fsize < 0 and 0) or fsize
-		if fsize < 1024 then
-			return fsize .. suffix[1]
-		end
-		local i = math.floor((math.log(fsize) / math.log(1024)))
-		return string.format("%.2g%s", fsize / math.pow(1024, i), suffix[i + 1])
-	end,
-}
-local FileLastModified = {
-	provider = function()
-		local ftime = vim.fn.getftime(vim.api.nvim_buf_get_name(0))
-		return (ftime > 0) and os.date("%c", ftime)
-	end,
-}
-
-local Ruler = {
-	hl = { fg = "fore_ground" },
-	-- %l = current line number
-	-- %L = number of lines in the buffer
-	-- %c = column number
-	-- %P = percentage through file of displayed window
-	provider = "%7(%l/%3L%):%2c %P",
-}
-
-local ScrollBar = {
-	static = {
-		sbar = { "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█" },
-	},
-	provider = function(self)
-		local curr_line = vim.api.nvim_win_get_cursor(0)[1]
-		local lines = vim.api.nvim_buf_line_count(0)
-		local i = math.floor((curr_line - 1) / lines * #self.sbar) + 1
-		return string.rep(self.sbar[i], 2)
-	end,
-	hl = { fg = "blue", bg = "back_ground" },
-}
-
-local LSPActive = {
-	condition = conditions.lsp_attached,
-	update = { "LspAttach", "LspDetach", "BufEnter" },
-	provider = function(self)
-		local names = {}
-		for _, server in pairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
-			table.insert(names, server.name)
-		end
-		return " [" .. table.concat(names, " ") .. "]"
-	end,
-	hl = { fg = "green", bold = true },
-}
-
-local Diagnostics = {
-	condition = function()
-		return #vim.diagnostic.get(nil) > 0
-	end,
-	update = { "DiagnosticChanged", "BufEnter" },
-	static = {
-		error_icon = config.icons.Error,
-		warn_icon = config.icons.Warn,
-		info_icon = config.icons.Info,
-		hint_icon = config.icons.Hint,
-	},
-	init = function(self)
-		self.errors = #vim.diagnostic.get(nil, { severity = vim.diagnostic.severity.ERROR })
-		self.warnings = #vim.diagnostic.get(nil, { severity = vim.diagnostic.severity.WARN })
-		self.hints = #vim.diagnostic.get(nil, { severity = vim.diagnostic.severity.HINT })
-		self.info = #vim.diagnostic.get(nil, { severity = vim.diagnostic.severity.INFO })
-	end,
-	{
-		provider = "![",
-	},
-	{
-		provider = function(self)
-			return self.errors > 0 and (self.error_icon .. " " .. self.errors .. " ")
-		end,
-		hl = { fg = "red", bg = "back_ground" },
-	},
-	{
-		provider = function(self)
-			return self.warnings > 0 and (self.warn_icon .. " " .. self.warnings .. " ")
-		end,
-		hl = { fg = "yellow", bg = "back_ground" },
-	},
-	{
-		provider = function(self)
-			return self.info > 0 and (self.info_icon .. " " .. self.info .. " ")
-		end,
-		hl = { fg = "cyan", bg = "back_ground" },
-	},
-	{
-		provider = function(self)
-			return self.hints > 0 and (self.hint_icon .. " " .. self.hints)
-		end,
-		hl = { fg = "blue", bg = "back_ground" },
-	},
-	{
-		provider = "]",
-	},
-}
-
-local Git = {
-	condition = conditions.is_git_repo,
-	init = function(self)
-		self.status_dict = vim.b.gitsigns_status_dict
-		self.has_changes = self.status_dict.added ~= 0 or self.status_dict.removed ~= 0 or self.status_dict.changed ~= 0
-	end,
-	hl = { fg = "orange", bg = "back_ground" },
-	{
-		provider = function(self)
-			return " " .. self.status_dict.head
-		end,
-		hl = { bold = true },
-	},
-	{
-		condition = function(self)
-			return self.has_changes
-		end,
-		provider = "(",
-	},
-	{
-		provider = function(self)
-			local count = self.status_dict.added or 0
-			return count > 0 and ("+" .. count)
-		end,
-		hl = { fg = "green", bg = "back_ground" },
-	},
-	{
-		provider = function(self)
-			local count = self.status_dict.removed or 0
-			return count > 0 and ("-" .. count)
-		end,
-		hl = { fg = "red", bg = "back_ground" },
-	},
-	{
-		provider = function(self)
-			local count = self.status_dict.changed or 0
-			return count > 0 and ("~" .. count)
-		end,
-		hl = { fg = "yellow", bg = "back_ground" },
-	},
-	{
-		condition = function(self)
-			return self.has_changes
-		end,
-		provider = ")",
-	},
-}
-
-local LeapSign = {
-	condition = function()
-		return vim.g.user_leap_status == 1
-	end,
-	{
-		provider = function()
-			return "Leap->?"
-		end,
-		hl = "Question",
-	},
-}
-
-local DAPMessages = {
-	condition = function()
-		return vim.g.debuging and require("dap").session()
-		-- local session = require("dap").session()
-		-- return session ~= nil
-	end,
-	{
-		provider = function()
-			return config.debug_icons.bug .. " " .. require("dap").status() .. ""
-		end,
-		hl = "Debug",
-	},
-}
-
-local TerminalName = {
-	provider = function()
-		local tname, _ = vim.api.nvim_buf_get_name(0):gsub(".*:", "")
-		return " " .. tname
-	end,
-	hl = { fg = "blue", bold = true },
-}
-
-local HelpFilename = {
-	condition = function()
-		return vim.bo.filetype == "help"
-	end,
-	provider = function()
-		local filename = vim.api.nvim_buf_get_name(0)
-		return vim.fn.fnamemodify(filename, ":t")
-	end,
-	hl = "Directory",
-}
-
-local QFName = {
-	condition = function()
-		return conditions.buffer_matches({
-			buftype = {
-				"quickfix",
-			},
-		})
-	end,
-	FileType,
-	{ provider = "%q" },
-}
-
-local Align = { provider = "%=" }
-local Space = { provider = " " }
-local VerticalLine = { provider = "|", hl = { fg = "gray", bg = "back_ground" } }
-
-local DefaultStatusline = {
-	ViMode,
-	VerticalLine,
-	WorkDir,
-	FileNameBlock,
-	Space,
-	{ provider = "%<" },
-	Git,
-	Align,
-	LeapSign,
-	Space,
-	DAPMessages,
-	Space,
-	Diagnostics,
-	Space,
-	LSPActive,
-	Space,
-	FileType,
-	Space,
-	Ruler,
-	Space,
-	ScrollBar,
-}
-
-local InactiveStatusline = {
-	condition = conditions.is_not_active,
-	FileType,
-	Space,
-	FileName,
-	Align,
-}
-
-local DapRepl = {
-	condition = function()
-		return vim.bo.filetype == "dap-repl"
-	end,
-	hl = { fg = "cyan" },
-	FileType,
-	Align,
-	DAPMessages,
-	Space,
-	Ruler,
-	Space,
-	ScrollBar,
-}
-
-local HelpFilenameStatusline = {
-	condition = function()
-		return conditions.buffer_matches({ buftype = { "help" } })
-	end,
-	hl = { fg = "cyan" },
-	FileType,
-	Space,
-	HelpFilename,
-	Align,
-}
-local QFNameStatusline = {
-	condition = function()
-		return conditions.buffer_matches({ buftype = { "quickfix" } })
-	end,
-	hl = { fg = "orange" },
-	QFName,
-	Align,
-}
-local TerminalStatusline = {
-	condition = function()
-		return conditions.buffer_matches({ buftype = { "terminal" } })
-	end,
-	hl = { fg = "blue" },
-	FileType,
-	Space,
-	TerminalName,
-	Align,
-}
-
-local SpecialStatusline = {
-	condition = function()
-		return conditions.buffer_matches({
-			buftype = {
-				"nofile",
-				"prompt",
-			},
-			filetype = {
-				"^git.*",
-				"fugitive",
-				"harpoon",
-			},
-		})
-	end,
-	hl = { fg = "green" },
-	FileType,
-	Align,
-}
-
-local StatusLines = {
-	hl = function()
-		if conditions.is_active() then
-			return "StatusLine"
+		if progress_status.kind == "end" then
+			progress_status.title = nil
+			-- Wait a bit before clearing the status.
+			vim.defer_fn(function()
+				vim.cmd.redrawstatus()
+			end, 3000)
 		else
-			return "StatusLineNC"
+			vim.cmd.redrawstatus()
 		end
 	end,
-	fallthrough = false,
-	DapRepl,
-	HelpFilenameStatusline,
-	QFNameStatusline,
-	TerminalStatusline,
-	SpecialStatusline,
-	InactiveStatusline,
-	DefaultStatusline,
-}
-
-require("heirline").setup({
-	statusline = StatusLines,
 })
+--- The latest LSP progress message.
+---@return string
+function M.lsp_progress_component()
+	if not progress_status.client or not progress_status.title then
+		return ""
+	end
 
-vim.api.nvim_create_augroup("Heirline", { clear = true })
-vim.api.nvim_create_autocmd("ColorScheme", {
-	callback = function()
-		local colors = setup_colors()
-		utils.on_colorscheme(colors)
-	end,
-	group = "Heirline",
-})
+	return table.concat({
+		string.format("%%#%s#%s: ", M.get_or_create_hl("Title"), progress_status.client),
+		string.format("%%#%s#%s...", M.get_or_create_hl("Normal"), progress_status.title),
+	})
+end
+
+--- The current debugging status (if any).
+---@return string?
+function M.dap_component()
+	if not package.loaded["dap"] or require("dap").status() == "" then
+		return nil
+	end
+
+	return string.format("%%#%s#%s %s", M.get_or_create_hl("Debug"), config.icons.bug, require("dap").status())
+end
+
+local last_diagnostic_component = ""
+
+--- Diagnostic counts in the current buffer.
+---@return string
+function M.diagnostics_component()
+	-- Use the last computed value if in insert mode.
+	if vim.startswith(vim.api.nvim_get_mode().mode, "i") then
+		return last_diagnostic_component
+	end
+
+	local counts = vim.iter(vim.diagnostic.get(0)):fold({
+		ERROR = 0,
+		WARN = 0,
+		HINT = 0,
+		INFO = 0,
+	}, function(acc, diagnostic)
+		local severity = vim.diagnostic.severity[diagnostic.severity]
+		acc[severity] = acc[severity] + 1
+		return acc
+	end)
+
+	local parts = vim.iter.map(function(severity, count)
+		if count == 0 then
+			return nil
+		end
+
+		local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
+		return string.format("%%#%s#%s %d", M.get_or_create_hl(hl), config.icons.diagnostics[severity], count)
+	end, counts)
+
+	return table.concat(parts, " ")
+end
+
+--- The buffer's filetype.
+---@return string
+function M.filetype_component()
+	local devicons = require("nvim-web-devicons")
+	local filetype = vim.bo.filetype
+	if filetype == "" then
+		filetype = "[No Name]"
+	end
+
+	local buf_name = vim.api.nvim_buf_get_name(0)
+	local name, ext = vim.fn.fnamemodify(buf_name, ":t"), vim.fn.fnamemodify(buf_name, ":e")
+
+	local icon, icon_hl = devicons.get_icon(name, ext)
+	if not icon then
+		icon, icon_hl = devicons.get_icon_by_filetype(filetype, { default = true })
+	end
+	icon_hl = M.get_or_create_hl(icon_hl)
+
+	return string.format("%%#%s#%s %%#%s#%s", icon_hl, icon, icon_hl, filetype)
+end
+
+--- File-content encoding for the current buffer.
+---@return string
+function M.encoding_component()
+	local encoding = vim.opt.fileencoding:get()
+	return encoding ~= "" and string.format("%%#%s#%s", M.get_or_create_hl("Normal"), encoding) or ""
+end
+
+--- The current line, total line count, and column position.
+---@return string
+function M.position_component()
+	local line = vim.fn.line(".")
+	local line_count = vim.api.nvim_buf_line_count(0)
+	local col = vim.fn.virtcol(".")
+
+	local len = #tostring(line_count)
+	local line = string.format("%" .. len .. "d", line)
+
+	return table.concat({
+		string.format("l: %%#%s#%s", M.get_or_create_hl("Title"), line),
+		string.format("%%#%s#/%d c: %d", M.get_or_create_hl("Normal"), line_count, col),
+	})
+end
+
+--- Renders the statusline.
+---@return string
+function M.render()
+	---@param components string[]
+	---@return string
+	local function concat_components(components)
+		return vim.iter(components):skip(1):fold(components[1], function(acc, component)
+			return #component > 0 and string.format("%s %s", acc, component) or acc
+		end)
+	end
+
+	return table.concat({
+		concat_components({
+			M.mode_component(),
+			M.word_dir_component(),
+			M.git_component(),
+		}),
+		"%#StatusLine#%=",
+		concat_components({
+			M.dap_component() or M.lsp_progress_component(),
+			M.diagnostics_component(),
+			M.lsp_clients_component(),
+			M.filetype_component(),
+			M.encoding_component(),
+			M.position_component(),
+		}),
+		" ",
+	})
+end
+
+_G.nvim_statsline = M.render
+
+vim.o.statusline = "%!v:lua.nvim_statsline()"
