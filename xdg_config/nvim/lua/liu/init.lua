@@ -1467,9 +1467,18 @@ require("lazy").setup(
 		},
 		{
 			"lambdalisue/suda.vim",
+			enabled = false,
 			cmd = {
 				"SudaRead",
 				"SudaWrite",
+			},
+		},
+		{
+			"tpope/vim-eunuch",
+			enabled = true,
+			cmd = {
+				"SudoEdit",
+				"SudoWrite",
 			},
 		},
 		{ "tpope/vim-sleuth", event = "VeryLazy" },

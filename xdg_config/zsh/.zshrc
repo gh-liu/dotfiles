@@ -62,6 +62,11 @@ fi
 export LIU_ENV=$HOME/env
 export LIU_DEV=$HOME/dev
 export LIU_TOOLS=$HOME/tools
+
+if [[ -f $LIU_ENV/pwd.sh ]]; then
+	export SUDO_ASKPASS=$LIU_ENV/pwd.sh
+fi
+
 # }}}
 
 # Plugins {{{1
