@@ -2460,7 +2460,7 @@ lsp.handlers["textDocument/signatureHelp"] = lsp.with(oldsignature, { border = c
 
 lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
 	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
-	diagnostic.reset(ns, api.nvimget_current_buf())
+	diagnostic.reset(ns, api.nvim_get_current_buf())
 
 	vim.notify("Lsp Workspace Diagnostic Refresh.", vim.log.levels.WARN)
 	return true
