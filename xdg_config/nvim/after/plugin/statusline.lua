@@ -134,7 +134,7 @@ function M.word_dir_component()
 	local cmd = vim.fn.pathshorten(vim.fn.getcwd(0))
 
 	return table.concat({
-		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, "%<"..cmd),
+		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, "%<" .. cmd),
 		string.format("%%#StatuslineModeSeparator#%s", "|"),
 	})
 end
@@ -143,10 +143,18 @@ function M.file_name_component()
 	local result = {}
 
 	local filename = vim.api.nvim_buf_get_name(0)
-	local extension = vim.fn.fnamemodify(filename, ":e")
-	-- local icon, icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
 
-	table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("Normal"), vim.fn.fnamemodify(filename, ":.")))
+	if filename == "" then
+		filename = "[No Name]"
+		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("Normal"), filename))
+	else
+		local extension = vim.fn.fnamemodify(filename, ":e")
+		-- local icon, icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
+		table.insert(
+			result,
+			string.format("%%#%s#%s", M.get_or_create_hl("Normal"), vim.fn.fnamemodify(filename, ":."))
+		)
+	end
 
 	if vim.bo.modified then
 		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("ErrorMsg"), "[+]"))
@@ -166,7 +174,7 @@ function M.git_component()
 		return ""
 	end
 
-	return string.format("%%#%s#%s %s",M.get_or_create_hl("DiffChange"), config.icons.git, head)
+	return string.format("%%#%s#%s %s", M.get_or_create_hl("DiffChange"), config.icons.git, head)
 end
 
 --- Lsp clients (if any).
@@ -281,7 +289,8 @@ function M.filetype_component()
 	local devicons = require("nvim-web-devicons")
 	local filetype = vim.bo.filetype
 	if filetype == "" then
-		filetype = "[No Name]"
+		return ""
+		-- filetype = "[No filetype]"
 	end
 
 	local buf_name = vim.api.nvim_buf_get_name(0)
@@ -314,7 +323,7 @@ function M.position_component()
 	local line = string.format("%" .. len .. "d", line)
 
 	return table.concat({
-		string.format("l: %%#%s#%s", M.get_or_create_hl("Title"), line),
+		string.format("%%#%s#l: %%#%s#%s", M.get_or_create_hl("Normal"), M.get_or_create_hl("Title"), line),
 		string.format("%%#%s#/%d c: %d", M.get_or_create_hl("Normal"), line_count, col),
 	})
 end
@@ -328,6 +337,33 @@ function M.render()
 		return vim.iter(components):skip(1):fold(components[1], function(acc, component)
 			return #component > 0 and string.format("%s %s", acc, component) or acc
 		end)
+	end
+
+	local is_specical_file_type = vim.tbl_contains({
+		"oil",
+		"lazy",
+		"harpoon",
+		"fugitive",
+	}, vim.bo.filetype)
+
+	local is_specical_buffer_type = vim.tbl_contains({
+		"help",
+		"nofile",
+		"quickfix",
+		"terminal",
+		"prompt",
+	}, vim.bo.buftype)
+
+	if is_specical_file_type or is_specical_buffer_type then
+		return table.concat({
+			concat_components({
+				string.format("%%#%s#%s", M.get_or_create_hl("MoreMsg"), string.upper(vim.bo.filetype)),
+			}),
+			"%#StatusLine#%=",
+			concat_components({
+				M.position_component(),
+			}),
+		})
 	end
 
 	return table.concat({
