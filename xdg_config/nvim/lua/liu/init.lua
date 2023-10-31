@@ -1512,6 +1512,9 @@ require("lazy").setup(
 				on_close = function(t)
 					vim.o.ch = 1
 				end,
+				highlights = {
+					StatusLine = { link = "StatusLine" },
+				},
 				-- shades terminal to be darker than other window
 				-- shade_terminals = false,
 				shading_factor = "-6",
