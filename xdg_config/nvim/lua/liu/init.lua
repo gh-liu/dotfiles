@@ -2071,7 +2071,7 @@ end, {
 
 -- Autocmds {{{1
 local function user_augroup(name)
-	return vim.api.nvim_create_augroup("user_" .. name, { clear = true })
+	return vim.api.nvim_create_augroup("liu_" .. name, { clear = true })
 end
 autocmd("TextYankPost", {
 	group = user_augroup("highlight_yank"),

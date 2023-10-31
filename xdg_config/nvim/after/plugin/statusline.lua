@@ -201,7 +201,7 @@ local progress_status = {
 }
 
 vim.api.nvim_create_autocmd("LspProgress", {
-	group = vim.api.nvim_create_augroup("user_statusline", { clear = true }),
+	group = vim.api.nvim_create_augroup("liu_statusline", { clear = true }),
 	desc = "Update LSP progress in statusline",
 	pattern = { "begin", "end" },
 	callback = function(args)
