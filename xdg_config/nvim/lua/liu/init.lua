@@ -2009,18 +2009,18 @@ setmap("n", "<leader>bb", "<cmd>e #<cr>")
 setmap("n", "<C-w>O", ":tabonly<CR>")
 -- }}}
 
--- Marks {{{2
--- delete mark
-vim.keymap.set("n", "dm", function()
-	local mark = vim.fn.getcharstr()
-	local ditgit = string.byte(mark)
-	if (ditgit >= 65 and ditgit <= 90) or (ditgit >= 97 and ditgit <= 122) then
-		vim.api.nvim_command(string.format(":delm %s<CR>", mark))
-	end
-end, { noremap = true })
--- use M jump to mark
-setmap("n", "M", "g'")
--- }}}
+-- -- Marks {{{2
+-- -- delete mark
+-- vim.keymap.set("n", "dm", function()
+-- 	local mark = vim.fn.getcharstr()
+-- 	local ditgit = string.byte(mark)
+-- 	if (ditgit >= 65 and ditgit <= 90) or (ditgit >= 97 and ditgit <= 122) then
+-- 		vim.api.nvim_command(string.format(":delm %s<CR>", mark))
+-- 	end
+-- end, { noremap = true })
+-- -- use M jump to mark
+-- setmap("n", "M", "g'")
+-- -- }}}
 
 -- Abbrev{{{2
 local opts = {
