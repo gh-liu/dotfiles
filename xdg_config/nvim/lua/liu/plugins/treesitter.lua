@@ -37,11 +37,14 @@ require("nvim-treesitter.configs").setup({
 	incremental_selection = { enable = false },
 })
 
--- Navigation {{{1
--- copied from nvim-treesitter-refactor/navigation.lua
+-- local compat = require("nvim-treesitter.compat")
+local parsers = require("nvim-treesitter.parsers")
 local ts_utils = require("nvim-treesitter.ts_utils")
+local queries = require("nvim-treesitter.query")
 local locals = require("nvim-treesitter.locals")
 
+-- Navigation {{{1
+-- copied from nvim-treesitter-refactor/navigation.lua
 local M = {}
 
 function M.goto_next_usage(bufnr)
@@ -75,7 +78,7 @@ function M.goto_adjacent_usage(bufnr, delta)
 	end
 
 	local target_index = (index + delta + #usages - 1) % #usages + 1
-	ts_utils.goto_node(usages[target_index])
+	ts_utils.goto_node(usages[target_index], false, false)
 end
 
 -- if lsp server supports document highlight, which will replce below two maps
@@ -86,8 +89,6 @@ vim.keymap.set("n", "[v", M.goto_previous_usage)
 -- Rename {{{
 -- copied from nvim-treesitter-refactor/smart_rename.lua
 local get_node_text = vim.treesitter.get_node_text
-
-local locals = require("nvim-treesitter.locals")
 
 local function smart_rename(bufnr)
 	bufnr = bufnr or api.nvim_get_current_buf()
@@ -144,14 +145,11 @@ vim.keymap.set("n", "<leader>rn", smart_rename)
 -- }}}
 
 -- Object Move {{{1
-local parsers = require("nvim-treesitter.parsers")
-local queries = require("nvim-treesitter.query")
-local compat = require("nvim-treesitter.compat")
 
 ---@param lang string
 ---@param query_group string
 local function available_textobjects(lang, query_group)
-	local parsed_queries = compat.get_query(lang, query_group)
+	local parsed_queries = vim.treesitter.query.get(lang, query_group)
 	if not parsed_queries then
 		return {}
 	end
