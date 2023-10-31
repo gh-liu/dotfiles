@@ -150,6 +150,9 @@ local servers = {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#bufls
 	-- go install github.com/bufbuild/buf-language-server/cmd/bufls@latest
 	bufls = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
+	-- sudo apt-get -y install clangd
+	clangd = {},
 }
 
 -- setup neodev BEFORE lspconfig

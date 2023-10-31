@@ -22,7 +22,8 @@ sudo apt install -y direnv podman
 sudo apt install -y btop
 
 sudo apt install -y lldb-14
-sudo apt install -y clangd-12
+# sudo apt install -y clangd-12
+sudo apt install -y clangd
 sudo apt install -y gcc g++ gdb
 sudo apt install -y python3-pip
 
