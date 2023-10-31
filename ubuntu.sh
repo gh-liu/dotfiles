@@ -37,6 +37,11 @@ sudo apt install -y proxychains4
 
 # sudo apt install -y libncurses5-dev libevent-dev
 
+# For full system emulation
+sudo apt install -y qemu-system
+# For emulating Linux binaries
+sudo apt install -y qemu-user-static
+
 
 # DIRECTORY
 mkdir -p $HOME/dev/{golang,rust,nodejs}
