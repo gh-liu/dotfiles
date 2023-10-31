@@ -679,6 +679,22 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"gbprod/yanky.nvim",
+			keys = {
+				{ "p", "<Plug>(YankyPutAfter)", mode = { "n", "x" }, desc = "Put yanked text after cursor" },
+				{ "P", "<Plug>(YankyPutBefore)", mode = { "n", "x" }, desc = "Put yanked text before cursor" },
+				{ "gp", "<Plug>(YankyPutAfterLinewise)", desc = "Put yanked text in line below" },
+				{ "gP", "<Plug>(YankyPutBeforeLinewise)", desc = "Put yanked text in line above" },
+				{ "[y", "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
+				{ "]y", "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
+			},
+			config = function(self, opts)
+				require("yanky").setup({
+					highlight = { timer = vim.o.updatetime },
+				})
+			end,
+		},
+		{
 			"gbprod/substitute.nvim",
 			event = "VeryLazy",
 			config = function()
