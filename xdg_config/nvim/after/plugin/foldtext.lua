@@ -13,9 +13,9 @@ local function foldtext()
 		table.insert(result, { start_line, "Folded" })
 
 	end
-		table.insert(result, { " ...", "NonText" })
-		table.insert(result, { string.format(" +%s(%s)", vim.v.folddashes, vim.v.foldlevel), "NonText" })
-		table.insert(result, { string.format(" [%d lines]", vim.v.foldend - vim.v.foldstart), "NonText" })
+		table.insert(result, { " ...", "Folded" })
+		table.insert(result, { string.format(" +%s(%s)", vim.v.folddashes, vim.v.foldlevel), "Folded" })
+		table.insert(result, { string.format(" [%d lines]", vim.v.foldend - vim.v.foldstart), "Folded" })
 	return result
 end
 
