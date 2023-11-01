@@ -127,12 +127,6 @@ require("lazy").setup(
 			-- event = "VeryLazy",
 		},
 		{
-			"rebelot/heirline.nvim",
-			enabled = false,
-			lazy = true,
-			-- event = "VeryLazy",
-		},
-		{
 			"stevearc/dressing.nvim",
 			-- event = "VeryLazy",
 			lazy = true,
@@ -240,29 +234,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"j-hui/fidget.nvim",
-			enabled = false,
-			tag = "legacy",
-			event = "LspAttach",
-			opts = {
-				sources = {
-					-- ["null-ls"] = {
-					-- 	ignore = true,
-					-- },
-				},
-			},
-			config = function(_, opts)
-				require("fidget").setup(opts)
-
-				set_hls({
-					FidgetTask = {
-						link = "Comment",
-					},
-					-- FidgetTitle = { link = "PreProc" },
-				})
-			end,
-		},
-		{
 			"kosayoda/nvim-lightbulb",
 			event = "LspAttach",
 			opts = {
@@ -278,40 +249,6 @@ require("lazy").setup(
 			},
 			config = function(_, opts)
 				require("nvim-lightbulb").setup(opts)
-			end,
-		},
-		{
-			"jose-elias-alvarez/null-ls.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			config = function()
-				local nls = require("null-ls")
-				local setup = nls["setup"]
-
-				local builtins = nls["builtins"]
-				-- local formatting = builtins["formatting"]
-				local diagnostics = builtins["diagnostics"]
-				-- local hover = builtins["hover"]
-				-- local completion = builtins["completion"]
-				local actions = builtins["code_actions"]
-
-				local function filter_actions(title)
-					return (nil == title:lower():match("blame"))
-				end
-
-				local sources = {
-					actions.gitsigns.with({
-						disabled_filetypes = { "harpoon" },
-						config = { filter_actions = filter_actions },
-					}),
-					diagnostics.golangci_lint,
-					-- formatting.stylua,
-					-- formatting.shfmt.with({
-					-- 	filetypes = { "zsh", "sh" },
-					-- }),
-				}
-
-				return setup({ sources = sources, border = config.borders })
 			end,
 		},
 		{
@@ -357,17 +294,6 @@ require("lazy").setup(
 				})
 
 				require("symbol-usage").setup(opts)
-			end,
-		},
-		{
-			"smjonas/inc-rename.nvim",
-			enabled = false,
-			event = "LspAttach",
-			opts = {
-				input_buffer_type = "dressing",
-			},
-			config = function(_, opts)
-				require("inc_rename").setup(opts)
 			end,
 		},
 		-- }}}
@@ -722,7 +648,6 @@ require("lazy").setup(
 			init = function(self)
 				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
 			end,
-			-- enabled = false,
 			-- event = "VeryLazy",
 			lazy = true,
 			keys = {
@@ -806,7 +731,6 @@ require("lazy").setup(
 		},
 		{
 			"junegunn/vim-easy-align",
-			-- enabled = false,
 			-- event = "VeryLazy",
 			keys = {
 				{ "ga", "<Plug>(EasyAlign)", mode = "x" },
@@ -841,7 +765,6 @@ require("lazy").setup(
 		-- Motion {{{2
 		{
 			"folke/flash.nvim",
-			-- enabled = false,
 			-- event = "VeryLazy",
 			keys = {
 				{
@@ -865,16 +788,6 @@ require("lazy").setup(
 				set_hls({
 					FlashBackdrop = { fg = config.colors.gray },
 				})
-			end,
-		},
-		{
-			"wellle/targets.vim",
-			enabled = false,
-			event = "VeryLazy",
-			config = function()
-				-- https://github.com/wellle/targets.vimgtargets_seekranges
-				-- Only consider targets around cursor
-				vimg.targets_seekRanges = "cc cr cb cB lc ac Ac lr lb ar ab lB Ar aB Ab AB"
 			end,
 		},
 		{
