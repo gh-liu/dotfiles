@@ -1113,7 +1113,7 @@ require("lazy").setup(
 						changedelete = { text = "≃" },
 						untracked = { text = "┆" },
 					},
-					signcolumn = false,
+					signcolumn = true,
 					preview_config = {
 						border = config.borders,
 						style = "minimal",
