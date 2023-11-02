@@ -139,6 +139,10 @@ function M.word_dir_component()
 	})
 end
 
+function M.special_file_type_component()
+	return string.format("%%#%s#%s", M.get_or_create_hl("MoreMsg"), string.upper(vim.bo.filetype))
+end
+
 function M.file_name_component()
 	local result = {}
 
@@ -181,7 +185,7 @@ end
 ---@return string
 function M.lsp_clients_component()
 	local names = {}
-	for _, server in pairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
+	for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
 		table.insert(names, server.name)
 	end
 	if #names == 0 then
@@ -263,22 +267,32 @@ function M.diagnostics_component()
 	local counts = vim.iter(vim.diagnostic.get(0)):fold({
 		ERROR = 0,
 		WARN = 0,
-		HINT = 0,
 		INFO = 0,
+		HINT = 0,
 	}, function(acc, diagnostic)
 		local severity = vim.diagnostic.severity[diagnostic.severity]
 		acc[severity] = acc[severity] + 1
 		return acc
 	end)
 
-	local parts = vim.iter.map(function(severity, count)
-		if count == 0 then
-			return nil
+	local parts = {}
+	for severity, count in pairs(counts) do
+		if count > 0 then
+			local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
+			table.insert(
+				parts,
+				string.format("%%#%s#%s %d", M.get_or_create_hl(hl), config.icons.diagnostics[severity], count)
+			)
 		end
+	end
+	-- local parts = vim.iter.map(function(severity, count)
+	-- 	if count == 0 then
+	-- 		return nil
+	-- 	end
 
-		local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
-		return string.format("%%#%s#%s %d", M.get_or_create_hl(hl), config.icons.diagnostics[severity], count)
-	end, counts)
+	-- 	local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
+	-- 	return string.format("%%#%s#%s %d", M.get_or_create_hl(hl), config.icons.diagnostics[severity], count)
+	-- end, counts)
 
 	return table.concat(parts, " ")
 end
@@ -339,6 +353,32 @@ function M.render()
 		end)
 	end
 
+	if vim.bo.filetype == "qf" then
+		return table.concat({
+			concat_components({
+				M.special_file_type_component(),
+			}),
+			" %q",
+			"%#StatusLine#%=",
+			concat_components({
+				M.position_component(),
+			}),
+		})
+	end
+
+	if vim.bo.filetype == "help" then
+		return table.concat({
+			concat_components({
+				M.special_file_type_component(),
+			}),
+			" %t",
+			"%#StatusLine#%=",
+			concat_components({
+				M.position_component(),
+			}),
+		})
+	end
+
 	local is_specical_file_type = vim.tbl_contains({
 		"oil",
 		"lazy",
@@ -347,9 +387,7 @@ function M.render()
 	}, vim.bo.filetype)
 
 	local is_specical_buffer_type = vim.tbl_contains({
-		"help",
 		"nofile",
-		"quickfix",
 		"terminal",
 		"prompt",
 	}, vim.bo.buftype)
@@ -357,7 +395,7 @@ function M.render()
 	if is_specical_file_type or is_specical_buffer_type then
 		return table.concat({
 			concat_components({
-				string.format("%%#%s#%s", M.get_or_create_hl("MoreMsg"), string.upper(vim.bo.filetype)),
+				M.special_file_type_component(),
 			}),
 			"%#StatusLine#%=",
 			concat_components({
