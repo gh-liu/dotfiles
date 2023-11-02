@@ -458,7 +458,7 @@ require("lazy").setup(
 				require("telescope").load_extension("goimpl")
 
 				api.nvim_create_autocmd("LspAttach", {
-					group = api.nvim_create_augroup("User-lspattach-gopls-setup-goimpl", { clear = true }),
+					group = api.nvim_create_augroup("liu_lsp_attach_goimpl", { clear = true }),
 					callback = function(args)
 						local bufnr = args.buf
 						local client_id = args.data.client_id
@@ -2166,9 +2166,13 @@ end, {
 })
 -- }}}
 
+local function lsp_attach_augroup(name)
+	return vim.api.nvim_create_augroup("liu_lsp_attach" .. name, { clear = true })
+end
+
 -- keymaps {{{2
 autocmd("LspAttach", {
-	group = augroup("UserLspAttachKeymaps", { clear = true }),
+	group = lsp_attach_augroup("keymaps"),
 	callback = function(args)
 		local bufnr = args.buf
 
@@ -2204,7 +2208,7 @@ autocmd("LspAttach", {
 
 -- workspace {{{2
 autocmd("LspAttach", {
-	group = augroup("UserLspAttachWorkspaceFolderCmds", { clear = true }),
+	group = lsp_attach_augroup("workspace"),
 	callback = function(args)
 		local bufnr = args.buf
 		local client = lsp.get_client_by_id(args.data.client_id)
@@ -2235,7 +2239,7 @@ autocmd("LspAttach", {
 
 -- codelens {{{2
 autocmd("LspAttach", {
-	group = augroup("UserLspAttachCodelens", { clear = true }),
+	group = lsp_attach_augroup("codelens"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/codeLens") then
@@ -2253,7 +2257,7 @@ autocmd("LspAttach", {
 
 -- inlayhint{{{2
 autocmd("LspAttach", {
-	group = augroup("UserLspAttachInlayHint", { clear = true }),
+	group = lsp_attach_augroup("inlayhint"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client.supports_method("textDocument/inlayHint") then
@@ -2276,7 +2280,7 @@ autocmd("LspAttach", {
 
 -- document highlight{{{2
 autocmd("LspAttach", {
-	group = augroup("UserLspAttachDocumentHighlight", { clear = true }),
+	group = lsp_attach_augroup("document_highlight"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		local bufnr = args.buf
