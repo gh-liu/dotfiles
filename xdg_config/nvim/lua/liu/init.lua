@@ -357,7 +357,8 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"nvim-treesitter/nvim-treesitter-textobjects",
+			-- "nvim-treesitter/nvim-treesitter-textobjects",
+			"gh-liu/nvim-treesitter-textobjects",
 			enabled = true,
 			lazy = true,
 			event = "VeryLazy",
