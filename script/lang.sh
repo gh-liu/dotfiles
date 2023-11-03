@@ -82,6 +82,7 @@ function update_rust() {
 	else
 		curl https://sh.rustup.rs -sSf | sh
 		rustup component add rust-analyzer rust-src
+		rustup component add llvm-tools-preview
 	fi
 	# ln -svf $(rustup which --toolchain stable rust-analyzer) $CARGO_HOME/bin/rust-analyzer
 	echo "========================================END"

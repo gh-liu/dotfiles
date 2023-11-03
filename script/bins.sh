@@ -150,6 +150,7 @@ bins() {
 	cargo install inferno # flamegraph
 
 	cargo install cargo-nextest
+	cargo install cargo-binutils
 }
 
 function update_protobuf() {
