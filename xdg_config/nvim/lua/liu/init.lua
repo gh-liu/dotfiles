@@ -623,6 +623,7 @@ require("lazy").setup(
 		},
 		{
 			"gbprod/substitute.nvim",
+			enabled = false,
 			event = "VeryLazy",
 			config = function()
 				require("substitute").setup({
@@ -639,6 +640,41 @@ require("lazy").setup(
 				keymap.set("x", "X", require("substitute.exchange").visual, { noremap = true })
 				keymap.set("n", "cxc", require("substitute.exchange").cancel, { noremap = true })
 			end,
+		},
+		{
+			"echasnovski/mini.operators",
+			-- event = "VeryLazy",
+			keys = {
+				{ "s", mode = { "n", "x" } },
+				{ "cx", mode = { "n", "x" } },
+				{ "g=", mode = { "n", "x" } },
+			},
+			opts = {
+				replace = {
+					-- Replace text with register
+					prefix = "s",
+					-- Whether to reindent new text to match previous indent
+					reindent_linewise = true,
+				},
+				exchange = {
+					-- Exchange text regions
+					prefix = "cx",
+					-- Whether to reindent new text to match previous indent
+					reindent_linewise = true,
+				},
+				evaluate = {
+					-- Evaluate text and replace with output
+					prefix = "g=",
+				},
+				miltiply = {
+					-- Multiply (duplicate) text
+					prefix = "",
+				},
+				sort = {
+					-- Sort text
+					prefix = "",
+				},
+			},
 		},
 		{
 			"tpope/vim-abolish",
