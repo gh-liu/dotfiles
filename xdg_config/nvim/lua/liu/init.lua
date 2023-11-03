@@ -2033,6 +2033,22 @@ end, {
 	nargs = "*",
 	desc = "Save the Output of Vim Command To a Empty Buffer",
 })
+
+api.nvim_create_user_command("Count", function(opts)
+	local pattern = opts.args
+	if #pattern == 0 then
+		pattern = vim.fn.expand("<cword>")
+	end
+	local range = "%"
+	if opts.line1 ~= opts.line2 then
+		range = tostring(opts.line1) .. "," .. tostring(opts.line2) 
+	end
+	vim.cmd(range .. "s/" .. pattern .. "//gn")
+end, {
+	nargs = "*",
+	range = true,
+	desc = "Count the Occurrences of a Pattern",
+})
 -- }}}
 
 -- Autocmds {{{1
