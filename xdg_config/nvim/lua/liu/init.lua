@@ -2231,10 +2231,20 @@ autocmd("LspAttach", {
 		nmap("<leader>ca", lsp.buf.code_action, "[C]ode [A]ction")
 		nmap("<leader>cl", lsp.codelens.run, "[C]ode [L]en")
 
-		-- nmap("gd", lsp.buf.definition, "[G]oto [D]efinition")
-		-- nmap("<leader>vd", "<cmd>vsplit | lua lsp.buf.definition()<CR>", "[G]oto [D]efinition")
-
 		nmap("gD", lsp.buf.declaration, "[G]oto [D]eclaration")
+		nmap("gvD", "<cmd>vsplit | lua vim.lsp.buf.declaration()<CR>", "[G]oto [D]eclaration")
+
+		-- nmap("gd", lsp.buf.definition, "[G]oto [D]efinition")
+		-- nmap("gvd", "<cmd>vsplit | lua vim.lsp.buf.definition()<CR>", "[G]oto [D]efinition")
+
+		-- nmap("gy", lsp.buf.type_definition, "[G]oto T[y]pe Definition")
+		-- nmap("gvy", "<cmd>vsplit | lua vim.lsp.buf.type_definition()<CR>", "[G]oto T[y]pe Definition")
+
+		-- nmap("gr", lsp.buf.references, "[G]oto [R]eferences")
+		-- nmap("gvr", "<cmd>vsplit | lua vim.lsp.buf.references()<CR>", "[G]oto [R]eferences")
+
+		-- nmap("gi", lsp.buf.implementation, "[G]oto [I]mplementation")
+		-- nmap("gvi", "<cmd>vsplit | lua vim.lsp.buf.implementation()<CR>", "[G]oto [I]mplementation")
 
 		-- nmap("K", lsp.buf.hover, "Hover Documentation")
 		-- nmap("<C-k>", lsp.buf.signature_help, "Signature Documentation")

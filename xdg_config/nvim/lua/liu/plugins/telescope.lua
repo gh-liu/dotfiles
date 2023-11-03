@@ -32,11 +32,33 @@ api.nvim_create_autocmd("LspAttach", {
 		local map = function(l, r, desc)
 			keymap.set("n", l, r, { buffer = args.buf, desc = desc })
 		end
-		map("gd", builtin.lsp_definitions, "[G]oto [D]efinition")
-		map("gy", builtin.lsp_type_definitions, "[G]oto T[y]pe Definition")
+		map("gd", function()
+			builtin.lsp_definitions({
+				jump_type = "vsplit",
+				-- reuse_win = true,
+			})
+		end, "[G]oto [D]efinition")
+		map("gy", function()
+			builtin.lsp_type_definitions({
+				jump_type = "vsplit",
+				-- reuse_win = true,
+			})
+		end, "[G]oto T[y]pe Definition")
 
-		map("gr", builtin.lsp_references, "[G]oto [R]eferences")
-		map("gi", builtin.lsp_implementations, "[G]oto [I]mplementation")
+		map("gr", function()
+			builtin.lsp_references({
+				include_declaration = false,
+				include_current_line = false,
+				jump_type = "vsplit",
+				-- reuse_win = true,
+			})
+		end, "[G]oto [R]eferences")
+		map("gi", function()
+			builtin.lsp_implementations({
+				jump_type = "vsplit",
+				-- reuse_win = true,
+			})
+		end, "[G]oto [I]mplementation")
 
 		map("<leader>ds", builtin.lsp_document_symbols, "Lists LSP [D]ocument [S]ymbols in the current buffer")
 
