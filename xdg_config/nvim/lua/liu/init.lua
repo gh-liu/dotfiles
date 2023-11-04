@@ -646,6 +646,7 @@ require("lazy").setup(
 			-- event = "VeryLazy",
 			keys = {
 				{ "s", mode = { "n", "x" } },
+				{ "S", "<cmd>normal s$<cr>", silent = true },
 				{ "cx", mode = { "n", "x" } },
 				{ "g=", mode = { "n", "x" } },
 			},
