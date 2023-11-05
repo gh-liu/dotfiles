@@ -607,6 +607,7 @@ require("lazy").setup(
 		},
 		{
 			"gbprod/yanky.nvim",
+			enabled = false,
 			keys = {
 				{ "p", "<Plug>(YankyPutAfter)", mode = { "n", "x" }, desc = "Put yanked text after cursor" },
 				{ "P", "<Plug>(YankyPutBefore)", mode = { "n", "x" }, desc = "Put yanked text before cursor" },
@@ -1450,6 +1451,15 @@ require("lazy").setup(
 		},
 		{ "tpope/vim-sleuth", event = "VeryLazy" },
 		{
+			"tpope/vim-unimpaired",
+			keys = {
+				"yo",
+				"[",
+				"]",
+			},
+			-- event = "VeryLazy",
+		},
+		{
 			"tpope/vim-dispatch",
 			-- event = "VeryLazy",
 			init = function()
@@ -1823,58 +1833,60 @@ local setmap = function(mode, lhs, rhs, opts)
 end
 
 -- Toggle Option{{{2
-local function toggle_opt(op, option, opts)
-	if not opts then
-		return setmap("n", ("co" .. op), (":set " .. option .. "!" .. "<bar> set " .. option .. "?<cr>"))
-	else
-		if opts.val then
-			local vv = opts.val
-			return setmap("n", "co" .. op, function()
-				vim.o[option], vv = vv, vim.o[option]
-				cmd(string.format("set %s?", option))
-			end)
-		end
 
-		if opts.option then
-			local vals = { opts.option, option }
-			local idx = 0
-			return setmap("n", "co" .. op, function()
-				local val = vals[idx % 2 + 1]
-				cmd(string.format("set %s | set %s?", val, val))
-				idx = idx + 1
-			end)
-		end
+-- local function toggle_opt(op, option, opts)
+-- 	if not opts then
+-- 		return setmap("n", ("co" .. op), (":set " .. option .. "!" .. "<bar> set " .. option .. "?<cr>"))
+-- 	else
+-- 		if opts.val then
+-- 			local vv = opts.val
+-- 			return setmap("n", "co" .. op, function()
+-- 				vim.o[option], vv = vv, vim.o[option]
+-- 				cmd(string.format("set %s?", option))
+-- 			end)
+-- 		end
 
-		if opts.fns then
-			local idx = 0
-			return setmap("n", "co" .. op, function()
-				cmd(string.format("set %s! | set %s?", option, option))
+-- 		if opts.option then
+-- 			local vals = { opts.option, option }
+-- 			local idx = 0
+-- 			return setmap("n", "co" .. op, function()
+-- 				local val = vals[idx % 2 + 1]
+-- 				cmd(string.format("set %s | set %s?", val, val))
+-- 				idx = idx + 1
+-- 			end)
+-- 		end
 
-				local fn = opts.fns[idx % 2 + 1]
-				fn()
+-- 		if opts.fns then
+-- 			local idx = 0
+-- 			return setmap("n", "co" .. op, function()
+-- 				cmd(string.format("set %s! | set %s?", option, option))
 
-				idx = idx + 1
-			end)
-		end
-	end
-end
+-- 				local fn = opts.fns[idx % 2 + 1]
+-- 				fn()
 
-toggle_opt("w", "wrap", {
-	fns = {
-		function()
-			-- Remap for dealing with word wrap
-			setmap({ "n", "x" }, "k", "gk")
-			setmap({ "n", "x" }, "j", "gj")
-		end,
-		function()
-			keymap.del({ "n", "x" }, "k")
-			keymap.del({ "n", "x" }, "j")
-		end,
-	},
-})
-toggle_opt("h", "hlsearch", { option = "nohlsearch" })
-toggle_opt("m", "mouse", { val = "a" })
-toggle_opt("t", "laststatus", { val = 0 })
+-- 				idx = idx + 1
+-- 			end)
+-- 		end
+-- 	end
+-- end
+
+-- toggle_opt("w", "wrap", {
+-- 	fns = {
+-- 		function()
+-- 			-- Remap for dealing with word wrap
+-- 			setmap({ "n", "x" }, "k", "gk")
+-- 			setmap({ "n", "x" }, "j", "gj")
+-- 		end,
+-- 		function()
+-- 			keymap.del({ "n", "x" }, "k")
+-- 			keymap.del({ "n", "x" }, "j")
+-- 		end,
+-- 	},
+-- })
+-- toggle_opt("h", "hlsearch", { option = "nohlsearch" })
+-- toggle_opt("m", "mouse", { val = "a" })
+-- toggle_opt("t", "laststatus", { val = 0 })
+
 -- }}}
 
 -- Text {{{2
@@ -1958,16 +1970,16 @@ setmap("c", "<C-k>", rtf("<up>", "c"))
 -- QF {{{2
 setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 
-setmap("n", "[q", "<cmd>try | cprev | catch | silent! clast | catch | endtry<cr>zv")
-setmap("n", "]q", "<cmd>try | cnext | catch | silent! cfirst | catch | endtry<cr>zv")
+-- setmap("n", "[q", "<cmd>try | cprev | catch | silent! clast | catch | endtry<cr>zv")
+-- setmap("n", "]q", "<cmd>try | cnext | catch | silent! cfirst | catch | endtry<cr>zv")
 
-setmap("n", "[l", ":lprev<cr>")
-setmap("n", "]l", ":lnext<cr>")
+-- setmap("n", "[l", ":lprev<cr>")
+-- setmap("n", "]l", ":lnext<cr>")
 -- }}}
 
 -- Buffers {{{
-setmap("n", "[b", "<cmd>bprevious<cr>")
-setmap("n", "]b", "<cmd>bnext<cr>")
+-- setmap("n", "[b", "<cmd>bprevious<cr>")
+-- setmap("n", "]b", "<cmd>bnext<cr>")
 -- switch to alternate file
 setmap("n", "<leader>bb", "<cmd>e #<cr>")
 -- }}}
@@ -2042,7 +2054,7 @@ api.nvim_create_user_command("Count", function(opts)
 	end
 	local range = "%"
 	if opts.line1 ~= opts.line2 then
-		range = tostring(opts.line1) .. "," .. tostring(opts.line2) 
+		range = tostring(opts.line1) .. "," .. tostring(opts.line2)
 	end
 	vim.cmd(range .. "s/" .. pattern .. "//gn")
 end, {
