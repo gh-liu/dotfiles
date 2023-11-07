@@ -770,15 +770,18 @@ require("lazy").setup(
 		},
 		{
 			"junegunn/vim-easy-align",
-			-- event = "VeryLazy",
 			keys = {
-				{ "ga", "<Plug>(EasyAlign)", mode = "x" },
+				{ "ga", "<Plug>(EasyAlign)", mode = { "n", "x" } },
+				{ "gl", "<Plug>(LiveEasyAlign)", mode = { "n", "x" } },
 			},
-			cmd = { "EasyAlign" },
+			cmd = {
+				"EasyAlign",
+				"LiveEasyAlign",
+			},
 		},
 		{
 			"tommcdo/vim-lion",
-			-- event = "VeryLazy",
+			enabled = false,
 			keys = {
 				{ "gl", mode = { "n", "x" } },
 				{ "gL", mode = { "n", "x" } },
