@@ -1384,6 +1384,7 @@ require("lazy").setup(
 		},
 		{
 			"rgroli/other.nvim",
+			enabled = false,
 			cmd = {
 				"Other",
 				"OtherVSplit",
@@ -1398,6 +1399,28 @@ require("lazy").setup(
 					},
 				})
 			end,
+		},
+		{
+			"tpope/vim-projectionist",
+			-- event = "VeryLazy",
+			init = function(self)
+				vim.g.projectionist_heuristics = {
+					["*.go"] = {
+						["*.go"] = {
+							alternate = "{}_test.go",
+							type = "source",
+						},
+						["*_test.go"] = {
+							alternate = "{}.go",
+							type = "test",
+						},
+					},
+				}
+			end,
+			ft = { "go" },
+			keys = {
+				{ "<leader>aa", "<cmd>A<cr>" },
+			},
 		},
 		{
 			"stevearc/oil.nvim",
