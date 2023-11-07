@@ -33,6 +33,8 @@ function update_zig() {
 	rm zig-linux-x86_64-$VERSION.tar.xz
 	mv zig-linux-x86_64-$VERSION zig
 
+	sudo ln -svf $(pwd)/zig/zig /usr/bin/zig
+
 	echo "zls.........................................."
 	ZLSINSTALLHOME=$HOME/env/zig/zls
 	if [ -d $ZLSINSTALLHOME ]; then
