@@ -47,6 +47,8 @@ sudo apt install -y qemu-user-static
 mkdir -p $HOME/dev/{golang,rust,nodejs}
 mkdir -p $HOME/env/{golang,rust,nodejs}
 
+mkdir -p $HOME/.local/bin
+
 LIU_TOOLS=$HOME/tools
 mkdir -p $LIU_TOOLS
 
