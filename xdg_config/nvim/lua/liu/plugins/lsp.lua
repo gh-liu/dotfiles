@@ -153,6 +153,9 @@ local servers = {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#clangd
 	-- sudo apt-get -y install clangd
 	clangd = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#cmake
+	-- pip install cmake-language-server
+	cmake = {},
 }
 
 -- setup neodev BEFORE lspconfig
