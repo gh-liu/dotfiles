@@ -2217,6 +2217,23 @@ autocmd({ "TermOpen" }, {
 		vim.keymap.set("t", "<C-w>", [[<C-\><C-n><C-w>]], opts)
 	end,
 })
+autocmd("OptionSet", {
+	group = user_augroup("option_set_wrap"),
+	pattern = "wrap",
+	callback = function(ev)
+		vim.print(vim.v.option_new)
+		if vim.v.option_new then
+			vim.keymap.set("n", "j", "gj")
+			vim.keymap.set("n", "k", "gk")
+		else
+			-- vim.keymap.del("n", "j")
+			-- vim.keymap.del("n", "k")
+			pcall(vim.keymap.del, "n", "j")
+			pcall(vim.keymap.del, "n", "k")
+		end
+	end,
+	desc = "OptionSetWrap",
+})
 -- }}}
 
 -- Diagnostic {{{1
