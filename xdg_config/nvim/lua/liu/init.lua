@@ -1854,6 +1854,17 @@ vim.o.matchtime = 1
 
 -- Avoid showing the intro when starting Neovim
 vim.opt.shortmess:append("I")
+
+-- vim.o.listchars = "tab:»,trail:-,nbsp:+,eol:↲"
+vim.o.listchars = table.concat({
+	"tab:» ",
+	"trail:·",
+	"nbsp:+",
+	-- "space:␣",
+	"eol:↲",
+	-- "extends:<",
+	-- "precedes:>",
+}, ",")
 -- }}}
 
 -- Remaps {{{1
