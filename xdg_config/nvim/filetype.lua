@@ -1,7 +1,5 @@
 vim.filetype.add({
 	extension = {},
-	filename = {
-		[".envrc"] = "bash",
-	},
+	filename = {},
 	pattern = {},
 })

@@ -1718,6 +1718,11 @@ require("lazy").setup(
 				})
 			end,
 		},
+		{
+			"direnv/direnv.vim",
+			-- ft = "direnv",
+			-- event = "VeryLazy",
+		},
 		-- }}}
 	},
 	-- Lazy Configuration {{{2
