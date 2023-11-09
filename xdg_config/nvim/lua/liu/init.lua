@@ -2206,15 +2206,26 @@ autocmd({ "TermOpen" }, {
 -- Diagnostic {{{1
 -- https://neovim.io/doc/user/diagnostic.html
 local diagnostic = vim.diagnostic
-diagnostic.config({
-	underline = { severity = { min = diagnostic.severity.INFO } },
-	signs = { severity = { min = diagnostic.severity.INFO } },
+local min_serverity = diagnostic.severity.INFO
+local opts = {
+	underline = { severity = { min = min_serverity } },
+	signs = { severity = { min = min_serverity } },
 	float = { source = true, border = config.borders, show_header = false },
 	severity_sort = true,
 	virtual_text = false,
 	update_in_insert = false,
-})
+}
+diagnostic.config(opts)
 
+vim.g.disgnostic_sign_disable = false
+keymap.set("n", "<leader>td", function()
+	vim.g.disgnostic_sign_disable = not vim.g.disgnostic_sign_disable
+	local opts = vim.deepcopy(opts)
+	if vim.g.disgnostic_sign_disable then
+		opts.signs = false
+	end
+	diagnostic.config(opts)
+end)
 keymap.set("n", "<leader>dp", diagnostic.open_float)
 -- keymap.set("n", "<leader>dq", diagnostic.setloclist)
 local diagnostic_goto = function(next, severity)
