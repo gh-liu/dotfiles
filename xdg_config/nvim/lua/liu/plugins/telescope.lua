@@ -21,8 +21,9 @@ end, { desc = "[S]earch [H]elp" })
 keymap.set("n", "<leader>sr", builtin.registers, { desc = "[S]earch [R]egisters" })
 keymap.set("n", "<leader>st", builtin.filetypes, { desc = "[S]et File[t]ype" })
 
-keymap.set("n", "<leader>;", builtin.commands, { desc = "List Commands" })
-keymap.set("n", "<leader>:", builtin.command_history, { desc = "List Commands History" })
+keymap.set("n", "<leader>;", ":")
+-- keymap.set("n", "<leader>;", builtin.commands, { desc = "List Commands" })
+-- keymap.set("n", "<leader>:", builtin.command_history, { desc = "List Commands History" })
 
 keymap.set("n", "<leader>ds", builtin.treesitter, { desc = "Treesitter [D]ocument [S]ymbols" })
 
@@ -34,13 +35,13 @@ api.nvim_create_autocmd("LspAttach", {
 		end
 		map("gd", function()
 			builtin.lsp_definitions({
-				jump_type = "vsplit",
+				-- jump_type = "vsplit",
 				-- reuse_win = true,
 			})
 		end, "[G]oto [D]efinition")
 		map("gy", function()
 			builtin.lsp_type_definitions({
-				jump_type = "vsplit",
+				-- jump_type = "vsplit",
 				-- reuse_win = true,
 			})
 		end, "[G]oto T[y]pe Definition")
@@ -49,13 +50,13 @@ api.nvim_create_autocmd("LspAttach", {
 			builtin.lsp_references({
 				include_declaration = false,
 				include_current_line = false,
-				jump_type = "vsplit",
+				-- jump_type = "vsplit",
 				-- reuse_win = true,
 			})
 		end, "[G]oto [R]eferences")
 		map("gi", function()
 			builtin.lsp_implementations({
-				jump_type = "vsplit",
+				-- jump_type = "vsplit",
 				-- reuse_win = true,
 			})
 		end, "[G]oto [I]mplementation")
