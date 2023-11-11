@@ -11,6 +11,7 @@ alias ....='cd ../../..'
 
 which exa &>/dev/null && alias ls="exa"
 which bat &>/dev/null && alias cat="bat --theme=\"Nord\" --style=\"changes\""
+which fd &>/dev/null && alias find="fd"
 
 which code-insiders &>/dev/null && alias codei=code-insiders
 
