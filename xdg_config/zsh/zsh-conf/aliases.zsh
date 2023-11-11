@@ -33,6 +33,8 @@ alias lzg=lazygit
 alias lzd=lazydocker
 alias hugos="hugo server -D --bind="0.0.0.0" --baseURL=http://$HOSTIP:1313"
 
+alias grep="grep --color"
+
 # podman
 # podman pull docker.io/arigaio/atlas:latest
 alias atlas1="podman run --rm arigaio/atlas"
