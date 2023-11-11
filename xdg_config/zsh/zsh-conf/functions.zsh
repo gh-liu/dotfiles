@@ -107,3 +107,11 @@ function ssh-copy-id2() {
 function t() {
 	command time --format 'real %es\nuser %Us\nsys  %Ss\nrss  %Mk' "$@"
 }
+
+find-rm() {
+	if [ "$#" -ne 2 ]; then
+		echo "Usage: find-rm {{dir}} {{pattern}}"
+		return
+	fi
+	find $1 -name $2 -exec rm -v {} \;
+}
