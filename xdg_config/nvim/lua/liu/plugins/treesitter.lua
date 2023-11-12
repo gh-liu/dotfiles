@@ -84,6 +84,28 @@ end
 -- if lsp server supports document highlight, which will replce below two maps
 vim.keymap.set("n", "]v", M.goto_next_usage)
 vim.keymap.set("n", "[v", M.goto_previous_usage)
+
+vim.keymap.set("n", "]]", function()
+	local node = ts_utils.get_node_at_cursor()
+	if node ~= nil then
+		ts_utils.goto_node(
+			ts_utils.get_next_node(node, true, true),
+			false,
+			true
+		)
+	end
+end, { desc = "Go to next sibling node" })
+
+vim.keymap.set("n", "[[", function()
+	local node = ts_utils.get_node_at_cursor()
+	if node ~= nil then
+		ts_utils.goto_node(
+			ts_utils.get_previous_node(node, true, true),
+			false,
+			true
+		)
+	end
+end, { desc = "Go to previous sibling node" })
 -- }}}
 
 -- Rename {{{
