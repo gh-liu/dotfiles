@@ -296,6 +296,28 @@ require("lazy").setup(
 				require("symbol-usage").setup(opts)
 			end,
 		},
+		{
+			"hedyhli/outline.nvim",
+			event = "LspAttach",
+			cmd = {
+				"Outline",
+			},
+			keys = {
+				{ "<leader>tt", "<cmd>Outline<CR>", desc = "SymbolsOutline" },
+			},
+			opts = {
+				outline_window = {
+					-- Where to open the split window: right/left
+					position = "left",
+				},
+				keymaps = {
+					show_help = "g?",
+					fold = "zc",
+					unfold = "zo",
+					fold_toggle = "za",
+				},
+			},
+		},
 		-- }}}
 
 		-- DAP {{{2
