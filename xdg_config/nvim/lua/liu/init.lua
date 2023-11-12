@@ -2221,7 +2221,7 @@ autocmd("OptionSet", {
 	group = user_augroup("option_set_wrap"),
 	pattern = "wrap",
 	callback = function(ev)
-		vim.print(vim.v.option_new)
+		-- vim.print(vim.v.option_new)
 		if vim.v.option_new then
 			vim.keymap.set("n", "j", "gj")
 			vim.keymap.set("n", "k", "gk")
