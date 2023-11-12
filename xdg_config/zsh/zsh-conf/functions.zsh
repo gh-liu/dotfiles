@@ -115,3 +115,11 @@ find-rm() {
 	fi
 	find $1 -name $2 -exec rm -v {} \;
 }
+
+find-mv() {
+	if [ "$#" -ne 3 ]; then
+		echo "Usage: find-mv {{dir}} {{pattern}} {{target}}"
+		return
+	fi
+	find $1 -name $2 -exec mv -v {} $3 \;
+}
