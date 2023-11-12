@@ -1423,7 +1423,39 @@ require("lazy").setup(
 			},
 		},
 		{
+			"echasnovski/mini.files",
+			lazy = true,
+			keys = {
+				{
+					"-",
+					function()
+						local MiniFiles = require("mini.files")
+						if not MiniFiles.close() then
+							MiniFiles.open(vim.api.nvim_buf_get_name(0))
+						end
+					end,
+				},
+			},
+			init = function()
+				vim.api.nvim_create_autocmd("User", {
+					pattern = "MiniFilesWindowOpen",
+					callback = function(args)
+						local win_id = args.data.win_id
+						-- Customize window-local settings
+						vim.wo[win_id].winblend = 50
+						vim.api.nvim_win_set_config(win_id, { border = config.borders })
+					end,
+				})
+			end,
+			opts = {
+				options = {
+					use_as_default_explorer = false,
+				},
+			},
+		},
+		{
 			"stevearc/oil.nvim",
+			enabled = false,
 			cmd = {
 				"Oil",
 				"OilSSH",
