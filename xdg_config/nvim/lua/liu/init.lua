@@ -998,7 +998,7 @@ require("lazy").setup(
 			enabled = true,
 			event = "InsertEnter",
 			init = function(self)
-				vim.g.minipairs_disable = true
+				vim.g.minipairs_disable = false
 			end,
 			opts = {},
 			keys = {
@@ -1011,6 +1011,8 @@ require("lazy").setup(
 						else
 							vim.notify("Enabled auto pairs", vim.log.levels.WARN)
 						end
+
+						vim.o.showmatch = vim.g.minipairs_disable
 					end,
 					desc = "[T]oggle auto [P]airs",
 				},
@@ -1902,7 +1904,7 @@ vim.opt.fillchars:append("foldclose:")
 -- }}}
 
 -- show match {{{2
-vim.o.showmatch = true
+vim.o.showmatch = false
 vim.o.matchtime = 1
 -- }}}
 
