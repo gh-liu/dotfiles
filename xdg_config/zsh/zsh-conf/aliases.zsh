@@ -38,3 +38,6 @@ alias grep="grep --color"
 # podman
 # podman pull docker.io/arigaio/atlas:latest
 alias atlas1="podman run --rm arigaio/atlas"
+atlas1schemadiff() {
+	atlas1 schema diff --to $1 --from $2
+}
