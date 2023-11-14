@@ -1427,9 +1427,9 @@ require("lazy").setup(
 								menu:click_on(component, nil, 1, "l")
 							end
 						end,
-						["q"] = function()
-							cmd.quit()
-						end,
+						-- ["q"] = function()
+						-- 	cmd.quit()
+						-- end,
 					},
 					win_configs = {
 						border = config.borders,
