@@ -577,7 +577,45 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"echasnovski/mini.surround",
+			-- event = "VeryLazy",
+			keys = {
+				-- Add surrounding in Normal and Visual modes
+				{ "ys", mode = { "x", "n" } },
+				-- Delete surrounding
+				{ "ds", mode = { "n" } },
+				-- Replace surrounding
+				{ "cs", mode = { "n" } },
+			},
+			config = function(self, _)
+				local keys = self.keys
+
+				local ts_input = require("mini.surround").gen_spec.input.treesitter
+				local opts = {
+					-- Module mappings. Use `''` (empty string) to disable one.
+					mappings = {
+						add = keys[1][1], -- Add surrounding in Normal and Visual modes
+						delete = keys[2][1], -- Delete surrounding
+						replace = keys[3][1], -- Replace surrounding
+
+						find = "", -- Find surrounding (to the right)
+						find_left = "", -- Find surrounding (to the left)
+						highlight = "", -- Highlight surrounding
+						update_n_lines = "", -- Update `n_lines`
+
+						suffix_last = "", -- Suffix to search with "prev" method
+						suffix_next = "", -- Suffix to search with "next" method
+					},
+					custom_textobjects = {
+						f = ts_input({ outer = "@call.outer", inner = "@call.inner" }),
+					},
+				}
+				require("mini.surround").setup(opts)
+			end,
+		},
+		{
 			"kylechui/nvim-surround",
+			enabled = false,
 			event = "VeryLazy",
 			opts = {},
 			config = function(self, opts)
