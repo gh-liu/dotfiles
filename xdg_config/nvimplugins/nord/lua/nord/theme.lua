@@ -223,7 +223,7 @@ theme.set_highlights = function()
 
 	local lsp = {
 		-- LspReferenceText = { reverse = true },
-		LspReferenceText = { fg = c.foreground, bg = c.gray },
+		LspReferenceText = { bg = c.gray },
 		LspReferenceRead = { link = "LspReferenceText" },
 		LspReferenceWrite = { link = "LspReferenceText" },
 		-- lsp inlayhint
