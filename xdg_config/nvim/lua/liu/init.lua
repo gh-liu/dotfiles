@@ -297,6 +297,16 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"j-hui/fidget.nvim",
+			event = "LspAttach",
+			opts = {
+				progress = {},
+				notification = {
+					override_vim_notify = false,
+				},
+			},
+		},
+		{
 			"hedyhli/outline.nvim",
 			event = "LspAttach",
 			cmd = {

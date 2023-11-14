@@ -413,7 +413,7 @@ function M.render()
 		}),
 		"%#StatusLine#%=",
 		concat_components({
-			M.dap_component() or M.lsp_progress_component(),
+			M.dap_component() or "",
 			M.diagnostics_component(),
 			M.lsp_clients_component(),
 			M.filetype_component(),
