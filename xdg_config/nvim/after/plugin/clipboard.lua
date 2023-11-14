@@ -15,7 +15,7 @@ end
 vim.api.nvim_create_autocmd("TextYankPost", {
 	callback = function(ev)
 		local text = vim.fn.getreg(vim.v.event.regname)
-		require("vim.clipboard.osc52").copy({ text })
+		require("vim.ui.clipboard.osc52").copy({ text })
 		-- osc52_copy(text)
 	end,
 })
