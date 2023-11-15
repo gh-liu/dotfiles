@@ -30,14 +30,14 @@ local dap = require("dap")
 
 dap.set_log_level("ERROR")
 
-create_cmd("DAPClearBreakpoints", function()
-	dap.clear_breakpoints()
-end, {})
+local last_config = nil
 
 -- Event {{{2
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
 dap.listeners.before["event_initialized"]["user"] = function(session, body)
 	cmd([[doautocmd User DAPInitialized]])
+
+	last_config = session.config
 end
 
 dap.listeners.after["event_stopped"]["user"] = function(session, body)
@@ -57,10 +57,6 @@ autocmd("User", {
 	pattern = "DAPInitialized",
 	callback = function()
 		vim.g.debuging = 1
-
-		create_cmd("DapRunLast", function()
-			dap.run_last()
-		end, {})
 	end,
 	group = group,
 	desc = "DAP Initialized",
@@ -74,6 +70,24 @@ autocmd("User", {
 	group = group,
 	desc = "DAP Terminated",
 })
+-- }}}
+
+-- Cmd {{{
+create_cmd("DAPClearBreakpoints", function()
+	dap.clear_breakpoints()
+end, {})
+
+create_cmd("DapRunLastWithConfig", function()
+	if last_config then
+		dap.run(last_config)
+	else
+		dap.continue()
+	end
+end, {})
+
+create_cmd("DapRunLast", function()
+	dap.run_last()
+end, {})
 -- }}}
 
 -- Repl {{{2
