@@ -59,6 +59,8 @@ for k, v in pairs(mode_colors) do
 	vim.api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = ("#%06x"):format(statusline_hl.bg) })
 end
 
+local separator = string.format("%%#StatuslineModeSeparator#%s", "|")
+
 --- Current mode.
 ---@return string
 function M.mode_component()
@@ -125,7 +127,7 @@ function M.mode_component()
 
 	return table.concat({
 		string.format("%%#Statusline%s#%s", hl, mode),
-		string.format("%%#StatuslineModeSeparator#%s", "|"),
+		separator,
 	})
 end
 
@@ -135,7 +137,7 @@ function M.word_dir_component()
 
 	return table.concat({
 		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, "%<" .. cmd),
-		string.format("%%#StatuslineModeSeparator#%s", "|"),
+		separator,
 	})
 end
 
@@ -251,7 +253,10 @@ function M.dap_component()
 		return nil
 	end
 
-	return string.format("%%#%s#%s %s", M.get_or_create_hl("Debug"), config.icons.bug, require("dap").status())
+	return table.concat({
+		string.format("%%#%s#%s %s", M.get_or_create_hl("Debug"), config.icons.bug, require("dap").status()),
+		separator,
+	})
 end
 
 local last_diagnostic_component = ""
