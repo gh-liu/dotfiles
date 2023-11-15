@@ -1514,7 +1514,7 @@ require("lazy").setup(
 					callback = function(args)
 						local win_id = args.data.win_id
 						-- Customize window-local settings
-						vim.wo[win_id].winblend = 50
+						-- vim.wo[win_id].winblend = 50
 						vim.api.nvim_win_set_config(win_id, { border = config.borders })
 					end,
 				})
