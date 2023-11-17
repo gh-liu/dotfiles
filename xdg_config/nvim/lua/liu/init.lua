@@ -1563,10 +1563,24 @@ require("lazy").setup(
 						-- Customize window-local settings
 						-- vim.wo[win_id].winblend = 50
 						vim.api.nvim_win_set_config(win_id, { border = config.borders })
+
+						local buf_id = args.data.buf_id
+						local MiniFiles = require("mini.files")
+						vim.keymap.set("n", "<CR>", function()
+							MiniFiles.go_in()
+						end, { buffer = buf_id })
+
+						vim.keymap.set("n", "<leader><CR>", function()
+							MiniFiles.synchronize()
+						end, { buffer = buf_id })
 					end,
 				})
 			end,
 			opts = {
+				mappings = {
+					go_in = "<C-l>",
+					go_out = "<C-h>",
+				},
 				options = {
 					use_as_default_explorer = false,
 				},
