@@ -48,10 +48,11 @@ local mode_colors = {
 	ModePENDING = colors.magenta,
 	ModeVisual = colors.blue,
 	ModeInsert = colors.green,
-	ModeSELECT = colors.purple,
+	ModeSELECT = colors.magenta,
 	ModeCOMMAND = colors.orange,
 	ModeTERMINAL = colors.cyan,
 	ModeEX = colors.yellow,
+	ModeREPLACE = colors.cyan,
 	ModeSeparator = colors.gray,
 	ModeUNKNOWN = colors.gray,
 }
@@ -123,6 +124,8 @@ function M.mode_component()
 		hl = "ModeTERMINAL"
 	elseif mode:find("EX") then
 		hl = "ModeEX"
+	elseif mode:find("REPLACE") then
+		hl = "ModeREPLACE"
 	end
 
 	return table.concat({
