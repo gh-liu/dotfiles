@@ -305,75 +305,6 @@ require("lazy").setup(
 				},
 			},
 		},
-		{
-			"hedyhli/outline.nvim",
-			event = "LspAttach",
-			cmd = {
-				"Outline",
-			},
-			keys = {
-				{ "<leader>tt", "<cmd>Outline<CR>", desc = "SymbolsOutline" },
-			},
-			opts = {
-				outline_window = {
-					-- Where to open the split window: right/left
-					position = "left",
-				},
-				keymaps = {
-					show_help = "g?",
-					fold = "zc",
-					unfold = "zo",
-					fold_toggle = "za",
-				},
-			},
-			config = function(self, opts)
-				local icons = {
-					File = {},
-					Module = {},
-					Namespace = {},
-					Package = {},
-					Class = {},
-					Method = {},
-					Property = {},
-					Field = {},
-					Constructor = {},
-					Enum = {},
-					Interface = {},
-					Function = {},
-					Variable = {},
-					Constant = {},
-					String = {},
-					Number = {},
-					Boolean = {},
-					Array = {},
-					Object = {},
-					Key = {},
-					Null = {},
-					EnumMember = {},
-					Struct = {},
-					Event = {},
-					Operator = {},
-					TypeParameter = {},
-					Component = {},
-					Fragment = {},
-					TypeAlias = {},
-					Parameter = {},
-					StaticMethod = {},
-					Macro = {},
-				}
-				for key, _ in pairs(icons) do
-					local symbol = config.icons.symbol_kinds[key]
-					if symbol then
-						icons[key].icon = symbol.icon
-						icons[key].hl = symbol.hl
-					else
-						icons[key] = { icon = "󰜢", hl = "@text" }
-					end
-				end
-
-				require("outline").setup(vim.tbl_extend("force", opts, { symbols = { icons = icons } }))
-			end,
-		},
 		-- }}}
 
 		-- DAP {{{2
@@ -1499,6 +1430,73 @@ require("lazy").setup(
 				keymap.set("n", "<leader>P", function()
 					require("dropbar.api").pick()
 				end)
+			end,
+		},
+		{
+			"hedyhli/outline.nvim",
+			cmd = { "Outline" },
+			keys = { { "<leader>tt", "<cmd>Outline<CR>", desc = "Toggle Outline" } },
+			opts = {
+				outline_window = {
+					-- Where to open the split window: right/left
+					position = "left",
+				},
+				keymaps = {
+					show_help = "g?",
+					fold = "zc",
+					unfold = "zo",
+					fold_toggle = "za",
+					fold_all = "zM",
+					unfold_all = 'zR',
+					fold_toggle_all = "zA",
+				},
+			},
+			config = function(self, opts)
+				local icons = {
+					File = {},
+					Module = {},
+					Namespace = {},
+					Package = {},
+					Class = {},
+					Method = {},
+					Property = {},
+					Field = {},
+					Constructor = {},
+					Enum = {},
+					Interface = {},
+					Function = {},
+					Variable = {},
+					Constant = {},
+					String = {},
+					Number = {},
+					Boolean = {},
+					Array = {},
+					Object = {},
+					Key = {},
+					Null = {},
+					EnumMember = {},
+					Struct = {},
+					Event = {},
+					Operator = {},
+					TypeParameter = {},
+					Component = {},
+					Fragment = {},
+					TypeAlias = {},
+					Parameter = {},
+					StaticMethod = {},
+					Macro = {},
+				}
+				for key, _ in pairs(icons) do
+					local symbol = config.icons.symbol_kinds[key]
+					if symbol then
+						icons[key].icon = symbol.icon
+						icons[key].hl = symbol.hl
+					else
+						icons[key] = { icon = "󰜢", hl = "@text" }
+					end
+				end
+
+				require("outline").setup(vim.tbl_extend("force", opts, { symbols = { icons = icons } }))
 			end,
 		},
 		{
