@@ -148,9 +148,11 @@ bins() {
 	cargo install git-delta
 	cargo install starship --locked
 	cargo install inferno # flamegraph
+	cargo install --features lsp --locked taplo-cli
 
 	cargo install cargo-nextest
 	cargo install cargo-binutils
+
 }
 
 function update_protobuf() {

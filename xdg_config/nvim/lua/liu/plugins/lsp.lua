@@ -156,6 +156,9 @@ local servers = {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#cmake
 	-- pip install cmake-language-server
 	cmake = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#taplo
+	-- cargo install --features lsp --locked taplo-cli
+	taplo = {},
 }
 
 -- setup neodev BEFORE lspconfig
