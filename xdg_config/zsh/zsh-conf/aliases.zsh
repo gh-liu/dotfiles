@@ -32,6 +32,12 @@ alias pm=podman
 alias lzg=lazygit
 alias lzd=lazydocker
 alias hugos="hugo server -D --bind="0.0.0.0" --baseURL=http://$HOSTIP:1313"
+if [[ $OS == darwin ]]; then
+	alias hugoso="open http://$HOSTIP:1313"
+fi
+hugon() {
+	hugo new content content/posts/$1/index.md
+}
 
 alias grep="grep --color"
 
