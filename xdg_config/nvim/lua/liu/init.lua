@@ -2221,6 +2221,8 @@ setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))
 setmap("ca", "%H", "expand('%:p:h')", { expr = true })
 setmap("ca", "%P", "expand('%:p')", { expr = true })
 setmap("ca", "%T", "expand('%:t')", { expr = true })
+
+setmap("ca", "w'", "w", {})
 -- }}}
 -- }}}
 
