@@ -104,6 +104,8 @@ local servers = {
 			validate = { enable = true },
 		},
 	},
+	html = {},
+	cssls = {},
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#yamlls
 	-- npm install -g yaml-language-server
 	yamlls = {
