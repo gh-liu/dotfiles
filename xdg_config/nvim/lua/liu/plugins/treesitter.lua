@@ -2,24 +2,26 @@ local api = vim.api
 
 ---@diagnostic disable-next-line: missing-fields
 require("nvim-treesitter.configs").setup({
-	ensure_installed = {
-		"c",
-		"lua",
-		"vim",
-		"vimdoc",
-		"comment",
-		"go",
-		"gosum",
-		"gomod",
-		"gowork",
-		"rust",
-		"bash",
-		"regex",
-		"diff",
-		"gitignore",
-		"gitcommit",
-		"git_rebase",
-	},
+	ensure_installed = "all",
+	ignore_install = {},
+	-- ensure_installed = {
+	-- 	"c",
+	-- 	"lua",
+	-- 	"vim",
+	-- 	"vimdoc",
+	-- 	"comment",
+	-- 	"go",
+	-- 	"gosum",
+	-- 	"gomod",
+	-- 	"gowork",
+	-- 	"rust",
+	-- 	"bash",
+	-- 	"regex",
+	-- 	"diff",
+	-- 	"gitignore",
+	-- 	"gitcommit",
+	-- 	"git_rebase",
+	-- },
 	sync_install = false,
 	auto_install = true,
 	highlight = {
@@ -88,22 +90,14 @@ vim.keymap.set("n", "[v", M.goto_previous_usage)
 vim.keymap.set("n", "]]", function()
 	local node = ts_utils.get_node_at_cursor()
 	if node ~= nil then
-		ts_utils.goto_node(
-			ts_utils.get_next_node(node, true, true),
-			false,
-			true
-		)
+		ts_utils.goto_node(ts_utils.get_next_node(node, true, true), false, true)
 	end
 end, { desc = "Go to next sibling node" })
 
 vim.keymap.set("n", "[[", function()
 	local node = ts_utils.get_node_at_cursor()
 	if node ~= nil then
-		ts_utils.goto_node(
-			ts_utils.get_previous_node(node, true, true),
-			false,
-			true
-		)
+		ts_utils.goto_node(ts_utils.get_previous_node(node, true, true), false, true)
 	end
 end, { desc = "Go to previous sibling node" })
 -- }}}
