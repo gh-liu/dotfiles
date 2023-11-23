@@ -1884,6 +1884,7 @@ require("lazy").setup(
 		},
 		{
 			"direnv/direnv.vim",
+			enabled = false,
 			cond = function()
 				return fn.executable("direnv") == 1
 			end,
