@@ -950,6 +950,7 @@ require("lazy").setup(
 		},
 		{
 			"airblade/vim-matchquote",
+			enabled = false,
 			event = "VeryLazy",
 		},
 		-- }}}
