@@ -445,12 +445,16 @@ require("lazy").setup(
 						file_ignore_patterns = { "target/", ".git/" },
 					},
 					pickers = {
-						buffers = { mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_buffer } } },
-						live_grep = { mappings = { [{ "i" }] = { ["<c-d>"] = actions.to_fuzzy_refine } } },
-						find_files = {
-							hidden = true,
-							no_ignore = true,
+						buffers = {
+							mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_buffer } },
 						},
+						marks = {
+							mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_mark } },
+						},
+						live_grep = {
+							mappings = { [{ "n" }] = { ["<leader>r"] = actions.to_fuzzy_refine } },
+						},
+						find_files = { hidden = true, no_ignore = true },
 					},
 				})
 
