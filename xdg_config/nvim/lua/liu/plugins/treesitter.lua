@@ -317,4 +317,26 @@ map_move("f", "@function.outer", true)
 map_move("F", "@function.outer", false)
 -- }}}
 
+-- override {{{
+local parsers = require("nvim-treesitter.parsers")
+local go = "go"
+if parsers.has_parser(go) then
+	-- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/queries/go/folds.scm
+	local folds_query = [[
+[
+ (import_declaration)
+ (var_declaration)
+ (const_declaration)
+ (type_declaration)
+ (func_literal)
+ (function_declaration)
+ (method_declaration)
+ (block)
+] @fold
+  ]]
+	vim.treesitter.query.set(go, "folds", folds_query)
+end
+
+-- }}}
+
 -- vim: foldmethod=marker
