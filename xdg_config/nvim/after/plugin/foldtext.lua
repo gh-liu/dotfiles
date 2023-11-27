@@ -11,11 +11,10 @@ local function foldtext()
 		result = {}
 		local start_line = vim.fn.getline(vim.v.foldstart)
 		table.insert(result, { start_line, "Folded" })
-
 	end
-		table.insert(result, { " ...", "Folded" })
-		table.insert(result, { string.format(" +%s(%s)", vim.v.folddashes, vim.v.foldlevel), "Folded" })
-		table.insert(result, { string.format(" [%d lines]", vim.v.foldend - vim.v.foldstart), "Folded" })
+	table.insert(result, { " ...", "Folded" })
+	table.insert(result, { string.format(" +%s(%s)", vim.v.folddashes, vim.v.foldlevel), "Folded" })
+	table.insert(result, { string.format(" [%d lines]", vim.v.foldend - vim.v.foldstart), "Folded" })
 	return result
 end
 
