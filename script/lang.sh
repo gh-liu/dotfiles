@@ -45,6 +45,7 @@ function update_zig() {
 		git clone https://github.com/zigtools/zls .
 	fi
 	zig build -Doptimize=ReleaseSafe
+	test $? -eq 1 && echo "fial to build zls" && return
 	chmod +x $(pwd)/zig-out/bin/zls
 	sudo ln -svf $(pwd)/zig-out/bin/zls /usr/bin/zls
 

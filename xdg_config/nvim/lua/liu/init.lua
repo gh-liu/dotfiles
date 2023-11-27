@@ -1622,6 +1622,29 @@ require("lazy").setup(
 				},
 			},
 		},
+		{
+			"tpope/vim-obsession",
+			init = function(self)
+				-- autocmd("VimEnter", {
+				-- 	callback = function()
+				-- 		local session = vim.fn.getcwd() .. "/Session.vim"
+				-- 		if vim.fn.filereadable(session) == 0 and vim.fn.argc() == 0 then
+				-- 			session = session:gsub("/", "_"):sub(2)
+				-- 			session = vim.fn.stdpath("cache") .. "/" .. session
+				-- 			if vim.fn.filereadable(session) == 0 then
+				-- 				vim.cmd("Obsess " .. session)
+				-- 			else
+				-- 				vim.schedule(function()
+				-- 					vim.cmd("source " .. session)
+				-- 					vim.print("Restoring session from " .. session)
+				-- 				end)
+				-- 			end
+				-- 		end
+				-- 	end,
+				-- 	desc = "Restore or create Session.vim in cache if not exist",
+				-- })
+			end,
+		},
 		-- }}}
 
 		-- Lang {{{2
