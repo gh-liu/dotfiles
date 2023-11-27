@@ -166,15 +166,6 @@ require("lazy").setup(
 			cmd = "ColorizerToggle",
 		},
 		{
-			"utilyre/sentiment.nvim",
-			event = "VeryLazy", -- keep for lazy loading
-			opts = {},
-			init = function()
-				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
-				vimg.loaded_matchparen = 1
-			end,
-		},
-		{
 			"hiphish/rainbow-delimiters.nvim",
 			event = "VeryLazy",
 			opts = {},
@@ -215,11 +206,6 @@ require("lazy").setup(
 					RainbowDelimiterYellow = { fg = config.colors.yellow },
 				})
 			end,
-		},
-		{
-			"folke/twilight.nvim",
-			cmd = { "Twilight" },
-			opts = {},
 		},
 		--}}}
 
@@ -397,13 +383,6 @@ require("lazy").setup(
 					build = "make",
 					config = function()
 						require("telescope").load_extension("fzf")
-					end,
-				},
-				{
-					"nvim-telescope/telescope-frecency.nvim",
-					enabled = false,
-					config = function()
-						require("telescope").load_extension("frecency")
 					end,
 				},
 			},
@@ -606,15 +585,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"kylechui/nvim-surround",
-			enabled = false,
-			event = "VeryLazy",
-			opts = {},
-			config = function(self, opts)
-				require("nvim-surround").setup(opts)
-			end,
-		},
-		{
 			"monaqa/dial.nvim",
 			keys = {
 				{ "<C-a>", "<Plug>(dial-increment)", mode = "n" },
@@ -672,26 +642,6 @@ require("lazy").setup(
 				require("yanky").setup({
 					highlight = { timer = vim.o.updatetime },
 				})
-			end,
-		},
-		{
-			"gbprod/substitute.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			config = function()
-				require("substitute").setup({
-					highlight_substituted_text = { timer = vim.o.updatetime },
-				})
-				-- operator
-				keymap.set("n", "s", require("substitute").operator, { noremap = true })
-				keymap.set("n", "ss", require("substitute").line, { noremap = true })
-				keymap.set("n", "S", require("substitute").eol, { noremap = true })
-				keymap.set("x", "s", require("substitute").visual, { noremap = true })
-				-- exchange
-				keymap.set("n", "cx", require("substitute.exchange").operator, { noremap = true })
-				keymap.set("n", "cxx", require("substitute.exchange").line, { noremap = true })
-				keymap.set("x", "X", require("substitute.exchange").visual, { noremap = true })
-				keymap.set("n", "cxc", require("substitute.exchange").cancel, { noremap = true })
 			end,
 		},
 		{
@@ -832,15 +782,6 @@ require("lazy").setup(
 			},
 		},
 		{
-			"tommcdo/vim-lion",
-			enabled = false,
-			keys = {
-				{ "gl", mode = { "n", "x" } },
-				{ "gL", mode = { "n", "x" } },
-			},
-			init = function() end,
-		},
-		{
 			"cshuaimin/ssr.nvim",
 			keys = {
 				{
@@ -944,19 +885,6 @@ require("lazy").setup(
 				},
 			},
 		},
-		{
-			"sustech-data/wildfire.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			config = function(self, _)
-				require("wildfire").setup({})
-			end,
-		},
-		{
-			"airblade/vim-matchquote",
-			enabled = false,
-			event = "VeryLazy",
-		},
 		-- }}}
 
 		-- Completion {{{2
@@ -999,29 +927,6 @@ require("lazy").setup(
 						{ name = "luasnip" },
 					}),
 				})
-			end,
-		},
-		{
-			"windwp/nvim-autopairs",
-			enabled = false,
-			event = "InsertEnter",
-			opts = {
-				check_ts = true,
-				fast_wrap = {
-					map = "<M-l>",
-					-- end_key = "$",
-					-- before_key = "h",
-					-- after_key = "l",
-					manual_position = false,
-					use_virt_lines = false,
-				},
-			},
-			config = function(_, opts)
-				require("nvim-autopairs").setup(opts)
-
-				local cmp_autopairs = require("nvim-autopairs.completion.cmp")
-				local cmp = require("cmp")
-				cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
 			end,
 		},
 		{
@@ -1241,59 +1146,6 @@ require("lazy").setup(
 
 		-- Repeat {{{2
 		{ "tpope/vim-repeat", event = "VeryLazy" },
-		{
-			"ghostbuster91/nvim-next",
-			enabled = false,
-			event = "VeryLazy",
-			config = function(_, opts)
-				local nvim_next_builtins = require("nvim-next.builtins")
-				require("nvim-next").setup({
-					default_mappings = {
-						repeat_style = "original",
-					},
-					items = {
-						nvim_next_builtins.f,
-						nvim_next_builtins.t,
-					},
-				})
-
-				local next_move = require("nvim-next.move")
-
-				-- local diagnostic = vim.diagnostic
-				-- local prev_diag_item, next_diag_item =
-				-- 	next_move.make_repeatable_pair(diagnostic.goto_prev, diagnostic.goto_next)
-				-- keymap.set("n", "[d", prev_diag_item)
-				-- keymap.set("n", "]d", next_diag_item)
-
-				local make_repeatable_cmd_pair = function(prev, next)
-					local checkerr = function(status)
-						if not status then
-							vim.notify("Can Not Move", vim.log.levels.INFO)
-						end
-					end
-					return next_move.make_repeatable_pair(function(_)
-						local status, _ = pcall(cmd, prev)
-						checkerr(status)
-					end, function(_)
-						local status, _ = pcall(cmd, next)
-						checkerr(status)
-					end)
-				end
-
-				local prev_qf_item, next_qf_item = make_repeatable_cmd_pair("cprev", "cnext")
-				keymap.set("n", "]q", next_qf_item, { desc = "repeat: next quickfix" })
-				keymap.set("n", "[q", prev_qf_item, { desc = "repeat: prev quickfix" })
-
-				local prev_ll_item, next_ll_item = make_repeatable_cmd_pair("lprev", "lnext")
-				keymap.set("n", "]l", next_ll_item, { desc = "repeat: next local quickfix" })
-				keymap.set("n", "[l", prev_ll_item, { desc = "repeat: prev local quickfix" })
-			end,
-		},
-		{
-			"Iron-E/nvim-libmodal",
-			lazy = true,
-			-- event = "VeryLazy",
-		},
 		-- }}}
 
 		-- Misc {{{2
@@ -1452,7 +1304,7 @@ require("lazy").setup(
 					unfold = "zo",
 					fold_toggle = "za",
 					fold_all = "zM",
-					unfold_all = 'zR',
+					unfold_all = "zR",
 					fold_toggle_all = "zA",
 				},
 			},
@@ -1590,44 +1442,6 @@ require("lazy").setup(
 			},
 		},
 		{
-			"stevearc/oil.nvim",
-			enabled = false,
-			cmd = {
-				"Oil",
-				"OilSSH",
-			},
-			keys = { "-" },
-			config = function(self, opts)
-				require("oil").setup({
-					keymaps = {
-						["q"] = {
-							callback = function()
-								for _, bufnr in ipairs(api.nvim_list_bufs()) do
-									if api.nvim_buf_get_name(bufnr):match("oil://.*") then
-										api.nvim_buf_delete(bufnr, { force = true })
-									end
-								end
-							end,
-						},
-					},
-					float = {
-						padding = 1,
-						border = config.borders,
-					},
-				})
-
-				keymap.set("n", "-", function()
-					require("oil").open()
-				end)
-
-				api.nvim_create_user_command("OilSSH", function(opts)
-					local url = opts.fargs[1]
-					local r = string.gsub(url, ":/", "//")
-					cmd(string.format("Oil oil-ssh://%s", r))
-				end, { nargs = 1 })
-			end,
-		},
-		{
 			"lambdalisue/suda.vim",
 			enabled = false,
 			cmd = {
@@ -1759,20 +1573,6 @@ require("lazy").setup(
 			},
 			cmd = "Glow",
 		},
-		{
-			"AckslD/nvim-FeMaco.lua",
-			opts = {
-				prepare_buffer = function(opts)
-					local buf = vim.api.nvim_create_buf(false, false)
-
-					vim.keymap.set("n", "q", ":quit<CR>", { buffer = buf })
-
-					return vim.api.nvim_open_win(buf, true, opts)
-				end,
-				post_open_float = function(winnr) end,
-			},
-			cmd = "FeMaco",
-		},
 
 		{
 			"echasnovski/mini.bufremove",
@@ -1885,15 +1685,6 @@ require("lazy").setup(
 					},
 				})
 			end,
-		},
-		{
-			"direnv/direnv.vim",
-			enabled = false,
-			cond = function()
-				return fn.executable("direnv") == 1
-			end,
-			-- ft = "direnv",
-			-- event = "VeryLazy",
 		},
 		-- }}}
 	},
