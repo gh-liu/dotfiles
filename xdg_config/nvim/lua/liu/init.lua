@@ -505,6 +505,7 @@ require("lazy").setup(
 		-- Text Edit {{{2
 		{
 			"Wansmer/treesj",
+			enabled = true,
 			-- event = "VeryLazy",
 			keys = {
 				{
@@ -520,11 +521,27 @@ require("lazy").setup(
 					desc = "splitting blocks of code like arrays, hashes, statements, objects, dictionaries, etc.",
 				},
 			},
-			cmd = { "TSJSplit", "TSJJoin" },
+			cmd = {
+				"TSJSplit",
+				"TSJJoin",
+			},
 			opts = { use_default_keymaps = false, max_join_length = 300 },
 			config = function(_, opts)
 				require("treesj").setup(opts)
 			end,
+		},
+		{
+			"echasnovski/mini.splitjoin",
+			lazy = true,
+			enabled = true,
+			keys = { "gS" },
+			opts = {
+				mappings = {
+					toggle = "gS",
+					split = "",
+					join = "",
+				},
+			},
 		},
 		{
 			"numToStr/Comment.nvim",
