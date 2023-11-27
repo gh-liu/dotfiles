@@ -1868,6 +1868,8 @@ vim.o.listchars = table.concat({
 	-- "extends:<",
 	-- "precedes:>",
 }, ",")
+
+vim.o.viewoptions = "folds"
 -- }}}
 
 -- Remaps {{{1
@@ -2239,6 +2241,31 @@ autocmd("OptionSet", {
 	end,
 	desc = "OptionSetWrap",
 })
+
+local view_group = vim.api.nvim_create_augroup("liu_auto_view", { clear = true })
+autocmd("BufWritePost", {
+	group = view_group,
+	callback = function(ev)
+		if api.nvim_buf_get_name(ev.buf) and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
+			vim.schedule(function()
+				vim.cmd([[mkview]])
+			end)
+		end
+	end,
+	desc = "auto mkview",
+})
+autocmd("BufRead", {
+	group = view_group,
+	callback = function(ev)
+		if api.nvim_buf_get_name(ev.buf) and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
+			vim.schedule(function()
+				vim.cmd([[silent! loadview]])
+			end)
+		end
+	end,
+	desc = "auto loadview",
+})
+
 -- }}}
 
 -- Diagnostic {{{1
