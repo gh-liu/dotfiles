@@ -1645,6 +1645,16 @@ require("lazy").setup(
 				-- })
 			end,
 		},
+		{
+			"tpope/vim-tbone",
+			cmd = {
+				"Tmux",
+				"Tyank",
+				"Tput",
+				"Twrite",
+				"Tattach",
+			},
+		},
 		-- }}}
 
 		-- Lang {{{2
