@@ -472,7 +472,72 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"echasnovski/mini.visits",
+			event = "VeryLazy",
+			opts = {},
+			config = function(self, opts)
+				require("mini.visits").setup(opts)
+
+				do
+					local vis = require("mini.visits")
+					local lable_name = "core"
+					vim.keymap.set("n", "<Leader>vv", function()
+						vis.add_label(lable_name)
+					end, { desc = "Add to core" })
+
+					vim.keymap.set("n", "<Leader>vd", function()
+						vis.remove_label(lable_name)
+					end, { desc = "Remove from core" })
+
+					vim.keymap.set("n", "<Leader>vl", function()
+						vis.select_path(nil, { filter = lable_name })
+					end, { desc = "Select core (cwd)" })
+
+					vim.keymap.set("n", "<Leader>vL", function()
+						vis.select_path("", { filter = lable_name })
+					end, { desc = "Select core (all)" })
+
+					local map_iterate_core = function(lhs, direction, desc)
+						local opts = { filter = lable_name, wrap = true }
+						local rhs = function()
+							vis.iterate_paths(direction, vim.fn.getcwd(), opts)
+						end
+						vim.keymap.set("n", lhs, rhs, { desc = desc })
+					end
+
+					map_iterate_core("<leader>[[", "forward", "Core label (earlier)")
+					map_iterate_core("<leader>]]", "backward", "Core label (later)")
+					-- map_iterate_core("[{", "last", "Core label (earliest)")
+					-- map_iterate_core("]}", "first", "Core label (latest)")
+				end
+
+				do
+					local vis = require("mini.visits")
+					local make_select_path = function(select_global, recency_weight)
+						local sort = vis.gen_sort.default({ recency_weight = recency_weight })
+						local select_opts = { sort = sort }
+						return function()
+							local cwd = select_global and "" or vim.fn.getcwd()
+							vis.select_path(cwd, select_opts)
+						end
+					end
+
+					local map_select = function(lhs, desc, ...)
+						vim.keymap.set("n", lhs, make_select_path(...), { desc = desc })
+					end
+
+					map_select("<Leader>vr", "Select recent (all)", true, 1)
+					map_select("<Leader>vR", "Select recent (cwd)", false, 1)
+					map_select("<Leader>vy", "Select frecent (all)", true, 0.5)
+					map_select("<Leader>vY", "Select frecent (cwd)", false, 0.5)
+					map_select("<Leader>vf", "Select frequent (all)", true, 0)
+					map_select("<Leader>vF", "Select frequent (cwd)", false, 0)
+				end
+			end,
+		},
+		{
 			"ThePrimeagen/harpoon",
+			enabled = false,
 			keys = {
 				"<C-y>",
 				"<C-e>",
