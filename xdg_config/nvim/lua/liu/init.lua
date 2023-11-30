@@ -2317,11 +2317,11 @@ autocmd("OptionSet", {
 	desc = "OptionSetWrap",
 })
 
-local view_group = vim.api.nvim_create_augroup("liu_auto_view", { clear = true })
-autocmd("BufWritePost", {
+local view_group = user_augroup("auto_view")
+autocmd({ "BufWritePre", "BufWipeout" }, {
 	group = view_group,
 	callback = function(ev)
-		if api.nvim_buf_get_name(ev.buf) and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
+		if api.nvim_buf_get_name(ev.buf) ~= "" and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
 			vim.schedule(function()
 				vim.cmd([[mkview]])
 			end)
@@ -2332,7 +2332,7 @@ autocmd("BufWritePost", {
 autocmd("BufRead", {
 	group = view_group,
 	callback = function(ev)
-		if api.nvim_buf_get_name(ev.buf) and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
+		if api.nvim_buf_get_name(ev.buf) ~= "" and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
 			vim.schedule(function()
 				vim.cmd([[silent! loadview]])
 			end)
