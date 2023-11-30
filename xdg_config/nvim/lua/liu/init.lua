@@ -2067,8 +2067,8 @@ setmap("n", "<C-d>", "<C-d>zz")
 setmap("n", "<C-u>", "<C-u>zz")
 -- }}}
 
--- Emacs like {{{2
-setmap("i", "<C-a>", "<HOME>")
+-- Readline key style bindings {{{2
+setmap("i", "<C-a>", "<C-O>^")
 setmap("i", "<C-e>", "<END>")
 setmap("i", "<C-f>", "<right>")
 setmap("i", "<C-b>", "<left>")
