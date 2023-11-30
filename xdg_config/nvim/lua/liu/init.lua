@@ -2103,7 +2103,7 @@ setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 -- setmap("n", "[b", "<cmd>bprevious<cr>")
 -- setmap("n", "]b", "<cmd>bnext<cr>")
 -- switch to alternate file
-setmap("n", "<leader>bb", "<cmd>e #<cr>")
+setmap("n", "<leader>bb", "<C-^>")
 -- }}}
 
 -- Tabs {{{2
