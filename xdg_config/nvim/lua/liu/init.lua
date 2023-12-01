@@ -2318,7 +2318,7 @@ autocmd("OptionSet", {
 })
 
 local view_group = user_augroup("auto_view")
-autocmd({ "BufWritePre", "BufWipeout" }, {
+autocmd({ "BufWritePre", "BufUnload" }, {
 	group = view_group,
 	callback = function(ev)
 		if api.nvim_buf_get_name(ev.buf) ~= "" and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
