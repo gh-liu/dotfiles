@@ -2328,13 +2328,11 @@ autocmd("OptionSet", {
 })
 
 local view_group = user_augroup("auto_view")
-autocmd({ "BufWritePre", "BufUnload" }, {
+autocmd({ "BufWritePre", "BufHidden", "BufLeave", "QuitPre" }, {
 	group = view_group,
 	callback = function(ev)
 		if api.nvim_buf_get_name(ev.buf) ~= "" and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
-			vim.schedule(function()
-				vim.cmd([[mkview]])
-			end)
+			vim.cmd([[mkview]])
 		end
 	end,
 	desc = "auto mkview",
@@ -2348,6 +2346,7 @@ autocmd("BufRead", {
 			end)
 		end
 	end,
+	nested = true,
 	desc = "auto loadview",
 })
 
@@ -2648,6 +2647,7 @@ autocmd("LspAttach", {
 			end
 
 			autocmd("LspDetach", {
+				group = aug,
 				callback = function()
 					api.nvim_clear_autocmds({
 						group = aug,
