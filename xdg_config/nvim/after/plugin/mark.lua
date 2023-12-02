@@ -107,8 +107,8 @@ local function on_attach(bufnr)
 		})
 	end
 
-	vim.keymap.set("n", "M", "g'", {
-		desc = "Jumo to mark",
+	vim.keymap.set("n", "M", "g`", {
+		desc = "Jump to the exact location of a mark",
 		buffer = bufnr,
 	})
 end
