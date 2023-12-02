@@ -1479,6 +1479,13 @@ require("lazy").setup(
 			},
 		},
 		{
+			"tpope/vim-rsi",
+			init = function(self)
+				vimg.rsi_no_meta = 1
+			end,
+			event = "VeryLazy",
+		},
+		{
 			"echasnovski/mini.files",
 			lazy = true,
 			keys = {
@@ -1853,7 +1860,6 @@ require("lazy").setup(
 vim.o.mouse = ""
 vim.o.clipboard = "unnamedplus"
 -- Open the command-line window in command-line Mode.
-vim.o.cedit = "<C-Y>"
 
 vim.o.splitright = true
 vim.o.splitbelow = false
@@ -2071,27 +2077,27 @@ setmap("n", "<C-d>", "<C-d>zz")
 setmap("n", "<C-u>", "<C-u>zz")
 -- }}}
 
--- Readline key style bindings {{{2
-setmap("i", "<C-a>", "<C-O>^")
-setmap("i", "<C-e>", "<END>")
-setmap("i", "<C-f>", "<right>")
-setmap("i", "<C-b>", "<left>")
+-- -- Readline key style bindings {{{2
+-- setmap("i", "<C-a>", "<C-O>^")
+-- setmap("i", "<C-e>", "<END>")
+-- setmap("i", "<C-f>", "<right>")
+-- setmap("i", "<C-b>", "<left>")
 
-local function rtf(keys, mode)
-	local tkeys = api.nvim_replace_termcodes(keys, true, true, true)
-	return function()
-		return api.nvim_feedkeys(tkeys, mode, false)
-	end
-end
-setmap("c", "<C-a>", rtf("<HOME>", "c"))
-setmap("c", "<C-e>", rtf("<END>", "c"))
-setmap("c", "<C-b>", rtf("<left>", "c"))
-setmap("c", "<C-f>", rtf("<right>", "c"))
+-- local function rtf(keys, mode)
+-- 	local tkeys = api.nvim_replace_termcodes(keys, true, true, true)
+-- 	return function()
+-- 		return api.nvim_feedkeys(tkeys, mode, false)
+-- 	end
+-- end
+-- setmap("c", "<C-a>", rtf("<HOME>", "c"))
+-- setmap("c", "<C-e>", rtf("<END>", "c"))
+-- setmap("c", "<C-b>", rtf("<left>", "c"))
+-- setmap("c", "<C-f>", rtf("<right>", "c"))
 
--- not
-setmap("c", "<C-j>", rtf("<down>", "c"))
-setmap("c", "<C-k>", rtf("<up>", "c"))
--- }}}
+-- -- not
+-- setmap("c", "<C-j>", rtf("<down>", "c"))
+-- setmap("c", "<C-k>", rtf("<up>", "c"))
+-- -- }}}
 
 -- QF {{{2
 setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
