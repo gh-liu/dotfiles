@@ -2341,6 +2341,18 @@ autocmd("BufRead", {
 	desc = "auto loadview",
 })
 
+local set_cursorline = user_augroup("set_cursorline")
+autocmd({ "InsertLeave" }, {
+	group = set_cursorline,
+	command = "set cursorline",
+	desc = "set cursorline",
+})
+autocmd({ "InsertEnter" }, {
+	group = set_cursorline,
+	command = "set nocursorline",
+	desc = "set nocursorline",
+})
+
 -- }}}
 
 -- Diagnostic {{{1
