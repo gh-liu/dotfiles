@@ -2041,6 +2041,10 @@ setmap("n", "<leader>g,", "mqA,<ESC>`q", { silent = true })
 setmap("i", ",", ",<c-g>u")
 setmap("i", ";", ";<c-g>u")
 setmap("i", ".", ".<c-g>u")
+
+-- https://vim.fandom.com/wiki/Selecting_your_pasted_text
+setmap("n", "vgp", [['`[' . strpart(getregtype(), 0, 1) . '`]']], { silent = true, expr = true })
+
 -- }}}
 
 -- Search {{{2
