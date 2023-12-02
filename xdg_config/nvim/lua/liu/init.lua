@@ -505,8 +505,8 @@ require("lazy").setup(
 						vim.keymap.set("n", lhs, rhs, { desc = desc })
 					end
 
-					map_iterate_core("<leader>[[", "forward", "Core label (earlier)")
-					map_iterate_core("<leader>]]", "backward", "Core label (later)")
+					map_iterate_core("[[", "forward", "Core label (earlier)")
+					map_iterate_core("]]", "backward", "Core label (later)")
 					-- map_iterate_core("[{", "last", "Core label (earliest)")
 					-- map_iterate_core("]}", "first", "Core label (latest)")
 				end
