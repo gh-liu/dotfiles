@@ -62,11 +62,13 @@ set_hls({
 	},
 })
 
-local from_lua = require("luasnip.loaders.from_lua")
-from_lua.load({ paths = (vim.fn.stdpath("config") .. "/snippets/luasnip") })
-vim.api.nvim_create_user_command("LuaSnipEdit", from_lua.edit_snippet_files, {})
+require("luasnip.loaders.from_lua").load({ paths = (vim.fn.stdpath("config") .. "/snippets/luasnip") })
 
 require("luasnip.loaders.from_vscode").lazy_load()
+
+vim.api.nvim_create_user_command("LuaSnipEdit", function()
+	require("luasnip.loaders").edit_snippet_files({})
+end, {})
 
 -- }}}
 
