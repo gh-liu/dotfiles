@@ -100,9 +100,15 @@ cmp.setup({
 	},
 	window = {
 		---@diagnostic disable-next-line: missing-fields
-		completion = { border = config.borders },
+		completion = {
+			border = config.borders,
+			winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+		},
 		---@diagnostic disable-next-line: missing-fields
-		documentation = { border = config.borders },
+		documentation = {
+			border = config.borders,
+			winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+		},
 	},
 	sources = {
 		{ name = "nvim_lsp" },
@@ -194,6 +200,7 @@ local simple_formatting = {
 }
 
 -- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
+---@diagnostic disable-next-line: missing-fields
 cmp.setup.cmdline({ "/", "?" }, {
 	mapping = cmp.mapping.preset.cmdline(),
 	formatting = simple_formatting,
@@ -203,6 +210,7 @@ cmp.setup.cmdline({ "/", "?" }, {
 })
 
 -- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
+---@diagnostic disable-next-line: missing-fields
 cmp.setup.cmdline(":", {
 	mapping = cmp.mapping.preset.cmdline(),
 	formatting = simple_formatting,
@@ -211,6 +219,7 @@ cmp.setup.cmdline(":", {
 	}, {
 		{ name = "cmdline" },
 	}),
+	---@diagnostic disable-next-line: missing-fields
 	completion = {
 		autocomplete = false,
 		completeopt = "menu,menuone,noselect",
