@@ -1959,6 +1959,8 @@ vim.o.listchars = table.concat({
 }, ",")
 
 vim.o.viewoptions = "folds"
+
+vim.o.completeopt = "menu,menuone,noselect"
 -- }}}
 
 -- Remaps {{{1

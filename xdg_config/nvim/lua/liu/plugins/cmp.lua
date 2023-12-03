@@ -211,6 +211,10 @@ cmp.setup.cmdline(":", {
 	}, {
 		{ name = "cmdline" },
 	}),
+	completion = {
+		autocomplete = false,
+		completeopt = "menu,menuone,noselect",
+	},
 })
 
 -- }}}
