@@ -99,7 +99,7 @@ theme.set_highlights = function()
 		-- Window bar of current window.
 		WinBar = { bold = true },
 		-- Window bar of not-current windows.
-		-- WinBarNC = { link = "WinBar" },
+		WinBarNC = { link = "WinBar" },
 		-- msg
 		ErrorMsg = { fg = c.red },
 		WarningMsg = { fg = c.yellow },
@@ -115,7 +115,7 @@ theme.set_highlights = function()
 		-- normal text
 		Normal = { bg = c.background, fg = c.foreground },
 		NormalNC = {}, -- not current window
-		NormalFloat = {link = "Normal"}, -- normal text in floating windows
+		NormalFloat = { link = "Normal" }, -- normal text in floating windows
 		-- column
 		SignColumn = { link = "Normal" },
 		CursorColumn = { link = "CursorLine" },
@@ -129,7 +129,7 @@ theme.set_highlights = function()
 		Directory = { fg = c.shadowgreen }, -- directory names (and other special names in listings)
 		Question = { fg = c.green, bold = true },
 		VertSplit = { fg = c.blue },
-		-- WinSeparator = { link = "VertSplit" },
+		WinSeparator = { link = "VertSplit" },
 		Title = { fg = c.magenta, bold = true },
 		WildMenu = { fg = c.yellow, bold = true },
 		-- QuickFixLine = { fg = yellow },
@@ -189,7 +189,7 @@ theme.set_highlights = function()
 		["@preproc"] = { link = "PreProc" },
 		["@debug"] = { link = "Debug" },
 		["@tag"] = { link = "Tag" },
-		["@attribute"] = {link = "Keyword"}
+		["@attribute"] = { link = "Keyword" },
 	}
 	highlights = vim.tbl_extend("force", highlights, ts)
 
