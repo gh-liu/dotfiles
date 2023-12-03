@@ -421,7 +421,12 @@ require("lazy").setup(
 						sorting_strategy = "ascending",
 						winblend = 5,
 						path_display = { "truncate" },
-						file_ignore_patterns = { "target/", ".git/" },
+						file_ignore_patterns = { -- lua regex
+							".git/",
+							-- "target/", -- rust
+							-- "zig%-out/", -- zig
+							-- "zig%-cache/", -- zig
+						},
 					},
 					pickers = {
 						buffers = {
@@ -433,7 +438,10 @@ require("lazy").setup(
 						live_grep = {
 							mappings = { [{ "n" }] = { ["<leader>r"] = actions.to_fuzzy_refine } },
 						},
-						find_files = { hidden = true, no_ignore = true },
+						find_files = {
+							hidden = true,
+							no_ignore = false, -- show files ignored by `.gitignore,` `.ignore,` etc.
+						},
 					},
 				})
 
