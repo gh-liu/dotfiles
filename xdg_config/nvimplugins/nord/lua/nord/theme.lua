@@ -1,3 +1,5 @@
+-- Base on: src/nvim/highlight_group.c
+-- or runtime/colors/vim.vim
 local c = require("nord.palette")
 
 local hl = vim.api.nvim_set_hl
@@ -113,7 +115,7 @@ theme.set_highlights = function()
 		-- normal text
 		Normal = { bg = c.background, fg = c.foreground },
 		NormalNC = {}, -- not current window
-		-- NormalFloat = { fg = blue }, -- normal text in floating windows
+		NormalFloat = {link = "Normal"}, -- normal text in floating windows
 		-- column
 		SignColumn = { link = "Normal" },
 		CursorColumn = { link = "CursorLine" },
@@ -187,6 +189,7 @@ theme.set_highlights = function()
 		["@preproc"] = { link = "PreProc" },
 		["@debug"] = { link = "Debug" },
 		["@tag"] = { link = "Tag" },
+		["@attribute"] = {link = "Keyword"}
 	}
 	highlights = vim.tbl_extend("force", highlights, ts)
 
