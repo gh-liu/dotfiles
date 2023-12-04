@@ -10,6 +10,7 @@ theme.set_highlights = function()
 
 	local editor = {
 		NONE = {},
+		Bold = { bold = true },
 		-- syntax
 		Comment = { fg = c.gray, italic = true }, -- italic comments
 		PreProc = { fg = c.blue }, -- generic Preprocessor
