@@ -2324,14 +2324,15 @@ autocmd("OptionSet", {
 	pattern = "wrap",
 	callback = function(ev)
 		-- vim.print(vim.v.option_new)
+		local buffer = vim.api.nvim_get_current_buf()
 		if vim.v.option_new then
-			vim.keymap.set("n", "j", "gj")
+			vim.keymap.set("n", "j", "gj", { buffer = buffer })
 			vim.keymap.set("n", "k", "gk")
 		else
 			-- vim.keymap.del("n", "j")
 			-- vim.keymap.del("n", "k")
-			pcall(vim.keymap.del, "n", "j")
-			pcall(vim.keymap.del, "n", "k")
+			pcall(vim.keymap.del, "n", "j", { buffer = buffer })
+			pcall(vim.keymap.del, "n", "k", { buffer = buffer })
 		end
 	end,
 	desc = "OptionSetWrap",
