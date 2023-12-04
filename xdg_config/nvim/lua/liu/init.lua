@@ -1686,6 +1686,7 @@ require("lazy").setup(
 		},
 		{
 			"tpope/vim-obsession",
+			event = "VeryLazy",
 			init = function(self)
 				-- autocmd("VimEnter", {
 				-- 	callback = function()
