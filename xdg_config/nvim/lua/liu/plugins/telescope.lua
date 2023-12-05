@@ -76,6 +76,19 @@ api.nvim_create_autocmd("DiagnosticChanged", {
 		end
 
 		map("<leader>sd", function()
+			local count = vim.v.count
+			if count >= vim.diagnostic.severity.ERROR then
+				if count > vim.diagnostic.severity.HINT then
+					builtin.diagnostics()
+					return
+				end
+
+				local opts = {}
+				opts.severity = { count }
+				builtin.diagnostics(opts)
+				return
+			end
+
 			vim.ui.select({ "ALL", "ERROR", "WARN", "INFO", "HINT" }, {
 				prompt = "Select Diagnostic",
 				format_item = function(item)
