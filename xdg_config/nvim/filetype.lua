@@ -1,5 +1,7 @@
 vim.filetype.add({
 	extension = {},
 	filename = {},
-	pattern = {},
+	pattern = {
+		[".*/%.vscode/.*%.json"] = "jsonc",
+	},
 })
