@@ -627,6 +627,26 @@ require("lazy").setup(
 			},
 		},
 		{
+			"echasnovski/mini.move",
+			keys = { "<M-h>", "<M-j>", "<M-k>", "<M-l>" },
+			config = function(self, opts)
+				require("mini.move").setup({
+					mappings = {
+						-- Move visual selection in Visual mode. Defaults are Alt (Meta) + hjkl.
+						left = self.keys[1],
+						down = self.keys[2],
+						up = self.keys[3],
+						right = self.keys[4],
+						-- Move current line in Normal mode
+						line_left = self.keys[1],
+						line_down = self.keys[2],
+						line_up = self.keys[3],
+						line_right = self.keys[4],
+					},
+				})
+			end,
+		},
+		{
 			"numToStr/Comment.nvim",
 			-- event = "VeryLazy",
 			lazy = true,
@@ -895,6 +915,7 @@ require("lazy").setup(
 			},
 			opts = {},
 		},
+
 		-- }}}
 
 		-- Motion {{{2
