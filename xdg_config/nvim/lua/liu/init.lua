@@ -1206,6 +1206,11 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"ruifm/gitlinker.nvim",
+			keys = { "<leader>gy" },
+			opts = {},
+		},
+		{
 			"akinsho/git-conflict.nvim",
 			enabled = true,
 			event = "VeryLazy",
