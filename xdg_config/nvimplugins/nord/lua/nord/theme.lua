@@ -47,7 +47,7 @@ theme.set_highlights = function()
 		Underlined = { underline = true, sp = c.green }, -- text that stands out, HTML links
 		Ignore = { fg = c.black }, -- left blank, hidden
 		Todo = { fg = c.orange, bold = true, italic = true }, -- anything that needs extra attention; mostly the keywords TODO FIXME and XXX
-		Conceal = { bg = c.background },
+		Conceal = { fg = c.brightblack },
 		-- diff
 		DiffAdd = { fg = c.green, bg = c.black }, -- diff mode: Added line
 		DiffChange = { fg = c.yellow, bg = c.black }, --  diff mode: Changed line
