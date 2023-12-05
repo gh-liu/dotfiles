@@ -167,6 +167,7 @@ require("lazy").setup(
 		},
 		{
 			"hiphish/rainbow-delimiters.nvim",
+			enabled = false,
 			event = "VeryLazy",
 			opts = {},
 			config = function()
@@ -206,6 +207,15 @@ require("lazy").setup(
 					RainbowDelimiterYellow = { fg = config.colors.yellow },
 				})
 			end,
+		},
+		{
+			"utilyre/sentiment.nvim",
+			event = "VeryLazy",
+			init = function()
+				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
+				vimg.loaded_matchparen = 1
+			end,
+			opts = {},
 		},
 		--}}}
 
