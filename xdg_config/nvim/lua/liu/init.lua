@@ -217,6 +217,17 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
+		{
+			"yorickpeterse/nvim-pqf",
+			enabled = true,
+			lazy = true,
+			-- event = "VeryLazy",
+			init = function()
+				vim.o.quickfixtextfunc = "v:lua.require'pqf'.format"
+			end,
+			-- opts = {},
+		},
+
 		--}}}
 
 		-- LSP {{{2
@@ -937,6 +948,10 @@ require("lazy").setup(
 					search = { enabled = false },
 					char = { enabled = false },
 				},
+				prompt = {
+					-- Place the prompt above the statusline.
+					win_config = { row = -3 },
+				},
 			},
 			config = function(_, opts)
 				require("flash").setup(opts)
@@ -1188,24 +1203,26 @@ require("lazy").setup(
 						end, { expr = true })
 
 						-- Actions
-						map("n", "<leader>hS", gs.stage_buffer, { desc = "Stage buffer" })
-						map("n", "<leader>hs", gs.stage_hunk, { desc = "Stage hunk" })
-						map("v", "<leader>hs", function()
+						-- stage
+						map("n", "<leader>gS", gs.stage_buffer, { desc = "Stage buffer" })
+						map("n", "<leader>gs", gs.stage_hunk, { desc = "Stage hunk" })
+						map("v", "<leader>gs", function()
 							gs.stage_hunk({ fn.line("."), fn.line("v") })
 						end, { desc = "Stage hunk" })
 
-						map("n", "<leader>hR", gs.reset_buffer, { desc = "Reset buffer" })
-						map("n", "<leader>hr", gs.reset_hunk, { desc = "Reset hunk" })
-						map("v", "<leader>hr", function()
+						-- reset
+						map("n", "<leader>gR", gs.reset_buffer, { desc = "Reset buffer" })
+						map("n", "<leader>gr", gs.reset_hunk, { desc = "Reset hunk" })
+						map("v", "<leader>gr", function()
 							gs.reset_hunk({ fn.line("."), fn.line("v") })
-						end, { desc = "Reset hunk" })
+						end, { desc = "Reset hunk of selection" })
 
-						map("n", "<leader>hd", gs.diffthis)
-						map("n", "<leader>hD", function()
+						map("n", "<leader>gd", gs.diffthis)
+						map("n", "<leader>gD", function()
 							gs.diffthis("~")
 						end)
-
-						map("n", "<leader>hp", gs.preview_hunk)
+						map("n", "<leader>gb", gs.blame_line)
+						map("n", "<leader>gp", gs.preview_hunk)
 					end,
 				})
 
@@ -1220,14 +1237,6 @@ require("lazy").setup(
 					GitSignsDeleteNr = { fg = config.colors.red },
 					GitSignsDeleteLn = { fg = config.colors.red, bg = config.colors.line },
 				})
-			end,
-		},
-		{
-			"rhysd/git-messenger.vim",
-			cmd = { "GitMessenger" },
-			config = function()
-				vimg.git_messenger_no_default_mappings = true
-				vimg.git_messenger_floating_win_opts = { border = config.borders }
 			end,
 		},
 		{
@@ -2148,6 +2157,33 @@ setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 
 -- setmap("n", "[l", ":lprev<cr>")
 -- setmap("n", "]l", ":lnext<cr>")
+
+-- Toggle the quickfix/loclist window.
+-- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
+local silent_mods = { mods = { silent = true, emsg_silent = true } }
+vim.keymap.set("n", "<leader>xq", function()
+	if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
+		vim.cmd.cclose(silent_mods)
+	elseif #vim.fn.getqflist() > 0 then
+		local win = vim.api.nvim_get_current_win()
+		vim.cmd.copen(silent_mods)
+		if win ~= vim.api.nvim_get_current_win() then
+			vim.cmd.wincmd("p")
+		end
+	end
+end, { desc = "Toggle quickfix list" })
+vim.keymap.set("n", "<leader>xl", function()
+	if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
+		vim.cmd.lclose(silent_mods)
+	elseif #vim.fn.getloclist(0) > 0 then
+		local win = vim.api.nvim_get_current_win()
+		vim.cmd.lopen(silent_mods)
+		if win ~= vim.api.nvim_get_current_win() then
+			vim.cmd.wincmd("p")
+		end
+	end
+end, { desc = "Toggle location list" })
+
 -- }}}
 
 -- Buffers {{{
