@@ -8,9 +8,10 @@ local api = vim.api
 local map = vim.keymap
 local cmd = vim.cmd
 
-fn.sign_define("DapBreakpoint", { text = "●", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
-fn.sign_define("DapBreakpointCondition", { text = "○", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
-fn.sign_define("DapStopped", { text = "→", texthl = "String", linehl = "", numhl = "" })
+fn.sign_define("DapBreakpoint", { text = "", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
+fn.sign_define("DapBreakpointCondition", { text = "", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
+fn.sign_define("DapBreakpointRejected", { text = "", texthl = "String", linehl = "", numhl = "ErrorMsg" })
+fn.sign_define("DapStopped", { text = "", texthl = "String", linehl = "", numhl = "" })
 
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
