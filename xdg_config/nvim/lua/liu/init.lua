@@ -2339,6 +2339,9 @@ autocmd("ModeChanged", {
 autocmd("BufReadPost", {
 	group = user_augroup("last_loc"),
 	callback = function(ev)
+		if vim.b.disable_jump_to_last_postion then
+			return true
+		end
 		local mark = api.nvim_buf_get_mark(ev.buf, '"')
 		local lcount = api.nvim_buf_line_count(ev.buf)
 		if mark[1] > 0 and mark[1] <= lcount then
