@@ -25,25 +25,33 @@ ls.config.setup({
 			},
 		},
 		[types.insertNode] = {
-			passive = {
-				virt_text = { { " ○ ", "LuasnipInsertNodePassive" } },
-				virt_text_pos = "inline",
-			},
-			active = {
-				virt_text = { { " ● ", "LuasnipInsertNodeActive" } },
+			-- 	passive = {
+			-- 		virt_text = { { " ○ ", "LuasnipInsertNodePassive" } },
+			-- 		virt_text_pos = "inline",
+			-- 	},
+			-- 	active = {
+			-- 		virt_text = { { " ● ", "LuasnipInsertNodeActive" } },
+			-- 		virt_text_pos = "inline",
+			-- 	},
+			unvisited = {
+				virt_text = { { "|", "LuasnipChoiceNodeUnvisited" } },
 				virt_text_pos = "inline",
 			},
 		},
-		-- [types.exitNode] = {
-		-- 	passive = {
-		-- 		virt_text = { { " ⇳ ", "Comment" } },
-		-- 		virt_text_pos = "inline",
-		-- 	},
-		-- 	active = {
-		-- 		virt_text = { { " ⬍ ", "WarningMsg" } },
-		-- 		virt_text_pos = "inline",
-		-- 	},
-		-- },
+		[types.exitNode] = {
+			-- passive = {
+			-- 	virt_text = { { " ⇳ ", "Comment" } },
+			-- 	virt_text_pos = "inline",
+			-- },
+			-- active = {
+			-- 	virt_text = { { " ⬍ ", "WarningMsg" } },
+			-- 	virt_text_pos = "inline",
+			-- },
+			unvisited = {
+				virt_text = { { "|", "LuasnipExitNodeUnvisited" } },
+				virt_text_pos = "inline",
+			},
+		},
 	},
 })
 
@@ -59,6 +67,14 @@ set_hls({
 	},
 	LuasnipChoiceNodePassive = {
 		fg = config.colors.blue,
+	},
+	LuasnipChoiceNodeUnvisited = {
+		fg = config.colors.gray,
+		italic = true,
+	},
+	LuasnipExitNodeUnvisited = {
+		fg = config.colors.gray,
+		bold = true,
 	},
 })
 
@@ -91,6 +107,7 @@ local function has_words_before()
 	return ((col ~= 0) and (((api.nvim_buf_get_lines(0, (line - 1), line, true))[1]):sub(col, col):match("%s") == nil))
 end
 
+local winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None"
 ---@diagnostic disable-next-line: missing-fields
 cmp.setup({
 	snippet = {
@@ -102,12 +119,14 @@ cmp.setup({
 		---@diagnostic disable-next-line: missing-fields
 		completion = {
 			border = config.borders,
-			winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+			winhighlight = winhighlight,
 		},
 		---@diagnostic disable-next-line: missing-fields
 		documentation = {
 			border = config.borders,
-			winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+			winhighlight = winhighlight,
+			max_height = math.floor(vim.o.lines * 0.5),
+			max_width = math.floor(vim.o.columns * 0.4),
 		},
 	},
 	sources = {
@@ -226,6 +245,8 @@ cmp.setup.cmdline(":", {
 	},
 })
 
+-- Inside a snippet, use backspace to remove the placeholder.
+vim.keymap.set("s", "<BS>", "<C-O>s")
 -- }}}
 
 -- vim: foldmethod=marker
