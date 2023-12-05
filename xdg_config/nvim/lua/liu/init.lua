@@ -927,7 +927,6 @@ require("lazy").setup(
 		},
 		{
 			"echasnovski/mini.ai",
-			-- event = "VeryLazy",
 			keys = {
 				{ "i", mode = { "o", "x" } },
 				{ "a", mode = { "o", "x" } },
@@ -935,15 +934,20 @@ require("lazy").setup(
 			config = function(self, opts)
 				local ai = require("mini.ai")
 				ai.setup({
-					n_lines = 500,
+					n_lines = 300,
 					-- search_method = "cover",
 					custom_textobjects = {
-						o = ai.gen_spec.treesitter({
-							a = { "@block.outer", "@conditional.outer", "@loop.outer" },
-							i = { "@block.inner", "@conditional.inner", "@loop.inner" },
-						}, {}),
+						o = ai.gen_spec.treesitter({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
 						f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
 						c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }, {}),
+					},
+					silent = true,
+					mappings = {
+						-- around_next = "",
+						-- inside_next = "",
+						-- Disable last variants.
+						around_last = "",
+						inside_last = "",
 					},
 				})
 			end,
