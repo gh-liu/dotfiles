@@ -26,7 +26,7 @@ local servers = {
 			gofumpt = true,
 			staticcheck = true,
 			semanticTokens = true,
-			usePlaceholders = false,
+			usePlaceholders = true,
 			buildFlags = { "-tags", "debug" },
 		},
 	},
@@ -74,6 +74,11 @@ local servers = {
 					hideNamedConstructor = false,
 				},
 			},
+			completion = {
+				callable = {
+					snippets = "fill_arguments",
+				},
+			},
 		},
 	},
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#lua_ls
@@ -86,6 +91,10 @@ local servers = {
 			telemetry = { enable = false },
 			workspace = { checkThirdParty = false },
 			diagnostics = { globals = { "vim" } },
+			completion = {
+				-- https://github.com/LuaLS/lua-language-server/wiki/Settings#completioncallsnippet
+				callSnippet = "Replace",
+			},
 		},
 	},
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#vimls
