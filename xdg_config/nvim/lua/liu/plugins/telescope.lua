@@ -1,6 +1,65 @@
 local api = vim.api
 local keymap = vim.keymap
 
+local borders = config.borders
+local actions = require("telescope.actions")
+
+require("telescope").setup({
+	defaults = {
+		borderchars = {
+			borders[2],
+			borders[4],
+			borders[6],
+			borders[8],
+			borders[1],
+			borders[3],
+			borders[5],
+			borders[7],
+		},
+		mappings = {
+			i = {
+				["<ESC>"] = actions.close,
+				["<C-n>"] = actions.move_selection_next,
+				["<C-p>"] = actions.move_selection_previous,
+			},
+			n = {
+				["<ESC>"] = actions.close,
+			},
+		},
+		layout_config = {
+			horizontal = { prompt_position = "top", preview_width = 0.6, results_width = 0.8 },
+			vertical = { mirror = false },
+			width = 0.8,
+			height = 0.8,
+			preview_cutoff = 120,
+		},
+		sorting_strategy = "ascending",
+		winblend = 5,
+		path_display = { "truncate" },
+		file_ignore_patterns = { -- lua regex
+			".git/",
+			-- "target/", -- rust
+			-- "zig%-out/", -- zig
+			-- "zig%-cache/", -- zig
+		},
+	},
+	pickers = {
+		buffers = {
+			mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_buffer } },
+		},
+		marks = {
+			mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_mark } },
+		},
+		live_grep = {
+			mappings = { [{ "n" }] = { ["<leader>r"] = actions.to_fuzzy_refine } },
+		},
+		find_files = {
+			hidden = true,
+			no_ignore = false, -- show files ignored by `.gitignore,` `.ignore,` etc.
+		},
+	},
+})
+
 local builtin = require("telescope.builtin")
 
 keymap.set("n", "<leader>so", builtin.oldfiles, { desc = "[S]earch recently [O]pened files" })

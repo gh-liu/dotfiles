@@ -2,6 +2,8 @@ if false then
 	return
 end
 
+local icons = config.icons
+
 -- Do not display the command that produced the quickfix list.
 -- https://neovim.io/doc/user/filetype.html#ft-qf-plugin
 vim.g.qf_disable_statusline = 1
@@ -135,11 +137,11 @@ function M.mode_component()
 end
 
 function M.word_dir_component()
-	local icon = (vim.fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. " "
+	local icon = (vim.fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. icons.directory
 	local cmd = vim.fn.pathshorten(vim.fn.getcwd(0))
 
 	return table.concat({
-		string.format("%%#%s#%s %s", M.get_or_create_hl("Directory"), icon, "%<" .. cmd),
+		string.format("%%#%s#%s%s", M.get_or_create_hl("Directory"), icon, "%<" .. cmd),
 		separator,
 	})
 end
@@ -183,7 +185,7 @@ function M.git_component()
 		return ""
 	end
 
-	return string.format("%%#%s#%s %s", M.get_or_create_hl("DiffChange"), config.icons.git, head)
+	return string.format("%%#%s#%s %s", M.get_or_create_hl("DiffChange"), icons.git, head)
 end
 
 --- Lsp clients (if any).
@@ -257,7 +259,7 @@ function M.dap_component()
 	end
 
 	return table.concat({
-		string.format("%%#%s#%s %s", M.get_or_create_hl("Debug"), config.icons.bug, require("dap").status()),
+		string.format("%%#%s#%s %s", M.get_or_create_hl("Debug"), icons.bug, require("dap").status()),
 		separator,
 	})
 end
@@ -289,7 +291,7 @@ function M.diagnostics_component()
 			local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
 			table.insert(
 				parts,
-				string.format("%%#%s#%s %d", M.get_or_create_hl(hl), config.icons.diagnostics[severity], count)
+				string.format("%%#%s#%s %d", M.get_or_create_hl(hl), icons.diagnostics[severity], count)
 			)
 		end
 	end
@@ -299,7 +301,7 @@ function M.diagnostics_component()
 	-- 	end
 
 	-- 	local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
-	-- 	return string.format("%%#%s#%s %d", M.get_or_create_hl(hl), config.icons.diagnostics[severity], count)
+	-- 	return string.format("%%#%s#%s %d", M.get_or_create_hl(hl), icons.diagnostics[severity], count)
 	-- end, counts)
 
 	return table.concat(parts, " ")

@@ -364,8 +364,8 @@ dapui.setup({
 		mappings = { close = { "q", "<Esc>" } },
 	},
 	icons = {
-		collapsed = config.fold_markers[1],
-		expanded = config.fold_markers[2],
+		collapsed = config.icons.fold[1],
+		expanded = config.icons.fold[2],
 		current_frame = "⇒",
 	},
 	layouts = {

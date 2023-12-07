@@ -21,41 +21,40 @@ _G.config = {
 		line = "#3B4252", -- same as gray
 	},
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
-	fold_markers = { "", "" },
 	icons = {
+		symbol_kinds = {
+			Array = { icon = "󰅪 ", hl = "Identifier" },
+			Class = { icon = " ", hl = "Structure" },
+			Color = { icon = "󰏘 ", hl = "@text" },
+			Constant = { icon = "󰏿 ", hl = "Constant" },
+			Constructor = { icon = " ", hl = "@constructor" },
+			Enum = { icon = " ", hl = "Structure" },
+			EnumMember = { icon = " ", hl = "Constant" },
+			Event = { icon = " ", hl = "@text" },
+			Field = { icon = " ", hl = "@field" },
+			File = { icon = "󰈙 ", hl = "@text" },
+			Folder = { icon = " ", hl = "Directory" },
+			Function = { icon = "󰊕 ", hl = "Function" },
+			Interface = { icon = " ", hl = "Structure" },
+			Keyword = { icon = "󰌋 ", hl = "Keyword" },
+			Method = { icon = "󰆧 ", hl = "@method" },
+			Module = { icon = "󰏗 ", hl = "@text" },
+			Operator = { icon = "󰆕 ", hl = "Keyword" },
+			Property = { icon = "󰜢 ", hl = "@property" },
+			Reference = { icon = "󰈇 ", hl = "@text.reference" },
+			Snippet = { icon = " ", hl = "@text" },
+			Struct = { icon = " ", hl = "Structure" },
+			Text = { icon = " ", hl = "@text" },
+			TypeParameter = { icon = " ", hl = "Type" },
+			Unit = { icon = " ", hl = "@text" },
+			Value = { icon = "󰎠 ", hl = "@text" },
+			Variable = { icon = "󰀫 ", hl = "Identifier" },
+		},
 		diagnostics = {
 			ERROR = "E",
 			WARN = "W",
 			INFO = "I",
 			HINT = "H",
-		},
-		symbol_kinds = {
-			Array = { icon = "󰅪", hl = "Identifier" },
-			Class = { icon = "", hl = "Structure" },
-			Color = { icon = "󰏘", hl = "@text" },
-			Constant = { icon = "󰏿", hl = "Constant" },
-			Constructor = { icon = "", hl = "@constructor" },
-			Enum = { icon = "", hl = "Structure" },
-			EnumMember = { icon = "", hl = "Constant" },
-			Event = { icon = "", hl = "@text" },
-			Field = { icon = "󰜢", hl = "@field" },
-			File = { icon = "󰈙", hl = "@text" },
-			Folder = { icon = "󰉋", hl = "Directory" },
-			Function = { icon = "󰆧", hl = "Function" },
-			Interface = { icon = "", hl = "Structure" },
-			Keyword = { icon = "󰌋", hl = "Keyword" },
-			Method = { icon = "󰆧", hl = "@method" },
-			Module = { icon = "", hl = "@text" },
-			Operator = { icon = "󰆕", hl = "Keyword" },
-			Property = { icon = "󰜢", hl = "@property" },
-			Reference = { icon = "󰈇", hl = "@text.reference" },
-			Snippet = { icon = "", hl = "@text" },
-			Struct = { icon = "", hl = "Structure" },
-			Text = { icon = "", hl = "@text" },
-			TypeParameter = { icon = "", hl = "Type" },
-			Unit = { icon = "", hl = "@text" },
-			Value = { icon = "", hl = "@text" },
-			Variable = { icon = "󰀫", hl = "Identifier" },
 		},
 		arrows = {
 			right = "",
@@ -63,10 +62,12 @@ _G.config = {
 			up = "",
 			down = "",
 		},
+		fold = { "", "" },
+		directory = " ",
 		bug = "",
 		git = "",
+		bulb = "💡",
 		search = "",
-		vertical_bar = "│",
 	},
 }
 
@@ -80,21 +81,17 @@ end
 
 ---@param cmds table
 _G.set_cmds = function(cmds)
-	for key, value in pairs(cmds) do
-		if type(value) == "string" then
-			api.nvim_create_user_command(key, function()
-				cmd(value)
-			end, {})
-		end
-
-		if type(value) == "function" then
-			api.nvim_create_user_command(key, value, {})
-		end
+	for key, cmd in pairs(cmds) do
+		api.nvim_create_user_command(key, cmd, {})
 	end
 end
 
-_G.load_plugin_config = function(plugin)
+local load_plugin_config = function(plugin)
 	require("liu.plugins." .. plugin)
+end
+
+local user_augroup = function(name)
+	return vim.api.nvim_create_augroup("liu_" .. name, { clear = true })
 end
 -- }}}
 
@@ -107,6 +104,7 @@ require("lazy").setup(
 			priority = 1000, -- make sure to load this before all the other start plugins
 			config = function(_, opts)
 				require("nord").setup()
+				vim.cmd([[colorscheme nord]])
 			end,
 		},
 		-- }}}
@@ -115,7 +113,6 @@ require("lazy").setup(
 		{
 			"nvim-lua/plenary.nvim",
 			lazy = true,
-			-- event = "VeryLazy",
 		},
 		-- }}}
 
@@ -123,11 +120,9 @@ require("lazy").setup(
 		{
 			"nvim-tree/nvim-web-devicons",
 			lazy = true,
-			-- event = "VeryLazy",
 		},
 		{
 			"stevearc/dressing.nvim",
-			-- event = "VeryLazy",
 			lazy = true,
 			init = function()
 				vim.ui.select = function(...)
@@ -139,6 +134,7 @@ require("lazy").setup(
 					return vim.ui.input(...)
 				end
 			end,
+			---@diagnostic disable-next-line: duplicate-set-field
 			opts = {
 				input = {
 					enabled = true,
@@ -152,13 +148,6 @@ require("lazy").setup(
 					},
 				},
 			},
-			-- config = function(_, opts)
-			-- 	require("dressing").setup(opts)
-			-- end,
-		},
-		{
-			"szw/vim-maximizer",
-			cmd = "MaximizerToggle",
 		},
 		{
 			"norcalli/nvim-colorizer.lua",
@@ -193,8 +182,7 @@ require("lazy").setup(
 						"RainbowDelimiterViolet",
 						"RainbowDelimiterCyan",
 					},
-					-- zig is slow
-					blacklist = { "zig" },
+					blacklist = {},
 				}
 
 				set_hls({
@@ -217,24 +205,15 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
-		{
-			"yorickpeterse/nvim-pqf",
-			enabled = true,
-			lazy = true,
-			-- event = "VeryLazy",
-			init = function()
-				vim.o.quickfixtextfunc = "v:lua.require'pqf'.format"
-			end,
-			-- opts = {},
-		},
-
 		--}}}
 
-		-- LSP {{{2
+		-- LSPs {{{2
 		{
 			"neovim/nvim-lspconfig",
 			event = "VeryLazy",
-			dependencies = { "folke/neodev.nvim" },
+			dependencies = {
+				"folke/neodev.nvim",
+			},
 			config = function(_, opts)
 				load_plugin_config("lsp")
 			end,
@@ -249,17 +228,12 @@ require("lazy").setup(
 				priority = 100,
 				sign = {
 					enabled = true,
-					text = "💡",
-					hl = "LightBulbSign",
+					text = config.icons.bulb,
 				},
 			},
-			config = function(_, opts)
-				require("nvim-lightbulb").setup(opts)
-			end,
 		},
 		{
 			"Wansmer/symbol-usage.nvim",
-			enabled = true,
 			event = "LspAttach",
 			opts = {
 				hl = { link = "LspInlayHint" },
@@ -270,7 +244,6 @@ require("lazy").setup(
 			},
 			config = function(_, opts)
 				local SymbolKind = vim.lsp.protocol.SymbolKind
-
 				opts = vim.tbl_extend("force", opts, {
 					filetypes = {
 						go = {
@@ -306,7 +279,6 @@ require("lazy").setup(
 			"j-hui/fidget.nvim",
 			event = "LspAttach",
 			opts = {
-				progress = {},
 				notification = {
 					override_vim_notify = false,
 				},
@@ -314,7 +286,7 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- DAP {{{2
+		-- DAPs {{{2
 		{
 			"mfussenegger/nvim-dap",
 			keys = {
@@ -335,7 +307,7 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- Treesitter {{{2
+		-- TreeSitters {{{2
 		{
 			"nvim-treesitter/nvim-treesitter",
 			event = "VeryLazy",
@@ -349,21 +321,12 @@ require("lazy").setup(
 			event = "VeryLazy",
 			opts = {
 				enable = true,
-				max_lines = 0,
-				min_window_height = 0,
-				line_numbers = true,
-				multiline_threshold = 20,
-				trim_scope = "outer",
-				mode = "cursor",
-				separator = nil,
-				zindex = 20,
 			},
 			config = function(_, opts)
-				require("treesitter-context").setup(opts)
+				local tsc = require("treesitter-context")
+				tsc.setup(opts)
 
-				keymap.set("n", "<leader>cj", function()
-					require("treesitter-context").go_to_context()
-				end, { silent = true })
+				keymap.set("n", "<leader>cj", tsc.go_to_context, {})
 
 				set_hls({
 					TreesitterContext = { link = "StatusLine" },
@@ -375,10 +338,9 @@ require("lazy").setup(
 		{
 			-- "nvim-treesitter/nvim-treesitter-textobjects",
 			"gh-liu/nvim-treesitter-textobjects",
-			enabled = true,
 			lazy = true,
 			event = "VeryLazy",
-			config = function(_, opts) end,
+			config = function(self, opts) end,
 		},
 		{
 			"JoosepAlviste/nvim-ts-context-commentstring",
@@ -391,7 +353,38 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- Fuzzy Finder {{{2
+		-- Diagnostics {{{2
+		{
+			"mfussenegger/nvim-lint",
+			lazy = true,
+			init = function(self)
+				local linters_by_ft = self.opts.linters_by_ft
+				autocmd("FileType", {
+					pattern = vim.tbl_keys(linters_by_ft),
+					callback = function(ev)
+						autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+							callback = function()
+								require("lint").try_lint()
+							end,
+							buffer = ev.buf,
+						})
+					end,
+					desc = "setup nvim-lint for ft",
+				})
+			end,
+			opts = {
+				linters_by_ft = {
+					go = { "golangcilint" },
+					proto = { "buf_lint" },
+				},
+			},
+			config = function(self, opts)
+				require("lint").linters_by_ft = opts.linters_by_ft
+			end,
+		},
+		-- }}}
+
+		-- Telescopes {{{2
 		{
 			"nvim-telescope/telescope.nvim",
 			event = "VeryLazy",
@@ -408,68 +401,9 @@ require("lazy").setup(
 				},
 			},
 			config = function()
-				local borders = config.borders
-				local actions = require("telescope.actions")
-				require("telescope").setup({
-					defaults = {
-						borderchars = {
-							borders[2],
-							borders[4],
-							borders[6],
-							borders[8],
-							borders[1],
-							borders[3],
-							borders[5],
-							borders[7],
-						},
-						mappings = {
-							i = {
-								["<ESC>"] = actions.close,
-								["<C-n>"] = actions.move_selection_next,
-								["<C-p>"] = actions.move_selection_previous,
-							},
-							n = {
-								["<ESC>"] = actions.close,
-							},
-						},
-						layout_config = {
-							horizontal = { prompt_position = "top", preview_width = 0.6, results_width = 0.8 },
-							vertical = { mirror = false },
-							width = 0.8,
-							height = 0.8,
-							preview_cutoff = 120,
-						},
-						sorting_strategy = "ascending",
-						winblend = 5,
-						path_display = { "truncate" },
-						file_ignore_patterns = { -- lua regex
-							".git/",
-							-- "target/", -- rust
-							-- "zig%-out/", -- zig
-							-- "zig%-cache/", -- zig
-						},
-					},
-					pickers = {
-						buffers = {
-							mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_buffer } },
-						},
-						marks = {
-							mappings = { [{ "i", "n" }] = { ["<c-d>"] = actions.delete_mark } },
-						},
-						live_grep = {
-							mappings = { [{ "n" }] = { ["<leader>r"] = actions.to_fuzzy_refine } },
-						},
-						find_files = {
-							hidden = true,
-							no_ignore = false, -- show files ignored by `.gitignore,` `.ignore,` etc.
-						},
-					},
-				})
-
 				load_plugin_config("telescope")
 
 				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
-
 				api.nvim_create_autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
 			end,
 		},
@@ -480,12 +414,11 @@ require("lazy").setup(
 				require("telescope").load_extension("goimpl")
 
 				api.nvim_create_autocmd("LspAttach", {
-					group = api.nvim_create_augroup("liu_lsp_attach_goimpl", { clear = true }),
+					group = user_augroup("lsp_attach_goimpl"),
 					callback = function(args)
 						local bufnr = args.buf
-						local client_id = args.data.client_id
-						local client = lsp.get_client_by_id(client_id)
-						if client.name == "gopls" then
+						local client = lsp.get_client_by_id(args.data.client_id)
+						if client and client.name == "gopls" then
 							keymap.set("n", "<leader>gi", function()
 								require("telescope").extensions.goimpl.goimpl({})
 							end, {
@@ -500,141 +433,30 @@ require("lazy").setup(
 				})
 			end,
 		},
-		{
-			"echasnovski/mini.visits",
-			event = "VeryLazy",
-			opts = {},
-			config = function(self, opts)
-				require("mini.visits").setup(opts)
-
-				do
-					local vis = require("mini.visits")
-					local lable_name = "core"
-					vim.keymap.set("n", "<Leader>vv", function()
-						vis.add_label(lable_name)
-					end, { desc = "Add to core" })
-
-					vim.keymap.set("n", "<Leader>vd", function()
-						vis.remove_label(lable_name)
-					end, { desc = "Remove from core" })
-
-					vim.keymap.set("n", "<Leader>vl", function()
-						vis.select_path(nil, { filter = lable_name })
-					end, { desc = "Select core (cwd)" })
-
-					vim.keymap.set("n", "<Leader>vL", function()
-						vis.select_path("", { filter = lable_name })
-					end, { desc = "Select core (all)" })
-
-					local map_iterate_core = function(lhs, direction, desc)
-						local opts = { filter = lable_name, wrap = true }
-						local rhs = function()
-							vis.iterate_paths(direction, vim.fn.getcwd(), opts)
-						end
-						vim.keymap.set("n", lhs, rhs, { desc = desc })
-					end
-
-					map_iterate_core("[[", "forward", "Core label (earlier)")
-					map_iterate_core("]]", "backward", "Core label (later)")
-					-- map_iterate_core("[{", "last", "Core label (earliest)")
-					-- map_iterate_core("]}", "first", "Core label (latest)")
-				end
-
-				do
-					local vis = require("mini.visits")
-					local make_select_path = function(select_global, recency_weight)
-						local sort = vis.gen_sort.default({ recency_weight = recency_weight })
-						local select_opts = { sort = sort }
-						return function()
-							local cwd = select_global and "" or vim.fn.getcwd()
-							vis.select_path(cwd, select_opts)
-						end
-					end
-
-					local map_select = function(lhs, desc, ...)
-						vim.keymap.set("n", lhs, make_select_path(...), { desc = desc })
-					end
-
-					map_select("<Leader>vr", "Select recent (all)", true, 1)
-					map_select("<Leader>vR", "Select recent (cwd)", false, 1)
-					map_select("<Leader>vy", "Select frecent (all)", true, 0.5)
-					map_select("<Leader>vY", "Select frecent (cwd)", false, 0.5)
-					map_select("<Leader>vf", "Select frequent (all)", true, 0)
-					map_select("<Leader>vF", "Select frequent (cwd)", false, 0)
-				end
-			end,
-		},
-		{
-			"ThePrimeagen/harpoon",
-			enabled = false,
-			keys = {
-				"<C-y>",
-				"<C-e>",
-				"<C-h>",
-				"<C-l>",
-			},
-			config = function(self, opts)
-				require("harpoon").setup()
-
-				local mark = require("harpoon.mark")
-				local ui = require("harpoon.ui")
-				keymap.set("n", self.keys[1], function()
-					mark.add_file()
-				end)
-				keymap.set("n", self.keys[2], function()
-					ui.toggle_quick_menu()
-				end)
-				keymap.set("n", self.keys[3], function()
-					ui.nav_prev()
-				end)
-				keymap.set("n", self.keys[4], function()
-					ui.nav_next()
-				end)
-
-				set_hls({ HarpoonBorder = { link = "FloatBorder" } })
-			end,
-		},
 		-- }}}
 
 		-- Text Edit {{{2
 		{
 			"Wansmer/treesj",
 			enabled = true,
-			-- event = "VeryLazy",
 			keys = {
 				{
-					"gj",
+					"gJ",
 					":TSJJoin<CR>",
 					silent = true,
 					desc = "joining blocks of code like arrays, hashes, statements, objects, dictionaries, etc.",
 				},
 				{
-					"gs",
+					"gS",
 					":TSJSplit<CR>",
 					silent = true,
 					desc = "splitting blocks of code like arrays, hashes, statements, objects, dictionaries, etc.",
 				},
 			},
-			cmd = {
-				"TSJSplit",
-				"TSJJoin",
-			},
-			opts = { use_default_keymaps = false, max_join_length = 300 },
-			config = function(_, opts)
-				require("treesj").setup(opts)
-			end,
-		},
-		{
-			"echasnovski/mini.splitjoin",
-			lazy = true,
-			enabled = true,
-			keys = { "gS" },
+			cmd = { "TSJSplit", "TSJJoin" },
 			opts = {
-				mappings = {
-					toggle = "gS",
-					split = "",
-					join = "",
-				},
+				use_default_keymaps = false,
+				max_join_length = 300,
 			},
 		},
 		{
@@ -659,28 +481,17 @@ require("lazy").setup(
 		},
 		{
 			"numToStr/Comment.nvim",
-			-- event = "VeryLazy",
 			lazy = true,
 			keys = {
 				{ "gc", mode = { "n", "x" } },
 				{ "gb", mode = { "n", "x" } },
 			},
-			config = function()
-				require("Comment").setup({
-					ignore = "^$",
-				})
-
-				local comment_ft = require("Comment.ft")
-				comment_ft.set("lua", { "--%s", "--[[%s]]" })
-				comment_ft.set("gowork", { "// %s" })
-				comment_ft.set("http", { "# %s" })
-				comment_ft.set("just", { "# %s" })
-				comment_ft.set("hurl", { "# %s" })
-			end,
+			opts = {
+				ignore = "^$",
+			},
 		},
 		{
 			"echasnovski/mini.surround",
-			-- event = "VeryLazy",
 			keys = {
 				-- Add surrounding in Normal and Visual modes
 				{ "ys", mode = { "x", "n" } },
@@ -712,8 +523,44 @@ require("lazy").setup(
 						f = ts_input({ outer = "@call.outer", inner = "@call.inner" }),
 					},
 				}
+
 				require("mini.surround").setup(opts)
 			end,
+		},
+		{
+			"echasnovski/mini.operators",
+			keys = {
+				{ "s", mode = { "n", "x" } },
+				{ "S", "<cmd>normal s$<cr>", silent = true },
+				{ "cx", mode = { "n", "x" } },
+				{ "g=", mode = { "n", "x" } },
+			},
+			opts = {
+				replace = {
+					-- Replace text with register
+					prefix = "s",
+					-- Whether to reindent new text to match previous indent
+					reindent_linewise = true,
+				},
+				exchange = {
+					-- Exchange text regions
+					prefix = "cx",
+					-- Whether to reindent new text to match previous indent
+					reindent_linewise = true,
+				},
+				evaluate = {
+					-- Evaluate text and replace with output
+					prefix = "g=",
+				},
+				-- miltiply = {
+				-- 	-- Multiply (duplicate) text
+				-- 	prefix = "",
+				-- },
+				-- sort = {
+				-- 	-- Sort text
+				-- 	prefix = "",
+				-- },
+			},
 		},
 		{
 			"monaqa/dial.nvim",
@@ -759,69 +606,16 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"gbprod/yanky.nvim",
-			enabled = false,
-			keys = {
-				{ "p", "<Plug>(YankyPutAfter)", mode = { "n", "x" }, desc = "Put yanked text after cursor" },
-				{ "P", "<Plug>(YankyPutBefore)", mode = { "n", "x" }, desc = "Put yanked text before cursor" },
-				{ "gp", "<Plug>(YankyPutAfterLinewise)", desc = "Put yanked text in line below" },
-				{ "gP", "<Plug>(YankyPutBeforeLinewise)", desc = "Put yanked text in line above" },
-				{ "[y", "<Plug>(YankyCycleForward)", desc = "Cycle forward through yank history" },
-				{ "]y", "<Plug>(YankyCycleBackward)", desc = "Cycle backward through yank history" },
-			},
-			config = function(self, opts)
-				require("yanky").setup({
-					highlight = { timer = vim.o.updatetime },
-				})
-			end,
-		},
-		{
-			"echasnovski/mini.operators",
-			-- event = "VeryLazy",
-			keys = {
-				{ "s", mode = { "n", "x" } },
-				{ "S", "<cmd>normal s$<cr>", silent = true },
-				{ "cx", mode = { "n", "x" } },
-				{ "g=", mode = { "n", "x" } },
-			},
-			opts = {
-				replace = {
-					-- Replace text with register
-					prefix = "s",
-					-- Whether to reindent new text to match previous indent
-					reindent_linewise = true,
-				},
-				exchange = {
-					-- Exchange text regions
-					prefix = "cx",
-					-- Whether to reindent new text to match previous indent
-					reindent_linewise = true,
-				},
-				evaluate = {
-					-- Evaluate text and replace with output
-					prefix = "g=",
-				},
-				miltiply = {
-					-- Multiply (duplicate) text
-					prefix = "",
-				},
-				sort = {
-					-- Sort text
-					prefix = "",
-				},
-			},
-		},
-		{
 			"tpope/vim-abolish",
-			event = "VeryLazy",
+			cmd = { "Abolish", "Subvert", "S" },
+			keys = { "cr" },
 		},
 		{
 			"stevearc/conform.nvim",
+			lazy = true,
 			init = function(self)
 				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
 			end,
-			-- event = "VeryLazy",
-			lazy = true,
 			keys = {
 				{
 					"<leader>=",
@@ -891,15 +685,14 @@ require("lazy").setup(
 		{
 			"danymat/neogen",
 			cmd = { "Neogen" },
-			config = function(self, opts)
-				local neogen = require("neogen")
-				neogen.setup({
-					snippet_engine = "luasnip",
-					languages = {
-						lua = { template = { annotation_convention = "emmylua" } },
+			opts = {
+				snippet_engine = "luasnip",
+				languages = {
+					lua = {
+						template = { annotation_convention = "emmylua" },
 					},
-				})
-			end,
+				},
+			},
 		},
 		{
 			"junegunn/vim-easy-align",
@@ -926,13 +719,11 @@ require("lazy").setup(
 			},
 			opts = {},
 		},
-
 		-- }}}
 
-		-- Motion {{{2
+		-- Motions {{{2
 		{
 			"folke/flash.nvim",
-			-- event = "VeryLazy",
 			keys = {
 				{
 					"<leader>f",
@@ -979,11 +770,12 @@ require("lazy").setup(
 					},
 					silent = true,
 					mappings = {
-						-- around_next = "",
-						-- inside_next = "",
 						-- Disable last variants.
 						around_last = "",
 						inside_last = "",
+						-- Disable next variants.
+						-- around_next = "",
+						-- inside_next = "",
 					},
 				})
 			end,
@@ -1027,7 +819,7 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- Completion {{{2
+		-- Completions {{{2
 		{
 			"hrsh7th/nvim-cmp",
 			event = { "InsertEnter", "CmdlineEnter" },
@@ -1052,12 +844,11 @@ require("lazy").setup(
 				return fn.executable("git") == 1
 			end,
 			ft = { "gitcommit", "octo" },
-			opts = {},
 			config = function(self, opts)
 				require("cmp_git").setup(opts)
 
 				local cmp = require("cmp")
-
+				---@diagnostic disable-next-line: missing-fields
 				cmp.setup.filetype(self.ft, {
 					sources = cmp.config.sources({
 						{ name = "git" },
@@ -1071,12 +862,10 @@ require("lazy").setup(
 		},
 		{
 			"echasnovski/mini.pairs",
-			enabled = true,
 			event = "InsertEnter",
 			init = function(self)
 				vim.g.minipairs_disable = false
 			end,
-			opts = {},
 			keys = {
 				{
 					"<leader>tp",
@@ -1093,6 +882,7 @@ require("lazy").setup(
 					desc = "[T]oggle auto [P]airs",
 				},
 			},
+			opts = {},
 		},
 		-- }}}
 
@@ -1249,6 +1039,7 @@ require("lazy").setup(
 			enabled = true,
 			event = "VeryLazy",
 			config = function()
+				---@diagnostic disable-next-line: missing-fields
 				require("git-conflict").setup({
 					default_mappings = false,
 					default_commands = true,
@@ -1283,85 +1074,123 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- Repeat {{{2
-		{ "tpope/vim-repeat", event = "VeryLazy" },
-		-- }}}
-
-		-- Misc {{{2
+		-- Navigations  {{{
 		{
-			"lewis6991/hover.nvim",
-			-- event = "VeryLazy",
-			keys = { "K", "gK" },
-			config = function()
-				require("hover").setup({
-					init = function()
-						require("hover.providers.lsp")
-						require("hover.providers.gh")
-						require("hover.providers.gh_user")
-						require("hover.providers.man")
-					end,
-					preview_opts = {
-						border = config.borders,
-					},
-					preview_window = false,
-					title = true,
-				})
+			"echasnovski/mini.visits",
+			event = "VeryLazy",
+			opts = {},
+			config = function(self, opts)
+				require("mini.visits").setup(opts)
 
-				load_plugin_config("hover")
+				do
+					local vis = require("mini.visits")
+					local lable_name = "core"
+					vim.keymap.set("n", "<Leader>vv", function()
+						vis.add_label(lable_name)
+					end, { desc = "Add to core" })
 
-				-- Setup keymaps
-				keymap.set("n", "K", require("hover").hover, { desc = "hover.nvim" })
-				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
+					vim.keymap.set("n", "<Leader>vd", function()
+						vis.remove_label(lable_name)
+					end, { desc = "Remove from core" })
+
+					vim.keymap.set("n", "<Leader>vl", function()
+						vis.select_path(nil, { filter = lable_name })
+					end, { desc = "Select core (cwd)" })
+
+					vim.keymap.set("n", "<Leader>vL", function()
+						vis.select_path("", { filter = lable_name })
+					end, { desc = "Select core (all)" })
+
+					local map_iterate_core = function(lhs, direction, desc)
+						local opts = { filter = lable_name, wrap = true }
+						local rhs = function()
+							vis.iterate_paths(direction, vim.fn.getcwd(), opts)
+						end
+						vim.keymap.set("n", lhs, rhs, { desc = desc })
+					end
+
+					map_iterate_core("[[", "forward", "Core label (earlier)")
+					map_iterate_core("]]", "backward", "Core label (later)")
+					-- map_iterate_core("[{", "last", "Core label (earliest)")
+					-- map_iterate_core("]}", "first", "Core label (latest)")
+				end
+
+				do
+					local vis = require("mini.visits")
+					local make_select_path = function(select_global, recency_weight)
+						local sort = vis.gen_sort.default({ recency_weight = recency_weight })
+						local select_opts = { sort = sort }
+						return function()
+							local cwd = select_global and "" or vim.fn.getcwd()
+							vis.select_path(cwd, select_opts)
+						end
+					end
+
+					local map_select = function(lhs, desc, ...)
+						vim.keymap.set("n", lhs, make_select_path(...), { desc = desc })
+					end
+
+					map_select("<Leader>vr", "Select recent (all)", true, 1)
+					map_select("<Leader>vR", "Select recent (cwd)", false, 1)
+					map_select("<Leader>vy", "Select frecent (all)", true, 0.5)
+					map_select("<Leader>vY", "Select frecent (cwd)", false, 0.5)
+					map_select("<Leader>vf", "Select frequent (all)", true, 0)
+					map_select("<Leader>vF", "Select frequent (cwd)", false, 0)
+				end
 			end,
 		},
 		{
-			"mfussenegger/nvim-lint",
+			"echasnovski/mini.files",
 			lazy = true,
-			-- event = "VeryLazy",
-			init = function(self)
-				local linters_by_ft = self.opts.linters_by_ft
-				autocmd("FileType", {
-					pattern = vim.tbl_keys(linters_by_ft),
-					callback = function(ev)
-						autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
-							callback = function()
-								require("lint").try_lint()
-							end,
-							buffer = ev.buf,
-						})
+			keys = {
+				{
+					"<leader>e",
+					function()
+						local MiniFiles = require("mini.files")
+						if not MiniFiles.close() then
+							-- MiniFiles.open(vim.api.nvim_buf_get_name(0))
+							local bufname = vim.api.nvim_buf_get_name(0)
+							local path = vim.fn.fnamemodify(bufname, ":p")
+
+							-- Noop if the buffer isn't valid.
+							if path and vim.uv.fs_stat(path) then
+								require("mini.files").open(bufname, false)
+							end
+						end
 					end,
-					desc = "setup nvim-lint for ft",
+					desc = "File [E]xplorer",
+				},
+			},
+			init = function()
+				vim.api.nvim_create_autocmd("User", {
+					pattern = "MiniFilesWindowOpen",
+					callback = function(args)
+						local win_id = args.data.win_id
+						-- Customize window-local settings
+						-- vim.wo[win_id].winblend = 50
+						vim.api.nvim_win_set_config(win_id, { border = config.borders })
+
+						local buf_id = args.data.buf_id
+						local MiniFiles = require("mini.files")
+						vim.keymap.set("n", "<CR>", function()
+							MiniFiles.go_in()
+						end, { buffer = buf_id })
+
+						vim.keymap.set("n", "<leader><CR>", function()
+							MiniFiles.synchronize()
+						end, { buffer = buf_id })
+					end,
 				})
 			end,
 			opts = {
-				linters_by_ft = {
-					go = { "golangcilint" },
-					proto = { "buf_lint" },
+				mappings = {
+					go_in = "<C-l>",
+					go_out = "<C-h>",
+				},
+				options = {
+					use_as_default_explorer = false,
 				},
 			},
-			config = function(self, opts)
-				require("lint").linters_by_ft = opts.linters_by_ft
-			end,
-		},
-		{
-			"mbbill/undotree",
-			-- event = "VeryLazy",
-			cmd = { "UndotreeToggle" },
-			keys = {
-				{
-					"<leader>u",
-					cmd.UndotreeToggle,
-					desc = "Undotree: Toggle",
-					noremap = true,
-					silent = true,
-				},
-			},
-			config = function()
-				vimg.undotree_WindowLayout = 2
-				vimg.undotree_DiffAutoOpen = 1
-				vimg.undotree_ShortIndicators = 1
-				vimg.undotree_SetFocusWhenToggle = 1
-			end,
 		},
 		{
 			"Bekaboo/dropbar.nvim",
@@ -1421,6 +1250,11 @@ require("lazy").setup(
 				},
 			},
 			config = function(self, opts)
+				local symbols = {}
+				for key, value in pairs(config.icons.symbol_kinds) do
+					symbols[key] = value.icon
+				end
+				opts.icons.kinds.symbols = symbols
 				require("dropbar").setup(opts)
 
 				keymap.set("n", "<leader>P", function()
@@ -1492,30 +1326,13 @@ require("lazy").setup(
 					end
 				end
 
-				require("outline").setup(vim.tbl_extend("force", opts, { symbols = { icons = icons } }))
-			end,
-		},
-		{
-			"rgroli/other.nvim",
-			enabled = false,
-			cmd = {
-				"Other",
-				"OtherVSplit",
-			},
-			config = function()
-				require("other-nvim").setup({
-					mappings = {
-						"golang",
-					},
-					style = {
-						border = config.borders,
-					},
-				})
+				require("outline").setup(vim.tbl_extend("force", opts, {
+					symbols = { icons = icons },
+				}))
 			end,
 		},
 		{
 			"tpope/vim-projectionist",
-			-- event = "VeryLazy",
 			init = function(self)
 				vim.g.projectionist_heuristics = {
 					["*.go"] = {
@@ -1535,73 +1352,80 @@ require("lazy").setup(
 				{ "<leader>aa", "<cmd>A<cr>" },
 			},
 		},
+		-- }}}
+
+		-- UI Improvements {{{2
+		{
+			"szw/vim-maximizer",
+			cmd = "MaximizerToggle",
+		},
+		{
+			"simeji/winresizer",
+			init = function(self)
+				-- disable the start key
+				-- https://github.com/simeji/winresizer/pull/19#issuecomment-925097954
+				-- vimg.winresizer_start_key = "<NOP>"
+
+				vimg.winresizer_start_key = self.keys[1]
+			end,
+			keys = { "<leader>wr" },
+			cmd = { "WinResizerStartResize" },
+		},
+		{
+			"lewis6991/hover.nvim",
+			keys = { "K", "gK" },
+			config = function()
+				require("hover").setup({
+					init = function()
+						require("hover.providers.lsp")
+						require("hover.providers.man")
+					end,
+					preview_opts = {
+						border = config.borders,
+					},
+					preview_window = false,
+					title = true,
+				})
+
+				load_plugin_config("hover")
+
+				-- Setup keymaps
+				keymap.set("n", "K", require("hover").hover, { desc = "hover.nvim" })
+				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
+			end,
+		},
+		{
+			"mbbill/undotree",
+			init = function()
+				vimg.undotree_WindowLayout = 2
+				vimg.undotree_DiffAutoOpen = 1
+				vimg.undotree_ShortIndicators = 1
+				vimg.undotree_SetFocusWhenToggle = 1
+			end,
+			cmd = { "UndotreeToggle" },
+			keys = {
+				{
+					"<leader>u",
+					cmd.UndotreeToggle,
+					desc = "Undotree: Toggle",
+					noremap = true,
+					silent = true,
+				},
+			},
+		},
+		-- }}}
+
+		-- Misc {{{2
+		{
+			"tpope/vim-repeat",
+			event = "VeryLazy",
+		},
 		{
 			"tpope/vim-rsi",
 			init = function(self)
 				vimg.rsi_no_meta = 1
 			end,
 			event = "VeryLazy",
-		},
-		{
-			"echasnovski/mini.files",
-			lazy = true,
-			keys = {
-				{
-					"<leader>e",
-					function()
-						local MiniFiles = require("mini.files")
-						if not MiniFiles.close() then
-							-- MiniFiles.open(vim.api.nvim_buf_get_name(0))
-							local bufname = vim.api.nvim_buf_get_name(0)
-							local path = vim.fn.fnamemodify(bufname, ":p")
-
-							-- Noop if the buffer isn't valid.
-							if path and vim.uv.fs_stat(path) then
-								require("mini.files").open(bufname, false)
-							end
-						end
-					end,
-					desc = "File [E]xplorer",
-				},
-			},
-			init = function()
-				vim.api.nvim_create_autocmd("User", {
-					pattern = "MiniFilesWindowOpen",
-					callback = function(args)
-						local win_id = args.data.win_id
-						-- Customize window-local settings
-						-- vim.wo[win_id].winblend = 50
-						vim.api.nvim_win_set_config(win_id, { border = config.borders })
-
-						local buf_id = args.data.buf_id
-						local MiniFiles = require("mini.files")
-						vim.keymap.set("n", "<CR>", function()
-							MiniFiles.go_in()
-						end, { buffer = buf_id })
-
-						vim.keymap.set("n", "<leader><CR>", function()
-							MiniFiles.synchronize()
-						end, { buffer = buf_id })
-					end,
-				})
-			end,
-			opts = {
-				mappings = {
-					go_in = "<C-l>",
-					go_out = "<C-h>",
-				},
-				options = {
-					use_as_default_explorer = false,
-				},
-			},
-		},
-		{
-			"lambdalisue/suda.vim",
-			enabled = false,
-			cmd = {
-				"SudaRead",
-				"SudaWrite",
-			},
 		},
 		{
 			"tpope/vim-eunuch",
@@ -1611,19 +1435,16 @@ require("lazy").setup(
 				"SudoWrite",
 			},
 		},
-		{ "tpope/vim-sleuth", event = "VeryLazy" },
+		{
+			"tpope/vim-sleuth",
+			event = "VeryLazy",
+		},
 		{
 			"tpope/vim-unimpaired",
-			keys = {
-				"yo",
-				"[",
-				"]",
-			},
-			-- event = "VeryLazy",
+			keys = { "yo", "[", "]" },
 		},
 		{
 			"tpope/vim-dispatch",
-			-- event = "VeryLazy",
 			init = function()
 				vimg.dispatch_no_maps = 1
 			end,
@@ -1641,8 +1462,11 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"tpope/vim-obsession",
+			cmd = { "Obsession" },
+		},
+		{
 			"akinsho/toggleterm.nvim",
-			-- event = "VeryLazy",
 			keys = { [[<c-\>]] },
 			opts = {
 				on_open = function(t)
@@ -1668,51 +1492,15 @@ require("lazy").setup(
 			cond = function()
 				return fn.executable("gh") == 1
 			end,
-			-- event = "VeryLazy",
 			cmd = { "Octo" },
-			opts = {
-				enable_builtin = true,
-				timeout = 3000,
-			},
 			config = function(_, opts)
-				require("octo").setup(opts)
+				require("octo").setup({
+					enable_builtin = true,
+					timeout = 3000,
+				})
 
 				vim.treesitter.language.register("markdown", "octo")
 			end,
-
-			-- config = function() end,
-		},
-		{
-			"simeji/winresizer",
-			init = function(self)
-				-- disable the start key
-				-- https://github.com/simeji/winresizer/pull/19#issuecomment-925097954
-				-- vimg.winresizer_start_key = "<NOP>"
-
-				vimg.winresizer_start_key = self.keys[1]
-			end,
-			keys = { "<leader>wr" },
-			cmd = { "WinResizerStartResize" },
-		},
-		{
-			"luckasRanarison/nvim-devdocs",
-			cmd = {
-				"DevdocsFetch",
-				"DevdocsOpenFloat",
-				"DevdocsOpenCurrentFloat",
-			},
-			-- event = "VeryLazy",
-			opts = {
-				float_win = { -- passed to nvim_open_win(), see :h api-floatwin
-					relative = "editor",
-					height = 25,
-					width = 100,
-					border = config.borders,
-				},
-				after_open = function(bufnr)
-					keymap.set("n", "q", ":close<CR>", { silent = true, buffer = bufnr })
-				end,
-			},
 		},
 		{
 			"ellisonleao/glow.nvim",
@@ -1729,7 +1517,6 @@ require("lazy").setup(
 		},
 		{
 			"famiu/bufdelete.nvim",
-			-- event = "VeryLazy",
 			cmd = { "Bdelete", "Bwipeout" },
 			keys = {
 				{
@@ -1739,40 +1526,6 @@ require("lazy").setup(
 					end,
 					desc = "Delete Buffer",
 				},
-			},
-		},
-		{
-			"tpope/vim-obsession",
-			event = "VeryLazy",
-			init = function(self)
-				-- autocmd("VimEnter", {
-				-- 	callback = function()
-				-- 		local session = vim.fn.getcwd() .. "/Session.vim"
-				-- 		if vim.fn.filereadable(session) == 0 and vim.fn.argc() == 0 then
-				-- 			session = session:gsub("/", "_"):sub(2)
-				-- 			session = vim.fn.stdpath("cache") .. "/" .. session
-				-- 			if vim.fn.filereadable(session) == 0 then
-				-- 				vim.cmd("Obsess " .. session)
-				-- 			else
-				-- 				vim.schedule(function()
-				-- 					vim.cmd("source " .. session)
-				-- 					vim.print("Restoring session from " .. session)
-				-- 				end)
-				-- 			end
-				-- 		end
-				-- 	end,
-				-- 	desc = "Restore or create Session.vim in cache if not exist",
-				-- })
-			end,
-		},
-		{
-			"tpope/vim-tbone",
-			cmd = {
-				"Tmux",
-				"Tyank",
-				"Tput",
-				"Twrite",
-				"Tattach",
 			},
 		},
 		-- }}}
@@ -1907,10 +1660,10 @@ require("lazy").setup(
 -- Sets {{{1
 vim.o.mouse = ""
 vim.o.clipboard = "unnamedplus"
--- Open the command-line window in command-line Mode.
 
-vim.o.splitright = true
-vim.o.splitbelow = false
+vim.o.viewoptions = "folds"
+
+vim.o.completeopt = "menu,menuone,noselect"
 
 -- UI {{{2
 vim.o.termguicolors = true
@@ -1930,6 +1683,10 @@ vim.o.pumblend = 18
 vim.o.scrolloff = 3
 
 vim.o.cursorline = true
+
+vim.o.splitright = true
+vim.o.splitbelow = false
+
 cmd([[
 	set guicursor=n-v:block,i-c-ci-ve:ver25,r-cr:hor20,o:hor50
 	  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
@@ -1937,7 +1694,7 @@ cmd([[
 ]])
 -- }}}
 
--- Search{{{2
+-- Search {{{2
 vim.o.hlsearch = false
 vim.o.incsearch = true
 
@@ -1957,7 +1714,7 @@ vim.o.undodir = os.getenv("HOME") .. "/.vim/undodir"
 
 -- Time {{{2
 vim.o.timeout = true
-vim.o.timeoutlen = 300
+vim.o.timeoutlen = 350
 vim.o.updatetime = 300
 -- }}}
 
@@ -1966,7 +1723,7 @@ vim.o.wrap = false
 vim.o.whichwrap = "b,s,<,>,h,l"
 -- }}}
 
--- Folding{{{2
+-- Folding {{{2
 vim.o.foldcolumn = "1"
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
@@ -1974,19 +1731,17 @@ vim.o.foldmethod = "expr"
 vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 -- Filling `foldtext` with space
 vim.opt.fillchars:append("fold: ")
-vim.opt.fillchars:append("foldopen:")
-vim.opt.fillchars:append("foldclose:")
+vim.opt.fillchars:append("foldopen:" .. config.icons.fold[2])
+vim.opt.fillchars:append("foldclose:" .. config.icons.fold[1])
 -- vim.opt.fillchars:append("foldsep:|")
 -- }}}
 
--- show match {{{2
+-- ShowMatch {{{2
 vim.o.showmatch = false
 vim.o.matchtime = 1
 -- }}}
 
--- Avoid showing the intro when starting Neovim
-vim.opt.shortmess:append("I")
-
+-- Listchars {{{2
 -- vim.o.listchars = "tab:»,trail:-,nbsp:+,eol:↲"
 vim.o.listchars = table.concat({
 	"tab:» ",
@@ -1997,10 +1752,18 @@ vim.o.listchars = table.concat({
 	-- "extends:<",
 	-- "precedes:>",
 }, ",")
+-- }}}
 
-vim.o.viewoptions = "folds"
+-- Avoid showing the intro when starting Neovim
+vim.opt.shortmess:append("I")
 
-vim.o.completeopt = "menu,menuone,noselect"
+autocmd("BufEnter", {
+	group = user_augroup("disable_newline_comment"),
+	callback = function()
+		vim.opt.formatoptions:remove({ "c", "r", "o" })
+	end,
+	desc = "Disable New Line Comment",
+})
 -- }}}
 
 -- Remaps {{{1
@@ -2010,76 +1773,18 @@ local setmap = function(mode, lhs, rhs, opts)
 	keymap.set(mode, lhs, rhs, opts)
 end
 
--- Toggle Option{{{2
-
--- local function toggle_opt(op, option, opts)
--- 	if not opts then
--- 		return setmap("n", ("co" .. op), (":set " .. option .. "!" .. "<bar> set " .. option .. "?<cr>"))
--- 	else
--- 		if opts.val then
--- 			local vv = opts.val
--- 			return setmap("n", "co" .. op, function()
--- 				vim.o[option], vv = vv, vim.o[option]
--- 				cmd(string.format("set %s?", option))
--- 			end)
--- 		end
-
--- 		if opts.option then
--- 			local vals = { opts.option, option }
--- 			local idx = 0
--- 			return setmap("n", "co" .. op, function()
--- 				local val = vals[idx % 2 + 1]
--- 				cmd(string.format("set %s | set %s?", val, val))
--- 				idx = idx + 1
--- 			end)
--- 		end
-
--- 		if opts.fns then
--- 			local idx = 0
--- 			return setmap("n", "co" .. op, function()
--- 				cmd(string.format("set %s! | set %s?", option, option))
-
--- 				local fn = opts.fns[idx % 2 + 1]
--- 				fn()
-
--- 				idx = idx + 1
--- 			end)
--- 		end
--- 	end
--- end
-
--- toggle_opt("w", "wrap", {
--- 	fns = {
--- 		function()
--- 			-- Remap for dealing with word wrap
--- 			setmap({ "n", "x" }, "k", "gk")
--- 			setmap({ "n", "x" }, "j", "gj")
--- 		end,
--- 		function()
--- 			keymap.del({ "n", "x" }, "k")
--- 			keymap.del({ "n", "x" }, "j")
--- 		end,
--- 	},
--- })
--- toggle_opt("h", "hlsearch", { option = "nohlsearch" })
--- toggle_opt("m", "mouse", { val = "a" })
--- toggle_opt("t", "laststatus", { val = 0 })
-
--- }}}
-
 -- Text {{{2
 setmap("n", "Y", "y$")
 setmap("x", "Y", "<ESC>y$gv")
 
+-- lines move {{{3
 setmap("x", "K", ":move '<-2<CR>gv=gv")
 setmap("x", "J", ":move '>+1<CR>gv=gv")
-
 setmap("x", "<", "<gv")
 setmap("x", ">", ">gv")
+-- }}}
 
--- keep the old word in the clipboard
-setmap("x", "p", '"_dP')
--- changing a word, use dot do repeat
+-- changing a word, use dot do repeat {{{3
 -- setmap("n", "cn", [[*``"_cgn]])
 setmap("n", "cn", [[:normal "ryiw<CR> | :let @/=escape(@r, '/')<CR>"_cgn]])
 -- changing a selection, use dot do repeat
@@ -2087,24 +1792,30 @@ setmap("n", "cn", [[:normal "ryiw<CR> | :let @/=escape(@r, '/')<CR>"_cgn]])
 -- let @/=escape(@r, '/') -- add the current selection from `r` register to the "search register"
 -- "_ -- next operation store the text in the _ register
 -- cgn -- replace the closest match to the search
-setmap("x", "cn", [["ry<cmd>let @/=escape(@r, '/')<cr>"_cgn]])
+-- setmap("x", "cn", [["ry<cmd>let @/=escape(@r, '/')<cr>"_cgn]])
 -- use the substitute function to replace the newline character with \n
 -- setmap("x", "cn", [[y<cmd>substitute(escape(@", '/'), '\n', '\\n', 'g')<cr>"_cgn]] )
+-- }}}
 
+-- appen ;/, at the eol {{{3
 setmap("n", "<leader>g;", "mqA;<ESC>`q", { silent = true })
 setmap("n", "<leader>g,", "mqA,<ESC>`q", { silent = true })
--- add undo break-points
+-- }}}
+
+-- add undo break-points {{{3
 setmap("i", ",", ",<c-g>u")
 setmap("i", ";", ";<c-g>u")
 setmap("i", ".", ".<c-g>u")
+-- }}}
 
+-- keep the old word in the clipboard
+setmap("x", "p", '"_dP')
 -- https://vim.fandom.com/wiki/Selecting_your_pasted_text
 setmap("n", "vgp", [['`[' . strpart(getregtype(), 0, 1) . '`]']], { silent = true, expr = true })
 
 -- }}}
 
 -- Search {{{2
-
 -- search in selected area
 setmap("x", "/", "<Esc>/\\%V")
 -- }}}
@@ -2120,34 +1831,13 @@ setmap("n", "<C-q>", ":quit<CR>")
 -- HL as amplified versions of hl
 setmap({ "n", "x", "o" }, "H", "^")
 setmap({ "n", "x", "o" }, "L", "$")
+
 -- Keep cursor in the center
 setmap("n", "n", "nzzzv")
 setmap("n", "N", "Nzzzv")
 setmap("n", "<C-d>", "<C-d>zz")
 setmap("n", "<C-u>", "<C-u>zz")
 -- }}}
-
--- -- Readline key style bindings {{{2
--- setmap("i", "<C-a>", "<C-O>^")
--- setmap("i", "<C-e>", "<END>")
--- setmap("i", "<C-f>", "<right>")
--- setmap("i", "<C-b>", "<left>")
-
--- local function rtf(keys, mode)
--- 	local tkeys = api.nvim_replace_termcodes(keys, true, true, true)
--- 	return function()
--- 		return api.nvim_feedkeys(tkeys, mode, false)
--- 	end
--- end
--- setmap("c", "<C-a>", rtf("<HOME>", "c"))
--- setmap("c", "<C-e>", rtf("<END>", "c"))
--- setmap("c", "<C-b>", rtf("<left>", "c"))
--- setmap("c", "<C-f>", rtf("<right>", "c"))
-
--- -- not
--- setmap("c", "<C-j>", rtf("<down>", "c"))
--- setmap("c", "<C-k>", rtf("<up>", "c"))
--- -- }}}
 
 -- QF {{{2
 setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
@@ -2158,7 +1848,7 @@ setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 -- setmap("n", "[l", ":lprev<cr>")
 -- setmap("n", "]l", ":lnext<cr>")
 
--- Toggle the quickfix/loclist window.
+-- Toggle the quickfix/loclist window. {{{3
 -- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
 local silent_mods = { mods = { silent = true, emsg_silent = true } }
 vim.keymap.set("n", "<leader>xq", function()
@@ -2183,12 +1873,13 @@ vim.keymap.set("n", "<leader>xl", function()
 		end
 	end
 end, { desc = "Toggle location list" })
-
+-- }}}
 -- }}}
 
 -- Buffers {{{
 -- setmap("n", "[b", "<cmd>bprevious<cr>")
 -- setmap("n", "]b", "<cmd>bnext<cr>")
+
 -- switch to alternate file
 setmap("n", "<leader>bb", "<C-^>")
 -- }}}
@@ -2196,19 +1887,6 @@ setmap("n", "<leader>bb", "<C-^>")
 -- Tabs {{{2
 setmap("n", "<C-w>O", ":tabonly<CR>")
 -- }}}
-
--- -- Marks {{{2
--- -- delete mark
--- vim.keymap.set("n", "dm", function()
--- 	local mark = vim.fn.getcharstr()
--- 	local ditgit = string.byte(mark)
--- 	if (ditgit >= 65 and ditgit <= 90) or (ditgit >= 97 and ditgit <= 122) then
--- 		vim.api.nvim_command(string.format(":delm %s<CR>", mark))
--- 	end
--- end, { noremap = true })
--- -- use M jump to mark
--- setmap("n", "M", "g'")
--- -- }}}
 
 -- Abbrev{{{2
 local opts = {
@@ -2276,9 +1954,6 @@ end, {
 -- }}}
 
 -- Autocmds {{{1
-local function user_augroup(name)
-	return vim.api.nvim_create_augroup("liu_" .. name, { clear = true })
-end
 autocmd("TextYankPost", {
 	group = user_augroup("highlight_yank"),
 	pattern = "*",
@@ -2290,11 +1965,13 @@ autocmd("TextYankPost", {
 	end,
 	desc = "Highlight when yanking",
 })
+
 autocmd("VimResized", {
 	group = user_augroup("resize_splits"),
 	command = "wincmd =",
 	desc = "Equalize Splits",
 })
+
 autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 	group = user_augroup("checktime"),
 	callback = function()
@@ -2305,24 +1982,12 @@ autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 	end,
 	desc = "Update file when there are changes",
 })
+
 -- autocmd("BufWritePre", {
 -- 	command = "%s/\\s\\+$//e",
 -- 	desc = "Trim Trailing",
 -- })
-autocmd("BufEnter", {
-	group = user_augroup("disable_newline_comment"),
-	callback = function()
-		vim.opt.formatoptions:remove({ "c", "r", "o" })
-	end,
-	desc = "Disable New Line Comment",
-})
--- autocmd({ "BufWinLeave", "BufLeave", "InsertLeave", "FocusLost" }, {
--- 	group = user_augroup("auto_save"),
--- 	callback = function()
--- 		cmd("silent! w")
--- 	end,
--- 	desc = "Auto Save when leaving insert mode, buffer or window",
--- })
+
 autocmd("ModeChanged", {
 	group = user_augroup("switch_highlight_when_searching"),
 	callback = function()
@@ -2335,6 +2000,7 @@ autocmd("ModeChanged", {
 	end,
 	desc = "Highlighting matched words when searching",
 })
+
 -- :h last-position-jump
 autocmd("BufReadPost", {
 	group = user_augroup("last_loc"),
@@ -2353,6 +2019,7 @@ autocmd("BufReadPost", {
 	end,
 	desc = "Go To The Last Cursor Position",
 })
+
 autocmd("BufWinEnter", {
 	group = user_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
@@ -2365,6 +2032,7 @@ autocmd("BufWinEnter", {
 	end,
 	desc = "Open help file in right split",
 })
+
 autocmd({ "BufWritePre" }, {
 	group = user_augroup("auto_create_dir"),
 	callback = function(event)
@@ -2375,6 +2043,7 @@ autocmd({ "BufWritePre" }, {
 		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
 	end,
 })
+
 autocmd({ "TermOpen" }, {
 	group = user_augroup("term_map"),
 	pattern = "term://*",
@@ -2389,6 +2058,7 @@ autocmd({ "TermOpen" }, {
 		vim.keymap.set("t", "<C-w>", [[<C-\><C-n><C-w>]], opts)
 	end,
 })
+
 autocmd("OptionSet", {
 	group = user_augroup("option_set_wrap"),
 	pattern = "wrap",
@@ -2479,20 +2149,18 @@ local diagnostic_goto = function(next, severity)
 end
 setmap("n", "]d", diagnostic_goto(true))
 setmap("n", "[d", diagnostic_goto(false))
-setmap("n", "]e", diagnostic_goto(true, "ERROR"))
-setmap("n", "[e", diagnostic_goto(false, "ERROR"))
-setmap("n", "]w", diagnostic_goto(true, "WARN"))
-setmap("n", "[w", diagnostic_goto(false, "WARN"))
+setmap("n", "]e", diagnostic_goto(true, vim.diagnostic.severity.ERROR))
+setmap("n", "[e", diagnostic_goto(false, vim.diagnostic.severity.ERROR))
+setmap("n", "]w", diagnostic_goto(true, vim.diagnostic.severity.WARN))
+setmap("n", "[w", diagnostic_goto(false, vim.diagnostic.severity.WARN))
 
 fn.sign_define("DiagnosticSignError", { text = config.icons.diagnostics.ERROR, texthl = "DiagnosticSignError" })
 fn.sign_define("DiagnosticSignWarn", { text = config.icons.diagnostics.WARN, texthl = "DiagnosticSignWarn" })
 fn.sign_define("DiagnosticSignInfo", { text = config.icons.diagnostics.INFO, texthl = "DiagnosticSignInfo" })
 fn.sign_define("DiagnosticSignHint", { text = config.icons.diagnostics.HINT, texthl = "DiagnosticSignHint" })
-
 -- }}}
 
 -- Lsp {{{1
-
 -- Log Levels {{{2
 lsp.set_log_level("OFF")
 
@@ -2510,13 +2178,9 @@ end, {
 })
 -- }}}
 
-local function lsp_attach_augroup(name)
-	return vim.api.nvim_create_augroup("liu_lsp_attach" .. name, { clear = true })
-end
-
 -- keymaps {{{2
 autocmd("LspAttach", {
-	group = lsp_attach_augroup("keymaps"),
+	group = user_augroup("lsp_keymaps"),
 	callback = function(args)
 		local bufnr = args.buf
 
@@ -2540,29 +2204,25 @@ autocmd("LspAttach", {
 		nmap("<leader>cl", lsp.codelens.run, "[C]ode [L]en")
 
 		nmap("gD", lsp.buf.declaration, "[G]oto [D]eclaration")
-		nmap("gvD", "<cmd>vsplit | lua vim.lsp.buf.declaration()<CR>", "[G]oto [D]eclaration")
 
 		-- nmap("gd", lsp.buf.definition, "[G]oto [D]efinition")
-		-- nmap("gvd", "<cmd>vsplit | lua vim.lsp.buf.definition()<CR>", "[G]oto [D]efinition")
 
 		-- nmap("gy", lsp.buf.type_definition, "[G]oto T[y]pe Definition")
-		-- nmap("gvy", "<cmd>vsplit | lua vim.lsp.buf.type_definition()<CR>", "[G]oto T[y]pe Definition")
 
 		-- nmap("gr", lsp.buf.references, "[G]oto [R]eferences")
-		-- nmap("gvr", "<cmd>vsplit | lua vim.lsp.buf.references()<CR>", "[G]oto [R]eferences")
 
 		-- nmap("gi", lsp.buf.implementation, "[G]oto [I]mplementation")
-		-- nmap("gvi", "<cmd>vsplit | lua vim.lsp.buf.implementation()<CR>", "[G]oto [I]mplementation")
 
 		-- nmap("K", lsp.buf.hover, "Hover Documentation")
-		-- nmap("<C-k>", lsp.buf.signature_help, "Signature Documentation")
+
+		keymap.set("i", "<C-k>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
 	end,
 })
 -- }}}
 
 -- workspace {{{2
 autocmd("LspAttach", {
-	group = lsp_attach_augroup("workspace"),
+	group = user_augroup("lsp_workspace"),
 	callback = function(args)
 		local bufnr = args.buf
 		local client = lsp.get_client_by_id(args.data.client_id)
@@ -2593,31 +2253,32 @@ autocmd("LspAttach", {
 
 -- codelens {{{2
 autocmd("LspAttach", {
-	group = lsp_attach_augroup("codelens"),
+	group = user_augroup("lsp_codelens"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
-		if client.supports_method("textDocument/codeLens") then
+		if client and client.supports_method("textDocument/codeLens") then
 			local bufnr = args.buf
 			autocmd({ "CursorHold", "InsertLeave" }, {
 				callback = function()
 					lsp.codelens.refresh()
 				end,
-				buffer = 0,
+				buffer = bufnr,
 			})
 		end
 	end,
 })
 -- }}}
 
--- inlayhint{{{2
+-- inlayhint {{{2
 autocmd("LspAttach", {
-	group = lsp_attach_augroup("inlayhint"),
+	group = user_augroup("lsp_inlayhint"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
-		if client.supports_method("textDocument/inlayHint") then
+		if client and client.supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
+
 			local inlay_hint = lsp.inlay_hint.enable
-			inlay_hint(bufnr, nil)
+			inlay_hint(bufnr, true)
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
 				inlay_hint(bufnr, nil)
@@ -2632,16 +2293,18 @@ autocmd("LspAttach", {
 })
 -- }}}
 
--- document highlight{{{2
+-- document highlight {{{2
 autocmd("LspAttach", {
-	group = lsp_attach_augroup("document_highlight"),
+	group = user_augroup("lsp_document_highlight"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
-		local bufnr = args.buf
-		if client.supports_method("textDocument/documentHighlight") then
-			local aug = api.nvim_create_augroup("UserLspDocumentHighlight", {
+		if client and client.supports_method("textDocument/documentHighlight") then
+			local bufnr = args.buf
+
+			local aug = api.nvim_create_augroup("liu_lsp_document_highlight", {
 				clear = false,
 			})
+
 			do
 				api.nvim_clear_autocmds({
 					buffer = bufnr,
@@ -2666,7 +2329,7 @@ autocmd("LspAttach", {
 			do
 				local function move_to_highlight(is_closer)
 					local lsp = vim.lsp
-					local util = vim.lsp.util
+					local util = lsp.util
 
 					local win = api.nvim_get_current_win()
 					local params = util.make_position_params()
@@ -2753,12 +2416,10 @@ lsp.handlers["textDocument/signatureHelp"] = lsp.with(oldsignature, { border = c
 lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
 	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
 	diagnostic.reset(ns, api.nvim_get_current_buf())
-
 	vim.notify("Lsp Workspace Diagnostic Refresh.", vim.log.levels.WARN)
 	return true
 end
 -- }}}
-
 -- }}}
 
 -- vim: foldmethod=marker
