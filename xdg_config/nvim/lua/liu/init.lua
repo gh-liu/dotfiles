@@ -882,7 +882,32 @@ require("lazy").setup(
 					desc = "[T]oggle auto [P]airs",
 				},
 			},
-			opts = {},
+			config = function(self, opts)
+				local pairs = require("mini.pairs")
+				pairs.setup()
+
+				autocmd("FileType", {
+					group = user_augroup("mini_pairs"),
+					pattern = { "zig" },
+					callback = function(ev)
+						local buf = ev.buf
+						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
+					end,
+					desc = "set pairs for zig",
+				})
+				autocmd("FileType", {
+					group = user_augroup("mini_pairs"),
+					pattern = { "rust" },
+					callback = function(ev)
+						local buf = ev.buf
+						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
+
+						pairs.map_buf(buf, "i", "<", { action = "open", pair = "<>", register = { cr = false } })
+						pairs.map_buf(buf, "i", ">", { action = "close", pair = "<>", register = { cr = false } })
+					end,
+					desc = "set pairs for rust",
+				})
+			end,
 		},
 		-- }}}
 
