@@ -1383,6 +1383,14 @@ require("lazy").setup(
 		{
 			"szw/vim-maximizer",
 			cmd = "MaximizerToggle",
+			keys = {
+				{
+					"<leader>wm",
+					function()
+						vim.cmd.MaximizerToggle()
+					end,
+				},
+			},
 		},
 		{
 			"simeji/winresizer",
