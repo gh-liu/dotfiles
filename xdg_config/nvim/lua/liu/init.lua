@@ -38,8 +38,8 @@ _G.config = {
 			Interface = { icon = " ", hl = "Structure" },
 			Keyword = { icon = "󰌋 ", hl = "Keyword" },
 			Method = { icon = "󰆧 ", hl = "@method" },
-			Module = { icon = "󰏗 ", hl = "@text" },
-			Operator = { icon = "󰆕 ", hl = "Keyword" },
+			Module = { icon = "󰏗 ", hl = "Macro" },
+			Operator = { icon = "󰆕 ", hl = "Operator" },
 			Property = { icon = "󰜢 ", hl = "@property" },
 			Reference = { icon = "󰈇 ", hl = "@text.reference" },
 			Snippet = { icon = " ", hl = "@text" },
@@ -1276,8 +1276,10 @@ require("lazy").setup(
 			},
 			config = function(self, opts)
 				local symbols = {}
+				local highlights = {}
 				for key, value in pairs(config.icons.symbol_kinds) do
 					symbols[key] = value.icon
+					highlights["DropBarIconKind" .. key] = { link = value.hl }
 				end
 				opts.icons.kinds.symbols = symbols
 				require("dropbar").setup(opts)
@@ -1285,6 +1287,8 @@ require("lazy").setup(
 				keymap.set("n", "<leader>P", function()
 					require("dropbar.api").pick()
 				end)
+
+				set_hls(highlights)
 			end,
 		},
 		{

@@ -247,6 +247,13 @@ cmp.setup.cmdline(":", {
 
 -- Inside a snippet, use backspace to remove the placeholder.
 vim.keymap.set("s", "<BS>", [[<C-O>"_s]])
+
+local highlights = {}
+for key, value in pairs(config.icons.symbol_kinds) do
+	highlights["CmpItemKind" .. key] = { link = value.hl }
+end
+
+set_hls(highlights)
 -- }}}
 
 -- vim: foldmethod=marker
