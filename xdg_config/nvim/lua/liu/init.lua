@@ -522,6 +522,8 @@ require("lazy").setup(
 					custom_textobjects = {
 						f = ts_input({ outer = "@call.outer", inner = "@call.inner" }),
 					},
+					n_lines = 30,
+					search_method = "cover",
 				}
 
 				require("mini.surround").setup(opts)
@@ -762,7 +764,7 @@ require("lazy").setup(
 				local ai = require("mini.ai")
 				ai.setup({
 					n_lines = 300,
-					-- search_method = "cover",
+					search_method = "cover",
 					custom_textobjects = {
 						o = ai.gen_spec.treesitter({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
 						f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
