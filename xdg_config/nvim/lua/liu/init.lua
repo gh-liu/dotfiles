@@ -300,6 +300,13 @@ require("lazy").setup(
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
 				"jbyuki/one-small-step-for-vimkind",
+				{
+					"theHamsta/nvim-dap-virtual-text",
+					enabled = true,
+					opts = {
+						virt_text_pos = "eol",
+					},
+				},
 			},
 			config = function(self, opts)
 				load_plugin_config("dap")
