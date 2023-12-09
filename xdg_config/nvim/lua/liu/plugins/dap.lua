@@ -3,21 +3,15 @@ if not ok then
 	return
 end
 
+-- Base {{{1
 local fn = vim.fn
 local api = vim.api
 local map = vim.keymap
 local cmd = vim.cmd
-
-fn.sign_define("DapBreakpoint", { text = "", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
-fn.sign_define("DapBreakpointCondition", { text = "", texthl = "ErrorMsg", linehl = "", numhl = "ErrorMsg" })
-fn.sign_define("DapBreakpointRejected", { text = "", texthl = "String", linehl = "", numhl = "ErrorMsg" })
-fn.sign_define("DapStopped", { text = "", texthl = "String", linehl = "", numhl = "" })
-
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
-
-local create_cmd = api.nvim_create_user_command
 local del_cmd = api.nvim_del_user_command
+local create_cmd = api.nvim_create_user_command
 
 local map = function(lhs, rhs, desc)
 	if desc then
@@ -25,20 +19,24 @@ local map = function(lhs, rhs, desc)
 	end
 	map.set("n", lhs, rhs, { silent = true, desc = desc })
 end
+-- }}}
 
 -- DAP {{{1
 local dap = require("dap")
-
 dap.set_log_level("ERROR")
 
-local last_config = nil
+-- Signs {{{2
+fn.sign_define("DapBreakpoint", { text = "", texthl = "Debug", numhl = "Debug", linehl = "" })
+fn.sign_define("DapLogPoint", { text = "", texthl = "Tag", numhl = "Tag", linehl = "" })
+fn.sign_define("DapBreakpointCondition", { text = "", texthl = "Conditional", numhl = "Conditional", linehl = "" })
+fn.sign_define("DapBreakpointRejected", { text = "", texthl = "ErrorMsg", numhl = "ErrorMsg", linehl = "" })
+fn.sign_define("DapStopped", { text = "", texthl = "MoreMsg", numhl = "MoreMsg", linehl = "" })
+-- }}}
 
 -- Event {{{2
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
 dap.listeners.before["event_initialized"]["user"] = function(session, body)
 	cmd([[doautocmd User DAPInitialized]])
-
-	last_config = session.config
 end
 
 dap.listeners.after["event_stopped"]["user"] = function(session, body)
@@ -53,41 +51,105 @@ dap.listeners.after["event_terminated"]["user"] = function(session, body)
 	cmd([[doautocmd User DAPTerminated]])
 end
 
-local group = augroup("UserDAPSettings", { clear = true })
+local group = augroup("liu_dap_settings", { clear = true })
 autocmd("User", {
-	pattern = "DAPInitialized",
+	group = group,
+	pattern = { "DAPInitialized" },
 	callback = function()
 		vim.g.debuging = 1
 	end,
-	group = group,
 	desc = "DAP Initialized",
 })
 
 autocmd("User", {
+	group = group,
 	pattern = { "DAPTerminated" },
 	callback = function()
 		vim.g.debuging = nil
 	end,
-	group = group,
 	desc = "DAP Terminated",
 })
 -- }}}
 
--- Cmd {{{
-create_cmd("DAPClearBreakpoints", function()
-	dap.clear_breakpoints()
-end, {})
-
+-- Cmd {{{2
+local last_config = nil
+dap.listeners.before["event_initialized"]["last_config"] = function(session, body)
+	last_config = session.config
+end
 create_cmd("DapRunLastWithConfig", function()
 	if last_config then
+		-- vim.print(last_config)
 		dap.run(last_config)
 	else
 		dap.continue()
 	end
 end, {})
 
+-- DapRunWithArgs {{{3
+create_cmd("DapRunWithArgs", function(t)
+	local filetype = vim.bo.filetype
+	local configurations = dap.configurations[filetype] or {}
+	-- check config {{{4
+	assert(
+		vim.tbl_islist(configurations),
+		string.format(
+			"`dap.configurations.%s` must be a list of configurations, got %s",
+			filetype,
+			vim.inspect(configurations)
+		)
+	)
+	if #configurations == 0 then
+		local msg =
+			"No configuration found for `%s`. You need to add configs to `dap.configurations.%s` (See `:h dap-configuration`)"
+		vim.notify(string.format(msg, filetype, filetype), vim.log.levels.INFO)
+		return
+	end
+	-- }}}
+	local args = t.fargs
+	local approval = vim.fn.confirm(
+		"Will try to run:\n    ["
+			.. vim.bo.filetype
+			.. " bin] "
+			.. vim.fn.expand("%")
+			.. " "
+			.. t.args
+			.. "\n\n"
+			.. "Do you approve? ",
+		"&Yes\n&No",
+		1
+	)
+	if approval == 1 then
+		local names = vim.iter(configurations)
+			:map(function(item)
+				return item.name
+			end)
+			:totable()
+
+		vim.ui.select(names, {
+			prompt = string.format("Select Config of [%s]", filetype),
+		}, function(choice, idx)
+			if not choice then
+				return
+			end
+
+			local config = vim.deepcopy(configurations[idx])
+			---@diagnostic disable-next-line: inject-field
+			config.args = args
+			-- vim.print(config)
+			dap.run(config)
+		end)
+	end
+end, {
+	nargs = "*",
+})
+-- }}}
+
 create_cmd("DapRunLast", function()
 	dap.run_last()
+end, {})
+
+create_cmd("DAPClearBreakpoints", function()
+	dap.clear_breakpoints()
 end, {})
 -- }}}
 
@@ -96,7 +158,9 @@ local repl = require("dap.repl")
 repl.commands = vim.tbl_extend("force", repl.commands, {
 	exit = { ".q" },
 	custom_commands = {
-		[".restart"] = dap.run_last,
+		[".echo"] = function(text)
+			dap.repl.append(text)
+		end,
 	},
 })
 -- }}}
@@ -111,10 +175,11 @@ end
 -- }}}
 
 -- Golang {{{3
-local dap_func_name_query = "Dap_Test_Func_Name"
+local dap_go_func_name_query = "Dap_Go_Test_Func_Name"
+-- test function name {{{
 vim.treesitter.query.set(
 	"go",
-	dap_func_name_query,
+	dap_go_func_name_query,
 	[[
 (function_declaration
   name: (identifier) @testfuncname
@@ -141,10 +206,11 @@ vim.treesitter.query.set(
   (#match? @fuzzfuncname "^Fuzz.+$")) @fuzzfunc
 ]]
 )
+
 local function get_closest_testfunc()
 	local parser = vim.treesitter.get_parser()
 	local tree = parser:trees()[1]
-	local query = vim.treesitter.query.get("go", dap_func_name_query)
+	local query = vim.treesitter.query.get("go", dap_go_func_name_query)
 
 	local closest_node, type
 	for _, match, _ in query:iter_matches(tree:root(), 0, 0, api.nvim_win_get_cursor(0)[1]) do
@@ -159,6 +225,7 @@ local function get_closest_testfunc()
 
 	return vim.treesitter.get_node_text(closest_node, 0), type
 end
+-- }}}
 
 dap.adapters.delve = {
 	type = "server",
@@ -169,55 +236,34 @@ dap.adapters.delve = {
 	},
 }
 dap.adapters.go = dap.adapters.delve
+
 dap.configurations.go = {
 	{
 		name = "Nvim: Launch file",
-		type = "delve",
+		type = "go",
 		request = "launch",
 		mode = "debug",
 		program = "${file}",
-		buildFlags = "-tags=debug",
-	},
-	{
-		name = "Nvim: Launch file with args",
-		type = "delve",
-		request = "launch",
-		mode = "debug",
-		program = "${file}",
-		args = function()
-			return input_args()
-		end,
 		buildFlags = "-tags=debug",
 	},
 	{
 		name = "Nvim: Launch package",
-		type = "delve",
+		type = "go",
 		request = "launch",
 		mode = "debug",
 		program = "${fileDirname}",
-		buildFlags = "-tags=debug",
-	},
-	{
-		name = "Nvim: Launch package with args",
-		type = "delve",
-		request = "launch",
-		mode = "debug",
-		program = "${fileDirname}",
-		args = function()
-			return input_args()
-		end,
 		buildFlags = "-tags=debug",
 	},
 	{
 		name = "Nvim: Launch test(go.mod)",
-		type = "delve",
+		type = "go",
 		request = "launch",
 		mode = "test",
 		program = "./${relativeFileDirname}",
 	},
 	{
 		name = "Nvim: Launch test function",
-		type = "delve",
+		type = "go",
 		request = "launch",
 		mode = "test",
 		program = "${file}",
@@ -256,6 +302,8 @@ dap.adapters.lldb = {
 	type = "executable",
 	command = "/usr/bin/lldb-vscode-14",
 }
+dap.adapters.rust = dap.adapters.lldb
+
 local function init_commands()
 	local rustc_sysroot = vim.fn.trim(vim.fn.system("rustc --print sysroot"))
 
@@ -274,12 +322,19 @@ local function init_commands()
 
 	return commands
 end
+
 dap.configurations.rust = {
 	{
 		name = "Nvim: Launch",
 		type = "lldb",
 		request = "launch",
 		program = function()
+			local obj = vim.system({ "cargo", "build" }, { text = true }):wait(1000)
+			if obj.code == 1 then
+				-- TODO fail to build
+				-- return fn.input("Path to executable: ", fn.getcwd() .. "/target/debug/", "file")
+			end
+
 			local metadata_json = fn.system("cargo metadata --format-version 1 --no-deps")
 			local metadata = fn.json_decode(metadata_json)
 			if not metadata then
@@ -291,15 +346,18 @@ dap.configurations.rust = {
 		end,
 		cwd = "${workspaceFolder}",
 		stopOnEntry = false,
-		args = function()
-			return input_args()
-		end,
 		runInTerminal = false,
 		initCommands = init_commands,
+		-- lldb-vscode by default doesn't inherit the environment variables from the parent.
+		env = function()
+			local variables = {}
+			for k, v in pairs(vim.fn.environ()) do
+				table.insert(variables, string.format("%s=%s", k, v))
+			end
+			return variables
+		end,
 	},
 }
-dap.configurations.c = dap.configurations.rust
-dap.configurations.cpp = dap.configurations.rust
 -- }}}
 
 -- Nlua {{{3
@@ -356,6 +414,7 @@ local left_element_width = 35
 
 -- Settings {{{2
 dapui.setup({
+	---@diagnostic disable-next-line: missing-fields
 	controls = { enabled = false },
 	expand_lines = false,
 	force_buffers = true,
@@ -517,6 +576,7 @@ local groups = {
 	DapUIWinSelect = { fg = colors.cyan, bold = true },
 }
 set_hls(groups)
+-- }}}
 
 -- Event {{{2
 local uigroup = augroup("UserDAPUISettings", { clear = true })
@@ -524,15 +584,27 @@ autocmd("User", {
 	pattern = "DAPInitialized",
 	callback = function()
 		local opts = { enter = true }
-		map("<Leader>de", function()
-			dapui.eval(nil, opts)
-		end)
-		map("<Leader>E", function()
-			local input = fn.input("[DAP] Expression > ")
-			if input then
+		vim.keymap.set({ "n", "v" }, "<Leader>de", function()
+			if vim.v.count == 0 then
+				dapui.eval(nil, opts)
+				return
+			end
+
+			local ok, input = pcall(fn.input, "[DAP] Expression > ")
+			if ok and input then
 				dapui.eval(input, opts)
 			end
 		end)
+
+		-- map("<Leader>de", function()
+		-- 	dapui.eval(nil, opts)
+		-- end)
+		-- map("<Leader>E", function()
+		-- 	local input = fn.input("[DAP] Expression > ")
+		-- 	if input then
+		-- 		dapui.eval(input, opts)
+		-- 	end
+		-- end)
 
 		-- create_cmd("DapUI", function()
 		-- 	dapui.toggle({ layout = 1, reset = true })
@@ -584,17 +656,35 @@ autocmd("User", {
 	desc = "DAP Terminated",
 })
 -- }}}
-
 -- }}}
 
--- map {{{1
-map("<Leader>db", dap.toggle_breakpoint, "toggle_breakpoint")
-map("<leader>B", function()
-	local input = fn.input("[DAP] Condition > ")
-	if input then
-		dap.set_breakpoint(input)
+-- Maps {{{1
+map("<Leader>db", function()
+	if vim.v.count == 0 then
+		dap.toggle_breakpoint()
 	end
-end)
+	if vim.v.count == 1 then
+		local ok, input = pcall(fn.input, "[DAP] Condition > ")
+		if ok and input then
+			dap.set_breakpoint(input)
+		end
+	end
+	if vim.v.count == 2 then
+		local ok, input = pcall(fn.input, "[DAP] Log Point > ")
+		if ok and input then
+			require("dap").set_breakpoint(nil, nil, input)
+		end
+	end
+end, "toggle_breakpoint")
+
+-- map("<Leader>db", dap.toggle_breakpoint, "toggle_breakpoint")
+-- map("<leader>B", function()
+-- 	local input = fn.input("[DAP] Condition > ")
+-- 	if input then
+-- 		dap.set_breakpoint(input)
+-- 	end
+-- end)
+
 map("<leader>dn", [[:lua require("dap").step_over()<CR>]], "Step over")
 map("<leader>dN", [[:lua require("dap").step_back()<CR>]], "Step back")
 map("<leader>di", [[:lua require("dap").step_into()<CR>]], "Step into")
@@ -631,4 +721,4 @@ end, "Dap ui watches")
 -- end, "Dap ui repl")
 -- }}}
 
--- vim: set foldmethod=marker
+-- vim: foldmethod=marker

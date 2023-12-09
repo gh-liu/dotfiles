@@ -225,7 +225,7 @@ require("lazy").setup(
 				autocmd = {
 					enabled = true,
 				},
-				priority = 100,
+				priority = 20, -- priority of dap signs is 21
 				sign = {
 					enabled = true,
 					text = config.icons.bulb,
