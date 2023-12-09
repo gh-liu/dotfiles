@@ -888,8 +888,9 @@ require("lazy").setup(
 				local pairs = require("mini.pairs")
 				pairs.setup()
 
+				local group = user_augroup("mini_pairs")
 				autocmd("FileType", {
-					group = user_augroup("mini_pairs"),
+					group = group,
 					pattern = { "zig" },
 					callback = function(ev)
 						local buf = ev.buf
@@ -898,7 +899,7 @@ require("lazy").setup(
 					desc = "set pairs for zig",
 				})
 				autocmd("FileType", {
-					group = user_augroup("mini_pairs"),
+					group = group,
 					pattern = { "rust" },
 					callback = function(ev)
 						local buf = ev.buf
