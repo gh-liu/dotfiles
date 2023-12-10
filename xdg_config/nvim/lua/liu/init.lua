@@ -1071,7 +1071,7 @@ require("lazy").setup(
 		},
 		{
 			"akinsho/git-conflict.nvim",
-			enabled = true,
+			enabled = false,
 			event = "VeryLazy",
 			config = function()
 				---@diagnostic disable-next-line: missing-fields
