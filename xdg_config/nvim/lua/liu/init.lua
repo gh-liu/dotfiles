@@ -961,6 +961,23 @@ require("lazy").setup(
 					GUndoLastCommit = [[:G reset --soft HEAD~]],
 					GDiscardChanges = [[:G reset --hard]],
 				})
+				set_cmds({
+					Gdiffsplit3 = function(t)
+						vim.cmd([[ tabnew % ]])
+						-- The windows layout:
+						-- Top-left: "ours" corresponding to the HEAD.
+						-- Top-center: "base" corresponding to the common ancestor of main and merge-branch.
+						-- Top-right: "theirs" corresponding to the tip of merge-branch.
+						-- Bottom: the working copy.
+
+						-- starts a diff between the current file and the object `:1`
+						-- the doc states that `:1:%` corresponds to the current file's common ancestor during a conflict
+						-- with % indicating the current file, which the default when omitted
+						vim.cmd("Gdiffsplit :1")
+						-- starts a vertical diff between the current file and all its direct ancestors
+						vim.cmd("Gvdiffsplit!")
+					end,
+				})
 
 				set_hls({
 					gitDiff = { link = "Normal" },
