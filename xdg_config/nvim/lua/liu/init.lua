@@ -1708,7 +1708,7 @@ require("lazy").setup(
 vim.o.mouse = ""
 vim.o.clipboard = "unnamedplus"
 
-vim.o.viewoptions = "folds"
+vim.o.viewoptions = "folds,cursor"
 
 vim.o.completeopt = "menu,menuone,noselect"
 
@@ -2049,23 +2049,23 @@ autocmd("ModeChanged", {
 })
 
 -- :h last-position-jump
-autocmd("BufReadPost", {
-	group = user_augroup("last_loc"),
-	callback = function(ev)
-		if vim.b.disable_jump_to_last_postion then
-			return true
-		end
-		local mark = api.nvim_buf_get_mark(ev.buf, '"')
-		local lcount = api.nvim_buf_line_count(ev.buf)
-		if mark[1] > 0 and mark[1] <= lcount then
-			pcall(api.nvim_win_set_cursor, 0, mark)
-		end
-		-- if fn.line("'\"") > 1 and fn.line("'\"") <= fn.line("$") then
-		-- 	cmd('normal! g`"')
-		-- end
-	end,
-	desc = "Go To The Last Cursor Position",
-})
+-- autocmd("BufReadPost", {
+-- 	group = user_augroup("last_loc"),
+-- 	callback = function(ev)
+-- 		if vim.b.disable_jump_to_last_postion then
+-- 			return true
+-- 		end
+-- 		local mark = api.nvim_buf_get_mark(ev.buf, '"')
+-- 		local lcount = api.nvim_buf_line_count(ev.buf)
+-- 		if mark[1] > 0 and mark[1] <= lcount then
+-- 			pcall(api.nvim_win_set_cursor, 0, mark)
+-- 		end
+-- 		-- if fn.line("'\"") > 1 and fn.line("'\"") <= fn.line("$") then
+-- 		-- 	cmd('normal! g`"')
+-- 		-- end
+-- 	end,
+-- 	desc = "Go To The Last Cursor Position",
+-- })
 
 autocmd("BufWinEnter", {
 	group = user_augroup("open_help_in_right_split"),
@@ -2125,22 +2125,27 @@ autocmd("OptionSet", {
 	desc = "OptionSetWrap",
 })
 
+local enable_view = function(buf)
+	return not vim.b.disable_view
+		and api.nvim_buf_get_name(buf) ~= ""
+		and api.nvim_get_option_value("buftype", { buf = buf }) == ""
+end
 local view_group = user_augroup("auto_view")
-autocmd({ "BufWritePre", "BufHidden", "BufLeave", "QuitPre" }, {
+autocmd({ "BufWinLeave", "BufWritePre", "QuitPre" }, {
 	group = view_group,
 	callback = function(ev)
-		if api.nvim_buf_get_name(ev.buf) ~= "" and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
-			vim.cmd([[mkview]])
+		if enable_view(ev.buf) then
+			vim.cmd([[mkview 9]])
 		end
 	end,
 	desc = "auto mkview",
 })
-autocmd("BufRead", {
+autocmd("BufWinEnter", {
 	group = view_group,
 	callback = function(ev)
-		if api.nvim_buf_get_name(ev.buf) ~= "" and api.nvim_get_option_value("buftype", { buf = ev.buf }) == "" then
+		if enable_view(ev.buf) then
 			vim.schedule(function()
-				vim.cmd([[silent! loadview]])
+				vim.cmd([[silent! loadview 9]])
 			end)
 		end
 	end,
