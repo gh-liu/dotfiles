@@ -36,26 +36,34 @@ fn.sign_define("DapStopped", { text = "", texthl = "MoreMsg", numhl = "MoreMs
 -- Event {{{2
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
 dap.listeners.before["event_initialized"]["user"] = function(session, body)
-	cmd([[doautocmd User DAPInitialized]])
+	-- cmd([[doautocmd User DAPInitialized]])
+	local pattern = "DAPInitialized"
+	api.nvim_exec_autocmds("User", { pattern = pattern, data = { session = { last_config = session.config } } })
 end
 
 dap.listeners.after["event_stopped"]["user"] = function(session, body)
-	cmd([[doautocmd User DAPStopped]])
+	-- cmd([[doautocmd User DAPStopped]])
+	local pattern = "DAPStopped"
+	api.nvim_exec_autocmds("User", { pattern = pattern })
 end
 
 dap.listeners.after["event_exited"]["user"] = function(session, body)
-	cmd([[doautocmd User DAPExited]])
+	-- cmd([[doautocmd User DAPExited]])
+	local pattern = "DAPExited"
+	api.nvim_exec_autocmds("User", { pattern = pattern })
 end
 
 dap.listeners.after["event_terminated"]["user"] = function(session, body)
-	cmd([[doautocmd User DAPTerminated]])
+	-- cmd([[doautocmd User DAPTerminated]])
+	local pattern = "DAPTerminated"
+	api.nvim_exec_autocmds("User", { pattern = pattern })
 end
 
 local group = augroup("liu_dap_settings", { clear = true })
 autocmd("User", {
 	group = group,
 	pattern = { "DAPInitialized" },
-	callback = function()
+	callback = function(ev)
 		vim.g.debuging = 1
 	end,
 	desc = "DAP Initialized",
@@ -73,12 +81,19 @@ autocmd("User", {
 
 -- Cmd {{{2
 local last_config = nil
-dap.listeners.before["event_initialized"]["last_config"] = function(session, body)
-	last_config = session.config
-end
+
+autocmd("User", {
+	group = group,
+	pattern = { "DAPInitialized" },
+	callback = function(ev)
+		last_config = ev.data.session.last_config
+		-- vim.print(last_config)
+	end,
+	desc = "DAP Initialized",
+})
+
 create_cmd("DapRunLastWithConfig", function()
 	if last_config then
-		-- vim.print(last_config)
 		dap.run(last_config)
 	else
 		dap.continue()
