@@ -2157,13 +2157,11 @@ autocmd({ "BufWinLeave", "BufWritePre", "QuitPre" }, {
 	end,
 	desc = "auto mkview",
 })
-autocmd("BufWinEnter", {
+autocmd({ "BufRead" }, {
 	group = view_group,
 	callback = function(ev)
 		if enable_view(ev.buf) then
-			vim.schedule(function()
-				vim.cmd([[silent! loadview 9]])
-			end)
+			vim.cmd([[silent! loadview 9]])
 		end
 	end,
 	nested = true,
