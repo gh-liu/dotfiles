@@ -183,9 +183,27 @@ repl.commands = vim.tbl_extend("force", repl.commands, {
 -- LANG {{{2
 
 -- helper funcs {{{3
-local function input_args()
-	local argument_string = fn.input("Program arg(s) (enter nothing to leave it null): ")
-	return fn.split(argument_string, " ", true)
+
+-- https://github.com/mfussenegger/nvim-dap/blob/bbe2c6f3438542a37cc2141a8e385f7dfe07d87d/doc/dap.txt#L263C31
+local function get_arguments()
+	return coroutine.create(function(dap_run_co)
+		local args = {}
+		vim.ui.input({
+			prompt = "Program argument(s):",
+		}, function(input)
+			args = vim.split(input or "", " ")
+			coroutine.resume(dap_run_co, args)
+		end)
+	end)
+end
+
+-- local function input_args()
+-- 	local argument_string = fn.input("Program arg(s) (enter nothing to leave it null): ")
+-- 	return fn.split(argument_string, " ", true)
+-- end
+
+local function filtered_pick_process()
+	return require("dap.utils").pick_process({})
 end
 -- }}}
 
@@ -252,6 +270,7 @@ dap.adapters.delve = {
 }
 dap.adapters.go = dap.adapters.delve
 
+local build_flags = "-tags=debug"
 dap.configurations.go = {
 	{
 		name = "Nvim: Launch file",
@@ -259,7 +278,7 @@ dap.configurations.go = {
 		request = "launch",
 		mode = "debug",
 		program = "${file}",
-		buildFlags = "-tags=debug",
+		buildFlags = build_flags,
 	},
 	{
 		name = "Nvim: Launch package",
@@ -267,7 +286,23 @@ dap.configurations.go = {
 		request = "launch",
 		mode = "debug",
 		program = "${fileDirname}",
-		buildFlags = "-tags=debug",
+		buildFlags = build_flags,
+	},
+	-- {
+	-- 	name = "Nvim: Launch package(Args)",
+	-- 	type = "go",
+	-- 	request = "launch",
+	-- 	program = "${fileDirname}",
+	-- 	args = get_arguments,
+	-- 	buildFlags = build_flags,
+	-- },
+	{
+		name = "Nvim: Attach Local Process",
+		type = "go",
+		mode = "local",
+		request = "attach",
+		processId = filtered_pick_process,
+		buildFlags = build_flags,
 	},
 	{
 		name = "Nvim: Launch test(go.mod)",
@@ -275,38 +310,43 @@ dap.configurations.go = {
 		request = "launch",
 		mode = "test",
 		program = "./${relativeFileDirname}",
+		buildFlags = build_flags,
 	},
 	{
 		name = "Nvim: Launch test function",
 		type = "go",
 		request = "launch",
 		mode = "test",
-		program = "${file}",
+		program = "${fileDirname}",
 		args = function()
 			local func_name, type = get_closest_testfunc()
 			local args = {}
+			local default_func_name = "^" .. func_name .. "$"
 			if type == "benchfuncname" then
 				args = {
-					"-test.run=none",
 					"-test.bench",
-					fn.input({ prompt = "Function to bench: ", default = func_name }),
+					fn.input({ prompt = "Function to bench: ", default = default_func_name }),
+					"-test.run",
+					"a^",
 				}
 			elseif type == "fuzzfuncname" then
 				args = {
-					"-test.run=none",
 					"-test.fuzz",
-					fn.input({ prompt = "Function to fuzz: ", default = func_name }),
+					fn.input({ prompt = "Function to fuzz: ", default = default_func_name }),
 					"-test.fuzzcachedir",
 					"./testdata",
+					"-test.run",
+					"a^",
 				}
 			else
 				args = {
 					"-test.run",
-					fn.input({ prompt = "Function to test: ", default = func_name }),
+					fn.input({ prompt = "Function to test: ", default = default_func_name }),
 				}
 			end
-			return table.insert(args, "-v")
+			return args
 		end,
+		buildFlags = build_flags,
 	},
 }
 -- }}}
@@ -344,33 +384,37 @@ dap.configurations.rust = {
 		type = "lldb",
 		request = "launch",
 		program = function()
-			local obj = vim.system({ "cargo", "build" }, { text = true }):wait(1000)
-			if obj.code == 1 then
-				-- TODO fail to build
-				-- return fn.input("Path to executable: ", fn.getcwd() .. "/target/debug/", "file")
-			end
+			return coroutine.create(function(dap_run_co)
+				local obj = vim.system({ "cargo", "build" }, { text = true }):wait(1000)
+				if obj.code == 1 then
+					-- TODO fail to build
+					-- return fn.input("Path to executable: ", fn.getcwd() .. "/target/debug/", "file")
+				end
 
-			local metadata_json = fn.system("cargo metadata --format-version 1 --no-deps")
-			local metadata = fn.json_decode(metadata_json)
-			if not metadata then
-				return fn.input("Path to executable: ", fn.getcwd() .. "/target/debug/", "file")
-			end
-			local target_dir = metadata.target_directory
-			local target_name = metadata.packages[1].targets[1].name
-			return target_dir .. "/debug/" .. target_name
+				local metadata_json = fn.system("cargo metadata --format-version 1 --no-deps")
+				local metadata = fn.json_decode(metadata_json)
+				if not metadata then
+					return fn.input("Path to executable: ", fn.getcwd() .. "/target/debug/", "file")
+				end
+				local target_dir = metadata.target_directory
+				local target_name = metadata.packages[1].targets[1].name
+				local program = target_dir .. "/debug/" .. target_name
+
+				coroutine.resume(dap_run_co, program)
+			end)
 		end,
 		cwd = "${workspaceFolder}",
 		stopOnEntry = false,
 		runInTerminal = false,
-		initCommands = init_commands,
+		-- initCommands = init_commands,
 		-- lldb-vscode by default doesn't inherit the environment variables from the parent.
-		env = function()
-			local variables = {}
-			for k, v in pairs(vim.fn.environ()) do
-				table.insert(variables, string.format("%s=%s", k, v))
-			end
-			return variables
-		end,
+		-- env = function()
+		-- 	local variables = {}
+		-- 	for k, v in pairs(vim.fn.environ()) do
+		-- 		table.insert(variables, string.format("%s=%s", k, v))
+		-- 	end
+		-- 	return variables
+		-- end,
 	},
 }
 -- }}}
