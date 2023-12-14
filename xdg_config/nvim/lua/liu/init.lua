@@ -1391,21 +1391,31 @@ require("lazy").setup(
 			"tpope/vim-projectionist",
 			init = function(self)
 				vim.g.projectionist_heuristics = {
-					["*.go"] = {
+					["go.mod"] = {
 						["*.go"] = {
 							alternate = "{}_test.go",
 							type = "source",
+							template = [[package {file|dirname|basename}]],
 						},
 						["*_test.go"] = {
 							alternate = "{}.go",
 							type = "test",
+							template = [[package {file|dirname|basename}_test]],
 						},
 					},
 				}
+
+				-- api.nvim_create_autocmd("User", {
+				-- 	pattern = "ProjectionistDetect",
+				-- 	callback = function(ev)
+				-- 		vim.notify("[Projections] detect!", vim.log.levels.INFO)
+				-- 	end,
+				-- })
 			end,
 			ft = { "go" },
 			keys = {
 				{ "<leader>aa", "<cmd>A<cr>" },
+				{ "<leader>av", "<cmd>AV<cr>" },
 			},
 		},
 		-- }}}
