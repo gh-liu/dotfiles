@@ -274,24 +274,34 @@ function M.diagnostics_component()
 		return last_diagnostic_component
 	end
 
-	local counts = vim.iter(vim.diagnostic.get(0)):fold({
-		ERROR = 0,
-		WARN = 0,
-		INFO = 0,
-		HINT = 0,
-	}, function(acc, diagnostic)
-		local severity = vim.diagnostic.severity[diagnostic.severity]
-		acc[severity] = acc[severity] + 1
-		return acc
-	end)
+	local count_fn = function(buf)
+		return vim.iter(vim.diagnostic.get(buf)):fold({
+			ERROR = 0,
+			WARN = 0,
+			INFO = 0,
+			HINT = 0,
+		}, function(acc, diagnostic)
+			local severity = vim.diagnostic.severity[diagnostic.severity]
+			acc[severity] = acc[severity] + 1
+			return acc
+		end)
+	end
 
+	local all_counts = count_fn(nil)
+	local local_counts = count_fn(0)
 	local parts = {}
-	for severity, count in pairs(counts) do
+	for severity, count in pairs(all_counts) do
 		if count > 0 then
 			local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
 			table.insert(
 				parts,
-				string.format("%%#%s#%s %d", M.get_or_create_hl(hl), icons.diagnostics[severity], count)
+				string.format(
+					"%%#%s#%s %d/%d",
+					M.get_or_create_hl(hl),
+					icons.diagnostics[severity],
+					local_counts[severity],
+					count
+				)
 			)
 		end
 	end
