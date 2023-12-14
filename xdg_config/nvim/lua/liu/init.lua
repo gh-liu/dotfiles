@@ -51,10 +51,18 @@ _G.config = {
 			Variable = { icon = "󰀫 ", hl = "Identifier" },
 		},
 		diagnostics = {
-			ERROR = "E",
-			WARN = "W",
-			INFO = "I",
-			HINT = "H",
+			-- ERROR = "E",
+			-- WARN = "W",
+			-- INFO = "I",
+			-- HINT = "H",
+			-- ERROR = "",
+			-- WARN = "",
+			-- INFO = "",
+			-- HINT = "💡",
+			ERROR = "Ⓔ",
+			WARN = "Ⓦ",
+			INFO = "Ⓘ",
+			HINT = "Ⓗ",
 		},
 		arrows = {
 			right = "",
@@ -2198,7 +2206,10 @@ local diagnostic = vim.diagnostic
 local min_serverity = diagnostic.severity.INFO
 local opts = {
 	underline = { severity = { min = min_serverity } },
-	signs = { severity = { min = min_serverity } },
+	signs = {
+		severity = { min = min_serverity },
+		text = config.icons.diagnostics,
+	},
 	float = { source = true, border = config.borders, show_header = false },
 	severity_sort = true,
 	virtual_text = false,
@@ -2231,10 +2242,11 @@ setmap("n", "[e", diagnostic_goto(false, vim.diagnostic.severity.ERROR))
 setmap("n", "]w", diagnostic_goto(true, vim.diagnostic.severity.WARN))
 setmap("n", "[w", diagnostic_goto(false, vim.diagnostic.severity.WARN))
 
-fn.sign_define("DiagnosticSignError", { text = config.icons.diagnostics.ERROR, texthl = "DiagnosticSignError" })
-fn.sign_define("DiagnosticSignWarn", { text = config.icons.diagnostics.WARN, texthl = "DiagnosticSignWarn" })
-fn.sign_define("DiagnosticSignInfo", { text = config.icons.diagnostics.INFO, texthl = "DiagnosticSignInfo" })
-fn.sign_define("DiagnosticSignHint", { text = config.icons.diagnostics.HINT, texthl = "DiagnosticSignHint" })
+local diagnostic_icons = config.icons.diagnostics
+fn.sign_define("DiagnosticSignError", { text = diagnostic_icons.ERROR, texthl = "DiagnosticSignError" })
+fn.sign_define("DiagnosticSignWarn", { text = diagnostic_icons.WARN, texthl = "DiagnosticSignWarn" })
+fn.sign_define("DiagnosticSignInfo", { text = diagnostic_icons.INFO, texthl = "DiagnosticSignInfo" })
+fn.sign_define("DiagnosticSignHint", { text = diagnostic_icons.HINT, texthl = "DiagnosticSignHint" })
 -- }}}
 
 -- Lsp {{{1
