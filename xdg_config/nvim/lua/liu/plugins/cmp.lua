@@ -141,9 +141,9 @@ cmp.setup({
 		fields = { "abbr", "kind", "menu" },
 		format = function(entry, item)
 			local kind = item.kind
-			local symbol = (config.icons.symbol_kinds)[kind]
+			local symbol = (config.icons.completion_item_kinds)[kind]
 			if symbol then
-				item.kind = symbol.icon .. " " .. kind
+				item.kind = symbol.icon .. kind
 				item.kind_hl_group = symbol.hl
 			end
 			item.menu = (source_labels[entry.source.name] or "")
@@ -249,7 +249,7 @@ cmp.setup.cmdline(":", {
 vim.keymap.set("s", "<BS>", [[<C-O>"_s]])
 
 local highlights = {}
-for key, value in pairs(config.icons.symbol_kinds) do
+for key, value in pairs(config.icons.completion_item_kinds) do
 	highlights["CmpItemKind" .. key] = { link = value.hl }
 end
 

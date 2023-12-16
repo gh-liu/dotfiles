@@ -8,6 +8,69 @@ local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
 
 -- Global Things {{{1
+
+-- symbol and completion item {{{2
+local completion_item_kinds = {
+	-- https://code.visualstudio.com/docs/editor/intellisense#_types-of-completions
+	-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
+	Text = { icon = " ", hl = "@text" },
+	Method = { icon = "󰆧 ", hl = "@method" },
+	Function = { icon = "󰊕 ", hl = "@function" },
+	Constructor = { icon = " ", hl = "@constructor" },
+	Field = { icon = " ", hl = "@field" },
+	Variable = { icon = "󰀫 ", hl = "@variable" },
+	Class = { icon = " ", hl = "@type" },
+	Interface = { icon = " ", hl = "@type" },
+	Module = { icon = " ", hl = "@include" },
+	Property = { icon = " ", hl = "@property" },
+	Unit = { icon = " ", hl = "@text" },
+	Value = { icon = "󰎠 ", hl = "@text" },
+	Enum = { icon = " ", hl = "@type" },
+	Keyword = { icon = " ", hl = "@keyword" },
+	Snippet = { icon = " ", hl = "@text" },
+	Color = { icon = "󰏘 ", hl = "@text" },
+	File = { icon = "󰈙 ", hl = "@text" },
+	Reference = { icon = " ", hl = "@text.reference" },
+	Folder = { icon = " ", hl = "Directory" },
+	EnumMember = { icon = " ", hl = "@constant" },
+	Constant = { icon = " ", hl = "@constant" },
+	Struct = { icon = " ", hl = "@type" },
+	Event = { icon = " ", hl = "@text" },
+	Operator = { icon = "󰆕 ", hl = "@operator" },
+	TypeParameter = { icon = " ", hl = "@type" },
+}
+
+local symbol_kinds = {
+	-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolKind
+	File = completion_item_kinds.File,
+	Module = completion_item_kinds.Module,
+	Namespace = { icon = " ", hl = "Macro" },
+	Package = { icon = " ", hl = "Macro" },
+	Class = completion_item_kinds.Class,
+	Method = completion_item_kinds.Method,
+	Property = completion_item_kinds.Property,
+	Field = completion_item_kinds.Field,
+	Constructor = completion_item_kinds.Constructor,
+	Enum = completion_item_kinds.Enum,
+	Interface = completion_item_kinds.Interface,
+	Function = completion_item_kinds.Function,
+	Variable = completion_item_kinds.Variable,
+	Constant = completion_item_kinds.Constant,
+	String = completion_item_kinds.String,
+	Number = completion_item_kinds.Number,
+	Boolean = completion_item_kinds.Boolean,
+	Array = { icon = "󰅪 ", hl = "Identifier" },
+	Object = completion_item_kinds.Object,
+	Key = completion_item_kinds.Key,
+	Null = completion_item_kinds.Null,
+	EnumMember = completion_item_kinds.EnumMember,
+	Struct = completion_item_kinds.Struct,
+	Event = completion_item_kinds.Event,
+	Operator = completion_item_kinds.Operator,
+	TypeParameter = completion_item_kinds.TypeParameter,
+}
+-- }}}
+
 _G.config = {
 	colors = {
 		gray = "#616E88",
@@ -22,47 +85,23 @@ _G.config = {
 	},
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
 	icons = {
-		symbol_kinds = {
-			Array = { icon = "󰅪 ", hl = "Identifier" },
-			Class = { icon = " ", hl = "Structure" },
-			Color = { icon = "󰏘 ", hl = "@text" },
-			Constant = { icon = "󰏿 ", hl = "Constant" },
-			Constructor = { icon = " ", hl = "@constructor" },
-			Enum = { icon = " ", hl = "Structure" },
-			EnumMember = { icon = " ", hl = "Constant" },
-			Event = { icon = " ", hl = "@text" },
-			Field = { icon = " ", hl = "@field" },
-			File = { icon = "󰈙 ", hl = "@text" },
-			Folder = { icon = " ", hl = "Directory" },
-			Function = { icon = "󰊕 ", hl = "Function" },
-			Interface = { icon = " ", hl = "Structure" },
-			Keyword = { icon = "󰌋 ", hl = "Keyword" },
-			Method = { icon = "󰆧 ", hl = "@method" },
-			Module = { icon = "󰏗 ", hl = "Macro" },
-			Operator = { icon = "󰆕 ", hl = "Operator" },
-			Property = { icon = "󰜢 ", hl = "@property" },
-			Reference = { icon = "󰈇 ", hl = "@text.reference" },
-			Snippet = { icon = " ", hl = "@text" },
-			Struct = { icon = " ", hl = "Structure" },
-			Text = { icon = " ", hl = "@text" },
-			TypeParameter = { icon = " ", hl = "Type" },
-			Unit = { icon = " ", hl = "@text" },
-			Value = { icon = "󰎠 ", hl = "@text" },
-			Variable = { icon = "󰀫 ", hl = "Identifier" },
-		},
+		symbol_kinds = symbol_kinds,
+		completion_item_kinds = completion_item_kinds,
 		diagnostics = {
 			-- ERROR = "E",
 			-- WARN = "W",
 			-- INFO = "I",
 			-- HINT = "H",
-			-- ERROR = "",
-			-- WARN = "",
-			-- INFO = "",
-			-- HINT = "💡",
-			ERROR = "Ⓔ",
-			WARN = "Ⓦ",
-			INFO = "Ⓘ",
-			HINT = "Ⓗ",
+
+			ERROR = "",
+			WARN = "",
+			INFO = "",
+			HINT = "",
+
+			-- ERROR = "Ⓔ",
+			-- WARN = "Ⓦ",
+			-- INFO = "Ⓘ",
+			-- HINT = "Ⓗ",
 		},
 		arrows = {
 			right = "",
@@ -1346,52 +1385,8 @@ require("lazy").setup(
 				},
 			},
 			config = function(self, opts)
-				local icons = {
-					File = {},
-					Module = {},
-					Namespace = {},
-					Package = {},
-					Class = {},
-					Method = {},
-					Property = {},
-					Field = {},
-					Constructor = {},
-					Enum = {},
-					Interface = {},
-					Function = {},
-					Variable = {},
-					Constant = {},
-					String = {},
-					Number = {},
-					Boolean = {},
-					Array = {},
-					Object = {},
-					Key = {},
-					Null = {},
-					EnumMember = {},
-					Struct = {},
-					Event = {},
-					Operator = {},
-					TypeParameter = {},
-					Component = {},
-					Fragment = {},
-					TypeAlias = {},
-					Parameter = {},
-					StaticMethod = {},
-					Macro = {},
-				}
-				for key, _ in pairs(icons) do
-					local symbol = config.icons.symbol_kinds[key]
-					if symbol then
-						icons[key].icon = symbol.icon
-						icons[key].hl = symbol.hl
-					else
-						icons[key] = { icon = "󰜢", hl = "@text" }
-					end
-				end
-
 				require("outline").setup(vim.tbl_extend("force", opts, {
-					symbols = { icons = icons },
+					symbols = { icons = config.icons.symbol_kinds },
 				}))
 			end,
 		},
@@ -1988,6 +1983,20 @@ setmap("ca", "w'", "w", {})
 -- }}}
 
 -- Cmds {{{1
+vim.api.nvim_create_user_command("Scratch", function()
+	vim.cmd("bel 10new")
+	local buf = vim.api.nvim_get_current_buf()
+	for name, value in pairs({
+		filetype = "scratch",
+		buftype = "nofile",
+		bufhidden = "hide",
+		swapfile = false,
+		modifiable = true,
+	}) do
+		vim.api.nvim_set_option_value(name, value, { buf = buf })
+	end
+end, { desc = "Open a scratch buffer", nargs = 0 })
+
 api.nvim_create_user_command("FindAndReplace", function(opts)
 	if #opts.fargs ~= 2 then
 		vim.print("Two argument required.")
