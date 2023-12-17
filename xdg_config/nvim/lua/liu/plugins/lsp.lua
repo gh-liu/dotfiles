@@ -179,6 +179,10 @@ local servers = {
 -- setup neodev BEFORE lspconfig
 require("neodev").setup({
 	setup_jsonls = false,
+	library = {
+		runtime = true, -- runtime path
+		types = false, -- full signature, docs and completion of vim.api, vim.treesitter, vim.lsp and others
+	},
 })
 
 local on_attach = function(client, bufnr)
