@@ -357,7 +357,7 @@ function M.position_component()
 	local line = string.format("%" .. len .. "d", line)
 
 	return table.concat({
-		string.format("%%#%s#l: %%#%s#%s", M.get_or_create_hl("Normal"), M.get_or_create_hl("Title"), line),
+		string.format("%%#%s#l: %%#%s#%s", M.get_or_create_hl("Normal"), M.get_or_create_hl("Search"), line),
 		string.format("%%#%s#/%d c: %d", M.get_or_create_hl("Normal"), line_count, col),
 	})
 end

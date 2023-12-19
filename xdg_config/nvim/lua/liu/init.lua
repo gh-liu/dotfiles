@@ -145,17 +145,6 @@ end
 -- Plugins {{{1
 require("lazy").setup(
 	{
-		-- Colorschemes {{{2
-		{
-			dir = "$XDG_CONFIG_HOME/nvimplugins/nord",
-			priority = 1000, -- make sure to load this before all the other start plugins
-			config = function(_, opts)
-				require("nord").setup()
-				vim.cmd([[colorscheme nord]])
-			end,
-		},
-		-- }}}
-
 		-- Libs {{{2
 		{
 			"nvim-lua/plenary.nvim",
