@@ -92,13 +92,15 @@ autocmd("User", {
 	desc = "DAP Initialized",
 })
 
-create_cmd("DapRunLastWithConfig", function()
-	if last_config then
+create_cmd("DapRunLast", function(opts)
+	if opts.bang and last_config then
 		dap.run(last_config)
 	else
-		dap.continue()
+		dap.run_last()
 	end
-end, {})
+end, {
+	bang = true,
+})
 
 -- DapRunWithArgs {{{3
 create_cmd("DapRunWithArgs", function(t)
@@ -158,10 +160,6 @@ end, {
 	nargs = "*",
 })
 -- }}}
-
-create_cmd("DapRunLast", function()
-	dap.run_last()
-end, {})
 
 create_cmd("DAPClearBreakpoints", function()
 	dap.clear_breakpoints()

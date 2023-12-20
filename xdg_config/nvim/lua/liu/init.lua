@@ -338,7 +338,7 @@ require("lazy").setup(
 				"jbyuki/one-small-step-for-vimkind",
 				{
 					"theHamsta/nvim-dap-virtual-text",
-					enabled = true,
+					enabled = false,
 					opts = {
 						virt_text_pos = "eol",
 					},
