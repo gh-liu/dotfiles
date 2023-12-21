@@ -1032,6 +1032,34 @@ require("lazy").setup(
 			cmd = { "GV" },
 		},
 		{
+			"rbong/vim-flog",
+			init = function(self)
+				vim.g.flog_use_internal_lua = 1
+				vim.g.flog_default_opts = { max_count = 2000 }
+				vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
+
+				vim.keymap.set("ca", "F", "Flog", {})
+			end,
+			cmd = {
+				"Flog",
+				"Flogsplit",
+				"Floggit",
+			},
+			config = function(self, opts)
+				set_hls({
+					flogBranch1 = { fg = config.colors.yellow },
+					flogBranch2 = { fg = config.colors.blue },
+					flogBranch3 = { fg = config.colors.green },
+					flogBranch4 = { fg = config.colors.red },
+					flogBranch5 = { fg = config.colors.magenta },
+					flogBranch6 = { fg = config.colors.gray },
+					flogBranch7 = { fg = config.colors.orange },
+					flogBranch8 = { fg = config.colors.cyan },
+					flogBranch9 = { fg = config.colors.green },
+				})
+			end,
+		},
+		{
 			"lewis6991/gitsigns.nvim",
 			event = "VeryLazy",
 			config = function()
