@@ -2081,6 +2081,63 @@ end, {
 	range = true,
 	desc = "Count the Occurrences of a Pattern",
 })
+
+-- Terminal {{{2
+vim.api.nvim_create_user_command("T", function(opt)
+	local Term = require("liu.term")
+	Term:open({ enter = opt.bang }):exec(opt.args)
+	-- local terms = Term.list()
+	-- if not terms then
+	-- 	return
+	-- end
+end, {
+	desc = "Open a new or existed terminal",
+	bang = true,
+	nargs = "*",
+})
+
+vim.api.nvim_create_user_command("Te", function(opt)
+	local Term = require("liu.term")
+
+	local terms = Term.list()
+	if not terms then
+		vim.print("no terminal buffer exist")
+		return
+	end
+
+	local term
+	if #terms == 1 then
+		term = terms[1]
+	else
+		vim.ui.select(
+			vim.iter(terms)
+				:map(function(term)
+					return term.name
+				end)
+				:totable(),
+			{
+				prompt = "Select terminal",
+			},
+			function(choice, idx)
+				term = terms[idx]
+			end
+		)
+	end
+	if term then
+		if opt.bang then
+			vim.cmd("bo 10new")
+			vim.api.nvim_set_current_buf(term.bufnr)
+		end
+		term:exec(opt.args)
+	end
+end, {
+	desc = "Terminal execute command",
+	bang = true,
+	nargs = "+",
+})
+
+-- }}}
+
 -- }}}
 
 -- Autocmds {{{1
