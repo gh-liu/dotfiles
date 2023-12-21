@@ -1872,10 +1872,11 @@ setmap("n", "Y", "y$")
 setmap("x", "Y", "<ESC>y$gv")
 
 -- lines move {{{3
-setmap("x", "K", ":move '<-2<CR>gv=gv")
-setmap("x", "J", ":move '>+1<CR>gv=gv")
-setmap("x", "<", "<gv")
-setmap("x", ">", ">gv")
+-- use mini.move
+-- setmap("x", "K", ":move '<-2<CR>gv=gv")
+-- setmap("x", "J", ":move '>+1<CR>gv=gv")
+-- setmap("x", "<", "<gv")
+-- setmap("x", ">", ">gv")
 -- }}}
 
 -- changing a word, use dot do repeat {{{3
@@ -1905,7 +1906,8 @@ setmap("i", ".", ".<c-g>u")
 -- keep the old word in the clipboard
 setmap("x", "p", '"_dP')
 -- https://vim.fandom.com/wiki/Selecting_your_pasted_text
-setmap("n", "vgp", [['`[' . strpart(getregtype(), 0, 1) . '`]']], { silent = true, expr = true })
+-- setmap("n", "vgp", [['`[' . strpart(getregtype(), 0, 1) . '`]']], { silent = true, expr = true })
+setmap("n", "vgp", "`[v`]", { noremap = true })
 
 -- }}}
 
@@ -1997,6 +1999,19 @@ setmap("ca", "%T", "expand('%:t')", { expr = true })
 
 setmap("ca", "w'", "w", {})
 -- }}}
+
+-- File {{{2
+-- cd to file parent
+setmap("n", "<leader>cd", ":<C-U>cd %:h<CR>", { noremap = true })
+
+-- go to parent dir
+setmap("n", "<leader>cp", ":<C-U>cd ..<CR>", { noremap = true })
+
+-- copy filename
+-- setmap("n", "<leader>cf", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
+setmap("n", "y<C-g>", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
+-- }}}
+
 -- }}}
 
 -- Cmds {{{1
