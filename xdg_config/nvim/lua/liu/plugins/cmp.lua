@@ -86,6 +86,22 @@ vim.api.nvim_create_user_command("LuaSnipEdit", function()
 	require("luasnip.loaders").edit_snippet_files({})
 end, {})
 
+vim.api.nvim_create_autocmd("ModeChanged", {
+	group = vim.api.nvim_create_augroup("liu/unlink_snippet", { clear = true }),
+	desc = "Cancel the snippet session when leaving insert mode",
+	pattern = { "s:n", "i:*" },
+	callback = function(args)
+		if
+			ls.session
+			and ls.session.current_nodes[args.buf]
+			and not ls.session.jump_active
+			and not ls.choice_active()
+		then
+			ls.unlink_current()
+		end
+	end,
+})
+
 -- }}}
 
 -- cmp {{{1
@@ -153,11 +169,13 @@ cmp.setup({
 	mapping = cmp.mapping.preset.insert({
 		["<C-b>"] = cmp.mapping.scroll_docs(-4),
 		["<C-f>"] = cmp.mapping.scroll_docs(4),
-		["<C-e>"] = cmp.mapping.abort(),
+
 		["<CR>"] = cmp.mapping.confirm({
 			behavior = cmp.ConfirmBehavior.Replace,
-			select = false,
+			select = true,
 		}),
+		-- ["<C-e>"] = cmp.mapping.abort(),
+		["/"] = cmp.mapping.close(),
 
 		["<Tab>"] = cmp.mapping(function(fallback)
 			if cmp.visible() then
@@ -175,6 +193,7 @@ cmp.setup({
 				return fallback()
 			end
 		end, { "i" }),
+
 		-- luasnip choice
 		["<C-j>"] = cmp.mapping(function(fallback)
 			if luasnip.choice_active() then
