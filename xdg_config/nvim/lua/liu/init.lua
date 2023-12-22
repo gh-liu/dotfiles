@@ -3,6 +3,7 @@ local api = vim.api
 local cmd = vim.cmd
 local keymap = vim.keymap
 local lsp = vim.lsp
+local lsp_protocol = vim.lsp.protocol
 local vimg = vim.g
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
@@ -279,7 +280,7 @@ require("lazy").setup(
 				implementation = { enabled = true },
 			},
 			config = function(_, opts)
-				local SymbolKind = vim.lsp.protocol.SymbolKind
+				local SymbolKind = lsp_protocol.SymbolKind
 				opts = vim.tbl_extend("force", opts, {
 					filetypes = {
 						go = {
@@ -2291,6 +2292,8 @@ fn.sign_define("DiagnosticSignHint", { text = diagnostic_icons.HINT, texthl = "D
 -- }}}
 
 -- Lsp {{{1
+local ms = lsp_protocol.Methods
+
 -- Log Levels {{{2
 lsp.set_log_level("OFF")
 
@@ -2538,17 +2541,49 @@ autocmd("LspAttach", {
 -- }}}
 
 -- handlers {{{2
-local oldhover = lsp.handlers.hover
-local oldsignature = lsp.handlers.signature_help
-lsp.handlers["textDocument/hover"] = lsp.with(oldhover, { border = config.borders })
-lsp.handlers["textDocument/signatureHelp"] = lsp.with(oldsignature, { border = config.borders })
+local handlers = lsp.handlers
 
-lsp.handlers["workspace/diagnostic/refresh"] = function(_, _, ctx)
-	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
-	diagnostic.reset(ns, api.nvim_get_current_buf())
-	vim.notify("Lsp Workspace Diagnostic Refresh.", vim.log.levels.WARN)
-	return true
+local old_hover = handlers[ms.textDocument_hover]
+local old_signature = handlers[ms.textDocument_signatureHelp]
+handlers[ms.textDocument_hover] = lsp.with(old_hover, { border = config.borders })
+handlers[ms.textDocument_signatureHelp] = lsp.with(old_signature, { border = config.borders })
+
+local old_rename = handlers[ms.textDocument_rename]
+handlers[ms.textDocument_rename] = function(...)
+	local function rename_notify(err, result, _, _)
+		if err or not result then
+			return
+		end
+
+		local changed_instances = 0
+		local changed_files = 0
+
+		local with_edits = result.documentChanges ~= nil
+		for _, change in pairs(result.documentChanges or result.changes) do
+			changed_instances = changed_instances + (with_edits and #change.edits or #change)
+			changed_files = changed_files + 1
+		end
+
+		local message = string.format(
+			"[LSP] Renamed %s instance%s in %s file%s.",
+			changed_instances,
+			changed_instances == 1 and "" or "s",
+			changed_files,
+			changed_files == 1 and "" or "s"
+		)
+		vim.notify(message)
+	end
+	old_rename(...)
+	rename_notify(...)
 end
+
+-- handlers[ms.workspace_diagnostic_refresh] = function(_, result, ctx, _)
+-- 	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
+-- 	diagnostic.reset(ns, api.nvim_get_current_buf())
+-- 	vim.notify("Lsp Workspace Diagnostic Refresh.", vim.log.levels.WARN)
+-- 	return true
+-- end
+
 -- }}}
 -- }}}
 
