@@ -1267,13 +1267,14 @@ require("lazy").setup(
 					function()
 						local MiniFiles = require("mini.files")
 						if not MiniFiles.close() then
-							-- MiniFiles.open(vim.api.nvim_buf_get_name(0))
 							local bufname = vim.api.nvim_buf_get_name(0)
 							local path = vim.fn.fnamemodify(bufname, ":p")
 
-							-- Noop if the buffer isn't valid.
+							-- Open last if the buffer isn't valid.
 							if path and vim.uv.fs_stat(path) then
 								require("mini.files").open(bufname, false)
+							else
+								MiniFiles.open(MiniFiles.get_latest_path())
 							end
 						end
 					end,
