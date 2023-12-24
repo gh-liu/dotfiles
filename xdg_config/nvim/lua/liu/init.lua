@@ -370,7 +370,9 @@ require("lazy").setup(
 				local tsc = require("treesitter-context")
 				tsc.setup(opts)
 
-				keymap.set("n", "<leader>cj", tsc.go_to_context, {})
+				keymap.set("n", "<leader>cj", function()
+					tsc.go_to_context(vim.v.count1)
+				end, {})
 
 				set_hls({
 					TreesitterContext = { link = "StatusLine" },
