@@ -174,8 +174,8 @@ cmp.setup({
 			behavior = cmp.ConfirmBehavior.Replace,
 			select = true,
 		}),
-		-- ["<C-e>"] = cmp.mapping.abort(),
-		["/"] = cmp.mapping.close(),
+		["<C-e>"] = cmp.mapping.abort(),
+		-- ["/"] = cmp.mapping.close(),
 
 		["<Tab>"] = cmp.mapping(function(fallback)
 			if cmp.visible() then

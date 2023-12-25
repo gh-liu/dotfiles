@@ -109,7 +109,10 @@ function zvm_config() {
 	ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
 	# ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
 }
-source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+# disable in nvim terminal buffer
+if [[ -z "${NVIM}" ]]; then
+	source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+fi
 # zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
 # }}}
 

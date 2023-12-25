@@ -74,15 +74,14 @@ local symbol_kinds = {
 
 _G.config = {
 	colors = {
-		gray = "#616E88",
+		red = "#BF616A",
 		green = "#A3BE8C",
 		blue = "#5E81AC",
-		cyan = "#88C0D0",
-		red = "#BF616A",
-		orange = "#D08770",
 		yellow = "#EBCB8B",
+		cyan = "#88C0D0",
+		orange = "#D08770",
 		magenta = "#B48EAD",
-		line = "#3B4252", -- same as gray
+		gray = "#616E88",
 	},
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
 	icons = {
@@ -127,6 +126,17 @@ _G.set_hls = function(highlights)
 	end
 end
 
+---@param highlight string
+_G.get_hl = function(highlight)
+	local hl = vim.api.nvim_get_hl(0, { name = highlight })
+	local bg = hl.bg and ("#%06x"):format(hl.bg) or nil
+	local fg = hl.fg and ("#%06x"):format(hl.fg) or nil
+	return {
+		bg = bg,
+		fg = fg,
+	}
+end
+
 ---@param cmds table
 _G.set_cmds = function(cmds)
 	for key, cmd in pairs(cmds) do
@@ -140,6 +150,32 @@ end
 
 local user_augroup = function(name)
 	return vim.api.nvim_create_augroup("liu_" .. name, { clear = true })
+end
+
+---@type boolean|fun(buf: integer, win: integer): boolean
+local enable_winbar = function(buf, win)
+	if vim.wo[win].diff then
+		return false
+	end
+
+	-- special buftype
+	if vim.bo[buf].buftype ~= "" then
+		return false
+	end
+
+	-- special filetype
+	if vim.tbl_contains({
+		"",
+	}, vim.bo[buf].filetype) then
+		return false
+	end
+
+	-- buffer local
+	if vim.b[buf].disable_winbar then
+		return false
+	end
+
+	return not api.nvim_win_get_config(win).zindex
 end
 -- }}}
 
@@ -166,6 +202,7 @@ require("lazy").setup(
 					require("lazy").load({ plugins = { "dressing.nvim" } })
 					return vim.ui.select(...)
 				end
+
 				vim.ui.input = function(...)
 					require("lazy").load({ plugins = { "dressing.nvim" } })
 					return vim.ui.input(...)
@@ -894,7 +931,10 @@ require("lazy").setup(
 			cond = function()
 				return fn.executable("git") == 1
 			end,
-			ft = { "gitcommit", "octo" },
+			ft = {
+				"gitcommit",
+				"octo",
+			},
 			config = function(self, opts)
 				require("cmp_git").setup(opts)
 
@@ -999,6 +1039,13 @@ require("lazy").setup(
 				})
 				-- }}}
 
+				api.nvim_create_autocmd("BufEnter", {
+					pattern = { "fugitive:///*" },
+					callback = function(ev)
+						vim.b[ev.buf].disable_winbar = true
+					end,
+				})
+
 				set_cmds({
 					GUndoLastCommit = [[:G reset --soft HEAD~]],
 					GDiscardChanges = [[:G reset --hard]],
@@ -1021,11 +1068,15 @@ require("lazy").setup(
 					end,
 				})
 
+				local add = get_hl("DiffAdd").fg
+				local change = get_hl("DiffChange").fg
+				local text = get_hl("DiffText").fg
+
 				set_hls({
-					gitDiff = { link = "Normal" },
-					diffFile = { fg = config.colors.cyan, italic = true },
-					diffNewFile = { fg = config.colors.green, italic = true },
-					diffOldFile = { fg = config.colors.yellow, italic = true },
+					-- gitDiff = { link = "Normal" },
+					diffFile = { fg = text, italic = true },
+					diffNewFile = { fg = add, italic = true },
+					diffOldFile = { fg = change, italic = true },
 					diffAdded = { link = "DiffAdd" },
 					diffRemoved = { link = "DiffDelete" },
 					diffLine = { link = "Visual" },
@@ -1061,7 +1112,7 @@ require("lazy").setup(
 					flogBranch6 = { fg = config.colors.gray },
 					flogBranch7 = { fg = config.colors.orange },
 					flogBranch8 = { fg = config.colors.cyan },
-					flogBranch9 = { fg = config.colors.green },
+					-- flogBranch9 = { fg = config.colors.green },
 				})
 			end,
 		},
@@ -1138,16 +1189,20 @@ require("lazy").setup(
 					end,
 				})
 
+				local add = get_hl("DiffAdd").fg
+				local change = get_hl("DiffChange").fg
+				local delete = get_hl("DiffDelete").fg
+				local line = get_hl("DiffText").bg
 				set_hls({
-					GitSignsAdd = { fg = config.colors.green },
-					GitSignsAddNr = { fg = config.colors.green },
-					GitSignsAddLn = { fg = config.colors.green, bg = config.colors.line },
-					GitSignsChange = { fg = config.colors.yellow },
-					GitSignsChangeNr = { fg = config.colors.yellow },
-					GitSignsChangeLn = { fg = config.colors.yellow, bg = config.colors.line },
-					GitSignsDelete = { fg = config.colors.red },
-					GitSignsDeleteNr = { fg = config.colors.red },
-					GitSignsDeleteLn = { fg = config.colors.red, bg = config.colors.line },
+					GitSignsAdd = { fg = add },
+					GitSignsAddNr = { fg = add },
+					GitSignsAddLn = { fg = add, bg = line },
+					GitSignsChange = { fg = change },
+					GitSignsChangeNr = { fg = change },
+					GitSignsChangeLn = { fg = change, bg = line },
+					GitSignsDelete = { fg = delete },
+					GitSignsDeleteNr = { fg = delete },
+					GitSignsDeleteLn = { fg = delete, bg = line },
 				})
 			end,
 		},
@@ -1320,31 +1375,7 @@ require("lazy").setup(
 			enabled = true,
 			event = "VeryLazy",
 			opts = {
-				general = {
-					---@type boolean|fun(buf: integer, win: integer): boolean
-					enable = function(buf, win)
-						if vim.tbl_contains({ "", "git", "fugitive", "GV", "toggleterm" }, vim.bo[buf].filetype) then
-							return false
-						end
-
-						for _, pattern in ipairs({ "fugitive:///" }) do
-							local fname = api.nvim_buf_get_name(buf)
-							if string.match(fname, pattern) then
-								return false
-							end
-						end
-
-						if vim.bo[buf].buftype ~= "" then
-							return false
-						end
-
-						if vim.wo[win].diff then
-							return false
-						end
-
-						return not api.nvim_win_get_config(win).zindex
-					end,
-				},
+				general = { enable = enable_winbar },
 				icons = {
 					kinds = {
 						use_devicons = true,
@@ -1506,7 +1537,7 @@ require("lazy").setup(
 			cmd = { "UndotreeToggle" },
 			keys = {
 				{
-					"<leader>u",
+					"<leader>tu",
 					cmd.UndotreeToggle,
 					desc = "Undotree: Toggle",
 					noremap = true,
@@ -1641,6 +1672,7 @@ require("lazy").setup(
 		},
 		{
 			"Olical/nfnl",
+			enabled = false,
 			ft = "fennel",
 		},
 		{
@@ -1730,7 +1762,7 @@ require("lazy").setup(
 		},
 		change_detection = {
 			enabled = false,
-			notify = true,
+			notify = false,
 		},
 		install = {
 			missing = true,
@@ -1781,7 +1813,7 @@ vim.o.showcmd = false
 vim.o.pumheight = 12
 vim.o.pumblend = 18
 
-vim.o.scrolloff = 3
+-- vim.o.scrolloff = 3
 
 vim.o.cursorline = true
 
@@ -1804,7 +1836,8 @@ vim.o.smartcase = true
 vim.o.infercase = true
 
 if fn.executable("rg") == 1 then
-	vim.o.grepprg = "rg --vimgrep"
+	vim.o.grepprg = "rg --vimgrep --no-heading"
+	vim.o.grepformat = "%f:%l:%c:%m,%f:%l:%m"
 end
 -- }}}
 
@@ -2066,21 +2099,21 @@ end, {
 	desc = "Save the Output of Vim Command To a Empty Buffer",
 })
 
-api.nvim_create_user_command("Count", function(opts)
-	local pattern = opts.args
-	if #pattern == 0 then
-		pattern = vim.fn.expand("<cword>")
-	end
-	local range = "%"
-	if opts.line1 ~= opts.line2 then
-		range = tostring(opts.line1) .. "," .. tostring(opts.line2)
-	end
-	vim.cmd(range .. "s/" .. pattern .. "//gn")
-end, {
-	nargs = "*",
-	range = true,
-	desc = "Count the Occurrences of a Pattern",
-})
+-- api.nvim_create_user_command("Count", function(opts)
+-- 	local pattern = opts.args
+-- 	if #pattern == 0 then
+-- 		pattern = vim.fn.expand("<cword>")
+-- 	end
+-- 	local range = "%"
+-- 	if opts.line1 ~= opts.line2 then
+-- 		range = tostring(opts.line1) .. "," .. tostring(opts.line2)
+-- 	end
+-- 	vim.cmd(range .. "s/" .. pattern .. "//gn")
+-- end, {
+-- 	nargs = "*",
+-- 	range = true,
+-- 	desc = "Count the Occurrences of a Pattern",
+-- })
 
 -- Terminal {{{2
 vim.api.nvim_create_user_command("T", function(opt)
@@ -2177,7 +2210,8 @@ autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 
 autocmd("ModeChanged", {
 	group = user_augroup("switch_highlight_when_searching"),
-	callback = function()
+	pattern = { "*:c", "c:*" },
+	callback = function(ev)
 		local cmdtype = fn.getcmdtype()
 		if cmdtype == "/" or cmdtype == "?" then
 			vim.opt.hlsearch = true
@@ -2237,7 +2271,8 @@ autocmd({ "TermOpen" }, {
 	callback = function(event)
 		local opts = { buffer = event.buf }
 		vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], opts)
-		vim.keymap.set("t", "jk", [[<C-\><C-n>]], opts)
+		-- vim.keymap.set("t", "jk", [[<C-\><C-n>]], opts)
+		vim.keymap.set("t", "jj", [[<C-\><C-n>]], opts)
 		vim.keymap.set("t", "<C-h>", [[<Cmd>wincmd h<CR>]], opts)
 		vim.keymap.set("t", "<C-j>", [[<Cmd>wincmd j<CR>]], opts)
 		vim.keymap.set("t", "<C-k>", [[<Cmd>wincmd k<CR>]], opts)
