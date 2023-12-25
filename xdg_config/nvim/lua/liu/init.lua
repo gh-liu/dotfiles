@@ -1483,6 +1483,20 @@ require("lazy").setup(
 							type = "test",
 							template = [[package {file|dirname|basename}_test]],
 						},
+						["cmd/*/main.go"] = {
+							type = "main",
+							template = [[package main]],
+							dispatch = "go run {file|dirname}",
+							start = "go run {file|dirname}",
+							make = "go build {file|dirname}",
+						},
+						["main.go"] = {
+							type = "main",
+							template = [[package main]],
+							dispatch = "go run {file|dirname}",
+							start = "go run {file|dirname}",
+							make = "go build {file|dirname}",
+						},
 					},
 				}
 
