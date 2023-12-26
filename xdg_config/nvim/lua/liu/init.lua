@@ -249,7 +249,10 @@ require("lazy").setup(
 			"neovim/nvim-lspconfig",
 			event = "VeryLazy",
 			dependencies = {
-				"folke/neodev.nvim",
+				{
+					"folke/neodev.nvim",
+					enabled = false,
+				},
 			},
 			config = function(_, opts)
 				load_plugin_config("lsp")
@@ -2430,6 +2433,49 @@ autocmd("LspAttach", {
 -- }}}
 
 -- document highlight {{{2
+local util = lsp.util
+
+---@param is_closer function (x,y) x is before y
+local function move_to_highlight(is_closer)
+	local win = api.nvim_get_current_win()
+	local lnum, col = unpack(api.nvim_win_get_cursor(win))
+	lnum = lnum - 1
+	local cursor = {
+		start = { line = lnum, character = col },
+	}
+
+	local params = util.make_position_params()
+	local responses = lsp.buf_request_sync(0, ms.textDocument_documentHighlight, params)
+	if not responses then
+		return
+	end
+	local closest = nil
+	for _, resp in pairs(responses) do
+		local result = resp.result or {}
+		for _, highlight in pairs(result) do
+			local range = highlight.range
+			local range_start = range.start
+			local range_end = range["end"]
+			local cursor_inside_range = (
+				range_start.line <= lnum
+				and range_end.line >= lnum
+				and range_start.character < col
+				and range_end.character > col
+			)
+			if
+				not cursor_inside_range
+				and is_closer(cursor, range)
+				and (closest == nil or is_closer(range, closest))
+			then
+				closest = range
+			end
+		end
+	end
+	if closest then
+		api.nvim_win_set_cursor(win, { closest.start.line + 1, closest.start.character })
+	end
+end
+
 autocmd("LspAttach", {
 	group = user_augroup("lsp_document_highlight"),
 	callback = function(args)
@@ -2463,46 +2509,7 @@ autocmd("LspAttach", {
 			end
 
 			do
-				local function move_to_highlight(is_closer)
-					local lsp = vim.lsp
-					local util = lsp.util
-
-					local win = api.nvim_get_current_win()
-					local params = util.make_position_params()
-					local lnum, col = unpack(api.nvim_win_get_cursor(win))
-					lnum = lnum - 1
-					local cursor = {
-						start = { line = lnum, character = col },
-					}
-					local results = lsp.buf_request_sync(0, "textDocument/documentHighlight", params)
-					if not results then
-						return
-					end
-					local closest = nil
-					for _, response in pairs(results) do
-						local result = response.result
-						for _, highlight in pairs(result or {}) do
-							local range = highlight.range
-							local cursor_inside_range = (
-								range.start.line <= lnum
-								and range.start.character < col
-								and range["end"].line >= lnum
-								and range["end"].character > col
-							)
-							if
-								not cursor_inside_range
-								and is_closer(cursor, range)
-								and (closest == nil or is_closer(range, closest))
-							then
-								closest = range
-							end
-						end
-					end
-					if closest then
-						api.nvim_win_set_cursor(win, { closest.start.line + 1, closest.start.character })
-					end
-				end
-
+				-- x is before y
 				local function is_before(x, y)
 					if x.start.line < y.start.line then
 						return true
