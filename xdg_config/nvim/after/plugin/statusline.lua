@@ -2,7 +2,11 @@ if false then
 	return
 end
 
+local api = vim.api
+local fn = vim.fn
+
 local icons = config.icons
+local colors = config.colors
 
 -- Do not display the command that produced the quickfix list.
 -- https://neovim.io/doc/user/filetype.html#ft-qf-plugin
@@ -10,20 +14,27 @@ vim.g.qf_disable_statusline = 1
 
 local M = {}
 
-local colors = {
-	gray = "#3B4252",
-	green = "#A3BE8C",
-	blue = "#5E81AC",
-	cyan = "#88C0D0",
-	red = "#BF616A",
-	orange = "#D08770",
-	yellow = "#EBCB8B",
-	magenta = "#B48EAD",
-	-- error = "#BF616A",
-	-- warn = "#EBCB8B",
-	-- info = "#88C0D0",
-	-- hint = "#5E81AC",
-}
+---@class color
+---@field fg string
+---@field bg string
+
+---extract highlight
+---@param highlight string
+---@return color|nil
+local extract_highlight_colors = function(highlight)
+	if fn.hlexists(highlight) == 0 then
+		return nil
+	end
+	local hl = api.nvim_get_hl(0, { name = highlight })
+	local bg = hl.bg and ("#%06x"):format(hl.bg) or nil
+	local fg = hl.fg and ("#%06x"):format(hl.fg) or nil
+	return {
+		bg = bg,
+		fg = fg,
+	}
+end
+
+local status_line_bg = extract_highlight_colors("StatusLine").bg
 
 ---@type table<string, boolean>
 local statusline_hls = {}
@@ -34,16 +45,17 @@ function M.get_or_create_hl(hl)
 	local hl_name = "Statusline" .. hl
 
 	if not statusline_hls[hl] then
-		local bg_hl = vim.api.nvim_get_hl(0, { name = "StatusLine" })
-		local fg_hl = vim.api.nvim_get_hl(0, { name = hl })
-		vim.api.nvim_set_hl(0, hl_name, { bg = ("#%06x"):format(bg_hl.bg), fg = ("#%06x"):format(fg_hl.fg) })
+		local fg = extract_highlight_colors(hl).fg
+		api.nvim_set_hl(0, hl_name, { bg = status_line_bg, fg = fg })
 		statusline_hls[hl] = true
 	end
 
 	return hl_name
 end
 
-local statusline_hl = vim.api.nvim_get_hl(0, { name = "StatusLine" })
+local separator_name = "StatuslineSeparator"
+api.nvim_set_hl(0, separator_name, { bg = status_line_bg, fg = colors.gray })
+local separator = string.format("%%#%s#%s", separator_name, "|")
 
 local mode_colors = {
 	ModeNormal = colors.red,
@@ -55,14 +67,11 @@ local mode_colors = {
 	ModeTERMINAL = colors.cyan,
 	ModeEX = colors.yellow,
 	ModeREPLACE = colors.cyan,
-	ModeSeparator = colors.gray,
 	ModeUNKNOWN = colors.gray,
 }
 for k, v in pairs(mode_colors) do
-	vim.api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = ("#%06x"):format(statusline_hl.bg) })
+	api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = status_line_bg })
 end
-
-local separator = string.format("%%#StatuslineModeSeparator#%s", "|")
 
 --- Current mode.
 ---@return string
@@ -107,7 +116,7 @@ function M.mode_component()
 		["t"] = "TERMINAL",
 	}
 
-	local mode = mode_to_str[vim.api.nvim_get_mode().mode] or "UNKNOWN"
+	local mode = mode_to_str[api.nvim_get_mode().mode] or "UNKNOWN"
 
 	local hl = "ModeUNKNOWN"
 	if mode:find("NORMAL") then
@@ -136,12 +145,12 @@ function M.mode_component()
 	})
 end
 
-function M.word_dir_component()
-	local icon = (vim.fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. icons.directory
-	local cmd = vim.fn.pathshorten(vim.fn.getcwd(0))
+function M.work_dir_component()
+	local icon = (fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. icons.directory
+	local cwd = fn.pathshorten(fn.getcwd(0))
 
 	return table.concat({
-		string.format("%%#%s#%s%s", M.get_or_create_hl("Directory"), icon, "%<" .. cmd),
+		string.format("%%#%s#%s%s", M.get_or_create_hl("Directory"), icon, "%<" .. cwd),
 		separator,
 	})
 end
@@ -153,25 +162,26 @@ end
 function M.file_name_component()
 	local result = {}
 
-	local filename = vim.api.nvim_buf_get_name(0)
-
+	local filename = api.nvim_buf_get_name(0)
 	if filename == "" then
 		filename = "[No Name]"
-		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("Normal"), filename))
 	else
-		local extension = vim.fn.fnamemodify(filename, ":e")
+		-- local extension = fn.fnamemodify(filename, ":e")
 		-- local icon, icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
-		table.insert(
-			result,
-			string.format("%%#%s#%s", M.get_or_create_hl("Normal"), vim.fn.fnamemodify(filename, ":."))
-		)
+
+		filename = fn.fnamemodify(filename, ":.")
 	end
+	table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("Normal"), filename))
 
 	if vim.bo.modified then
 		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("ErrorMsg"), "[+]"))
 	end
 	if not vim.bo.modifiable or vim.bo.readonly then
 		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("WarningMsg"), ""))
+	end
+
+	if vim.wo.diff then
+		table.insert(result, string.format("%%#%s# %s", M.get_or_create_hl("ErrorMsg"), "[D]"))
 	end
 
 	return table.concat(result)
@@ -185,7 +195,7 @@ function M.git_component()
 		return ""
 	end
 
-	return string.format("%%#%s#%s %s", M.get_or_create_hl("DiffChange"), icons.git, head)
+	return string.format("%%#%s#%s %s", M.get_or_create_hl("DiffText"), icons.git, head)
 end
 
 --- Lsp clients (if any).
@@ -200,7 +210,7 @@ function M.lsp_clients_component()
 	end
 	local clients = "[" .. table.concat(names, " ") .. "]"
 
-	return string.format("%%#%s# %s", M.get_or_create_hl("MoreMsg"), clients)
+	return string.format("%%#%s#%s%s", M.get_or_create_hl("MoreMsg"), " ", clients)
 end
 
 --- Lsp progress status (if any).
@@ -211,8 +221,8 @@ local progress_status = {
 	title = nil,
 }
 
-vim.api.nvim_create_autocmd("LspProgress", {
-	group = vim.api.nvim_create_augroup("liu_statusline", { clear = true }),
+api.nvim_create_autocmd("LspProgress", {
+	group = api.nvim_create_augroup("liu_statusline", { clear = true }),
 	desc = "Update LSP progress in statusline",
 	pattern = { "begin", "end" },
 	callback = function(args)
@@ -270,7 +280,7 @@ local last_diagnostic_component = ""
 ---@return string
 function M.diagnostics_component()
 	-- Use the last computed value if in insert mode.
-	if vim.startswith(vim.api.nvim_get_mode().mode, "i") then
+	if vim.startswith(api.nvim_get_mode().mode, "i") then
 		return last_diagnostic_component
 	end
 
@@ -320,20 +330,16 @@ end
 --- The buffer's filetype.
 ---@return string
 function M.filetype_component()
-	local devicons = require("nvim-web-devicons")
 	local filetype = vim.bo.filetype
 	if filetype == "" then
 		return ""
-		-- filetype = "[No filetype]"
 	end
 
-	local buf_name = vim.api.nvim_buf_get_name(0)
-	local name, ext = vim.fn.fnamemodify(buf_name, ":t"), vim.fn.fnamemodify(buf_name, ":e")
+	local bufname = api.nvim_buf_get_name(0)
+	local ext = fn.fnamemodify(bufname, ":e")
 
-	local icon, icon_hl = devicons.get_icon(name, ext)
-	if not icon then
-		icon, icon_hl = devicons.get_icon_by_filetype(filetype, { default = true })
-	end
+	local devicons = require("nvim-web-devicons")
+	local icon, icon_hl = devicons.get_icon_by_filetype(filetype, { default = true })
 	icon_hl = M.get_or_create_hl(icon_hl)
 
 	return string.format("%%#%s#%s %%#%s#%s", icon_hl, icon, icon_hl, filetype)
@@ -349,9 +355,9 @@ end
 --- The current line, total line count, and column position.
 ---@return string
 function M.position_component()
-	local line = vim.fn.line(".")
-	local line_count = vim.api.nvim_buf_line_count(0)
-	local col = vim.fn.virtcol(".")
+	local line = fn.line(".")
+	local line_count = api.nvim_buf_line_count(0)
+	local col = fn.virtcol(".")
 
 	local len = #tostring(line_count)
 	local line = string.format("%" .. len .. "d", line)
@@ -360,6 +366,14 @@ function M.position_component()
 		string.format("%%#%s#l: %%#%s#%s", M.get_or_create_hl("Normal"), M.get_or_create_hl("Search"), line),
 		string.format("%%#%s#/%d c: %d", M.get_or_create_hl("Normal"), line_count, col),
 	})
+end
+
+function M.preview_window()
+	if vim.wo.previewwindow then
+		return "%w"
+	else
+		return ""
+	end
 end
 
 --- Renders the statusline.
@@ -400,19 +414,17 @@ function M.render()
 	end
 
 	local is_specical_file_type = vim.tbl_contains({
-		"oil",
-		"lazy",
-		"harpoon",
 		"fugitive",
 	}, vim.bo.filetype)
 
 	local is_specical_buffer_type = vim.tbl_contains({
 		"nofile",
+		-- "nowrite",
 		"terminal",
 		"prompt",
 	}, vim.bo.buftype)
 
-	if is_specical_file_type or is_specical_buffer_type then
+	if is_specical_file_type or is_specical_buffer_type or vim.b.ft_as_statuline then
 		return table.concat({
 			concat_components({
 				M.special_file_type_component(),
@@ -427,7 +439,8 @@ function M.render()
 	return table.concat({
 		concat_components({
 			M.mode_component(),
-			M.word_dir_component(),
+			M.preview_window(),
+			M.work_dir_component(),
 			M.file_name_component(),
 			M.git_component(),
 		}),
