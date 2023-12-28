@@ -224,7 +224,8 @@ require("lazy").setup(
 			},
 		},
 		{
-			"norcalli/nvim-colorizer.lua",
+			-- "norcalli/nvim-colorizer.lua",
+			"NvChad/nvim-colorizer.lua",
 			opts = {},
 			cmd = "ColorizerToggle",
 		},
