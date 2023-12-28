@@ -2223,6 +2223,21 @@ autocmd("ModeChanged", {
 	desc = "Highlighting matched words when searching",
 })
 
+autocmd("ModeChanged", {
+	group = user_augroup("save_when_from_insert_to_normal_mode"),
+	pattern = { "i:n" },
+	callback = function(ev)
+		local buf = ev.buf
+		-- valid file and be modified
+		if #api.nvim_buf_get_name(buf) > 0 and vim.bo[buf].modified then
+			vim.api.nvim_buf_call(buf, function()
+				vim.cmd.write()
+			end)
+		end
+	end,
+	desc = "Save when from insert to normal mode",
+})
+
 -- :h last-position-jump
 -- autocmd("BufReadPost", {
 -- 	group = user_augroup("last_loc"),
