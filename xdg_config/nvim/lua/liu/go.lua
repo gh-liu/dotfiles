@@ -2,6 +2,8 @@ local api = vim.api
 local ts = vim.treesitter
 local fn = vim.fn
 
+local M = {}
+
 local function get_closest_func()
 	local parser = ts.get_parser()
 	local tree = parser:trees()[1]
@@ -162,14 +164,83 @@ end
 local function test_func_linenr(bufnr, func_name)
 	local lines = api.nvim_buf_get_lines(bufnr, 0, -1, false)
 	for idx, line in ipairs(lines) do
-		if line:match("^func " .. func_name) then
+		if line:match("^func " .. func_name .. "%(") then
 			return idx
 		end
 	end
 	return 0
 end
 
-api.nvim_create_user_command("GoTest", function(opts)
+local function get_closest_testfunc()
+	local parser = vim.treesitter.get_parser()
+	local tree = parser:trees()[1]
+	local query = vim.treesitter.query.parse(
+		"go",
+		[[
+(function_declaration
+  name: (identifier) @testfuncname
+  parameters: (parameter_list
+    . (parameter_declaration
+      type: (pointer_type) @testtype) .)
+  (#match? @testtype "*testing.(T)")
+  (#match? @testfuncname "^Test.+$")) @testfunc
+
+(function_declaration
+  name: (identifier) @benchfuncname
+  parameters: (parameter_list
+    . (parameter_declaration
+      type: (pointer_type) @testtype) .)
+  (#match? @testtype "*testing.B")
+  (#match? @benchfuncname "^Benchmark.+$")) @benchfunc
+
+(function_declaration
+  name: (identifier) @fuzzfuncname
+  parameters: (parameter_list
+    . (parameter_declaration
+      type: (pointer_type) @testtype) .)
+  (#match? @testtype "*testing.F")
+  (#match? @fuzzfuncname "^Fuzz.+$")) @fuzzfunc
+	]]
+	)
+
+	local match
+	for _, m, _ in query:iter_matches(tree:root(), 0, 0, api.nvim_win_get_cursor(0)[1]) do
+		match = m
+	end
+	local closest_node, type
+	for id, node in pairs(match) do
+		local name = query.captures[id]
+		if name == "testfuncname" or name == "benchfuncname" or name == "fuzzfuncname" then
+			closest_node = node
+			type = name
+		end
+	end
+
+	return vim.treesitter.get_node_text(closest_node, 0), type
+end
+
+local run_test = function()
+	local term = require("liu.term")
+	local t = term:open({
+		dir = vim.fn.fnamemodify(vim.fn.bufname(), ":h"),
+	})
+	local cmd = "go test "
+
+	local func_name, type = get_closest_testfunc()
+	if type == "testfuncname" then
+		cmd = cmd .. "-test.run " .. func_name
+	end
+	if type == "benchfuncname" then
+		cmd = cmd .. "-test.run a^ " .. "-test.bench " .. func_name
+	end
+	if type == "fuzzfuncname" then
+		cmd = cmd .. "-test.run a^ " .. "-test.fuzz " .. func_name
+	end
+
+	t:exec(cmd)
+end
+
+local gen_or_jump_to_test = function()
 	local type, func, struct = get_closest_func()
 	local func_name
 	if type == "func" then
@@ -191,6 +262,40 @@ api.nvim_create_user_command("GoTest", function(opts)
 			vim.notify(string.format("[Test] generate `func %s`", func_name), vim.log.levels.INFO)
 		end
 	end
-end, {
-	desc = "Go: generate or jump to test",
-})
+end
+
+M.setup = function()
+	local autocmd = api.nvim_create_autocmd
+	local augroup = api.nvim_create_augroup
+	local g = augroup("liu/go", { clear = true })
+	autocmd("BufEnter", {
+		group = g,
+		pattern = "*.go",
+		callback = function(ev)
+			local buf = ev.buf
+			local is_test = vim.endswith(ev.file, "_test.go")
+			if is_test then
+				api.nvim_buf_create_user_command(buf, "GoRunTest", function(opts)
+					run_test()
+				end, {
+					desc = "Go: run test",
+				})
+			else
+				api.nvim_buf_create_user_command(buf, "GoTest", function(opts)
+					gen_or_jump_to_test()
+				end, {
+					desc = "Go: generate or jump to test",
+				})
+			end
+		end,
+		desc = "Go: run test",
+	})
+
+	---@param command lsp.Command
+	---@param ctx? {bufnr: integer, client_id: integer}
+	vim.lsp.commands["gopls.test"] = function(command, ctx)
+		vim.print(command)
+	end
+end
+
+return M

@@ -2761,4 +2761,6 @@ end
 -- }}}
 -- }}}
 
+require("liu.go").setup()
+
 -- vim: foldmethod=marker
