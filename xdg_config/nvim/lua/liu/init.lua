@@ -2325,20 +2325,40 @@ local enable_view = function(buf)
 		and api.nvim_get_option_value("buftype", { buf = buf }) == ""
 end
 local view_group = user_augroup("auto_view")
-autocmd({ "BufWinLeave", "BufWritePre", "QuitPre" }, {
+autocmd({
+	"BufWritePre",
+	"BufWinLeave",
+	"BufDelete",
+}, {
 	group = view_group,
 	callback = function(ev)
 		if enable_view(ev.buf) then
-			vim.cmd([[mkview 9]])
+			api.nvim_buf_call(ev.buf, function()
+				-- vim.cmd([[mkview 9]])
+				-- :h nvim_parse_cmd
+				vim.cmd({
+					cmd = "mkview",
+					args = { "9" },
+				})
+			end)
 		end
 	end,
 	desc = "auto mkview",
 })
-autocmd({ "BufRead" }, {
+autocmd({
+	"BufReadPost",
+	"BufWinEnter",
+}, {
 	group = view_group,
 	callback = function(ev)
 		if enable_view(ev.buf) then
-			vim.cmd([[silent! loadview 9]])
+			-- vim.cmd([[silent! loadview 9]])
+			-- :h nvim_parse_cmd
+			vim.cmd({
+				cmd = "loadview",
+				args = { "9" },
+				mods = { emsg_silent = true },
+			})
 		end
 	end,
 	nested = true,
