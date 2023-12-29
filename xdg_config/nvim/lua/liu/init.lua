@@ -1258,32 +1258,36 @@ require("lazy").setup(
 		-- Navigations  {{{
 		{
 			"echasnovski/mini.visits",
+			init = function(self)
+				vim.g.mini_visits_default_label = "core"
+			end,
 			event = "VeryLazy",
 			opts = {},
 			config = function(self, opts)
 				require("mini.visits").setup(opts)
 
 				do
+					local default_lable_name = vim.g.mini_visits_default_label
+
 					local vis = require("mini.visits")
-					local lable_name = "core"
 					vim.keymap.set("n", "<Leader>vv", function()
-						vis.add_label(lable_name)
+						vis.add_label(default_lable_name)
 					end, { desc = "Add to core" })
 
 					vim.keymap.set("n", "<Leader>vd", function()
-						vis.remove_label(lable_name)
+						vis.remove_label(default_lable_name)
 					end, { desc = "Remove from core" })
 
 					vim.keymap.set("n", "<Leader>vl", function()
-						vis.select_path(nil, { filter = lable_name })
+						vis.select_path(nil, { filter = default_lable_name })
 					end, { desc = "Select core (cwd)" })
 
 					vim.keymap.set("n", "<Leader>vL", function()
-						vis.select_path("", { filter = lable_name })
+						vis.select_path("", { filter = default_lable_name })
 					end, { desc = "Select core (all)" })
 
 					local map_iterate_core = function(lhs, direction, desc)
-						local opts = { filter = lable_name, wrap = true }
+						local opts = { filter = default_lable_name, wrap = true }
 						local rhs = function()
 							vis.iterate_paths(direction, vim.fn.getcwd(), opts)
 						end
@@ -1360,6 +1364,21 @@ require("lazy").setup(
 
 						vim.keymap.set("n", "<leader><CR>", function()
 							MiniFiles.synchronize()
+						end, { buffer = buf_id })
+
+						vim.keymap.set("n", "<tab>", function()
+							local add = function(fname)
+								local default_lable = vim.g.mini_visits_default_label
+								if default_lable then
+									local vis = require("mini.visits")
+									vis.add_label(default_lable, fname)
+								end
+							end
+
+							local entry = MiniFiles.get_fs_entry(0, vim.fn.line("."))
+							if entry.fs_type == "file" then
+								add(entry.path)
+							end
 						end, { buffer = buf_id })
 					end,
 				})
