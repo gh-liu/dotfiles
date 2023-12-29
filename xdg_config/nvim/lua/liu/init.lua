@@ -696,6 +696,9 @@ require("lazy").setup(
 		},
 		{
 			"tpope/vim-abolish",
+			init = function(self)
+				vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
+			end,
 			cmd = { "Abolish", "Subvert", "S" },
 			keys = { "cr" },
 		},
