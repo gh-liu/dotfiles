@@ -1898,8 +1898,29 @@ vim.o.whichwrap = "b,s,<,>,h,l"
 vim.o.foldcolumn = "1"
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
-vim.o.foldmethod = "expr"
-vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+
+-- autocmd("BufEnter", {
+-- 	group = user_augroup("enable_treesitter_foldexpr"),
+-- 	callback = function(ev)
+-- 		local bufnr = ev.buf
+
+-- 		local ts = vim.treesitter
+-- 		---@type boolean, LanguageTree
+-- 		local ok, parser = pcall(ts.get_parser, bufnr)
+-- 		if not ok then
+-- 			return
+-- 		end
+-- 		local query = ts.query.get(parser:lang(), "fold")
+-- 		if not query then
+-- 			return
+-- 		end
+
+-- 		vim.wo.foldmethod = "expr"
+-- 		vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+-- 	end,
+-- 	desc = "enable treesitter foldexpr",
+-- })
+
 -- Filling `foldtext` with space
 vim.opt.fillchars:append("fold: ")
 vim.opt.fillchars:append("foldopen:" .. config.icons.fold[2])
