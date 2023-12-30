@@ -224,6 +224,19 @@ local servers = {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#taplo
 	-- cargo install --features lsp --locked taplo-cli
 	taplo = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#sqls
+	-- go install github.com/sqls-server/sqls@latest
+	sqls = {
+		-- https://github.com/sqls-server/sqls#configuration-file-sample
+		settings = {
+			sqls = {
+				connections = {},
+			},
+		},
+		on_attach = function(client, bufnr)
+			require("sqls").on_attach(client, bufnr)
+		end,
+	},
 }
 
 -- setup neodev BEFORE lspconfig

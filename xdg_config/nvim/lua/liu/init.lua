@@ -1779,6 +1779,11 @@ require("lazy").setup(
 				})
 			end,
 		},
+		{
+			"nanotee/sqls.nvim",
+			lazy = true,
+			ft = "sql",
+		},
 		-- }}}
 	},
 	-- Lazy Configuration {{{2
