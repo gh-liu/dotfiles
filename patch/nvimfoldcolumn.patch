@@ -1,18 +1,17 @@
 diff --git a/src/nvim/drawline.c b/src/nvim/drawline.c
-index 29221e64f..f3cf2fe33 100644
+index 4b14a3a1e..c9db0fdf9 100644
 --- a/src/nvim/drawline.c
 +++ b/src/nvim/drawline.c
-@@ -422,12 +422,8 @@ size_t fill_foldcolumn(void *maybe_wlv, win_T *wp, foldinfo_T foldinfo, linenr_T
-     int symbol = 0;
-     if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
+@@ -418,10 +418,8 @@ void fill_foldcolumn(win_T *wp, foldinfo_T foldinfo, linenr_T lnum, int attr, in
+       symbol = wp->w_p_fcs_chars.foldclosed;
+     } else if (foldinfo.fi_lnum == lnum && first_level + i >= foldinfo.fi_low_level) {
        symbol = wp->w_p_fcs_chars.foldopen;
 -    } else if (first_level == 1) {
 -      symbol = wp->w_p_fcs_chars.foldsep;
--    } else if (first_level + i <= 9) {
+     } else if (first_level + i <= 9) {
 -      symbol = '0' + first_level + i;
-     } else {
--      symbol = '>';
 +      symbol = wp->w_p_fcs_chars.foldsep;
+     } else {
+       symbol = '>';
      }
- 
-     if (out_buffer) {
+
