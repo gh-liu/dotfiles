@@ -70,7 +70,7 @@ M.set_highlights = function()
 	local highlights = {
 		NONE = {},
 		Bold = { bold = true },
-		Underlined = { underline = true, sp = c.green }, -- text that stands out, HTML links
+		Underlined = { underline = true, sp = c.gray }, -- text that stands out, HTML links
 
 		Constant = { fg = c.darkwhite }, -- any constant
 		Operator = { fg = c.lightblue }, -- "sizeof", "+", "*", etc.
