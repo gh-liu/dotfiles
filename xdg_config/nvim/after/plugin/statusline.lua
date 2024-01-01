@@ -76,6 +76,7 @@ end
 --- Current mode.
 ---@return string
 function M.mode_component()
+	-- :h mode()
 	-- Note that: \19 = ^S and \22 = ^V.
 	local mode_to_str = {
 		["n"] = "NORMAL",
@@ -83,20 +84,20 @@ function M.mode_component()
 		["nov"] = "OP-PENDING",
 		["noV"] = "OP-PENDING",
 		["no\22"] = "OP-PENDING",
-		["niI"] = "NORMAL",
-		["niR"] = "NORMAL",
-		["niV"] = "NORMAL",
+		["niI"] = "NORMAL-I",
+		["niR"] = "NORMAL-R",
+		["niV"] = "NORMAL-V",
 		["nt"] = "NORMAL",
 		["ntT"] = "NORMAL",
 		["v"] = "VISUAL",
 		["vs"] = "VISUAL",
-		["V"] = "VISUAL",
-		["Vs"] = "VISUAL",
-		["\22"] = "VISUAL",
-		["\22s"] = "VISUAL",
+		["V"] = "VISUAL-L",
+		["Vs"] = "VISUAL-L",
+		["\22"] = "VISUAL-B",
+		["\22s"] = "VISUAL-B",
 		["s"] = "SELECT",
-		["S"] = "SELECT",
-		["\19"] = "SELECT",
+		["S"] = "SELECT-L",
+		["\19"] = "SELECT-B",
 		["i"] = "INSERT",
 		["ic"] = "INSERT",
 		["ix"] = "INSERT",
