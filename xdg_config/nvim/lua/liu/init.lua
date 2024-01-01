@@ -1382,6 +1382,18 @@ require("lazy").setup(
 						end, { buffer = buf_id })
 					end,
 				})
+
+				vim.api.nvim_create_autocmd("User", {
+					pattern = "MiniFilesActionDelete",
+					callback = function(args)
+						local fname = args.data.from
+						local bufnr = vim.fn.bufnr(fname)
+						if bufnr > 0 then
+							-- delete buffer
+							require("bufdelete").bufdelete(bufnr, false)
+						end
+					end,
+				})
 			end,
 			opts = {
 				mappings = {
@@ -1686,6 +1698,7 @@ require("lazy").setup(
 		},
 		{
 			"famiu/bufdelete.nvim",
+			lazy = true,
 			cmd = { "Bdelete", "Bwipeout" },
 			keys = {
 				{
