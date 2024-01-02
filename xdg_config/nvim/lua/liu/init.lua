@@ -2502,6 +2502,18 @@ autocmd({ "InsertEnter" }, {
 	desc = "set nocursorline",
 })
 
+autocmd("CmdwinEnter", {
+	group = user_augroup("cmdwin_enter"),
+	pattern = "*",
+	callback = function()
+		vim.wo.foldcolumn = "0"
+		vim.wo.number = false
+		vim.wo.relativenumber = false
+		vim.wo.signcolumn = "no"
+	end,
+	desc = "cmdwin enter",
+})
+
 -- }}}
 
 -- Diagnostic {{{1
