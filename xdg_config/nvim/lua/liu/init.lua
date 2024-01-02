@@ -1614,6 +1614,16 @@ require("lazy").setup(
 			cmd = {
 				"SudoEdit",
 				"SudoWrite",
+				"Remove",
+				"Delete",
+				"Copy",
+				"Move",
+				"Chmod",
+				"Mkdir",
+				"W",
+				"Wall",
+				"Cfind",
+				"Lfind",
 			},
 		},
 		{
@@ -2144,13 +2154,13 @@ setmap("n", "<C-w>O", ":tabonly<CR>")
 -- }}}
 
 -- Abbrev{{{2
-local opts = {
+local abbr_opts = {
 	expr = true,
 	desc = "fixing that stupid typo when trying to [save]exit",
 	noremap = true,
 }
-setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", opts)
-setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", opts)
+-- setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", opts)
+setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", abbr_opts)
 
 setmap("ca", "%H", "expand('%:p:h')", { expr = true })
 setmap("ca", "%P", "expand('%:p')", { expr = true })
