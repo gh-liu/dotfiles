@@ -286,16 +286,18 @@ function M.diagnostics_component()
 	end
 
 	local count_fn = function(buf)
-		return vim.iter(vim.diagnostic.get(buf)):fold({
+		local acc = {
 			ERROR = 0,
 			WARN = 0,
 			INFO = 0,
 			HINT = 0,
-		}, function(acc, diagnostic)
-			local severity = vim.diagnostic.severity[diagnostic.severity]
-			acc[severity] = acc[severity] + 1
-			return acc
-		end)
+		}
+		local diag_count = vim.diagnostic.count(buf)
+		for level, count in pairs(diag_count) do
+			local severity = vim.diagnostic.severity[level]
+			acc[severity] = acc[severity] + count
+		end
+		return acc
 	end
 
 	local all_counts = count_fn(nil)
