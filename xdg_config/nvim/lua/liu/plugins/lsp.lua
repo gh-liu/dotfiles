@@ -234,7 +234,7 @@ local servers = {
 			},
 		},
 		on_attach = function(client, bufnr)
-			require("sqls").on_attach(client, bufnr)
+			require("liu.plugins.sqls").on_attach(client, bufnr)
 		end,
 	},
 }

@@ -1803,11 +1803,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"nanotee/sqls.nvim",
-			lazy = true,
-			ft = "sql",
-		},
-		{
 			"gaoDean/autolist.nvim",
 			lazy = true,
 			ft = {
