@@ -788,6 +788,7 @@ require("lazy").setup(
 		},
 		{
 			"junegunn/vim-easy-align",
+			enabled = false,
 			keys = {
 				{ "ga", "<Plug>(EasyAlign)", mode = { "n", "x" } },
 				{ "gl", "<Plug>(LiveEasyAlign)", mode = { "n", "x" } },
@@ -796,6 +797,21 @@ require("lazy").setup(
 				"EasyAlign",
 				"LiveEasyAlign",
 			},
+		},
+		{
+			"echasnovski/mini.align",
+			keys = {
+				{ "ga", mode = { "n", "x" } },
+				{ "gA", mode = { "n", "x" } },
+			},
+			config = function(self, opts)
+				require("mini.align").setup({
+					mappings = {
+						start = self.keys[1][1],
+						start_with_preview = self.keys[2][1],
+					},
+				})
+			end,
 		},
 		{
 			"cshuaimin/ssr.nvim",
