@@ -36,6 +36,9 @@ local servers = {
 				},
 			},
 		},
+		on_attach = function(client, bufnr)
+			require("liu.plugins.gopls").on_attach(client, bufnr)
+		end,
 	},
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#rust_analyzer
 	-- rustup component add rust-analyzer
