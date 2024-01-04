@@ -2,7 +2,7 @@ if false then
 	return
 end
 
-local sign_group_name = "liu_marks_signs"
+local sign_group_name = "liu/marks_signs"
 
 local mark_sign_ns = vim.api.nvim_create_namespace(sign_group_name)
 

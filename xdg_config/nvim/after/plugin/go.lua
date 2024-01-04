@@ -1,3 +1,7 @@
+if false then
+	return
+end
+
 local api = vim.api
 local ts = vim.treesitter
 local fn = vim.fn
@@ -220,7 +224,7 @@ local function get_closest_testfunc()
 end
 
 local run_test = function()
-	local term = require("liu.term")
+	local term = require("liu.utils.term")
 	local t = term:open({
 		dir = vim.fn.fnamemodify(vim.fn.bufname(), ":h"),
 	})
@@ -290,12 +294,8 @@ M.setup = function()
 		end,
 		desc = "Go: run test",
 	})
-
-	---@param command lsp.Command
-	---@param ctx? {bufnr: integer, client_id: integer}
-	vim.lsp.commands["gopls.test"] = function(command, ctx)
-		vim.print(command)
-	end
 end
 
-return M
+M.setup()
+
+-- return M

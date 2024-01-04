@@ -218,7 +218,10 @@ M.set_highlights = function()
 		DiagnosticUnnecessary = { link = "Comment" },
 
 		-- LSP semantic tokens
+		-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
+		-- :h lsp-semantic-highlight
 		["@lsp"] = {},
+		-- default
 		-- ["@lsp.type.class"] = { link = "Structure" },
 		-- ["@lsp.type.comment"] = { link = "Comment" },
 		["@lsp.type.comment"] = {},
@@ -237,6 +240,9 @@ M.set_highlights = function()
 		-- ["@lsp.type.type"] = { link = "Type" },
 		-- ["@lsp.type.typeParameter"] = { link = "Typedef" },
 		-- ["@lsp.type.variable"] = {}, -- don't highlight to reduce visual overload
+		-- user defined
+		-- ["@lsp.type.keyword"] = { link = "Keyword" },
+		["@lsp.mod.deprecated"] = { link = "DiagnosticDeprecated" },
 
 		-- Lsp reference
 		LspReferenceText = { bg = c.brightgray, italic = true },

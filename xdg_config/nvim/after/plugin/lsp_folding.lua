@@ -8,7 +8,7 @@ local augroup = api.nvim_create_augroup
 
 local method = "textDocument/foldingRange"
 
-local user_lsp_attach_folding = augroup("UserLspAttachFolding", { clear = true })
+local user_lsp_attach_folding = augroup("liu/lsp_folding", { clear = true })
 
 autocmd("LspAttach", {
 	group = user_lsp_attach_folding,

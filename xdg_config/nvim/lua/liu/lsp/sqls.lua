@@ -3,7 +3,7 @@ local fn = vim.fn
 local ms = vim.lsp.protocol.Methods
 
 -- for the sake of operatorfunc
-local require_path = "liu.plugins.sqls"
+local require_path = "liu.lsp.sqls"
 
 local M = {
 	client = nil,

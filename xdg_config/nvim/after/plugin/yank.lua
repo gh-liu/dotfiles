@@ -5,7 +5,7 @@ end
 local autocmd = vim.api.nvim_create_autocmd
 local augroup = vim.api.nvim_create_augroup
 
-local yankg = augroup("UserYankSetting", { clear = true })
+local yankg = augroup("liu/yank_setting", { clear = true })
 local cursor_pos
 autocmd({ "VimEnter", "CursorMoved" }, {
 	pattern = "*",

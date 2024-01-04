@@ -1,3 +1,7 @@
+if false then
+	return
+end
+
 ---@param opts {next: function, prev:function}
 local set_pair_move_func = function(opts)
 	vim.notify("Move mode: Use ] or [ to move, any other char to abort: ", vim.log.levels.INFO)
@@ -38,18 +42,22 @@ end
 
 setmap("l", {
 	next = function()
-		vim.cmd("lnext")
+		vim.cmd.normal("]l")
+		-- vim.cmd("lnext")
 	end,
 	prev = function()
-		vim.cmd("lprev")
+		vim.cmd.normal("[l")
+		-- vim.cmd("lprev")
 	end,
 })
 setmap("q", {
 	next = function()
-		vim.cmd("cnext")
+		vim.cmd.normal("]q")
+		-- vim.cmd("cnext")
 	end,
 	prev = function()
-		vim.cmd("cprev")
+		vim.cmd.normal("[q")
+		-- vim.cmd("cprev")
 	end,
 })
 setmap("c", {

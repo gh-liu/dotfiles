@@ -1,3 +1,7 @@
+if false then
+	return
+end
+
 -- " :h fold-foldtext
 -- " v:foldstart	line number of first line in the fold
 -- " v:foldend	line number of last line in the fold

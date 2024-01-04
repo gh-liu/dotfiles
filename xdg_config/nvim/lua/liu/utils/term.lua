@@ -2,6 +2,9 @@ local api = vim.api
 
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
+
+-- local require_path = "liu.utils.term"
+
 local g = augroup("liu/term", {})
 
 ---@class Term

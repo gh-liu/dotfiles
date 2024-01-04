@@ -37,7 +37,7 @@ local servers = {
 			},
 		},
 		on_attach = function(client, bufnr)
-			require("liu.plugins.gopls").on_attach(client, bufnr)
+			require("liu.lsp.gopls").on_attach(client, bufnr)
 		end,
 	},
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#rust_analyzer
@@ -237,7 +237,7 @@ local servers = {
 			},
 		},
 		on_attach = function(client, bufnr)
-			require("liu.plugins.sqls").on_attach(client, bufnr)
+			require("liu.lsp.sqls").on_attach(client, bufnr)
 		end,
 	},
 }

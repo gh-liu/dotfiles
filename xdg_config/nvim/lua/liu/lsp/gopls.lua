@@ -2,7 +2,13 @@ local api = vim.api
 local fn = vim.fn
 local ms = vim.lsp.protocol.Methods
 
--- local require_path = "liu.plugins.gopls"
+---@param command lsp.Command
+---@param ctx? {bufnr: integer, client_id: integer}
+vim.lsp.commands["gopls.test"] = function(command, ctx)
+	vim.print(command)
+end
+
+-- local require_path = "liu.lsp.gopls"
 
 local M = {
 	---@type lsp.Client

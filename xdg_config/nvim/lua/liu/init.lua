@@ -1,77 +1,13 @@
 local fn = vim.fn
 local api = vim.api
-local cmd = vim.cmd
 local keymap = vim.keymap
 local lsp = vim.lsp
-local lsp_protocol = vim.lsp.protocol
-local vimg = vim.g
+local lsp_protocol = lsp.protocol
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
+local create_command = api.nvim_create_user_command
 
 -- Global Things {{{1
-
--- symbol and completion item {{{2
-local completion_item_kinds = {
-	-- https://code.visualstudio.com/docs/editor/intellisense#_types-of-completions
-	-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#completionItemKind
-	Text = { icon = " ", hl = "@text" },
-	Method = { icon = "󰆧 ", hl = "@method" },
-	Function = { icon = "󰊕 ", hl = "@function" },
-	Constructor = { icon = " ", hl = "@constructor" },
-	Field = { icon = " ", hl = "@field" },
-	Variable = { icon = "󰀫 ", hl = "@variable" },
-	Class = { icon = " ", hl = "@type" },
-	Interface = { icon = " ", hl = "@type" },
-	Module = { icon = " ", hl = "@include" },
-	Property = { icon = " ", hl = "@property" },
-	Unit = { icon = " ", hl = "@text" },
-	Value = { icon = "󰎠 ", hl = "@text" },
-	Enum = { icon = " ", hl = "@type" },
-	Keyword = { icon = " ", hl = "@keyword" },
-	Snippet = { icon = " ", hl = "@text" },
-	Color = { icon = "󰏘 ", hl = "@text" },
-	File = { icon = "󰈙 ", hl = "@text" },
-	Reference = { icon = " ", hl = "@text.reference" },
-	Folder = { icon = " ", hl = "Directory" },
-	EnumMember = { icon = " ", hl = "@constant" },
-	Constant = { icon = " ", hl = "@constant" },
-	Struct = { icon = " ", hl = "@type" },
-	Event = { icon = " ", hl = "@text" },
-	Operator = { icon = "󰆕 ", hl = "@operator" },
-	TypeParameter = { icon = " ", hl = "@type" },
-}
-
-local symbol_kinds = {
-	-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#symbolKind
-	File = completion_item_kinds.File,
-	Module = completion_item_kinds.Module,
-	Namespace = { icon = " ", hl = "Macro" },
-	Package = { icon = " ", hl = "Macro" },
-	Class = completion_item_kinds.Class,
-	Method = completion_item_kinds.Method,
-	Property = completion_item_kinds.Property,
-	Field = completion_item_kinds.Field,
-	Constructor = completion_item_kinds.Constructor,
-	Enum = completion_item_kinds.Enum,
-	Interface = completion_item_kinds.Interface,
-	Function = completion_item_kinds.Function,
-	Variable = completion_item_kinds.Variable,
-	Constant = completion_item_kinds.Constant,
-	String = completion_item_kinds.String,
-	Number = completion_item_kinds.Number,
-	Boolean = completion_item_kinds.Boolean,
-	Array = { icon = "󰅪 ", hl = "Identifier" },
-	Object = completion_item_kinds.Object,
-	Key = completion_item_kinds.Key,
-	Null = completion_item_kinds.Null,
-	EnumMember = completion_item_kinds.EnumMember,
-	Struct = completion_item_kinds.Struct,
-	Event = completion_item_kinds.Event,
-	Operator = completion_item_kinds.Operator,
-	TypeParameter = completion_item_kinds.TypeParameter,
-}
--- }}}
-
 _G.config = {
 	colors = {
 		red = "#BF616A",
@@ -84,38 +20,7 @@ _G.config = {
 		gray = "#616E88",
 	},
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
-	icons = {
-		symbol_kinds = symbol_kinds,
-		completion_item_kinds = completion_item_kinds,
-		diagnostics = {
-			-- ERROR = "E",
-			-- WARN = "W",
-			-- INFO = "I",
-			-- HINT = "H",
-
-			ERROR = "",
-			WARN = "",
-			INFO = "",
-			HINT = "",
-
-			-- ERROR = "Ⓔ",
-			-- WARN = "Ⓦ",
-			-- INFO = "Ⓘ",
-			-- HINT = "Ⓗ",
-		},
-		arrows = {
-			right = "",
-			left = "",
-			up = "",
-			down = "",
-		},
-		fold = { "", "" },
-		directory = " ",
-		bug = "",
-		git = "",
-		bulb = "💡",
-		search = "",
-	},
+	icons = require("liu.icons"),
 }
 
 local nvim_set_hl = api.nvim_set_hl
@@ -126,33 +31,32 @@ _G.set_hls = function(highlights)
 	end
 end
 
+local nvim_get_hl = api.nvim_get_hl
 ---@param highlight string
 _G.get_hl = function(highlight)
-	local hl = vim.api.nvim_get_hl(0, { name = highlight })
-	local bg = hl.bg and ("#%06x"):format(hl.bg) or nil
-	local fg = hl.fg and ("#%06x"):format(hl.fg) or nil
+	local hl = nvim_get_hl(0, { name = highlight })
+	local normal_hl = nvim_get_hl(0, { name = "Normal" }) -- fallback to normal
+	local bg = hl.bg or normal_hl.bg
+	local fg = hl.fg or normal_hl.fg
 	return {
-		bg = bg,
-		fg = fg,
+		bg = ("#%06x"):format(bg),
+		fg = ("#%06x"):format(fg),
 	}
 end
 
 ---@param cmds table
 _G.set_cmds = function(cmds)
 	for key, cmd in pairs(cmds) do
-		api.nvim_create_user_command(key, cmd, {})
+		create_command(key, cmd, {})
 	end
 end
 
-local load_plugin_config = function(plugin)
-	require("liu.plugins." .. plugin)
+---@param group_name string
+local user_augroup = function(group_name)
+	return augroup("liu_" .. group_name, { clear = true })
 end
 
-local user_augroup = function(name)
-	return vim.api.nvim_create_augroup("liu_" .. name, { clear = true })
-end
-
----@type boolean|fun(buf: integer, win: integer): boolean
+---@type fun(buf: integer, win: integer): boolean
 local enable_winbar = function(buf, win)
 	if vim.wo[win].diff then
 		return false
@@ -166,6 +70,7 @@ local enable_winbar = function(buf, win)
 	-- special filetype
 	if vim.tbl_contains({
 		"",
+		"git",
 	}, vim.bo[buf].filetype) then
 		return false
 	end
@@ -177,9 +82,20 @@ local enable_winbar = function(buf, win)
 
 	return not api.nvim_win_get_config(win).zindex
 end
+
+---@type fun(buf: integer): boolean
+local enable_view = function(buf)
+	return not vim.b.disable_view
+		and api.nvim_buf_get_name(buf) ~= ""
+		and api.nvim_get_option_value("buftype", { buf = buf }) == ""
+end
 -- }}}
 
 -- Plugins {{{1
+local load_plugin_config = function(plugin)
+	require("liu.plugins." .. plugin)
+end
+
 require("lazy").setup(
 	{
 		-- Libs {{{2
@@ -198,11 +114,13 @@ require("lazy").setup(
 			"stevearc/dressing.nvim",
 			lazy = true,
 			init = function()
+				---@diagnostic disable-next-line: duplicate-set-field
 				vim.ui.select = function(...)
 					require("lazy").load({ plugins = { "dressing.nvim" } })
 					return vim.ui.select(...)
 				end
 
+				---@diagnostic disable-next-line: duplicate-set-field
 				vim.ui.input = function(...)
 					require("lazy").load({ plugins = { "dressing.nvim" } })
 					return vim.ui.input(...)
@@ -224,7 +142,6 @@ require("lazy").setup(
 			},
 		},
 		{
-			-- "norcalli/nvim-colorizer.lua",
 			"NvChad/nvim-colorizer.lua",
 			opts = {},
 			cmd = "ColorizerToggle",
@@ -233,11 +150,9 @@ require("lazy").setup(
 			"hiphish/rainbow-delimiters.nvim",
 			enabled = false,
 			event = "VeryLazy",
-			opts = {},
-			config = function()
+			config = function(self, opts)
 				local rainbow_delimiters = require("rainbow-delimiters")
-
-				vimg.rainbow_delimiters = {
+				vim.g.rainbow_delimiters = {
 					-- defines how to perform the highlighting of delimiters
 					-- global, local
 					strategy = {
@@ -276,7 +191,7 @@ require("lazy").setup(
 			event = "VeryLazy",
 			init = function()
 				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
-				vimg.loaded_matchparen = 1
+				vim.g.loaded_matchparen = 1
 			end,
 			opts = {},
 		},
@@ -355,7 +270,15 @@ require("lazy").setup(
 		},
 		{
 			"j-hui/fidget.nvim",
+			lazy = true,
 			event = "LspAttach",
+			init = function()
+				-- ---@diagnostic disable-next-line: duplicate-set-field
+				-- vim.notify = function(...)
+				-- 	require("fidget").notify(...)
+				-- end
+			end,
+			cmd = { "Fidget" },
 			opts = {
 				notification = {
 					override_vim_notify = false,
@@ -378,13 +301,6 @@ require("lazy").setup(
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
 				"jbyuki/one-small-step-for-vimkind",
-				{
-					"theHamsta/nvim-dap-virtual-text",
-					enabled = false,
-					opts = {
-						virt_text_pos = "eol",
-					},
-				},
 			},
 			config = function(self, opts)
 				load_plugin_config("dap")
@@ -425,9 +341,7 @@ require("lazy").setup(
 		{
 			-- "nvim-treesitter/nvim-treesitter-textobjects",
 			"gh-liu/nvim-treesitter-textobjects",
-			lazy = true,
 			event = "VeryLazy",
-			config = function(self, opts) end,
 		},
 		{
 			"JoosepAlviste/nvim-ts-context-commentstring",
@@ -456,7 +370,7 @@ require("lazy").setup(
 							buffer = ev.buf,
 						})
 					end,
-					desc = "setup nvim-lint for ft",
+					desc = "setup nvim-lint",
 				})
 			end,
 			opts = {
@@ -491,7 +405,8 @@ require("lazy").setup(
 				load_plugin_config("telescope")
 
 				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
-				api.nvim_create_autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
+
+				autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
 			end,
 		},
 		{
@@ -500,7 +415,7 @@ require("lazy").setup(
 			config = function()
 				require("telescope").load_extension("goimpl")
 
-				api.nvim_create_autocmd("LspAttach", {
+				autocmd("LspAttach", {
 					group = user_augroup("lsp_attach_goimpl"),
 					callback = function(args)
 						local bufnr = args.buf
@@ -548,34 +463,33 @@ require("lazy").setup(
 		},
 		{
 			"echasnovski/mini.move",
-			keys = { "<M-h>", "<M-j>", "<M-k>", "<M-l>" },
+			keys = {
+				{ "<M-h>", mode = { "n", "x" } },
+				{ "<M-j>", mode = { "n", "x" } },
+				{ "<M-k>", mode = { "n", "x" } },
+				{ "<M-l>", mode = { "n", "x" } },
+			},
 			config = function(self, opts)
+				local keys = self.keys
+				if not keys then
+					return
+				end
+
 				require("mini.move").setup({
 					mappings = {
 						-- Move visual selection in Visual mode. Defaults are Alt (Meta) + hjkl.
-						left = self.keys[1],
-						down = self.keys[2],
-						up = self.keys[3],
-						right = self.keys[4],
+						left = keys[1][1],
+						down = keys[2][1],
+						up = keys[3][1],
+						right = keys[4][1],
 						-- Move current line in Normal mode
-						line_left = self.keys[1],
-						line_down = self.keys[2],
-						line_up = self.keys[3],
-						line_right = self.keys[4],
+						line_left = keys[1][1],
+						line_down = keys[2][1],
+						line_up = keys[3][1],
+						line_right = keys[4][1],
 					},
 				})
 			end,
-		},
-		{
-			"numToStr/Comment.nvim",
-			lazy = true,
-			keys = {
-				{ "gc", mode = { "n", "x" } },
-				{ "gb", mode = { "n", "x" } },
-			},
-			opts = {
-				ignore = "^$",
-			},
 		},
 		{
 			"echasnovski/mini.surround",
@@ -589,6 +503,9 @@ require("lazy").setup(
 			},
 			config = function(self, _)
 				local keys = self.keys
+				if not keys then
+					return
+				end
 
 				local ts_input = require("mini.surround").gen_spec.input.treesitter
 				local opts = {
@@ -652,12 +569,36 @@ require("lazy").setup(
 			},
 		},
 		{
+			"echasnovski/mini.align",
+			keys = {
+				{ "ga", mode = { "n", "x" } },
+				{ "gA", mode = { "n", "x" } },
+			},
+			config = function(self, opts)
+				require("mini.align").setup({
+					mappings = {
+						start = self.keys[1][1],
+						start_with_preview = self.keys[2][1],
+					},
+				})
+			end,
+		},
+		{
+			"numToStr/Comment.nvim",
+			lazy = true,
+			keys = {
+				{ "gc", mode = { "n", "x" } },
+				{ "gb", mode = { "n", "x" } },
+			},
+			opts = {
+				ignore = "^$",
+			},
+		},
+		{
 			"monaqa/dial.nvim",
 			keys = {
-				{ "<C-a>", "<Plug>(dial-increment)", mode = "n" },
-				{ "<C-x>", "<Plug>(dial-decrement)", mode = "n" },
-				{ "<C-a>", "<Plug>(dial-increment)", mode = "x" },
-				{ "<C-x>", "<Plug>(dial-decrement)", mode = "x" },
+				{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "x" } },
+				{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "x" } },
 				{ "g<C-a>", "g<Plug>(dial-increment)", mode = "x" },
 				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = "x" },
 			},
@@ -699,8 +640,8 @@ require("lazy").setup(
 			init = function(self)
 				vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
 			end,
-			cmd = { "Abolish", "Subvert", "S" },
 			keys = { "cr" },
+			cmd = { "Abolish", "Subvert", "S" },
 		},
 		{
 			"stevearc/conform.nvim",
@@ -741,14 +682,14 @@ require("lazy").setup(
 				require("conform").setup(opts)
 
 				do
-					vim.api.nvim_create_user_command(self.cmd[2], function()
+					create_command(self.cmd[2], function()
 						vim.b.disable_autoformat = false
 						vim.g.disable_autoformat = false
 					end, {
 						desc = "Re-enable autoformat-on-save",
 					})
 
-					vim.api.nvim_create_user_command(self.cmd[3], function(args)
+					create_command(self.cmd[3], function(args)
 						if args.bang then
 							-- FormatDisable! will disable formatting just for this buffer
 							vim.b.disable_autoformat = true
@@ -761,7 +702,7 @@ require("lazy").setup(
 					})
 				end
 
-				vim.api.nvim_create_user_command(self.cmd[1], function(args)
+				create_command(self.cmd[1], function(args)
 					local range = nil
 					if args.count ~= -1 then
 						local end_line = vim.api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
@@ -785,33 +726,6 @@ require("lazy").setup(
 					},
 				},
 			},
-		},
-		{
-			"junegunn/vim-easy-align",
-			enabled = false,
-			keys = {
-				{ "ga", "<Plug>(EasyAlign)", mode = { "n", "x" } },
-				{ "gl", "<Plug>(LiveEasyAlign)", mode = { "n", "x" } },
-			},
-			cmd = {
-				"EasyAlign",
-				"LiveEasyAlign",
-			},
-		},
-		{
-			"echasnovski/mini.align",
-			keys = {
-				{ "ga", mode = { "n", "x" } },
-				{ "gA", mode = { "n", "x" } },
-			},
-			config = function(self, opts)
-				require("mini.align").setup({
-					mappings = {
-						start = self.keys[1][1],
-						start_with_preview = self.keys[2][1],
-					},
-				})
-			end,
 		},
 		{
 			"cshuaimin/ssr.nvim",
@@ -892,31 +806,33 @@ require("lazy").setup(
 			"chaoren/vim-wordmotion",
 			enabled = true,
 			init = function()
-				vimg.wordmotion_nomap = true
-				vimg.wordmotion_prefix = ","
+				vim.g.wordmotion_nomap = true
+				vim.g.wordmotion_prefix = ","
 
-				-- user define
+				-- user defined
 				vim.g.wordmotion_disable = true
 			end,
 			keys = {
 				{
 					"<leader>tw",
 					function()
+						local mod_nxo = { "n", "x", "o" }
+						local mod_xo = { "x", "o" }
 						vim.g.wordmotion_disable = not vim.g.wordmotion_disable
 						if vim.g.wordmotion_disable then
-							vim.keymap.del({ "n", "x", "o" }, "w")
-							vim.keymap.del({ "n", "x", "o" }, "b")
-							vim.keymap.del({ "n", "x", "o" }, "e")
-							vim.keymap.del({ "x", "o" }, "iw")
-							vim.keymap.del({ "x", "o" }, "aw")
+							keymap.del(mod_nxo, "w")
+							keymap.del(mod_nxo, "b")
+							keymap.del(mod_nxo, "e")
+							keymap.del(mod_xo, "iw")
+							keymap.del(mod_xo, "aw")
 
 							vim.notify("Disabled word motion", vim.log.levels.WARN)
 						else
-							vim.keymap.set({ "n", "x", "o" }, "w", "<Plug>WordMotion_w")
-							vim.keymap.set({ "n", "x", "o" }, "b", "<Plug>WordMotion_b")
-							vim.keymap.set({ "n", "x", "o" }, "e", "<Plug>WordMotion_e")
-							vim.keymap.set({ "x", "o" }, "iw", "<Plug>WordMotion_iw")
-							vim.keymap.set({ "x", "o" }, "aw", "<Plug>WordMotion_aw")
+							keymap.set(mod_nxo, "w", "<Plug>WordMotion_w")
+							keymap.set(mod_nxo, "b", "<Plug>WordMotion_b")
+							keymap.set(mod_nxo, "e", "<Plug>WordMotion_e")
+							keymap.set(mod_xo, "iw", "<Plug>WordMotion_iw")
+							keymap.set(mod_xo, "aw", "<Plug>WordMotion_aw")
 
 							vim.notify("Enabled word motion", vim.log.levels.WARN)
 						end
@@ -988,6 +904,7 @@ require("lazy").setup(
 							vim.notify("Enabled auto pairs", vim.log.levels.WARN)
 						end
 
+						-- When a bracket is inserted, briefly jump to the matching one.
 						vim.o.showmatch = vim.g.minipairs_disable
 					end,
 					desc = "[T]oggle auto [P]airs",
@@ -998,26 +915,25 @@ require("lazy").setup(
 				pairs.setup()
 
 				local group = user_augroup("mini_pairs")
-				autocmd("FileType", {
-					group = group,
-					pattern = { "zig" },
-					callback = function(ev)
-						local buf = ev.buf
+				local pairs_by_fts = {
+					zig = function(buf)
 						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
 					end,
-					desc = "set pairs for zig",
-				})
-				autocmd("FileType", {
-					group = group,
-					pattern = { "rust" },
-					callback = function(ev)
-						local buf = ev.buf
+					rust = function(buf)
 						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
-
 						pairs.map_buf(buf, "i", "<", { action = "open", pair = "<>", register = { cr = false } })
 						pairs.map_buf(buf, "i", ">", { action = "close", pair = "<>", register = { cr = false } })
 					end,
-					desc = "set pairs for rust",
+				}
+
+				autocmd("FileType", {
+					group = group,
+					pattern = vim.tbl_keys(pairs_by_fts),
+					callback = function(ev)
+						local buf = ev.buf
+						pairs_by_fts[ev.match](buf)
+					end,
+					desc = "set mini pairs for fts",
 				})
 			end,
 		},
@@ -1028,6 +944,7 @@ require("lazy").setup(
 			"tpope/vim-fugitive",
 			event = "VeryLazy",
 			config = function()
+				local g = user_augroup("fugitive")
 				-- Toggle summary window {{{3
 				local fugitivebuf = -1
 				local exit = function()
@@ -1038,14 +955,16 @@ require("lazy").setup(
 						exit()
 						fugitivebuf = -1
 					else
-						cmd.G()
+						vim.cmd.G()
 					end
 				end, { silent = true })
-				api.nvim_create_autocmd("User", {
+
+				autocmd("User", {
+					group = g,
 					pattern = { "FugitiveIndex" },
 					callback = function(data)
 						fugitivebuf = data.buf
-						api.nvim_create_autocmd("BufDelete", {
+						autocmd("BufDelete", {
 							callback = function()
 								fugitivebuf = -1
 							end,
@@ -1059,7 +978,8 @@ require("lazy").setup(
 				})
 				-- }}}
 
-				api.nvim_create_autocmd("BufEnter", {
+				autocmd("BufEnter", {
+					group = g,
 					pattern = { "fugitive:///*" },
 					callback = function(ev)
 						vim.b[ev.buf].disable_winbar = true
@@ -1105,24 +1025,20 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"junegunn/gv.vim",
-			cmd = { "GV" },
-		},
-		{
 			"rbong/vim-flog",
 			init = function(self)
 				vim.g.flog_use_internal_lua = 1
 				vim.g.flog_default_opts = { max_count = 2000 }
 				vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
 
-				vim.keymap.set("ca", "F", "Flog", {})
+				keymap.set("ca", "F", "Flog", {})
 
 				autocmd("FileType", {
 					pattern = "floggraph",
 					callback = function(ev)
 						local buf = ev.buf
 						-- like fugitive
-						vim.keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
+						keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
 					end,
 				})
 			end,
@@ -1169,24 +1085,24 @@ require("lazy").setup(
 						col = 1,
 					},
 					on_attach = function(bufnr)
-						local function map(mode, l, r, opts)
+						local function setmap(mode, l, r, opts)
 							opts = opts or {}
 							opts.buffer = bufnr
 							keymap.set(mode, l, r, opts)
 						end
 
 						-- Text object
-						map({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
+						setmap({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
 
 						-- Navigation
-						map("n", "]c", function()
+						setmap("n", "]c", function()
 							if vim.wo.diff then
 								return "]c"
 							end
 							vim.schedule(gs.next_hunk)
 							return "<Ignore>"
 						end, { expr = true })
-						map("n", "[c", function()
+						setmap("n", "[c", function()
 							if vim.wo.diff then
 								return "[c"
 							end
@@ -1196,25 +1112,25 @@ require("lazy").setup(
 
 						-- Actions
 						-- stage
-						map("n", "<leader>gS", gs.stage_buffer, { desc = "Stage buffer" })
-						map("n", "<leader>gs", gs.stage_hunk, { desc = "Stage hunk" })
-						map("v", "<leader>gs", function()
+						setmap("n", "<leader>gS", gs.stage_buffer, { desc = "Stage buffer" })
+						setmap("n", "<leader>gs", gs.stage_hunk, { desc = "Stage hunk" })
+						setmap("v", "<leader>gs", function()
 							gs.stage_hunk({ fn.line("."), fn.line("v") })
 						end, { desc = "Stage hunk" })
 
 						-- reset
-						map("n", "<leader>gR", gs.reset_buffer, { desc = "Reset buffer" })
-						map("n", "<leader>gr", gs.reset_hunk, { desc = "Reset hunk" })
-						map("v", "<leader>gr", function()
+						setmap("n", "<leader>gR", gs.reset_buffer, { desc = "Reset buffer" })
+						setmap("n", "<leader>gr", gs.reset_hunk, { desc = "Reset hunk" })
+						setmap("v", "<leader>gr", function()
 							gs.reset_hunk({ fn.line("."), fn.line("v") })
 						end, { desc = "Reset hunk of selection" })
 
-						map("n", "<leader>gd", gs.diffthis)
-						map("n", "<leader>gD", function()
+						setmap("n", "<leader>gd", gs.diffthis)
+						setmap("n", "<leader>gD", function()
 							gs.diffthis("~")
 						end)
-						map("n", "<leader>gb", gs.blame_line)
-						map("n", "<leader>gp", gs.preview_hunk)
+						setmap("n", "<leader>gb", gs.blame_line)
+						setmap("n", "<leader>gp", gs.preview_hunk)
 					end,
 				})
 
@@ -1242,35 +1158,37 @@ require("lazy").setup(
 		},
 		{
 			"akinsho/git-conflict.nvim",
-			enabled = false,
+			enabled = true,
 			event = "VeryLazy",
 			config = function()
 				---@diagnostic disable-next-line: missing-fields
 				require("git-conflict").setup({
-					default_mappings = false,
+					default_mappings = true,
 					default_commands = true,
 				})
 
-				api.nvim_create_autocmd("User", {
+				local g = user_augroup("git_conflict")
+				autocmd("User", {
+					group = g,
 					pattern = "GitConflictDetected",
 					callback = function(args)
 						vim.notify("[Git] Conflict detected!", vim.log.levels.WARN)
 
-						local bufnr = args.buf
-						local map = function(lhs, rhs)
-							keymap.set("n", lhs, rhs)
-						end
-
-						map("Co", "<Plug>(git-conflict-ours)")
-						map("Ct", "<Plug>(git-conflict-theirs)")
-						map("Cb", "<Plug>(git-conflict-both)")
-						map("C0", "<Plug>(git-conflict-none)")
-						map("[x", "<Plug>(git-conflict-prev-conflict)")
-						map("]x", "<Plug>(git-conflict-next-conflict)")
+						-- local bufnr = args.buf
+						-- local map = function(lhs, rhs)
+						-- 	keymap.set("n", lhs, rhs)
+						-- end
+						-- map("Co", "<Plug>(git-conflict-ours)")
+						-- map("Ct", "<Plug>(git-conflict-theirs)")
+						-- map("Cb", "<Plug>(git-conflict-both)")
+						-- map("C0", "<Plug>(git-conflict-none)")
+						-- map("[x", "<Plug>(git-conflict-prev-conflict)")
+						-- map("]x", "<Plug>(git-conflict-next-conflict)")
 					end,
 				})
 
-				api.nvim_create_autocmd("User", {
+				autocmd("User", {
+					group = g,
 					pattern = "GitConflictResolved",
 					callback = function(args)
 						vim.notify("[Git] Conflict resolved!", vim.log.levels.INFO)
@@ -1295,19 +1213,19 @@ require("lazy").setup(
 					local default_lable_name = vim.g.mini_visits_default_label
 
 					local vis = require("mini.visits")
-					vim.keymap.set("n", "<Leader>vv", function()
+					keymap.set("n", "<Leader>vv", function()
 						vis.add_label(default_lable_name)
 					end, { desc = "Add to core" })
 
-					vim.keymap.set("n", "<Leader>vd", function()
+					keymap.set("n", "<Leader>vd", function()
 						vis.remove_label(default_lable_name)
 					end, { desc = "Remove from core" })
 
-					vim.keymap.set("n", "<Leader>vl", function()
+					keymap.set("n", "<Leader>vl", function()
 						vis.select_path(nil, { filter = default_lable_name })
 					end, { desc = "Select core (cwd)" })
 
-					vim.keymap.set("n", "<Leader>vL", function()
+					keymap.set("n", "<Leader>vL", function()
 						vis.select_path("", { filter = default_lable_name })
 					end, { desc = "Select core (all)" })
 
@@ -1316,7 +1234,7 @@ require("lazy").setup(
 						local rhs = function()
 							vis.iterate_paths(direction, vim.fn.getcwd(), opts)
 						end
-						vim.keymap.set("n", lhs, rhs, { desc = desc })
+						keymap.set("n", lhs, rhs, { desc = desc })
 					end
 
 					map_iterate_core("[[", "forward", "Core label (earlier)")
@@ -1337,7 +1255,7 @@ require("lazy").setup(
 					end
 
 					local map_select = function(lhs, desc, ...)
-						vim.keymap.set("n", lhs, make_select_path(...), { desc = desc })
+						keymap.set("n", lhs, make_select_path(...), { desc = desc })
 					end
 
 					map_select("<Leader>vr", "Select recent (all)", true, 1)
@@ -1352,46 +1270,26 @@ require("lazy").setup(
 		{
 			"echasnovski/mini.files",
 			lazy = true,
-			keys = {
-				{
-					"<leader>e",
-					function()
-						local MiniFiles = require("mini.files")
-						if not MiniFiles.close() then
-							local bufname = vim.api.nvim_buf_get_name(0)
-							local path = vim.fn.fnamemodify(bufname, ":p")
-
-							-- Open last if the buffer isn't valid.
-							if path and vim.uv.fs_stat(path) then
-								require("mini.files").open(bufname, false)
-							else
-								MiniFiles.open(MiniFiles.get_latest_path())
-							end
-						end
-					end,
-					desc = "File [E]xplorer",
-				},
-			},
 			init = function()
-				vim.api.nvim_create_autocmd("User", {
+				autocmd("User", {
 					pattern = "MiniFilesWindowOpen",
 					callback = function(args)
 						local win_id = args.data.win_id
+						local buf_id = args.data.buf_id
 						-- Customize window-local settings
 						-- vim.wo[win_id].winblend = 50
 						vim.api.nvim_win_set_config(win_id, { border = config.borders })
 
-						local buf_id = args.data.buf_id
 						local MiniFiles = require("mini.files")
-						vim.keymap.set("n", "<CR>", function()
+						keymap.set("n", "<CR>", function()
 							MiniFiles.go_in()
 						end, { buffer = buf_id })
 
-						vim.keymap.set("n", "<leader><CR>", function()
+						keymap.set("n", "<leader><CR>", function()
 							MiniFiles.synchronize()
 						end, { buffer = buf_id })
 
-						vim.keymap.set("n", "<tab>", function()
+						keymap.set("n", "<tab>", function()
 							local add = function(fname)
 								local default_lable = vim.g.mini_visits_default_label
 								if default_lable then
@@ -1408,7 +1306,7 @@ require("lazy").setup(
 					end,
 				})
 
-				vim.api.nvim_create_autocmd("User", {
+				autocmd("User", {
 					pattern = "MiniFilesActionDelete",
 					callback = function(args)
 						local fname = args.data.from
@@ -1420,6 +1318,26 @@ require("lazy").setup(
 					end,
 				})
 			end,
+			keys = {
+				{
+					"<leader>e",
+					function()
+						local MiniFiles = require("mini.files")
+						if not MiniFiles.close() then
+							local bufname = vim.api.nvim_buf_get_name(0)
+							local path = vim.fn.fnamemodify(bufname, ":p")
+							-- Open last if the buffer isn't valid.
+							---@diagnostic disable-next-line: undefined-field
+							if path and vim.uv.fs_stat(path) then
+								MiniFiles.open(bufname, false)
+							else
+								MiniFiles.open(MiniFiles.get_latest_path())
+							end
+						end
+					end,
+					desc = "File [E]xplorer",
+				},
+			},
 			opts = {
 				mappings = {
 					go_in = "<C-l>",
@@ -1454,9 +1372,6 @@ require("lazy").setup(
 								menu:click_on(component, nil, 1, "l")
 							end
 						end,
-						-- ["q"] = function()
-						-- 	cmd.quit()
-						-- end,
 					},
 					win_configs = {
 						border = config.borders,
@@ -1482,8 +1397,11 @@ require("lazy").setup(
 		},
 		{
 			"hedyhli/outline.nvim",
+			enabled = false,
+			keys = {
+				{ "<leader>tt", "<cmd>Outline<CR>", desc = "Toggle Outline" },
+			},
 			cmd = { "Outline" },
-			keys = { { "<leader>tt", "<cmd>Outline<CR>", desc = "Toggle Outline" } },
 			opts = {
 				outline_window = {
 					-- Where to open the split window: right/left
@@ -1537,7 +1455,7 @@ require("lazy").setup(
 					},
 				}
 
-				-- api.nvim_create_autocmd("User", {
+				-- autocmd("User", {
 				-- 	pattern = "ProjectionistDetect",
 				-- 	callback = function(ev)
 				-- 		vim.notify("[Projections] detect!", vim.log.levels.INFO)
@@ -1570,9 +1488,9 @@ require("lazy").setup(
 			init = function(self)
 				-- disable the start key
 				-- https://github.com/simeji/winresizer/pull/19#issuecomment-925097954
-				-- vimg.winresizer_start_key = "<NOP>"
+				-- vim.g.winresizer_start_key = "<NOP>"
 
-				vimg.winresizer_start_key = self.keys[1]
+				vim.g.winresizer_start_key = self.keys[1]
 			end,
 			keys = { "<leader>wr" },
 			cmd = { "WinResizerStartResize" },
@@ -1595,7 +1513,6 @@ require("lazy").setup(
 
 				load_plugin_config("hover")
 
-				-- Setup keymaps
 				keymap.set("n", "K", require("hover").hover, { desc = "hover.nvim" })
 				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
 			end,
@@ -1603,21 +1520,21 @@ require("lazy").setup(
 		{
 			"mbbill/undotree",
 			init = function()
-				vimg.undotree_WindowLayout = 2
-				vimg.undotree_DiffAutoOpen = 1
-				vimg.undotree_ShortIndicators = 1
-				vimg.undotree_SetFocusWhenToggle = 1
+				vim.g.undotree_WindowLayout = 2
+				vim.g.undotree_DiffAutoOpen = 1
+				vim.g.undotree_ShortIndicators = 1
+				vim.g.undotree_SetFocusWhenToggle = 1
 			end,
-			cmd = { "UndotreeToggle" },
 			keys = {
 				{
 					"<leader>tu",
-					cmd.UndotreeToggle,
+					vim.cmd.UndotreeToggle,
 					desc = "Undotree: Toggle",
 					noremap = true,
 					silent = true,
 				},
 			},
+			cmd = { "UndotreeToggle" },
 		},
 		-- }}}
 
@@ -1629,7 +1546,7 @@ require("lazy").setup(
 		{
 			"tpope/vim-rsi",
 			init = function(self)
-				vimg.rsi_no_meta = 1
+				vim.g.rsi_no_meta = 1
 			end,
 			event = "VeryLazy",
 		},
@@ -1662,7 +1579,7 @@ require("lazy").setup(
 		{
 			"tpope/vim-dispatch",
 			init = function()
-				vimg.dispatch_no_maps = 1
+				vim.g.dispatch_no_maps = 1
 			end,
 			cmd = { "Make", "Dispatch", "Start" },
 		},
@@ -1671,7 +1588,7 @@ require("lazy").setup(
 			cmd = { "DB" },
 			ft = { "sql" },
 			config = function()
-				cmd([[
+				vim.cmd([[
 				 nmap <expr> Q db#op_exec()
 				 xmap <expr> Q db#op_exec()
 				]])
@@ -1751,21 +1668,16 @@ require("lazy").setup(
 		{
 			"romainl/vim-qf",
 			init = function(self)
-				vimg.qf_mapping_ack_style = 1
+				vim.g.qf_mapping_ack_style = 1
 			end,
 			ft = "qf",
-		},
-		{
-			"Olical/nfnl",
-			enabled = false,
-			ft = "fennel",
 		},
 		{
 			"saecki/crates.nvim",
 			lazy = true,
 			event = { "BufRead Cargo.toml" },
 			init = function()
-				api.nvim_create_autocmd("BufRead", {
+				autocmd("BufRead", {
 					group = api.nvim_create_augroup("UserSetCargoCmpSource", { clear = true }),
 					pattern = "Cargo.toml",
 					callback = function()
@@ -1775,7 +1687,7 @@ require("lazy").setup(
 					end,
 				})
 
-				vim.api.nvim_create_autocmd("BufRead", {
+				autocmd("BufRead", {
 					pattern = "Cargo.toml",
 					callback = function()
 						local actions = require("crates.actions")
@@ -1788,7 +1700,7 @@ require("lazy").setup(
 							end
 						end
 						local api = vim.api
-						local server = require("liu.plugins.lsp2").server({
+						local server = require("liu.lsp.helper").server({
 							capabilities = {
 								codeActionProvider = true,
 							},
@@ -1840,7 +1752,7 @@ require("lazy").setup(
 					pattern = self.ft,
 					callback = function(ev)
 						local buf = ev.buf
-						local map = vim.keymap.set
+						local map = keymap.set
 
 						local al = require("autolist")
 
@@ -1869,7 +1781,6 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
-
 		-- }}}
 	},
 	-- Lazy Configuration {{{2
@@ -1894,7 +1805,7 @@ require("lazy").setup(
 		},
 		install = {
 			missing = true,
-			colorscheme = { vimg.colors_name },
+			colorscheme = { vim.g.colors_name },
 		},
 		ui = {
 			border = config.borders,
@@ -1922,7 +1833,7 @@ require("lazy").setup(
 vim.o.mouse = ""
 vim.o.clipboard = "unnamedplus"
 
-vim.o.viewoptions = "folds,cursor"
+vim.o.viewoptions = "folds,cursor,curdir"
 
 vim.o.completeopt = "menu,menuone,noselect"
 
@@ -1948,11 +1859,14 @@ vim.o.cursorline = true
 vim.o.splitright = true
 vim.o.splitbelow = false
 
-cmd([[
+vim.cmd([[
 	set guicursor=n-v:block,i-c-ci-ve:ver25,r-cr:hor20,o:hor50
 	  \,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor
 	  \,sm:block-blinkwait175-blinkoff150-blinkon175
 ]])
+
+-- Avoid showing the intro when starting Neovim
+vim.opt.shortmess:append("I")
 -- }}}
 
 -- Search {{{2
@@ -1964,7 +1878,7 @@ vim.o.smartcase = true
 vim.o.infercase = true
 
 if fn.executable("rg") == 1 then
-	vim.o.grepprg = "rg --vimgrep --no-heading"
+	vim.o.grepprg = "rg --vim.grep --no-heading"
 	vim.o.grepformat = "%f:%l:%c:%m,%f:%l:%m"
 end
 -- }}}
@@ -1980,7 +1894,7 @@ vim.o.timeoutlen = 350
 vim.o.updatetime = 300
 -- }}}
 
--- wrap {{{2
+-- Wrap {{{2
 vim.o.wrap = false
 vim.o.whichwrap = "b,s,<,>,h,l"
 -- }}}
@@ -1989,28 +1903,6 @@ vim.o.whichwrap = "b,s,<,>,h,l"
 vim.o.foldcolumn = "1"
 vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
-
--- autocmd("BufEnter", {
--- 	group = user_augroup("enable_treesitter_foldexpr"),
--- 	callback = function(ev)
--- 		local bufnr = ev.buf
-
--- 		local ts = vim.treesitter
--- 		---@type boolean, LanguageTree
--- 		local ok, parser = pcall(ts.get_parser, bufnr)
--- 		if not ok then
--- 			return
--- 		end
--- 		local query = ts.query.get(parser:lang(), "fold")
--- 		if not query then
--- 			return
--- 		end
-
--- 		vim.wo.foldmethod = "expr"
--- 		vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
--- 	end,
--- 	desc = "enable treesitter foldexpr",
--- })
 
 -- Filling `foldtext` with space
 vim.opt.fillchars:append("fold: ")
@@ -2037,9 +1929,6 @@ vim.o.listchars = table.concat({
 }, ",")
 -- }}}
 
--- Avoid showing the intro when starting Neovim
-vim.opt.shortmess:append("I")
-
 autocmd("BufEnter", {
 	group = user_augroup("disable_newline_comment"),
 	callback = function()
@@ -2050,9 +1939,8 @@ autocmd("BufEnter", {
 -- }}}
 
 -- Remaps {{{1
-local mapopts = { silent = true, noremap = true }
 local setmap = function(mode, lhs, rhs, opts)
-	opts = opts or mapopts
+	opts = opts or { silent = true, noremap = true }
 	keymap.set(mode, lhs, rhs, opts)
 end
 
@@ -2081,7 +1969,7 @@ setmap("n", "cn", [[:normal "ryiw<CR> | :let @/=escape(@r, '/')<CR>"_cgn]])
 -- setmap("x", "cn", [[y<cmd>substitute(escape(@", '/'), '\n', '\\n', 'g')<cr>"_cgn]] )
 -- }}}
 
--- appen ;/, at the eol {{{3
+-- append ;, at the eol {{{3
 setmap("n", "<leader>g;", "mqA;<ESC>`q", { silent = true })
 setmap("n", "<leader>g,", "mqA,<ESC>`q", { silent = true })
 -- }}}
@@ -2136,7 +2024,7 @@ setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 -- Toggle the quickfix/loclist window. {{{3
 -- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
 local silent_mods = { mods = { silent = true, emsg_silent = true } }
-vim.keymap.set("n", "<leader>xq", function()
+keymap.set("n", "<leader>xq", function()
 	if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
 		vim.cmd.cclose(silent_mods)
 	elseif #vim.fn.getqflist() > 0 then
@@ -2147,7 +2035,7 @@ vim.keymap.set("n", "<leader>xq", function()
 		end
 	end
 end, { desc = "Toggle quickfix list" })
-vim.keymap.set("n", "<leader>xl", function()
+keymap.set("n", "<leader>xl", function()
 	if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
 		vim.cmd.lclose(silent_mods)
 	elseif #vim.fn.getloclist(0) > 0 then
@@ -2170,17 +2058,12 @@ setmap("n", "<leader>bb", "<C-^>")
 -- }}}
 
 -- Tabs {{{2
-setmap("n", "<C-w>O", ":tabonly<CR>")
+-- setmap("n", "<C-w>O", ":tabonly<CR>")
 -- }}}
 
 -- Abbrev{{{2
-local abbr_opts = {
-	expr = true,
-	desc = "fixing that stupid typo when trying to [save]exit",
-	noremap = true,
-}
--- setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", opts)
-setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", abbr_opts)
+-- setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", { expr = true })
+setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", { expr = true })
 
 setmap("ca", "%H", "expand('%:p:h')", { expr = true })
 setmap("ca", "%P", "expand('%:p')", { expr = true })
@@ -2204,21 +2087,21 @@ setmap("n", "y<C-g>", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
 -- }}}
 
 -- Cmds {{{1
-vim.api.nvim_create_user_command("Scratch", function()
-	vim.cmd("bel 10new")
-	local buf = vim.api.nvim_get_current_buf()
-	for name, value in pairs({
-		filetype = "scratch",
-		buftype = "nofile",
-		bufhidden = "hide",
-		swapfile = false,
-		modifiable = true,
-	}) do
-		vim.api.nvim_set_option_value(name, value, { buf = buf })
-	end
-end, { desc = "Open a scratch buffer", nargs = 0 })
+-- create_command("Scratch", function()
+-- 	vim.cmd("bel 10new")
+-- 	local buf = vim.api.nvim_get_current_buf()
+-- 	for name, value in pairs({
+-- 		filetype = "scratch",
+-- 		buftype = "nofile",
+-- 		bufhidden = "hide",
+-- 		swapfile = false,
+-- 		modifiable = true,
+-- 	}) do
+-- 		vim.api.nvim_set_option_value(name, value, { buf = buf })
+-- 	end
+-- end, { desc = "Open a scratch buffer", nargs = 0 })
 
-api.nvim_create_user_command("FindAndReplace", function(opts)
+create_command("FindAndReplace", function(opts)
 	if #opts.fargs ~= 2 then
 		vim.print("Two argument required.")
 	end
@@ -2229,7 +2112,7 @@ end, {
 	desc = "Find and Replace (after quickfix)",
 })
 
-api.nvim_create_user_command("R", function(opts)
+create_command("R", function(opts)
 	if #opts.fargs < 2 then
 		vim.print("Arguments required.")
 	end
@@ -2248,25 +2131,9 @@ end, {
 	desc = "Save the Output of Vim Command To a Empty Buffer",
 })
 
--- api.nvim_create_user_command("Count", function(opts)
--- 	local pattern = opts.args
--- 	if #pattern == 0 then
--- 		pattern = vim.fn.expand("<cword>")
--- 	end
--- 	local range = "%"
--- 	if opts.line1 ~= opts.line2 then
--- 		range = tostring(opts.line1) .. "," .. tostring(opts.line2)
--- 	end
--- 	vim.cmd(range .. "s/" .. pattern .. "//gn")
--- end, {
--- 	nargs = "*",
--- 	range = true,
--- 	desc = "Count the Occurrences of a Pattern",
--- })
-
 -- Terminal {{{2
-vim.api.nvim_create_user_command("T", function(opt)
-	local Term = require("liu.term")
+create_command("T", function(opt)
+	local Term = require("liu.utils.term")
 	Term:open({ enter = opt.bang }):exec(opt.args)
 	-- local terms = Term.list()
 	-- if not terms then
@@ -2278,8 +2145,8 @@ end, {
 	nargs = "*",
 })
 
-vim.api.nvim_create_user_command("Te", function(opt)
-	local Term = require("liu.term")
+create_command("Te", function(opt)
+	local Term = require("liu.utils.term")
 
 	local terms = Term.list()
 	if not terms then
@@ -2317,7 +2184,6 @@ end, {
 	bang = true,
 	nargs = "+",
 })
-
 -- }}}
 
 -- }}}
@@ -2346,7 +2212,7 @@ autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 	callback = function()
 		-- normal buffer
 		if vim.o.bt == "" then
-			cmd("checktime")
+			vim.cmd("checktime")
 		end
 	end,
 	desc = "Update file when there are changes",
@@ -2386,33 +2252,14 @@ autocmd("ModeChanged", {
 	desc = "Save when from insert to normal mode",
 })
 
--- :h last-position-jump
--- autocmd("BufReadPost", {
--- 	group = user_augroup("last_loc"),
--- 	callback = function(ev)
--- 		if vim.b.disable_jump_to_last_postion then
--- 			return true
--- 		end
--- 		local mark = api.nvim_buf_get_mark(ev.buf, '"')
--- 		local lcount = api.nvim_buf_line_count(ev.buf)
--- 		if mark[1] > 0 and mark[1] <= lcount then
--- 			pcall(api.nvim_win_set_cursor, 0, mark)
--- 		end
--- 		-- if fn.line("'\"") > 1 and fn.line("'\"") <= fn.line("$") then
--- 		-- 	cmd('normal! g`"')
--- 		-- end
--- 	end,
--- 	desc = "Go To The Last Cursor Position",
--- })
-
 autocmd("BufWinEnter", {
 	group = user_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
 	callback = function(ev)
 		if vim.o.filetype == "help" then
-			cmd.wincmd("L")
+			vim.cmd.wincmd("L")
 
-			vim.keymap.set("n", "<leader>tt", ":wincmd T<CR>", { buffer = ev.buf })
+			keymap.set("n", "<leader>tt", ":wincmd T<CR>", { buffer = ev.buf })
 		end
 	end,
 	desc = "Open help file in right split",
@@ -2424,6 +2271,7 @@ autocmd({ "BufWritePre" }, {
 		if event.match:match("^%w%w+://") then
 			return
 		end
+		---@diagnostic disable-next-line: undefined-field
 		local file = vim.loop.fs_realpath(event.match) or event.match
 		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
 	end,
@@ -2434,14 +2282,14 @@ autocmd({ "TermOpen" }, {
 	pattern = "term://*",
 	callback = function(event)
 		local opts = { buffer = event.buf }
-		vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], opts)
-		-- vim.keymap.set("t", "jk", [[<C-\><C-n>]], opts)
-		vim.keymap.set("t", "jj", [[<C-\><C-n>]], opts)
-		vim.keymap.set("t", "<C-h>", [[<Cmd>wincmd h<CR>]], opts)
-		vim.keymap.set("t", "<C-j>", [[<Cmd>wincmd j<CR>]], opts)
-		vim.keymap.set("t", "<C-k>", [[<Cmd>wincmd k<CR>]], opts)
-		vim.keymap.set("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
-		vim.keymap.set("t", "<C-w>", [[<C-\><C-n><C-w>]], opts)
+		keymap.set("t", "<esc>", [[<C-\><C-n>]], opts)
+		-- keymap.set("t", "jk", [[<C-\><C-n>]], opts)
+		keymap.set("t", "jj", [[<C-\><C-n>]], opts)
+		keymap.set("t", "<C-h>", [[<Cmd>wincmd h<CR>]], opts)
+		keymap.set("t", "<C-j>", [[<Cmd>wincmd j<CR>]], opts)
+		keymap.set("t", "<C-k>", [[<Cmd>wincmd k<CR>]], opts)
+		keymap.set("t", "<C-l>", [[<Cmd>wincmd l<CR>]], opts)
+		keymap.set("t", "<C-w>", [[<C-\><C-n><C-w>]], opts)
 	end,
 })
 
@@ -2449,26 +2297,18 @@ autocmd("OptionSet", {
 	group = user_augroup("option_set_wrap"),
 	pattern = "wrap",
 	callback = function(ev)
-		-- vim.print(vim.v.option_new)
 		local buffer = vim.api.nvim_get_current_buf()
 		if vim.v.option_new then
-			vim.keymap.set("n", "j", "gj", { buffer = buffer })
-			vim.keymap.set("n", "k", "gk")
+			keymap.set("n", "j", "gj", { buffer = buffer })
+			keymap.set("n", "k", "gk")
 		else
-			-- vim.keymap.del("n", "j")
-			-- vim.keymap.del("n", "k")
-			pcall(vim.keymap.del, "n", "j", { buffer = buffer })
-			pcall(vim.keymap.del, "n", "k", { buffer = buffer })
+			pcall(keymap.del, "n", "j", { buffer = buffer })
+			pcall(keymap.del, "n", "k", { buffer = buffer })
 		end
 	end,
 	desc = "OptionSetWrap",
 })
 
-local enable_view = function(buf)
-	return not vim.b.disable_view
-		and api.nvim_buf_get_name(buf) ~= ""
-		and api.nvim_get_option_value("buftype", { buf = buf }) == ""
-end
 local view_group = user_augroup("auto_view")
 autocmd({
 	"BufWritePre",
@@ -2533,7 +2373,6 @@ autocmd("CmdwinEnter", {
 	end,
 	desc = "cmdwin enter",
 })
-
 -- }}}
 
 -- Diagnostic {{{1
@@ -2555,11 +2394,8 @@ diagnostic.config(opts)
 
 vim.g.disgnostic_sign_disable = false
 keymap.set("n", "<leader>td", function()
+	opts.signs = vim.g.disgnostic_sign_disable
 	vim.g.disgnostic_sign_disable = not vim.g.disgnostic_sign_disable
-	local opts = vim.deepcopy(opts)
-	if vim.g.disgnostic_sign_disable then
-		opts.signs = false
-	end
 	diagnostic.config(opts)
 end)
 keymap.set("n", "<leader>dp", diagnostic.open_float)
@@ -2592,7 +2428,7 @@ local ms = lsp_protocol.Methods
 lsp.set_log_level("OFF")
 
 local levels = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF" }
-api.nvim_create_user_command("LspSetLogLevel", function(opts)
+create_command("LspSetLogLevel", function(opts)
 	local level = unpack(opts.fargs)
 	lsp.set_log_level(level)
 	vim.notify("Set: " .. level, vim.log.levels.WARN)
@@ -2654,26 +2490,22 @@ autocmd("LspAttach", {
 		local bufnr = args.buf
 		local client = lsp.get_client_by_id(args.data.client_id)
 
-		api.nvim_create_user_command("LspAddWorkspaceFolder", function(opts)
+		api.nvim_buf_create_user_command(bufnr, "LspWorkspaceFolderAdd", function(opts)
 			lsp.buf.add_workspace_folder()
 		end, { nargs = 0 })
 
-		api.nvim_create_user_command("LspDeleteWorkspaceFolder", function(opts)
-			local wsfs = lsp.buf.list_workspace_folders()
-
-			vim.ui.select(wsfs, {
-				prompt = "Remove Workspace Folder",
-				format_item = function(item)
-					return "Remove: " .. item
-				end,
-			}, function(choice)
-				lsp.buf.remove_workspace_folder(choice)
-			end)
-		end, { nargs = 0 })
-
-		api.nvim_create_user_command("LspListWorkspaceFolder", function(opts)
+		api.nvim_buf_create_user_command(bufnr, "LspWorkspaceFolderList", function(opts)
 			vim.print(lsp.buf.list_workspace_folders())
 		end, { nargs = 0 })
+
+		api.nvim_buf_create_user_command(bufnr, "LspWorkspaceFolderDelete", function(opts)
+			lsp.buf.remove_workspace_folder(opts.fargs[1])
+		end, {
+			nargs = 1,
+			complete = function()
+				return lsp.buf.list_workspace_folders()
+			end,
+		})
 	end,
 })
 -- }}}
@@ -2704,71 +2536,33 @@ autocmd("LspAttach", {
 		if client and client.supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
 
+			local is_enabled = lsp.inlay_hint.is_enabled
 			local inlay_hint = lsp.inlay_hint.enable
 			inlay_hint(bufnr, true)
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
-				inlay_hint(bufnr, nil)
-			end, {})
+				inlay_hint(bufnr, not is_enabled(bufnr))
+			end, {
+				nargs = 0,
+			})
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintRefresh", function(opts)
 				inlay_hint(bufnr, false)
 				inlay_hint(bufnr, true)
-			end, {})
+			end, {
+				nargs = 0,
+			})
 		end
 	end,
 })
 -- }}}
 
 -- document highlight {{{2
-local util = lsp.util
-
----@param is_closer function (x,y) x is before y
-local function move_to_highlight(is_closer)
-	local win = api.nvim_get_current_win()
-	local lnum, col = unpack(api.nvim_win_get_cursor(win))
-	lnum = lnum - 1
-	local cursor = {
-		start = { line = lnum, character = col },
-	}
-
-	local params = util.make_position_params()
-	local responses = lsp.buf_request_sync(0, ms.textDocument_documentHighlight, params)
-	if not responses then
-		return
-	end
-	local closest = nil
-	for _, resp in pairs(responses) do
-		local result = resp.result or {}
-		for _, highlight in pairs(result) do
-			local range = highlight.range
-			local range_start = range.start
-			local range_end = range["end"]
-			local cursor_inside_range = (
-				range_start.line <= lnum
-				and range_end.line >= lnum
-				and range_start.character < col
-				and range_end.character > col
-			)
-			if
-				not cursor_inside_range
-				and is_closer(cursor, range)
-				and (closest == nil or is_closer(range, closest))
-			then
-				closest = range
-			end
-		end
-	end
-	if closest then
-		api.nvim_win_set_cursor(win, { closest.start.line + 1, closest.start.character })
-	end
-end
-
 autocmd("LspAttach", {
 	group = user_augroup("lsp_document_highlight"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
-		if client and client.supports_method("textDocument/documentHighlight") then
+		if client and client.supports_method(ms.textDocument_documentHighlight) then
 			local bufnr = args.buf
 
 			local aug = api.nvim_create_augroup("liu_lsp_document_highlight", {
@@ -2780,14 +2574,14 @@ autocmd("LspAttach", {
 					buffer = bufnr,
 					group = aug,
 				})
-				api.nvim_create_autocmd({ "CursorHold" }, {
+				autocmd({ "CursorHold" }, {
 					group = aug,
 					buffer = bufnr,
 					callback = function()
 						lsp.buf.document_highlight()
 					end,
 				})
-				api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+				autocmd({ "CursorMoved", "CursorMovedI" }, {
 					group = aug,
 					buffer = bufnr,
 					callback = function()
@@ -2797,28 +2591,9 @@ autocmd("LspAttach", {
 			end
 
 			do
-				-- x is before y
-				local function is_before(x, y)
-					if x.start.line < y.start.line then
-						return true
-					elseif x.start.line == y.start.line then
-						return x.start.character < y.start.character
-					else
-						return false
-					end
-				end
-
-				local function next_highlight()
-					return move_to_highlight(is_before)
-				end
-
-				local function prev_highlight()
-					return move_to_highlight(function(x, y)
-						return is_before(y, x)
-					end)
-				end
-				vim.keymap.set("n", "]v", next_highlight, { buffer = bufnr })
-				vim.keymap.set("n", "[v", prev_highlight, { buffer = bufnr })
+				local document_highlight = require("liu.lsp.helper").document_highlight
+				keymap.set("n", "]v", document_highlight.goto_next, { buffer = bufnr })
+				keymap.set("n", "[v", document_highlight.goto_prev, { buffer = bufnr })
 			end
 
 			autocmd("LspDetach", {
@@ -2828,8 +2603,8 @@ autocmd("LspAttach", {
 						group = aug,
 						buffer = bufnr,
 					})
-					vim.keymap.del("n", "]v", { buffer = bufnr })
-					vim.keymap.del("n", "[v", { buffer = bufnr })
+					keymap.del("n", "]v", { buffer = bufnr })
+					keymap.del("n", "[v", { buffer = bufnr })
 				end,
 				buffer = bufnr,
 			})
@@ -2884,7 +2659,5 @@ end
 
 -- }}}
 -- }}}
-
-require("liu.go").setup()
 
 -- vim: foldmethod=marker
