@@ -270,6 +270,7 @@ require("lazy").setup(
 		},
 		{
 			"j-hui/fidget.nvim",
+			enabled = false,
 			lazy = true,
 			event = "LspAttach",
 			init = function()
@@ -284,6 +285,41 @@ require("lazy").setup(
 					override_vim_notify = false,
 				},
 			},
+		},
+		{
+			"echasnovski/mini.notify",
+			lazy = true,
+			event = "LspAttach",
+			init = function()
+				local notify = nil
+				---@diagnostic disable-next-line: duplicate-set-field
+				vim.notify = function(...)
+					if not notify then
+						notify = require("mini.notify").make_notify()
+					end
+					notify(...)
+				end
+			end,
+			opts = {
+				window = {
+					config = {
+						border = config.borders,
+					},
+					winblend = 20,
+				},
+			},
+			config = function(self, opts)
+				local MiniNotify = require("mini.notify")
+				MiniNotify.setup(self.opts)
+
+				create_command("MiniNotifyHistory", function()
+					MiniNotify.show_history()
+				end, {})
+
+				set_hls({
+					MiniNotifyBorder = { link = "LspInlayHint" },
+				})
+			end,
 		},
 		-- }}}
 
