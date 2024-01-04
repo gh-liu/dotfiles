@@ -1116,6 +1116,15 @@ require("lazy").setup(
 				vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
 
 				vim.keymap.set("ca", "F", "Flog", {})
+
+				autocmd("FileType", {
+					pattern = "floggraph",
+					callback = function(ev)
+						local buf = ev.buf
+						-- like fugitive
+						vim.keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
+					end,
+				})
 			end,
 			cmd = {
 				"Flog",
