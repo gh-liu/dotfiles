@@ -417,6 +417,42 @@ dap.configurations.rust = {
 }
 -- }}}
 
+-- Zig {{{3
+dap.adapters.codelldb = {
+	type = "server",
+	port = "${port}",
+	executable = {
+		command = vim.fn.expand("$HOME/tools/codelldb/extension/adapter/codelldb"),
+		args = { "--port", "${port}" },
+	},
+}
+
+dap.configurations.zig = {
+	{
+		type = "codelldb",
+		-- type = "lldb",
+		request = "launch",
+		name = "Nvim: Launch",
+		program = function()
+			return coroutine.create(function(dap_run_co)
+				local bufname = vim.fn.bufname()
+				local bin_name = vim.fn.expand("%:p:r"):gsub("/", "_")
+				local program = "zig-out/bin/" .. bin_name
+				-- zig build-exe -femit-bin=zig-out/bin/out src/main.zig
+				local obj = vim.system({ "zig", "build-exe", "-femit-bin=" .. program, bufname }, { text = true })
+					:wait(1000)
+				if obj.code == 1 then
+					program = fn.input("Path to executable: ", fn.getcwd() .. "/zig-out/bin/", "file")
+				end
+
+				coroutine.resume(dap_run_co, program)
+			end)
+		end,
+		cwd = "${workspaceFolder}",
+	},
+}
+-- }}}
+
 -- Nlua {{{3
 local nvim_instance
 dap.adapters.nlua = function(cb, config)
