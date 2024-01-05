@@ -25,6 +25,25 @@ function update_luals() {
 	echo "========================================END"
 }
 
+function update_codelldb() {
+	echo "========================================BEGIN"
+	url="https://api.github.com/repos/vadimcn/codelldb/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	echo "Installing codelldb-$version..."
+
+	[ -d $HOME/tools/codelldb ] && rm -rf $HOME/tools/codelldb 
+	mkdir -p $HOME/tools/codelldb
+	cd $HOME/tools/codelldb
+
+	pkg="codelldb-x86_64-linux.vsix"
+	wget https://github.com/vadimcn/codelldb/releases/download/$version/$pkg -q --show-progres
+	test $? -eq 1 && echo "fial to download" && return
+
+	unzip $pkg
+
+	echo "========================================END"
+}
+
 function update_marksman() {
 	echo "========================================BEGIN"
 	url="https://api.github.com/repos/artempyanykh/marksman/tags"
@@ -208,6 +227,9 @@ case $1 in
 	;;
 "fzf")
 	update_fzf
+	;;
+"codelldb")
+	update_codelldb
 	;;
 *)
 	bins
