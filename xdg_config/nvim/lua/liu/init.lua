@@ -270,24 +270,33 @@ require("lazy").setup(
 		},
 		{
 			"j-hui/fidget.nvim",
-			enabled = false,
+			enabled = true,
 			lazy = true,
 			event = "LspAttach",
 			init = function()
-				-- ---@diagnostic disable-next-line: duplicate-set-field
-				-- vim.notify = function(...)
-				-- 	require("fidget").notify(...)
-				-- end
+				local notify = nil
+				---@diagnostic disable-next-line: duplicate-set-field
+				vim.notify = function(...)
+					if not notify then
+						notify = require("fidget").notify
+					end
+					notify(...)
+				end
 			end,
 			cmd = { "Fidget" },
 			opts = {
+				-- LSP progress
+				progress = {},
+				-- Notification
 				notification = {
+					-- Automatically override vim.notify() with Fidget
 					override_vim_notify = false,
 				},
 			},
 		},
 		{
 			"echasnovski/mini.notify",
+			enabled = false,
 			lazy = true,
 			event = "LspAttach",
 			init = function()
