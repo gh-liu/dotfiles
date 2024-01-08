@@ -187,4 +187,29 @@ M.operator_callback = function(type)
 	}, execute_handler)
 end
 
+M.parse_env_of_dadbod = function()
+	local url = os.getenv("DATABASE_URL")
+	if not url then
+		return
+	end
+
+	local conn
+	if vim.startswith(url, "mysql://") then
+		-- mysql://[<user>[:<password>]@][<host>[:<port>]]/[database]
+		local _, _, user, password, host, port, database = url:find("mysql://(%a+):(.+)@([%d.]+):(%d+)/(.+)")
+		password = vim.uri_decode(password)
+		conn = {
+			driver = "mysql",
+			alias = string.format("%s(%s:%d)", database, host, port),
+			dataSourceName = string.format("%s:%s@tcp(%s:%d)/%s", user, password, host, port, database),
+		}
+	end
+
+	-- TODO: postgresql
+	-- TODO: sqlserver
+	-- TODO: sqlite
+
+	return conn
+end
+
 return M

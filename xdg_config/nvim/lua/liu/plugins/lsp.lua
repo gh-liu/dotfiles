@@ -233,7 +233,9 @@ local servers = {
 		-- https://github.com/sqls-server/sqls#configuration-file-sample
 		settings = {
 			sqls = {
-				connections = {},
+				connections = {
+					require("liu.lsp.sqls").parse_env_of_dadbod(),
+				},
 			},
 		},
 		on_attach = function(client, bufnr)
