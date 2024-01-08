@@ -83,12 +83,6 @@ local enable_winbar = function(buf, win)
 	return not api.nvim_win_get_config(win).zindex
 end
 
----@type fun(buf: integer): boolean
-local enable_view = function(buf)
-	return not vim.b.disable_view
-		and api.nvim_buf_get_name(buf) ~= ""
-		and api.nvim_get_option_value("buftype", { buf = buf }) == ""
-end
 -- }}}
 
 -- Plugins {{{1
@@ -2362,47 +2356,6 @@ autocmd("OptionSet", {
 		end
 	end,
 	desc = "OptionSetWrap",
-})
-
-local view_group = user_augroup("auto_view")
-autocmd({
-	"BufWritePre",
-	"BufWinLeave",
-	"BufDelete",
-}, {
-	group = view_group,
-	callback = function(ev)
-		if enable_view(ev.buf) then
-			api.nvim_buf_call(ev.buf, function()
-				-- vim.cmd([[mkview 9]])
-				-- :h nvim_parse_cmd
-				vim.cmd({
-					cmd = "mkview",
-					args = { "9" },
-				})
-			end)
-		end
-	end,
-	desc = "auto mkview",
-})
-autocmd({
-	"BufReadPost",
-	"BufWinEnter",
-}, {
-	group = view_group,
-	callback = function(ev)
-		if enable_view(ev.buf) then
-			-- vim.cmd([[silent! loadview 9]])
-			-- :h nvim_parse_cmd
-			vim.cmd({
-				cmd = "loadview",
-				args = { "9" },
-				mods = { emsg_silent = true },
-			})
-		end
-	end,
-	nested = true,
-	desc = "auto loadview",
 })
 
 local set_cursorline = user_augroup("set_cursorline")
