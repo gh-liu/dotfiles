@@ -1316,23 +1316,32 @@ require("lazy").setup(
 			"echasnovski/mini.files",
 			lazy = true,
 			init = function()
+				local g = user_augroup("mini_files")
 				autocmd("User", {
 					pattern = "MiniFilesWindowOpen",
+					group = g,
 					callback = function(args)
 						local win_id = args.data.win_id
-						local buf_id = args.data.buf_id
 						-- Customize window-local settings
 						-- vim.wo[win_id].winblend = 50
 						vim.api.nvim_win_set_config(win_id, { border = config.borders })
+					end,
+				})
+
+				autocmd("User", {
+					pattern = "MiniFilesBufferCreate",
+					group = g,
+					callback = function(args)
+						local buf = args.data.buf_id
 
 						local MiniFiles = require("mini.files")
 						keymap.set("n", "<CR>", function()
 							MiniFiles.go_in()
-						end, { buffer = buf_id })
+						end, { buffer = buf })
 
 						keymap.set("n", "<leader><CR>", function()
 							MiniFiles.synchronize()
-						end, { buffer = buf_id })
+						end, { buffer = buf })
 
 						keymap.set("n", "<tab>", function()
 							local add = function(fname)
@@ -1347,12 +1356,13 @@ require("lazy").setup(
 							if entry.fs_type == "file" then
 								add(entry.path)
 							end
-						end, { buffer = buf_id })
+						end, { buffer = buf })
 					end,
 				})
 
 				autocmd("User", {
 					pattern = "MiniFilesActionDelete",
+					group = g,
 					callback = function(args)
 						local fname = args.data.from
 						local bufnr = vim.fn.bufnr(fname)
