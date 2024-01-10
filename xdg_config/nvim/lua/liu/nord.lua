@@ -241,7 +241,7 @@ M.set_highlights = function()
 		-- ["@lsp.type.typeParameter"] = { link = "Typedef" },
 		-- ["@lsp.type.variable"] = {}, -- don't highlight to reduce visual overload
 		-- user defined
-		-- ["@lsp.type.keyword"] = { link = "Keyword" },
+		["@lsp.type.keyword"] = { link = "Keyword" },
 		["@lsp.mod.deprecated"] = { link = "DiagnosticDeprecated" },
 
 		-- Lsp reference
@@ -253,13 +253,15 @@ M.set_highlights = function()
 		LspInlayHint = { fg = c.brightgray },
 
 		-- Lsp codelens
-		LspCodeLens = { fg = c.blue, bold = true },
-		-- LspCodeLensText = { link = "LspCodeLens" },
-		-- LspCodeLensTextSign = { link = "LspCodeLens" },
-		-- LspCodeLensTextSeparator = { link = "WinSeparator" },
+		LspCodeLens = { fg = c.brightergray, bold = true, italic = true },
+		LspCodeLensSeparator = { link = "WinSeparator" },
+
+		-- Lsp signature active parameter
+		LspSignatureActiveParameter = { fg = c.green, bold = true },
 
 		-- Treesitter
 		["@text.reference"] = { link = "LspReferenceText" },
+		["@variable"] = { link = "Identifier" },
 	}
 
 	for group, opts in pairs(highlights) do
