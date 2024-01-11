@@ -155,6 +155,7 @@ bins() {
 	npm i -g pyright
 
 	npm i -g @bufbuild/buf
+	npm i -g sql-formatter
 
 	cargo install bat
 	cargo install exa
@@ -171,7 +172,6 @@ bins() {
 
 	cargo install cargo-nextest
 	cargo install cargo-binutils
-
 }
 
 function update_protobuf() {

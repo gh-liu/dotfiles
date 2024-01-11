@@ -708,6 +708,7 @@ require("lazy").setup(
 					json = { "jq" },
 					just = { "just" },
 					proto = { "buf" },
+					sql = { "sql_formatter" },
 				},
 			},
 			config = function(self, opts)
