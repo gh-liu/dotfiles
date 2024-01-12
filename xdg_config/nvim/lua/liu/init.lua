@@ -893,7 +893,8 @@ require("lazy").setup(
 				"hrsh7th/cmp-cmdline",
 				"hrsh7th/cmp-nvim-lsp",
 				"hrsh7th/cmp-nvim-lsp-signature-help",
-				"hrsh7th/cmp-omni",
+				-- "hrsh7th/cmp-omni",
+				"gh-liu/cmp-omni", -- #10
 				"L3MON4D3/LuaSnip",
 				"rafamadriz/friendly-snippets",
 				"saadparwaiz1/cmp_luasnip",
@@ -907,23 +908,39 @@ require("lazy").setup(
 			cond = function()
 				return fn.executable("git") == 1
 			end,
-			ft = {
-				"gitcommit",
-				"octo",
-			},
+			ft = { "gitcommit", "octo" },
 			config = function(self, opts)
 				require("cmp_git").setup(opts)
 
 				local cmp = require("cmp")
-				---@diagnostic disable-next-line: missing-fields
 				cmp.setup.filetype(self.ft, {
-					sources = cmp.config.sources({
+					sources = {
 						{ name = "git" },
-					}, {
 						{ name = "buffer" },
-					}, {
 						{ name = "luasnip" },
-					}),
+					},
+				})
+			end,
+		},
+		{
+			"rcarriga/cmp-dap",
+			ft = { "dap-repl", "dapui_watches", "dapui_hover" },
+			config = function(self, opts)
+				require("cmp_git").setup(opts)
+
+				local cmp = require("cmp")
+				cmp.setup.filetype({ "dap-repl" }, {
+					enabled = true,
+					sources = {
+						{ name = "omni" },
+						{ name = "dap" },
+					},
+				})
+				cmp.setup.filetype({ "dapui_watches", "dapui_hover" }, {
+					enabled = true,
+					sources = {
+						{ name = "dap" },
+					},
 				})
 			end,
 		},
@@ -2134,6 +2151,7 @@ setmap("n", "<leader>cp", ":<C-U>cd ..<CR>", { noremap = true })
 setmap("n", "y<C-g>", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
 -- }}}
 
+setmap("s", "<BS>", [[<C-O>"_s]])
 -- }}}
 
 -- Cmds {{{1
