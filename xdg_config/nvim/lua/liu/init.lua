@@ -1693,6 +1693,18 @@ require("lazy").setup(
 				},
 			},
 		},
+		{
+			"jbyuki/venn.nvim",
+			lazy = true,
+			cmd = {
+				"VBox",
+				"VBoxD",
+				"VBoxDO",
+				"VBoxH",
+				"VBoxHO",
+				"VBoxO",
+			},
+		},
 		-- }}}
 
 		-- Lang {{{2
