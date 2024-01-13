@@ -224,9 +224,11 @@ local function get_closest_testfunc()
 end
 
 local run_test = function()
-	local term = require("liu.utils.term")
+	local Term = require("liu.utils.term").Term
+	local term = Term.new()
 	local t = term:open({
-		dir = vim.fn.fnamemodify(vim.fn.bufname(), ":h"),
+		dir = fn.expand("%:h"),
+		delete_when_close_win = true,
 	})
 	local cmd = "go test "
 

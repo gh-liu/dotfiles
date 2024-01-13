@@ -2131,6 +2131,7 @@ setmap("s", "<BS>", [[<C-O>"_s]])
 -- }}}
 
 -- Cmds {{{1
+require("liu.utils.term").setup_cmd()
 -- create_command("Scratch", function()
 -- 	vim.cmd("bel 10new")
 -- 	local buf = vim.api.nvim_get_current_buf()
@@ -2174,61 +2175,6 @@ end, {
 	nargs = "*",
 	desc = "Save the Output of Vim Command To a Empty Buffer",
 })
-
--- Terminal {{{2
-create_command("T", function(opt)
-	local Term = require("liu.utils.term")
-	Term:open({ enter = opt.bang }):exec(opt.args)
-	-- local terms = Term.list()
-	-- if not terms then
-	-- 	return
-	-- end
-end, {
-	desc = "Open a new or existed terminal",
-	bang = true,
-	nargs = "*",
-})
-
-create_command("Te", function(opt)
-	local Term = require("liu.utils.term")
-
-	local terms = Term.list()
-	if not terms then
-		vim.print("no terminal buffer exist")
-		return
-	end
-
-	local term
-	if #terms == 1 then
-		term = terms[1]
-	else
-		vim.ui.select(
-			vim.iter(terms)
-				:map(function(term)
-					return term.name
-				end)
-				:totable(),
-			{
-				prompt = "Select terminal",
-			},
-			function(choice, idx)
-				term = terms[idx]
-			end
-		)
-	end
-	if term then
-		if opt.bang then
-			vim.cmd("bo 10new")
-			vim.api.nvim_set_current_buf(term.bufnr)
-		end
-		term:exec(opt.args)
-	end
-end, {
-	desc = "Terminal execute command",
-	bang = true,
-	nargs = "+",
-})
--- }}}
 
 -- }}}
 
