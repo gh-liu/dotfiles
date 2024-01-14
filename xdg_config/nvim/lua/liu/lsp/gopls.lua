@@ -81,12 +81,131 @@ M.on_attach = function(client, bufnr)
 			nargs = 1,
 		})
 	end
+
+	vim.keymap.set("n", "<leader>gi", function()
+		M.impl()
+	end, { buffer = bufnr, desc = "Go impl" })
 end
 
 ---@param params lsp.ExecuteCommandParams
 ---@param handler lsp.Handler
 M.execute_command = function(params, handler)
 	M.client.request(ms.workspace_executeCommand, params, handler, 0)
+end
+
+local append_text = function(node, text)
+	local _, _, pos, _ = node:range()
+	pos = pos + 1
+	-- insert an empty line
+	api.nvim_buf_set_lines(0, pos, pos, false, {})
+	pos = pos + 1
+	api.nvim_buf_set_lines(0, pos, pos, false, vim.split(text, "\n"))
+end
+
+local gen_impl_text = function(struct, package, interface)
+	local receiver = string.lower(string.sub(struct, 1, 2))
+	local dirname = vim.fn.fnameescape(vim.fn.expand("%:p:h"))
+
+	local cmd = {
+		"impl",
+		"-dir",
+		dirname,
+		string.format("%s *%s", receiver, struct),
+		string.format("%s.%s", package, interface),
+	}
+	local obj = vim.system(cmd, { text = true }):wait(1000)
+	if
+		obj.code == 1
+		and (string.find(obj.stderr, "unrecognized interface:") or string.find(obj.stderr, "couldn't find"))
+	then
+		-- if not find the 'packageName.interfaceName', then try just `interfaceName`
+		cmd[#cmd] = interface
+		obj = vim.system(cmd, { text = true }):wait(1000)
+	end
+
+	if obj.code == 1 then
+		vim.notify(obj.stderr, vim.log.levels.ERROR)
+		return
+	end
+	return obj.stdout
+end
+
+local function dynamic_get_workspace_symbols_requester(bufnr, kind)
+	local lsp2 = require("liu.lsp.helper")
+	local channel = require("plenary.async.control").channel
+	local cancel = function() end
+	return function(prompt)
+		cancel()
+		local tx, rx = channel.oneshot()
+		_, cancel = lsp2.workspace_symbol_async(bufnr, {
+			query = prompt,
+			kind = kind,
+		}, tx)
+		local err, res = rx()
+		assert(not err, err)
+		return lsp2.symbols_to_items(res or {}, bufnr) or {}
+	end
+end
+
+M.impl = function()
+	local ts = vim.treesitter
+	local tsnode = ts.get_node()
+	if
+		not tsnode
+		or (
+			tsnode:type() ~= "type_identifier"
+			or tsnode:parent():type() ~= "type_spec"
+			or tsnode:parent():parent():type() ~= "type_declaration"
+		)
+	then
+		vim.print("No type identifier found under cursor")
+		return
+	end
+	local struct_name = ts.get_node_text(tsnode, 0)
+
+	local buf = api.nvim_get_current_buf()
+
+	local opts = {}
+	local pickers = require("telescope.pickers")
+	local finders = require("telescope.finders")
+	local actions = require("telescope.actions")
+	local actions_set = require("telescope.actions.set")
+	local actions_state = require("telescope.actions.state")
+	local make_entry = require("telescope.make_entry")
+	local config_values = require("telescope.config").values
+
+	pickers
+		.new(opts, {
+			prompt_title = "Go Impl",
+			finder = finders.new_dynamic({
+				entry_maker = make_entry.gen_from_lsp_symbols(opts),
+				fn = dynamic_get_workspace_symbols_requester(buf, vim.lsp.protocol.SymbolKind.Interface),
+			}),
+			previewer = config_values.qflist_previewer(opts),
+			sorter = config_values.generic_sorter(),
+			attach_mappings = function(prompt_bufnr)
+				actions_set.select:replace(function(_, _)
+					local entry = actions_state.get_selected_entry()
+					actions.close(prompt_bufnr)
+					if not entry then
+						return
+					end
+
+					-- if symbol contains dot eg: sort.Interface, the symbol_name will contains the sort package name,
+					-- so only use the name of  interface part
+					local symbol_names = vim.split(entry.symbol_name, "%.")
+					local interface_name = symbol_names[#symbol_names]
+					local package_name = entry.value.symbol.containerName
+
+					vim.schedule(function()
+						local lines = gen_impl_text(struct_name, package_name, interface_name)
+						append_text(tsnode:parent():parent(), lines)
+					end)
+				end)
+				return true
+			end,
+		})
+		:find()
 end
 
 return M

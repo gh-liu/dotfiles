@@ -412,32 +412,6 @@ require("lazy").setup(
 				autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
 			end,
 		},
-		{
-			"edolphin-ydf/goimpl.nvim",
-			ft = "go",
-			config = function()
-				require("telescope").load_extension("goimpl")
-
-				autocmd("LspAttach", {
-					group = user_augroup("lsp_attach_goimpl"),
-					callback = function(args)
-						local bufnr = args.buf
-						local client = lsp.get_client_by_id(args.data.client_id)
-						if client and client.name == "gopls" then
-							keymap.set("n", "<leader>gi", function()
-								require("telescope").extensions.goimpl.goimpl({})
-							end, {
-								buffer = bufnr,
-								desc = "Telescope Goimpl",
-								noremap = true,
-								silent = true,
-							})
-							return
-						end
-					end,
-				})
-			end,
-		},
 		-- }}}
 
 		-- Text Edit {{{2
