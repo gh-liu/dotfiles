@@ -722,6 +722,16 @@ require("lazy").setup(
 		{
 			"danymat/neogen",
 			cmd = { "Neogen" },
+			keys = {
+				{
+					"<leader>ng",
+					function()
+						require("neogen").generate()
+					end,
+					mode = { "n" },
+					desc = "Neogen: generate annotation",
+				},
+			},
 			opts = {
 				snippet_engine = "luasnip",
 				languages = {
