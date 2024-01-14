@@ -976,7 +976,7 @@ require("lazy").setup(
 						exit()
 						fugitivebuf = -1
 					else
-						vim.cmd.G()
+						vim.cmd.G({ mods = { keepalt = true } })
 					end
 				end, { silent = true })
 
