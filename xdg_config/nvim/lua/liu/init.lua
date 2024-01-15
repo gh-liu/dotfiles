@@ -406,10 +406,6 @@ require("lazy").setup(
 			},
 			config = function()
 				load_plugin_config("telescope")
-
-				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
-
-				autocmd("User", { pattern = "TelescopePreviewerLoaded", command = "setlocal number" })
 			end,
 		},
 		-- }}}
