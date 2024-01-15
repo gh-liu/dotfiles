@@ -1696,13 +1696,6 @@ require("lazy").setup(
 
 		-- Lang {{{2
 		{
-			"romainl/vim-qf",
-			init = function(self)
-				vim.g.qf_mapping_ack_style = 1
-			end,
-			ft = "qf",
-		},
-		{
 			"saecki/crates.nvim",
 			lazy = true,
 			event = { "BufRead Cargo.toml" },
