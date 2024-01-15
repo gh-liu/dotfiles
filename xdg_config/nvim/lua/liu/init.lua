@@ -1157,9 +1157,16 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"ruifm/gitlinker.nvim",
-			keys = { "<leader>gy" },
-			opts = {},
+			"linrongbin16/gitlinker.nvim",
+			cmd = "GLink",
+			config = function(self, opts)
+				require("gitlinker").setup({
+					command = {
+						name = self.cmd,
+						desc = "Generate git permanent link",
+					},
+				})
+			end,
 		},
 		{
 			"akinsho/git-conflict.nvim",
