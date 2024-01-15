@@ -164,6 +164,29 @@ end, {
 create_cmd("DAPClearBreakpoints", function()
 	dap.clear_breakpoints()
 end, {})
+
+create_cmd("DapStart", function(e)
+	-- print(e.fargs[1])
+	local config = vim.iter(dap.configurations[vim.bo.ft])
+		:filter(function(config)
+			return config.name == e.fargs[1]
+		end)
+		:totable()
+	if #config == 1 then
+		dap.run(config[1])
+	end
+end, {
+	nargs = 1,
+	complete = function(...)
+		local configs = dap.configurations[vim.bo.ft]
+		return vim.iter(configs)
+			:map(function(config)
+				return config.name
+			end)
+			:totable()
+	end,
+})
+
 -- }}}
 
 -- Repl {{{2
@@ -176,6 +199,26 @@ repl.commands = vim.tbl_extend("force", repl.commands, {
 		end,
 	},
 })
+
+local aug_dap_repl = augroup("liu/dap_repl", { clear = true })
+autocmd("FileType", {
+	group = aug_dap_repl,
+	callback = function(ev)
+		autocmd({ "BufEnter" }, {
+			callback = function(ev)
+				if fn.winnr("$") < 2 then
+					vim.cmd.quit({
+						bang = true,
+						mods = { silent = true },
+					})
+				end
+			end,
+			buffer = ev.buf,
+			nested = true,
+		})
+	end,
+})
+
 -- }}}
 
 -- LANG {{{2

@@ -300,6 +300,7 @@ require("lazy").setup(
 			cmd = {
 				"DapContinue",
 				"DapToggleBreakpoint",
+				"DapStart",
 			},
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
