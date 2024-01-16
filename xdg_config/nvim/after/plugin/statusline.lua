@@ -70,7 +70,7 @@ local mode_colors = {
 	ModeUNKNOWN = colors.gray,
 }
 for k, v in pairs(mode_colors) do
-	api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = status_line_bg })
+	api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = status_line_bg, bold = true })
 end
 
 --- Current mode.

@@ -82,7 +82,6 @@ local enable_winbar = function(buf, win)
 
 	return not api.nvim_win_get_config(win).zindex
 end
-
 -- }}}
 
 -- Plugins {{{1
@@ -351,11 +350,6 @@ require("lazy").setup(
 			"JoosepAlviste/nvim-ts-context-commentstring",
 			event = "VeryLazy",
 		},
-		{
-			"IndianBoy42/tree-sitter-just",
-			ft = "just",
-			opts = {},
-		},
 		-- }}}
 
 		-- Diagnostics {{{2
@@ -367,7 +361,12 @@ require("lazy").setup(
 				autocmd("FileType", {
 					pattern = vim.tbl_keys(linters_by_ft),
 					callback = function(ev)
-						autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+						autocmd({
+							"BufWritePost",
+							"BufReadPost",
+							"InsertLeave",
+							"TextChanged",
+						}, {
 							callback = function()
 								require("lint").try_lint()
 							end,
@@ -494,8 +493,8 @@ require("lazy").setup(
 						highlight = "", -- Highlight surrounding
 						update_n_lines = "", -- Update `n_lines`
 
-						suffix_last = "", -- Suffix to search with "prev" method
-						suffix_next = "", -- Suffix to search with "next" method
+						suffix_last = "p", -- Suffix to search with "prev" method
+						suffix_next = "n", -- Suffix to search with "next" method
 					},
 					custom_textobjects = {
 						f = ts_input({ outer = "@call.outer", inner = "@call.inner" }),
@@ -680,7 +679,7 @@ require("lazy").setup(
 				create_command(self.cmd[1], function(args)
 					local range = nil
 					if args.count ~= -1 then
-						local end_line = vim.api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
+						local end_line = api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
 						range = {
 							start = { args.line1, 0 },
 							["end"] = { args.line2, end_line:len() },
@@ -869,7 +868,11 @@ require("lazy").setup(
 		},
 		{
 			"rcarriga/cmp-dap",
-			ft = { "dap-repl", "dapui_watches", "dapui_hover" },
+			ft = {
+				"dap-repl",
+				"dapui_watches",
+				"dapui_hover",
+			},
 			config = function(self, opts)
 				require("cmp_git").setup(opts)
 
@@ -991,8 +994,6 @@ require("lazy").setup(
 				set_cmds({
 					GUndoLastCommit = [[:G reset --soft HEAD~]],
 					GDiscardChanges = [[:G reset --hard]],
-				})
-				set_cmds({
 					Gdiffsplit3 = function(t)
 						vim.cmd([[ tabnew % ]])
 						-- The windows layout:
@@ -1167,7 +1168,7 @@ require("lazy").setup(
 		},
 		{
 			"akinsho/git-conflict.nvim",
-			enabled = true,
+			enabled = false,
 			event = "VeryLazy",
 			config = function()
 				---@diagnostic disable-next-line: missing-fields
@@ -1269,8 +1270,8 @@ require("lazy").setup(
 
 					map_select("<Leader>vr", "Select recent (all)", true, 1)
 					map_select("<Leader>vR", "Select recent (cwd)", false, 1)
-					map_select("<Leader>vy", "Select frecent (all)", true, 0.5)
-					map_select("<Leader>vY", "Select frecent (cwd)", false, 0.5)
+					-- map_select("<Leader>vy", "Select frecent (all)", true, 0.5)
+					-- map_select("<Leader>vY", "Select frecent (cwd)", false, 0.5)
 					map_select("<Leader>vf", "Select frequent (all)", true, 0)
 					map_select("<Leader>vF", "Select frequent (cwd)", false, 0)
 				end
@@ -1288,7 +1289,7 @@ require("lazy").setup(
 						local win_id = args.data.win_id
 						-- Customize window-local settings
 						-- vim.wo[win_id].winblend = 50
-						vim.api.nvim_win_set_config(win_id, { border = config.borders })
+						api.nvim_win_set_config(win_id, { border = config.borders })
 					end,
 				})
 
@@ -1343,7 +1344,7 @@ require("lazy").setup(
 					function()
 						local MiniFiles = require("mini.files")
 						if not MiniFiles.close() then
-							local bufname = vim.api.nvim_buf_get_name(0)
+							local bufname = api.nvim_buf_get_name(0)
 							local path = vim.fn.fnamemodify(bufname, ":p")
 							-- Open last if the buffer isn't valid.
 							---@diagnostic disable-next-line: undefined-field
@@ -1415,34 +1416,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"hedyhli/outline.nvim",
-			enabled = false,
-			keys = {
-				{ "<leader>tt", "<cmd>Outline<CR>", desc = "Toggle Outline" },
-			},
-			cmd = { "Outline" },
-			opts = {
-				outline_window = {
-					-- Where to open the split window: right/left
-					position = "left",
-				},
-				keymaps = {
-					show_help = "g?",
-					fold = "zc",
-					unfold = "zo",
-					fold_toggle = "za",
-					fold_all = "zM",
-					unfold_all = "zR",
-					fold_toggle_all = "zA",
-				},
-			},
-			config = function(self, opts)
-				require("outline").setup(vim.tbl_extend("force", opts, {
-					symbols = { icons = config.icons.symbol_kinds },
-				}))
-			end,
-		},
-		{
 			"tpope/vim-projectionist",
 			init = function(self)
 				vim.g.projectionist_heuristics = {
@@ -1478,6 +1451,16 @@ require("lazy").setup(
 				-- 	pattern = "ProjectionistDetect",
 				-- 	callback = function(ev)
 				-- 		vim.notify("[Projections] detect!", vim.log.levels.INFO)
+				-- 		vim.print(vim.g.projectionist_file)
+				-- 	end,
+				-- })
+
+				-- autocmd("User", {
+				-- 	pattern = "ProjectionistActivate",
+				-- 	callback = function(ev)
+				-- 		-- property can be defined
+				-- 		-- [root, property_value]
+				-- 		vim.fn["projectionist#query"]("property")
 				-- 	end,
 				-- })
 			end,
@@ -1998,32 +1981,6 @@ setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 -- setmap("n", "[l", ":lprev<cr>")
 -- setmap("n", "]l", ":lnext<cr>")
 
--- Toggle the quickfix/loclist window. {{{3
--- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
-local silent_mods = { mods = { silent = true, emsg_silent = true } }
-keymap.set("n", "<leader>xq", function()
-	if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
-		vim.cmd.cclose(silent_mods)
-	elseif #vim.fn.getqflist() > 0 then
-		local win = vim.api.nvim_get_current_win()
-		vim.cmd.copen(silent_mods)
-		if win ~= vim.api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
-	end
-end, { desc = "Toggle quickfix list" })
-keymap.set("n", "<leader>xl", function()
-	if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
-		vim.cmd.lclose(silent_mods)
-	elseif #vim.fn.getloclist(0) > 0 then
-		local win = vim.api.nvim_get_current_win()
-		vim.cmd.lopen(silent_mods)
-		if win ~= vim.api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
-	end
-end, { desc = "Toggle location list" })
--- }}}
 -- }}}
 
 -- Buffers {{{
@@ -2066,19 +2023,6 @@ setmap("s", "<BS>", [[<C-O>"_s]])
 
 -- Cmds {{{1
 require("liu.utils.term").setup_cmd()
--- create_command("Scratch", function()
--- 	vim.cmd("bel 10new")
--- 	local buf = vim.api.nvim_get_current_buf()
--- 	for name, value in pairs({
--- 		filetype = "scratch",
--- 		buftype = "nofile",
--- 		bufhidden = "hide",
--- 		swapfile = false,
--- 		modifiable = true,
--- 	}) do
--- 		vim.api.nvim_set_option_value(name, value, { buf = buf })
--- 	end
--- end, { desc = "Open a scratch buffer", nargs = 0 })
 
 create_command("FindAndReplace", function(opts)
 	if #opts.fargs ~= 2 then
@@ -2109,7 +2053,6 @@ end, {
 	nargs = "*",
 	desc = "Save the Output of Vim Command To a Empty Buffer",
 })
-
 -- }}}
 
 -- Autocmds {{{1
@@ -2142,11 +2085,6 @@ autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 	desc = "Update file when there are changes",
 })
 
--- autocmd("BufWritePre", {
--- 	command = "%s/\\s\\+$//e",
--- 	desc = "Trim Trailing",
--- })
-
 autocmd("ModeChanged", {
 	group = user_augroup("switch_highlight_when_searching"),
 	pattern = { "*:c", "c:*" },
@@ -2161,29 +2099,12 @@ autocmd("ModeChanged", {
 	desc = "Highlighting matched words when searching",
 })
 
--- autocmd("ModeChanged", {
--- 	group = user_augroup("save_when_from_insert_to_normal_mode"),
--- 	pattern = { "i:n" },
--- 	callback = function(ev)
--- 		local buf = ev.buf
--- 		-- valid file and be modified
--- 		if #api.nvim_buf_get_name(buf) > 0 and vim.bo[buf].modified then
--- 			vim.api.nvim_buf_call(buf, function()
--- 				vim.cmd.write()
--- 			end)
--- 		end
--- 	end,
--- 	desc = "Save when from insert to normal mode",
--- })
-
 autocmd("BufWinEnter", {
 	group = user_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
 	callback = function(ev)
 		if vim.o.filetype == "help" then
 			vim.cmd.wincmd("L")
-
-			keymap.set("n", "<leader>tt", ":wincmd T<CR>", { buffer = ev.buf })
 		end
 	end,
 	desc = "Open help file in right split",
@@ -2221,7 +2142,7 @@ autocmd("OptionSet", {
 	group = user_augroup("option_set_wrap"),
 	pattern = "wrap",
 	callback = function(ev)
-		local buffer = vim.api.nvim_get_current_buf()
+		local buffer = api.nvim_get_current_buf()
 		if vim.v.option_new then
 			keymap.set("n", "j", "gj", { buffer = buffer })
 			keymap.set("n", "k", "gk")
@@ -2281,8 +2202,10 @@ keymap.set("n", "<leader>td", function()
 	vim.g.disgnostic_sign_disable = not vim.g.disgnostic_sign_disable
 	diagnostic.config(opts)
 end)
+
 keymap.set("n", "<leader>dp", diagnostic.open_float)
--- keymap.set("n", "<leader>dq", diagnostic.setloclist)
+keymap.set("n", "<leader>dq", diagnostic.setqflist)
+keymap.set("n", "<leader>dl", diagnostic.setloclist)
 local diagnostic_goto = function(next, severity)
 	local go = next and diagnostic.goto_next or vim.diagnostic.goto_prev
 	severity = severity and diagnostic.severity[severity] or nil
@@ -2330,6 +2253,8 @@ autocmd("LspAttach", {
 	callback = function(args)
 		local bufnr = args.buf
 
+		local client = lsp.get_client_by_id(args.data.client_id)
+
 		vim.bo[bufnr].omnifunc = "v:lua.lsp.omnifunc"
 		-- vim.bo[bufnr].tagfunc = "v:lua.lsp.tagfunc"
 		-- vim.bo[bufnr].formatexpr = "v:lua.lsp.formatexpr(#{timeout_ms:250})"
@@ -2341,8 +2266,7 @@ autocmd("LspAttach", {
 			keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
 		end
 
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if client.supports_method("textDocument/rename") then
+		if client.supports_method(ms.textDocument_rename) then
 			nmap("<leader>rn", lsp.buf.rename, "[R]e[n]ame")
 		end
 
@@ -2448,7 +2372,7 @@ autocmd("LspAttach", {
 		if client and client.supports_method(ms.textDocument_documentHighlight) then
 			local bufnr = args.buf
 
-			local aug = api.nvim_create_augroup("liu_lsp_document_highlight", {
+			local aug = api.nvim_create_augroup("liu/lsp_document_highlight", {
 				clear = false,
 			})
 
@@ -2527,7 +2451,7 @@ handlers[ms.textDocument_rename] = function(...)
 			changed_files,
 			changed_files == 1 and "" or "s"
 		)
-		vim.notify(message)
+		vim.notify(message, vim.log.levels.INFO)
 	end
 	old_rename(...)
 	rename_notify(...)
