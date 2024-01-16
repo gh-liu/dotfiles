@@ -1167,7 +1167,7 @@ require("lazy").setup(
 		},
 		{
 			"akinsho/git-conflict.nvim",
-			enabled = true,
+			enabled = false,
 			event = "VeryLazy",
 			config = function()
 				---@diagnostic disable-next-line: missing-fields
@@ -1998,32 +1998,6 @@ setmap("n", "<leader>cc", "<cmd>try | cclose | lclose | catch | endtry <cr>")
 -- setmap("n", "[l", ":lprev<cr>")
 -- setmap("n", "]l", ":lnext<cr>")
 
--- Toggle the quickfix/loclist window. {{{3
--- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
-local silent_mods = { mods = { silent = true, emsg_silent = true } }
-keymap.set("n", "<leader>xq", function()
-	if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
-		vim.cmd.cclose(silent_mods)
-	elseif #vim.fn.getqflist() > 0 then
-		local win = vim.api.nvim_get_current_win()
-		vim.cmd.copen(silent_mods)
-		if win ~= vim.api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
-	end
-end, { desc = "Toggle quickfix list" })
-keymap.set("n", "<leader>xl", function()
-	if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
-		vim.cmd.lclose(silent_mods)
-	elseif #vim.fn.getloclist(0) > 0 then
-		local win = vim.api.nvim_get_current_win()
-		vim.cmd.lopen(silent_mods)
-		if win ~= vim.api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
-	end
-end, { desc = "Toggle location list" })
--- }}}
 -- }}}
 
 -- Buffers {{{
