@@ -67,8 +67,8 @@ do
 		local mod = "pedit"
 		go_to(bufnr, mod, lnum, col)
 	end
-	local function edit_go_to(bufnr, lnum, col)
-		local mod = "edit"
+	local function drop_go_to(bufnr, lnum, col)
+		local mod = "drop"
 		go_to(bufnr, mod, lnum, col)
 	end
 
@@ -128,7 +128,7 @@ do
 		local item = items[line]
 		vim.schedule(function()
 			call_in_the_last_accessed_win(function()
-				edit_go_to(item.bufnr, item.lnum, item.col)
+				drop_go_to(item.bufnr, item.lnum, item.col)
 			end)
 		end)
 	end, "open entry and come back")
@@ -137,7 +137,7 @@ do
 		local item = items[line]
 		vim.schedule(function()
 			call_in_the_last_accessed_win(function()
-				edit_go_to(item.bufnr, item.lnum, item.col)
+				drop_go_to(item.bufnr, item.lnum, item.col)
 			end)
 
 			if vim.b.qf_is_loclist == 1 then
