@@ -379,6 +379,10 @@ function M.preview_window()
 	end
 end
 
+function M.windown_maximize_status()
+	return vim.t.maximized and " " or ""
+end
+
 --- Renders the statusline.
 ---@return string
 function M.render()
@@ -443,6 +447,7 @@ function M.render()
 		concat_components({
 			M.mode_component(),
 			M.preview_window(),
+			M.windown_maximize_status(),
 			M.work_dir_component(),
 			M.file_name_component(),
 			M.git_component(),

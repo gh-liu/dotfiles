@@ -1474,17 +1474,29 @@ require("lazy").setup(
 
 		-- UI Improvements {{{2
 		{
-			"szw/vim-maximizer",
-			cmd = "MaximizerToggle",
+			"declancm/maximize.nvim",
 			keys = {
 				{
 					"<leader>wm",
 					function()
-						vim.cmd.MaximizerToggle()
+						require("maximize").toggle()
 					end,
 				},
 			},
+			opts = { default_keymaps = false },
 		},
+		-- {
+		-- 	"szw/vim-maximizer",
+		-- 	cmd = "MaximizerToggle",
+		-- 	keys = {
+		-- 		{
+		-- 			"<leader>wm",
+		-- 			function()
+		-- 				vim.cmd.MaximizerToggle()
+		-- 			end,
+		-- 		},
+		-- 	},
+		-- },
 		{
 			"simeji/winresizer",
 			init = function(self)
