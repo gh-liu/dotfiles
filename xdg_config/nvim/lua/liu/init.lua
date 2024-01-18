@@ -1342,9 +1342,20 @@ require("lazy").setup(
 		},
 		{
 			"tpope/vim-projectionist",
+			lazy = true,
+			-- event = "VeryLazy",
 			init = function(self)
+				local cwd = vim.uv.cwd()
+				if fn.filereadable(cwd .. "/.projections.json") == 1 then
+					require("lazy").load({ plugins = { "vim-projectionist" } })
+				end
+
+				-- ft will load plugin
 				vim.g.projectionist_heuristics = {
 					["go.mod"] = {
+						["go.mod"] = {
+							type = "dep",
+						},
 						["*.go"] = {
 							alternate = "{}_test.go",
 							type = "source",
@@ -1370,6 +1381,20 @@ require("lazy").setup(
 							make = "go build {file|dirname}",
 						},
 					},
+					["build.zig"] = {
+						["build.zig"] = {
+							type = "build",
+							alternate = "build.zig.zon",
+						},
+						["build.zig.zon"] = {
+							type = "dep",
+							alternate = "build.zig",
+						},
+						["src/main.zig"] = {
+							type = "main",
+							template = [[pub fn main() !void {|open}{|close}]],
+						},
+					},
 				}
 
 				-- autocmd("User", {
@@ -1389,7 +1414,10 @@ require("lazy").setup(
 				-- 	end,
 				-- })
 			end,
-			ft = { "go" },
+			ft = {
+				"go",
+				"zig",
+			},
 			keys = {
 				{ "<leader>aa", "<cmd>A<cr>" },
 				{ "<leader>av", "<cmd>AV<cr>" },
