@@ -38,6 +38,9 @@ require("telescope").setup({
 				["<C-/>"] = actions.which_key,
 				["<C-_>"] = actions.which_key, -- keys from pressing <C-/>
 
+				["<C-w>"] = { "<c-s-w>", type = "command" },
+				["<C-r><C-w>"] = actions.insert_original_cword,
+
 				["<C-j>"] = actions.cycle_history_next,
 				["<C-k>"] = actions.cycle_history_prev,
 			},
