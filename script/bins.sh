@@ -6,41 +6,44 @@ function git_clone_or_update() {
 	)
 }
 
-function update_luals() {
-	echo "========================================BEGIN"
-	url="https://api.github.com/repos/LuaLS/lua-language-server/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	echo "Installing luals-$version..."
+function update_tmux() {
+	# echo "========================================"
+	# PWD=$(pwd)
 
-	[ -d $HOME/tools/luals ] && mv $HOME/tools/luals $HOME/tools/luals$(date +%s)
-	mkdir -p $HOME/tools/luals
-	cd $HOME/tools/luals
+	# url="https://api.github.com/repos/tmux/tmux/tags"
+	# version=$(curl -s $url | jq -r '.[0].name')
+	# echo "Installing tmux-$version..."
 
-	pkg="lua-language-server-$version-linux-x64.tar.gz"
-	wget https://github.com/LuaLS/lua-language-server/releases/download/$version/$pkg -q --show-progres
-	test $? -eq 1 && echo "fial to download" && return
+	# mkdir $LIU_TOOLS/tmux && cd $LIU_TOOLS/tmux
+	# wget https://github.com/tmux/tmux/releases/download/$version/tmux-$version.tar.gz
+	# test $? -eq 1 && echo "fial to download tmux" && return
 
-	tar -zxvf ./$pkg
-	ln -svf $(pwd)/bin/lua-language-server $HOME/.local/bin/lua-language-server
-	echo "========================================END"
+	# tar -zxvf ./tmux-$version.tar.gz
+	# cd ./tmux-$version
+	# ./configure
+	# make && sudo make install
+
+	# mkdir -p $HOME/.local/bin
+	# ln -svf $(pwd)/tmux $HOME/.local/bin/tmux
+
+	# cd $PWD
+	# echo "========================================"
+
+	echo "========================================"
+	echo "Installing tpm..."
+	mkdir -p $XDG_CONFIG_HOME/tmux/plugins/tpm
+	git_clone_or_update https://github.com/tmux-plugins/tpm $XDG_CONFIG_HOME/tmux/plugins/tpm
+	echo "========================================"
 }
 
-function update_codelldb() {
+function nvim_nightly() {
+	sudo apt-get install ninja-build gettext cmake unzip curl
 	echo "========================================BEGIN"
-	url="https://api.github.com/repos/vadimcn/codelldb/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	echo "Installing codelldb-$version..."
-
-	[ -d $HOME/tools/codelldb ] && rm -rf $HOME/tools/codelldb 
-	mkdir -p $HOME/tools/codelldb
-	cd $HOME/tools/codelldb
-
-	pkg="codelldb-x86_64-linux.vsix"
-	wget https://github.com/vadimcn/codelldb/releases/download/$version/$pkg -q --show-progres
-	test $? -eq 1 && echo "fial to download" && return
-
-	unzip $pkg
-
+	mkdir -p $LIU_TOOLS/nvim
+	git_clone_or_update https://github.com/neovim/neovim $LIU_TOOLS/nvim
+	cd $LIU_TOOLS/nvim
+	make CMAKE_BUILD_TYPE=Release
+	sudo make install
 	echo "========================================END"
 }
 
@@ -50,9 +53,9 @@ function update_marksman() {
 	version=$(curl -s $url | jq -r '.[0].name')
 	echo "Installing marksman-$version..."
 
-	[ -d $HOME/tools/marksman ] && mv $HOME/tools/marksman $HOME/tools/marksman$(date +%s)
-	mkdir -p $HOME/tools/marksman
-	cd $HOME/tools/marksman
+	[ -d $LIU_TOOLS/marksman ] && mv $LIU_TOOLS/marksman $LIU_TOOLS/marksman$(date +%s)
+	mkdir -p $LIU_TOOLS/marksman
+	cd $LIU_TOOLS/marksman
 
 	wget https://github.com/artempyanykh/marksman/releases/download/$version/marksman-linux-x64 -q --show-progres
 	test $? -eq 1 && echo "fial to download" && return
@@ -87,33 +90,6 @@ function update_wrk() {
 
 	mkdir -p $HOME/.local/bin
 	ln -svf $LIU_TOOLS/wrk/wrk $HOME/.local/bin/wrk
-
-	cd $PWD
-	echo "========================================"
-}
-
-function update_tmux() {
-	echo "========================================"
-	PWD=$(pwd)
-
-	url="https://api.github.com/repos/LuaLS/lua-language-server/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	echo "Installing tmux-$version..."
-
-	mkdir $LIU_TOOLS/tmux && cd $LIU_TOOLS/tmux
-	wget https://github.com/tmux/tmux/releases/download/$version/tmux-$version.tar.gz
-	test $? -eq 1 && echo "fial to download tmux" && return
-
-	tar -zxvf ./tmux-3.3a.tar.gz
-	cd ./tmux-3.3a
-	./configure
-	make && sudo make install
-
-	mkdir -p $HOME/.local/bin
-	ln -svf $(pwd)/tmux $HOME/.local/bin/tmux
-
-	# mkdir -p $XDG_CONFIG_HOME/tmux/plugins/tpm
-	# git_clone_or_update https://github.com/tmux-plugins/tpm $XDG_CONFIG_HOME/tmux/plugins/tpm
 
 	cd $PWD
 	echo "========================================"
@@ -181,9 +157,9 @@ function update_protobuf() {
 	version="${version:1}"
 	echo "Installing protobuf-$version..."
 
-	[ -d $HOME/tools/protobuf ] && mv $HOME/tools/protobuf $HOME/tools/protobuf$(date +%s)
-	mkdir -p $HOME/tools/protobuf
-	cd $HOME/tools/protobuf
+	[ -d $LIU_TOOLS/protobuf ] && mv $LIU_TOOLS/protobuf $LIU_TOOLS/protobuf$(date +%s)
+	mkdir -p $LIU_TOOLS/protobuf
+	cd $LIU_TOOLS/protobuf
 
 	pkg="protoc-$version-linux-x86_64.zip"
 	wget https://github.com/protocolbuffers/protobuf/releases/download/v$version/$pkg -q --show-progres
@@ -213,23 +189,20 @@ install_docker() {
 }
 
 case $1 in
-"luals")
-	update_luals
+"tmux")
+	update_tmux
+	;;
+"nvim_nightly")
+	nvim_nightly
 	;;
 "mdls")
 	update_marksman
-	;;
-"tmux")
-	update_tmux
 	;;
 "wrk")
 	update_wrk
 	;;
 "fzf")
 	update_fzf
-	;;
-"codelldb")
-	update_codelldb
 	;;
 *)
 	bins
