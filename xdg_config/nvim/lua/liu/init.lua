@@ -220,6 +220,7 @@ require("lazy").setup(
 		},
 		{
 			"Wansmer/symbol-usage.nvim",
+			enabled = false,
 			event = "LspAttach",
 			opts = {
 				hl = { link = "LspInlayHint" },
@@ -1427,18 +1428,6 @@ require("lazy").setup(
 
 		-- UI Improvements {{{2
 		{
-			"szw/vim-maximizer",
-			cmd = "MaximizerToggle",
-			keys = {
-				{
-					"<leader>wm",
-					function()
-						vim.cmd.MaximizerToggle()
-					end,
-				},
-			},
-		},
-		{
 			"simeji/winresizer",
 			init = function(self)
 				-- disable the start key
@@ -1619,6 +1608,7 @@ require("lazy").setup(
 		},
 		{
 			"jbyuki/venn.nvim",
+			enabled = false,
 			lazy = true,
 			cmd = {
 				"VBox",
