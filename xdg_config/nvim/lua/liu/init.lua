@@ -188,6 +188,26 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
+		{
+			"mvllow/modes.nvim",
+			event = "VeryLazy",
+			opts = {
+				colors = {
+					copy = config.colors.yellow,
+					delete = config.colors.red,
+					insert = config.colors.green,
+					visual = config.colors.blue,
+				},
+				line_opacity = 0.2,
+				ignore_filetypes = {
+					"TelescopePrompt",
+					"TelescopeResults",
+				},
+				set_cursor = true,
+				set_cursorline = false,
+				set_number = false,
+			},
+		},
 		--}}}
 
 		-- LSPs {{{2
