@@ -593,39 +593,49 @@ require("lazy").setup(
 			keys = {
 				{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "x" } },
 				{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "x" } },
-				{ "g<C-a>", "g<Plug>(dial-increment)", mode = "x" },
-				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = "x" },
+				{ "g<C-a>", "g<Plug>(dial-increment)", mode = { "n", "x" } },
+				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = { "n", "x" } },
 			},
 			config = function()
-				local augend = require("dial.augend")
 				local config = require("dial.config")
+				local augend = require("dial.augend")
 
-				local operators = augend.constant.new({
-					elements = { "&&", "||" },
-					word = false,
-					cyclic = true,
-				})
+				local default = {
+					augend.constant.alias.bool,
+					augend.integer.alias.hex,
+					augend.integer.alias.decimal,
+					-- augend.date.new({ pattern = "%Y/%m/%d", default_kind = "day" }),
+					-- augend.date.new({ pattern = "%Y-%m-%d", default_kind = "day" }),
+					-- augend.paren.alias.brackets,
+				}
 
 				config.augends:register_group({
-					default = {
-						augend.integer.alias.hex,
-						augend.integer.alias.decimal,
-						augend.constant.alias.bool,
-						augend.date.alias["%Y/%m/%d"],
-					},
+					default = default,
 				})
 
 				config.augends:on_filetype({
-					go = {
-						augend.integer.alias.decimal,
-						augend.integer.alias.hex,
-						augend.constant.alias.bool,
-						operators,
-					},
-					toml = {
-						augend.integer.alias.decimal,
+					go = vim.list_extend({
+						augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }),
+						-- camelCase for private, PascalCase for public.
+						augend.case.new({ types = { "camelCase", "PascalCase" }, cyclic = true }),
+					}, default),
+					lua = vim.list_extend({
+						augend.paren.alias.lua_str_literal,
+						augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
+					}, default),
+					rust = vim.list_extend({
+						augend.paren.alias.rust_str_literal,
+					}, default),
+					zig = vim.list_extend({
+						-- camelCase for function, snake_case for variable, PascalCase for type.
+						augend.case.new({ types = { "camelCase", "snake_case", "PascalCase" }, cyclic = true }),
+					}, default),
+					toml = vim.list_extend({
 						augend.semver.alias.semver,
-					},
+					}, default),
+					markdown = vim.list_extend({
+						augend.misc.alias.markdown_header,
+					}, default),
 				})
 			end,
 		},
