@@ -998,6 +998,8 @@ require("lazy").setup(
 						local buf = ev.buf
 						-- like fugitive
 						keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
+
+						keymap.set("n", "q", ":normal gq<cr>", { buffer = buf, silent = true })
 					end,
 				})
 			end,

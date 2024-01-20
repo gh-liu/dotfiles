@@ -10,14 +10,17 @@ local fugitivebuf = -1
 local exit = function()
 	api.nvim_buf_delete(fugitivebuf, { force = true })
 end
-keymap.set("n", "<leader>gg", function()
+local toggle_fugitive = function()
 	if fugitivebuf > 0 then
 		exit()
 		fugitivebuf = -1
 	else
 		vim.cmd.G({ mods = { keepalt = true } })
 	end
-end, { silent = true })
+end
+
+keymap.set("n", "<leader>gg", toggle_fugitive, { silent = true })
+keymap.set("n", "g<space>", toggle_fugitive, { silent = true })
 
 autocmd("User", {
 	group = g,
@@ -66,9 +69,6 @@ set_cmds({
 	end,
 })
 
-local diff_buffer = -1
-local diff_get2 = "<c-h>"
-local diff_get3 = "<c-l>"
 set_cmds({
 	GdiffToggle = function(opt)
 		if vim.o.diff then
@@ -78,14 +78,28 @@ set_cmds({
 					api.nvim_buf_delete(bufnr, { force = true })
 				end
 			end
-			keymap.del("n", diff_get2, { buffer = diff_buffer })
-			keymap.del("n", diff_get3, { buffer = diff_buffer })
-			diff_buffer = -1
 		else
 			vim.cmd("Gvdiffsplit!")
-			diff_buffer = api.nvim_get_current_buf()
-			keymap.set("n", diff_get2, ":diffget //2<cr>", { buffer = diff_buffer })
-			keymap.set("n", diff_get3, ":diffget //3<cr>", { buffer = diff_buffer })
+
+			local diff_get2 = "<c-h>"
+			local diff_get3 = "<c-l>"
+			local opts = { buffer = api.nvim_get_current_buf() }
+			keymap.set("n", diff_get2, ":diffget //2<cr>", opts)
+			keymap.set("n", diff_get3, ":diffget //3<cr>", opts)
+
+			autocmd("OptionSet", {
+				group = augroup("liu/option_set_diff", { clear = true }),
+				pattern = "diff",
+				callback = function(ev)
+					if vim.v.option_old then
+						-- print("off")
+						pcall(keymap.del, "n", diff_get2, opts)
+						pcall(keymap.del, "n", diff_get3, opts)
+					end
+				end,
+				once = true,
+				desc = "OptionSetDiff",
+			})
 		end
 	end,
 })

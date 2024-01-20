@@ -1,6 +1,7 @@
 local api = vim.api
 local keymap = vim.keymap
 
+local builtin = require("telescope.builtin")
 local actions = require("telescope.actions")
 
 local borders = config.borders
@@ -118,8 +119,6 @@ require("telescope").setup({
 
 -- keymaps
 do
-	local builtin = require("telescope.builtin")
-
 	keymap.set("n", "<leader>so", builtin.oldfiles, { desc = "[S]earch recently [O]pened files" })
 	keymap.set("n", "<leader>sb", builtin.buffers, { desc = "[S]earch existing [B]uffers" })
 	keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [F]iles" })
@@ -185,6 +184,20 @@ do
 			-- map("gO", builtin.lsp_outgoing_calls, "[G]oto [O]utgoingCalls") -- this function as caller
 		end,
 	})
+end
+
+-- commands
+do
+	local cmds = {
+		GBufferCommits = "git_bcommits",
+		GBranches = "git_branches",
+		GStash = "git_stash",
+	}
+	for cmd, fn in pairs(cmds) do
+		api.nvim_create_user_command(cmd, function(opts)
+			builtin[fn]()
+		end, { nargs = 0, desc = "telescope " .. fn })
+	end
 end
 
 set_hls({ TelescopeBorder = { link = "FloatBorder" } })
