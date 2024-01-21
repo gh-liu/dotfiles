@@ -378,10 +378,13 @@ require("lazy").setup(
 			"mfussenegger/nvim-lint",
 			lazy = true,
 			init = function(self)
+				local DEBOUNCE_MS = 500
+
 				local linters_by_ft = self.opts.linters_by_ft
 				autocmd("FileType", {
 					pattern = vim.tbl_keys(linters_by_ft),
 					callback = function(ev)
+						local bufnr = ev.buf
 						autocmd({
 							"BufWritePost",
 							"BufReadPost",
@@ -389,9 +392,24 @@ require("lazy").setup(
 							"TextChanged",
 						}, {
 							callback = function()
-								require("lint").try_lint()
+								-- require("lint").try_lint()
+
+								-- local bufnr = api.nvim_get_current_buf()
+								local timer = assert(vim.uv.new_timer())
+								timer:stop()
+								timer:start(
+									DEBOUNCE_MS,
+									0,
+									vim.schedule_wrap(function()
+										if api.nvim_buf_is_valid(bufnr) then
+											api.nvim_buf_call(bufnr, function()
+												require("lint").try_lint()
+											end)
+										end
+									end)
+								)
 							end,
-							buffer = ev.buf,
+							buffer = bufnr,
 						})
 					end,
 					desc = "setup nvim-lint",
