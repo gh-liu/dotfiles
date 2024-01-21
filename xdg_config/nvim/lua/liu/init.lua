@@ -45,27 +45,30 @@ local user_augroup = function(group_name)
 	return augroup("liu_" .. group_name, { clear = true })
 end
 
+---@type fun(buf: integer, fts: table): boolean
+local is_special_buffer = function(buf, fts)
+	local ft = vim.bo[buf].filetype
+	local opts = { buf = buf }
+	return api.nvim_get_option_value("buftype", opts) ~= "" -- not a normal buffer
+		or not api.nvim_get_option_value("buflisted", opts) -- unlisted buffer
+		or vim.tbl_contains(fts or {}, ft)
+end
+
 ---@type fun(buf: integer, win: integer): boolean
 local enable_winbar = function(buf, win)
+	-- buffer local
+	if vim.b[buf].disable_winbar then
+		return false
+	end
+
 	if vim.wo[win].diff then
 		return false
 	end
 
-	-- special buftype
-	if vim.bo[buf].buftype ~= "" then
-		return false
-	end
-
-	-- special filetype
-	if vim.tbl_contains({
+	if is_special_buffer(buf, {
 		"",
 		"git",
-	}, vim.bo[buf].filetype) then
-		return false
-	end
-
-	-- buffer local
-	if vim.b[buf].disable_winbar then
+	}) then
 		return false
 	end
 
