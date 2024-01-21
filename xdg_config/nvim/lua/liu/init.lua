@@ -642,7 +642,7 @@ require("lazy").setup(
 		{
 			"tpope/vim-abolish",
 			init = function(self)
-				vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
+				vim.g.abolish_save_file = fn.stdpath("config") .. "/after/plugin/abolish.vim"
 			end,
 			keys = { "cr" },
 			cmd = { "Abolish", "Subvert", "S" },
@@ -1200,7 +1200,7 @@ require("lazy").setup(
 					local map_iterate_core = function(lhs, direction, desc)
 						local opts = { filter = default_lable_name, wrap = true }
 						local rhs = function()
-							vis.iterate_paths(direction, vim.fn.getcwd(), opts)
+							vis.iterate_paths(direction, fn.getcwd(), opts)
 						end
 						keymap.set("n", lhs, rhs, { desc = desc })
 					end
@@ -1217,7 +1217,7 @@ require("lazy").setup(
 						local sort = vis.gen_sort.default({ recency_weight = recency_weight })
 						local select_opts = { sort = sort }
 						return function()
-							local cwd = select_global and "" or vim.fn.getcwd()
+							local cwd = select_global and "" or fn.getcwd()
 							vis.select_path(cwd, select_opts)
 						end
 					end
@@ -1275,7 +1275,7 @@ require("lazy").setup(
 								end
 							end
 
-							local entry = MiniFiles.get_fs_entry(0, vim.fn.line("."))
+							local entry = MiniFiles.get_fs_entry(0, fn.line("."))
 							if entry.fs_type == "file" then
 								add(entry.path)
 							end
@@ -1288,7 +1288,7 @@ require("lazy").setup(
 					group = g,
 					callback = function(args)
 						local fname = args.data.from
-						local bufnr = vim.fn.bufnr(fname)
+						local bufnr = fn.bufnr(fname)
 						if bufnr > 0 then
 							-- delete buffer
 							require("bufdelete").bufdelete(bufnr, false)
@@ -1303,7 +1303,7 @@ require("lazy").setup(
 						local MiniFiles = require("mini.files")
 						if not MiniFiles.close() then
 							local bufname = api.nvim_buf_get_name(0)
-							local path = vim.fn.fnamemodify(bufname, ":p")
+							local path = fn.fnamemodify(bufname, ":p")
 							-- Open last if the buffer isn't valid.
 							---@diagnostic disable-next-line: undefined-field
 							if path and vim.uv.fs_stat(path) then
@@ -1443,7 +1443,7 @@ require("lazy").setup(
 				-- 	callback = function(ev)
 				-- 		-- property can be defined
 				-- 		-- [root, property_value]
-				-- 		vim.fn["projectionist#query"]("property")
+				-- 		fn["projectionist#query"]("property")
 				-- 	end,
 				-- })
 			end,
@@ -2014,7 +2014,7 @@ create_command("R", function(opts)
 	if #opts.fargs < 2 then
 		vim.print("Arguments required.")
 	end
-	local old = vim.fn.getreg("r")
+	local old = fn.getreg("r")
 
 	vim.cmd([[redir @r]])
 	local cmd = table.concat(opts.fargs, " ")
@@ -2023,7 +2023,7 @@ create_command("R", function(opts)
 
 	vim.cmd([[vertical new | normal "rp]])
 
-	vim.fn.setreg("r", old)
+	fn.setreg("r", old)
 end, {
 	nargs = "*",
 	desc = "Save the Output of Vim Command To a Empty Buffer",
@@ -2093,7 +2093,7 @@ autocmd({ "BufWritePre" }, {
 		end
 		---@diagnostic disable-next-line: undefined-field
 		local file = vim.uv.fs_realpath(event.match) or event.match
-		vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
+		fn.mkdir(fn.fnamemodify(file, ":p:h"), "p")
 	end,
 })
 
@@ -2347,7 +2347,7 @@ autocmd("LspAttach", {
 		if client and client.supports_method(ms.textDocument_documentHighlight) then
 			local bufnr = args.buf
 
-			local aug = api.nvim_create_augroup("liu/lsp_document_highlight", {
+			local aug = augroup("liu/lsp_document_highlight", {
 				clear = false,
 			})
 
