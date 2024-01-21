@@ -31,18 +31,7 @@ _G.set_hls = function(highlights)
 	end
 end
 
-local nvim_get_hl = api.nvim_get_hl
----@param highlight string
-_G.get_hl = function(highlight)
-	local hl = nvim_get_hl(0, { name = highlight })
-	local normal_hl = nvim_get_hl(0, { name = "Normal" }) -- fallback to normal
-	local bg = hl.bg or normal_hl.bg
-	local fg = hl.fg or normal_hl.fg
-	return {
-		bg = ("#%06x"):format(bg),
-		fg = ("#%06x"):format(fg),
-	}
-end
+_G.get_hl = require("liu.utils.color").get_hl_color
 
 ---@param cmds table
 _G.set_cmds = function(cmds)
