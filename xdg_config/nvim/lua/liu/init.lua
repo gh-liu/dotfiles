@@ -1997,6 +1997,27 @@ setmap("s", "<BS>", [[<C-O>"_s]])
 -- }}}
 
 -- Cmds {{{1
+create_command("EditFtplugin", function(opts)
+	local ft
+	if #opts.fargs == 1 then
+		ft = opts.fargs[1]
+	else
+		ft = vim.bo.ft
+	end
+	if ft == "" then
+		return
+	end
+
+	local path = string.format("%s/after/ftplugin/%s.lua", fn.stdpath("config"), ft)
+	vim.cmd.vsplit({ args = { path } })
+end, {
+	nargs = "?",
+	desc = "Edit after ftplugin",
+	complete = function()
+		return fn.getcompletion("", "filetype")
+	end,
+})
+
 require("liu.utils.term").setup_cmd()
 
 create_command("FindAndReplace", function(opts)
