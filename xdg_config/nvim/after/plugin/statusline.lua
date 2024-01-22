@@ -157,7 +157,7 @@ function M.work_dir_component()
 end
 
 function M.special_file_type_component()
-	return string.format("%%#%s#%s", M.get_or_create_hl("MoreMsg"), string.upper(vim.bo.filetype))
+	return string.format("%%#%s#%s", M.get_or_create_hl("ModeMsg"), string.upper(vim.bo.filetype))
 end
 
 function M.file_name_component()
@@ -211,7 +211,7 @@ function M.lsp_clients_component()
 	end
 	local clients = "[" .. table.concat(names, " ") .. "]"
 
-	return string.format("%%#%s#%s%s", M.get_or_create_hl("MoreMsg"), " ", clients)
+	return string.format("%%#%s#%s%s", M.get_or_create_hl("ModeMsg"), " ", clients)
 end
 
 --- Lsp progress status (if any).

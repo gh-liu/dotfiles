@@ -68,92 +68,126 @@ local c = M.colors
 -- Base on: src/nvim/highlight_group.c
 M.set_highlights = function()
 	local highlights = {
-		NONE = {},
-		Bold = { bold = true },
+		-- default groups {{{
 		Underlined = { underline = true, sp = c.gray }, -- text that stands out, HTML links
+		-------------------------------------
 
-		Constant = { fg = c.darkwhite }, -- any constant
-		Operator = { fg = c.lightblue }, -- "sizeof", "+", "*", etc.
-		PreProc = { fg = c.blue }, -- generic Preprocessor
-		Type = { fg = c.lightgreen }, -- int, long, char, etc.
-		Delimiter = { fg = c.lightblue }, -- character that needs attention like , or .
-
-		-- UI
-		NonText = { fg = c.brightgray, bold = true },
-		-- normal text
 		Normal = { bg = c.bg, fg = c.fg },
 		-- NormalNC = {}, -- not current window
 		NormalFloat = { link = "Normal" }, -- normal text in floating windows
-		-- cursor
-		Cursor = { fg = c.bg, bg = c.fg },
-		lCursor = { link = "Cursor" },
-		CursorLine = { bg = c.gray },
-		CursorLineNr = { fg = c.yellow },
-		-- CursorLineSign = { link = "SignColumn" },
-		-- CursorLineFold = { link = "FoldColumn" },
-		TermCursor = { fg = c.fg, bg = c.gray },
-		TermCursorNC = { fg = c.fg, bg = c.gray },
-		-- line nr
-		LineNr = { fg = c.gray },
-		-- LineNrAbove = { link = "LineNr" },
-		-- LineNrBelow = { link = "LineNr" },
-		-- column
-		SignColumn = { link = "Normal" },
-		CursorColumn = { link = "CursorLine" },
-		-- ColorColumn = {},
-		-- fold
-		Folded = { fg = c.brightgray, italic = true },
-		FoldColumn = { link = "NonText" },
+
+		-- // UI
+		NonText = { fg = c.brightgray, bold = true },
+		Conceal = { fg = c.gray },
+		-- Whitespace = { link = "NonText" },
+		-- EndOfBuffer = { link = "NonText" },
+
+		Added = { fg = c.green },
+		Changed = { fg = c.yellow },
+		Removed = { fg = c.red },
+		-- diff
+		DiffAdd = { fg = c.green, bg = c.gray },
+		DiffChange = { fg = c.yellow, bg = c.gray },
+		DiffDelete = { fg = c.red, bg = c.gray },
+		DiffText = { fg = c.blue, bg = c.gray },
+
+		-- float window
+		FloatBorder = { fg = c.blue },
+		-- FloatTitle = { link = "Title" },
+		-- FloatFooter = { link = "Title" },
+		FloatShadow = { fg = c.gray, blend = 80 },
+		FloatShadowThrough = { fg = c.gray, blend = 100 },
+
+		-- window bar
+		WinBar = { bold = true },
+		WinBarNC = { link = "WinBar" },
+		-- statusline
+		StatusLine = { fg = c.fg, bg = c.brightergray },
+		StatusLineNC = { fg = c.fg, bg = c.gray },
 		-- tabline
 		TabLine = { fg = c.brightergray, bg = c.gray },
 		TabLineSel = { fg = c.gray, bg = c.lightgreen },
 		TabLineFill = { fg = c.brightergray },
-		-- window bar
-		WinBar = { bold = true },
-		WinBarNC = { link = "WinBar" },
-		VertSplit = { fg = c.blue },
-		WinSeparator = { link = "VertSplit" },
-		-- statusline
-		StatusLine = { fg = c.fg, bg = c.brightergray },
-		StatusLineNC = { fg = c.fg, bg = c.gray },
+
+		-- cursor
+		Cursor = { fg = c.bg, bg = c.fg },
+		lCursor = { link = "Cursor" },
+		CursorLine = { bg = c.gray },
+		CursorLineNr = { fg = c.magenta },
+		-- CursorLineSign = { link = "SignColumn" },
+		-- CursorLineFold = { link = "FoldColumn" },
+		TermCursor = { fg = c.fg, bg = c.gray },
+		TermCursorNC = { fg = c.fg, bg = c.gray },
+
 		-- msg
 		ErrorMsg = { fg = c.red },
 		WarningMsg = { fg = c.yellow },
-		MoreMsg = { fg = c.green },
+		MoreMsg = { fg = c.orange },
 		ModeMsg = { fg = c.green, bold = true },
 		-- MsgArea = {},
 		-- MsgSeparator = { link = "WinSeparator" },
-		-- diff
-		DiffAdd = { fg = c.green, bg = c.gray }, -- diff mode: Added line
-		DiffChange = { fg = c.yellow, bg = c.gray }, --  diff mode: Changed line
-		DiffDelete = { fg = c.red, bg = c.gray }, -- diff mode: Deleted line
-		DiffText = { fg = c.blue, bg = c.gray }, -- diff mode: Changed text within a changed line
-		-- spell
-		SpellBad = { fg = c.red, italic = true, undercurl = true },
-		SpellCap = { fg = c.lightgreen, italic = true, undercurl = true },
-		SpellLocal = { fg = c.cyan, italic = true, undercurl = true },
-		SpellRare = { fg = c.lightgreen, italic = true, undercurl = true },
-		-- float windows
-		FloatBorder = { fg = c.blue },
-		-- FloatTitle = { link = "Title" },
-		-- FloatFooter = { link = "Title" },
-		-- FloatShadow = { fg = c.gray, blend = 80 },
-		-- FloatShadowThrough = { fg = c.gray, blend = 100 },
-		-- pmenu
-		Pmenu = { fg = c.blue, bg = c.bg },
-		PmenuSel = { fg = c.fg, bg = c.blue },
-		PmenuThumb = { fg = c.fg, bg = c.brightergray },
-		-- PmenuSbar = { fg = c.fg, bg = c.brightergray, bold = true },
+
+		-- fold
+		Folded = { fg = c.brightgray, italic = true },
+		FoldColumn = { link = "NonText" },
+
+		-- column
+		SignColumn = { link = "Normal" },
+		CursorColumn = { link = "CursorLine" },
+		-- ColorColumn = {},
+
+		-- line nr
+		LineNr = { fg = c.gray },
+		-- LineNrAbove = { link = "LineNr" },
+		-- LineNrBelow = { link = "LineNr" },
+
 		-- search & substitute
 		Search = { fg = c.white, bg = c.blue },
 		-- IncSearch = { link = "Search" },
 		CurSearch = { bg = c.yellow },
 		-- Substitute = { link = "Search" },
+
 		-- visual
 		Visual = { bg = c.brightgray },
 		VisualNOS = { bg = c.brightgray },
 
-		-- syntax(both)
+		-- pmenu
+		Pmenu = { fg = c.blue, bg = c.bg },
+		PmenuSel = { fg = c.fg, bg = c.blue },
+		PmenuThumb = { fg = c.fg, bg = c.brightergray },
+		-- PmenuSbar = { fg = c.fg, bg = c.brightergray, bold = true },
+
+		-- spell
+		SpellBad = { fg = c.red, undercurl = true },
+		SpellCap = { fg = c.lightgreen, undercurl = true },
+		SpellLocal = { fg = c.cyan, undercurl = true },
+		SpellRare = { fg = c.lightgreen, undercurl = true },
+
+		-- redraw debug
+		RedrawDebugNormal = { reverse = true },
+		RedrawDebugClear = { fg = c.yellow },
+		RedrawDebugComposed = { fg = c.green },
+		RedrawDebugRecompose = { fg = c.red },
+
+		-- misc
+		Question = { fg = c.green, bold = true },
+		QuickFixLine = { fg = c.darkwhite },
+
+		Title = { fg = c.magenta, bold = true },
+		WinSeparator = { fg = c.blue },
+		Todo = { fg = c.orange, bold = true, italic = true }, -- anything that needs extra attention; mostly the keywords TODO FIXME and XXX
+		SpecialKey = { fg = c.lightgreen },
+		MatchParen = { underline = true, italic = true, bold = true },
+		Directory = { fg = c.lightgreen }, -- directory names (and other special names in listings)
+		--
+
+		-- // Syntax
+		Constant = { fg = c.darkwhite }, -- any constant
+		Operator = { fg = c.lightblue }, -- "sizeof", "+", "*", etc.
+		PreProc = { fg = c.blue }, -- generic Preprocessor
+		Type = { fg = c.lightgreen }, -- int, long, char, etc.
+		Delimiter = { fg = c.lightblue }, -- character that needs attention like , or .
+		-------------------------------------
 		-- Character = { link = "Constant" },
 		Number = { fg = c.magenta },
 		Boolean = { fg = c.lightgreen },
@@ -170,61 +204,61 @@ M.set_highlights = function()
 		-- StorageClass = { link = "Type" }, -- static, register, volatile, etc.
 		-- Structure = { link = "Type" }, -- struct, union, enum, etc.
 		-- Typedef = { link = "Type" }, -- A typedef
-		Tag = { fg = c.lightgreen }, -- you can use CTRL-] on this
+		-- Tag = { link = "Special" }, -- you can use CTRL-] on this
 		-- SpecialChar = { link = "Special" }, -- special character in a constant
 		-- SpecialComment = { link = "Special" }, -- special character in a constant
 		Debug = { fg = c.orange }, -- debugging statements
-		Ignore = { fg = c.gray }, -- left blank, hidden
-		SnippetTabstop = { link = "Visual" }, -- left blank, hidden
-		Conceal = { fg = c.gray },
-		-- Whitespace = { link = "NonText" },
-		-- EndOfBuffer = { link = "NonText" },
-		-- redraw debug
-		RedrawDebugNormal = { reverse = true },
-		RedrawDebugClear = { fg = c.yellow },
-		RedrawDebugComposed = { fg = c.green },
-		RedrawDebugRecompose = { fg = c.red },
-		-- misc
-		Todo = { fg = c.orange, bold = true, italic = true }, -- anything that needs extra attention; mostly the keywords TODO FIXME and XXX
-		SpecialKey = { fg = c.lightgreen },
-		MatchParen = { underline = true, italic = true, bold = true },
-		Title = { fg = c.magenta, bold = true },
-		WildMenu = { fg = c.yellow, bold = true },
-		QuickFixLine = { fg = c.darkwhite },
-		Directory = { fg = c.lightgreen }, -- directory names (and other special names in listings)
-		Question = { fg = c.green, bold = true },
-
-		-- syntax(dark)
-		Comment = { fg = c.brightergray, italic = true }, -- italic comments
-		String = { fg = c.green },
+		Ignore = { fg = c.gray },
+		-- LspInlayHint = {link = "NonText"},
+		SnippetTabstop = { link = "Visual" },
+		-------------------------------------
 		Identifier = { fg = c.fg },
 		Function = { fg = c.cyan },
 		-- Statement = { bold = true },
 		Special = { fg = c.yellow },
 		Error = { underline = true, sp = c.red },
+		Comment = { fg = c.brightergray, italic = true }, -- italic comments
+		String = { fg = c.green },
+		-- }}}
 
-		-- Diagnostic
+		-- Diagnostic {{{
 		DiagnosticError = { fg = c.red },
-		DiagnosticWarn = { fg = c.orange },
+		DiagnosticWarn = { fg = c.blue },
 		DiagnosticInfo = { fg = c.cyan },
 		DiagnosticHint = { fg = c.blue },
 		DiagnosticOk = { fg = c.green },
+		DiagnosticDeprecated = { strikethrough = true, sp = c.red },
+		-- DiagnosticUnnecessary = { link = "Comment" },
 		DiagnosticUnderlineError = { underline = true, sp = c.red },
 		DiagnosticUnderlineWarn = { underline = true, sp = c.orange },
 		DiagnosticUnderlineInfo = { underline = true, sp = c.cyan },
 		DiagnosticUnderlineHint = { underline = true, sp = c.blue },
 		DiagnosticUnderlineOk = { underline = true, sp = c.green },
-		DiagnosticDeprecated = { strikethrough = true },
-		DiagnosticUnnecessary = { link = "Comment" },
+		-- DiagnosticFloatingError = { link = "DiagnosticError" },
+		-- DiagnosticFloatingHint = { link = "DiagnosticHint" },
+		-- DiagnosticFloatingInfo = { link = "DiagnosticInfo" },
+		-- DiagnosticFloatingOk = { link = "DiagnosticOk" },
+		-- DiagnosticFloatingWarn = { link = "DiagnosticWarn" },
+		-- DiagnosticSignError = { link = "DiagnosticError" },
+		-- DiagnosticSignHint = { link = "DiagnosticHint" },
+		-- DiagnosticSignInfo = { link = "DiagnosticInfo" },
+		-- DiagnosticSignOk = { link = "DiagnosticOk" },
+		-- DiagnosticSignWarn = { link = "DiagnosticWarn" },
+		-- DiagnosticVirtualTextError = { link = "DiagnosticError" },
+		-- DiagnosticVirtualTextHint = { link = "DiagnosticHint" },
+		-- DiagnosticVirtualTextInfo = { link = "DiagnosticInfo" },
+		-- DiagnosticVirtualTextOk = { link = "DiagnosticOk" },
+		-- DiagnosticVirtualTextWarn = { link = "DiagnosticWarn" },
+		-- }}}
 
-		-- LSP semantic tokens
-		-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
+		-- Lsp {{{
+		-- semantic-highlight{{{
 		-- :h lsp-semantic-highlight
+		-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
+		-- build in
 		["@lsp"] = {},
-		-- default
 		-- ["@lsp.type.class"] = { link = "Structure" },
 		-- ["@lsp.type.comment"] = { link = "Comment" },
-		["@lsp.type.comment"] = {},
 		-- ["@lsp.type.decorator"] = { link = "Function" },
 		-- ["@lsp.type.enum"] = { link = "Structure" },
 		-- ["@lsp.type.enumMember"] = { link = "Constant" },
@@ -233,35 +267,119 @@ M.set_highlights = function()
 		-- ["@lsp.type.macro"] = { link = "Macro" },
 		-- ["@lsp.type.method"] = { link = "Function" },
 		-- ["@lsp.type.namespace"] = { link = "Structure" },
-		["@lsp.type.namespace"] = { link = "Include" },
 		-- ["@lsp.type.parameter"] = { link = "Identifier" },
 		-- ["@lsp.type.property"] = { link = "Identifier" },
 		-- ["@lsp.type.struct"] = { link = "Structure" },
 		-- ["@lsp.type.type"] = { link = "Type" },
 		-- ["@lsp.type.typeParameter"] = { link = "Typedef" },
-		-- ["@lsp.type.variable"] = {}, -- don't highlight to reduce visual overload
+		-- ["@lsp.type.variable"] = {},
+
 		-- user defined
+		["@lsp.type.comment"] = {},
+		["@lsp.type.namespace"] = { link = "Include" },
 		["@lsp.type.keyword"] = { link = "Keyword" },
 		["@lsp.mod.deprecated"] = { link = "DiagnosticDeprecated" },
+		-- }}}
 
-		-- Lsp reference
+		-- lsp-highlight {{{
+		-- :h lsp-highlight
+		-- reference
 		LspReferenceText = { bg = c.brightgray, italic = true },
 		LspReferenceRead = { bg = c.brightgray, bold = true },
 		LspReferenceWrite = { bg = c.brightgray, italic = true, bold = true },
 
-		-- Lsp inlayhint
+		-- inlayhint
+		-- LspInlayHint = {link = "NonText"},
 		LspInlayHint = { fg = c.brightgray },
 
-		-- Lsp codelens
+		-- codelens
 		LspCodeLens = { fg = c.brightergray, bold = true, italic = true },
 		LspCodeLensSeparator = { link = "WinSeparator" },
 
-		-- Lsp signature active parameter
+		-- signature active parameter
 		LspSignatureActiveParameter = { fg = c.green, bold = true },
+		-- }}}
+		-- }}}
 
-		-- Treesitter
-		["@text.reference"] = { link = "LspReferenceText" },
+		-- Treesitter {{{
+		-- :h treesitter-highlight
+		-- build in
+		-- ["@variable"] = {},
+		-- ["@variable.builtin"] = { link = "Special" },
+		-- ["@variable.parameter"] = { link = "Identifier" },
+		-- ["@variable.member"] = { link = "Identifier" },
+		-- ["@constant"] = { link = "Constant" },
+		-- ["@constant.builtin"] = { link = "Special" },
+		-- ["@constant.macro"] = { link = "Define" },
+		-- ["@module"] = { link = "Structure" },
+		-- ["@label"] = { link = "Label" },
+		-- ["@string"] = { link = "String" },
+		-- ["@string.regexp"] = { link = "SpecialChar" },
+		-- ["@string.escape"] = { link = "SpecialChar" },
+		-- ["@string.special"] = { link = "SpecialChar" },
+		-- ["@string.special.symbol"] = { link = "Constant" },
+		-- ["@string.special.url"] = { link = "Underlined" },
+		-- ["@character"] = { link = "Character" },
+		-- ["@character.special"] = { link = "SpecialChar" },
+		-- ["@boolean"] = { link = "Boolean" },
+		-- ["@number"] = { link = "Number" },
+		-- ["@number.float"] = { link = "Float" },
+		-- ["@type"] = { link = "Type" },
+		-- ["@type.builtin"] = { link = "Special" },
+		-- ["@type.definition"] = { link = "Typedef" },
+		-- ["@type.qualifier"] = { link = "StorageClass" },
+		-- ["@attribute"] = { link = "Macro" },
+		-- ["@property"] = { link = "Identifier" },
+		-- ["@function"] = { link = "Function" },
+		-- ["@function.builtin"] = { link = "Special" },
+		-- ["@function.macro"] = { link = "Macro" },
+		-- ["@constructor"] = { link = "Special" },
+		-- ["@operator"] = { link = "Operator" },
+		-- ["@keyword"] = { link = "Keyword" },
+		-- ["@keyword.function"] = { link = "Statement" },
+		-- ["@keyword.operator"] = { link = "Operator" },
+		-- ["@keyword.import"] = { link = "Include" },
+		-- ["@keyword.storage"] = { link = "StorageClass" },
+		-- ["@keyword.repeat"] = { link = "Repeat" },
+		-- ["@keyword.debug"] = { link = "Debug" },
+		-- ["@keyword.exception"] = { link = "Exception" },
+		-- ["@keyword.conditional"] = { link = "Conditional" },
+		-- ["@keyword.directive"] = { link = "PreProc" },
+		-- ["@keyword.directive.define"] = { link = "Define" },
+		-- ["@punctuation"] = {},
+		-- ["@punctuation.delimiter"] = { link = "Delimiter" },
+		-- ["@punctuation.bracket"] = { link = "Delimiter" },
+		-- ["@punctuation.special"] = { link = "Special" },
+		-- ["@comment"] = { link = "Comment" },
+		-- ["@comment.error"] = { link = "DiagnosticError" },
+		-- ["@comment.warning"] = { link = "DiagnosticWarn" },
+		-- ["@comment.note"] = { link = "DiagnosticInfo" },
+		-- ["@comment.todo"] = { link = "Todo" },
+		-- ["@markup"] = {},
+		-- ["@markup.strong"] = { bold = true },
+		-- ["@markup.italic"] = { italic = true },
+		-- ["@markup.strikethrough"] = { strikethrough = true },
+		-- ["@markup.underline"] = { underline = true },
+		-- ["@markup.heading"] = { link = "Title" },
+		-- ["@markup.raw"] = { link = "Comment" },
+		-- ["@markup.quote"] = { link = "Comment" },
+		-- ["@markup.math"] = { link = "Comment" },
+		-- ["@markup.environment"] = { link = "Comment" },
+		-- ["@markup.link"] = { link = "Underlined" },
+		-- ["@markup.link.label"] = { link = "Identifier" },
+		-- ["@markup.list"] = { link = "Special" },
+		-- ["@markup.list.checked"] = { link = "DiagnosticOk" },
+		-- ["@markup.list.unchecked"] = { link = "DiagnosticWarn" },
+		-- ["@diff"] = {},
+		-- ["@diff.plus"] = { link = "Added" },
+		-- ["@diff.minus"] = { link = "Removed" },
+		-- ["@diff.delta"] = { link = "Changed" },
+		-- ["@tag"] = { link = "Tag" },
+		-- ["@tag.delimiter"] = { link = "Delimiter" },
+		-- user defined
 		["@variable"] = { link = "Identifier" },
+		["@keyword.function"] = { link = "Function" },
+		-- }}}
 	}
 
 	for group, opts in pairs(highlights) do
@@ -270,3 +388,5 @@ M.set_highlights = function()
 end
 
 return M
+
+-- # vim: foldmethod=marker
