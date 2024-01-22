@@ -31,3 +31,6 @@ langs:
 	@ ./script/lang.sh zig
 	@ ./script/lang.sh lua
 	@ ./script/lang.sh nodejs
+.PHONY: patchs
+patchs:
+	@cp $$(pwd)/patch/nvimfoldcolumn.patch $$LIU_TOOLS/neovim
