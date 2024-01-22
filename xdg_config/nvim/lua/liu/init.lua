@@ -989,6 +989,9 @@ require("lazy").setup(
 		{
 			"tpope/vim-fugitive",
 			event = "VeryLazy",
+			dependencies = {
+				"tpope/vim-rhubarb",
+			},
 			config = function()
 				load_plugin_config("git")
 			end,
@@ -1122,18 +1125,18 @@ require("lazy").setup(
 				})
 			end,
 		},
-		{
-			"linrongbin16/gitlinker.nvim",
-			cmd = "GLink",
-			config = function(self, opts)
-				require("gitlinker").setup({
-					command = {
-						name = self.cmd,
-						desc = "Generate git permanent link",
-					},
-				})
-			end,
-		},
+		-- {
+		-- 	"linrongbin16/gitlinker.nvim",
+		-- 	cmd = "GLink",
+		-- 	config = function(self, opts)
+		-- 		require("gitlinker").setup({
+		-- 			command = {
+		-- 				name = self.cmd,
+		-- 				desc = "Generate git permanent link",
+		-- 			},
+		-- 		})
+		-- 	end,
+		-- },
 		{
 			"akinsho/git-conflict.nvim",
 			enabled = false,
