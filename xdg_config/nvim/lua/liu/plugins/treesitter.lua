@@ -39,7 +39,7 @@ local edit = require("liu.treesitter.edit")
 vim.keymap.set("n", "<leader>rn", edit.smart_rename)
 
 local ts_foldexpr = "v:lua.vim.treesitter.foldexpr()"
-local ts_foldtext = "v:lua.vim.treesitter.foldtext()"
+local ts_foldtext = ""
 
 local function set_ts_win_defaults(ev)
 	if not vim.b.is_foldable then
