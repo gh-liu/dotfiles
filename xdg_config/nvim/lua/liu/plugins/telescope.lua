@@ -67,8 +67,10 @@ require("telescope").setup({
 				["gg"] = actions.move_to_top,
 				["G"] = actions.move_to_bottom,
 
-				["<C-u>"] = actions.preview_scrolling_up,
-				["<C-d>"] = actions.preview_scrolling_down,
+				["<C-k>"] = actions.preview_scrolling_up,
+				["<C-j>"] = actions.preview_scrolling_down,
+				["<C-h>"] = actions.preview_scrolling_left,
+				["<C-l>"] = actions.preview_scrolling_right,
 
 				["?"] = actions.which_key,
 			},
