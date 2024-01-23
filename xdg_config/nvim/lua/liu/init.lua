@@ -2069,6 +2069,20 @@ end, {
 	nargs = "*",
 	desc = "Save the Output of Vim Command To a Empty Buffer",
 })
+
+create_command("AppendModeline", function(opts)
+	local modeline = string.format(
+		"vim: ts=%d sw=%d tw=%d %set :",
+		vim.o.tabstop,
+		vim.o.shiftwidth,
+		vim.o.textwidth,
+		vim.o.expandtab and "" or "no"
+	)
+	modeline = string.format(vim.bo.commentstring, modeline)
+	api.nvim_buf_set_lines(0, -1, -1, false, { modeline })
+	api.nvim_exec2("doautocmd BufRead", {})
+end, {})
+
 -- }}}
 
 -- Autocmds {{{1
