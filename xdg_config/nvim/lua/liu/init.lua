@@ -182,6 +182,7 @@ require("lazy").setup(
 		},
 		{
 			"mvllow/modes.nvim",
+			enabled = false,
 			event = "VeryLazy",
 			opts = {
 				colors = {
@@ -1699,7 +1700,7 @@ require("lazy").setup(
 			lazy = true,
 			ft = {
 				"norg",
-				"text",
+				-- "text",
 				"markdown",
 			},
 			init = function(self)
