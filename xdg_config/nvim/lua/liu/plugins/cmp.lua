@@ -149,7 +149,19 @@ do
 		sources = {
 			{ name = "nvim_lsp" },
 			{ name = "luasnip" },
-			{ name = "buffer", keyword_length = 3 }, -- don't complete from buffer right away
+			{
+				name = "buffer",
+				keyword_length = 3,
+				option = {
+					get_bufnrs = function()
+						local bufs = {}
+						for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+							table.insert(bufs, api.nvim_win_get_buf(win))
+						end
+						return bufs
+					end,
+				},
+			},
 			{ name = "path" },
 			{ name = "nvim_lsp_signature_help" },
 		},
