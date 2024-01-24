@@ -4,6 +4,54 @@ local keymap = vim.keymap
 local builtin = require("telescope.builtin")
 local actions = require("telescope.actions")
 
+local utils = require("telescope.utils")
+local action_state = require("telescope.actions.state")
+
+---@param prompt_bufnr integer
+---@param action_name string
+---@param stash_sub_command string
+---@param gen_cmd_fn function(string)
+local git_stash_command = function(prompt_bufnr, action_name, stash_sub_command, gen_cmd_fn)
+	local selection = action_state.get_selected_entry()
+	if selection == nil then
+		utils.__warn_no_selection("actions." .. action_name)
+		return
+	end
+	actions.close(prompt_bufnr)
+
+	local index = selection.value
+	local _, ret, stderr = utils.get_os_command_output(gen_cmd_fn(index))
+	if ret == 0 then
+		utils.notify("actions." .. action_name, {
+			msg = string.format("%sed: '%s' ", stash_sub_command, index),
+			level = "INFO",
+		})
+	else
+		utils.notify("actions." .. action_name, {
+			msg = string.format(
+				"Error when %sing: %s. Git returned: '%s'",
+				stash_sub_command,
+				index,
+				table.concat(stderr, " ")
+			),
+			level = "ERROR",
+		})
+	end
+end
+
+local user_action = {
+	git_pop_stash = function(prompt_bufnr)
+		git_stash_command(prompt_bufnr, "git_pop_stash", "pop", function(index)
+			return { "git", "stash", "pop", "--index", index }
+		end)
+	end,
+	git_drop_stash = function(prompt_bufnr)
+		git_stash_command(prompt_bufnr, "git_drop_stash", "drop", function(index)
+			return { "git", "stash", "drop", index }
+		end)
+	end,
+}
+
 local borders = config.borders
 
 require("telescope").setup({
@@ -115,6 +163,12 @@ require("telescope").setup({
 		find_files = {
 			hidden = true,
 			no_ignore = false, -- show files ignored by `.gitignore,` `.ignore,` etc.
+		},
+		git_stash = {
+			mappings = {
+				[{ "n" }] = { ["<leader>p"] = user_action.git_pop_stash },
+				[{ "n" }] = { ["<leader>d"] = user_action.git_drop_stash },
+			},
 		},
 	},
 })
