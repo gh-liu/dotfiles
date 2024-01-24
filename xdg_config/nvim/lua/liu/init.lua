@@ -1305,7 +1305,7 @@ require("lazy").setup(
 						local bufnr = fn.bufnr(fname)
 						if bufnr > 0 then
 							-- delete buffer
-							require("bufdelete").bufdelete(bufnr, false)
+							require("mini.bufremove").delete(bufnr, false)
 						end
 					end,
 				})
@@ -1646,18 +1646,46 @@ require("lazy").setup(
 			cmd = "Glow",
 		},
 		{
-			"famiu/bufdelete.nvim",
+			"echasnovski/mini.bufremove",
 			lazy = true,
 			cmd = { "Bdelete", "Bwipeout" },
 			keys = {
 				{
 					"<leader>bd",
 					function()
-						require("bufdelete").bufdelete(0, false)
+						require("mini.bufremove").delete(0, false)
 					end,
 					desc = "Delete Buffer",
 				},
 			},
+			opts = {},
+			config = function(self, opts)
+				local MiniBufremove = require("mini.bufremove")
+				MiniBufremove.setup(self.opts)
+
+				local cmd_opts = {
+					bang = true,
+					addr = "buffers",
+					nargs = "?",
+					complete = "buffer",
+				}
+				local buf_id = function(opts)
+					local buffer = 0
+					if #opts.fargs == 1 then
+						local bufnr = fn.bufnr(opts.fargs[1])
+						if bufnr > 0 then
+							buffer = bufnr
+						end
+					end
+					return buffer
+				end
+				api.nvim_create_user_command("Bdelete", function(opts)
+					MiniBufremove.delete(buf_id(opts), opts.bang)
+				end, cmd_opts)
+				api.nvim_create_user_command("Bwipeout", function(opts)
+					MiniBufremove.wipeout(buf_id(opts), opts.bang)
+				end, cmd_opts)
+			end,
 		},
 		{
 			"jbyuki/venn.nvim",
