@@ -57,9 +57,9 @@ local function set_ts_win_defaults(ev)
 		if cur_win_opt.foldmethod == "manual" then
 			cur_win_opt.foldmethod = "expr"
 			cur_win_opt.foldexpr = ts_foldexpr
-			if cur_win_opt.foldtext == "foldtext()" then
-				cur_win_opt.foldtext = ts_foldtext
-			end
+		end
+		if cur_win_opt.foldtext == "foldtext()" then
+			cur_win_opt.foldtext = ts_foldtext
 		end
 	end
 end
