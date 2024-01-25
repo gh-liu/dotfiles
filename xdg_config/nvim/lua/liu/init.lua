@@ -132,46 +132,6 @@ require("lazy").setup(
 			cmd = "ColorizerToggle",
 		},
 		{
-			"hiphish/rainbow-delimiters.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			config = function(self, opts)
-				local rainbow_delimiters = require("rainbow-delimiters")
-				vim.g.rainbow_delimiters = {
-					-- defines how to perform the highlighting of delimiters
-					-- global, local
-					strategy = {
-						[""] = rainbow_delimiters.strategy["global"],
-					},
-					-- defines what to match
-					query = {
-						[""] = "rainbow-delimiters",
-						lua = "rainbow-blocks",
-					},
-					highlight = {
-						"RainbowDelimiterRed",
-						"RainbowDelimiterYellow",
-						"RainbowDelimiterBlue",
-						"RainbowDelimiterOrange",
-						"RainbowDelimiterGreen",
-						"RainbowDelimiterViolet",
-						"RainbowDelimiterCyan",
-					},
-					blacklist = {},
-				}
-
-				set_hls({
-					RainbowDelimiterRed = { fg = config.colors.red },
-					RainbowDelimiterBlue = { fg = config.colors.blue },
-					RainbowDelimiterCyan = { fg = config.colors.cyan },
-					RainbowDelimiterGreen = { fg = config.colors.green },
-					RainbowDelimiterOrange = { fg = config.colors.orange },
-					RainbowDelimiterViolet = { fg = config.colors.magenta },
-					RainbowDelimiterYellow = { fg = config.colors.yellow },
-				})
-			end,
-		},
-		{
 			"utilyre/sentiment.nvim",
 			event = "VeryLazy",
 			init = function()
@@ -180,39 +140,13 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
-		{
-			"mvllow/modes.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			opts = {
-				colors = {
-					copy = config.colors.yellow,
-					delete = config.colors.red,
-					insert = config.colors.green,
-					visual = config.colors.blue,
-				},
-				line_opacity = 0.2,
-				ignore_filetypes = {
-					"TelescopePrompt",
-					"TelescopeResults",
-				},
-				set_cursor = true,
-				set_cursorline = false,
-				set_number = false,
-			},
-		},
 		--}}}
 
 		-- LSPs {{{2
 		{
 			"neovim/nvim-lspconfig",
 			event = "VeryLazy",
-			dependencies = {
-				{
-					"folke/neodev.nvim",
-					enabled = false,
-				},
-			},
+			dependencies = {},
 			config = function(_, opts)
 				load_plugin_config("lsp")
 			end,
@@ -755,6 +689,7 @@ require("lazy").setup(
 		},
 		{
 			"cshuaimin/ssr.nvim",
+			enabled = false,
 			keys = {
 				{
 					"<leader>R",
@@ -1123,58 +1058,6 @@ require("lazy").setup(
 					GitSignsDelete = { fg = delete },
 					GitSignsDeleteNr = { fg = delete },
 					GitSignsDeleteLn = { fg = delete, bg = line },
-				})
-			end,
-		},
-		-- {
-		-- 	"linrongbin16/gitlinker.nvim",
-		-- 	cmd = "GLink",
-		-- 	config = function(self, opts)
-		-- 		require("gitlinker").setup({
-		-- 			command = {
-		-- 				name = self.cmd,
-		-- 				desc = "Generate git permanent link",
-		-- 			},
-		-- 		})
-		-- 	end,
-		-- },
-		{
-			"akinsho/git-conflict.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			config = function()
-				---@diagnostic disable-next-line: missing-fields
-				require("git-conflict").setup({
-					default_mappings = true,
-					default_commands = true,
-				})
-
-				local g = user_augroup("git_conflict")
-				autocmd("User", {
-					group = g,
-					pattern = "GitConflictDetected",
-					callback = function(args)
-						vim.notify("[Git] Conflict detected!", vim.log.levels.WARN)
-
-						-- local bufnr = args.buf
-						-- local map = function(lhs, rhs)
-						-- 	keymap.set("n", lhs, rhs)
-						-- end
-						-- map("Co", "<Plug>(git-conflict-ours)")
-						-- map("Ct", "<Plug>(git-conflict-theirs)")
-						-- map("Cb", "<Plug>(git-conflict-both)")
-						-- map("C0", "<Plug>(git-conflict-none)")
-						-- map("[x", "<Plug>(git-conflict-prev-conflict)")
-						-- map("]x", "<Plug>(git-conflict-next-conflict)")
-					end,
-				})
-
-				autocmd("User", {
-					group = g,
-					pattern = "GitConflictResolved",
-					callback = function(args)
-						vim.notify("[Git] Conflict resolved!", vim.log.levels.INFO)
-					end,
 				})
 			end,
 		},
