@@ -13,6 +13,7 @@ sudo apt install -y binutils
 
 sudo apt install -y git git-flow
 sudo apt install -y gh
+sudo apt install -y kitty
 
 sudo apt install -y curl wget
 sudo apt install -y zip unzip

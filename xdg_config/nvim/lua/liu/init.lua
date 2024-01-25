@@ -1607,6 +1607,10 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"fladson/vim-kitty",
+			ft = "kitty",
+		},
+		{
 			"gaoDean/autolist.nvim",
 			lazy = true,
 			ft = {
