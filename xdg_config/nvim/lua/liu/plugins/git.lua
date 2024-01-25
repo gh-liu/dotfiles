@@ -50,8 +50,9 @@ autocmd("BufEnter", {
 })
 
 set_cmds({
-	GUndoLastCommit = [[:G reset --soft HEAD~]],
-	GDiscardChanges = [[:G reset --hard]],
+	-- GUndoLastCommit = [[:G reset --soft HEAD~]],
+	-- GDiscardChanges = [[:G reset --hard]],
+	GDiffFiles = [[G difftool --name-status]],
 	Gdiffsplit3 = function(t)
 		vim.cmd([[ tabnew % ]])
 		-- The windows layout:
@@ -118,3 +119,37 @@ set_hls({
 	diffLine = { link = "Visual" },
 	diffIndexLine = { link = "VisualNC" },
 })
+
+-- set_cmds({
+-- 	GDiffFiles = function(opts)
+-- 		local file_status = {
+-- 			A = "Added",
+-- 			B = "Broken",
+-- 			C = "Copied",
+-- 			D = "Deleted",
+-- 			M = "Modified",
+-- 			R = "Renamed",
+-- 			T = "Changed",
+-- 			U = "Unmerged",
+-- 			X = "Unknown",
+-- 		}
+-- 		local r = vim.system({ "git", "diff", "--name-status" }, { text = true }):wait()
+-- 		if #r.stderr > 0 then
+-- 			vim.print(r.stderr)
+-- 			return
+-- 		end
+-- 		local diffs = vim.split(r.stdout, "\n", { trimempty = true })
+-- 		diffs = vim.iter(diffs)
+-- 			:map(function(f)
+-- 				local _, _, status, file = string.find(f, "(%a+)%s(.+)")
+-- 				return {
+-- 					filename = file,
+-- 					text = file_status[status],
+-- 				}
+-- 			end)
+-- 			:totable()
+
+-- 		vim.fn.setqflist(diffs)
+-- 		vim.cmd.copen()
+-- 	end,
+-- })
