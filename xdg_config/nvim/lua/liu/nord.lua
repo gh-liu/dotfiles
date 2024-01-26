@@ -276,7 +276,8 @@ M.set_highlights = function()
 
 		-- user defined
 		["@lsp.type.comment"] = {},
-		["@lsp.type.keyword"] = { link = "Keyword" },
+		["@lsp.type.keyword"] = { link = "@keyword" },
+		["@lsp.mod.readonly"] = { link = "@constant.builtin" },
 		["@lsp.mod.deprecated"] = { link = "DiagnosticDeprecated" },
 		-- }}}
 
