@@ -191,7 +191,7 @@ end
 --- Git status (if any).
 ---@return string
 function M.git_component()
-	local head = vim.b.gitsigns_head
+	local head = vim.g.gitsigns_head
 	if not head then
 		return ""
 	end
