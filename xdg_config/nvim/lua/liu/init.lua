@@ -1772,7 +1772,7 @@ vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
 
 -- Filling `foldtext` with space
-vim.opt.fillchars:append("fold: ")
+-- vim.opt.fillchars:append("fold: ")
 vim.opt.fillchars:append("foldopen:" .. config.icons.fold[2])
 vim.opt.fillchars:append("foldclose:" .. config.icons.fold[1])
 -- vim.opt.fillchars:append("foldsep:|")
