@@ -198,10 +198,7 @@ do
 	-- keymap.set("n", "<leader>:", builtin.command_history, { desc = "List Commands History" })
 
 	keymap.set("n", "<leader>sd", function()
-		local count = vim.v.count -- use count as level
-		if vim.diagnostic.severity.HINT >= count and count >= vim.diagnostic.severity.ERROR then
-			return builtin.diagnostics({ severity = { count } })
-		end
+		-- use `complete_tag` to selection diagnostic severity
 		return builtin.diagnostics()
 	end, { desc = "[S]earch [D]iagnostics" })
 
