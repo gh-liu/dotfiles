@@ -2145,9 +2145,25 @@ keymap.set("n", "<leader>td", function()
 	diagnostic.config(opts)
 end)
 
-keymap.set("n", "<leader>dp", diagnostic.open_float)
-keymap.set("n", "<leader>dq", diagnostic.setqflist)
-keymap.set("n", "<leader>dl", diagnostic.setloclist)
+keymap.set("n", "<leader>dp", diagnostic.open_float, { desc = "[D]iagnostic [S]how" })
+keymap.set("n", "d0", function()
+	local severity = vim.diagnostic.severity
+	local count = vim.v.count -- use count as level
+	local opts = {}
+	if severity.HINT >= count and count >= severity.ERROR then
+		opts.severity = count
+	end
+	diagnostic.setqflist(opts)
+end, { desc = "[D]iagnostic [0]All" })
+keymap.set("n", "dc", function()
+	local severity = vim.diagnostic.severity
+	local count = vim.v.count -- use count as level
+	local opts = {}
+	if severity.HINT >= count and count >= severity.ERROR then
+		opts.severity = count
+	end
+	diagnostic.setloclist(opts)
+end, { desc = "[D]iagnostic [C]urrent Buffer" })
 local diagnostic_goto = function(next, severity)
 	local go = next and diagnostic.goto_next or vim.diagnostic.goto_prev
 	severity = severity and diagnostic.severity[severity] or nil
