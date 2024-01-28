@@ -140,6 +140,35 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
+		{
+			-- Dim inactive windows
+			"levouh/tint.nvim",
+			enabled = false,
+			-- event = "VeryLazy",
+			event = "WinNew",
+			opts = {
+				tint = -10,
+				saturation = 0.5,
+				window_ignore_function = function(winid)
+					-- local bufnr = api.nvim_win_get_buf(winid)
+
+					local wininfo = fn.getwininfo(winid)[1]
+					if wininfo.quickfix == 1 or wininfo.terminal == 1 then
+						return true
+					end
+
+					if api.nvim_win_get_config(winid).relative ~= "" then
+						return true
+					end
+
+					-- if vim.wo[winid].diff then
+					-- 	return true
+					-- end
+
+					return false
+				end,
+			},
+		},
 		--}}}
 
 		-- LSPs {{{2
