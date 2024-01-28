@@ -12,51 +12,113 @@ local colors = config.colors
 -- https://neovim.io/doc/user/filetype.html#ft-qf-plugin
 vim.g.qf_disable_statusline = 1
 
-local M = {}
-
----@class color
----@field fg string
----@field bg string
-
 ---extract highlight
 ---@param highlight string
 ---@return color|nil
-local extract_highlight_colors = function(highlight)
+local function highlight_colors(highlight)
 	if fn.hlexists(highlight) == 0 then
 		return nil
 	end
+
 	local hl = api.nvim_get_hl(0, { name = highlight })
 	local bg = hl.bg and ("#%06x"):format(hl.bg) or nil
 	local fg = hl.fg and ("#%06x"):format(hl.fg) or nil
-	return {
-		bg = bg,
-		fg = fg,
-	}
+	return { bg = bg, fg = fg }
 end
 
-local status_line_bg = extract_highlight_colors("StatusLine").bg
+local status_line_bg = highlight_colors("StatusLine").bg
 
----@type table<string, boolean>
-local statusline_hls = {}
+local H = {
+	statusline_hls = {}, ---@type table<string, boolean>
+}
 
----@param hl string
----@return string
-function M.get_or_create_hl(hl)
+function H.get_or_create_hl(hl)
 	local hl_name = "Statusline" .. hl
 
-	if not statusline_hls[hl] then
-		local fg = extract_highlight_colors(hl).fg
+	if not H.statusline_hls[hl] then
+		local fg = highlight_colors(hl).fg
 		api.nvim_set_hl(0, hl_name, { bg = status_line_bg, fg = fg })
-		statusline_hls[hl] = true
+		H.statusline_hls[hl] = true
 	end
 
 	return hl_name
 end
 
+--- @param hl string
+--- @param item string
+--- @return string
+function H.add_highlight(hl, item)
+	return "%#" .. hl .. "#" .. item
+end
+
+---@param item string
+---@return string
+function H.truncate(item)
+	local t = "%<"
+	return t .. item
+end
+
+---@return string
+function H.align()
+	return "%="
+end
+
+---@param i integer|nil
+---@return string
+function H.space(i)
+	local count = i or 1
+	return fn["repeat"](" ", count)
+end
+
 local separator_name = "StatuslineSeparator"
 api.nvim_set_hl(0, separator_name, { bg = status_line_bg, fg = colors.gray })
-local separator = string.format("%%#%s#%s", separator_name, "|")
+---@return string
+function H.sep()
+	return H.add_highlight(separator_name, "|")
+end
 
+local Items = {}
+
+-- :h mode()
+-- Note that: \19 = ^S and \22 = ^V.
+local mode_to_str = {
+	["n"] = "NORMAL",
+	["no"] = "OP-PENDING",
+	["nov"] = "OP-PENDING",
+	["noV"] = "OP-PENDING",
+	["no\22"] = "OP-PENDING",
+	["niI"] = "NORMAL-I",
+	["niR"] = "NORMAL-R",
+	["niV"] = "NORMAL-V",
+	["nt"] = "NORMAL",
+	["ntT"] = "NORMAL",
+	["v"] = "VISUAL",
+	["vs"] = "VISUAL",
+	["V"] = "VISUAL-L",
+	["Vs"] = "VISUAL-L",
+	["\22"] = "VISUAL-B",
+	["\22s"] = "VISUAL-B",
+	["s"] = "SELECT",
+	["S"] = "SELECT-L",
+	["\19"] = "SELECT-B",
+	["i"] = "INSERT",
+	["ic"] = "INSERT",
+	["ix"] = "INSERT",
+	["R"] = "REPLACE",
+	["Rc"] = "REPLACE",
+	["Rx"] = "REPLACE",
+	["Rv"] = "VIRT REPLACE",
+	["Rvc"] = "VIRT REPLACE",
+	["Rvx"] = "VIRT REPLACE",
+	["c"] = "COMMAND",
+	["cv"] = "VIM EX",
+	["ce"] = "EX",
+	["r"] = "PROMPT",
+	["rm"] = "MORE",
+	["r?"] = "CONFIRM",
+	["!"] = "SHELL",
+	["t"] = "TERMINAL",
+}
 local mode_colors = {
 	ModeNormal = colors.red,
 	ModePENDING = colors.magenta,
@@ -72,51 +134,7 @@ local mode_colors = {
 for k, v in pairs(mode_colors) do
 	api.nvim_set_hl(0, "Statusline" .. k, { fg = v, bg = status_line_bg, bold = true })
 end
-
---- Current mode.
----@return string
-function M.mode_component()
-	-- :h mode()
-	-- Note that: \19 = ^S and \22 = ^V.
-	local mode_to_str = {
-		["n"] = "NORMAL",
-		["no"] = "OP-PENDING",
-		["nov"] = "OP-PENDING",
-		["noV"] = "OP-PENDING",
-		["no\22"] = "OP-PENDING",
-		["niI"] = "NORMAL-I",
-		["niR"] = "NORMAL-R",
-		["niV"] = "NORMAL-V",
-		["nt"] = "NORMAL",
-		["ntT"] = "NORMAL",
-		["v"] = "VISUAL",
-		["vs"] = "VISUAL",
-		["V"] = "VISUAL-L",
-		["Vs"] = "VISUAL-L",
-		["\22"] = "VISUAL-B",
-		["\22s"] = "VISUAL-B",
-		["s"] = "SELECT",
-		["S"] = "SELECT-L",
-		["\19"] = "SELECT-B",
-		["i"] = "INSERT",
-		["ic"] = "INSERT",
-		["ix"] = "INSERT",
-		["R"] = "REPLACE",
-		["Rc"] = "REPLACE",
-		["Rx"] = "REPLACE",
-		["Rv"] = "VIRT REPLACE",
-		["Rvc"] = "VIRT REPLACE",
-		["Rvx"] = "VIRT REPLACE",
-		["c"] = "COMMAND",
-		["cv"] = "VIM EX",
-		["ce"] = "EX",
-		["r"] = "PROMPT",
-		["rm"] = "MORE",
-		["r?"] = "CONFIRM",
-		["!"] = "SHELL",
-		["t"] = "TERMINAL",
-	}
-
+Items.mode = function()
 	local mode = mode_to_str[api.nvim_get_mode().mode] or "UNKNOWN"
 
 	local hl = "ModeUNKNOWN"
@@ -140,152 +158,62 @@ function M.mode_component()
 		hl = "ModeREPLACE"
 	end
 
-	return table.concat({
-		string.format("%%#Statusline%s#%s", hl, mode),
-		separator,
-	})
+	return H.add_highlight("Statusline" .. hl, mode)
 end
-
-function M.work_dir_component()
+Items.preview_window = function()
+	if vim.wo.previewwindow then
+		return "%w"
+	else
+		return ""
+	end
+end
+Items.diff_window = function()
+	if vim.wo.diff then
+		return H.add_highlight(H.get_or_create_hl("ErrorMsg"), "[Diff]")
+	else
+		return ""
+	end
+end
+Items.work_dir = function()
 	local icon = (fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. icons.directory
 	local cwd = fn.pathshorten(fn.getcwd(0))
-
-	return table.concat({
-		string.format("%%#%s#%s%s", M.get_or_create_hl("Directory"), icon, "%<" .. cwd),
-		separator,
-	})
+	return H.add_highlight(H.get_or_create_hl("Directory"), string.format("%s%s/", icon, H.truncate(cwd)))
 end
-
-function M.special_file_type_component()
-	return string.format("%%#%s#%s", M.get_or_create_hl("ModeMsg"), string.upper(vim.bo.filetype))
-end
-
-function M.file_name_component()
-	local result = {}
-
-	local filename = api.nvim_buf_get_name(0)
-	if filename == "" then
-		filename = "[No Name]"
+Items.buf_name = function()
+	local buf_name = api.nvim_buf_get_name(0)
+	if vim.startswith(buf_name, "fugitive://") then
+		local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
+		buf_name = relpath .. "@" .. revision:sub(1, 7)
+	elseif vim.startswith(buf_name, "gitsigns://") then
+		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
+		buf_name = relpath .. "@" .. revision:sub(1, 7)
 	else
-		-- local extension = fn.fnamemodify(filename, ":e")
-		-- local icon, icon_color = require("nvim-web-devicons").get_icon_color(filename, extension, { default = true })
-
-		filename = fn.fnamemodify(filename, ":.")
-	end
-	table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("Normal"), filename))
-
-	if vim.bo.modified then
-		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("ErrorMsg"), "[+]"))
-	end
-	if not vim.bo.modifiable or vim.bo.readonly then
-		table.insert(result, string.format("%%#%s#%s", M.get_or_create_hl("WarningMsg"), ""))
+		buf_name = api.nvim_eval_statusline("%f", {}).str
 	end
 
-	if vim.wo.diff then
-		table.insert(result, string.format("%%#%s# %s", M.get_or_create_hl("ErrorMsg"), "[D]"))
-	end
-
-	return table.concat(result)
+	return H.add_highlight(H.get_or_create_hl("Normal"), buf_name)
 end
-
---- Git status (if any).
----@return string
-function M.git_component()
-	local head = vim.g.gitsigns_head
+Items.buf_flag = function()
+	-- [+][RO]
+	return H.add_highlight(H.get_or_create_hl("ErrorMsg"), "%m")
+		.. H.add_highlight(H.get_or_create_hl("WarningMsg"), "%r")
+end
+Items.git = function()
+	local head = vim.b.gitsigns_head or vim.g.gitsigns_head
 	if not head then
 		return ""
 	end
-
-	return string.format("%%#%s#%s %s", M.get_or_create_hl("DiffText"), icons.git, head)
+	return H.add_highlight(H.get_or_create_hl("DiffText"), string.format("%s %s", icons.git, head))
 end
-
---- Lsp clients (if any).
----@return string
-function M.lsp_clients_component()
-	local names = {}
-	for _, server in pairs(vim.lsp.get_clients({ bufnr = 0 })) do
-		table.insert(names, server.name)
-	end
-	if #names == 0 then
-		return ""
-	end
-	local clients = "[" .. table.concat(names, " ") .. "]"
-
-	return string.format("%%#%s#%s%s", M.get_or_create_hl("ModeMsg"), " ", clients)
-end
-
---- Lsp progress status (if any).
----@type table<string, string?>
-local progress_status = {
-	client = nil,
-	kind = nil,
-	title = nil,
-}
-
-api.nvim_create_autocmd("LspProgress", {
-	group = api.nvim_create_augroup("liu_statusline", { clear = true }),
-	desc = "Update LSP progress in statusline",
-	pattern = { "begin", "end" },
-	callback = function(args)
-		-- This should in theory never happen, but I've seen weird errors.
-		if not args.data then
-			return
-		end
-
-		progress_status = {
-			client = vim.lsp.get_client_by_id(args.data.client_id).name,
-			kind = args.data.result.value.kind,
-			title = args.data.result.value.title,
-		}
-
-		if progress_status.kind == "end" then
-			progress_status.title = nil
-			-- Wait a bit before clearing the status.
-			vim.defer_fn(function()
-				vim.cmd.redrawstatus()
-			end, 3000)
-		else
-			vim.cmd.redrawstatus()
-		end
-	end,
-})
---- The latest LSP progress message.
----@return string
-function M.lsp_progress_component()
-	if not progress_status.client or not progress_status.title then
-		return ""
-	end
-
-	return table.concat({
-		string.format("%%#%s#%s: ", M.get_or_create_hl("Title"), progress_status.client),
-		string.format("%%#%s#%s...", M.get_or_create_hl("Normal"), progress_status.title),
-	})
-end
-
---- The current debugging status (if any).
----@return string?
-function M.dap_component()
+Items.dap = function()
 	if not package.loaded["dap"] or require("dap").status() == "" then
-		return nil
+		return ""
 	end
-
-	return table.concat({
-		string.format("%%#%s#%s %s", M.get_or_create_hl("Debug"), icons.bug, require("dap").status()),
-		separator,
-	})
+	return H.add_highlight(H.get_or_create_hl("Debug"), string.format("%s %s", icons.bug, require("dap").status()))
 end
 
-local last_diagnostic_component = ""
-
---- Diagnostic counts in the current buffer.
----@return string
-function M.diagnostics_component()
-	-- Use the last computed value if in insert mode.
-	if vim.startswith(api.nvim_get_mode().mode, "i") then
-		return last_diagnostic_component
-	end
-
-	local count_fn = function(buf)
+Items.diagnostics = function()
+	local get_counts = function(buf)
 		local acc = {
 			ERROR = 0,
 			WARN = 0,
@@ -300,166 +228,165 @@ function M.diagnostics_component()
 		return acc
 	end
 
-	local all_counts = count_fn(nil)
-	local local_counts = count_fn(0)
+	local all_counts = get_counts(nil)
+	local local_counts = get_counts(0)
 	local parts = {}
 	for severity, count in pairs(all_counts) do
 		if count > 0 then
 			local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
 			table.insert(
 				parts,
-				string.format(
-					"%%#%s#%s %d/%d",
-					M.get_or_create_hl(hl),
-					icons.diagnostics[severity],
-					local_counts[severity],
-					count
+				H.add_highlight(
+					H.get_or_create_hl(hl),
+					string.format("%s %d/%d", icons.diagnostics[severity], local_counts[severity], count)
 				)
 			)
 		end
 	end
-	-- local parts = vim.iter.map(function(severity, count)
-	-- 	if count == 0 then
-	-- 		return nil
-	-- 	end
-
-	-- 	local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
-	-- 	return string.format("%%#%s#%s %d", M.get_or_create_hl(hl), icons.diagnostics[severity], count)
-	-- end, counts)
-
 	return table.concat(parts, " ")
 end
 
---- The buffer's filetype.
----@return string
-function M.filetype_component()
+Items.lsp_clients = function()
+	local clients = vim.lsp.get_clients({ bufnr = 0 })
+	if #clients == 0 then
+		return ""
+	end
+
+	local names = {}
+	for _, server in pairs(clients) do
+		table.insert(names, server.name)
+	end
+	local lsp_clients = "[" .. table.concat(names, " ") .. "]"
+
+	return H.add_highlight(H.get_or_create_hl("ModeMsg"), string.format("%s %s", "", lsp_clients))
+end
+Items.filetype = function()
 	local filetype = vim.bo.filetype
 	if filetype == "" then
 		return ""
 	end
 
-	local bufname = api.nvim_buf_get_name(0)
-	local ext = fn.fnamemodify(bufname, ":e")
+	local icon, icon_hl = require("nvim-web-devicons").get_icon_by_filetype(filetype, { default = true })
 
-	local devicons = require("nvim-web-devicons")
-	local icon, icon_hl = devicons.get_icon_by_filetype(filetype, { default = true })
-	icon_hl = M.get_or_create_hl(icon_hl)
+	local hl = H.get_or_create_hl(icon_hl)
+	return H.add_highlight(hl, icon) .. " " .. H.add_highlight(hl, filetype)
+end
+Items.encoding = function()
+	local e = #vim.bo.fileencoding > 0 and vim.bo.fileencoding or vim.o.encoding
 
-	return string.format("%%#%s#%s %%#%s#%s", icon_hl, icon, icon_hl, filetype)
+	local strs = {} ---@type string[]
+	-- if e ~= "utf-8" then
+	table.insert(strs, e)
+	-- end
+
+	local f = vim.bo.fileformat
+	-- if f ~= "unix" then
+	table.insert(strs, string.format("[%s]", f))
+	-- end
+
+	return H.add_highlight(H.get_or_create_hl("Normal"), table.concat(strs))
 end
 
---- File-content encoding for the current buffer.
----@return string
-function M.encoding_component()
-	local encoding = vim.opt.fileencoding:get()
-	return encoding ~= "" and string.format("%%#%s#%s", M.get_or_create_hl("Normal"), encoding) or ""
+Items.position = function()
+	-- 65[12]/120
+	return H.add_highlight(H.get_or_create_hl("Normal"), "%2l(%02c)/%-3L")
+	-- return "%2l(%02c)/%-3L"
 end
 
---- The current line, total line count, and column position.
----@return string
-function M.position_component()
-	local line = fn.line(".")
-	local line_count = api.nvim_buf_line_count(0)
-	local col = fn.virtcol(".")
-
-	local len = #tostring(line_count)
-	local line = string.format("%" .. len .. "d", line)
-
-	return table.concat({
-		string.format("%%#%s#l: %%#%s#%s", M.get_or_create_hl("Normal"), M.get_or_create_hl("Search"), line),
-		string.format("%%#%s#/%d c: %d", M.get_or_create_hl("Normal"), line_count, col),
-	})
+Items.ruler = function()
+	-- 80%
+	return H.add_highlight(H.get_or_create_hl("Normal"), "%3p%%")
+	-- return "%3p%%"
 end
 
-function M.preview_window()
-	if vim.wo.previewwindow then
-		return "%w"
-	else
-		return ""
-	end
+function Items.special_file_type()
+	return H.add_highlight(H.get_or_create_hl("ModeMsg"), string.upper(vim.bo.filetype))
 end
 
 --- Renders the statusline.
 ---@return string
-function M.render()
-	---@param components string[]
+_G.nvim_statsline = function()
+	---@param items string[]
 	---@return string
-	local function concat_components(components)
-		return vim.iter(components):skip(1):fold(components[1], function(acc, component)
-			return #component > 0 and string.format("%s %s", acc, component) or acc
+	local function contact_items(items)
+		return vim.iter(items):skip(1):fold(items[1], function(acc, item)
+			return string.format("%s%s", acc, item)
 		end)
 	end
 
 	if vim.bo.filetype == "qf" then
-		return table.concat({
-			concat_components({
-				M.special_file_type_component(),
-			}),
-			" %q",
-			"%#StatusLine#%=",
-			concat_components({
-				M.position_component(),
-			}),
+		return contact_items({
+			Items.special_file_type(),
+			H.add_highlight(H.get_or_create_hl("Normal"), " %q"),
+			H.align(),
+			Items.position(),
+			H.space(),
+			Items.ruler(),
 		})
 	end
 
 	if vim.bo.filetype == "help" then
-		return table.concat({
-			concat_components({
-				M.special_file_type_component(),
-			}),
-			" %t",
-			"%#StatusLine#%=",
-			concat_components({
-				M.position_component(),
-			}),
+		return contact_items({
+			Items.special_file_type(),
+			H.space(),
+			H.truncate(Items.buf_name()),
+			H.align(),
+			Items.position(),
+			H.space(),
+			Items.ruler(),
 		})
 	end
 
-	local is_specical_file_type = vim.tbl_contains({
-		"fugitive",
-	}, vim.bo.filetype)
-
-	local is_specical_buffer_type = vim.tbl_contains({
-		"nofile",
-		-- "nowrite",
-		"terminal",
-		"prompt",
-	}, vim.bo.buftype)
-
-	if is_specical_file_type or is_specical_buffer_type or vim.b.ft_as_statuline then
-		return table.concat({
-			concat_components({
-				M.special_file_type_component(),
-			}),
-			"%#StatusLine#%=",
-			concat_components({
-				M.position_component(),
-			}),
+	if
+		vim.tbl_contains({
+			"nofile",
+			"nowrite",
+			"terminal",
+			"prompt",
+		}, vim.bo.buftype) or vim.tbl_contains({}, vim.bo.filetype)
+	then
+		return contact_items({
+			Items.special_file_type(),
+			H.align(),
+			Items.position(),
+			H.space(),
+			Items.ruler(),
 		})
 	end
 
-	return table.concat({
-		concat_components({
-			M.mode_component(),
-			M.preview_window(),
-			M.work_dir_component(),
-			M.file_name_component(),
-			M.git_component(),
-		}),
-		"%#StatusLine#%=",
-		concat_components({
-			M.dap_component() or "",
-			M.diagnostics_component(),
-			M.lsp_clients_component(),
-			M.filetype_component(),
-			M.encoding_component(),
-			M.position_component(),
-		}),
-		" ",
+	return contact_items({
+		Items.mode(),
+		H.sep(),
+		Items.preview_window(),
+		Items.diff_window(),
+		Items.work_dir(),
+		H.space(),
+		H.truncate(Items.buf_name()),
+		Items.buf_flag(),
+		H.space(),
+		Items.git(),
+		H.align(),
+		Items.dap(),
+		H.space(),
+		Items.diagnostics(),
+		H.space(),
+		Items.lsp_clients(),
+		H.space(),
+		Items.filetype(),
+		H.space(),
+		Items.encoding(),
+		H.space(),
+		Items.position(),
+		H.space(),
+		Items.ruler(),
 	})
 end
 
-_G.nvim_statsline = M.render
+api.nvim_create_autocmd({
+	"DiagnosticChanged",
+	"ModeChanged",
+}, {
+	command = "redrawstatus",
+})
 
 vim.o.statusline = "%!v:lua.nvim_statsline()"
