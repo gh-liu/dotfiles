@@ -223,7 +223,7 @@ M.set_highlights = function()
 
 		-- Diagnostic {{{
 		DiagnosticError = { fg = c.red },
-		DiagnosticWarn = { fg = c.blue },
+		DiagnosticWarn = { fg = c.orange },
 		DiagnosticInfo = { fg = c.cyan },
 		DiagnosticHint = { fg = c.blue },
 		DiagnosticOk = { fg = c.green },
