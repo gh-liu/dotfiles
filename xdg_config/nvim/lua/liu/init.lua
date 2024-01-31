@@ -1254,7 +1254,7 @@ require("lazy").setup(
 		},
 		{
 			"Bekaboo/dropbar.nvim",
-			enabled = true,
+			enabled = false,
 			event = "VeryLazy",
 			opts = {
 				general = { enable = enable_winbar },
