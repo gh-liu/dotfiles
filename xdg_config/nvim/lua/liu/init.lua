@@ -2053,6 +2053,7 @@ end, {})
 
 -- Autocmds {{{1
 autocmd("TextYankPost", {
+	desc = "Highlight when yanking",
 	group = user_augroup("highlight_yank"),
 	pattern = "*",
 	callback = function()
@@ -2061,16 +2062,16 @@ autocmd("TextYankPost", {
 			priority = vim.highlight.priorities.user + 1,
 		})
 	end,
-	desc = "Highlight when yanking",
 })
 
 autocmd("VimResized", {
+	desc = "Equalize Splits",
 	group = user_augroup("resize_splits"),
 	command = "wincmd =",
-	desc = "Equalize Splits",
 })
 
 autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
+	desc = "Update file when there are changes",
 	group = user_augroup("checktime"),
 	callback = function()
 		-- normal buffer
@@ -2078,10 +2079,10 @@ autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 			vim.cmd("checktime")
 		end
 	end,
-	desc = "Update file when there are changes",
 })
 
 autocmd("ModeChanged", {
+	desc = "Highlighting matched words when searching",
 	group = user_augroup("switch_highlight_when_searching"),
 	pattern = { "*:c", "c:*" },
 	callback = function(ev)
@@ -2092,10 +2093,10 @@ autocmd("ModeChanged", {
 			vim.opt.hlsearch = false
 		end
 	end,
-	desc = "Highlighting matched words when searching",
 })
 
 autocmd("BufWinEnter", {
+	desc = "Open help file in right split",
 	group = user_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
 	callback = function(ev)
@@ -2103,7 +2104,6 @@ autocmd("BufWinEnter", {
 			vim.cmd.wincmd("L")
 		end
 	end,
-	desc = "Open help file in right split",
 })
 
 autocmd({ "BufWritePre" }, {
@@ -2135,6 +2135,7 @@ autocmd({ "TermOpen" }, {
 })
 
 autocmd("OptionSet", {
+	desc = "OptionSetWrap",
 	group = user_augroup("option_set_wrap"),
 	pattern = "wrap",
 	callback = function(ev)
@@ -2147,22 +2148,22 @@ autocmd("OptionSet", {
 			pcall(keymap.del, "n", "k", { buffer = buffer })
 		end
 	end,
-	desc = "OptionSetWrap",
 })
 
 local set_cursorline = user_augroup("set_cursorline")
 autocmd({ "InsertLeave" }, {
+	desc = "set cursorline",
 	group = set_cursorline,
 	command = "set cursorline",
-	desc = "set cursorline",
 })
 autocmd({ "InsertEnter" }, {
+	desc = "set nocursorline",
 	group = set_cursorline,
 	command = "set nocursorline",
-	desc = "set nocursorline",
 })
 
 autocmd("CmdwinEnter", {
+	desc = "cmdwin enter",
 	group = user_augroup("cmdwin_enter"),
 	pattern = "*",
 	callback = function()
@@ -2171,7 +2172,17 @@ autocmd("CmdwinEnter", {
 		vim.wo.relativenumber = false
 		vim.wo.signcolumn = "no"
 	end,
-	desc = "cmdwin enter",
+})
+autocmd("BufHidden", {
+	desc = "Delete [No Name] buffers",
+	group = user_augroup("delete_noname_buffers"),
+	callback = function(data)
+		if data.file == "" and vim.bo[data.buf].buftype == "" and not vim.bo[data.buf].modified then
+			vim.schedule(function()
+				pcall(vim.api.nvim_buf_delete, data.buf, {})
+			end)
+		end
+	end,
 })
 -- }}}
 
