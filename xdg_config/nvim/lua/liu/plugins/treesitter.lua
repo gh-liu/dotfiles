@@ -53,7 +53,9 @@ local function set_ts_win_defaults(ev)
 	end
 
 	if vim.b.is_foldable then
-		local cur_win_opt = vim.wo
+		local winid = api.nvim_get_current_win()
+		-- Like `:setlocal` if {bufnr} is provided
+		local cur_win_opt = vim.wo[winid][0]
 		if cur_win_opt.foldmethod == "manual" then
 			cur_win_opt.foldmethod = "expr"
 			cur_win_opt.foldexpr = ts_foldexpr
