@@ -2352,8 +2352,8 @@ autocmd("LspAttach", {
 		if client and client.supports_method("textDocument/codeLens") then
 			local bufnr = args.buf
 			autocmd({ "CursorHold", "InsertLeave" }, {
-				callback = function()
-					lsp.codelens.refresh()
+				callback = function(ev)
+					lsp.codelens.refresh({ bufnr = ev.buf })
 				end,
 				buffer = bufnr,
 			})
