@@ -1681,6 +1681,10 @@ require("lazy").setup(
 			end,
 			opts = {},
 		},
+		{
+			"zchee/vim-goasm",
+			ft = "goasm",
+		},
 		-- }}}
 	},
 	-- Lazy Configuration {{{2
