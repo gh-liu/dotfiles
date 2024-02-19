@@ -51,6 +51,13 @@ function H.add_highlight(hl, item)
 	return "%#" .. hl .. "#" .. item
 end
 
+--- @param hl string
+--- @param item string
+--- @return string
+function H.add_highlight2(hl, item)
+	return H.add_highlight(H.get_or_create_hl(hl), item)
+end
+
 ---@param item string
 ---@return string
 function H.truncate(item)
@@ -169,7 +176,7 @@ Items.preview_window = function()
 end
 Items.diff_window = function()
 	if vim.wo.diff then
-		return H.add_highlight(H.get_or_create_hl("ErrorMsg"), "[Diff]")
+		return H.add_highlight2("ErrorMsg", "[Diff]")
 	else
 		return ""
 	end
@@ -177,7 +184,7 @@ end
 Items.work_dir = function()
 	local icon = (fn.haslocaldir(0) == 1 and "l" or "g") .. " " .. icons.directory
 	local cwd = fn.pathshorten(fn.getcwd(0))
-	return H.add_highlight(H.get_or_create_hl("Directory"), string.format("%s%s/", icon, H.truncate(cwd)))
+	return H.add_highlight2("Directory", string.format("%s%s/", icon, H.truncate(cwd)))
 end
 Items.buf_name = function()
 	local buf_name = api.nvim_buf_get_name(0)
@@ -196,30 +203,29 @@ Items.buf_name = function()
 		buf_name = api.nvim_eval_statusline("%f", {}).str
 	end
 
-	local name = H.add_highlight(H.get_or_create_hl("Normal"), buf_name)
+	local name = H.add_highlight2("Normal", buf_name)
 	if file_version then
-		return name .. H.add_highlight(H.get_or_create_hl("DiffText"), "@" .. file_version)
+		return name .. H.add_highlight2("DiffText", "@" .. file_version)
 	else
 		return name
 	end
 end
 Items.buf_flag = function()
 	-- [+][RO]
-	return H.add_highlight(H.get_or_create_hl("ErrorMsg"), "%m")
-		.. H.add_highlight(H.get_or_create_hl("WarningMsg"), "%r")
+	return H.add_highlight2("ErrorMsg", "%m") .. H.add_highlight2("WarningMsg", "%r")
 end
 Items.git = function()
 	local head = vim.b.gitsigns_head or vim.g.gitsigns_head
 	if not head then
 		return ""
 	end
-	return H.add_highlight(H.get_or_create_hl("DiffText"), string.format("%s %s", icons.git, head))
+	return H.add_highlight2("DiffText", string.format("%s %s", icons.git, head))
 end
 Items.dap = function()
 	if not package.loaded["dap"] or require("dap").status() == "" then
 		return ""
 	end
-	return H.add_highlight(H.get_or_create_hl("Debug"), string.format("%s %s", icons.bug, require("dap").status()))
+	return H.add_highlight2("Debug", string.format("%s %s", icons.bug, require("dap").status()))
 end
 
 Items.diagnostics = function()
@@ -246,8 +252,8 @@ Items.diagnostics = function()
 			local hl = "Diagnostic" .. severity:sub(1, 1) .. severity:sub(2):lower()
 			table.insert(
 				parts,
-				H.add_highlight(
-					H.get_or_create_hl(hl),
+				H.add_highlight2(
+					hl,
 					string.format("%s %d/%d", icons.diagnostics[severity], local_counts[severity], count)
 				)
 			)
@@ -268,7 +274,7 @@ Items.lsp_clients = function()
 	end
 	local lsp_clients = "[" .. table.concat(names, " ") .. "]"
 
-	return H.add_highlight(H.get_or_create_hl("ModeMsg"), string.format("%s %s", "", lsp_clients))
+	return H.add_highlight2("ModeMsg", string.format("%s %s", "", lsp_clients))
 end
 Items.filetype = function()
 	local filetype = vim.bo.filetype
@@ -294,23 +300,23 @@ Items.encoding = function()
 	table.insert(strs, string.format("[%s]", f))
 	-- end
 
-	return H.add_highlight(H.get_or_create_hl("Normal"), table.concat(strs))
+	return H.add_highlight2("Normal", table.concat(strs))
 end
 
 Items.position = function()
 	-- 65[12]/120
-	return H.add_highlight(H.get_or_create_hl("Normal"), "%2l(%02c)/%-3L")
+	return H.add_highlight2("Normal", "%2l(%02c)/%-3L")
 	-- return "%2l(%02c)/%-3L"
 end
 
 Items.ruler = function()
 	-- 80%
-	return H.add_highlight(H.get_or_create_hl("Normal"), "%3p%%")
+	return H.add_highlight2("Normal", "%3p%%")
 	-- return "%3p%%"
 end
 
 function Items.special_file_type()
-	return H.add_highlight(H.get_or_create_hl("ModeMsg"), string.upper(vim.bo.filetype))
+	return H.add_highlight2("ModeMsg", string.upper(vim.bo.filetype))
 end
 
 --- Renders the statusline.
@@ -327,7 +333,7 @@ _G.nvim_statsline = function()
 	if vim.bo.filetype == "qf" then
 		return contact_items({
 			Items.special_file_type(),
-			H.add_highlight(H.get_or_create_hl("Normal"), " %q"),
+			H.add_highlight2("Normal", " %q"),
 			H.align(),
 			Items.position(),
 			H.space(),
