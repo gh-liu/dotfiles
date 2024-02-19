@@ -181,17 +181,27 @@ Items.work_dir = function()
 end
 Items.buf_name = function()
 	local buf_name = api.nvim_buf_get_name(0)
+	local file_version
 	if vim.startswith(buf_name, "fugitive://") then
 		local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
-		buf_name = relpath .. "@" .. revision:sub(1, 7)
+		-- buf_name = relpath .. "@" .. revision:sub(1, 7)
+		file_version = revision:sub(1, 7)
+		buf_name = relpath
 	elseif vim.startswith(buf_name, "gitsigns://") then
 		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
-		buf_name = relpath .. "@" .. revision:sub(1, 7)
+		-- buf_name = relpath .. "@" .. revision:sub(1, 7)
+		file_version = revision:sub(1, 7)
+		buf_name = relpath
 	else
 		buf_name = api.nvim_eval_statusline("%f", {}).str
 	end
 
-	return H.add_highlight(H.get_or_create_hl("Normal"), buf_name)
+	local name = H.add_highlight(H.get_or_create_hl("Normal"), buf_name)
+	if file_version then
+		return name .. H.add_highlight(H.get_or_create_hl("DiffText"), "@" .. file_version)
+	else
+		return name
+	end
 end
 Items.buf_flag = function()
 	-- [+][RO]
