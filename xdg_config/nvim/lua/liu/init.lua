@@ -1963,6 +1963,8 @@ setmap("n", "y<C-g>", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
 -- }}}
 
 setmap("s", "<BS>", [[<C-O>"_s]])
+
+setmap("n", "z<space>", "za")
 -- }}}
 
 -- Cmds {{{1
