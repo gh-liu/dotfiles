@@ -42,11 +42,13 @@ autocmd({
 		if enable_view(ev.buf) then
 			-- vim.cmd([[silent! loadview 9]])
 			-- :h nvim_parse_cmd
-			vim.cmd({
-				cmd = "loadview",
-				args = { "9" },
-				mods = { emsg_silent = true },
-			})
+			vim.schedule(function()
+				vim.cmd({
+					cmd = "loadview",
+					args = { "9" },
+					mods = { emsg_silent = true },
+				})
+			end)
 		end
 	end,
 	nested = true,
