@@ -1484,6 +1484,14 @@ require("lazy").setup(
 		{
 			"tpope/vim-unimpaired",
 			keys = { "yo", "[", "]" },
+			config = function(self, opts)
+				vim.keymap.set(
+					"n",
+					"yoz",
+					[[&foldmethod ==# 'syntax' ? ':setlocal foldmethod=manual<CR>' : ':setlocal foldmethod=syntax<CR>']],
+					{ expr = true }
+				)
+			end,
 		},
 		{
 			"tpope/vim-dispatch",
