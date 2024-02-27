@@ -1967,7 +1967,7 @@ setmap("n", "<leader>cp", ":<C-U>cd ..<CR>", { noremap = true })
 
 -- copy filename
 -- setmap("n", "<leader>cf", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
-setmap("n", "y<C-g>", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
+-- setmap("n", "y<C-g>", ":<C-U>let @+ = expand('%:p')<CR>", { noremap = true })
 -- }}}
 
 setmap("s", "<BS>", [[<C-O>"_s]])

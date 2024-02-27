@@ -3,6 +3,18 @@ local keymap = vim.keymap
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
 
+--[[ 
+-- NOTE: fugitive
+https://github.com/tpope/vim-fugitive/discussions/1661#discussioncomment-306777
+`>` is a special notation to use the current filename.
+
+Think of reblame as navigating to a commit and then running blame on your file.
+1. `-` use the commit in question under your cursor and reblame the file.
+2. `~` Is equivalent to `<rev>~`
+3. `P` Is equivalent to `<rev>^`
+
+]]
+
 local g = augroup("liu/fugitive", { clear = true })
 
 -- Toggle summary window {{{3
@@ -53,7 +65,7 @@ set_cmds({
 	-- GUndoLastCommit = [[:G reset --soft HEAD~]],
 	-- GDiscardChanges = [[:G reset --hard]],
 	GDiffFiles = [[G difftool --name-status]],
-	Gdiffsplit3 = function(t)
+	GConflictTool = function(t)
 		vim.cmd([[ tabnew % ]])
 		-- The windows layout:
 		-- Top-left: "ours" corresponding to the HEAD.
@@ -64,9 +76,11 @@ set_cmds({
 		-- starts a diff between the current file and the object `:1`
 		-- the doc states that `:1:%` corresponds to the current file's common ancestor during a conflict
 		-- with % indicating the current file, which the default when omitted
-		vim.cmd("Gdiffsplit :1")
-		-- starts a vertical diff between the current file and all its direct ancestors
-		vim.cmd("Gvdiffsplit!")
+		-- :h Gdiffsplit
+		vim.cmd("Gdiffsplit :1") -- (top, current window) base, (bottom) current file
+		-- during a merge conflict, this is a three-way diff against the "ours" and "theirs" ancestors.
+		-- :h Gdiffsplit!
+		vim.cmd("Gvdiffsplit!") -- (left) ours, (mid, current window) base, (right) theirs
 	end,
 })
 
