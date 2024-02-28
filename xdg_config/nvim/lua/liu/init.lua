@@ -1064,14 +1064,22 @@ require("lazy").setup(
 							gs.reset_hunk({ fn.line("."), fn.line("v") })
 						end, { desc = "Reset hunk of selection" })
 
-						setmap("n", "<leader>gd", gs.diffthis)
+						-- diff
+						setmap("n", "<leader>gd", gs.diffthis, { desc = "Diff against the index(by default)" })
 						setmap("n", "<leader>gD", function()
-							gs.diffthis("~")
-						end)
+							gs.diffthis("~" .. tostring(vim.v.count1))
+						end, { desc = "Diff against the last commit" })
+
 						setmap("n", "<leader>gb", gs.blame_line)
 						setmap("n", "<leader>gp", gs.preview_hunk)
+						setmap("n", "<leader>gl", gs.setloclist)
+						setmap("n", "<leader>gq", function()
+							gs.setqflist("all")
+						end)
 					end,
 				})
+
+				keymap.set("ca", "gs", "Gitsigns", {})
 
 				local add = get_hl("DiffAdd").fg
 				local change = get_hl("DiffChange").fg
