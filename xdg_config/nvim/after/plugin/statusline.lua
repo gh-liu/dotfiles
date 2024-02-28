@@ -187,17 +187,18 @@ Items.work_dir = function()
 	return H.add_highlight2("Directory", string.format("%s%s/", icon, H.truncate(cwd)))
 end
 Items.buf_name = function()
-	-- local buf_name = api.nvim_buf_get_name(0)
-	-- if vim.startswith(buf_name, "fugitive://") then
-	-- 	local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
-	-- 	buf_name = relpath .. "@" .. revision:sub(1, 7)
-	-- elseif vim.startswith(buf_name, "gitsigns://") then
-	-- 	local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
-	-- 	buf_name = relpath .. "@" .. revision:sub(1, 7)
-	-- else
-	-- 	buf_name = api.nvim_eval_statusline("%f", {}).str
-	-- end
-	local buf_name = api.nvim_eval_statusline("%f", {}).str
+	local sep = "||"
+	local buf_name = api.nvim_buf_get_name(0)
+	if vim.startswith(buf_name, "fugitive://") then
+		local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
+		buf_name = revision .. sep .. relpath
+	elseif vim.startswith(buf_name, "gitsigns://") then
+		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
+		buf_name = revision .. sep .. relpath
+	else
+		buf_name = api.nvim_eval_statusline("%f", {}).str
+	end
+	-- local buf_name = api.nvim_eval_statusline("%f", {}).str
 
 	return H.add_highlight2("Normal", buf_name)
 end
@@ -206,7 +207,7 @@ Items.buf_flag = function()
 	return H.add_highlight2("ErrorMsg", "%m") .. H.add_highlight2("WarningMsg", "%r")
 end
 Items.git = function()
-	local head = vim.b.gitsigns_head or vim.g.gitsigns_head
+	local head = vim.b.gitsigns_head --or vim.g.gitsigns_head
 	if not head then
 		return ""
 	end
@@ -347,10 +348,12 @@ _G.nvim_statsline = function()
 	if
 		vim.tbl_contains({
 			"nofile",
-			"nowrite",
+			-- "nowrite",
 			"terminal",
 			"prompt",
-		}, vim.bo.buftype) or vim.tbl_contains({}, vim.bo.filetype)
+		}, vim.bo.buftype) or vim.tbl_contains({
+			"fugitive",
+		}, vim.bo.filetype)
 	then
 		return contact_items({
 			Items.special_file_type(),
