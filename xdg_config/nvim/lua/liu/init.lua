@@ -1465,7 +1465,8 @@ require("lazy").setup(
 			init = function(self)
 				vim.g.rsi_no_meta = 1
 			end,
-			event = "VeryLazy",
+			-- event = "VeryLazy",
+			event = { "InsertEnter", "CmdlineEnter" },
 		},
 		{
 			"tpope/vim-eunuch",
