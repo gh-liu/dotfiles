@@ -40,6 +40,12 @@ local create_highlight_group = function(color, ft)
 	return "Normal"
 end
 
+local specialFiletypes = {
+	fugitive = "git",
+	floggraph = "git",
+	help = "markdown",
+}
+
 ---Get the icon
 ---@param bufnr number
 ---@param isSelected boolean
@@ -49,6 +55,11 @@ M.icon = function(bufnr, isSelected)
 
 	if filetype == "" then
 		return ""
+	end
+
+	local sft = specialFiletypes[filetype]
+	if sft then
+		filetype = sft
 	end
 
 	local icon, icon_color = require("nvim-web-devicons").get_icon_color_by_filetype(filetype, { default = true })
