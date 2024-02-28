@@ -1394,18 +1394,6 @@ require("lazy").setup(
 
 		-- UI Improvements {{{2
 		{
-			"simeji/winresizer",
-			init = function(self)
-				-- disable the start key
-				-- https://github.com/simeji/winresizer/pull/19#issuecomment-925097954
-				-- vim.g.winresizer_start_key = "<NOP>"
-
-				vim.g.winresizer_start_key = self.keys[1]
-			end,
-			keys = { "<leader>wr" },
-			cmd = { "WinResizerStartResize" },
-		},
-		{
 			"lewis6991/hover.nvim",
 			keys = { "K", "gK" },
 			config = function()
@@ -1628,6 +1616,21 @@ require("lazy").setup(
 				"VBoxHO",
 				"VBoxO",
 			},
+		},
+		{
+			"dstein64/vim-win",
+			config = function(self, opts)
+				vim.g.win_ext_command_map = {
+					c = "wincmd c",
+					C = "close!",
+					q = "quit",
+					Q = "quit!",
+					["="] = "wincmd =",
+					x = "Win#exit",
+				}
+			end,
+			keys = { "<leader>w" },
+			cmd = { "Win" },
 		},
 		-- }}}
 
