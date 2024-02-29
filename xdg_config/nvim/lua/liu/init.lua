@@ -968,7 +968,8 @@ require("lazy").setup(
 				vim.g.flog_default_opts = { max_count = 2000 }
 				vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
 
-				keymap.set("ca", "F", "Flog", {})
+				-- keymap.set("ca", "F", "Flog", {})
+				keymap.set("ca", "F", "Flogsplit", {})
 
 				autocmd("FileType", {
 					pattern = "floggraph",
@@ -1926,7 +1927,7 @@ setmap("n", "<C-q>", ":quit<CR>")
 
 -- Movement {{{2
 -- HL as amplified versions of hl
-setmap({ "n", "x", "o" }, "H", "^")
+setmap({ "n", "x", "o" }, "H", "^", { remap = true })
 setmap({ "n", "x", "o" }, "L", "$")
 
 -- Keep cursor in the center
