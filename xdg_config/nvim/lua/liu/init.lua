@@ -1103,6 +1103,24 @@ require("lazy").setup(
 
 		-- Navigations  {{{
 		{
+			"otavioschwanck/arrow.nvim",
+			keys = {
+				"<leader><space>",
+				"<leader>H",
+				"<leader>L",
+			},
+			config = function(self, opts)
+				require("arrow").setup({
+					show_icons = true,
+					leader_key = self.keys[1],
+				})
+
+				local arrow_persist = require("arrow.persist")
+				vim.keymap.set("n", self.keys[2], arrow_persist.previous)
+				vim.keymap.set("n", self.keys[3], arrow_persist.next)
+			end,
+		},
+		{
 			"echasnovski/mini.visits",
 			init = function(self)
 				vim.g.mini_visits_default_label = "core"
