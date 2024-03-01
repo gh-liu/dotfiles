@@ -83,100 +83,57 @@ end
 
 require("lazy").setup(
 	{
-		-- Libs {{{2
+		-- libs {{{2
 		{
 			"nvim-lua/plenary.nvim",
 			lazy = true,
 		},
 		-- }}}
 
-		-- UIs {{{2
+		-- treesitter {{{2
 		{
-			"nvim-tree/nvim-web-devicons",
-			lazy = true,
-		},
-		{
-			"stevearc/dressing.nvim",
-			lazy = true,
-			init = function()
-				---@diagnostic disable-next-line: duplicate-set-field
-				vim.ui.select = function(...)
-					require("lazy").load({ plugins = { "dressing.nvim" } })
-					return vim.ui.select(...)
-				end
-
-				---@diagnostic disable-next-line: duplicate-set-field
-				vim.ui.input = function(...)
-					require("lazy").load({ plugins = { "dressing.nvim" } })
-					return vim.ui.input(...)
-				end
-			end,
-			---@diagnostic disable-next-line: duplicate-set-field
-			opts = {
-				input = {
-					enabled = true,
-					border = config.borders,
-				},
-				select = {
-					enabled = true,
-					backend = { "telescope", "builtin" },
-					builtin = {
-						border = config.borders,
-					},
-				},
-			},
-		},
-		{
-			"NvChad/nvim-colorizer.lua",
-			opts = {},
-			cmd = "ColorizerToggle",
-		},
-		{
-			"utilyre/sentiment.nvim",
+			"nvim-treesitter/nvim-treesitter",
 			event = "VeryLazy",
-			init = function()
-				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
-				vim.g.loaded_matchparen = 1
+			build = ":TSUpdate",
+			config = function(self, opts)
+				load_plugin_config("treesitter")
 			end,
-			opts = {},
 		},
 		{
-			-- Dim inactive windows
-			"levouh/tint.nvim",
-			enabled = false,
-			-- event = "VeryLazy",
-			event = "WinNew",
-			opts = {
-				tint = -10,
-				saturation = 0.5,
-				window_ignore_function = function(winid)
-					-- local bufnr = api.nvim_win_get_buf(winid)
+			"nvim-treesitter/nvim-treesitter-context",
+			event = "VeryLazy",
+			opts = { enable = true },
+			config = function(self, opts)
+				local ts_ctx = require("treesitter-context")
+				ts_ctx.setup(opts)
 
-					local wininfo = fn.getwininfo(winid)[1]
-					if wininfo.quickfix == 1 or wininfo.terminal == 1 then
-						return true
-					end
+				-- keymap.set("n", "<leader>cj", function()
+				-- 	ts_ctx.go_to_context(vim.v.count1)
+				-- end, {})
 
-					if api.nvim_win_get_config(winid).relative ~= "" then
-						return true
-					end
-
-					-- if vim.wo[winid].diff then
-					-- 	return true
-					-- end
-
-					return false
-				end,
-			},
+				set_hls({
+					TreesitterContext = { link = "StatusLine" },
+					TreesitterContextLineNumber = { link = "Tag" },
+					-- TreesitterContextBottom = { underline = true },
+				})
+			end,
 		},
-		--}}}
+		{
+			-- "nvim-treesitter/nvim-treesitter-textobjects",
+			"gh-liu/nvim-treesitter-textobjects",
+			event = "VeryLazy",
+		},
+		{
+			"JoosepAlviste/nvim-ts-context-commentstring",
+			event = "VeryLazy",
+		},
+		-- }}}
 
-		-- LSPs {{{2
+		-- lsp {{{2
 		{
 			"neovim/nvim-lspconfig",
 			event = "VeryLazy",
-			dependencies = {},
-			config = function(_, opts)
+			config = function(self, opts)
 				load_plugin_config("lsp")
 			end,
 		},
@@ -238,35 +195,9 @@ require("lazy").setup(
 				require("symbol-usage").setup(opts)
 			end,
 		},
-		{
-			"j-hui/fidget.nvim",
-			enabled = true,
-			lazy = true,
-			event = "LspAttach",
-			init = function()
-				local notify = nil
-				---@diagnostic disable-next-line: duplicate-set-field
-				vim.notify = function(...)
-					if not notify then
-						notify = require("fidget").notify
-					end
-					notify(...)
-				end
-			end,
-			cmd = { "Fidget" },
-			opts = {
-				-- LSP progress
-				progress = {},
-				-- Notification
-				notification = {
-					-- Automatically override vim.notify() with Fidget
-					override_vim_notify = false,
-				},
-			},
-		},
 		-- }}}
 
-		-- DAPs {{{2
+		-- dap {{{2
 		{
 			"mfussenegger/nvim-dap",
 			keys = {
@@ -288,52 +219,12 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- TreeSitters {{{2
-		{
-			"nvim-treesitter/nvim-treesitter",
-			event = "VeryLazy",
-			build = ":TSUpdate",
-			config = function(_, opts)
-				load_plugin_config("treesitter")
-			end,
-		},
-		{
-			"nvim-treesitter/nvim-treesitter-context",
-			event = "VeryLazy",
-			opts = {
-				enable = true,
-			},
-			config = function(_, opts)
-				local tsc = require("treesitter-context")
-				tsc.setup(opts)
-
-				keymap.set("n", "<leader>cj", function()
-					tsc.go_to_context(vim.v.count1)
-				end, {})
-
-				set_hls({
-					TreesitterContext = { link = "StatusLine" },
-					TreesitterContextLineNumber = { link = "Tag" },
-					-- TreesitterContextBottom = { underline = true },
-				})
-			end,
-		},
-		{
-			-- "nvim-treesitter/nvim-treesitter-textobjects",
-			"gh-liu/nvim-treesitter-textobjects",
-			event = "VeryLazy",
-		},
-		{
-			"JoosepAlviste/nvim-ts-context-commentstring",
-			event = "VeryLazy",
-		},
-		-- }}}
-
-		-- Diagnostics {{{2
+		-- diagnostic {{{2
 		{
 			"mfussenegger/nvim-lint",
 			lazy = true,
 			init = function(self)
+				-- TODO: unstand debounce <gh-liu>
 				local DEBOUNCE_MS = 500
 
 				local linters_by_ft = self.opts.linters_by_ft
@@ -348,9 +239,6 @@ require("lazy").setup(
 							"TextChanged",
 						}, {
 							callback = function()
-								-- require("lint").try_lint()
-
-								-- local bufnr = api.nvim_get_current_buf()
 								local timer = assert(vim.uv.new_timer())
 								timer:stop()
 								timer:start(
@@ -383,29 +271,142 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- Telescopes {{{2
+		-- text edit {{{2
 		{
-			"nvim-telescope/telescope.nvim",
-			event = "VeryLazy",
-			dependencies = {
+			"numToStr/Comment.nvim",
+			lazy = true,
+			keys = {
+				{ "gc", mode = { "n", "x" } },
+				{ "gb", mode = { "n", "x" } },
+			},
+			opts = {
+				ignore = "^$",
+			},
+		},
+		{
+			"stevearc/conform.nvim",
+			lazy = true,
+			init = function(self)
+				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+			end,
+			keys = {
 				{
-					"nvim-telescope/telescope-fzf-native.nvim",
-					cond = function()
-						return fn.executable("make") == 1
-					end,
-					build = "make",
-					config = function()
-						require("telescope").load_extension("fzf")
+					"<leader>=",
+					function()
+						require("conform").format({ lsp_fallback = true })
 					end,
 				},
 			},
-			config = function()
-				load_plugin_config("telescope")
+			cmd = { "Format", "FormatEnable", "FormatDisable" },
+			opts = {
+				formatters_by_ft = {
+					go = { "goimports", "gofumpt" },
+					zig = { "zigfmt" },
+					rust = { "rustfmt" },
+					lua = { "stylua" },
+					sh = { "shfmt" },
+					zsh = { "shfmt" },
+					json = { "jq" },
+					just = { "just" },
+					proto = { "buf" },
+					sql = { "sql_formatter" },
+				},
+			},
+			config = function(self, opts)
+				opts.format_on_save = function(bufnr)
+					-- Disable with a global or buffer-local variable
+					if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+						return
+					end
+					return { timeout_ms = 500, lsp_fallback = true }
+				end
+				require("conform").setup(opts)
+
+				do
+					create_command(self.cmd[2], function()
+						vim.b.disable_autoformat = false
+						vim.g.disable_autoformat = false
+					end, {
+						desc = "Re-enable autoformat-on-save",
+					})
+
+					create_command(self.cmd[3], function(args)
+						if args.bang then
+							-- FormatDisable! will disable formatting just for this buffer
+							vim.b.disable_autoformat = true
+						else
+							vim.g.disable_autoformat = true
+						end
+					end, {
+						desc = "Disable autoformat-on-save",
+						bang = true,
+					})
+				end
+
+				create_command(self.cmd[1], function(args)
+					local range = nil
+					if args.count ~= -1 then
+						local end_line = api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
+						range = {
+							start = { args.line1, 0 },
+							["end"] = { args.line2, end_line:len() },
+						}
+					end
+					require("conform").format({ async = true, lsp_fallback = true, range = range })
+				end, { range = true })
 			end,
 		},
-		-- }}}
+		{
+			"monaqa/dial.nvim",
+			keys = {
+				{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "x" } },
+				{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "x" } },
+				{ "g<C-a>", "g<Plug>(dial-increment)", mode = { "n", "x" } },
+				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = { "n", "x" } },
+			},
+			config = function()
+				local config = require("dial.config")
+				local augend = require("dial.augend")
 
-		-- Text Edit {{{2
+				local default = {
+					augend.constant.alias.bool,
+					augend.integer.alias.hex,
+					augend.integer.alias.decimal,
+					-- augend.date.new({ pattern = "%Y/%m/%d", default_kind = "day" }),
+					-- augend.date.new({ pattern = "%Y-%m-%d", default_kind = "day" }),
+					-- augend.paren.alias.brackets,
+				}
+
+				config.augends:register_group({
+					default = default,
+				})
+
+				config.augends:on_filetype({
+					go = vim.list_extend({
+						augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }),
+						-- camelCase for private, PascalCase for public.
+						augend.case.new({ types = { "camelCase", "PascalCase" }, cyclic = true }),
+					}, default),
+					lua = vim.list_extend({
+						augend.paren.alias.lua_str_literal,
+						augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
+					}, default),
+					rust = vim.list_extend({
+						augend.paren.alias.rust_str_literal,
+					}, default),
+					zig = vim.list_extend({
+						-- camelCase for function, snake_case for variable, PascalCase for type.
+						augend.case.new({ types = { "camelCase", "snake_case", "PascalCase" }, cyclic = true }),
+					}, default),
+					toml = vim.list_extend({
+						augend.semver.alias.semver,
+					}, default),
+					markdown = vim.list_extend({
+						augend.misc.alias.markdown_header,
+					}, default),
+				})
+			end,
+		},
 		{
 			"Wansmer/treesj",
 			enabled = true,
@@ -552,147 +553,12 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"numToStr/Comment.nvim",
-			lazy = true,
-			keys = {
-				{ "gc", mode = { "n", "x" } },
-				{ "gb", mode = { "n", "x" } },
-			},
-			opts = {
-				ignore = "^$",
-			},
-		},
-		{
-			"monaqa/dial.nvim",
-			keys = {
-				{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "x" } },
-				{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "x" } },
-				{ "g<C-a>", "g<Plug>(dial-increment)", mode = { "n", "x" } },
-				{ "g<C-x>", "g<Plug>(dial-decrement)", mode = { "n", "x" } },
-			},
-			config = function()
-				local config = require("dial.config")
-				local augend = require("dial.augend")
-
-				local default = {
-					augend.constant.alias.bool,
-					augend.integer.alias.hex,
-					augend.integer.alias.decimal,
-					-- augend.date.new({ pattern = "%Y/%m/%d", default_kind = "day" }),
-					-- augend.date.new({ pattern = "%Y-%m-%d", default_kind = "day" }),
-					-- augend.paren.alias.brackets,
-				}
-
-				config.augends:register_group({
-					default = default,
-				})
-
-				config.augends:on_filetype({
-					go = vim.list_extend({
-						augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }),
-						-- camelCase for private, PascalCase for public.
-						augend.case.new({ types = { "camelCase", "PascalCase" }, cyclic = true }),
-					}, default),
-					lua = vim.list_extend({
-						augend.paren.alias.lua_str_literal,
-						augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
-					}, default),
-					rust = vim.list_extend({
-						augend.paren.alias.rust_str_literal,
-					}, default),
-					zig = vim.list_extend({
-						-- camelCase for function, snake_case for variable, PascalCase for type.
-						augend.case.new({ types = { "camelCase", "snake_case", "PascalCase" }, cyclic = true }),
-					}, default),
-					toml = vim.list_extend({
-						augend.semver.alias.semver,
-					}, default),
-					markdown = vim.list_extend({
-						augend.misc.alias.markdown_header,
-					}, default),
-				})
-			end,
-		},
-		{
 			"tpope/vim-abolish",
 			init = function(self)
 				vim.g.abolish_save_file = fn.stdpath("config") .. "/after/plugin/abolish.vim"
 			end,
 			keys = { "cr" },
 			cmd = { "Abolish", "Subvert", "S" },
-		},
-		{
-			"stevearc/conform.nvim",
-			lazy = true,
-			init = function(self)
-				vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
-			end,
-			keys = {
-				{
-					"<leader>=",
-					function()
-						require("conform").format({ lsp_fallback = true })
-					end,
-				},
-			},
-			cmd = { "Format", "FormatEnable", "FormatDisable" },
-			opts = {
-				formatters_by_ft = {
-					go = { "goimports", "gofumpt" },
-					zig = { "zigfmt" },
-					rust = { "rustfmt" },
-					lua = { "stylua" },
-					sh = { "shfmt" },
-					zsh = { "shfmt" },
-					json = { "jq" },
-					just = { "just" },
-					proto = { "buf" },
-					sql = { "sql_formatter" },
-				},
-			},
-			config = function(self, opts)
-				opts.format_on_save = function(bufnr)
-					-- Disable with a global or buffer-local variable
-					if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
-						return
-					end
-					return { timeout_ms = 500, lsp_fallback = true }
-				end
-				require("conform").setup(opts)
-
-				do
-					create_command(self.cmd[2], function()
-						vim.b.disable_autoformat = false
-						vim.g.disable_autoformat = false
-					end, {
-						desc = "Re-enable autoformat-on-save",
-					})
-
-					create_command(self.cmd[3], function(args)
-						if args.bang then
-							-- FormatDisable! will disable formatting just for this buffer
-							vim.b.disable_autoformat = true
-						else
-							vim.g.disable_autoformat = true
-						end
-					end, {
-						desc = "Disable autoformat-on-save",
-						bang = true,
-					})
-				end
-
-				create_command(self.cmd[1], function(args)
-					local range = nil
-					if args.count ~= -1 then
-						local end_line = api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
-						range = {
-							start = { args.line1, 0 },
-							["end"] = { args.line2, end_line:len() },
-						}
-					end
-					require("conform").format({ async = true, lsp_fallback = true, range = range })
-				end, { range = true })
-			end,
 		},
 		{
 			"danymat/neogen",
@@ -733,375 +599,160 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- Motions {{{2
+		-- ui {{{2
 		{
-			"folke/flash.nvim",
-			keys = {
-				{
-					"<leader>f",
-					mode = { "n", "o", "x" },
-					function()
-						require("flash").jump()
-					end,
-					desc = "Flash",
-				},
-			},
-			opts = {
-				modes = {
-					search = { enabled = false },
-					char = { enabled = false },
-				},
-				prompt = {
-					-- Place the prompt above the statusline.
-					win_config = { row = -3 },
-				},
-			},
-			config = function(_, opts)
-				require("flash").setup(opts)
-
-				set_hls({
-					FlashBackdrop = { fg = config.colors.gray },
-				})
-			end,
+			"nvim-tree/nvim-web-devicons",
+			lazy = true,
 		},
 		{
-			"echasnovski/mini.ai",
-			keys = {
-				{ "i", mode = { "o", "x" } },
-				{ "a", mode = { "o", "x" } },
-			},
-			config = function(self, opts)
-				local ai = require("mini.ai")
-				ai.setup({
-					n_lines = 300,
-					search_method = "cover",
-					custom_textobjects = {
-						o = ai.gen_spec.treesitter({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
-						f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
-						c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }, {}),
-					},
-					silent = true,
-					mappings = {
-						-- Disable last variants.
-						around_last = "",
-						inside_last = "",
-						-- Disable next variants.
-						-- around_next = "",
-						-- inside_next = "",
-					},
-				})
-			end,
-		},
-		{
-			"chaoren/vim-wordmotion",
-			enabled = true,
+			"stevearc/dressing.nvim",
+			lazy = true,
 			init = function()
-				vim.g.wordmotion_nomap = true
-				vim.g.wordmotion_prefix = ","
+				---@diagnostic disable-next-line: duplicate-set-field
+				vim.ui.select = function(...)
+					require("lazy").load({ plugins = { "dressing.nvim" } })
+					return vim.ui.select(...)
+				end
 
-				-- user defined
-				vim.g.wordmotion_disable = true
+				---@diagnostic disable-next-line: duplicate-set-field
+				vim.ui.input = function(...)
+					require("lazy").load({ plugins = { "dressing.nvim" } })
+					return vim.ui.input(...)
+				end
 			end,
-			keys = {
-				{
-					"<leader>tw",
-					function()
-						local mod_nxo = { "n", "x", "o" }
-						local mod_xo = { "x", "o" }
-						vim.g.wordmotion_disable = not vim.g.wordmotion_disable
-						if vim.g.wordmotion_disable then
-							keymap.del(mod_nxo, "w")
-							keymap.del(mod_nxo, "b")
-							keymap.del(mod_nxo, "e")
-							keymap.del(mod_xo, "iw")
-							keymap.del(mod_xo, "aw")
-
-							vim.notify("Disabled word motion", vim.log.levels.WARN)
-						else
-							keymap.set(mod_nxo, "w", "<Plug>WordMotion_w")
-							keymap.set(mod_nxo, "b", "<Plug>WordMotion_b")
-							keymap.set(mod_nxo, "e", "<Plug>WordMotion_e")
-							keymap.set(mod_xo, "iw", "<Plug>WordMotion_iw")
-							keymap.set(mod_xo, "aw", "<Plug>WordMotion_aw")
-
-							vim.notify("Enabled word motion", vim.log.levels.WARN)
-						end
-					end,
-					desc = "[T]oggle [W]ord motion",
-				},
-			},
-		},
-		-- }}}
-
-		-- Completions {{{2
-		{
-			"hrsh7th/nvim-cmp",
-			event = { "InsertEnter", "CmdlineEnter" },
-			dependencies = {
-				"hrsh7th/cmp-path",
-				"hrsh7th/cmp-buffer",
-				"hrsh7th/cmp-cmdline",
-				"hrsh7th/cmp-nvim-lsp",
-				"hrsh7th/cmp-nvim-lsp-signature-help",
-				-- "hrsh7th/cmp-omni",
-				"gh-liu/cmp-omni", -- #10
-				"L3MON4D3/LuaSnip",
-				"rafamadriz/friendly-snippets",
-				"saadparwaiz1/cmp_luasnip",
-			},
-			config = function()
-				load_plugin_config("cmp")
-			end,
-		},
-		{
-			"petertriho/cmp-git",
-			cond = function()
-				return fn.executable("git") == 1
-			end,
-			ft = { "gitcommit", "octo" },
-			config = function(self, opts)
-				require("cmp_git").setup(opts)
-
-				local cmp = require("cmp")
-				cmp.setup.filetype(self.ft, {
-					sources = {
-						{ name = "git" },
-						{ name = "buffer" },
-						{ name = "luasnip" },
-					},
-				})
-			end,
-		},
-		{
-			"rcarriga/cmp-dap",
-			ft = {
-				"dap-repl",
-				"dapui_watches",
-				"dapui_hover",
-			},
-			config = function(self, opts)
-				require("cmp_git").setup(opts)
-
-				local cmp = require("cmp")
-				cmp.setup.filetype({ "dap-repl" }, {
+			---@diagnostic disable-next-line: duplicate-set-field
+			opts = {
+				input = {
 					enabled = true,
-					sources = {
-						{ name = "omni" },
-						{ name = "dap" },
-					},
-				})
-				cmp.setup.filetype({ "dapui_watches", "dapui_hover" }, {
-					enabled = true,
-					sources = {
-						{ name = "dap" },
-					},
-				})
-			end,
-		},
-		{
-			"echasnovski/mini.pairs",
-			event = "InsertEnter",
-			init = function(self)
-				vim.g.minipairs_disable = false
-			end,
-			keys = {
-				{
-					"<leader>tp",
-					function()
-						vim.g.minipairs_disable = not vim.g.minipairs_disable
-						if vim.g.minipairs_disable then
-							vim.notify("Disabled auto pairs", vim.log.levels.WARN)
-						else
-							vim.notify("Enabled auto pairs", vim.log.levels.WARN)
-						end
-
-						-- When a bracket is inserted, briefly jump to the matching one.
-						vim.o.showmatch = vim.g.minipairs_disable
-					end,
-					desc = "[T]oggle auto [P]airs",
+					border = config.borders,
 				},
-			},
-			config = function(self, opts)
-				local pairs = require("mini.pairs")
-				pairs.setup()
-
-				local group = user_augroup("mini_pairs")
-				local pairs_by_fts = {
-					zig = function(buf)
-						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
-					end,
-					rust = function(buf)
-						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
-						pairs.map_buf(buf, "i", "<", { action = "open", pair = "<>", register = { cr = false } })
-						pairs.map_buf(buf, "i", ">", { action = "close", pair = "<>", register = { cr = false } })
-					end,
-				}
-
-				autocmd("FileType", {
-					group = group,
-					pattern = vim.tbl_keys(pairs_by_fts),
-					callback = function(ev)
-						local buf = ev.buf
-						pairs_by_fts[ev.match](buf)
-					end,
-					desc = "set mini pairs for fts",
-				})
-			end,
-		},
-		-- }}}
-
-		-- Git {{{2
-		{
-			"tpope/vim-fugitive",
-			event = "VeryLazy",
-			dependencies = {
-				"tpope/vim-rhubarb",
-			},
-			config = function()
-				load_plugin_config("git")
-			end,
-		},
-		{
-			"rbong/vim-flog",
-			init = function(self)
-				vim.g.flog_use_internal_lua = 1
-				vim.g.flog_default_opts = { max_count = 2000 }
-				vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
-
-				-- keymap.set("ca", "F", "Flog", {})
-				keymap.set("ca", "F", "Flogsplit", {})
-
-				autocmd("FileType", {
-					pattern = "floggraph",
-					callback = function(ev)
-						local buf = ev.buf
-						-- like fugitive
-						keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
-
-						keymap.set("n", "q", ":normal gq<cr>", { buffer = buf, silent = true })
-					end,
-				})
-			end,
-			cmd = {
-				"Flog",
-				"Flogsplit",
-				"Floggit",
-			},
-			config = function(self, opts)
-				set_hls({
-					flogBranch1 = { fg = config.colors.yellow },
-					flogBranch2 = { fg = config.colors.blue },
-					flogBranch3 = { fg = config.colors.green },
-					flogBranch4 = { fg = config.colors.red },
-					flogBranch5 = { fg = config.colors.magenta },
-					flogBranch6 = { fg = config.colors.gray },
-					flogBranch7 = { fg = config.colors.orange },
-					flogBranch8 = { fg = config.colors.cyan },
-					-- flogBranch9 = { fg = config.colors.green },
-				})
-			end,
-		},
-		{
-			"lewis6991/gitsigns.nvim",
-			event = "VeryLazy",
-			config = function()
-				local gs = require("gitsigns")
-
-				gs.setup({
-					signs = {
-						add = { text = "+" },
-						change = { text = "~" },
-						delete = { text = "_" },
-						topdelete = { text = "‾" },
-						changedelete = { text = "≃" },
-						untracked = { text = "┆" },
-					},
-					signcolumn = true,
-					preview_config = {
+				select = {
+					enabled = true,
+					backend = { "telescope", "builtin" },
+					builtin = {
 						border = config.borders,
-						style = "minimal",
-						relative = "cursor",
-						row = 0,
-						col = 1,
 					},
-					on_attach = function(bufnr)
-						local function setmap(mode, l, r, opts)
-							opts = opts or {}
-							opts.buffer = bufnr
-							keymap.set(mode, l, r, opts)
-						end
+				},
+			},
+		},
+		{
+			"utilyre/sentiment.nvim",
+			event = "VeryLazy",
+			init = function()
+				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
+				vim.g.loaded_matchparen = 1
+			end,
+			opts = {},
+		},
+		{
+			-- Dim inactive windows
+			"levouh/tint.nvim",
+			enabled = false,
+			-- event = "VeryLazy",
+			event = "WinNew",
+			opts = {
+				tint = -10,
+				saturation = 0.5,
+				window_ignore_function = function(winid)
+					-- local bufnr = api.nvim_win_get_buf(winid)
 
-						-- Text object
-						setmap({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
+					local wininfo = fn.getwininfo(winid)[1]
+					if wininfo.quickfix == 1 or wininfo.terminal == 1 then
+						return true
+					end
 
-						-- Navigation
-						setmap("n", "]c", function()
-							if vim.wo.diff then
-								return "]c"
-							end
-							vim.schedule(gs.next_hunk)
-							return "<Ignore>"
-						end, { expr = true })
-						setmap("n", "[c", function()
-							if vim.wo.diff then
-								return "[c"
-							end
-							vim.schedule(gs.prev_hunk)
-							return "<Ignore>"
-						end, { expr = true })
+					if api.nvim_win_get_config(winid).relative ~= "" then
+						return true
+					end
 
-						-- Actions
-						-- stage
-						setmap("n", "<leader>gS", gs.stage_buffer, { desc = "Stage buffer" })
-						setmap("n", "<leader>gs", gs.stage_hunk, { desc = "Stage hunk" })
-						setmap("v", "<leader>gs", function()
-							gs.stage_hunk({ fn.line("."), fn.line("v") })
-						end, { desc = "Stage hunk" })
+					-- if vim.wo[winid].diff then
+					-- 	return true
+					-- end
 
-						-- reset
-						setmap("n", "<leader>gR", gs.reset_buffer, { desc = "Reset buffer" })
-						setmap("n", "<leader>gr", gs.reset_hunk, { desc = "Reset hunk" })
-						setmap("v", "<leader>gr", function()
-							gs.reset_hunk({ fn.line("."), fn.line("v") })
-						end, { desc = "Reset hunk of selection" })
-
-						-- diff
-						setmap("n", "<leader>gd", gs.diffthis, { desc = "Diff against the index(by default)" })
-						setmap("n", "<leader>gD", function()
-							gs.diffthis("~" .. tostring(vim.v.count1))
-						end, { desc = "Diff against the last commit" })
-
-						setmap("n", "<leader>gb", gs.blame_line)
-						setmap("n", "<leader>gp", gs.preview_hunk)
-						setmap("n", "<leader>gl", gs.setloclist)
-						setmap("n", "<leader>gq", function()
-							gs.setqflist("all")
-						end)
+					return false
+				end,
+			},
+		},
+		{
+			"j-hui/fidget.nvim",
+			enabled = true,
+			lazy = true,
+			event = "LspAttach",
+			init = function()
+				local notify = nil
+				---@diagnostic disable-next-line: duplicate-set-field
+				vim.notify = function(...)
+					if not notify then
+						notify = require("fidget").notify
+					end
+					notify(...)
+				end
+			end,
+			cmd = { "Fidget" },
+			opts = {
+				-- LSP progress
+				progress = {},
+				-- Notification
+				notification = {
+					-- Automatically override vim.notify() with Fidget
+					override_vim_notify = false,
+				},
+			},
+		},
+		{
+			"lewis6991/hover.nvim",
+			keys = { "K", "gK" },
+			config = function()
+				require("hover").setup({
+					init = function()
+						require("hover.providers.lsp")
+						require("hover.providers.man")
 					end,
+					preview_opts = {
+						border = config.borders,
+					},
+					preview_window = false,
+					title = true,
 				})
 
-				keymap.set("ca", "gs", "Gitsigns", {})
+				load_plugin_config("hover")
 
-				local add = get_hl("DiffAdd").fg
-				local change = get_hl("DiffChange").fg
-				local delete = get_hl("DiffDelete").fg
-				local line = get_hl("DiffText").bg
-				set_hls({
-					GitSignsAdd = { fg = add },
-					GitSignsAddNr = { fg = add },
-					GitSignsAddLn = { fg = add, bg = line },
-					GitSignsChange = { fg = change },
-					GitSignsChangeNr = { fg = change },
-					GitSignsChangeLn = { fg = change, bg = line },
-					GitSignsDelete = { fg = delete },
-					GitSignsDeleteNr = { fg = delete },
-					GitSignsDeleteLn = { fg = delete, bg = line },
-				})
+				keymap.set("n", "K", function()
+					local hover_win = vim.b.hover_preview
+					if hover_win and api.nvim_win_is_valid(hover_win) then
+						api.nvim_set_current_win(hover_win)
+					else
+						require("hover").hover()
+					end
+				end, { desc = "hover.nvim" })
+				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
+			end,
+		},
+		--}}}
+
+		-- fuzzy finder(Telescope) {{{2
+		{
+			"nvim-telescope/telescope.nvim",
+			event = "VeryLazy",
+			dependencies = {
+				{
+					"nvim-telescope/telescope-fzf-native.nvim",
+					cond = function()
+						return fn.executable("make") == 1
+					end,
+					build = "make",
+					config = function()
+						require("telescope").load_extension("fzf")
+					end,
+				},
+			},
+			config = function()
+				load_plugin_config("telescope")
 			end,
 		},
 		-- }}}
 
-		-- Navigations  {{{
+		-- navigation {{{
 		{
 			"otavioschwanck/arrow.nvim",
 			keys = {
@@ -1326,6 +977,614 @@ require("lazy").setup(
 				set_hls(highlights)
 			end,
 		},
+		-- }}}
+
+		-- motion(text object) {{{2
+		{
+			"folke/flash.nvim",
+			keys = {
+				{
+					"<leader>f",
+					mode = { "n", "o", "x" },
+					function()
+						require("flash").jump()
+					end,
+					desc = "Flash",
+				},
+			},
+			opts = {
+				modes = {
+					search = { enabled = false },
+					char = { enabled = false },
+				},
+				prompt = {
+					-- Place the prompt above the statusline.
+					win_config = { row = -3 },
+				},
+			},
+			config = function(_, opts)
+				require("flash").setup(opts)
+
+				set_hls({
+					FlashBackdrop = { fg = config.colors.gray },
+				})
+			end,
+		},
+		{
+			"echasnovski/mini.ai",
+			keys = {
+				{ "i", mode = { "o", "x" } },
+				{ "a", mode = { "o", "x" } },
+			},
+			config = function(self, opts)
+				local ai = require("mini.ai")
+				ai.setup({
+					n_lines = 300,
+					search_method = "cover",
+					custom_textobjects = {
+						o = ai.gen_spec.treesitter({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
+						f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
+						c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }, {}),
+					},
+					silent = true,
+					mappings = {
+						-- Disable last variants.
+						around_last = "",
+						inside_last = "",
+						-- Disable next variants.
+						-- around_next = "",
+						-- inside_next = "",
+					},
+				})
+			end,
+		},
+		{
+			"chaoren/vim-wordmotion",
+			enabled = true,
+			init = function()
+				vim.g.wordmotion_nomap = true
+				vim.g.wordmotion_prefix = ","
+
+				-- user defined
+				vim.g.wordmotion_disable = true
+			end,
+			keys = {
+				{
+					"<leader>tw",
+					function()
+						local mod_nxo = { "n", "x", "o" }
+						local mod_xo = { "x", "o" }
+						vim.g.wordmotion_disable = not vim.g.wordmotion_disable
+						if vim.g.wordmotion_disable then
+							keymap.del(mod_nxo, "w")
+							keymap.del(mod_nxo, "b")
+							keymap.del(mod_nxo, "e")
+							keymap.del(mod_xo, "iw")
+							keymap.del(mod_xo, "aw")
+
+							vim.notify("Disabled word motion", vim.log.levels.WARN)
+						else
+							keymap.set(mod_nxo, "w", "<Plug>WordMotion_w")
+							keymap.set(mod_nxo, "b", "<Plug>WordMotion_b")
+							keymap.set(mod_nxo, "e", "<Plug>WordMotion_e")
+							keymap.set(mod_xo, "iw", "<Plug>WordMotion_iw")
+							keymap.set(mod_xo, "aw", "<Plug>WordMotion_aw")
+
+							vim.notify("Enabled word motion", vim.log.levels.WARN)
+						end
+					end,
+					desc = "[T]oggle [W]ord motion",
+				},
+			},
+		},
+		-- }}}
+
+		-- completion {{{2
+		{
+			"hrsh7th/nvim-cmp",
+			event = { "InsertEnter", "CmdlineEnter" },
+			dependencies = {
+				"hrsh7th/cmp-path",
+				"hrsh7th/cmp-buffer",
+				"hrsh7th/cmp-cmdline",
+				"hrsh7th/cmp-nvim-lsp",
+				"hrsh7th/cmp-nvim-lsp-signature-help",
+				-- "hrsh7th/cmp-omni",
+				"gh-liu/cmp-omni", -- #10
+				"L3MON4D3/LuaSnip",
+				"rafamadriz/friendly-snippets",
+				"saadparwaiz1/cmp_luasnip",
+			},
+			config = function()
+				load_plugin_config("cmp")
+			end,
+		},
+		{
+			"petertriho/cmp-git",
+			cond = function()
+				return fn.executable("git") == 1
+			end,
+			ft = { "gitcommit", "octo" },
+			config = function(self, opts)
+				require("cmp_git").setup(opts)
+
+				local cmp = require("cmp")
+				cmp.setup.filetype(self.ft, {
+					sources = {
+						{ name = "git" },
+						{ name = "buffer" },
+						{ name = "luasnip" },
+					},
+				})
+			end,
+		},
+		{
+			"rcarriga/cmp-dap",
+			ft = {
+				"dap-repl",
+				"dapui_watches",
+				"dapui_hover",
+			},
+			config = function(self, opts)
+				require("cmp_git").setup(opts)
+
+				local cmp = require("cmp")
+				cmp.setup.filetype({ "dap-repl" }, {
+					enabled = true,
+					sources = {
+						{ name = "omni" },
+						{ name = "dap" },
+					},
+				})
+				cmp.setup.filetype({ "dapui_watches", "dapui_hover" }, {
+					enabled = true,
+					sources = {
+						{ name = "dap" },
+					},
+				})
+			end,
+		},
+		{
+			"echasnovski/mini.pairs",
+			event = "InsertEnter",
+			init = function(self)
+				vim.g.minipairs_disable = false
+			end,
+			keys = {
+				{
+					"<leader>tp",
+					function()
+						vim.g.minipairs_disable = not vim.g.minipairs_disable
+						if vim.g.minipairs_disable then
+							vim.notify("Disabled auto pairs", vim.log.levels.WARN)
+						else
+							vim.notify("Enabled auto pairs", vim.log.levels.WARN)
+						end
+
+						-- When a bracket is inserted, briefly jump to the matching one.
+						vim.o.showmatch = vim.g.minipairs_disable
+					end,
+					desc = "[T]oggle auto [P]airs",
+				},
+			},
+			config = function(self, opts)
+				local pairs = require("mini.pairs")
+				pairs.setup()
+
+				local group = user_augroup("mini_pairs")
+				local pairs_by_fts = {
+					zig = function(buf)
+						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
+					end,
+					rust = function(buf)
+						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
+						pairs.map_buf(buf, "i", "<", { action = "open", pair = "<>", register = { cr = false } })
+						pairs.map_buf(buf, "i", ">", { action = "close", pair = "<>", register = { cr = false } })
+					end,
+				}
+
+				autocmd("FileType", {
+					group = group,
+					pattern = vim.tbl_keys(pairs_by_fts),
+					callback = function(ev)
+						local buf = ev.buf
+						pairs_by_fts[ev.match](buf)
+					end,
+					desc = "set mini pairs for fts",
+				})
+			end,
+		},
+		-- }}}
+
+		-- git {{{2
+		{
+			"tpope/vim-fugitive",
+			event = "VeryLazy",
+			dependencies = {
+				"tpope/vim-rhubarb",
+			},
+			config = function()
+				load_plugin_config("git")
+			end,
+		},
+		{
+			"rbong/vim-flog",
+			init = function(self)
+				vim.g.flog_use_internal_lua = 1
+				vim.g.flog_default_opts = { max_count = 2000 }
+				vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
+
+				-- keymap.set("ca", "F", "Flog", {})
+				keymap.set("ca", "F", "Flogsplit", {})
+
+				autocmd("FileType", {
+					pattern = "floggraph",
+					callback = function(ev)
+						local buf = ev.buf
+						-- like fugitive
+						keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
+
+						keymap.set("n", "q", ":normal gq<cr>", { buffer = buf, silent = true })
+					end,
+				})
+			end,
+			cmd = {
+				"Flog",
+				"Flogsplit",
+				"Floggit",
+			},
+			config = function(self, opts)
+				set_hls({
+					flogBranch1 = { fg = config.colors.yellow },
+					flogBranch2 = { fg = config.colors.blue },
+					flogBranch3 = { fg = config.colors.green },
+					flogBranch4 = { fg = config.colors.red },
+					flogBranch5 = { fg = config.colors.magenta },
+					flogBranch6 = { fg = config.colors.gray },
+					flogBranch7 = { fg = config.colors.orange },
+					flogBranch8 = { fg = config.colors.cyan },
+					-- flogBranch9 = { fg = config.colors.green },
+				})
+			end,
+		},
+		{
+			"lewis6991/gitsigns.nvim",
+			event = "VeryLazy",
+			config = function()
+				local gs = require("gitsigns")
+
+				gs.setup({
+					signs = {
+						add = { text = "+" },
+						change = { text = "~" },
+						delete = { text = "_" },
+						topdelete = { text = "‾" },
+						changedelete = { text = "≃" },
+						untracked = { text = "┆" },
+					},
+					signcolumn = true,
+					preview_config = {
+						border = config.borders,
+						style = "minimal",
+						relative = "cursor",
+						row = 0,
+						col = 1,
+					},
+					on_attach = function(bufnr)
+						local function setmap(mode, l, r, opts)
+							opts = opts or {}
+							opts.buffer = bufnr
+							keymap.set(mode, l, r, opts)
+						end
+
+						-- Text object
+						setmap({ "o", "x" }, "ih", ":<C-U>Gitsigns select_hunk<CR>")
+
+						-- Navigation
+						setmap("n", "]c", function()
+							if vim.wo.diff then
+								return "]c"
+							end
+							vim.schedule(gs.next_hunk)
+							return "<Ignore>"
+						end, { expr = true })
+						setmap("n", "[c", function()
+							if vim.wo.diff then
+								return "[c"
+							end
+							vim.schedule(gs.prev_hunk)
+							return "<Ignore>"
+						end, { expr = true })
+
+						-- Actions
+						-- stage
+						setmap("n", "<leader>gS", gs.stage_buffer, { desc = "Stage buffer" })
+						setmap("n", "<leader>gs", gs.stage_hunk, { desc = "Stage hunk" })
+						setmap("v", "<leader>gs", function()
+							gs.stage_hunk({ fn.line("."), fn.line("v") })
+						end, { desc = "Stage hunk" })
+
+						-- reset
+						setmap("n", "<leader>gR", gs.reset_buffer, { desc = "Reset buffer" })
+						setmap("n", "<leader>gr", gs.reset_hunk, { desc = "Reset hunk" })
+						setmap("v", "<leader>gr", function()
+							gs.reset_hunk({ fn.line("."), fn.line("v") })
+						end, { desc = "Reset hunk of selection" })
+
+						-- diff
+						setmap("n", "<leader>gd", gs.diffthis, { desc = "Diff against the index(by default)" })
+						setmap("n", "<leader>gD", function()
+							gs.diffthis("~" .. tostring(vim.v.count1))
+						end, { desc = "Diff against the last commit" })
+
+						setmap("n", "<leader>gb", gs.blame_line)
+						setmap("n", "<leader>gp", gs.preview_hunk)
+						setmap("n", "<leader>gl", gs.setloclist)
+						setmap("n", "<leader>gq", function()
+							gs.setqflist("all")
+						end)
+					end,
+				})
+
+				keymap.set("ca", "gs", "Gitsigns", {})
+
+				local add = get_hl("DiffAdd").fg
+				local change = get_hl("DiffChange").fg
+				local delete = get_hl("DiffDelete").fg
+				local line = get_hl("DiffText").bg
+				set_hls({
+					GitSignsAdd = { fg = add },
+					GitSignsAddNr = { fg = add },
+					GitSignsAddLn = { fg = add, bg = line },
+					GitSignsChange = { fg = change },
+					GitSignsChangeNr = { fg = change },
+					GitSignsChangeLn = { fg = change, bg = line },
+					GitSignsDelete = { fg = delete },
+					GitSignsDeleteNr = { fg = delete },
+					GitSignsDeleteLn = { fg = delete, bg = line },
+				})
+			end,
+		},
+		{
+			"pwntester/octo.nvim",
+			cond = function()
+				return fn.executable("gh") == 1
+			end,
+			cmd = { "Octo" },
+			config = function(_, opts)
+				require("octo").setup({
+					enable_builtin = true,
+					timeout = 3000,
+				})
+
+				vim.treesitter.language.register("markdown", "octo")
+			end,
+		},
+		-- }}}
+
+		-- improvement {{{2
+		{
+			"mbbill/undotree",
+			init = function()
+				vim.g.undotree_WindowLayout = 2
+				vim.g.undotree_DiffAutoOpen = 1
+				vim.g.undotree_ShortIndicators = 1
+				vim.g.undotree_SetFocusWhenToggle = 1
+			end,
+			keys = {
+				{
+					"<leader>tu",
+					vim.cmd.UndotreeToggle,
+					desc = "Undotree: Toggle",
+					noremap = true,
+					silent = true,
+				},
+			},
+			cmd = { "UndotreeToggle" },
+		},
+		{
+			"echasnovski/mini.bufremove",
+			lazy = true,
+			cmd = { "Bdelete", "Bwipeout" },
+			keys = {
+				{
+					"<leader>bd",
+					function()
+						require("mini.bufremove").delete(0, false)
+					end,
+					desc = "Delete Buffer",
+				},
+			},
+			opts = {},
+			config = function(self, opts)
+				local MiniBufremove = require("mini.bufremove")
+				MiniBufremove.setup(self.opts)
+
+				local cmd_opts = {
+					bang = true,
+					addr = "buffers",
+					nargs = "?",
+					complete = "buffer",
+				}
+				local buf_id = function(opts)
+					local buffer = 0
+					if #opts.fargs == 1 then
+						local bufnr = fn.bufnr(opts.fargs[1])
+						if bufnr > 0 then
+							buffer = bufnr
+						end
+					end
+					return buffer
+				end
+				api.nvim_create_user_command("Bdelete", function(opts)
+					MiniBufremove.delete(buf_id(opts), opts.bang)
+				end, cmd_opts)
+				api.nvim_create_user_command("Bwipeout", function(opts)
+					MiniBufremove.wipeout(buf_id(opts), opts.bang)
+				end, cmd_opts)
+			end,
+		},
+		{
+			"dstein64/vim-win",
+			config = function(self, opts)
+				vim.g.win_ext_command_map = {
+					c = "wincmd c",
+					C = "close!",
+					q = "quit",
+					Q = "quit!",
+					["="] = "wincmd =",
+					x = "Win#exit",
+				}
+			end,
+			keys = { "<leader>w" },
+			cmd = { "Win" },
+		},
+		-- }}}
+
+		-- filetype specifically {{{2
+		{
+			"saecki/crates.nvim",
+			lazy = true,
+			event = { "BufRead Cargo.toml" },
+			config = function()
+				require("crates").setup({
+					popup = {
+						border = config.borders,
+					},
+					src = {},
+					lsp = {
+						enabled = true,
+						name = "crates.nvim",
+						-- on_attach = function(client, bufnr) end,
+						actions = true,
+						completion = true,
+					},
+				})
+			end,
+		},
+		{
+			"fladson/vim-kitty",
+			ft = "kitty",
+		},
+		{
+			"zchee/vim-goasm",
+			ft = "goasm",
+		},
+		{
+			"ellisonleao/glow.nvim",
+			cond = function()
+				return fn.executable("glow") == 1
+			end,
+			enabled = true,
+			opts = {
+				border = config.borders,
+				-- width_ratio = 0.8,
+				-- height_ratio = 0.8,
+			},
+			cmd = "Glow",
+		},
+		{
+			"gaoDean/autolist.nvim",
+			lazy = true,
+			ft = {
+				"norg",
+				-- "text",
+				"markdown",
+			},
+			init = function(self)
+				autocmd("FileType", {
+					pattern = self.ft,
+					callback = function(ev)
+						local buf = ev.buf
+						local map = keymap.set
+
+						local al = require("autolist")
+
+						map("i", "<CR>", "<CR><cmd>AutolistNewBullet<cr>", { buffer = buf })
+						map("n", "o", "o<cmd>AutolistNewBullet<cr>", { buffer = buf })
+						map("n", "O", "O<cmd>AutolistNewBulletBefore<cr>", { buffer = buf })
+
+						map("i", "<C-t>", "<C-t><cmd>AutolistRecalculate<cr>", { buffer = buf })
+						map("i", "<C-d>", "<C-d><cmd>AutolistRecalculate<cr>", { buffer = buf })
+						map("n", ">>", ">><cmd>AutolistRecalculate<cr>", { buffer = buf })
+						map("n", "<<", "<<<cmd>AutolistRecalculate<cr>", { buffer = buf })
+						map("v", ">", "><cmd>AutolistRecalculate<cr>", { buffer = buf })
+						map("v", "<", "<<cmd>AutolistRecalculate<cr>", { buffer = buf })
+
+						-- functions to recalculate list on edit
+						map("n", "dd", "dd<cmd>AutolistRecalculate<cr>", { buffer = buf })
+
+						-- cycle list types with dot-repeat
+						map("n", "<leader>cn", al.cycle_next_dr, { expr = true, buffer = buf })
+						map("n", "<leader>cp", al.cycle_prev_dr, { expr = true, buffer = buf })
+
+						map("n", "<leader>x", al.toggle_checkbox, { buffer = buf })
+					end,
+					desc = "setup autolist",
+				})
+			end,
+			opts = {},
+		},
+		-- }}}
+
+		-- tpope {{{2
+		{
+			"tpope/vim-repeat",
+			event = "VeryLazy",
+		},
+		{
+			"tpope/vim-rsi",
+			init = function(self)
+				vim.g.rsi_no_meta = 1
+			end,
+			-- event = "VeryLazy",
+			event = { "InsertEnter", "CmdlineEnter" },
+		},
+		{
+			"tpope/vim-eunuch",
+			enabled = true,
+			cmd = {
+				"SudoEdit",
+				"SudoWrite",
+				"Remove",
+				"Delete",
+				"Copy",
+				"Move",
+				"Chmod",
+				"Mkdir",
+				"W",
+				"Wall",
+				"Cfind",
+				"Lfind",
+			},
+		},
+		{
+			"tpope/vim-sleuth",
+			event = "VeryLazy",
+		},
+		{
+			"tpope/vim-unimpaired",
+			keys = { "yo", "[", "]" },
+			config = function(self, opts)
+				vim.keymap.set(
+					"n",
+					"yoz",
+					[[&foldmethod ==# 'syntax' ? ':setlocal foldmethod=manual<CR>' : ':setlocal foldmethod=syntax<CR>']],
+					{ expr = true }
+				)
+			end,
+		},
+		{
+			"tpope/vim-dispatch",
+			init = function()
+				vim.g.dispatch_no_maps = 1
+			end,
+			cmd = { "Make", "Dispatch", "Start" },
+		},
+		{
+			"tpope/vim-obsession",
+			cmd = { "Obsession" },
+		},
 		{
 			"tpope/vim-projectionist",
 			lazy = true,
@@ -1411,111 +1670,7 @@ require("lazy").setup(
 		},
 		-- }}}
 
-		-- UI Improvements {{{2
-		{
-			"lewis6991/hover.nvim",
-			keys = { "K", "gK" },
-			config = function()
-				require("hover").setup({
-					init = function()
-						require("hover.providers.lsp")
-						require("hover.providers.man")
-					end,
-					preview_opts = {
-						border = config.borders,
-					},
-					preview_window = false,
-					title = true,
-				})
-
-				load_plugin_config("hover")
-
-				keymap.set("n", "K", function()
-					local hover_win = vim.b.hover_preview
-					if hover_win and api.nvim_win_is_valid(hover_win) then
-						api.nvim_set_current_win(hover_win)
-					else
-						require("hover").hover()
-					end
-				end, { desc = "hover.nvim" })
-				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
-			end,
-		},
-		{
-			"mbbill/undotree",
-			init = function()
-				vim.g.undotree_WindowLayout = 2
-				vim.g.undotree_DiffAutoOpen = 1
-				vim.g.undotree_ShortIndicators = 1
-				vim.g.undotree_SetFocusWhenToggle = 1
-			end,
-			keys = {
-				{
-					"<leader>tu",
-					vim.cmd.UndotreeToggle,
-					desc = "Undotree: Toggle",
-					noremap = true,
-					silent = true,
-				},
-			},
-			cmd = { "UndotreeToggle" },
-		},
-		-- }}}
-
-		-- Misc {{{2
-		{
-			"tpope/vim-repeat",
-			event = "VeryLazy",
-		},
-		{
-			"tpope/vim-rsi",
-			init = function(self)
-				vim.g.rsi_no_meta = 1
-			end,
-			-- event = "VeryLazy",
-			event = { "InsertEnter", "CmdlineEnter" },
-		},
-		{
-			"tpope/vim-eunuch",
-			enabled = true,
-			cmd = {
-				"SudoEdit",
-				"SudoWrite",
-				"Remove",
-				"Delete",
-				"Copy",
-				"Move",
-				"Chmod",
-				"Mkdir",
-				"W",
-				"Wall",
-				"Cfind",
-				"Lfind",
-			},
-		},
-		{
-			"tpope/vim-sleuth",
-			event = "VeryLazy",
-		},
-		{
-			"tpope/vim-unimpaired",
-			keys = { "yo", "[", "]" },
-			config = function(self, opts)
-				vim.keymap.set(
-					"n",
-					"yoz",
-					[[&foldmethod ==# 'syntax' ? ':setlocal foldmethod=manual<CR>' : ':setlocal foldmethod=syntax<CR>']],
-					{ expr = true }
-				)
-			end,
-		},
-		{
-			"tpope/vim-dispatch",
-			init = function()
-				vim.g.dispatch_no_maps = 1
-			end,
-			cmd = { "Make", "Dispatch", "Start" },
-		},
+		-- database {{{
 		{
 			"tpope/vim-dadbod",
 			cmd = { "DB" },
@@ -1527,10 +1682,9 @@ require("lazy").setup(
 				]])
 			end,
 		},
-		{
-			"tpope/vim-obsession",
-			cmd = { "Obsession" },
-		},
+		-- }}}
+
+		-- misc {{{2
 		{
 			"akinsho/toggleterm.nvim",
 			enabled = false,
@@ -1555,76 +1709,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"pwntester/octo.nvim",
-			cond = function()
-				return fn.executable("gh") == 1
-			end,
-			cmd = { "Octo" },
-			config = function(_, opts)
-				require("octo").setup({
-					enable_builtin = true,
-					timeout = 3000,
-				})
-
-				vim.treesitter.language.register("markdown", "octo")
-			end,
-		},
-		{
-			"ellisonleao/glow.nvim",
-			cond = function()
-				return fn.executable("glow") == 1
-			end,
-			enabled = true,
-			opts = {
-				border = config.borders,
-				-- width_ratio = 0.8,
-				-- height_ratio = 0.8,
-			},
-			cmd = "Glow",
-		},
-		{
-			"echasnovski/mini.bufremove",
-			lazy = true,
-			cmd = { "Bdelete", "Bwipeout" },
-			keys = {
-				{
-					"<leader>bd",
-					function()
-						require("mini.bufremove").delete(0, false)
-					end,
-					desc = "Delete Buffer",
-				},
-			},
-			opts = {},
-			config = function(self, opts)
-				local MiniBufremove = require("mini.bufremove")
-				MiniBufremove.setup(self.opts)
-
-				local cmd_opts = {
-					bang = true,
-					addr = "buffers",
-					nargs = "?",
-					complete = "buffer",
-				}
-				local buf_id = function(opts)
-					local buffer = 0
-					if #opts.fargs == 1 then
-						local bufnr = fn.bufnr(opts.fargs[1])
-						if bufnr > 0 then
-							buffer = bufnr
-						end
-					end
-					return buffer
-				end
-				api.nvim_create_user_command("Bdelete", function(opts)
-					MiniBufremove.delete(buf_id(opts), opts.bang)
-				end, cmd_opts)
-				api.nvim_create_user_command("Bwipeout", function(opts)
-					MiniBufremove.wipeout(buf_id(opts), opts.bang)
-				end, cmd_opts)
-			end,
-		},
-		{
 			"jbyuki/venn.nvim",
 			enabled = false,
 			lazy = true,
@@ -1638,92 +1722,9 @@ require("lazy").setup(
 			},
 		},
 		{
-			"dstein64/vim-win",
-			config = function(self, opts)
-				vim.g.win_ext_command_map = {
-					c = "wincmd c",
-					C = "close!",
-					q = "quit",
-					Q = "quit!",
-					["="] = "wincmd =",
-					x = "Win#exit",
-				}
-			end,
-			keys = { "<leader>w" },
-			cmd = { "Win" },
-		},
-		-- }}}
-
-		-- Lang {{{2
-		{
-			"saecki/crates.nvim",
-			lazy = true,
-			event = { "BufRead Cargo.toml" },
-			config = function()
-				require("crates").setup({
-					popup = {
-						border = config.borders,
-					},
-					src = {},
-					lsp = {
-						enabled = true,
-						name = "crates.nvim",
-						-- on_attach = function(client, bufnr) end,
-						actions = true,
-						completion = true,
-					},
-				})
-			end,
-		},
-		{
-			"fladson/vim-kitty",
-			ft = "kitty",
-		},
-		{
-			"gaoDean/autolist.nvim",
-			lazy = true,
-			ft = {
-				"norg",
-				-- "text",
-				"markdown",
-			},
-			init = function(self)
-				autocmd("FileType", {
-					pattern = self.ft,
-					callback = function(ev)
-						local buf = ev.buf
-						local map = keymap.set
-
-						local al = require("autolist")
-
-						map("i", "<CR>", "<CR><cmd>AutolistNewBullet<cr>", { buffer = buf })
-						map("n", "o", "o<cmd>AutolistNewBullet<cr>", { buffer = buf })
-						map("n", "O", "O<cmd>AutolistNewBulletBefore<cr>", { buffer = buf })
-
-						map("i", "<C-t>", "<C-t><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("i", "<C-d>", "<C-d><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("n", ">>", ">><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("n", "<<", "<<<cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("v", ">", "><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("v", "<", "<<cmd>AutolistRecalculate<cr>", { buffer = buf })
-
-						-- functions to recalculate list on edit
-						map("n", "dd", "dd<cmd>AutolistRecalculate<cr>", { buffer = buf })
-
-						-- cycle list types with dot-repeat
-						map("n", "<leader>cn", al.cycle_next_dr, { expr = true, buffer = buf })
-						map("n", "<leader>cp", al.cycle_prev_dr, { expr = true, buffer = buf })
-
-						map("n", "<leader>x", al.toggle_checkbox, { buffer = buf })
-					end,
-					desc = "setup autolist",
-				})
-			end,
+			"NvChad/nvim-colorizer.lua",
 			opts = {},
-		},
-		{
-			"zchee/vim-goasm",
-			ft = "goasm",
+			cmd = "ColorizerToggle",
 		},
 		-- }}}
 	},
@@ -1777,7 +1778,7 @@ require("lazy").setup(
 vim.o.mouse = ""
 vim.o.clipboard = "unnamedplus"
 
-vim.o.viewoptions = "folds,cursor,curdir"
+vim.o.viewoptions = "folds,curdir"
 
 vim.o.completeopt = "menu,menuone,noselect"
 
