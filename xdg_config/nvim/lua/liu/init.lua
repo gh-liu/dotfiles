@@ -866,23 +866,26 @@ require("lazy").setup(
 						local buf = args.data.buf_id
 
 						local MiniFiles = require("mini.files")
-						keymap.set("n", "<CR>", function()
-							MiniFiles.go_in()
-						end, { buffer = buf })
 
-						keymap.set("n", "<leader><CR>", function()
-							MiniFiles.synchronize()
-						end, { buffer = buf })
+						-- set up ability to confirm changes with :w
+						api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
+						api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
+						api.nvim_create_autocmd("BufWriteCmd", {
+							callback = MiniFiles.synchronize,
+							buffer = buf,
+						})
 
-						keymap.set("n", "<tab>", function()
-							local add = function(fname)
-								local default_lable = vim.g.mini_visits_default_label
-								if default_lable then
-									local vis = require("mini.visits")
-									vis.add_label(default_lable, fname)
-								end
+						keymap.set("n", "<CR>", MiniFiles.go_in, { buffer = buf })
+						keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
+
+						local add = function(fname)
+							local default_lable = vim.g.mini_visits_default_label
+							if default_lable then
+								local vis = require("mini.visits")
+								vis.add_label(default_lable, fname)
 							end
-
+						end
+						keymap.set("n", "<tab>", function()
 							local entry = MiniFiles.get_fs_entry(0, fn.line("."))
 							if entry.fs_type == "file" then
 								add(entry.path)
