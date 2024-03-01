@@ -74,6 +74,17 @@ local enable_winbar = function(buf, win)
 
 	return not api.nvim_win_get_config(win).zindex
 end
+
+local debounce = function(ms, fn)
+	local timer = vim.uv.new_timer()
+	return function(...)
+		local argv = { ... }
+		timer:start(ms, 0, function()
+			timer:stop()
+			vim.schedule_wrap(fn)(unpack(argv))
+		end)
+	end
+end
 -- }}}
 
 -- Plugins {{{1
@@ -224,34 +235,27 @@ require("lazy").setup(
 			"mfussenegger/nvim-lint",
 			lazy = true,
 			init = function(self)
-				-- TODO: unstand debounce <gh-liu>
-				local DEBOUNCE_MS = 500
-
 				local linters_by_ft = self.opts.linters_by_ft
 				autocmd("FileType", {
 					pattern = vim.tbl_keys(linters_by_ft),
 					callback = function(ev)
 						local bufnr = ev.buf
+						local try_lint = debounce(500, function()
+							if api.nvim_buf_is_valid(bufnr) then
+								api.nvim_buf_call(bufnr, function()
+									require("lint").try_lint()
+								end)
+							end
+						end)
 						autocmd({
 							"BufWritePost",
 							"BufReadPost",
 							"InsertLeave",
 							"TextChanged",
 						}, {
-							callback = function()
-								local timer = assert(vim.uv.new_timer())
-								timer:stop()
-								timer:start(
-									DEBOUNCE_MS,
-									0,
-									vim.schedule_wrap(function()
-										if api.nvim_buf_is_valid(bufnr) then
-											api.nvim_buf_call(bufnr, function()
-												require("lint").try_lint()
-											end)
-										end
-									end)
-								)
+							group = augroup("liu/nvim-lint_" .. tostring(bufnr), { clear = true }),
+							callback = function(ev)
+								try_lint()
 							end,
 							buffer = bufnr,
 						})
