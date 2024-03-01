@@ -1515,6 +1515,7 @@ require("lazy").setup(
 		},
 		{
 			"akinsho/toggleterm.nvim",
+			enabled = false,
 			keys = { [[<c-\>]] },
 			opts = {
 				on_open = function(t)
