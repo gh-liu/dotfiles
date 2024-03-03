@@ -859,6 +859,36 @@ require("lazy").setup(
 					end,
 				})
 
+				local function map_split(buf_id, lhs, direction)
+					local minifiles = require("mini.files")
+
+					local function rhs()
+						local window = minifiles.get_target_window()
+						-- Noop if the explorer isn't open or the cursor is on a directory.
+						if window == nil or minifiles.get_fs_entry().fs_type == "directory" then
+							return
+						end
+						-- Make a new window and set it as target.
+						local new_target_window
+						vim.api.nvim_win_call(window, function()
+							vim.cmd(direction .. " split")
+							new_target_window = vim.api.nvim_get_current_win()
+						end)
+						minifiles.set_target_window(new_target_window)
+						-- Go in and close the explorer.
+						minifiles.go_in({ close_on_file = true })
+					end
+
+					vim.keymap.set("n", lhs, rhs, { buffer = buf_id, desc = "Split " .. string.sub(direction, 12) })
+				end
+				local add_to_visits = function(fname)
+					local default_lable = vim.g.mini_visits_default_label
+					if default_lable then
+						local vis = require("mini.visits")
+						vis.add_label(default_lable, fname)
+					end
+				end
+
 				autocmd("User", {
 					pattern = "MiniFilesBufferCreate",
 					group = g,
@@ -878,17 +908,13 @@ require("lazy").setup(
 						keymap.set("n", "<CR>", MiniFiles.go_in, { buffer = buf })
 						keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
 
-						local add = function(fname)
-							local default_lable = vim.g.mini_visits_default_label
-							if default_lable then
-								local vis = require("mini.visits")
-								vis.add_label(default_lable, fname)
-							end
-						end
+						map_split(buf, "<C-s>", "belowright horizontal")
+						map_split(buf, "<C-v>", "belowright vertical")
+
 						keymap.set("n", "<tab>", function()
 							local entry = MiniFiles.get_fs_entry(0, fn.line("."))
 							if entry.fs_type == "file" then
-								add(entry.path)
+								add_to_visits(entry.path)
 							end
 						end, { buffer = buf })
 					end,
