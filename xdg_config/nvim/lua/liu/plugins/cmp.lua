@@ -111,7 +111,7 @@ do
 		nvim_lsp = "[LSP]", -- unknown source https://github.com/hrsh7th/nvim-cmp/issues/290#issuecomment-939327970
 		luasnip = "[SNIP]",
 		path = "[PATH]",
-		cmdline = "[CMD]",
+		-- cmdline = "[CMD]",
 		omni = "[OMNI]",
 		git = "[GIT]",
 	}
@@ -239,49 +239,6 @@ do
 			end, { "i", "s" }),
 		}),
 	})
-
-	-- cmdline setup
-	do
-		local cmdline_formatting = {
-			fields = { "abbr", "kind" },
-			format = function(entry, item)
-				local kind_abbr = item.kind
-				item.kind = kind_abbr
-				item.kind_hl_group = "None"
-				return item
-			end,
-		}
-		-- Use buffer source for `/` and `?` (if you enabled `native_menu`, this won't work anymore).
-		---@diagnostic disable-next-line: missing-fields
-		cmp.setup.cmdline({ "/", "?" }, {
-			mapping = cmp.mapping.preset.cmdline(),
-			formatting = cmdline_formatting,
-			sources = {
-				{ name = "buffer" },
-			},
-		})
-		-- Use cmdline & path source for ':' (if you enabled `native_menu`, this won't work anymore).
-		---@diagnostic disable-next-line: missing-fields
-		cmp.setup.cmdline(":", {
-			mapping = cmp.mapping.preset.cmdline(),
-			formatting = cmdline_formatting,
-			sources = cmp.config.sources({
-				{ name = "path" },
-			}, {
-				{ name = "cmdline" },
-			}),
-			---@diagnostic disable-next-line: missing-fields
-			completion = {
-				autocomplete = false,
-				completeopt = "menu,menuone,noselect",
-			},
-		})
-
-		cmp.setup.cmdline("@", { enabled = false })
-		cmp.setup.cmdline(">", { enabled = false })
-		cmp.setup.cmdline("-", { enabled = false })
-		cmp.setup.cmdline("=", { enabled = false })
-	end
 
 	-- ft: query
 	cmp.setup.filetype({ "query" }, {
