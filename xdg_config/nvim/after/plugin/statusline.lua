@@ -187,14 +187,28 @@ Items.work_dir = function()
 	return H.add_highlight2("Directory", string.format("%s%s/", icon, H.truncate(cwd)))
 end
 Items.buf_name = function()
+	local type_commit = "(commit)"
+	local type_tree = "(tree)"
+	local type_blob = "(bolb)"
 	local sep = "||"
 	local buf_name = api.nvim_buf_get_name(0)
 	if vim.startswith(buf_name, "fugitive://") then
 		local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
-		buf_name = revision .. sep .. relpath
+		local revision_len = #revision
+		local relpath_len = #relpath
+		if revision_len > 0 and relpath_len > 0 then
+			buf_name = type_blob .. revision .. sep .. relpath
+		else
+			if relpath_len == 0 then
+				buf_name = type_tree .. revision
+			end
+			if revision_len == 0 then
+				buf_name = type_commit .. relpath
+			end
+		end
 	elseif vim.startswith(buf_name, "gitsigns://") then
 		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
-		buf_name = revision .. sep .. relpath
+		buf_name = type_blob .. revision .. sep .. relpath
 	else
 		buf_name = api.nvim_eval_statusline("%f", {}).str
 	end
