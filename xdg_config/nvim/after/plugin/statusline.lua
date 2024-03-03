@@ -367,6 +367,7 @@ _G.nvim_statsline = function()
 			"prompt",
 		}, vim.bo.buftype) or vim.tbl_contains({
 			"fugitive",
+			"minifiles",
 		}, vim.bo.filetype)
 	then
 		return contact_items({
