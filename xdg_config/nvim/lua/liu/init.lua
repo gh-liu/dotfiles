@@ -219,6 +219,7 @@ require("lazy").setup(
 				"DapContinue",
 				"DapToggleBreakpoint",
 				"DapStart",
+				"DapRunOSV",
 			},
 			dependencies = {
 				"rcarriga/nvim-dap-ui",
@@ -226,6 +227,10 @@ require("lazy").setup(
 			},
 			config = function(self, opts)
 				load_plugin_config("dap")
+
+				api.nvim_create_user_command("DapRunOSV", function()
+					require("osv").launch({ port = 8086 })
+				end, { nargs = 0 })
 			end,
 		},
 		-- }}}

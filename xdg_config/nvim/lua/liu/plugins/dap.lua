@@ -529,11 +529,20 @@ dap.adapters.nlua = function(cb, config)
 	end
 end
 
+dap.adapters.nlua2 = function(callback, config)
+	callback({ type = "server", host = config.host or "127.0.0.1", port = config.port or 8086 })
+end
+
 dap.configurations.lua = {
 	{
 		type = "nlua",
 		request = "attach",
-		name = "Attach to running Neovim instance",
+		name = "Attach to embeded running Neovim instance",
+	},
+	{
+		type = "nlua2",
+		request = "attach",
+		name = "Attach to running(by DapRunOSV) Neovim instance",
 	},
 }
 -- }}}
