@@ -583,7 +583,8 @@ require("lazy").setup(
 				},
 			},
 			opts = {
-				snippet_engine = "luasnip",
+				-- snippet_engine = "luasnip",
+				snippet_engine = "nvim",
 				languages = {
 					lua = {
 						template = { annotation_convention = "emmylua" },

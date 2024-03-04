@@ -2,6 +2,7 @@ local api = vim.api
 
 local cmp = require("cmp")
 local luasnip = require("luasnip")
+local vim_snippet = vim.snippet
 
 -- Luasnip
 do
@@ -99,6 +100,10 @@ do
 				and not luasnip.choice_active()
 			then
 				luasnip.unlink_current()
+			end
+
+			if vim_snippet.active() then
+				vim_snippet.exit()
 			end
 		end,
 	})
@@ -222,20 +227,27 @@ do
 					return fallback()
 				end
 			end, { "i", "s" }),
-			-- luaship snippet jump
 			["<C-h>"] = cmp.mapping(function(fallback)
+				-- native snippet
+				if vim_snippet.active() and vim_snippet.jumpable(-1) then
+					return vim_snippet.jump(-1)
+				end
+				-- luaship snippet
 				if luasnip.in_snippet() and luasnip.jumpable(-1) then
 					return luasnip.jump(-1)
-				else
-					return fallback()
 				end
+				return fallback()
 			end, { "i", "s" }),
 			["<C-l>"] = cmp.mapping(function(fallback)
+				-- native snippet
+				if vim_snippet.active() and vim_snippet.jumpable(1) then
+					return vim_snippet.jump(1)
+				end
+				-- luaship snippet
 				if luasnip.in_snippet() and luasnip.jumpable(1) then
 					return luasnip.jump(1)
-				else
-					return fallback()
 				end
+				return fallback()
 			end, { "i", "s" }),
 		}),
 	})
