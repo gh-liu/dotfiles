@@ -1309,6 +1309,11 @@ require("lazy").setup(
 						col = 1,
 					},
 					on_attach = function(bufnr)
+						-- do not attach to fugitive buffers
+						if vim.startswith(api.nvim_buf_get_name(bufnr), "fugitive://") then
+							return false
+						end
+
 						local function setmap(mode, l, r, opts)
 							opts = opts or {}
 							opts.buffer = bufnr
