@@ -42,10 +42,11 @@ local ts_foldexpr = "v:lua.vim.treesitter.foldexpr()"
 local ts_foldtext = ""
 
 local function set_ts_win_defaults(ev)
+	local bufnr = ev.buf
 	if not vim.b.is_foldable then
-		local parser_name = parsers.get_buf_lang()
-		if parsers.has_parser(parser_name) then
-			local ok, has_folds = pcall(ts.query.get, parser_name, "folds")
+		local lang = ts.language.get_lang(api.nvim_get_option_value("filetype", { buf = bufnr }))
+		if parsers.has_parser(lang) then
+			local ok, has_folds = pcall(ts.query.get, lang, "folds")
 			if ok and has_folds then
 				vim.b.is_foldable = true
 			end

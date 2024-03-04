@@ -3,7 +3,7 @@ local ts = vim.treesitter
 
 local locals = require("nvim-treesitter.locals")
 local ts_utils = require("nvim-treesitter.ts_utils")
-local parsers = require("nvim-treesitter.parsers")
+-- local parsers = require("nvim-treesitter.parsers")
 local queries = require("nvim-treesitter.query")
 
 local M = {}
@@ -107,7 +107,12 @@ local function ts_obj_move(opts)
 	local winid = opts.winid or api.nvim_get_current_win()
 	local bufnr = api.nvim_win_get_buf(winid)
 
-	local query_strings = get_query_strings_from_regex(query_strings_regex, query_group, parsers.get_buf_lang(bufnr))
+	-- ts.language.get_lang(vim.api.nvim_get_option_value("filetype", { buf = bufnr }))
+	local query_strings = get_query_strings_from_regex(
+		query_strings_regex,
+		query_group,
+		ts.language.get_lang(api.nvim_get_option_value("filetype", { buf = bufnr }))
+	)
 
 	-- score is a byte position.
 	local function scoring_function(start_, match)
