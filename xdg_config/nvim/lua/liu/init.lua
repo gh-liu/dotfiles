@@ -2021,7 +2021,8 @@ setmap("n", "<leader>bb", "<C-^>")
 -- }}}
 
 -- Tabs {{{2
--- setmap("n", "<C-w>O", ":tabonly<CR>")
+setmap("n", "<C-w>O", ":tabonly<CR>")
+setmap("n", "<C-w>Q", ":tabclose<CR>")
 -- }}}
 
 -- Abbrev{{{2
