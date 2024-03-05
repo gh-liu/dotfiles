@@ -51,6 +51,16 @@ autocmd("User", {
 		end, { buffer = fugitivebuf })
 	end,
 })
+
+-- autocmd("User", {
+-- 	group = g,
+-- 	pattern = { "FugitiveStageBlob" },
+-- 	callback = function(data)
+-- 		local bufnr = data.buf
+-- 		local buf_name = api.nvim_buf_get_name(bufnr)
+-- 		local _, _, stage, _ = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
+-- 	end,
+-- })
 -- }}}
 
 autocmd("BufEnter", {
