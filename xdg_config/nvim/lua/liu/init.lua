@@ -1639,38 +1639,42 @@ require("lazy").setup(
 					require("lazy").load({ plugins = { "vim-projectionist" } })
 				end
 
-				-- ft will load plugin
+				local go_main_template = "package main"
 				vim.g.projectionist_heuristics = {
 					["go.mod"] = {
-						["go.mod"] = {
-							type = "dep",
-						},
-						["*.go"] = {
+						["README.md"] = { type = "doc" },
+						["go.mod"] = { type = "dep" },
+						["*.go&!*_test.go"] = {
 							alternate = "{}_test.go",
+							-- related = "{}_test.go",
 							type = "source",
 							template = [[package {file|dirname|basename}]],
 						},
 						["*_test.go"] = {
 							alternate = "{}.go",
+							-- related = "{}.go",
 							type = "test",
 							template = [[package {file|dirname|basename}_test]],
 						},
 						["cmd/*/main.go"] = {
-							type = "main",
-							template = [[package main]],
+							type = "main", -- argument will replace the glob
+							template = go_main_template,
 							dispatch = "go run {file|dirname}",
 							start = "go run {file|dirname}",
 							make = "go build {file|dirname}",
 						},
 						["main.go"] = {
+							-- If this option is provided for a literal filename rather than a glob,
+							-- it is used as the default destination of the navigation command when no argument is given.
 							type = "main",
-							template = [[package main]],
+							template = go_main_template,
 							dispatch = "go run {file|dirname}",
 							start = "go run {file|dirname}",
 							make = "go build {file|dirname}",
 						},
 					},
 					["build.zig"] = {
+						["README.md"] = { type = "doc" },
 						["build.zig"] = {
 							type = "build",
 							alternate = "build.zig.zon",
