@@ -74,8 +74,8 @@ autocmd("BufEnter", {
 set_cmds({
 	-- GUndoLastCommit = [[:G reset --soft HEAD~]],
 	-- GDiscardChanges = [[:G reset --hard]],
-	GDiffFiles = [[G difftool --name-status]],
-	GConflictTool = function(t)
+	-- GListDiffFiles = [[:G difftool --name-status]],
+	Gdiff4 = function(t)
 		vim.cmd([[ tabnew % ]])
 		-- The windows layout:
 		-- Top-left: "ours" corresponding to the HEAD.
@@ -95,7 +95,7 @@ set_cmds({
 })
 
 set_cmds({
-	GdiffToggle = function(opt)
+	Gdiff3Toggle = function(opt)
 		if vim.o.diff then
 			vim.cmd("diffoff")
 			for _, bufnr in ipairs(api.nvim_list_bufs()) do
