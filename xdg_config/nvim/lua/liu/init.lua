@@ -1826,6 +1826,8 @@ vim.o.viewoptions = "folds,curdir"
 
 vim.o.completeopt = "menu,menuone,noselect"
 
+vim.o.confirm = true
+
 -- UI {{{2
 vim.o.termguicolors = true
 
