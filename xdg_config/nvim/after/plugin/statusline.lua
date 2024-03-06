@@ -262,7 +262,11 @@ Items.buf_name = function()
 end
 Items.buf_flag = function()
 	-- [+][RO]
-	return H.add_highlight2("ErrorMsg", "%m") .. H.add_highlight2("WarningMsg", "%r")
+	-- return H.add_highlight2("ErrorMsg", "%m") .. H.add_highlight2("WarningMsg", "%r")
+	return H.concat_items({
+		{ hl = "ErrorMsg", text = "%m" },
+		{ hl = "WarningMsg", text = "%r" },
+	})
 end
 Items.git = function()
 	local head = vim.b.gitsigns_head --or vim.g.gitsigns_head
