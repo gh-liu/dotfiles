@@ -58,6 +58,16 @@ function H.add_highlight2(hl, item)
 	return H.add_highlight(H.get_or_create_hl(hl), item)
 end
 
+---@param items any[]
+---@return string
+function H.concat_items(items)
+	local result = ""
+	for _, item in ipairs(items) do
+		result = result .. H.add_highlight2(item.hl, item.text)
+	end
+	return result
+end
+
 ---@param item string
 ---@return string
 function H.truncate(item)
@@ -209,24 +219,46 @@ Items.buf_name = function()
 			if stage_str then
 				revision = string.format("[%s %s]", revision, stage_str)
 			end
-			buf_name = type_blob .. revision .. sep .. relpath
+			-- buf_name = type_blob .. revision .. sep .. relpath
+			-- return H.add_highlight2("Normal", buf_name)
+			return H.concat_items({
+				{ hl = "DiffText", text = type_blob },
+				{ hl = "Delimiter", text = revision },
+				{ hl = "Conceal", text = sep },
+				{ hl = "Normal", text = relpath },
+			})
 		else
 			if relpath_len == 0 then
-				buf_name = type_tree .. revision
+				-- buf_name = type_tree .. revision
+				-- return H.add_highlight2("Normal", buf_name)
+				return H.concat_items({
+					{ hl = "DiffText", text = type_tree },
+					{ hl = "Delimiter", text = revision },
+				})
 			end
 			if revision_len == 0 then
-				buf_name = type_commit .. relpath
+				-- buf_name = type_commit .. relpath
+				-- return H.add_highlight2("Normal", buf_name)
+				return H.concat_items({
+					{ hl = "DiffText", text = type_commit },
+					{ hl = "Delimiter", text = relpath },
+				})
 			end
 		end
 	elseif vim.startswith(buf_name, "gitsigns://") then
 		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
-		buf_name = type_blob .. revision .. sep .. relpath
+		-- buf_name = type_blob .. revision .. sep .. relpath
+		-- return H.add_highlight2("Normal", buf_name)
+		return H.concat_items({
+			{ hl = "DiffText", text = type_blob },
+			{ hl = "Delimiter", text = revision },
+			{ hl = "Conceal", text = sep },
+			{ hl = "Normal", text = relpath },
+		})
 	else
 		buf_name = api.nvim_eval_statusline("%f", {}).str
+		return H.add_highlight2("Normal", buf_name)
 	end
-	-- local buf_name = api.nvim_eval_statusline("%f", {}).str
-
-	return H.add_highlight2("Normal", buf_name)
 end
 Items.buf_flag = function()
 	-- [+][RO]
