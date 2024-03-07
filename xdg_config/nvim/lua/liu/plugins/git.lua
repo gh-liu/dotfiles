@@ -52,13 +52,41 @@ autocmd("User", {
 	end,
 })
 
+autocmd("User", {
+	group = g,
+	pattern = { "FugitiveStageBlob" },
+	callback = function(data)
+		local buf = data.buf
+		local buf_name = api.nvim_buf_get_name(buf)
+		local _, _, stage, _ = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
+		vim.b[buf].fugitive_stage_type = stage
+	end,
+})
+
+-- local fugitive_object_type = {
+-- 	FugitiveTag = "tag",
+-- 	FugitiveCommit = "commit",
+-- 	FugitiveTree = "tree",
+-- 	FugitiveBlob = "blob",
+-- }
+
 -- autocmd("User", {
 -- 	group = g,
--- 	pattern = { "FugitiveStageBlob" },
+-- 	pattern = vim.tbl_keys(fugitive_object_type),
 -- 	callback = function(data)
--- 		local bufnr = data.buf
--- 		local buf_name = api.nvim_buf_get_name(bufnr)
--- 		local _, _, stage, _ = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
+-- 		local buf = data.buf
+-- 		-- use vim.b.fugitive_type instead
+-- 		vim.b[buf].fugitive_object_type = fugitive_object_type[data.match]
+-- 	end,
+-- })
+
+-- autocmd("User", {
+-- 	group = g,
+-- 	pattern = { "FugitiveObject" },
+-- 	callback = function(data)
+-- 		local buf = data.buf
+-- 		local buf_name = api.nvim_buf_get_name(buf)
+-- 		vim.print(vim.fn["fugitive#Parse"](buf_name))
 -- 	end,
 -- })
 -- }}}

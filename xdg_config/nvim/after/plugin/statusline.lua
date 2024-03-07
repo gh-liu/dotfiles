@@ -196,9 +196,6 @@ Items.work_dir = function()
 	local cwd = fn.pathshorten(fn.getcwd(0))
 	return H.add_highlight2("Directory", string.format("%s%s/", icon, H.truncate(cwd)))
 end
-local type_commit = "(commit)"
-local type_tree = "(tree)"
-local type_blob = "(blob)"
 local stages = {
 	-- stage number (0 to 3)
 	-- [<n>:]<path>
@@ -208,51 +205,57 @@ local stages = {
 	["3"] = "Theirs", -- Merged: the branch you're merging from
 }
 Items.buf_name = function()
-	local sep = "||"
+	local sep = ":"
 	local buf_name = api.nvim_buf_get_name(0)
+
+	local obj_type_hi = "DiffText"
+	local obj_id_hi = "Constant"
 	if vim.startswith(buf_name, "fugitive://") then
+		local object_type = vim.b.fugitive_type and string.format("(%s)", vim.b.fugitive_type) or ""
+
 		local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
-		local revision_len = #revision
 		local relpath_len = #relpath
-		if revision_len > 0 and relpath_len > 0 then
-			local stage_str = stages[revision]
-			if stage_str then
-				revision = string.format("[%s %s]", revision, stage_str)
-			end
-			-- buf_name = type_blob .. revision .. sep .. relpath
-			-- return H.add_highlight2("Normal", buf_name)
+		if relpath_len == 0 then
 			return H.concat_items({
-				{ hl = "DiffText", text = type_blob },
-				{ hl = "Delimiter", text = revision },
-				{ hl = "Conceal", text = sep },
+				{ hl = obj_type_hi, text = object_type },
+				{ hl = obj_id_hi, text = revision },
+			})
+		end
+
+		local revision_len = #revision
+		if revision_len == 0 then
+			return H.concat_items({
+				{ hl = obj_type_hi, text = object_type },
+				{ hl = obj_id_hi, text = relpath },
+			})
+		end
+
+		local stage_str = stages[revision]
+		if stage_str then
+			stage_str = string.format("[%s %s]", revision, stage_str)
+			return H.concat_items({
+				{ hl = obj_type_hi, text = object_type },
+				{ hl = "Title", text = stage_str },
+				{ hl = "Delimiter", text = sep },
 				{ hl = "Normal", text = relpath },
 			})
-		else
-			if relpath_len == 0 then
-				-- buf_name = type_tree .. revision
-				-- return H.add_highlight2("Normal", buf_name)
-				return H.concat_items({
-					{ hl = "DiffText", text = type_tree },
-					{ hl = "Delimiter", text = revision },
-				})
-			end
-			if revision_len == 0 then
-				-- buf_name = type_commit .. relpath
-				-- return H.add_highlight2("Normal", buf_name)
-				return H.concat_items({
-					{ hl = "DiffText", text = type_commit },
-					{ hl = "Delimiter", text = relpath },
-				})
-			end
 		end
+
+		return H.concat_items({
+			{ hl = obj_type_hi, text = object_type },
+			{ hl = obj_id_hi, text = revision },
+			{ hl = "Delimiter", text = sep },
+			{ hl = "Normal", text = relpath },
+		})
 	elseif vim.startswith(buf_name, "gitsigns://") then
+		local type_blob = "(blob)"
 		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
 		-- buf_name = type_blob .. revision .. sep .. relpath
 		-- return H.add_highlight2("Normal", buf_name)
 		return H.concat_items({
-			{ hl = "DiffText", text = type_blob },
-			{ hl = "Delimiter", text = revision },
-			{ hl = "Conceal", text = sep },
+			{ hl = obj_type_hi, text = type_blob },
+			{ hl = obj_id_hi, text = revision },
+			{ hl = "Delimiter", text = sep },
 			{ hl = "Normal", text = relpath },
 		})
 	else
