@@ -27,7 +27,10 @@ local toggle_fugitive = function()
 		exit()
 		fugitivebuf = -1
 	else
-		vim.cmd.G({ mods = { keepalt = true } })
+		vim.cmd.G({ mods = {
+			keepalt = true,
+			keepjumps = true,
+		} })
 	end
 end
 
