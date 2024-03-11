@@ -200,17 +200,14 @@ repl.commands = vim.tbl_extend("force", repl.commands, {
 	},
 })
 
-local aug_dap_repl = augroup("liu/dap_repl", { clear = true })
 autocmd("FileType", {
-	group = aug_dap_repl,
+	pattern = "dap-repl",
+	group = augroup("liu/dap_exit_repl", { clear = true }),
 	callback = function(ev)
 		autocmd({ "BufEnter" }, {
 			callback = function(ev)
 				if fn.winnr("$") < 2 then
-					vim.cmd.quit({
-						bang = true,
-						mods = { silent = true },
-					})
+					vim.cmd.quit({ bang = true, mods = { silent = true } })
 				end
 			end,
 			buffer = ev.buf,
@@ -865,5 +862,27 @@ end, "Dap ui watches")
 -- 	dapui.toggle({ layout = 8, reset = true })
 -- end, "Dap ui repl")
 -- }}}
+
+-- winfixbuf
+autocmd("FileType", {
+	pattern = {
+		"dap-repl",
+		"dapui_scopes",
+		"dapui_stacks",
+		"dapui_watches",
+		"dapui_console",
+		"dapui_breakpoints",
+	},
+	group = augroup("liu/dap_winfixbuf", { clear = true }),
+	callback = function(ev)
+		autocmd({ "BufEnter" }, {
+			callback = function(ev)
+				vim.wo.winfixbuf = true
+			end,
+			buffer = ev.buf,
+			nested = true,
+		})
+	end,
+})
 
 -- vim: foldmethod=marker
