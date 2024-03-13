@@ -777,6 +777,29 @@ autocmd("User", {
 			-- dapui.float_element("repl", opts)
 			dapui.toggle({ layout = 8, reset = true })
 		end, {})
+
+		-- :h dapui.elements
+		create_cmd("DapUIFloat", function(arg)
+			local args = {} ---@type dapui.FloatElementArgs
+			if arg.bang then
+				args.enter = true
+			end
+			dapui.float_element(arg.fargs[1], args)
+		end, {
+			nargs = 1,
+			bang = true,
+			complete = function()
+				return {
+					"scopes",
+					"breakpoints",
+					"stack",
+					"watches",
+					"console",
+					"repl",
+					"exception",
+				}
+			end,
+		})
 	end,
 	group = uigroup,
 	desc = "DAP Initialized",
@@ -792,6 +815,8 @@ autocmd("User", {
 		del_cmd("DapUIWatches")
 		del_cmd("DapUIStacks")
 		del_cmd("DapUIScopes")
+
+		del_cmd("DapUIFloat")
 	end,
 	once = true,
 	group = uigroup,
