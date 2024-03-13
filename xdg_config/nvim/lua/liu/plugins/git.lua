@@ -175,6 +175,23 @@ set_hls({
 	diffIndexLine = { link = "VisualNC" },
 })
 
+-- winfixbuf
+autocmd("FileType", {
+	pattern = {
+		"fugitiveblame",
+	},
+	group = augroup("liu/git_winfixbuf", { clear = true }),
+	callback = function(ev)
+		autocmd({ "BufEnter" }, {
+			callback = function(ev)
+				vim.wo.winfixbuf = true
+			end,
+			buffer = ev.buf,
+			nested = true,
+		})
+	end,
+})
+
 -- set_cmds({
 -- 	GDiffFiles = function(opts)
 -- 		local file_status = {
