@@ -123,9 +123,6 @@ set_cmds({
 		-- :h Gdiffsplit!
 		vim.cmd("Gvdiffsplit!") -- (left) ours, (mid, current window) base, (right) theirs
 	end,
-})
-
-set_cmds({
 	Gdiff3Toggle = function(opt)
 		if vim.o.diff then
 			vim.cmd("diffoff")
@@ -157,6 +154,24 @@ set_cmds({
 				desc = "OptionSetDiff",
 			})
 		end
+	end,
+	Gdiff3HSW = function()
+		--- { HEAD, stage/index, working copy } with diff between HEAD v.s. index
+
+		local cursor = vim.api.nvim_win_get_cursor(0)
+
+		vim.cmd([[ tabnew % ]])
+		-- turn off diff for all windows
+		vim.cmd([[ diffoff! ]])
+		local win = vim.api.nvim_get_current_win() -- on a new tab
+		vim.api.nvim_win_set_cursor(win, cursor) -- preserve the same cursor location
+
+		vim.cmd([[ aboveleft Gvdiff HEAD ]]) -- left: HEAD
+		vim.fn.win_gotoid(win)
+		vim.cmd([[ above Gvdiff :%]]) -- middle: stage/index
+		vim.fn.win_gotoid(win)
+		vim.cmd([[ diffoff ]]) -- right: working copy (no diff)
+		-- vim.cmd([[ set cursorbind ]]) -- right: working copy (cursorbind)
 	end,
 })
 
