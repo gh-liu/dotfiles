@@ -798,6 +798,50 @@ autocmd("User", {
 	desc = "DAP Terminated",
 })
 -- }}}
+
+-- Custom Elements {{{2
+local dapui_exception = {
+	buffer = require("dapui.util").create_buffer("DAP Exceptions", { filetype = "dapui_exceptions" }),
+}
+
+function dapui_exception.render()
+	-- get the diagnostic information and draw upon rendering/entering.
+	local session = require("dap").session()
+	if session == nil then
+		return
+	end
+	local buf = dapui_exception.buffer()
+	local diagnostics = vim.diagnostic.get(nil, { namespace = session.ns }) ---@type vim.Diagnostic[]
+	local msg = table.concat(
+		vim.tbl_map(function(d)
+			return d.message
+		end, diagnostics),
+		"\n"
+	)
+	if not msg or msg == "" then
+		msg = "(No exception was caught)"
+	end
+	pcall(function()
+		api.nvim_set_option_value("modifiable", true, { buf = buf })
+		api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(msg, "\n"))
+		api.nvim_set_option_value("modifiable", false, { buf = buf })
+	end)
+end
+
+---@return dapui.FloatElementArgs
+function dapui_exception.float_defaults()
+	return { enter = false }
+end
+
+xpcall(function()
+	dapui.register_element("exception", dapui_exception)
+end, function(err)
+	if err:match("already exists") then
+		return
+	end
+	vim.notify(debug.traceback(err, 1), vim.log.levels.ERROR, { title = "dapui" })
+end)
+-- }}}
 -- }}}
 
 -- Maps {{{1

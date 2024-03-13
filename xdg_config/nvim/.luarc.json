@@ -7,7 +7,9 @@
     "checkThirdParty": false,
     "library": [
       "$VIMRUNTIME/lua",
-      "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua"
+      "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua",
+      "$XDG_DATA_HOME/nvim/lazy/nvim-dap/lua",
+      "$XDG_DATA_HOME/nvim/lazy/nvim-dap-ui/lua"
     ]
   }
 }
