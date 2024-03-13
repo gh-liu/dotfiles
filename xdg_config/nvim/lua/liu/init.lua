@@ -764,6 +764,7 @@ require("lazy").setup(
 		-- navigation {{{
 		{
 			"otavioschwanck/arrow.nvim",
+			enabled = false,
 			keys = {
 				"<leader><space>",
 				"<leader>H",
