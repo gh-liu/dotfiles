@@ -1,4 +1,4 @@
-if false then
+if true then
 	return
 end
 local api = vim.api
