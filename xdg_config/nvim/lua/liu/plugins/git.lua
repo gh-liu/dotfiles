@@ -191,19 +191,15 @@ set_hls({
 })
 
 -- winfixbuf
-autocmd("FileType", {
-	pattern = {
-		"fugitiveblame",
-	},
+autocmd({ "BufEnter" }, {
 	group = augroup("liu/git_winfixbuf", { clear = true }),
 	callback = function(ev)
-		autocmd({ "BufEnter" }, {
-			callback = function(ev)
-				vim.wo.winfixbuf = true
-			end,
-			buffer = ev.buf,
-			nested = true,
-		})
+		local fts = {
+			"fugitiveblame",
+		}
+		if vim.tbl_contains(fts, vim.bo.ft) then
+			vim.wo.winfixbuf = true
+		end
 	end,
 })
 

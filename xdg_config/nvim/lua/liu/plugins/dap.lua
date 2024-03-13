@@ -933,24 +933,20 @@ end, "Dap ui watches")
 -- }}}
 
 -- winfixbuf
-autocmd("FileType", {
-	pattern = {
-		"dap-repl",
-		"dapui_scopes",
-		"dapui_stacks",
-		"dapui_watches",
-		"dapui_console",
-		"dapui_breakpoints",
-	},
+autocmd({ "BufEnter" }, {
 	group = augroup("liu/dap_winfixbuf", { clear = true }),
 	callback = function(ev)
-		autocmd({ "BufEnter" }, {
-			callback = function(ev)
-				vim.wo.winfixbuf = true
-			end,
-			buffer = ev.buf,
-			nested = true,
-		})
+		local fts = {
+			-- "dap-repl",
+			"dapui_scopes",
+			"dapui_stacks",
+			"dapui_watches",
+			"dapui_console",
+			"dapui_breakpoints",
+		}
+		if vim.tbl_contains(fts, vim.bo.ft) then
+			vim.wo.winfixbuf = true
+		end
 	end,
 })
 
