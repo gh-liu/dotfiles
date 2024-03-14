@@ -214,6 +214,8 @@ Items.buf_name = function()
 		local object_type = vim.b.fugitive_type and string.format("(%s)", vim.b.fugitive_type) or ""
 
 		local _, _, revision, relpath = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
+		revision = revision or ""
+		relpath = relpath or ""
 		local relpath_len = #relpath
 		if relpath_len == 0 then
 			return H.concat_items({
