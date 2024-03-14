@@ -52,6 +52,9 @@ autocmd("User", {
 		keymap.set("n", "q", function()
 			exit()
 		end, { buffer = fugitivebuf })
+
+		-- git absorb
+		keymap.set("n", "gaa", ":Git absorb<space>", { buffer = fugitivebuf })
 	end,
 })
 

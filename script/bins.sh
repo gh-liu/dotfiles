@@ -146,6 +146,8 @@ bins() {
 	cargo install inferno # flamegraph
 	cargo install --features lsp --locked taplo-cli
 
+	cargo install git-absorb # git absorb
+
 	cargo install cargo-nextest
 	cargo install cargo-binutils
 }

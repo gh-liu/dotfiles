@@ -1260,14 +1260,22 @@ require("lazy").setup(
 					pattern = "floggraph",
 					callback = function(ev)
 						local buf = ev.buf
-						local nmap = function(lhs, rhs)
-							keymap.set("n", lhs, rhs, { buffer = buf, silent = true })
+						local nmap = function(lhs, rhs, opts)
+							opts = opts or { buffer = buf, silent = true }
+							keymap.set("n", lhs, rhs, opts)
 						end
 
 						-- like fugitive
 						nmap("o", "<Plug>(FlogVSplitCommitRight)")
 
 						nmap("q", "<cmd>normal gq<cr>")
+
+						-- git absorb
+						nmap("gaa", ":Floggit absorb<space>", { buffer = buf })
+						-- :flog-%h
+						-- The hash of the commit under the cursor, if any.
+						nmap("gab", "<cmd><C-U>exec flog#Format('Floggit absorb --base %h')<CR>")
+						nmap("gar", "<cmd><C-U>exec flog#Format('Floggit absorb --base %h --and-rebase')<CR>")
 					end,
 				})
 			end,
