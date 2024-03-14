@@ -1260,10 +1260,14 @@ require("lazy").setup(
 					pattern = "floggraph",
 					callback = function(ev)
 						local buf = ev.buf
-						-- like fugitive
-						keymap.set("n", "o", "<Plug>(FlogVSplitCommitRight)", { buffer = buf })
+						local nmap = function(lhs, rhs)
+							keymap.set("n", lhs, rhs, { buffer = buf, silent = true })
+						end
 
-						keymap.set("n", "q", ":normal gq<cr>", { buffer = buf, silent = true })
+						-- like fugitive
+						nmap("o", "<Plug>(FlogVSplitCommitRight)")
+
+						nmap("q", "<cmd>normal gq<cr>")
 					end,
 				})
 			end,
