@@ -69,6 +69,19 @@ autocmd("User", {
 	end,
 })
 
+-- jump up to the commit object for the current tree or blob
+autocmd("User", {
+	group = g,
+	pattern = {
+		"FugitiveTree",
+		"FugitiveBlob",
+	},
+	callback = function(data)
+		local buf = data.buf
+		keymap.set("n", "<space>.", "<cmd>edit %:h<CR>", { buffer = buf })
+	end,
+})
+
 -- local fugitive_object_type = {
 -- 	FugitiveTag = "tag",
 -- 	FugitiveCommit = "commit",
