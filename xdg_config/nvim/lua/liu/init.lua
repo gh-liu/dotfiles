@@ -1835,6 +1835,9 @@ require("lazy").setup(
 -- }}}
 
 -- Sets {{{1
+local opt_tbl2str = function(opts)
+	return vim.iter(opts):join(",")
+end
 vim.o.mouse = ""
 vim.o.clipboard = "unnamedplus"
 
@@ -1843,6 +1846,15 @@ vim.o.viewoptions = "folds,curdir"
 vim.o.completeopt = "menu,menuone,noselect"
 
 vim.o.confirm = true
+
+vim.o.diffopt = opt_tbl2str({
+	"internal",
+	"filler",
+	"closeoff",
+	"hiddenoff", -- Do not use diff mode for a buffer when it becomes hidden.
+	"algorithm:minimal",
+	-- "linematch:60", -- https://github.com/neovim/neovim/pull/14537
+})
 
 -- UI {{{2
 vim.o.termguicolors = true
