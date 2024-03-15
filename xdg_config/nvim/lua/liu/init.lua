@@ -2272,6 +2272,21 @@ autocmd("OptionSet", {
 	end,
 })
 
+autocmd("OptionSet", {
+	desc = "turn off diagnostic when diff",
+	group = user_augroup("option_set_diff"),
+	pattern = "diff",
+	callback = function(ev)
+		-- local buf = api.nvim_get_current_buf()
+		local diff = vim.v.option_new
+		if diff then
+			vim.diagnostic.config({ signs = false })
+		else
+			vim.diagnostic.config({ signs = true })
+		end
+	end,
+})
+
 local set_cursorline = user_augroup("set_cursorline")
 autocmd({ "InsertLeave" }, {
 	desc = "set cursorline",
