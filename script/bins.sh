@@ -147,6 +147,7 @@ bins() {
 	cargo install starship --locked
 	cargo install inferno # flamegraph
 	cargo install --features lsp --locked taplo-cli
+	cargo install ast-grep
 
 	cargo install git-absorb # git absorb
 

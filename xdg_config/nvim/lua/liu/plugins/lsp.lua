@@ -242,6 +242,9 @@ local servers = {
 			require("liu.lsp.sqls").on_attach(client, bufnr)
 		end,
 	},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#ast_grep
+	-- cargo install ast-grep
+	ast_grep = {},
 }
 
 -- setup neodev BEFORE lspconfig
