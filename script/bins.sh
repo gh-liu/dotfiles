@@ -121,6 +121,8 @@ bins() {
 	go install github.com/jesseduffield/lazygit@latest
 	go install github.com/jesseduffield/lazydocker@latest
 
+	go install honnef.co/go/gotraceui/cmd/gotraceui@latest
+
 	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 	npm i -g vim-language-server
