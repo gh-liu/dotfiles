@@ -782,7 +782,70 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"ThePrimeagen/harpoon",
+			branch = "harpoon2",
+			lazy = true,
+			dependencies = { "plenary.nvim" },
+			keys = {
+				"<leader>A", -- Add
+				"<leader>h", -- prev
+				"<leader>l", -- next
+				"<leader>E", -- mEnu
+			},
+			config = function(self, opts)
+				vim.g.harpoon_enable_statusline = true
+
+				local harpoon = require("harpoon")
+				harpoon:setup({
+					settings = {
+						save_on_toggle = true,
+						sync_on_ui_close = false,
+					},
+				})
+
+				local keys = self.keys or {}
+
+				keymap.set("n", keys[1], function()
+					harpoon:list():append()
+				end)
+				keymap.set("n", keys[2], function()
+					if vim.v.count > 0 then
+						harpoon:list():select(vim.v.count)
+						return
+					end
+					harpoon:list():prev()
+				end)
+				keymap.set("n", keys[3], function()
+					if vim.v.count > 0 then
+						harpoon:list():select(vim.v.count)
+						return
+					end
+					harpoon:list():next()
+				end)
+				keymap.set("n", keys[4], function()
+					harpoon.ui:toggle_quick_menu(harpoon:list())
+				end)
+
+				harpoon:extend({
+					UI_CREATE = function(cx)
+						vim.keymap.set("n", "<C-v>", function()
+							harpoon.ui:select_menu_item({ vsplit = true })
+						end, { buffer = cx.bufnr })
+
+						vim.keymap.set("n", "<C-s>", function()
+							harpoon.ui:select_menu_item({ split = true })
+						end, { buffer = cx.bufnr })
+
+						vim.keymap.set("n", "<C-t>", function()
+							harpoon.ui:select_menu_item({ tabedit = true })
+						end, { buffer = cx.bufnr })
+					end,
+				})
+			end,
+		},
+		{
 			"echasnovski/mini.visits",
+			enabled = false,
 			init = function(self)
 				vim.g.mini_visits_default_label = "core"
 			end,
@@ -895,6 +958,12 @@ require("lazy").setup(
 					end
 				end
 
+				local add_to_harpoon = function(fname)
+					vim.print("not support add to harpoon")
+					-- local harpoon = require("harpoon")
+					-- harpoon:list():append(fname)
+				end
+
 				autocmd("User", {
 					pattern = "MiniFilesBufferCreate",
 					group = g,
@@ -920,7 +989,8 @@ require("lazy").setup(
 						keymap.set("n", "<tab>", function()
 							local entry = MiniFiles.get_fs_entry(0, fn.line("."))
 							if entry.fs_type == "file" then
-								add_to_visits(entry.path)
+								-- add_to_visits(entry.path)
+								add_to_harpoon(entry.path)
 							end
 						end, { buffer = buf })
 					end,

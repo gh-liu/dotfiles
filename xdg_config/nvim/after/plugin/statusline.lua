@@ -374,6 +374,29 @@ Items.ruler = function()
 	-- return "%3p%%"
 end
 
+Items.harpoon = function()
+	if vim.g.harpoon_enable_statusline then
+		local buf = api.nvim_get_current_buf()
+
+		local harpoon_list = { "" }
+
+		local harpoon = require("harpoon")
+		local list = harpoon:list()
+		local length = list:length()
+		local root_dir = list.config:get_root_dir()
+		for i = 1, length do
+			local item = list:get(i).value
+			if buf == vim.fn.bufnr(item) then
+				table.insert(harpoon_list, string.format("[%d]", i))
+			else
+				table.insert(harpoon_list, string.format("%d", i))
+			end
+		end
+		return H.add_highlight2("Normal", table.concat(harpoon_list, " "))
+	end
+	return ""
+end
+
 function Items.special_file_type()
 	return H.add_highlight2("ModeMsg", string.upper(vim.bo.filetype))
 end
@@ -444,6 +467,8 @@ _G.nvim_statsline = function()
 		H.space(),
 		Items.git(),
 		H.align(),
+		Items.harpoon(),
+		H.space(),
 		Items.dap(),
 		H.space(),
 		Items.diagnostics(),
