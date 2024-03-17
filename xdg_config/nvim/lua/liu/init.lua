@@ -1590,48 +1590,6 @@ require("lazy").setup(
 			},
 			cmd = "Glow",
 		},
-		{
-			"gaoDean/autolist.nvim",
-			lazy = true,
-			ft = {
-				"norg",
-				-- "text",
-				"markdown",
-			},
-			init = function(self)
-				autocmd("FileType", {
-					pattern = self.ft,
-					callback = function(ev)
-						local buf = ev.buf
-						local map = keymap.set
-
-						local al = require("autolist")
-
-						map("i", "<CR>", "<CR><cmd>AutolistNewBullet<cr>", { buffer = buf })
-						map("n", "o", "o<cmd>AutolistNewBullet<cr>", { buffer = buf })
-						map("n", "O", "O<cmd>AutolistNewBulletBefore<cr>", { buffer = buf })
-
-						map("i", "<C-t>", "<C-t><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("i", "<C-d>", "<C-d><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("n", ">>", ">><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("n", "<<", "<<<cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("v", ">", "><cmd>AutolistRecalculate<cr>", { buffer = buf })
-						map("v", "<", "<<cmd>AutolistRecalculate<cr>", { buffer = buf })
-
-						-- functions to recalculate list on edit
-						map("n", "dd", "dd<cmd>AutolistRecalculate<cr>", { buffer = buf })
-
-						-- cycle list types with dot-repeat
-						map("n", "<leader>cn", al.cycle_next_dr, { expr = true, buffer = buf })
-						map("n", "<leader>cp", al.cycle_prev_dr, { expr = true, buffer = buf })
-
-						map("n", "<leader>x", al.toggle_checkbox, { buffer = buf })
-					end,
-					desc = "setup autolist",
-				})
-			end,
-			opts = {},
-		},
 		-- }}}
 
 		-- tpope {{{2
