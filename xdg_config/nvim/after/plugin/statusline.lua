@@ -441,8 +441,10 @@ _G.nvim_statsline = function()
 			-- "nowrite",
 			"terminal",
 			"prompt",
-		}, vim.bo.buftype) or vim.tbl_contains({
+		}, vim.bo.buftype)
+		or vim.tbl_contains({
 			"fugitive",
+			"fugitiveblame",
 			"minifiles",
 		}, vim.bo.filetype)
 	then

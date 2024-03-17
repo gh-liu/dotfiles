@@ -42,6 +42,7 @@ end
 
 local specialFiletypes = {
 	fugitive = "git",
+	fugitiveblame = "git",
 	floggraph = "git",
 	help = "markdown",
 }
