@@ -763,25 +763,6 @@ require("lazy").setup(
 
 		-- navigation {{{
 		{
-			"otavioschwanck/arrow.nvim",
-			enabled = false,
-			keys = {
-				"<leader><space>",
-				"<leader>H",
-				"<leader>L",
-			},
-			config = function(self, opts)
-				require("arrow").setup({
-					show_icons = true,
-					leader_key = self.keys[1],
-				})
-
-				local arrow_persist = require("arrow.persist")
-				vim.keymap.set("n", self.keys[2], arrow_persist.previous)
-				vim.keymap.set("n", self.keys[3], arrow_persist.next)
-			end,
-		},
-		{
 			"ThePrimeagen/harpoon",
 			branch = "harpoon2",
 			lazy = true,
