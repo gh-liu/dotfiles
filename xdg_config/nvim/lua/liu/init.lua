@@ -953,6 +953,7 @@ require("lazy").setup(
 
 						local MiniFiles = require("mini.files")
 
+						api.nvim_set_option_value("bufhidden", "delete", { buf = buf })
 						-- set up ability to confirm changes with :w
 						api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
 						api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
