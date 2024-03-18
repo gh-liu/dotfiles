@@ -1637,6 +1637,13 @@ require("lazy").setup(
 					[[&foldmethod ==# 'syntax' ? ':setlocal foldmethod=manual<CR>' : ':setlocal foldmethod=syntax<CR>']],
 					{ expr = true }
 				)
+
+				vim.keymap.set(
+					"n",
+					"yof",
+					[[&winfixbuf ? ':setlocal nowinfixbuf<CR>' : ':setlocal winfixbuf<CR>']],
+					{ expr = true }
+				)
 			end,
 		},
 		{
