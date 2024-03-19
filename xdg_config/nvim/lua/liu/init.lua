@@ -222,6 +222,7 @@ require("lazy").setup(
 				"DapRunOSV",
 			},
 			dependencies = {
+				"nvim-neotest/nvim-nio",
 				"rcarriga/nvim-dap-ui",
 				"jbyuki/one-small-step-for-vimkind",
 			},
