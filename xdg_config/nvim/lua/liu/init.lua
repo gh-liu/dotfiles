@@ -963,14 +963,16 @@ require("lazy").setup(
 
 						local MiniFiles = require("mini.files")
 
-						api.nvim_set_option_value("bufhidden", "delete", { buf = buf })
-						-- set up ability to confirm changes with :w
-						api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
-						api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
-						api.nvim_create_autocmd("BufWriteCmd", {
-							callback = MiniFiles.synchronize,
-							buffer = buf,
-						})
+						-- do
+						-- 	-- https://github.com/echasnovski/mini.nvim/issues/391
+						-- 	-- set up ability to confirm changes with :w
+						-- 	api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
+						-- 	api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
+						-- 	api.nvim_create_autocmd("BufWriteCmd", {
+						-- 		callback = MiniFiles.synchronize,
+						-- 		buffer = buf,
+						-- 	})
+						-- end
 
 						keymap.set("n", "<CR>", MiniFiles.go_in, { buffer = buf })
 						keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
