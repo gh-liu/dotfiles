@@ -940,6 +940,15 @@ require("lazy").setup(
 					end
 				end
 
+				local yank_relative_path = function()
+					-- local fn = vim.fn
+					local minifiles = require("mini.files")
+					local path = minifiles.get_fs_entry().path
+					local p = fn.fnamemodify(path, ":.")
+					fn.setreg(vim.v.register, p)
+					print(string.format([["%s"]], p))
+				end
+
 				local add_to_harpoon = function(fname)
 					vim.print("not support add to harpoon")
 					-- local harpoon = require("harpoon")
@@ -968,6 +977,8 @@ require("lazy").setup(
 
 						map_split(buf, "<C-s>", "belowright horizontal")
 						map_split(buf, "<C-v>", "belowright vertical")
+
+						keymap.set("n", "gY", yank_relative_path, { buffer = buf })
 
 						keymap.set("n", "<tab>", function()
 							local entry = MiniFiles.get_fs_entry(0, fn.line("."))

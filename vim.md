@@ -67,3 +67,58 @@ n/N:
 `\<` only matches at the beginning of a word.
 
 search patterns:
+`^`: beginning
+`$`: end
+`.`: any single character
+special characters: 前缀`\`
+
+marks:
+jump, move the cursor further than within the same line; "j" and "k" are not considered to be a jump,
+jumplist, CTRL-O, CTRL-I
+named marks: m{a-zA-Z} `{a-zA-Z} 
+
+## Making small changes
+
+3 basic ways: operator-motion, Visual mode, text objects.
+
+> The operators + movement commands / text objects give you the possibility to make lots of combinations.
+
+### Operators and motions
+
+exclusive/inclusive if the operator effects the character
+
+`.`: repeats the last change, works for all changes, except for "u" (undo), CTRL-R and commands that start with a colon (:)
+
+### Visual mode
+
+`v/V/<c-v>`: character, line, block
+`o/O`: go to the other side
+
+`p/P`: put text
+`y/Y`: yank text
+
+### Text objects
+
+`a*`:
+`i*`:
+
+## Set your settings
+
+## Using syntax highlighting
+
+## Editing more than one file
+
+### arglist
+
+### alternate file: CTRL-^
+
+### predefined marks: 
+
+`"`: the position where the cursor was when you left the file
+`.`: the position where you made the last change
+
+### copy text between files
+
+y then p
+
+register: a place where Vim stores text
