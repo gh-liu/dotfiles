@@ -122,3 +122,16 @@ exclusive/inclusive if the operator effects the character
 y then p
 
 register: a place where Vim stores text
+
+## Splitting windows
+
+### split
+
+### resize
+
+### moving
+
+### diff mode
+
+### tab
+
