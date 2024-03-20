@@ -127,6 +127,8 @@ register: a place where Vim stores text
 
 ### split
 
+modifier: 
+
 ### resize
 
 ### moving
@@ -134,4 +136,9 @@ register: a place where Vim stores text
 ### diff mode
 
 ### tab
+
+## Making big changes
+
+marco: record and playback commands
+
 
