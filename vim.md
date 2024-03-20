@@ -52,8 +52,8 @@ scrolling:
 <C-d>: scrolls up half a screen of text
 <C-e>: scroll up
 <C-y>: scroll down
-<C-f>: scroll forward by a whole screen 
-<C-b>: scroll backward by a whole screen 
+<C-f>: scroll forward by a whole screen
+<C-b>: scroll backward by a whole screen
 zz/zt/zb: middle/top/bottom
 
 searches:
@@ -62,7 +62,7 @@ searches:
 n/N:
 `#`: whole word
 `*`: whole word
-`g#/g*`: partial words 
+`g#/g*`: partial words
 `\>` item is a special marker that only matches at the end of a word;
 `\<` only matches at the beginning of a word.
 
@@ -75,7 +75,7 @@ special characters: 前缀`\`
 marks:
 jump, move the cursor further than within the same line; "j" and "k" are not considered to be a jump,
 jumplist, CTRL-O, CTRL-I
-named marks: m{a-zA-Z} `{a-zA-Z} 
+named marks: m{a-zA-Z} `{a-zA-Z}
 
 ## Making small changes
 
@@ -112,7 +112,7 @@ exclusive/inclusive if the operator effects the character
 
 ### alternate file: CTRL-^
 
-### predefined marks: 
+### predefined marks:
 
 `"`: the position where the cursor was when you left the file
 `.`: the position where you made the last change
@@ -127,7 +127,7 @@ register: a place where Vim stores text
 
 ### split
 
-modifier: 
+modifier:
 
 ### resize
 
@@ -141,4 +141,9 @@ modifier:
 
 marco: record and playback commands
 
+## Recovering from a crash
+
+swap files
+
+## Clever tricks
 
