@@ -240,18 +240,18 @@ do
 end
 
 -- commands
-do
-	local cmds = {
-		GBufferCommits = "git_bcommits",
-		GBranches = "git_branches",
-		GStash = "git_stash",
-	}
-	for cmd, fn in pairs(cmds) do
-		api.nvim_create_user_command(cmd, function(opts)
-			builtin[fn]()
-		end, { nargs = 0, desc = "telescope " .. fn })
-	end
-end
+-- do
+-- 	local cmds = {
+-- 		GBufferCommits = "git_bcommits",
+-- 		GBranches = "git_branches",
+-- 		GStash = "git_stash",
+-- 	}
+-- 	for cmd, fn in pairs(cmds) do
+-- 		api.nvim_create_user_command(cmd, function(opts)
+-- 			builtin[fn]()
+-- 		end, { nargs = 0, desc = "telescope " .. fn })
+-- 	end
+-- end
 
 set_hls({ TelescopeBorder = { link = "FloatBorder" } })
 
