@@ -221,7 +221,7 @@ Items.buf_name = function()
 			return H.concat_items({
 				{ hl = obj_type_hi, text = object_type },
 				{ hl = obj_id_hi, text = revision },
-				{ hl = "Delimiter", text = ":" }, -- this is a tree
+				{ hl = "Delimiter", text = sep }, -- this is a tree
 			})
 		end
 

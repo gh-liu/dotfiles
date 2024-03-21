@@ -19,12 +19,11 @@ local g = augroup("liu/fugitive", { clear = true })
 
 -- Toggle summary window {{{3
 local fugitivebuf = -1
-local exit = function()
-	api.nvim_buf_delete(fugitivebuf, { force = true })
-end
 local toggle_fugitive = function()
 	if fugitivebuf > 0 then
-		exit()
+		api.nvim_buf_call(fugitivebuf, function()
+			vim.cmd([[normal gq]])
+		end)
 		fugitivebuf = -1
 	else
 		vim.cmd.G({ mods = {
@@ -37,6 +36,7 @@ end
 keymap.set("n", "<leader>gg", toggle_fugitive, { silent = true })
 keymap.set("n", "g<space>", toggle_fugitive, { silent = true })
 
+local stash_list_cmd = "--paginate stash list '--pretty=format:%h %as %<(10)%gd %<(76,trunc)%s'"
 autocmd("User", {
 	group = g,
 	pattern = { "FugitiveIndex" },
@@ -49,12 +49,53 @@ autocmd("User", {
 			buffer = data.buf,
 		})
 
-		keymap.set("n", "q", function()
-			exit()
-		end, { buffer = fugitivebuf })
+		keymap.set("n", "q", "gq", { buffer = fugitivebuf, remap = true })
+		-- stash
+		keymap.set("n", "czl", ":G " .. stash_list_cmd .. "<CR>", { buffer = fugitivebuf })
 
 		-- git absorb
 		keymap.set("n", "gaa", ":Git absorb<space>", { buffer = fugitivebuf })
+	end,
+})
+
+autocmd("User", {
+	group = g,
+	pattern = { "FugitivePager" },
+	callback = function(data)
+		local buf = data.buf
+
+		local refresh_stash_list = function()
+			vim.api.nvim_buf_call(buf, function()
+				vim.cmd(":0G " .. stash_list_cmd)
+			end)
+		end
+		local get_stash_idx = function()
+			local line = vim.api.nvim_get_current_line()
+			return line:match("stash@{%d}")
+		end
+		local op_stash = function(fn)
+			local idx = get_stash_idx()
+			if idx then
+				fn(idx)
+				refresh_stash_list()
+			end
+		end
+
+		keymap.set("n", "czd", function()
+			op_stash(function(idx)
+				vim.cmd("Git stash drop --quiet " .. idx)
+			end)
+		end, { buffer = buf })
+		keymap.set("n", "czo", function()
+			op_stash(function(idx)
+				vim.cmd("Git stash apply --quiet --index " .. idx)
+			end)
+		end, { buffer = buf })
+		keymap.set("n", "czO", function()
+			op_stash(function(idx)
+				vim.cmd("Git stash apply --quiet " .. idx)
+			end)
+		end, { buffer = buf })
 	end,
 })
 
@@ -188,6 +229,10 @@ set_cmds({
 		vim.fn.win_gotoid(win)
 		vim.cmd([[ diffoff ]]) -- right: working copy (no diff)
 		-- vim.cmd([[ set cursorbind ]]) -- right: working copy (cursorbind)
+	end,
+	Gstashtool = function()
+		vim.cmd([[Gclog -g stash]])
+		-- browse stashs and apply using cz<Space>apply<Space><C-R><C-G>
 	end,
 })
 
