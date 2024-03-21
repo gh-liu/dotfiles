@@ -75,6 +75,13 @@ local enable_winbar = function(buf, win)
 	return not api.nvim_win_get_config(win).zindex
 end
 
+local open_maps = function(buf, s, v, t)
+	local map = vim.keymap
+	map.set("n", "<C-v>", v, { buffer = buf, desc = "split v" })
+	map.set("n", "<C-s>", s, { buffer = buf, desc = "split s" })
+	map.set("n", "<C-t>", t, { buffer = buf, desc = "split t" })
+end
+
 local debounce = function(ms, fn)
 	local timer = vim.uv.new_timer()
 	return function(...)
@@ -810,17 +817,13 @@ require("lazy").setup(
 
 				harpoon:extend({
 					UI_CREATE = function(cx)
-						vim.keymap.set("n", "<C-v>", function()
+						open_maps(cx.bufnr, function()
 							harpoon.ui:select_menu_item({ vsplit = true })
-						end, { buffer = cx.bufnr })
-
-						vim.keymap.set("n", "<C-s>", function()
+						end, function()
 							harpoon.ui:select_menu_item({ split = true })
-						end, { buffer = cx.bufnr })
-
-						vim.keymap.set("n", "<C-t>", function()
+						end, function()
 							harpoon.ui:select_menu_item({ tabedit = true })
-						end, { buffer = cx.bufnr })
+						end)
 					end,
 				})
 			end,
@@ -910,28 +913,24 @@ require("lazy").setup(
 					end,
 				})
 
-				local function map_split(buf_id, lhs, direction)
+				local function split_rhs(modify)
 					local minifiles = require("mini.files")
 
-					local function rhs()
-						local window = minifiles.get_target_window()
-						-- Noop if the explorer isn't open or the cursor is on a directory.
-						if window == nil or minifiles.get_fs_entry().fs_type == "directory" then
-							return
-						end
-						-- Make a new window and set it as target.
-						local new_target_window
-						vim.api.nvim_win_call(window, function()
-							vim.cmd(direction .. " split")
-							new_target_window = vim.api.nvim_get_current_win()
-						end)
-						minifiles.set_target_window(new_target_window)
-						-- Go in and close the explorer.
-						minifiles.go_in({ close_on_file = true })
-					end
+					-- local window = minifiles.get_target_window()
+					-- if window == nil then
+					-- 	return
+					-- end
 
-					vim.keymap.set("n", lhs, rhs, { buffer = buf_id, desc = "Split " .. string.sub(direction, 12) })
+					local entry = minifiles.get_fs_entry()
+					if entry.fs_type == "directory" then
+						-- Noop if the explorer isn't open or the cursor is on a directory.
+						print("no support on directory.")
+						return
+					end
+					vim.cmd(modify .. " " .. entry.path)
+					minifiles.close()
 				end
+
 				local add_to_visits = function(fname)
 					local default_lable = vim.g.mini_visits_default_label
 					if default_lable then
@@ -977,8 +976,13 @@ require("lazy").setup(
 						keymap.set("n", "<CR>", MiniFiles.go_in, { buffer = buf })
 						keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
 
-						map_split(buf, "<C-s>", "belowright horizontal")
-						map_split(buf, "<C-v>", "belowright vertical")
+						open_maps(buf, function()
+							split_rhs("split")
+						end, function()
+							split_rhs("vsplit")
+						end, function()
+							split_rhs("tabedit")
+						end)
 
 						keymap.set("n", "gY", yank_relative_path, { buffer = buf })
 
