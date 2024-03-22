@@ -949,9 +949,11 @@ require("lazy").setup(
 				end
 
 				local add_to_harpoon = function(fname)
-					vim.print("not support add to harpoon")
-					-- local harpoon = require("harpoon")
-					-- harpoon:list():append(fname)
+					local harpoon = require("harpoon")
+					harpoon:list():append({
+						value = fname,
+						context = "",
+					})
 				end
 
 				autocmd("User", {
@@ -973,7 +975,9 @@ require("lazy").setup(
 						-- 	})
 						-- end
 
-						keymap.set("n", "<CR>", MiniFiles.go_in, { buffer = buf })
+						keymap.set("n", "<CR>", function()
+							MiniFiles.go_in({ close_on_file = true })
+						end, { buffer = buf })
 						keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
 
 						open_maps(buf, function()
