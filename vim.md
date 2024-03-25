@@ -147,3 +147,27 @@ swap files
 
 ## Clever tricks
 
+# 2 
+
+## Repeating
+
+visual mode: `gv` reselect the same text
+
+add and subtract: `CTRL-A CTRL-X`
+
+making a change in many files: `:args :argdo`,`:windo :bufdo`
+
+## Search commands and patterns
+
+`set ignorecase`
+`set smartcase`
+
+magic option: `\c \C ...`
+
+offset: line, character(e/b)
+
+repeat: `/`
+
+`* \+ \= \(\) \{,}`: `\=`类似`?`
+
+TODO 27.7
