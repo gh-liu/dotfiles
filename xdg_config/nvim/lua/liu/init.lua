@@ -1556,6 +1556,7 @@ require("lazy").setup(
 		},
 		{
 			"dstein64/vim-win",
+			enabled = false,
 			config = function(self, opts)
 				vim.g.win_ext_command_map = {
 					c = "wincmd c",
@@ -1630,7 +1631,7 @@ require("lazy").setup(
 		},
 		{
 			"tpope/vim-eunuch",
-			enabled = true,
+			enabled = false,
 			cmd = {
 				"SudoEdit",
 				"SudoWrite",
