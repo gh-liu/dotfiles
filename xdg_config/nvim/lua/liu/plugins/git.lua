@@ -36,6 +36,8 @@ end
 keymap.set("n", "<leader>gg", toggle_fugitive, { silent = true })
 keymap.set("n", "g<space>", toggle_fugitive, { silent = true })
 
+keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
+
 local stash_list_cmd = "--paginate stash list '--pretty=format:%h %as %<(10)%gd %<(76,trunc)%s'"
 autocmd("User", {
 	group = g,
@@ -69,14 +71,16 @@ autocmd("User", {
 				vim.cmd(":0G " .. stash_list_cmd)
 			end)
 		end
-		local get_stash_idx = function()
+		local get_stash = function()
 			local line = vim.api.nvim_get_current_line()
-			return line:match("stash@{%d}")
+
+			local _, _, hash, stash_idx = line:find([[(%x+).*(stash@{%d})]])
+			return stash_idx
 		end
 		local op_stash = function(fn)
-			local idx = get_stash_idx()
-			if idx then
-				fn(idx)
+			local hash = get_stash()
+			if hash then
+				fn(hash)
 				refresh_stash_list()
 			end
 		end
@@ -88,12 +92,12 @@ autocmd("User", {
 		end, { buffer = buf })
 		keymap.set("n", "czo", function()
 			op_stash(function(idx)
-				vim.cmd("Git stash apply --quiet --index " .. idx)
+				vim.cmd("Git stash pop --quiet --index " .. idx)
 			end)
 		end, { buffer = buf })
 		keymap.set("n", "czO", function()
 			op_stash(function(idx)
-				vim.cmd("Git stash apply --quiet " .. idx)
+				vim.cmd("Git stash pop --quiet " .. idx)
 			end)
 		end, { buffer = buf })
 	end,
