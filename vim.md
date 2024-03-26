@@ -1,4 +1,4 @@
-# vim
+# Vim1: Getting Started
 
 The Vim editor is a modal editor.
 处于的模式不行，行为有所差异。两种基础模式：Normal模式，字符都是命令；Insert模式，字符被插入。
@@ -147,7 +147,84 @@ swap files
 
 ## Clever tricks
 
-# 2 
+# Vim2/3: Editing Effectively
+
+## command line: `:/?`
+
+edit, abbr, completion, history, cmdwin
+
+edit: `<C-W>` for delete word, `<C-W>` for delete all text 
+abbr: 
+`:h cmdline-completion`: `<C-D>` list matches, `<C-L>` get the longest unambiguous string, `:h wildmode`
+`:h cmdline-history`: 
+cmdwin: 
+
+## Go away and come back: use other programs with vim
+
+`<C-z>, fg`:
+
+`:!{command}`:
+
+`shada: share data`:
+1. Command-line and Search pattern history
+2. Text in registers
+3. Marks for various files
+4. The buffer list
+5. Global variables
+
+sessions:
+
+views(for one window only):
+
+Modelines: set options specifically for a specific file
+`any-text vim:set {option}={value} ... : any-text `
+
+## Finding the file to edit
+
+netrw:
+
+current directory: cd
+window local directory: lcd
+tab local directory: tcd
+
+find a file: gd, `'path`, `:find`
+
+buffer list: hidden/inactive/active buffers 
+:bnext/bprevious/bfirst/blast/bdelete/bwipe
+
+## Editing other files
+
+## Inserting quickly
+
+`<C-W>, <C-U>`: delete
+
+showmatch: 
+
+`:h ins-completion`:
+
+repeating an insert: `<C-A> <C-@>`
+
+copying from another line: `<C-E> <C-Y>`
+
+inserting a register: `<C-R>{reg}`
+
+abbr:
+
+entering special characters: `<C-K>`
+
+normal mode commands: `<C-o>`
+
+## Editing formatted text
+
+breaking lines: textwidth
+aligning lines: `:center/right/left`
+indent: `><`
+
+long lines: zh/zH/zl/zL
+
+editing tables: virtualedit
+
+TODO :h 25.5
 
 ## Repeating
 
@@ -170,4 +247,26 @@ repeat: `/`
 
 `* \+ \= \(\) \{,}`: `\=`类似`?`
 
-TODO 27.7
+character classes: ident`\i` keyword`\k` printablechar`\p` filename`\f`
+
+space: `\s`, line break: `\n` , space or line break: `\_s`
+
+## Folding
+
+> You can yank, delete and put folds as if it was a single line.
+
+zo/zc/zr/zm/zn/zi
+zO/zC/zR/zM/zN
+zd/zD
+
+mkview/loadview:
+
+manual: zf
+ident:
+markers:
+syntax:
+expr:
+diff:
+
+# Vim4: Tuning Vim
+
