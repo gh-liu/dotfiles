@@ -268,5 +268,57 @@ syntax:
 expr:
 diff:
 
+## Moving through programs
+
+> find where identifiers are defined and used
+> preview declarations in a separate window
+
+tags: a location where an identifier is defined. `CTRL-]` `CTRL-T` 
+preview window:
+moving in code blocks:`[[ ]]` `]} [{` ...
+find global/local identifiers: `gd/gD ]d [d`
+
+## Editing programs
+
+quickfix
+
+`:make`:
+`makeprg`:
+`errorformat`:
+
+use `compiler` to set `makeprg/errorformat`.
+
+indent: `<C-T> <C-D>`
+
+## Exploiting the GUI
+
+## The undo tree
+
 # Vim4: Tuning Vim
+
+## Make new commands
+
+mapping:
+
+command-line commands:
+
+autocommands:
+
+## Write a Vim script
+
+TODO
+
+## Add new menus
+
+TODO
+
+## Using filetypes
+
+TODO
+
+## Your own syntax highlighted
+
+TODO
+
+## Select your language (locale)
 
