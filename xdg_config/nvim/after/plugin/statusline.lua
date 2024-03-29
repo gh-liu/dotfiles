@@ -266,6 +266,40 @@ end
 Items.git = function()
 	return ""
 end
+Items.diff_summary = function()
+	local minidiff_summary = vim.b.minidiff_summary
+	if minidiff_summary then
+		-- {
+		--   add = 2,
+		--   change = 1,
+		--   delete = 0,
+		--   n_ranges = 1,
+		--   source_name = "git"
+		-- }
+		local items = {}
+		-- if minidiff_summary.source_name == "git" then
+		-- 	table.insert(items, { hl = "DiffText", text = icons.git })
+		-- end
+		local add = minidiff_summary.add or 0
+		local change = minidiff_summary.change or 0
+		local delete = minidiff_summary.delete or 0
+		if add > 0 then
+			local str = " +" .. tostring(add)
+			table.insert(items, { hl = "DiffAdd", text = str })
+		end
+		if change > 0 then
+			local str = " ~" .. tostring(change)
+			table.insert(items, { hl = "DiffChange", text = str })
+		end
+		if delete > 0 then
+			local str = " -" .. tostring(delete)
+			table.insert(items, { hl = "DiffDelete", text = str })
+		end
+		return H.concat_items(items)
+	end
+
+	return ""
+end
 Items.dap = function()
 	if not package.loaded["dap"] or require("dap").status() == "" then
 		return ""
@@ -454,6 +488,7 @@ _G.nvim_statsline = function()
 		Items.buf_flag(),
 		H.space(),
 		Items.git(),
+		Items.diff_summary(),
 		H.align(),
 		Items.harpoon(),
 		H.space(),

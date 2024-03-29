@@ -1373,6 +1373,65 @@ require("lazy").setup(
 			end,
 		},
 		{
+			"echasnovski/mini.diff",
+			event = "VeryLazy",
+			opts = {
+				view = {
+					-- Visualization style. Possible values are 'sign' and 'number'.
+					style = vim.o.number and "number" or "sign",
+					-- Signs used for hunks with 'sign' view
+					signs = { add = "▒", change = "▒", delete = "▒" },
+					-- Priority of used visualization extmarks
+					priority = vim.highlight.priorities.user - 1,
+				},
+				-- Source for how reference text is computed/updated/etc
+				-- Uses content from Git index by default
+				source = nil,
+				-- Delays (in ms) defining asynchronous processes
+				delay = {
+					-- How much to wait before update following every text change
+					text_change = 200,
+				},
+				-- Module mappings. Use `''` (empty string) to disable one.
+				mappings = {
+					-- Apply hunks inside a visual/operator region
+					apply = "gh", -- WRITE TO DIFF SOURCE
+					-- Reset hunks inside a visual/operator region
+					reset = "gH", -- READ FROM DIFF SOURCE
+					-- Hunk range textobject to be used inside operator
+					textobject = "ih",
+					-- Go to hunk range in corresponding direction
+					goto_first = "[H",
+					goto_prev = "[h",
+					goto_next = "]h",
+					goto_last = "]H",
+				},
+				-- Various options
+				options = {
+					-- Diff algorithm. See `:h vim.diff()`.
+					algorithm = "histogram",
+					-- Whether to use "indent heuristic". See `:h vim.diff()`.
+					indent_heuristic = true,
+					-- The amount of second-stage diff to align lines (in Neovim>=0.9)
+					linematch = 60,
+				},
+			},
+			config = function(self, opts)
+				require("mini.diff").setup(opts)
+
+				local MiniDiff = require("mini.diff")
+				api.nvim_create_user_command("DiffOverlay", function(opts)
+					MiniDiff.toggle_overlay()
+				end, { nargs = 0 })
+				api.nvim_create_user_command("DiffHunks", function(opts)
+					local export_opts = { scope = "current" }
+					if opts.bang then
+						export_opts.scope = "all"
+					end
+					vim.fn.setqflist(MiniDiff.export("qf", export_opts))
+					vim.cmd.copen()
+				end, { bang = true, nargs = 0 })
+			end,
 		},
 		{
 			"pwntester/octo.nvim",
