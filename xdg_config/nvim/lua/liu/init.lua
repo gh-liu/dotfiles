@@ -2093,8 +2093,8 @@ setmap({ "n", "x", "o" }, "L", "$")
 -- Keep cursor in the center
 setmap("n", "n", "nzzzv")
 setmap("n", "N", "Nzzzv")
-setmap("n", "<C-d>", "<C-d>zz")
-setmap("n", "<C-u>", "<C-u>zz")
+-- setmap("n", "<C-d>", "<C-d>zz")
+-- setmap("n", "<C-u>", "<C-u>zz")
 -- }}}
 
 -- QF {{{2
