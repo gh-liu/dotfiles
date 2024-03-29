@@ -250,17 +250,6 @@ Items.buf_name = function()
 			{ hl = "Delimiter", text = sep },
 			{ hl = "Normal", text = relpath },
 		})
-	elseif vim.startswith(buf_name, "gitsigns://") then
-		local type_blob = "(blob)"
-		local _, _, revision, relpath = buf_name:find([[^gitsigns://.*/%.git.*/(.*):(.*)]])
-		-- buf_name = type_blob .. revision .. sep .. relpath
-		-- return H.add_highlight2("Normal", buf_name)
-		return H.concat_items({
-			{ hl = obj_type_hi, text = type_blob },
-			{ hl = obj_id_hi, text = revision },
-			{ hl = "Delimiter", text = sep },
-			{ hl = "Normal", text = relpath },
-		})
 	else
 		buf_name = api.nvim_eval_statusline("%f", {}).str
 		return H.add_highlight2("Normal", buf_name)
@@ -275,11 +264,7 @@ Items.buf_flag = function()
 	})
 end
 Items.git = function()
-	local head = vim.b.gitsigns_head --or vim.g.gitsigns_head
-	if not head then
-		return ""
-	end
-	return H.add_highlight2("DiffText", string.format("%s %s", icons.git, head))
+	return ""
 end
 Items.dap = function()
 	if not package.loaded["dap"] or require("dap").status() == "" then
