@@ -11,26 +11,7 @@ local M = {}
 local function get_closest_func()
 	local parser = ts.get_parser()
 	local tree = parser:trees()[1]
-	local query = ts.query.parse(
-		"go",
-		[[
-[
-(function_declaration
-  name: (identifier) @func)
-
-
-(method_declaration
-  receiver: (parameter_list
-	      (parameter_declaration
-		name: (identifier)
-		type: [(type_identifier) @type
-
-		       (pointer_type
-			 (type_identifier) @type)]))
-  name: (field_identifier) @method)
-]
-		]]
-	)
+	local query = ts.query.get("go", "funcname")
 	query:iter_matches(tree:root(), 0, 0, api.nvim_win_get_cursor(0)[1])
 
 	local nearest_match
@@ -178,34 +159,7 @@ end
 local function get_closest_testfunc()
 	local parser = vim.treesitter.get_parser()
 	local tree = parser:trees()[1]
-	local query = vim.treesitter.query.parse(
-		"go",
-		[[
-(function_declaration
-  name: (identifier) @testfuncname
-  parameters: (parameter_list
-    . (parameter_declaration
-      type: (pointer_type) @testtype) .)
-  (#match? @testtype "*testing.(T)")
-  (#match? @testfuncname "^Test.+$")) @testfunc
-
-(function_declaration
-  name: (identifier) @benchfuncname
-  parameters: (parameter_list
-    . (parameter_declaration
-      type: (pointer_type) @testtype) .)
-  (#match? @testtype "*testing.B")
-  (#match? @benchfuncname "^Benchmark.+$")) @benchfunc
-
-(function_declaration
-  name: (identifier) @fuzzfuncname
-  parameters: (parameter_list
-    . (parameter_declaration
-      type: (pointer_type) @testtype) .)
-  (#match? @testtype "*testing.F")
-  (#match? @fuzzfuncname "^Fuzz.+$")) @fuzzfunc
-	]]
-	)
+	local query = ts.query.get("go", "testfunc")
 
 	local match
 	for _, m, _ in query:iter_matches(tree:root(), 0, 0, api.nvim_win_get_cursor(0)[1]) do

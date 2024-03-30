@@ -246,42 +246,11 @@ end
 -- }}}
 
 -- Golang {{{3
-local dap_go_func_name_query = "Dap_Go_Test_Func_Name"
 -- test function name {{{
-vim.treesitter.query.set(
-	"go",
-	dap_go_func_name_query,
-	[[
-(function_declaration
-  name: (identifier) @testfuncname
-  parameters: (parameter_list
-    . (parameter_declaration
-      type: (pointer_type) @testtype) .)
-  (#match? @testtype "*testing.(T)")
-  (#match? @testfuncname "^Test.+$")) @testfunc
-
-(function_declaration
-  name: (identifier) @benchfuncname
-  parameters: (parameter_list
-    . (parameter_declaration
-      type: (pointer_type) @testtype) .)
-  (#match? @testtype "*testing.B")
-  (#match? @benchfuncname "^Benchmark.+$")) @benchfunc
-
-(function_declaration
-  name: (identifier) @fuzzfuncname
-  parameters: (parameter_list
-    . (parameter_declaration
-      type: (pointer_type) @testtype) .)
-  (#match? @testtype "*testing.F")
-  (#match? @fuzzfuncname "^Fuzz.+$")) @fuzzfunc
-]]
-)
-
 local function get_closest_testfunc()
 	local parser = vim.treesitter.get_parser()
 	local tree = parser:trees()[1]
-	local query = vim.treesitter.query.get("go", dap_go_func_name_query)
+	local query = vim.treesitter.query.get("go", "testfunc")
 
 	local closest_node, type
 	for _, match, _ in query:iter_matches(tree:root(), 0, 0, api.nvim_win_get_cursor(0)[1]) do
