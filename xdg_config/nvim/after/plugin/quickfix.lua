@@ -2,7 +2,37 @@ if false then
 	return
 end
 
-local M = {}
+local api = vim.api
+local fn = vim.fn
+local autocmd = api.nvim_create_autocmd
+local augroup = api.nvim_create_augroup
+
+-- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
+local silent_mods = { mods = { silent = true, emsg_silent = true } }
+vim.keymap.set("n", "<leader>xq", function()
+	if fn.getqflist({ winid = 0 }).winid ~= 0 then
+		vim.cmd.cclose(silent_mods)
+	elseif #fn.getqflist() > 0 then
+		local win = api.nvim_get_current_win()
+		vim.cmd.copen(silent_mods)
+		if win ~= api.nvim_get_current_win() then
+			vim.cmd.wincmd("p")
+		end
+	end
+end, { desc = "Toggle quickfix list" })
+vim.keymap.set("n", "<leader>xl", function()
+	if fn.getloclist(0, { winid = 0 }).winid ~= 0 then
+		vim.cmd.lclose(silent_mods)
+	elseif #fn.getloclist(0) > 0 then
+		local win = api.nvim_get_current_win()
+		vim.cmd.lopen(silent_mods)
+		if win ~= api.nvim_get_current_win() then
+			vim.cmd.wincmd("p")
+		end
+	end
+end, { desc = "Toggle location list" })
+
+local QFTEXT = {}
 
 ---Traverse the qflist and get the maximum display width of the
 ---transformed string; cache the transformed string and its width
@@ -18,7 +48,7 @@ local function _traverse(qflist, trans_fun, max_width_allowed, str_cache, width_
 	local max_width_seen = 0
 	for i, item in ipairs(qflist) do
 		local str = tostring(trans_fun(item))
-		local width = vim.fn.strdisplaywidth(str)
+		local width = fn.strdisplaywidth(str)
 		str_cache[i] = str
 		width_cache[i] = width
 		if width > max_width_seen then
@@ -31,9 +61,9 @@ end
 ---See `:h quickfix-window-function`
 ---@param info table
 ---@return string[]
-function M.qftf(info)
-	local qflist = info.quickfix == 1 and vim.fn.getqflist({ id = info.id, items = 0 }).items
-		or vim.fn.getloclist(info.winid, { id = info.id, items = 0 }).items
+function QFTEXT.qftf(info)
+	local qflist = info.quickfix == 1 and fn.getqflist({ id = info.id, items = 0 }).items
+		or fn.getloclist(info.winid, { id = info.id, items = 0 }).items
 
 	if vim.tbl_isempty(qflist) then
 		return {}
@@ -60,7 +90,7 @@ function M.qftf(info)
 		local filename = item.filename
 		return module and module ~= "" and module
 			or filename and filename ~= "" and filename
-			or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":~:.")
+			or fn.fnamemodify(api.nvim_buf_get_name(bufnr), ":~:.")
 	end
 
 	---@param item table
@@ -166,32 +196,165 @@ function M.qftf(info)
 	return lines
 end
 
-_G.nvim_qftf = M.qftf
+_G.nvim_qftf = QFTEXT.qftf
 
 ---See `:h 'quickfixtextfunc'`
 vim.o.quickfixtextfunc = [[v:lua.nvim_qftf]]
 
--- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
-local silent_mods = { mods = { silent = true, emsg_silent = true } }
-vim.keymap.set("n", "<leader>xq", function()
-	if vim.fn.getqflist({ winid = 0 }).winid ~= 0 then
-		vim.cmd.cclose(silent_mods)
-	elseif #vim.fn.getqflist() > 0 then
-		local win = vim.api.nvim_get_current_win()
-		vim.cmd.copen(silent_mods)
-		if win ~= vim.api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
+local ACKMAP = {}
+
+vim.g.qf_mapping_ack_style = 1
+--[[ 
+s - open entry in a new horizontal window
+v - open entry in a new vertical window
+t - open entry in a new tab
+o - open entry and come back
+O - open entry and close the location/quickfix window
+p - open entry in a preview window 
+]]
+
+---@class QFItem
+---@field bufnr integer
+---@field col integer
+---@field end_col integer
+---@field lnum integer
+---@field end_lnum integer
+---@field module string
+---@field nr integer
+---@field pattern string
+---@field text string
+---@field type string
+---@field valid integer
+---@field vcol integer
+
+function ACKMAP.setup()
+	local function go_to(bufnr, mod, lnum, col)
+		local fname = fn.bufname(bufnr)
+		vim.cmd(string.format("%s +%d %s", mod, lnum, fname))
 	end
-end, { desc = "Toggle quickfix list" })
-vim.keymap.set("n", "<leader>xl", function()
-	if vim.fn.getloclist(0, { winid = 0 }).winid ~= 0 then
-		vim.cmd.lclose(silent_mods)
-	elseif #vim.fn.getloclist(0) > 0 then
-		local win = vim.api.nvim_get_current_win()
-		vim.cmd.lopen(silent_mods)
-		if win ~= vim.api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
+	local function split_go_to(bufnr, lnum, col)
+		local mod = "split"
+		go_to(bufnr, mod, lnum, col)
 	end
-end, { desc = "Toggle location list" })
+	local function vsplit_go_to(bufnr, lnum, col)
+		local mod = "vsplit"
+		go_to(bufnr, mod, lnum, col)
+	end
+	local function tabedit_go_to(bufnr, lnum, col)
+		local mod = "tabedit"
+		go_to(bufnr, mod, lnum, col)
+	end
+	local function pedit_go_to(bufnr, lnum, col)
+		local mod = "pedit"
+		go_to(bufnr, mod, lnum, col)
+	end
+	local function drop_go_to(bufnr, lnum, col)
+		local mod = "drop"
+		go_to(bufnr, mod, lnum, col)
+	end
+
+	local function call_in_the_last_accessed_win(fun)
+		-- get the last accessed window
+		local win = fn.win_getid(fn.winnr("#"))
+		api.nvim_win_call(win, function()
+			fun()
+		end)
+	end
+
+	local map = function(lhs, rhs, desc)
+		vim.keymap.set("n", lhs, rhs, { desc = desc, buffer = 0 })
+	end
+
+	---@type QFItem[]
+	local items = {}
+	if vim.b.qf_is_loclist == 1 then
+		items = fn.getloclist(0)
+	else
+		items = fn.getqflist()
+	end
+	map("s", function()
+		local line = fn.line(".")
+		local item = items[line]
+		vim.schedule(function()
+			call_in_the_last_accessed_win(function()
+				split_go_to(item.bufnr, item.lnum, item.col)
+			end)
+		end)
+	end, "open entry in a new horizontal window")
+	map("v", function()
+		local line = fn.line(".")
+		local item = items[line]
+		vim.schedule(function()
+			call_in_the_last_accessed_win(function()
+				vsplit_go_to(item.bufnr, item.lnum, item.col)
+			end)
+		end)
+	end, "open entry in a new vertical window")
+	map("t", function()
+		local line = fn.line(".")
+		local item = items[line]
+		tabedit_go_to(item.bufnr, item.lnum, item.col)
+	end, "open entry in a new tab")
+	map("p", function()
+		local line = fn.line(".")
+		local item = items[line]
+		vim.schedule(function()
+			call_in_the_last_accessed_win(function()
+				pedit_go_to(item.bufnr, item.lnum, item.col)
+			end)
+		end)
+	end, "open entry in a preview window ")
+	map("o", function()
+		local line = fn.line(".")
+		local item = items[line]
+		vim.schedule(function()
+			call_in_the_last_accessed_win(function()
+				drop_go_to(item.bufnr, item.lnum, item.col)
+			end)
+		end)
+	end, "open entry and come back")
+	map("O", function()
+		local line = fn.line(".")
+		local item = items[line]
+		vim.schedule(function()
+			call_in_the_last_accessed_win(function()
+				drop_go_to(item.bufnr, item.lnum, item.col)
+			end)
+
+			if vim.b.qf_is_loclist == 1 then
+				vim.cmd.lclose()
+			else
+				vim.cmd.cclose()
+			end
+		end)
+	end, "open entry and close the location/quickfix window")
+end
+
+autocmd({ "FileType" }, {
+	pattern = "qf",
+	callback = function(ev)
+		local buf = ev.buf
+		local info = fn.getwininfo(fn.win_getid())[1] or {}
+		vim.b.qf_is_loclist = info.loclist or 0
+		vim.b.qf_is_quickfix = info.quickfix or 0
+		ACKMAP.setup()
+	end,
+})
+
+vim.g.qf_auto_quit = 1
+autocmd({ "FileType" }, {
+	pattern = "qf",
+	callback = function(ev)
+		local buf = ev.buf
+		-- quit Vim if the last window is a quickfix window
+		autocmd({ "BufEnter" }, {
+			callback = function(ev)
+				if vim.g.qf_auto_quit and fn.winnr("$") < 2 then
+					vim.cmd.quit()
+				end
+			end,
+			nested = true,
+			buffer = buf,
+		})
+	end,
+})
