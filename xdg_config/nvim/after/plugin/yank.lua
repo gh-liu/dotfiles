@@ -25,3 +25,13 @@ autocmd("TextYankPost", {
 	group = yankg,
 	desc = "Keep Cursor Position on Yank",
 })
+
+if os.getenv("TMUX") == nil then
+	-- disable in TMUX
+	vim.api.nvim_create_autocmd("TextYankPost", {
+		callback = function(ev)
+			local text = vim.fn.getreg(vim.v.event.regname)
+			require("vim.ui.clipboard.osc52").copy({ text })
+		end,
+	})
+end
