@@ -35,3 +35,15 @@ if os.getenv("TMUX") == nil then
 		end,
 	})
 end
+
+autocmd("TextYankPost", {
+	desc = "Highlight when yanking",
+	group = augroup("liu/highlight_yank", { clear = true }),
+	pattern = "*",
+	callback = function()
+		vim.highlight.on_yank({
+			timeout = vim.o.updatetime,
+			priority = vim.highlight.priorities.user + 1,
+		})
+	end,
+})

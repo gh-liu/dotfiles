@@ -2198,18 +2198,6 @@ end, {})
 -- }}}
 
 -- Autocmds {{{1
-autocmd("TextYankPost", {
-	desc = "Highlight when yanking",
-	group = user_augroup("highlight_yank"),
-	pattern = "*",
-	callback = function()
-		vim.highlight.on_yank({
-			timeout = vim.o.updatetime,
-			priority = vim.highlight.priorities.user + 1,
-		})
-	end,
-})
-
 autocmd("VimResized", {
 	desc = "Equalize Splits",
 	group = user_augroup("resize_splits"),
