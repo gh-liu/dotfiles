@@ -7,6 +7,8 @@ local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
 local create_command = api.nvim_create_user_command
 
+local paire_move = require("liu.utils.pair_move")
+
 -- Global Things {{{1
 _G.config = {
 	colors = {
@@ -1611,6 +1613,10 @@ require("lazy").setup(
 		},
 		{
 			"tpope/vim-unimpaired",
+			init = function(self)
+				paire_move.setkeymap("l", { next = "]l", prev = "[l" })
+				paire_move.setkeymap("q", { next = "]q", prev = "[q" })
+			end,
 			keys = { "yo", "[", "]" },
 			config = function(self, opts)
 				vim.keymap.set(
@@ -2105,6 +2111,8 @@ setmap("n", "<leader>cp", ":<C-U>cd ..<CR>", { noremap = true })
 setmap("s", "<BS>", [[<C-O>"_s]])
 
 setmap("n", "z<space>", "za")
+
+paire_move.setkeymap("c", { next = "]c", prev = "[c" })
 -- }}}
 
 -- Cmds {{{1
