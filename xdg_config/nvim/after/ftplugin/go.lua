@@ -1,7 +1,3 @@
-if false then
-	return
-end
-
 local api = vim.api
 local ts = vim.treesitter
 local fn = vim.fn
@@ -224,34 +220,19 @@ local gen_or_jump_to_test = function()
 	end
 end
 
-M.setup = function()
-	local autocmd = api.nvim_create_autocmd
-	local augroup = api.nvim_create_augroup
-	local g = augroup("liu/go", { clear = true })
-	autocmd("BufEnter", {
-		group = g,
-		pattern = "*.go",
-		callback = function(ev)
-			local buf = ev.buf
-			local is_test = vim.endswith(ev.file, "_test.go")
-			if is_test then
-				api.nvim_buf_create_user_command(buf, "GoRunTest", function(opts)
-					run_test()
-				end, {
-					desc = "Go: run test",
-				})
-			else
-				api.nvim_buf_create_user_command(buf, "GoTest", function(opts)
-					gen_or_jump_to_test()
-				end, {
-					desc = "Go: generate or jump to test",
-				})
-			end
-		end,
+local buf = api.nvim_get_current_buf()
+local fname = api.nvim_buf_get_name(buf)
+local is_test = vim.endswith(fname, "_test.go")
+if is_test then
+	api.nvim_buf_create_user_command(buf, "GoRunTest", function(opts)
+		run_test()
+	end, {
 		desc = "Go: run test",
 	})
+else
+	api.nvim_buf_create_user_command(buf, "GoTest", function(opts)
+		gen_or_jump_to_test()
+	end, {
+		desc = "Go: generate or jump to test",
+	})
 end
-
-M.setup()
-
--- return M
