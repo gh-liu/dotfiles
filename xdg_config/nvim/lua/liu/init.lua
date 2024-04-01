@@ -1,5 +1,6 @@
 local fn = vim.fn
 local api = vim.api
+local uv = vim.uv
 local keymap = vim.keymap
 local lsp = vim.lsp
 local lsp_protocol = lsp.protocol
@@ -67,10 +68,7 @@ local enable_winbar = function(buf, win)
 		return false
 	end
 
-	if is_special_buffer(buf, {
-		"",
-		"git",
-	}) then
+	if is_special_buffer(buf, { "git" }) then
 		return false
 	end
 
@@ -85,7 +83,7 @@ local open_maps = function(buf, s, v, t)
 end
 
 local debounce = function(ms, fn)
-	local timer = vim.uv.new_timer()
+	local timer = uv.new_timer()
 	return function(...)
 		local argv = { ... }
 		timer:start(ms, 0, function()
@@ -128,7 +126,7 @@ require("lazy").setup(
 							return false
 						end
 
-						local ok, stats = pcall(vim.uv.fs_stat, api.nvim_buf_get_name(buf))
+						local ok, stats = pcall(uv.fs_stat, api.nvim_buf_get_name(buf))
 						-- Disable for files larger than 256 KB.
 						return ok and stats and stats.size > (256 * 1024)
 					end,
@@ -146,6 +144,7 @@ require("lazy").setup(
 				local nav = require("liu.treesitter.navigation")
 				nav.map_object_pair_move("f", "@function.outer", true)
 				nav.map_object_pair_move("F", "@function.outer", false)
+
 				local usage = nav.usage
 				-- if lsp server supports document highlight, which will replce below map
 				vim.keymap.set("n", "]v", usage.goto_next)
@@ -160,9 +159,9 @@ require("lazy").setup(
 				local ts_ctx = require("treesitter-context")
 				ts_ctx.setup(opts)
 
-				-- keymap.set("n", "<leader>cj", function()
-				-- 	ts_ctx.go_to_context(vim.v.count1)
-				-- end, {})
+				keymap.set("n", "cO", function()
+					ts_ctx.go_to_context(vim.v.count1)
+				end, { desc = "go to [cO]ntext" })
 
 				set_hls({
 					TreesitterContext = { link = "StatusLine" },
@@ -264,16 +263,21 @@ require("lazy").setup(
 				"DapRunOSV",
 			},
 			dependencies = {
-				"nvim-neotest/nvim-nio",
-				"rcarriga/nvim-dap-ui",
-				"jbyuki/one-small-step-for-vimkind",
+				{
+					"rcarriga/nvim-dap-ui",
+					dependencies = { "nvim-neotest/nvim-nio" },
+				},
+				{
+					"jbyuki/one-small-step-for-vimkind",
+					config = function(self, opts)
+						api.nvim_create_user_command("DapRunOSV", function()
+							require("osv").launch({ port = 8086 })
+						end, { nargs = 0 })
+					end,
+				},
 			},
 			config = function(self, opts)
 				load_plugin_config("dap")
-
-				api.nvim_create_user_command("DapRunOSV", function()
-					require("osv").launch({ port = 8086 })
-				end, { nargs = 0 })
 			end,
 		},
 		-- }}}
@@ -349,7 +353,11 @@ require("lazy").setup(
 					end,
 				},
 			},
-			cmd = { "Format", "FormatEnable", "FormatDisable" },
+			cmd = {
+				"Format",
+				"FormatEnable",
+				"FormatDisable",
+			},
 			opts = {
 				formatters_by_ft = {
 					go = { "goimports", "gofumpt" },
@@ -440,7 +448,7 @@ require("lazy").setup(
 						augend.case.new({ types = { "camelCase", "PascalCase" }, cyclic = true }),
 					}, default),
 					lua = vim.list_extend({
-						augend.paren.alias.lua_str_literal,
+						-- augend.paren.alias.lua_str_literal,
 						augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
 					}, default),
 					rust = vim.list_extend({
@@ -579,14 +587,14 @@ require("lazy").setup(
 					-- Evaluate text and replace with output
 					prefix = "g=",
 				},
-				-- miltiply = {
-				-- 	-- Multiply (duplicate) text
-				-- 	prefix = "",
-				-- },
-				-- sort = {
-				-- 	-- Sort text
-				-- 	prefix = "",
-				-- },
+				multiply = {
+					-- Multiply (duplicate) text
+					prefix = "",
+				},
+				sort = {
+					-- Sort text
+					prefix = "",
+				},
 			},
 		},
 		{
@@ -610,7 +618,11 @@ require("lazy").setup(
 				vim.g.abolish_save_file = fn.stdpath("config") .. "/after/plugin/abolish.vim"
 			end,
 			keys = { "cr" },
-			cmd = { "Abolish", "Subvert", "S" },
+			cmd = {
+				"Abolish",
+				"Subvert",
+				"S",
+			},
 		},
 		{
 			"danymat/neogen",
@@ -700,7 +712,6 @@ require("lazy").setup(
 			-- Dim inactive windows
 			"levouh/tint.nvim",
 			enabled = false,
-			-- event = "VeryLazy",
 			event = "WinNew",
 			opts = {
 				tint = -10,
@@ -946,8 +957,8 @@ require("lazy").setup(
 								["?"] = actions.which_key,
 							},
 						},
-		-- stylua: ignore start
-		borderchars = { borders[2], borders[4], borders[6], borders[8], borders[1], borders[3], borders[5], borders[7] },
+						-- stylua: ignore start
+						borderchars = { borders[2], borders[4], borders[6], borders[8], borders[1], borders[3], borders[5], borders[7] },
 						-- stylua: ignore end
 						winblend = 10,
 						layout_config = {
@@ -972,16 +983,16 @@ require("lazy").setup(
 					-- Individual: Default configuration for builtin pickers
 					pickers = {
 						buffers = {
-							mappings = { [{ "n" }] = { ["<leader>d"] = actions.delete_buffer } },
+							mappings = { [{ "n" }] = { ["dd"] = actions.delete_buffer } },
 						},
 						marks = {
-							mappings = { [{ "n" }] = { ["<leader>d"] = actions.delete_mark } },
+							mappings = { [{ "n" }] = { ["dd"] = actions.delete_mark } },
 						},
 						live_grep = {
-							mappings = { [{ "n" }] = { ["<leader>r"] = actions.to_fuzzy_refine } },
+							mappings = { [{ "n" }] = { ["cr"] = actions.to_fuzzy_refine } },
 						},
 						grep_string = {
-							mappings = { [{ "n" }] = { ["<leader>r"] = actions.to_fuzzy_refine } },
+							mappings = { [{ "n" }] = { ["cr"] = actions.to_fuzzy_refine } },
 						},
 						find_files = {
 							hidden = true,
@@ -1294,7 +1305,7 @@ require("lazy").setup(
 						-- 	-- https://github.com/echasnovski/mini.nvim/issues/391
 						-- 	-- set up ability to confirm changes with :w
 						-- 	api.nvim_set_option_value("buftype", "acwrite", { buf = buf })
-						-- 	api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
+						-- 	api.nvim_buf_set_name(buf, string.format("mini.files-%s", uv.hrtime()))
 						-- 	api.nvim_create_autocmd("BufWriteCmd", {
 						-- 		callback = MiniFiles.synchronize,
 						-- 		buffer = buf,
@@ -1349,7 +1360,7 @@ require("lazy").setup(
 							local path = fn.fnamemodify(bufname, ":p")
 							-- Open last if the buffer isn't valid.
 							---@diagnostic disable-next-line: undefined-field
-							if path and vim.uv.fs_stat(path) then
+							if path and uv.fs_stat(path) then
 								MiniFiles.open(bufname, false)
 							else
 								MiniFiles.open(MiniFiles.get_latest_path())
@@ -2215,7 +2226,7 @@ require("lazy").setup(
 			lazy = true,
 			-- event = "VeryLazy",
 			init = function(self)
-				local cwd = vim.uv.cwd()
+				local cwd = uv.cwd()
 				if fn.filereadable(cwd .. "/.projections.json") == 1 then
 					require("lazy").load({ plugins = { "vim-projectionist" } })
 				end
@@ -2820,7 +2831,7 @@ autocmd({ "BufWritePre" }, {
 			return
 		end
 		---@diagnostic disable-next-line: undefined-field
-		local file = vim.uv.fs_realpath(event.match) or event.match
+		local file = uv.fs_realpath(event.match) or event.match
 		fn.mkdir(fn.fnamemodify(file, ":p:h"), "p")
 	end,
 })

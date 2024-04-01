@@ -761,7 +761,7 @@ autocmd("User", {
 				return {
 					"scopes",
 					"breakpoints",
-					"stack",
+					"stacks",
 					"watches",
 					"console",
 					"repl",
