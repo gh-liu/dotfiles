@@ -113,9 +113,10 @@ local servers = {
 				},
 			},
 		},
-		---@param client lsp.Client
+		---@param client vim.lsp.Client
 		on_init = function(client)
 			local has_local_config = function(path)
+				---@diagnostic disable-next-line: undefined-field
 				return vim.uv.fs_stat(path .. "/.luarc.json") or vim.uv.fs_stat(path .. "/.luarc.jsonc")
 			end
 			local path = client.workspace_folders and client.workspace_folders[1] and client.workspace_folders[1].name

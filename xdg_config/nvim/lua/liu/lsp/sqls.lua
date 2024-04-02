@@ -73,7 +73,7 @@ local execute_handler = function(err, result, context, config)
 	show_handler(err, result, context, config)
 end
 
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param bufnr integer
 M.on_attach = function(client, bufnr)
 	---@diagnostic disable-next-line: assign-type-mismatch

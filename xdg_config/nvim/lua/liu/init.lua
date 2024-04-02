@@ -48,14 +48,21 @@ local user_augroup = function(group_name)
 	return augroup("liu_" .. group_name, { clear = true })
 end
 
+---@param buf integer
+---@param s function
+---@param v function
+---@param t function
 local open_maps = function(buf, s, v, t)
 	local map = vim.keymap
-	map.set("n", "<C-v>", v, { buffer = buf, desc = "split v" })
 	map.set("n", "<C-s>", s, { buffer = buf, desc = "split s" })
+	map.set("n", "<C-v>", v, { buffer = buf, desc = "split v" })
 	map.set("n", "<C-t>", t, { buffer = buf, desc = "split t" })
 end
 
+---@param ms integer
+---@param fn function
 local debounce = function(ms, fn)
+	---@diagnostic disable-next-line: undefined-field
 	local timer = uv.new_timer()
 	return function(...)
 		local argv = { ... }
@@ -94,11 +101,12 @@ require("lazy").setup(
 				highlight = {
 					enable = true,
 					disable = function(_, buf)
-						-- Don't disable for read-only buffers.
+						-- Disable for read-only buffers.
 						if not vim.bo[buf].modifiable then
 							return false
 						end
 
+						---@diagnostic disable-next-line: undefined-field
 						local ok, stats = pcall(uv.fs_stat, api.nvim_buf_get_name(buf))
 						-- Disable for files larger than 256 KB.
 						return ok and stats and stats.size > (256 * 1024)
@@ -166,9 +174,7 @@ require("lazy").setup(
 			"kosayoda/nvim-lightbulb",
 			event = "LspAttach",
 			opts = {
-				autocmd = {
-					enabled = true,
-				},
+				autocmd = { enabled = true },
 				priority = 20, -- priority of dap signs is 21
 				sign = {
 					enabled = true,
@@ -326,11 +332,10 @@ require("lazy").setup(
 					end,
 				},
 			},
-			cmd = {
-				"Format",
-				"FormatEnable",
-				"FormatDisable",
-			},
+			ft = function(self, ft)
+				return vim.tbl_keys(self.opts.formatters_by_ft)
+			end,
+			cmd = { "Format" },
 			opts = {
 				formatters_by_ft = {
 					go = { "goimports", "gofumpt" },
@@ -354,27 +359,6 @@ require("lazy").setup(
 					return { timeout_ms = 500, lsp_fallback = true }
 				end
 				require("conform").setup(opts)
-
-				do
-					create_command(self.cmd[2], function()
-						vim.b.disable_autoformat = false
-						vim.g.disable_autoformat = false
-					end, {
-						desc = "Re-enable autoformat-on-save",
-					})
-
-					create_command(self.cmd[3], function(args)
-						if args.bang then
-							-- FormatDisable! will disable formatting just for this buffer
-							vim.b.disable_autoformat = true
-						else
-							vim.g.disable_autoformat = true
-						end
-					end, {
-						desc = "Disable autoformat-on-save",
-						bang = true,
-					})
-				end
 
 				create_command(self.cmd[1], function(args)
 					local range = nil
@@ -541,7 +525,6 @@ require("lazy").setup(
 				{ "s", mode = { "n", "x" } },
 				{ "S", "<cmd>normal s$<cr>", silent = true },
 				{ "cx", mode = { "n", "x" } },
-				{ "g=", mode = { "n", "x" } },
 			},
 			opts = {
 				replace = {
@@ -556,18 +539,12 @@ require("lazy").setup(
 					-- Whether to reindent new text to match previous indent
 					reindent_linewise = true,
 				},
-				evaluate = {
-					-- Evaluate text and replace with output
-					prefix = "g=",
-				},
-				multiply = {
-					-- Multiply (duplicate) text
-					prefix = "",
-				},
-				sort = {
-					-- Sort text
-					prefix = "",
-				},
+				-- Evaluate text and replace with output
+				evaluate = { prefix = "" },
+				-- Multiply (duplicate) text
+				multiply = { prefix = "" },
+				-- Sort text
+				sort = { prefix = "" },
 			},
 		},
 		{
@@ -737,7 +714,10 @@ require("lazy").setup(
 		},
 		{
 			"lewis6991/hover.nvim",
-			keys = { "K", "gK" },
+			keys = {
+				"K",
+				"gK",
+			},
 			config = function()
 				require("hover").setup({
 					init = function()
@@ -808,7 +788,7 @@ require("lazy").setup(
 			config = function()
 				local keymap = vim.keymap
 
-				local builtin = require("telescope.builtin")
+				local B = require("telescope.builtin")
 				local actions = require("telescope.actions")
 
 				local utils = require("telescope.utils")
@@ -876,12 +856,16 @@ require("lazy").setup(
 								["<esc>"] = actions.close,
 
 								["<CR>"] = actions.select_default,
-								["<C-x>"] = actions.select_horizontal,
+								["<C-s>"] = actions.select_horizontal,
 								["<C-v>"] = actions.select_vertical,
 								["<C-t>"] = actions.select_tab,
 
 								["<C-u>"] = actions.preview_scrolling_up,
 								["<C-d>"] = actions.preview_scrolling_down,
+								["<M-j>"] = actions.preview_scrolling_down,
+								["<M-k>"] = actions.preview_scrolling_up,
+								["<M-h>"] = actions.preview_scrolling_left,
+								["<M-l>"] = actions.preview_scrolling_right,
 
 								["<Tab>"] = actions.toggle_selection + actions.move_selection_worse,
 								["<S-Tab>"] = actions.toggle_selection + actions.move_selection_better,
@@ -906,7 +890,7 @@ require("lazy").setup(
 
 								["<CR>"] = actions.select_default,
 
-								["<C-x>"] = actions.select_horizontal,
+								["<C-s>"] = actions.select_horizontal,
 								["<C-v>"] = actions.select_vertical,
 								["<C-t>"] = actions.select_tab,
 
@@ -922,10 +906,12 @@ require("lazy").setup(
 								["gg"] = actions.move_to_top,
 								["G"] = actions.move_to_bottom,
 
-								["<C-k>"] = actions.preview_scrolling_up,
-								["<C-j>"] = actions.preview_scrolling_down,
-								["<C-h>"] = actions.preview_scrolling_left,
-								["<C-l>"] = actions.preview_scrolling_right,
+								["<C-u>"] = actions.preview_scrolling_up,
+								["<C-d>"] = actions.preview_scrolling_down,
+								["<M-j>"] = actions.preview_scrolling_down,
+								["<M-k>"] = actions.preview_scrolling_up,
+								["<M-h>"] = actions.preview_scrolling_left,
+								["<M-l>"] = actions.preview_scrolling_right,
 
 								["?"] = actions.which_key,
 							},
@@ -973,108 +959,80 @@ require("lazy").setup(
 						},
 						git_stash = {
 							mappings = {
-								[{ "n" }] = { ["<leader>p"] = user_action.git_pop_stash },
-								[{ "n" }] = { ["<leader>d"] = user_action.git_drop_stash },
+								[{ "n" }] = { ["gp"] = user_action.git_pop_stash },
+								[{ "n" }] = { ["gd"] = user_action.git_drop_stash },
 							},
 						},
 					},
 				})
 
 				-- keymaps
-				do
-					keymap.set("n", "<leader>so", builtin.oldfiles, { desc = "[S]earch recently [O]pened files" })
-					keymap.set("n", "<leader>sb", builtin.buffers, { desc = "[S]earch existing [B]uffers" })
-					keymap.set("n", "<leader>sf", builtin.find_files, { desc = "[S]earch [F]iles" })
-
-					keymap.set({ "n", "x" }, "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
-					keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
-					keymap.set(
-						"n",
-						"<leader>s/",
-						builtin.current_buffer_fuzzy_find,
-						{ desc = "[S]earch in Current Buffer like [/]" }
-					)
-					keymap.set("n", "<leader>ss", builtin.search_history, { desc = "[S]earch [S]earch History" })
-
-					keymap.set("n", "<leader>sm", builtin.marks, { desc = "[S]earch [M]ark" })
-					keymap.set("n", "<leader>sj", builtin.jumplist, { desc = "[S]et [J]umplist" })
-					keymap.set("n", "<leader>sr", builtin.registers, { desc = "[S]earch [R]egisters" })
-					keymap.set("n", "<leader>st", builtin.filetypes, { desc = "[S]et File[t]ype" })
-					keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
-					keymap.set("n", "<leader>sH", function()
-						builtin.help_tags({ default_text = vim.fn.expand("<cword>") })
-					end, { desc = "[S]earch [H]elp" })
-
-					-- keymap.set("n", "<leader>;", ":")
-					keymap.set("n", "<leader>;", builtin.commands, { desc = "List Commands" })
-					-- keymap.set("n", "<leader>:", builtin.command_history, { desc = "List Commands History" })
-
-					keymap.set("n", "<leader>sd", function()
-						-- use `complete_tag` to selection diagnostic severity
-						return builtin.diagnostics()
-					end, { desc = "[S]earch [D]iagnostics" })
-
+				local maps = {
+					["<leader>so"] = { fn = B.oldfiles, desc = "[S]earch recently [O]pened files" },
+					["<leader>sf"] = { fn = B.find_files, desc = "[S]earch [F]iles" },
+					["<leader>sb"] = { fn = B.buffers, desc = "[S]earch existing [B]uffers" },
+					["<leader>sg"] = { fn = B.live_grep, desc = "[S]earch by [G]rep" },
+					["<leader>s/"] = { fn = B.current_buffer_fuzzy_find, desc = "[S]earch in Current Buffer like [/]" },
+					["<leader>ss"] = { fn = B.search_history, desc = "[S]earch [S]earch History" },
+					["<leader>sm"] = { fn = B.marks, desc = "[S]earch [M]ark" },
+					["<leader>sj"] = { fn = B.jumplist, desc = "[S]et [J]umplist" },
+					["<leader>sr"] = { fn = B.registers, desc = "[S]earch [R]egisters" },
+					["<leader>st"] = { fn = B.filetypes, desc = "[S]et File[t]ype" },
+					["<leader>sh"] = { fn = B.help_tags, desc = "[S]earch [H]elp" },
+					["<leader>sw"] = { fn = B.grep_string, desc = "[S]earch [W]ord" },
+					["<leader>;"] = { fn = B.commands, desc = "List Commands" },
+					["<leader>sd"] = { fn = B.diagnostics, desc = "[S]earch [D]iagnostics" },
 					-- override by builtin.lsp_document_symbols
-					keymap.set("n", "<leader>ds", builtin.treesitter, { desc = "Treesitter [D]ocument [S]ymbols" })
+					["<leader>ds"] = { fn = B.diagnostics, desc = "Treesitter [D]ocument [S]ymbols" },
+				}
 
-					api.nvim_create_autocmd("LspAttach", {
-						group = api.nvim_create_augroup("liu/lsp_attach_telescope_keymaps", { clear = true }),
-						callback = function(args)
-							local map = function(l, r, desc)
-								keymap.set("n", l, r, { buffer = args.buf, desc = desc })
-							end
-
-							map(
-								"<leader>ds",
-								builtin.lsp_document_symbols,
-								"Lists LSP [D]ocument [S]ymbols in the current buffer"
-							)
-
-							map("gd", function()
-								builtin.lsp_definitions()
-							end, "[G]oto [D]efinition")
-
-							map("gy", function()
-								builtin.lsp_type_definitions()
-							end, "[G]oto T[y]pe Definition")
-
-							map("gr", function()
-								builtin.lsp_references({
-									include_declaration = false,
-									include_current_line = false,
-								})
-							end, "[G]oto [R]eferences")
-
-							map("gi", function()
-								builtin.lsp_implementations({})
-							end, "[G]oto [I]mplementation")
-
-							map("gI", builtin.lsp_incoming_calls, "[G]oto [I]ncomingCalls") -- this function as callee
-							-- map("gO", builtin.lsp_outgoing_calls, "[G]oto [O]utgoingCalls") -- this function as caller
-						end,
-					})
+				for lhs, map in pairs(maps) do
+					keymap.set("n", lhs, map.fn, { desc = map.desc })
 				end
 
-				-- commands
-				-- do
-				-- 	local cmds = {
-				-- 		GBufferCommits = "git_bcommits",
-				-- 		GBranches = "git_branches",
-				-- 		GStash = "git_stash",
-				-- 	}
-				-- 	for cmd, fn in pairs(cmds) do
-				-- 		api.nvim_create_user_command(cmd, function(opts)
-				-- 			builtin[fn]()
-				-- 		end, { nargs = 0, desc = "telescope " .. fn })
-				-- 	end
-				-- end
+				api.nvim_create_autocmd("LspAttach", {
+					group = api.nvim_create_augroup("liu/lsp_attach_telescope_keymaps", { clear = true }),
+					callback = function(args)
+						local map = function(l, r, desc)
+							keymap.set("n", l, r, { buffer = args.buf, desc = desc })
+						end
 
-				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
+						map(
+							"<leader>ds",
+							B.lsp_document_symbols,
+							"Lists LSP [D]ocument [S]ymbols in the current buffer"
+						)
+
+						map("gd", function()
+							B.lsp_definitions()
+						end, "[G]oto [D]efinition")
+
+						map("gy", function()
+							B.lsp_type_definitions()
+						end, "[G]oto T[y]pe Definition")
+
+						map("gr", function()
+							B.lsp_references({
+								include_declaration = false,
+								include_current_line = false,
+							})
+						end, "[G]oto [R]eferences")
+
+						map("gi", function()
+							B.lsp_implementations({})
+						end, "[G]oto [I]mplementation")
+
+						map("gI", B.lsp_incoming_calls, "[G]oto [I]ncomingCalls") -- this function as callee
+						-- map("gO", builtin.lsp_outgoing_calls, "[G]oto [O]utgoingCalls") -- this function as caller
+					end,
+				})
 
 				api.nvim_create_autocmd("User", {
 					pattern = "TelescopePreviewerLoaded",
 					command = "setlocal number",
 				})
+
+				set_hls({ TelescopeBorder = { link = "FloatBorder" } })
 			end,
 		},
 		-- }}}
@@ -1157,11 +1115,6 @@ require("lazy").setup(
 				local function split_rhs(modify)
 					local minifiles = require("mini.files")
 
-					-- local window = minifiles.get_target_window()
-					-- if window == nil then
-					-- 	return
-					-- end
-
 					local entry = minifiles.get_fs_entry()
 					if entry.fs_type == "directory" then
 						-- Noop if the explorer isn't open or the cursor is on a directory.
@@ -1179,14 +1132,6 @@ require("lazy").setup(
 					local p = fn.fnamemodify(path, ":.")
 					fn.setreg(vim.v.register, p)
 					print(string.format([["%s"]], p))
-				end
-
-				local add_to_harpoon = function(fname)
-					local harpoon = require("harpoon")
-					harpoon:list():append({
-						value = fname,
-						context = "",
-					})
 				end
 
 				autocmd("User", {
@@ -1222,13 +1167,6 @@ require("lazy").setup(
 						end)
 
 						keymap.set("n", "gY", yank_relative_path, { buffer = buf })
-
-						keymap.set("n", "<tab>", function()
-							local entry = MiniFiles.get_fs_entry(0, fn.line("."))
-							if entry.fs_type == "file" then
-								add_to_harpoon(entry.path)
-							end
-						end, { buffer = buf })
 					end,
 				})
 
@@ -1387,7 +1325,6 @@ require("lazy").setup(
 			dependencies = {
 				"hrsh7th/cmp-path",
 				"hrsh7th/cmp-buffer",
-				-- "hrsh7th/cmp-cmdline",
 				"hrsh7th/cmp-nvim-lsp",
 				"hrsh7th/cmp-nvim-lsp-signature-help",
 				-- "hrsh7th/cmp-omni",
@@ -1711,7 +1648,6 @@ require("lazy").setup(
 				local pairs = require("mini.pairs")
 				pairs.setup()
 
-				local group = user_augroup("mini_pairs")
 				local pairs_by_fts = {
 					zig = function(buf)
 						pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
@@ -1724,7 +1660,7 @@ require("lazy").setup(
 				}
 
 				autocmd("FileType", {
-					group = group,
+					group = user_augroup("mini_pairs"),
 					pattern = vim.tbl_keys(pairs_by_fts),
 					callback = function(ev)
 						local buf = ev.buf
@@ -1805,7 +1741,7 @@ require("lazy").setup(
 			opts = {
 				view = {
 					-- Visualization style. Possible values are 'sign' and 'number'.
-					style = vim.o.number and "number" or "sign",
+					style = vim.go.number and "number" or "sign",
 					-- Signs used for hunks with 'sign' view
 					signs = { add = "▒", change = "▒", delete = "▒" },
 					-- Priority of used visualization extmarks
@@ -1960,6 +1896,7 @@ require("lazy").setup(
 		-- filetype specifically {{{2
 		{
 			"saecki/crates.nvim",
+			enabled = false,
 			lazy = true,
 			event = { "BufRead Cargo.toml" },
 			config = function()
@@ -2075,6 +2012,7 @@ require("lazy").setup(
 			lazy = true,
 			-- event = "VeryLazy",
 			init = function(self)
+				---@diagnostic disable-next-line: undefined-field
 				local cwd = uv.cwd()
 				if fn.filereadable(cwd .. "/.projections.json") == 1 then
 					require("lazy").load({ plugins = { "vim-projectionist" } })
@@ -2813,7 +2751,7 @@ keymap.set("n", "dc", function()
 end, { desc = "[D]iagnostic [C]urrent Buffer" })
 local diagnostic_goto = function(next, severity)
 	local go = next and diagnostic.goto_next or vim.diagnostic.goto_prev
-	severity = severity and diagnostic.severity[severity] or nil
+	severity = severity and diagnostic.severity[severity]
 	return function()
 		go({ severity = severity })
 	end
@@ -2859,6 +2797,9 @@ autocmd("LspAttach", {
 		local bufnr = args.buf
 
 		local client = lsp.get_client_by_id(args.data.client_id)
+		if not client then
+			return
+		end
 
 		vim.bo[bufnr].omnifunc = "v:lua.lsp.omnifunc"
 		-- vim.bo[bufnr].tagfunc = "v:lua.lsp.tagfunc"

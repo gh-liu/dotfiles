@@ -749,6 +749,7 @@ autocmd("User", {
 
 		-- :h dapui.elements
 		create_cmd("DapUIFloat", function(arg)
+			---@diagnostic disable-next-line: missing-fields
 			local args = {} ---@type dapui.FloatElementArgs
 			if arg.bang then
 				args.enter = true

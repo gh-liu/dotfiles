@@ -11,7 +11,7 @@ end
 -- local require_path = "liu.lsp.gopls"
 
 local M = {
-	---@type lsp.Client
+	---@type vim.lsp.Client
 	client = nil,
 }
 
@@ -56,7 +56,7 @@ local add_handler = function(err, result, context, config)
 	end
 end
 
----@param client lsp.Client
+---@param client vim.lsp.Client
 ---@param bufnr integer
 M.on_attach = function(client, bufnr)
 	M.client = client
