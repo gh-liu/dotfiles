@@ -1743,6 +1743,7 @@ require("lazy").setup(
 		{
 			"L3MON4D3/LuaSnip",
 			lazy = true,
+			build = "make install_jsregexp", -- https://github.com/L3MON4D3/LuaSnip/blob/master/DOC.md#transformations
 			dependencies = {
 				"rafamadriz/friendly-snippets",
 				"saadparwaiz1/cmp_luasnip",
