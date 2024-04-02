@@ -2569,6 +2569,11 @@ end, {})
 -- }}}
 
 -- Autocmds {{{1
+vim.cmd([[
+    au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
+    \| exe "normal! g'\"" | endif
+]])
+
 autocmd("VimResized", {
 	desc = "Equalize Splits",
 	group = user_augroup("resize_splits"),
