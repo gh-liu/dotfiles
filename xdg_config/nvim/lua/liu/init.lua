@@ -48,33 +48,6 @@ local user_augroup = function(group_name)
 	return augroup("liu_" .. group_name, { clear = true })
 end
 
----@type fun(buf: integer, fts: table): boolean
-local is_special_buffer = function(buf, fts)
-	local ft = vim.bo[buf].filetype
-	local opts = { buf = buf }
-	return api.nvim_get_option_value("buftype", opts) ~= "" -- not a normal buffer
-		or not api.nvim_get_option_value("buflisted", opts) -- unlisted buffer
-		or vim.tbl_contains(fts or {}, ft)
-end
-
----@type fun(buf: integer, win: integer): boolean
-local enable_winbar = function(buf, win)
-	-- buffer local
-	if vim.b[buf].disable_winbar then
-		return false
-	end
-
-	if vim.wo[win].diff then
-		return false
-	end
-
-	if is_special_buffer(buf, { "git" }) then
-		return false
-	end
-
-	return not api.nvim_win_get_config(win).zindex
-end
-
 local open_maps = function(buf, s, v, t)
 	local map = vim.keymap
 	map.set("n", "<C-v>", v, { buffer = buf, desc = "split v" })
@@ -1166,75 +1139,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"echasnovski/mini.visits",
-			enabled = false,
-			init = function(self)
-				vim.g.mini_visits_default_label = "core"
-			end,
-			event = "VeryLazy",
-			opts = {},
-			config = function(self, opts)
-				require("mini.visits").setup(opts)
-
-				do
-					local default_lable_name = vim.g.mini_visits_default_label
-
-					local vis = require("mini.visits")
-					keymap.set("n", "<Leader>vv", function()
-						vis.add_label(default_lable_name)
-					end, { desc = "Add to core" })
-
-					keymap.set("n", "<Leader>vd", function()
-						vis.remove_label(default_lable_name)
-					end, { desc = "Remove from core" })
-
-					keymap.set("n", "<Leader>vl", function()
-						vis.select_path(nil, { filter = default_lable_name })
-					end, { desc = "Select core (cwd)" })
-
-					keymap.set("n", "<Leader>vL", function()
-						vis.select_path("", { filter = default_lable_name })
-					end, { desc = "Select core (all)" })
-
-					local map_iterate_core = function(lhs, direction, desc)
-						local opts = { filter = default_lable_name, wrap = true }
-						local rhs = function()
-							vis.iterate_paths(direction, fn.getcwd(), opts)
-						end
-						keymap.set("n", lhs, rhs, { desc = desc })
-					end
-
-					map_iterate_core("[[", "forward", "Core label (earlier)")
-					map_iterate_core("]]", "backward", "Core label (later)")
-					-- map_iterate_core("[{", "last", "Core label (earliest)")
-					-- map_iterate_core("]}", "first", "Core label (latest)")
-				end
-
-				do
-					local vis = require("mini.visits")
-					local make_select_path = function(select_global, recency_weight)
-						local sort = vis.gen_sort.default({ recency_weight = recency_weight })
-						local select_opts = { sort = sort }
-						return function()
-							local cwd = select_global and "" or fn.getcwd()
-							vis.select_path(cwd, select_opts)
-						end
-					end
-
-					local map_select = function(lhs, desc, ...)
-						keymap.set("n", lhs, make_select_path(...), { desc = desc })
-					end
-
-					map_select("<Leader>vr", "Select recent (all)", true, 1)
-					map_select("<Leader>vR", "Select recent (cwd)", false, 1)
-					-- map_select("<Leader>vy", "Select frecent (all)", true, 0.5)
-					-- map_select("<Leader>vY", "Select frecent (cwd)", false, 0.5)
-					map_select("<Leader>vf", "Select frequent (all)", true, 0)
-					map_select("<Leader>vF", "Select frequent (cwd)", false, 0)
-				end
-			end,
-		},
-		{
 			"echasnovski/mini.files",
 			lazy = true,
 			init = function()
@@ -1266,14 +1170,6 @@ require("lazy").setup(
 					end
 					vim.cmd(modify .. " " .. entry.path)
 					minifiles.close()
-				end
-
-				local add_to_visits = function(fname)
-					local default_lable = vim.g.mini_visits_default_label
-					if default_lable then
-						local vis = require("mini.visits")
-						vis.add_label(default_lable, fname)
-					end
 				end
 
 				local yank_relative_path = function()
@@ -1330,7 +1226,6 @@ require("lazy").setup(
 						keymap.set("n", "<tab>", function()
 							local entry = MiniFiles.get_fs_entry(0, fn.line("."))
 							if entry.fs_type == "file" then
-								-- add_to_visits(entry.path)
 								add_to_harpoon(entry.path)
 							end
 						end, { buffer = buf })
@@ -1379,53 +1274,6 @@ require("lazy").setup(
 					use_as_default_explorer = false,
 				},
 			},
-		},
-		{
-			"Bekaboo/dropbar.nvim",
-			enabled = false,
-			event = "VeryLazy",
-			opts = {
-				general = { enable = enable_winbar },
-				icons = {
-					kinds = {
-						use_devicons = true,
-					},
-				},
-				menu = {
-					keymaps = {
-						["<CR>"] = function()
-							local menu = require("dropbar.api").get_current_dropbar_menu()
-							if not menu then
-								return
-							end
-							local cursor = api.nvim_win_get_cursor(menu.win)
-							local component = menu.entries[cursor[1]]:first_clickable(cursor[2])
-							if component then
-								menu:click_on(component, nil, 1, "l")
-							end
-						end,
-					},
-					win_configs = {
-						border = config.borders,
-					},
-				},
-			},
-			config = function(self, opts)
-				local symbols = {}
-				local highlights = {}
-				for key, value in pairs(config.icons.symbol_kinds) do
-					symbols[key] = value.icon
-					highlights["DropBarIconKind" .. key] = { link = value.hl }
-				end
-				opts.icons.kinds.symbols = symbols
-				require("dropbar").setup(opts)
-
-				keymap.set("n", "<leader>P", function()
-					require("dropbar.api").pick()
-				end)
-
-				set_hls(highlights)
-			end,
 		},
 		-- }}}
 
