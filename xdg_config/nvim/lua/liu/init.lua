@@ -158,6 +158,7 @@ require("lazy").setup(
 		},
 		{
 			"JoosepAlviste/nvim-ts-context-commentstring",
+			enabled = false,
 			event = "VeryLazy",
 		},
 		-- }}}
@@ -309,6 +310,7 @@ require("lazy").setup(
 		-- text edit {{{2
 		{
 			"numToStr/Comment.nvim",
+			enabled = false,
 			lazy = true,
 			keys = {
 				{ "gc", mode = { "n", "x" } },
