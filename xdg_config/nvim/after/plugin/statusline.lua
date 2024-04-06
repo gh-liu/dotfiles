@@ -405,11 +405,14 @@ Items.harpoon = function()
 		local length = list:length()
 		local root_dir = list.config:get_root_dir()
 		for i = 1, length do
-			local item = list:get(i).value
-			if buf == vim.fn.bufnr(item) then
-				table.insert(harpoon_list, string.format("[%d]", i))
-			else
-				table.insert(harpoon_list, string.format("%d", i))
+			local item = list:get(i)
+			if item then
+				local value = item.value
+				if buf == vim.fn.bufnr(value) then
+					table.insert(harpoon_list, string.format("[%d]", i))
+				else
+					table.insert(harpoon_list, string.format("%d", i))
+				end
 			end
 		end
 		return H.add_highlight2("Normal", table.concat(harpoon_list, " "))
@@ -465,7 +468,7 @@ _G.nvim_statsline = function()
 		or vim.tbl_contains({
 			"fugitive",
 			"fugitiveblame",
-			"minifiles",
+			"harpoon",
 		}, vim.bo.filetype)
 	then
 		return contact_items({

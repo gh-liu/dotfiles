@@ -1050,6 +1050,7 @@ require("lazy").setup(
 				"<leader>h", -- prev
 				"<leader>l", -- next
 				"<leader>E", -- mEnu
+				"<leader>D", -- Delete
 			},
 			config = function(self, opts)
 				vim.g.harpoon_enable_statusline = true
@@ -1066,6 +1067,7 @@ require("lazy").setup(
 
 				keymap.set("n", keys[1], function()
 					harpoon:list():add()
+					print("Harpoon add.")
 				end)
 				keymap.set("n", keys[2], function()
 					if vim.v.count > 0 then
@@ -1083,6 +1085,10 @@ require("lazy").setup(
 				end)
 				keymap.set("n", keys[4], function()
 					harpoon.ui:toggle_quick_menu(harpoon:list())
+				end)
+				keymap.set("n", keys[5], function()
+					harpoon:list():remove()
+					print("Harpoon remove.")
 				end)
 
 				harpoon:extend({
