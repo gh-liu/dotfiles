@@ -1758,19 +1758,19 @@ require("lazy").setup(
 					text_change = 200,
 				},
 				-- Module mappings. Use `''` (empty string) to disable one.
-				mappings = {
-					-- Apply hunks inside a visual/operator region
-					apply = "gh", -- WRITE TO DIFF SOURCE
-					-- Reset hunks inside a visual/operator region
-					reset = "gH", -- READ FROM DIFF SOURCE
-					-- Hunk range textobject to be used inside operator
-					textobject = "ih",
-					-- Go to hunk range in corresponding direction
-					goto_first = "[H",
-					goto_prev = "[h",
-					goto_next = "]h",
-					goto_last = "]H",
-				},
+				-- mappings = {
+				-- 	-- Apply hunks inside a visual/operator region
+				-- 	apply = "gh", -- WRITE TO DIFF SOURCE
+				-- 	-- Reset hunks inside a visual/operator region
+				-- 	reset = "gH", -- READ FROM DIFF SOURCE
+				-- 	-- Hunk range textobject to be used inside operator
+				-- 	textobject = "gh",
+				-- 	-- Go to hunk range in corresponding direction
+				-- 	goto_first = "[H",
+				-- 	goto_prev = "[h",
+				-- 	goto_next = "]h",
+				-- 	goto_last = "]H",
+				-- },
 				-- Various options
 				options = {
 					-- Diff algorithm. See `:h vim.diff()`.
