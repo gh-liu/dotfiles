@@ -1063,7 +1063,7 @@ require("lazy").setup(
 				local keys = self.keys or {}
 
 				keymap.set("n", keys[1], function()
-					harpoon:list():append()
+					harpoon:list():add()
 				end)
 				keymap.set("n", keys[2], function()
 					if vim.v.count > 0 then
