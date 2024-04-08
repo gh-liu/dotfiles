@@ -583,6 +583,16 @@ require("lazy").setup(
 			},
 			opts = {},
 		},
+		{
+			"mizlan/iswap.nvim",
+			cmd = {
+				"ISwap",
+				"ISwapWith",
+				"ISwapNode",
+				"ISwapNodeWith",
+			},
+			opts = {},
+		},
 		-- }}}
 
 		-- ui {{{2
