@@ -12,40 +12,30 @@ local paire_move = require("liu.utils.pair_move")
 
 -- Global Things {{{1
 _G.config = {
-	colors = {
-		red = "#BF616A",
-		green = "#A3BE8C",
-		blue = "#5E81AC",
-		yellow = "#EBCB8B",
-		cyan = "#88C0D0",
-		orange = "#D08770",
-		magenta = "#B48EAD",
-		gray = "#616E88",
-	},
 	borders = { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
+	colors = require("liu.nord").colors,
 	icons = require("liu.icons"),
 }
 
-local nvim_set_hl = api.nvim_set_hl
+_G.get_hl = require("liu.utils.color").get_hl_color
+
 ---@param highlights table
 _G.set_hls = function(highlights)
 	for group, opts in pairs(highlights) do
-		nvim_set_hl(0, group, opts)
+		api.nvim_set_hl(0, group, opts)
 	end
 end
-
-_G.get_hl = require("liu.utils.color").get_hl_color
 
 ---@param cmds table
 _G.set_cmds = function(cmds)
 	for key, cmd in pairs(cmds) do
-		create_command(key, cmd, {})
+		create_command(key, cmd, { bang = true, nargs = 0 })
 	end
 end
 
 ---@param group_name string
-local user_augroup = function(group_name)
-	return augroup("liu_" .. group_name, { clear = true })
+_G.liu_augroup = function(group_name)
+	return augroup("liu/" .. group_name, { clear = true })
 end
 
 ---@param buf integer
@@ -100,16 +90,13 @@ require("lazy").setup(
 				auto_install = true,
 				highlight = {
 					enable = true,
-					disable = function(_, buf)
-						-- Disable for read-only buffers.
-						if not vim.bo[buf].modifiable then
-							return false
-						end
-
+					disable = function(lang, buf)
+						local max_filesize = 256 * 1024 -- 256 KB
 						---@diagnostic disable-next-line: undefined-field
-						local ok, stats = pcall(uv.fs_stat, api.nvim_buf_get_name(buf))
-						-- Disable for files larger than 256 KB.
-						return ok and stats and stats.size > (256 * 1024)
+						local ok, stats = pcall(vim.uv.fs_stat, vim.api.nvim_buf_get_name(buf))
+						if ok and stats and stats.size > max_filesize then
+							return true
+						end
 					end,
 				},
 				indent = { enable = true },
@@ -119,15 +106,11 @@ require("lazy").setup(
 				require("nvim-treesitter.configs").setup(opts)
 
 				local edit = require("liu.treesitter.edit")
-				-- if lsp server supports document rename, which will replce below map
 				vim.keymap.set("n", "<leader>rn", edit.smart_rename)
-
 				local nav = require("liu.treesitter.navigation")
 				nav.map_object_pair_move("f", "@function.outer", true)
 				nav.map_object_pair_move("F", "@function.outer", false)
-
 				local usage = nav.usage
-				-- if lsp server supports document highlight, which will replce below map
 				vim.keymap.set("n", "]v", usage.goto_next)
 				vim.keymap.set("n", "[v", usage.goto_prev)
 			end,
@@ -285,7 +268,7 @@ require("lazy").setup(
 							"InsertLeave",
 							"TextChanged",
 						}, {
-							group = augroup("liu/nvim-lint_" .. tostring(bufnr), { clear = true }),
+							group = liu_augroup("nvim-lint_" .. tostring(bufnr)),
 							callback = function(ev)
 								try_lint()
 							end,
@@ -372,7 +355,9 @@ require("lazy").setup(
 						}
 					end
 					require("conform").format({ async = true, lsp_fallback = true, range = range })
-				end, { range = true })
+				end, {
+					range = true,
+				})
 			end,
 		},
 		{
@@ -403,20 +388,12 @@ require("lazy").setup(
 				config.augends:on_filetype({
 					go = vim.list_extend({
 						augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }),
-						-- camelCase for private, PascalCase for public.
-						augend.case.new({ types = { "camelCase", "PascalCase" }, cyclic = true }),
 					}, default),
 					lua = vim.list_extend({
-						-- augend.paren.alias.lua_str_literal,
 						augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
 					}, default),
-					rust = vim.list_extend({
-						augend.paren.alias.rust_str_literal,
-					}, default),
-					zig = vim.list_extend({
-						-- camelCase for function, snake_case for variable, PascalCase for type.
-						augend.case.new({ types = { "camelCase", "snake_case", "PascalCase" }, cyclic = true }),
-					}, default),
+					rust = vim.list_extend({}, default),
+					zig = vim.list_extend({}, default),
 					toml = vim.list_extend({
 						augend.semver.alias.semver,
 					}, default),
@@ -443,7 +420,10 @@ require("lazy").setup(
 					desc = "splitting blocks of code like arrays, hashes, statements, objects, dictionaries, etc.",
 				},
 			},
-			cmd = { "TSJSplit", "TSJJoin" },
+			cmd = {
+				"TSJSplit",
+				"TSJJoin",
+			},
 			opts = {
 				use_default_keymaps = false,
 				max_join_length = 300,
@@ -579,16 +559,6 @@ require("lazy").setup(
 		{
 			"danymat/neogen",
 			cmd = { "Neogen" },
-			keys = {
-				{
-					"<leader>ng",
-					function()
-						require("neogen").generate()
-					end,
-					mode = { "n" },
-					desc = "Neogen: generate annotation",
-				},
-			},
 			opts = {
 				snippet_engine = "luasnip",
 				languages = {
@@ -645,9 +615,7 @@ require("lazy").setup(
 				select = {
 					enabled = true,
 					backend = { "telescope", "builtin" },
-					builtin = {
-						border = config.borders,
-					},
+					builtin = { border = config.borders },
 				},
 			},
 		},
@@ -716,10 +684,7 @@ require("lazy").setup(
 		},
 		{
 			"lewis6991/hover.nvim",
-			keys = {
-				"K",
-				"gK",
-			},
+			keys = { "K", "gK" },
 			config = function()
 				require("hover").setup({
 					init = function()
@@ -742,31 +707,6 @@ require("lazy").setup(
 					end
 				end, { desc = "hover.nvim" })
 				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
-
-				local hover = require("hover")
-				-- crates {{{
-				local ok, crates = pcall(require, "crates")
-				if ok then
-					local fns = {
-						popup = { fn = crates.show_popup, priority = 1010 },
-						versions = { fn = crates.show_versions_popup, priority = 1009 },
-						features = { fn = crates.show_features_popup, priority = 1008 },
-						dependencies = { fn = crates.show_dependencies_popup, priority = 1007 },
-					}
-					for key, val in pairs(fns) do
-						hover.register({
-							name = string.format("Crates: %s", key),
-							enabled = function()
-								return vim.fn.expand("%:t") == "Cargo.toml"
-							end,
-							execute = function(done)
-								val.fn()
-							end,
-							priority = val.priority,
-						})
-					end
-				end
-				-- }}}
 			end,
 		},
 		--}}}
@@ -788,10 +728,8 @@ require("lazy").setup(
 				},
 			},
 			config = function()
-				local keymap = vim.keymap
-
 				local B = require("telescope.builtin")
-				local actions = require("telescope.actions")
+				local A = require("telescope.actions")
 
 				local utils = require("telescope.utils")
 				local action_state = require("telescope.actions.state")
@@ -806,7 +744,7 @@ require("lazy").setup(
 						utils.__warn_no_selection("actions." .. action_name)
 						return
 					end
-					actions.close(prompt_bufnr)
+					A.close(prompt_bufnr)
 
 					local index = selection.value
 					local _, ret, stderr = utils.get_os_command_output(gen_cmd_fn(index))
@@ -849,73 +787,73 @@ require("lazy").setup(
 						-- https://github.com/nvim-telescope/telescope.nvim#default-mappings
 						default_mappings = {
 							i = {
-								["<C-n>"] = actions.move_selection_next,
-								["<C-p>"] = actions.move_selection_previous,
-								["<Down>"] = actions.move_selection_next,
-								["<Up>"] = actions.move_selection_previous,
+								["<C-n>"] = A.move_selection_next,
+								["<C-p>"] = A.move_selection_previous,
+								["<Down>"] = A.move_selection_next,
+								["<Up>"] = A.move_selection_previous,
 
-								["<C-c>"] = actions.close,
-								["<esc>"] = actions.close,
+								["<C-c>"] = A.close,
+								["<esc>"] = A.close,
 
-								["<CR>"] = actions.select_default,
-								["<C-s>"] = actions.select_horizontal,
-								["<C-v>"] = actions.select_vertical,
-								["<C-t>"] = actions.select_tab,
+								["<CR>"] = A.select_default,
+								["<C-s>"] = A.select_horizontal,
+								["<C-v>"] = A.select_vertical,
+								["<C-t>"] = A.select_tab,
 
-								["<C-u>"] = actions.preview_scrolling_up,
-								["<C-d>"] = actions.preview_scrolling_down,
-								["<M-j>"] = actions.preview_scrolling_down,
-								["<M-k>"] = actions.preview_scrolling_up,
-								["<M-h>"] = actions.preview_scrolling_left,
-								["<M-l>"] = actions.preview_scrolling_right,
+								["<C-u>"] = A.preview_scrolling_up,
+								["<C-d>"] = A.preview_scrolling_down,
+								["<M-j>"] = A.preview_scrolling_down,
+								["<M-k>"] = A.preview_scrolling_up,
+								["<M-h>"] = A.preview_scrolling_left,
+								["<M-l>"] = A.preview_scrolling_right,
 
-								["<Tab>"] = actions.toggle_selection + actions.move_selection_worse,
-								["<S-Tab>"] = actions.toggle_selection + actions.move_selection_better,
-								["<C-q>"] = actions.send_to_qflist + actions.open_qflist,
-								["<M-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
+								["<Tab>"] = A.toggle_selection + A.move_selection_worse,
+								["<S-Tab>"] = A.toggle_selection + A.move_selection_better,
+								["<C-q>"] = A.send_to_qflist + A.open_qflist,
+								["<M-q>"] = A.send_selected_to_qflist + A.open_qflist,
 
 								-- ["<C-l>"] = actions.send_to_loclist + actions.open_loclist,
-								["<C-l>"] = actions.complete_tag,
+								["<C-l>"] = A.complete_tag,
 
-								["<C-/>"] = actions.which_key,
-								["<C-_>"] = actions.which_key, -- keys from pressing <C-/>
+								["<C-/>"] = A.which_key,
+								["<C-_>"] = A.which_key, -- keys from pressing <C-/>
 
 								["<C-w>"] = { "<c-s-w>", type = "command" },
-								["<C-r><C-w>"] = actions.insert_original_cword,
+								["<C-r><C-w>"] = A.insert_original_cword,
 
-								["<C-j>"] = actions.cycle_history_next,
-								["<C-k>"] = actions.cycle_history_prev,
+								["<C-j>"] = A.cycle_history_next,
+								["<C-k>"] = A.cycle_history_prev,
 							},
 							n = {
-								["<esc>"] = actions.close,
-								["<C-c>"] = actions.close,
+								["<esc>"] = A.close,
+								["<C-c>"] = A.close,
 
-								["<CR>"] = actions.select_default,
+								["<CR>"] = A.select_default,
 
-								["<C-s>"] = actions.select_horizontal,
-								["<C-v>"] = actions.select_vertical,
-								["<C-t>"] = actions.select_tab,
+								["<C-s>"] = A.select_horizontal,
+								["<C-v>"] = A.select_vertical,
+								["<C-t>"] = A.select_tab,
 
-								["<Tab>"] = actions.toggle_selection + actions.move_selection_worse,
-								["<S-Tab>"] = actions.toggle_selection + actions.move_selection_better,
-								["<C-q>"] = actions.send_to_qflist + actions.open_qflist,
-								["<M-q>"] = actions.send_selected_to_qflist + actions.open_qflist,
+								["<Tab>"] = A.toggle_selection + A.move_selection_worse,
+								["<S-Tab>"] = A.toggle_selection + A.move_selection_better,
+								["<C-q>"] = A.send_to_qflist + A.open_qflist,
+								["<M-q>"] = A.send_selected_to_qflist + A.open_qflist,
 
-								["j"] = actions.move_selection_next,
-								["k"] = actions.move_selection_previous,
-								["<Down>"] = actions.move_selection_next,
-								["<Up>"] = actions.move_selection_previous,
-								["gg"] = actions.move_to_top,
-								["G"] = actions.move_to_bottom,
+								["j"] = A.move_selection_next,
+								["k"] = A.move_selection_previous,
+								["<Down>"] = A.move_selection_next,
+								["<Up>"] = A.move_selection_previous,
+								["gg"] = A.move_to_top,
+								["G"] = A.move_to_bottom,
 
-								["<C-u>"] = actions.preview_scrolling_up,
-								["<C-d>"] = actions.preview_scrolling_down,
-								["<M-j>"] = actions.preview_scrolling_down,
-								["<M-k>"] = actions.preview_scrolling_up,
-								["<M-h>"] = actions.preview_scrolling_left,
-								["<M-l>"] = actions.preview_scrolling_right,
+								["<C-u>"] = A.preview_scrolling_up,
+								["<C-d>"] = A.preview_scrolling_down,
+								["<M-j>"] = A.preview_scrolling_down,
+								["<M-k>"] = A.preview_scrolling_up,
+								["<M-h>"] = A.preview_scrolling_left,
+								["<M-l>"] = A.preview_scrolling_right,
 
-								["?"] = actions.which_key,
+								["?"] = A.which_key,
 							},
 						},
 						-- stylua: ignore start
@@ -944,16 +882,16 @@ require("lazy").setup(
 					-- Individual: Default configuration for builtin pickers
 					pickers = {
 						buffers = {
-							mappings = { [{ "n" }] = { ["dd"] = actions.delete_buffer } },
+							mappings = { [{ "n" }] = { ["dd"] = A.delete_buffer } },
 						},
 						marks = {
-							mappings = { [{ "n" }] = { ["dd"] = actions.delete_mark } },
+							mappings = { [{ "n" }] = { ["dd"] = A.delete_mark } },
 						},
 						live_grep = {
-							mappings = { [{ "n" }] = { ["cr"] = actions.to_fuzzy_refine } },
+							mappings = { [{ "n" }] = { ["cr"] = A.to_fuzzy_refine } },
 						},
 						grep_string = {
-							mappings = { [{ "n" }] = { ["cr"] = actions.to_fuzzy_refine } },
+							mappings = { [{ "n" }] = { ["cr"] = A.to_fuzzy_refine } },
 						},
 						find_files = {
 							hidden = true,
@@ -982,10 +920,11 @@ require("lazy").setup(
 					["<leader>st"] = { fn = B.filetypes, desc = "[S]et File[t]ype" },
 					["<leader>sh"] = { fn = B.help_tags, desc = "[S]earch [H]elp" },
 					["<leader>sw"] = { fn = B.grep_string, desc = "[S]earch [W]ord" },
-					["<leader>;"] = { fn = B.commands, desc = "List Commands" },
 					["<leader>sd"] = { fn = B.diagnostics, desc = "[S]earch [D]iagnostics" },
 					-- override by builtin.lsp_document_symbols
 					["<leader>ds"] = { fn = B.diagnostics, desc = "Treesitter [D]ocument [S]ymbols" },
+
+					["<leader>;"] = { fn = B.commands, desc = "List Commands" },
 				}
 
 				for lhs, map in pairs(maps) do
@@ -993,7 +932,7 @@ require("lazy").setup(
 				end
 
 				api.nvim_create_autocmd("LspAttach", {
-					group = api.nvim_create_augroup("liu/lsp_attach_telescope_keymaps", { clear = true }),
+					group = liu_augroup("lsp_attach_telescope_keymaps"),
 					callback = function(args)
 						local map = function(l, r, desc)
 							keymap.set("n", l, r, { buffer = args.buf, desc = desc })
@@ -1108,7 +1047,7 @@ require("lazy").setup(
 			"echasnovski/mini.files",
 			lazy = true,
 			init = function()
-				local g = user_augroup("mini_files")
+				local g = liu_augroup("mini_files")
 				autocmd("User", {
 					pattern = "MiniFilesWindowOpen",
 					group = g,
@@ -1262,13 +1201,14 @@ require("lazy").setup(
 			},
 			config = function(self, opts)
 				local ai = require("mini.ai")
+				local ts_gen = ai.gen_spec.treesitter
 				ai.setup({
 					n_lines = 300,
 					search_method = "cover",
 					custom_textobjects = {
-						o = ai.gen_spec.treesitter({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
-						f = ai.gen_spec.treesitter({ a = "@function.outer", i = "@function.inner" }, {}),
-						c = ai.gen_spec.treesitter({ a = "@class.outer", i = "@class.inner" }, {}),
+						o = ts_gen({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
+						f = ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
+						c = ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
 					},
 					silent = true,
 					mappings = {
@@ -1580,6 +1520,31 @@ require("lazy").setup(
 					},
 				})
 
+				require("luasnip.loaders.from_lua").load({
+					paths = (vim.fn.stdpath("config") .. "/snippets/luasnip"),
+				})
+				require("luasnip.loaders.from_vscode").lazy_load()
+
+				api.nvim_create_user_command("LuaSnipEdit", function()
+					require("luasnip.loaders").edit_snippet_files({})
+				end, { nargs = 0 })
+
+				api.nvim_create_autocmd("ModeChanged", {
+					group = liu_augroup("unlink_snippet"),
+					desc = "Cancel the snippet session when leaving insert mode",
+					pattern = { "s:n", "i:*" },
+					callback = function(args)
+						if
+							luasnip.session
+							and luasnip.session.current_nodes[args.buf]
+							and not luasnip.session.jump_active
+							and not luasnip.choice_active()
+						then
+							luasnip.unlink_current()
+						end
+					end,
+				})
+
 				set_hls({
 					LuasnipInsertNodeActive = {
 						fg = config.colors.green,
@@ -1601,31 +1566,6 @@ require("lazy").setup(
 						fg = config.colors.gray,
 						bold = true,
 					},
-				})
-
-				require("luasnip.loaders.from_lua").load({
-					paths = (vim.fn.stdpath("config") .. "/snippets/luasnip"),
-				})
-				require("luasnip.loaders.from_vscode").lazy_load()
-
-				api.nvim_create_user_command("LuaSnipEdit", function()
-					require("luasnip.loaders").edit_snippet_files({})
-				end, { nargs = 0 })
-
-				api.nvim_create_autocmd("ModeChanged", {
-					group = api.nvim_create_augroup("liu/unlink_snippet", { clear = true }),
-					desc = "Cancel the snippet session when leaving insert mode",
-					pattern = { "s:n", "i:*" },
-					callback = function(args)
-						if
-							luasnip.session
-							and luasnip.session.current_nodes[args.buf]
-							and not luasnip.session.jump_active
-							and not luasnip.choice_active()
-						then
-							luasnip.unlink_current()
-						end
-					end,
 				})
 			end,
 		},
@@ -1668,7 +1608,7 @@ require("lazy").setup(
 				}
 
 				autocmd("FileType", {
-					group = user_augroup("mini_pairs"),
+					group = liu_augroup("mini_pairs"),
 					pattern = vim.tbl_keys(pairs_by_fts),
 					callback = function(ev)
 						local buf = ev.buf
@@ -1791,21 +1731,24 @@ require("lazy").setup(
 				require("mini.diff").setup(opts)
 
 				local MiniDiff = require("mini.diff")
-				api.nvim_create_user_command("DiffOverlay", function(opts)
-					MiniDiff.toggle_overlay()
-				end, { nargs = 0 })
-				api.nvim_create_user_command("DiffHunks", function(opts)
-					local export_opts = { scope = "current" }
-					if opts.bang then
-						export_opts.scope = "all"
-					end
-					vim.fn.setqflist(MiniDiff.export("qf", export_opts))
-					vim.cmd.copen()
-				end, { bang = true, nargs = 0 })
+				set_cmds({
+					DiffOverlay = function()
+						MiniDiff.toggle_overlay()
+					end,
+					DiffHunks = function(opts)
+						local export_opts = { scope = "current" }
+						if opts.bang then
+							export_opts.scope = "all"
+						end
+						vim.fn.setqflist(MiniDiff.export("qf", export_opts))
+						vim.cmd.copen()
+					end,
+				})
 			end,
 		},
 		{
 			"pwntester/octo.nvim",
+			enabled = false,
 			cond = function()
 				return fn.executable("gh") == 1
 			end,
@@ -1956,7 +1899,6 @@ require("lazy").setup(
 			init = function(self)
 				vim.g.rsi_no_meta = 1
 			end,
-			-- event = "VeryLazy",
 			event = { "InsertEnter", "CmdlineEnter" },
 		},
 		{
@@ -2009,7 +1951,11 @@ require("lazy").setup(
 			init = function()
 				vim.g.dispatch_no_maps = 1
 			end,
-			cmd = { "Make", "Dispatch", "Start" },
+			cmd = {
+				"Make",
+				"Dispatch",
+				"Start",
+			},
 		},
 		{
 			"tpope/vim-obsession",
@@ -2350,7 +2296,7 @@ vim.o.listchars = table.concat({
 -- }}}
 
 autocmd("BufEnter", {
-	group = user_augroup("disable_newline_comment"),
+	group = liu_augroup("disable_newline_comment"),
 	callback = function()
 		vim.opt.formatoptions:remove({ "c", "r", "o" })
 	end,
@@ -2584,13 +2530,13 @@ vim.cmd([[
 
 autocmd("VimResized", {
 	desc = "Equalize Splits",
-	group = user_augroup("resize_splits"),
+	group = liu_augroup("resize_splits"),
 	command = "wincmd =",
 })
 
 autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 	desc = "Update file when there are changes",
-	group = user_augroup("checktime"),
+	group = liu_augroup("checktime"),
 	callback = function()
 		-- normal buffer
 		if vim.o.bt == "" then
@@ -2601,7 +2547,7 @@ autocmd({ "FocusGained", "TermClose", "TermLeave" }, {
 
 autocmd("ModeChanged", {
 	desc = "Highlighting matched words when searching",
-	group = user_augroup("switch_highlight_when_searching"),
+	group = liu_augroup("switch_highlight_when_searching"),
 	pattern = { "*:c", "c:*" },
 	callback = function(ev)
 		local cmdtype = fn.getcmdtype()
@@ -2615,7 +2561,7 @@ autocmd("ModeChanged", {
 
 autocmd("BufWinEnter", {
 	desc = "Open help file in right split",
-	group = user_augroup("open_help_in_right_split"),
+	group = liu_augroup("open_help_in_right_split"),
 	pattern = { "*.txt" },
 	callback = function(ev)
 		if vim.o.filetype == "help" then
@@ -2625,7 +2571,7 @@ autocmd("BufWinEnter", {
 })
 
 autocmd({ "BufWritePre" }, {
-	group = user_augroup("auto_create_dir"),
+	group = liu_augroup("auto_create_dir"),
 	callback = function(event)
 		if event.match:match("^%w%w+://") then
 			return
@@ -2637,7 +2583,7 @@ autocmd({ "BufWritePre" }, {
 })
 
 autocmd({ "TermOpen" }, {
-	group = user_augroup("term_map"),
+	group = liu_augroup("term_map"),
 	pattern = "term://*",
 	callback = function(event)
 		local opts = { buffer = event.buf }
@@ -2654,7 +2600,7 @@ autocmd({ "TermOpen" }, {
 
 autocmd("OptionSet", {
 	desc = "OptionSetWrap",
-	group = user_augroup("option_set_wrap"),
+	group = liu_augroup("option_set_wrap"),
 	pattern = "wrap",
 	callback = function(ev)
 		local buffer = api.nvim_get_current_buf()
@@ -2670,7 +2616,7 @@ autocmd("OptionSet", {
 
 autocmd("OptionSet", {
 	desc = "turn off diagnostic when diff",
-	group = user_augroup("option_set_diff"),
+	group = liu_augroup("option_set_diff"),
 	pattern = "diff",
 	callback = function(ev)
 		-- local buf = api.nvim_get_current_buf()
@@ -2683,7 +2629,7 @@ autocmd("OptionSet", {
 	end,
 })
 
-local set_cursorline = user_augroup("set_cursorline")
+local set_cursorline = liu_augroup("set_cursorline")
 autocmd({ "InsertLeave" }, {
 	desc = "set cursorline",
 	group = set_cursorline,
@@ -2697,7 +2643,7 @@ autocmd({ "InsertEnter" }, {
 
 autocmd("CmdwinEnter", {
 	desc = "cmdwin enter",
-	group = user_augroup("cmdwin_enter"),
+	group = liu_augroup("cmdwin_enter"),
 	pattern = "*",
 	callback = function()
 		vim.wo.foldcolumn = "0"
@@ -2708,7 +2654,7 @@ autocmd("CmdwinEnter", {
 })
 autocmd("BufHidden", {
 	desc = "Delete [No Name] buffers",
-	group = user_augroup("delete_noname_buffers"),
+	group = liu_augroup("delete_noname_buffers"),
 	callback = function(data)
 		if data.file == "" and vim.bo[data.buf].buftype == "" and not vim.bo[data.buf].modified then
 			vim.schedule(function()
@@ -2805,7 +2751,7 @@ end, {
 
 -- keymaps {{{2
 autocmd("LspAttach", {
-	group = user_augroup("lsp_keymaps"),
+	group = liu_augroup("lsp_keymaps"),
 	callback = function(args)
 		local bufnr = args.buf
 
@@ -2851,7 +2797,7 @@ autocmd("LspAttach", {
 
 -- workspace {{{2
 autocmd("LspAttach", {
-	group = user_augroup("lsp_workspace"),
+	group = liu_augroup("lsp_workspace"),
 	callback = function(args)
 		local bufnr = args.buf
 		local client = lsp.get_client_by_id(args.data.client_id)
@@ -2878,7 +2824,7 @@ autocmd("LspAttach", {
 
 -- codelens {{{2
 autocmd("LspAttach", {
-	group = user_augroup("lsp_codelens"),
+	group = liu_augroup("lsp_codelens"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client and client.supports_method("textDocument/codeLens") then
@@ -2896,7 +2842,7 @@ autocmd("LspAttach", {
 
 -- inlayhint {{{2
 autocmd("LspAttach", {
-	group = user_augroup("lsp_inlayhint"),
+	group = liu_augroup("lsp_inlayhint"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client and client.supports_method("textDocument/inlayHint") then
@@ -2925,7 +2871,7 @@ autocmd("LspAttach", {
 
 -- document highlight {{{2
 autocmd("LspAttach", {
-	group = user_augroup("lsp_document_highlight"),
+	group = liu_augroup("lsp_document_highlight"),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client and client.supports_method(ms.textDocument_documentHighlight) then

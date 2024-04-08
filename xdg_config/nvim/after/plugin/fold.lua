@@ -50,6 +50,6 @@ api.nvim_create_autocmd({
 	"WinEnter",
 }, {
 	callback = set_ts_win_defaults,
-	group = api.nvim_create_augroup("liug/ts_fold", { clear = true }),
+	group = liu_augroup("ts_fold"),
 	desc = "set treesitter fold",
 })

@@ -167,7 +167,7 @@ set_cmds({
 	-- GUndoLastCommit = [[:G reset --soft HEAD~]],
 	-- GDiscardChanges = [[:G reset --hard]],
 	-- GListDiffFiles = [[:G difftool --name-status]],
-	Gdiff4 = function(t)
+	Gdiff4 = function(_)
 		vim.cmd([[ tabnew % ]])
 		-- The windows layout:
 		-- Top-left: "ours" corresponding to the HEAD.
@@ -184,7 +184,7 @@ set_cmds({
 		-- :h Gdiffsplit!
 		vim.cmd("Gvdiffsplit!") -- (left) ours, (mid, current window) base, (right) theirs
 	end,
-	Gdiff3Toggle = function(opt)
+	Gdiff3Toggle = function(_)
 		if vim.o.diff then
 			vim.cmd("diffoff")
 			for _, bufnr in ipairs(api.nvim_list_bufs()) do
