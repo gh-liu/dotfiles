@@ -2439,6 +2439,8 @@ setmap("s", "<BS>", [[<C-O>"_s]])
 
 setmap("n", "z<space>", "za")
 
+setmap("n", "<leader>w", "<cmd>write<cr>")
+
 paire_move.setkeymap("c", { next = "]c", prev = "[c" })
 -- }}}
 

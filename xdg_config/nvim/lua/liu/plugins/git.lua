@@ -37,6 +37,7 @@ keymap.set("n", "<leader>gg", toggle_fugitive, { silent = true })
 keymap.set("n", "g<space>", toggle_fugitive, { silent = true })
 
 keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
+keymap.set("n", "<leader>gw", "<cmd>Gwrite<cr>")
 
 local stash_list_cmd = "--paginate stash list '--pretty=format:%h %as %<(10)%gd %<(76,trunc)%s'"
 autocmd("User", {
