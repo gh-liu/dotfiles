@@ -646,23 +646,30 @@ require("lazy").setup(
 			opts = {
 				tint = -10,
 				saturation = 0.5,
+				highlight_ignore_patterns = { "WinSeparator", "Status.*" },
 				window_ignore_function = function(winid)
-					-- local bufnr = api.nvim_win_get_buf(winid)
+					local bufnr = api.nvim_win_get_buf(winid)
 
+					-- Do not tint `terminal` or `quickfix` window
 					local wininfo = fn.getwininfo(winid)[1]
 					if wininfo.quickfix == 1 or wininfo.terminal == 1 then
 						return true
 					end
-
+					-- Do not tint floating windows
 					if api.nvim_win_get_config(winid).relative ~= "" then
 						return true
 					end
 
-					-- if vim.wo[winid].diff then
+					-- local diff = api.nvim_get_option_value("diff", { win = winid })
+					-- if diff then
 					-- 	return true
 					-- end
 
-					return false
+					local ignored_filetypes = { "fugitive", "floggraph" }
+					local is_ignored_filetype =
+						vim.tbl_contains(ignored_filetypes, api.nvim_get_option_value("filetype", { buf = bufnr }))
+
+					return is_ignored_filetype
 				end,
 			},
 		},
