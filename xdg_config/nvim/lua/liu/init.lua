@@ -2867,22 +2867,17 @@ autocmd("LspAttach", {
 		if client and client.supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
 
-			local is_enabled = lsp.inlay_hint.is_enabled
-			local inlay_hint = lsp.inlay_hint.enable
-			inlay_hint(bufnr, true)
+			local inlay_hint = lsp.inlay_hint
+			inlay_hint.enable(bufnr, true)
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
-				inlay_hint(bufnr, not is_enabled(bufnr))
-			end, {
-				nargs = 0,
-			})
+				inlay_hint.enable(bufnr, not inlay_hint.is_enabled(bufnr))
+			end, { nargs = 0 })
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintRefresh", function(opts)
-				inlay_hint(bufnr, false)
-				inlay_hint(bufnr, true)
-			end, {
-				nargs = 0,
-			})
+				inlay_hint.enable(bufnr, false)
+				inlay_hint.enable(bufnr, true)
+			end, { nargs = 0 })
 		end
 	end,
 })
@@ -2896,28 +2891,19 @@ autocmd("LspAttach", {
 		if client and client.supports_method(ms.textDocument_documentHighlight) then
 			local bufnr = args.buf
 
-			local aug = augroup("liu/lsp_document_highlight", {
-				clear = false,
-			})
+			local aug = augroup("liu/lsp_document_highlight", { clear = false })
 
 			do
-				api.nvim_clear_autocmds({
-					buffer = bufnr,
-					group = aug,
-				})
-				autocmd({ "CursorHold" }, {
+				api.nvim_clear_autocmds({ buffer = bufnr, group = aug })
+				autocmd({ "CursorHold", "CursorHoldI" }, {
 					group = aug,
 					buffer = bufnr,
-					callback = function()
-						lsp.buf.document_highlight()
-					end,
+					callback = lsp.buf.document_highlight,
 				})
 				autocmd({ "CursorMoved", "CursorMovedI" }, {
 					group = aug,
 					buffer = bufnr,
-					callback = function()
-						lsp.buf.clear_references()
-					end,
+					callback = lsp.buf.clear_references,
 				})
 			end
 
@@ -2930,10 +2916,7 @@ autocmd("LspAttach", {
 			autocmd("LspDetach", {
 				group = aug,
 				callback = function()
-					api.nvim_clear_autocmds({
-						group = aug,
-						buffer = bufnr,
-					})
+					api.nvim_clear_autocmds({ group = aug, buffer = bufnr })
 					keymap.del("n", "]v", { buffer = bufnr })
 					keymap.del("n", "[v", { buffer = bufnr })
 				end,
