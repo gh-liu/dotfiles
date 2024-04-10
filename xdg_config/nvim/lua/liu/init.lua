@@ -38,6 +38,18 @@ _G.liu_augroup = function(group_name)
 	return augroup("liu/" .. group_name, { clear = true })
 end
 
+---@param win integer,
+---@param fn fun(conf: vim.api.keyset.win_config): vim.api.keyset.win_config?
+local function win_update_config(win, fn)
+	local api = vim.api
+	local config = api.nvim_win_get_config(win)
+	local res = fn(config)
+	if res ~= nil then
+		config = res
+	end
+	api.nvim_win_set_config(win, config)
+end
+
 ---@param buf integer
 ---@param s function
 ---@param v function
@@ -1018,12 +1030,11 @@ require("lazy").setup(
 						sync_on_ui_close = false,
 					},
 				})
+				require("harpoon.config").DEFAULT_LIST = "files"
 
 				local keys = self.keys or {}
-
 				keymap.set("n", keys[1], function()
 					harpoon:list():add()
-					print("Harpoon add.")
 				end)
 				keymap.set("n", keys[2], function()
 					if vim.v.count > 0 then
@@ -1044,18 +1055,44 @@ require("lazy").setup(
 				end)
 				keymap.set("n", keys[5], function()
 					harpoon:list():remove()
-					print("Harpoon remove.")
 				end)
 
 				harpoon:extend({
+					ADD = function(cx)
+						local file = cx.item.value
+						print(string.format("Harpoon add `%s`", file))
+					end,
+					REMOVE = function(cx)
+						local file = cx.item.value
+						print(string.format("Harpoon remove `%s`", file))
+					end,
 					UI_CREATE = function(cx)
-						open_maps(cx.bufnr, function()
+						local win = cx.win_id
+						local buf = cx.bufnr
+
+						win_update_config(win, function(config)
+							config.footer = harpoon.ui.active_list.name
+							config.footer_pos = "right"
+
+							config.width = math.floor(math.max(math.min(120, vim.o.columns / 2), 40))
+							config.col = math.floor(vim.o.columns / 2 - config.width / 2)
+							config.row = math.floor(vim.o.lines / 2 - config.height / 2)
+						end)
+
+						open_maps(buf, function()
 							harpoon.ui:select_menu_item({ vsplit = true })
 						end, function()
 							harpoon.ui:select_menu_item({ split = true })
 						end, function()
 							harpoon.ui:select_menu_item({ tabedit = true })
 						end)
+
+						-- navigate with number
+						for i = 1, 9 do
+							vim.keymap.set("n", "" .. i, function()
+								harpoon:list():select(i)
+							end, { buffer = buf })
+						end
 					end,
 				})
 			end,
