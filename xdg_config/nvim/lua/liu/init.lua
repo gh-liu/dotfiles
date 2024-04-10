@@ -1098,6 +1098,42 @@ require("lazy").setup(
 					print(string.format([["%s"]], p))
 				end
 
+				local add2harpoon = function(buf)
+					local api = vim.api
+
+					local minifiles = require("mini.files")
+					local append2list = function(file)
+						if file then
+							local root = minifiles.get_latest_path()
+							local Path = require("plenary.path")
+							local list = require("harpoon"):list()
+							list:add({
+								value = Path:new(file.path):make_relative(root),
+								context = { row = 1, col = 1 },
+							})
+						end
+					end
+
+					return function()
+						local mode = vim.fn.mode()
+						if mode == "n" then
+							local win = api.nvim_get_current_win()
+							local cursor = api.nvim_win_get_cursor(win)
+							local file = minifiles.get_fs_entry(buf, cursor[1])
+							append2list(file)
+						elseif mode == "v" or mode == "V" then
+							vim.cmd.normal(vim.keycode("<Esc>"))
+
+							local start = api.nvim_buf_get_mark(0, "<")[1]
+							local finish = api.nvim_buf_get_mark(0, ">")[1]
+							for i = start, finish do
+								local file = minifiles.get_fs_entry(buf, i)
+								append2list(file)
+							end
+						end
+					end
+				end
+
 				autocmd("User", {
 					pattern = "MiniFilesBufferCreate",
 					group = g,
@@ -1129,6 +1165,8 @@ require("lazy").setup(
 						end, function()
 							split_rhs("tabedit")
 						end)
+
+						keymap.set({ "n", "v" }, "<Tab>", add2harpoon(buf), { buffer = buf })
 
 						keymap.set("n", "gY", yank_relative_path, { buffer = buf })
 					end,
