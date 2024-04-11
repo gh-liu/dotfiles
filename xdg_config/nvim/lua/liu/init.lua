@@ -519,6 +519,7 @@ require("lazy").setup(
 				{ "s", mode = { "n", "x" } },
 				{ "S", "<cmd>normal s$<cr>", silent = true },
 				{ "cx", mode = { "n", "x" } },
+				{ "g=", mode = { "n", "x" } },
 			},
 			opts = {
 				replace = {
@@ -534,7 +535,7 @@ require("lazy").setup(
 					reindent_linewise = true,
 				},
 				-- Evaluate text and replace with output
-				evaluate = { prefix = "" },
+				evaluate = { prefix = "g=" },
 				-- Multiply (duplicate) text
 				multiply = { prefix = "" },
 				-- Sort text
