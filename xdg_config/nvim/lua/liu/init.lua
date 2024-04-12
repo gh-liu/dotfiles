@@ -2710,15 +2710,27 @@ autocmd("OptionSet", {
 })
 
 autocmd("OptionSet", {
-	desc = "turn off diagnostic when diff",
+	desc = "turn off something when diff option toggle",
 	group = liu_augroup("option_set_diff"),
 	pattern = "diff",
 	callback = function(ev)
-		-- local buf = api.nvim_get_current_buf()
+		local bufnr = api.nvim_get_current_buf()
+		local inlay_hint = lsp.inlay_hint
+
 		local diff = vim.v.option_new
 		if diff then
+			local clients = vim.lsp.get_clients({ bufnr = bufnr, method = lsp.protocol.Methods.textDocument_inlayHint })
+			if #clients > 0 and inlay_hint.is_enabled(bufnr) then
+				inlay_hint.enable(bufnr, false)
+			end
+
 			vim.diagnostic.config({ signs = false })
 		else
+			local clients = vim.lsp.get_clients({ bufnr = bufnr, method = lsp.protocol.Methods.textDocument_inlayHint })
+			if #clients > 0 and not inlay_hint.is_enabled(bufnr) then
+				inlay_hint.enable(bufnr, true)
+			end
+
 			vim.diagnostic.config({ signs = true })
 		end
 	end,
