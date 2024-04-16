@@ -222,9 +222,9 @@ function gopprof() {
 }
 
 function gopprof2() {
-	local ip=$1
-	local port=$2
-	local typ=$3
+	local ip="${1:-$HOSTIP}"
+	local port="${2:-6060}"
+	local typ="${3:-profile}"
 	go tool pprof -http=$HOSTIP:7788 -no_browser "http://$ip:$port/debug/pprof/$typ"
 }
 
