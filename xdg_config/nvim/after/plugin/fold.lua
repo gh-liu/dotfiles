@@ -34,6 +34,9 @@ local set_treesitter_fold = function(win)
 end
 
 local function set_ts_win_defaults(ev)
+	if ev.match == "" then
+		return
+	end
 	local buf = ev.buf
 	if not vim.b.is_foldable then
 		vim.b.is_foldable = is_foldable(buf)
@@ -46,8 +49,7 @@ local function set_ts_win_defaults(ev)
 end
 
 api.nvim_create_autocmd({
-	"BufReadPost",
-	"WinEnter",
+	"BufWinEnter",
 }, {
 	callback = set_ts_win_defaults,
 	group = liu_augroup("ts_fold"),
