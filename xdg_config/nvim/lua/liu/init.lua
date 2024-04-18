@@ -1206,7 +1206,7 @@ require("lazy").setup(
 
 						keymap.set({ "n", "v" }, "<Tab>", add2harpoon(buf), { buffer = buf })
 
-						keymap.set("n", "gY", yank_relative_path, { buffer = buf })
+						keymap.set("n", "y<C-g>", yank_relative_path, { buffer = buf })
 					end,
 				})
 
