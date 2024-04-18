@@ -146,6 +146,7 @@ autocmd("User", {
 	end,
 })
 
+local hash_cache = {}
 autocmd("User", {
 	group = g,
 	pattern = { "FugitiveObject" },
@@ -155,14 +156,23 @@ autocmd("User", {
 
 		local buf_name = api.nvim_buf_get_name(buf)
 
+		local hash = hash_cache[buf_name]
+		if hash then
+			-- print("use cache")
+			vim.b[buf].fugitive_hash = hash
+			return
+		end
+
 		local obj_type = vim.b.fugitive_type
 		local obj = vim.fn["fugitive#Object"](buf_name)
 		if obj_type == "blob" or obj_type == "tree" then
 			local hash = vim.fn["fugitive#RevParse"](obj)
 			vim.b[buf].fugitive_hash = hash
+			hash_cache[buf_name] = hash
 		else
 			-- commit or tag
 			vim.b[buf].fugitive_hash = obj
+			hash_cache[buf_name] = hash
 		end
 	end,
 })
