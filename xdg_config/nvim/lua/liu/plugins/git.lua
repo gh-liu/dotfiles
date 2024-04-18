@@ -3,8 +3,8 @@ local keymap = vim.keymap
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
 
+--- NOTE: fugitive{{{1
 --[[ 
--- NOTE: fugitive
 https://github.com/tpope/vim-fugitive/discussions/1661#discussioncomment-306777
 `>` is a special notation to use the current filename.
 
@@ -12,13 +12,29 @@ Think of reblame as navigating to a commit and then running blame on your file.
 1. `-` use the commit in question under your cursor and reblame the file.
 2. `~` Is equivalent to `<rev>~`
 3. `P` Is equivalent to `<rev>^`
-
 ]]
+---}}}
 
 local g = augroup("liu/fugitive", { clear = true })
 
--- Toggle summary window {{{3
+--- Toggle summary window {{{1
 local fugitivebuf = -1
+
+autocmd("User", {
+	group = g,
+	pattern = { "FugitiveIndex" },
+	callback = function(data)
+		fugitivebuf = data.buf
+		autocmd("BufDelete", {
+			callback = function()
+				fugitivebuf = -1
+			end,
+			buffer = data.buf,
+		})
+		keymap.set("n", "q", "gq", { buffer = fugitivebuf, remap = true })
+	end,
+})
+
 local toggle_fugitive = function()
 	if fugitivebuf > 0 then
 		api.nvim_buf_call(fugitivebuf, function()
@@ -35,29 +51,41 @@ end
 
 keymap.set("n", "<leader>gg", toggle_fugitive, { silent = true })
 keymap.set("n", "g<space>", toggle_fugitive, { silent = true })
+-- }}}
 
 keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
 keymap.set("n", "<leader>gw", "<cmd>Gwrite<cr>")
 
-local stash_list_cmd = "--paginate stash list '--pretty=format:%h %as %<(10)%gd %<(76,trunc)%s'"
 autocmd("User", {
 	group = g,
 	pattern = { "FugitiveIndex" },
 	callback = function(data)
-		fugitivebuf = data.buf
-		autocmd("BufDelete", {
-			callback = function()
-				fugitivebuf = -1
-			end,
-			buffer = data.buf,
-		})
-
-		keymap.set("n", "q", "gq", { buffer = fugitivebuf, remap = true })
-		-- stash
-		keymap.set("n", "czl", ":G " .. stash_list_cmd .. "<CR>", { buffer = fugitivebuf })
-
 		-- git absorb
-		keymap.set("n", "gaa", ":Git absorb<space>", { buffer = fugitivebuf })
+		keymap.set("n", "gaa", ":Git absorb<space>", { buffer = 0 })
+	end,
+})
+
+-- jump up to the commit object for the current tree or blob
+-- autocmd("User", {
+-- 	group = g,
+-- 	pattern = {
+-- 		"FugitiveTree",
+-- 		"FugitiveBlob",
+-- 	},
+-- 	callback = function(data)
+-- 		local buf = data.buf
+-- 		keymap.set("n", "<space>.", "<cmd>edit %:h<CR>", { buffer = buf })
+-- 	end,
+-- })
+
+--- Stash {{{1
+local stash_list_cmd = "--paginate stash list '--pretty=format:%h %as %<(10)%gd %<(76,trunc)%s'"
+
+autocmd("User", {
+	group = g,
+	pattern = { "FugitiveIndex" },
+	callback = function(data)
+		keymap.set("n", "czl", ":G " .. stash_list_cmd .. "<CR>", { buffer = 0 })
 	end,
 })
 
@@ -103,10 +131,13 @@ autocmd("User", {
 		end, { buffer = buf })
 	end,
 })
+--- }}}
 
+--- buffer local var {{{1
 autocmd("User", {
 	group = g,
 	pattern = { "FugitiveStageBlob" },
+	desc = "set stage type for git stage blob buffer",
 	callback = function(data)
 		local buf = data.buf
 		local buf_name = api.nvim_buf_get_name(buf)
@@ -114,47 +145,6 @@ autocmd("User", {
 		vim.b[buf].fugitive_stage_type = stage
 	end,
 })
-
--- jump up to the commit object for the current tree or blob
-autocmd("User", {
-	group = g,
-	pattern = {
-		"FugitiveTree",
-		"FugitiveBlob",
-	},
-	callback = function(data)
-		local buf = data.buf
-		keymap.set("n", "<space>.", "<cmd>edit %:h<CR>", { buffer = buf })
-	end,
-})
-
--- local fugitive_object_type = {
--- 	FugitiveTag = "tag",
--- 	FugitiveCommit = "commit",
--- 	FugitiveTree = "tree",
--- 	FugitiveBlob = "blob",
--- }
-
--- autocmd("User", {
--- 	group = g,
--- 	pattern = vim.tbl_keys(fugitive_object_type),
--- 	callback = function(data)
--- 		local buf = data.buf
--- 		-- use vim.b.fugitive_type instead
--- 		vim.b[buf].fugitive_object_type = fugitive_object_type[data.match]
--- 	end,
--- })
-
--- autocmd("User", {
--- 	group = g,
--- 	pattern = { "FugitiveObject" },
--- 	callback = function(data)
--- 		local buf = data.buf
--- 		local buf_name = api.nvim_buf_get_name(buf)
--- 		vim.print(vim.fn["fugitive#Parse"](buf_name))
--- 	end,
--- })
--- }}}
 
 autocmd("User", {
 	group = g,
@@ -177,6 +167,9 @@ autocmd("User", {
 	end,
 })
 
+--- }}}
+
+--- Commands {{{
 set_cmds({
 	-- GUndoLastCommit = [[:G reset --soft HEAD~]],
 	-- GDiscardChanges = [[:G reset --hard]],
@@ -254,21 +247,6 @@ set_cmds({
 	end,
 })
 
-local add = get_hl("DiffAdd").fg
-local change = get_hl("DiffChange").fg
-local text = get_hl("DiffText").fg
-
-set_hls({
-	-- gitDiff = { link = "Normal" },
-	diffFile = { fg = text, italic = true },
-	diffNewFile = { fg = add, italic = true },
-	diffOldFile = { fg = change, italic = true },
-	diffAdded = { link = "DiffAdd" },
-	diffRemoved = { link = "DiffDelete" },
-	diffLine = { link = "Visual" },
-	diffIndexLine = { link = "VisualNC" },
-})
-
 -- set_cmds({
 -- 	GDiffFiles = function(opts)
 -- 		local file_status = {
@@ -297,11 +275,29 @@ set_hls({
 -- 				}
 -- 			end)
 -- 			:totable()
-
 -- 		vim.fn.setqflist(diffs)
 -- 		vim.cmd.copen()
 -- 	end,
 -- })
+
+--- }}}
+
+--- highlights {{{
+local add = get_hl("DiffAdd").fg
+local change = get_hl("DiffChange").fg
+local text = get_hl("DiffText").fg
+
+set_hls({
+	-- gitDiff = { link = "Normal" },
+	diffFile = { fg = text, italic = true },
+	diffNewFile = { fg = add, italic = true },
+	diffOldFile = { fg = change, italic = true },
+	diffAdded = { link = "DiffAdd" },
+	diffRemoved = { link = "DiffDelete" },
+	diffLine = { link = "Visual" },
+	diffIndexLine = { link = "VisualNC" },
+})
+---}}}
 
 --- Get a human-readable ref name (e.g. master, master~1, remotes/origin/HEAD) for a commit hash,
 --- from the output of `git name-rev`. Returns nil if the reference cannot be resolved,
@@ -355,3 +351,5 @@ local name_revision = (function()
 		end
 	end)
 end)()
+
+-- vim: foldmethod=marker
