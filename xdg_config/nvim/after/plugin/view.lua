@@ -1,6 +1,7 @@
 if true then
 	return
 end
+
 local api = vim.api
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
@@ -14,9 +15,9 @@ end
 
 local view_group = augroup("liu/auto_view", { clear = true })
 autocmd({
-	"BufWritePre",
-	"BufWinLeave",
+	"BufLeave",
 	"BufDelete",
+	"VimLeavePre",
 }, {
 	group = view_group,
 	callback = function(ev)
@@ -34,8 +35,7 @@ autocmd({
 	desc = "auto mkview",
 })
 autocmd({
-	"BufReadPost",
-	"BufWinEnter",
+	"BufEnter",
 }, {
 	group = view_group,
 	callback = function(ev)
