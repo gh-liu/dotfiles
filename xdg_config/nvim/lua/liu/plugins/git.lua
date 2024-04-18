@@ -177,14 +177,6 @@ autocmd("User", {
 	end,
 })
 
-autocmd("BufEnter", {
-	group = g,
-	pattern = { "fugitive:///*" },
-	callback = function(ev)
-		vim.b[ev.buf].disable_winbar = true
-	end,
-})
-
 set_cmds({
 	-- GUndoLastCommit = [[:G reset --soft HEAD~]],
 	-- GDiscardChanges = [[:G reset --hard]],
