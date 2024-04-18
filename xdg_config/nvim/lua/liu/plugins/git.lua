@@ -156,6 +156,27 @@ autocmd("User", {
 -- })
 -- }}}
 
+autocmd("User", {
+	group = g,
+	pattern = { "FugitiveObject" },
+	desc = "set hash for git object buffer",
+	callback = function(data)
+		local buf = data.buf
+
+		local buf_name = api.nvim_buf_get_name(buf)
+
+		local obj_type = vim.b.fugitive_type
+		local obj = vim.fn["fugitive#Object"](buf_name)
+		if obj_type == "blob" or obj_type == "tree" then
+			local hash = vim.fn["fugitive#RevParse"](obj)
+			vim.b[buf].fugitive_hash = hash
+		else
+			-- commit or tag
+			vim.b[buf].fugitive_hash = obj
+		end
+	end,
+})
+
 autocmd("BufEnter", {
 	group = g,
 	pattern = { "fugitive:///*" },
