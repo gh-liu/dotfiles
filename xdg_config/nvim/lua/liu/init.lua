@@ -2618,10 +2618,17 @@ end, {})
 -- }}}
 
 -- Autocmds {{{1
-vim.cmd([[
-    au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
-    \| exe "normal! g'\"" | endif
-]])
+autocmd("BufReadPost", {
+	desc = "Go to the last location when opening a buffer",
+	group = liu_augroup("last_location"),
+	callback = function(args)
+		local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
+		local line_count = vim.api.nvim_buf_line_count(args.buf)
+		if mark[1] > 0 and mark[1] <= line_count then
+			vim.cmd('normal! g`"zz')
+		end
+	end,
+})
 
 autocmd("VimResized", {
 	desc = "Equalize Splits",
