@@ -119,12 +119,12 @@ require("lazy").setup(
 
 				local edit = require("liu.treesitter.edit")
 				vim.keymap.set("n", "<leader>rn", edit.smart_rename)
-				local nav = require("liu.treesitter.navigation")
-				nav.map_object_pair_move("f", "@function.outer", true)
-				nav.map_object_pair_move("F", "@function.outer", false)
-				local usage = nav.usage
-				vim.keymap.set("n", "]v", usage.goto_next)
-				vim.keymap.set("n", "[v", usage.goto_prev)
+				-- local nav = require("liu.treesitter.navigation")
+				-- nav.map_object_pair_move("f", "@function.outer", true)
+				-- nav.map_object_pair_move("F", "@function.outer", false)
+				-- local usage = nav.usage
+				-- vim.keymap.set("n", "]v", usage.goto_next)
+				-- vim.keymap.set("n", "[v", usage.goto_prev)
 			end,
 		},
 		{
@@ -1288,10 +1288,50 @@ require("lazy").setup(
 		},
 		{
 			"echasnovski/mini.ai",
-			keys = {
-				{ "i", mode = { "o", "x" } },
-				{ "a", mode = { "o", "x" } },
-			},
+			keys = function(self, _)
+				local keys = {
+					{ "i", mode = { "o", "x" } },
+					{ "a", mode = { "o", "x" } },
+				}
+				local map_start = function(op, ai)
+					table.insert(keys, {
+						"]" .. op,
+						function()
+							require("mini.ai").move_cursor("left", ai, op, { search_method = "next" })
+						end,
+						desc = "Goto next start of " .. ai .. op .. " textobject",
+					})
+					table.insert(keys, {
+						"[" .. op,
+						function()
+							require("mini.ai").move_cursor("left", ai, op, { search_method = "cover_or_prev" })
+						end,
+						desc = "Goto previous start of " .. ai .. op .. " textobject",
+					})
+				end
+				local map_end = function(op, ai)
+					table.insert(keys, {
+						"]" .. op:upper(),
+						function()
+							require("mini.ai").move_cursor("right", ai, op, { search_method = "cover_or_next" })
+						end,
+						desc = "Goto next end of " .. ai .. op .. " textobject",
+					})
+					table.insert(keys, {
+						"[" .. op:upper(),
+						function()
+							require("mini.ai").move_cursor("right", ai, op, { search_method = "prev" })
+						end,
+						desc = "Goto previous end of " .. ai .. op .. " textobject",
+					})
+				end
+				for _, op in pairs({ "f", "c" }) do
+					map_start(op, "a")
+					map_end(op, "a")
+				end
+
+				return keys
+			end,
 			config = function(self, opts)
 				local ai = require("mini.ai")
 				local ts_gen = ai.gen_spec.treesitter
