@@ -2768,14 +2768,14 @@ autocmd("OptionSet", {
 		if diff then
 			local clients = vim.lsp.get_clients({ bufnr = bufnr, method = lsp.protocol.Methods.textDocument_inlayHint })
 			if #clients > 0 and inlay_hint.is_enabled(bufnr) then
-				inlay_hint.enable(bufnr, false)
+				inlay_hint.enable(false, { bufnr = bufnr })
 			end
 
 			vim.diagnostic.config({ signs = false })
 		else
 			local clients = vim.lsp.get_clients({ bufnr = bufnr, method = lsp.protocol.Methods.textDocument_inlayHint })
 			if #clients > 0 and not inlay_hint.is_enabled(bufnr) then
-				inlay_hint.enable(bufnr, true)
+				inlay_hint.enable(true, { bufnr = bufnr })
 			end
 
 			vim.diagnostic.config({ signs = true })
@@ -3003,15 +3003,15 @@ autocmd("LspAttach", {
 			local bufnr = args.buf
 
 			local inlay_hint = lsp.inlay_hint
-			inlay_hint.enable(bufnr, true)
+			inlay_hint.enable(true, { bufnr = bufnr })
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
-				inlay_hint.enable(bufnr, not inlay_hint.is_enabled(bufnr))
+				inlay_hint.enable(not inlay_hint.is_enabled(bufnr), { bufnr = bufnr })
 			end, { nargs = 0 })
 
 			api.nvim_buf_create_user_command(bufnr, "InlayHintRefresh", function(opts)
-				inlay_hint.enable(bufnr, false)
-				inlay_hint.enable(bufnr, true)
+				inlay_hint.enable(false, { bufnr = bufnr })
+				inlay_hint.enable(true, { bufnr = bufnr })
 			end, { nargs = 0 })
 		end
 	end,
