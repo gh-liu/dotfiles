@@ -2376,10 +2376,10 @@ vim.o.ignorecase = true
 vim.o.smartcase = true
 vim.o.infercase = true
 
-if fn.executable("rg") == 1 then
-	vim.o.grepprg = "rg --vimgrep --no-heading"
-	vim.o.grepformat = "%f:%l:%c:%m,%f:%l:%m"
-end
+-- if fn.executable("rg") == 1 then
+-- 	vim.o.grepprg = "rg --vimgrep --no-heading"
+-- 	vim.o.grepformat = "%f:%l:%c:%m,%f:%l:%m"
+-- end
 -- }}}
 
 -- Undo {{{2
