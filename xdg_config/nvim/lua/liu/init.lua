@@ -1292,6 +1292,8 @@ require("lazy").setup(
 				local keys = {
 					{ "i", mode = { "o", "x" } },
 					{ "a", mode = { "o", "x" } },
+					"g[",
+					"g]",
 				}
 				local map_start = function(op, ai)
 					table.insert(keys, {
@@ -1336,21 +1338,30 @@ require("lazy").setup(
 				local ai = require("mini.ai")
 				local ts_gen = ai.gen_spec.treesitter
 				ai.setup({
+					silent = true,
+					-- search_method = "cover",
 					n_lines = 300,
-					search_method = "cover",
 					custom_textobjects = {
 						o = ts_gen({ a = { "@conditional.outer" }, i = { "@conditional.inner" } }, {}),
 						f = ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
 						c = ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
 					},
-					silent = true,
 					mappings = {
+						-- -- Main textobject prefixes
+						-- around = "a",
+						-- inside = "i",
+
+						-- -- Disable next variants.
+						-- around_next = "",
+						-- inside_next = "",
+
 						-- Disable last variants.
 						around_last = "",
 						inside_last = "",
-						-- Disable next variants.
-						-- around_next = "",
-						-- inside_next = "",
+
+						-- Move cursor to corresponding edge of `a` textobject
+						goto_left = "g[",
+						goto_right = "g]",
 					},
 				})
 			end,
