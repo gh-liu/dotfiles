@@ -3126,4 +3126,4 @@ end
 -- }}}
 -- }}}
 
--- vim: foldmethod=marker
+-- vim: foldmethod=marker foldlevel=0
