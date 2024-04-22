@@ -1,5 +1,7 @@
 vim.filetype.add({
-	extension = {},
+	extension = {
+		gotmpl = "gotmpl",
+	},
 	filename = {},
 	pattern = {
 		[".*/%.vscode/.*%.json"] = "jsonc",
