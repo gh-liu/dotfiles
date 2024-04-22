@@ -3033,6 +3033,10 @@ autocmd("LspAttach", {
 autocmd("LspAttach", {
 	group = liu_augroup("lsp_document_highlight"),
 	callback = function(args)
+		if vim.b.lsp_document_highlight_disable then
+			return
+		end
+
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if client and client.supports_method(ms.textDocument_documentHighlight) then
 			local bufnr = args.buf
