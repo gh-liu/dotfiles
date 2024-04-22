@@ -3065,6 +3065,8 @@ autocmd("LspAttach", {
 					api.nvim_clear_autocmds({ group = aug, buffer = bufnr })
 					keymap.del("n", "]v", { buffer = bufnr })
 					keymap.del("n", "[v", { buffer = bufnr })
+
+					lsp.buf.clear_references()
 				end,
 				buffer = bufnr,
 			})
