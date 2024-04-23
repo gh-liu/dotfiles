@@ -1118,7 +1118,10 @@ require("lazy").setup(
 						print("no support on directory.")
 						return
 					end
-					vim.cmd(modify .. " " .. entry.path)
+
+					local root = minifiles.get_latest_path()
+					local path = require("plenary.path"):new(entry.path):make_relative(root)
+					vim.cmd(modify .. " " .. path)
 					minifiles.close()
 				end
 
