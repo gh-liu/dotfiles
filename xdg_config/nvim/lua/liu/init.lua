@@ -744,7 +744,63 @@ require("lazy").setup(
 		-- fuzzy finder(Telescope) {{{2
 		{
 			"nvim-telescope/telescope.nvim",
-			event = "VeryLazy",
+			-- event = "VeryLazy",
+			init = function(self)
+				api.nvim_create_autocmd("LspAttach", {
+					group = liu_augroup("lsp_attach_telescope_keymaps"),
+					callback = function(args)
+						local map = function(l, r, desc, opts)
+							keymap.set("n", l, function()
+								local opts = opts or {}
+								require("telescope.builtin")[r](opts)
+							end, { buffer = args.buf, desc = desc })
+						end
+
+						map("<leader>ds", "lsp_document_symbols", "LSP [D]ocument [S]ymbols of the current buffer")
+						map("gd", "lsp_definitions", "[G]oto [D]efinition")
+						map("gy", "lsp_type_definitions", "[G]oto T[y]pe Definition")
+						map("gi", "lsp_implementations", "[G]oto [I]mplementation")
+						map("gr", "lsp_references", "[G]oto [R]eferences", { include_declaration = false })
+
+						-- map("gI", "lsp_incoming_calls", "[G]oto [I]ncomingCalls") -- this function as callee
+						-- map("gO", "lsp_outgoing_calls", "[G]oto [O]utgoingCalls") -- this function as caller
+					end,
+				})
+			end,
+			cmd = { "Telescope" },
+			keys = function(self, keys)
+				local maps = {
+					["<leader>so"] = { fn = "oldfiles", desc = "[S]earch recently [O]pened files" },
+					["<leader>sf"] = { fn = "find_files", desc = "[S]earch [F]iles" },
+					["<leader>sb"] = { fn = "buffers", desc = "[S]earch existing [B]uffers" },
+					["<leader>sg"] = { fn = "live_grep", desc = "[S]earch by [G]rep" },
+					["<leader>s/"] = { fn = "current_buffer_fuzzy_find", desc = "[S]earch in Current Buffer like [/]" },
+					["<leader>ss"] = { fn = "search_history", desc = "[S]earch [S]earch History" },
+					["<leader>sm"] = { fn = "marks", desc = "[S]earch [M]ark" },
+					["<leader>sj"] = { fn = "jumplist", desc = "[S]et [J]umplist" },
+					["<leader>sr"] = { fn = "registers", desc = "[S]earch [R]egisters" },
+					["<leader>st"] = { fn = "filetypes", desc = "[S]et File[t]ype" },
+					["<leader>sh"] = { fn = "help_tags", desc = "[S]earch [H]elp" },
+					["<leader>sw"] = { fn = "grep_string", desc = "[S]earch [W]ord" },
+					["<leader>sd"] = { fn = "diagnostics", desc = "[S]earch [D]iagnostics" },
+					-- override by builtin.lsp_document_symbols
+					["<leader>ds"] = { fn = "diagnostics", desc = "Treesitter [D]ocument [S]ymbols" },
+
+					["<leader>;"] = { fn = "commands", desc = "List Commands" },
+				}
+
+				local keys = {}
+				for key, value in pairs(maps) do
+					table.insert(keys, {
+						key,
+						function()
+							require("telescope.builtin")[value.fn]()
+						end,
+						desc = value.desc,
+					})
+				end
+				return keys
+			end,
 			dependencies = {
 				{
 					"nvim-telescope/telescope-fzf-native.nvim",
@@ -758,12 +814,12 @@ require("lazy").setup(
 				},
 			},
 			config = function()
-				local B = require("telescope.builtin")
 				local A = require("telescope.actions")
 
 				local utils = require("telescope.utils")
 				local action_state = require("telescope.actions.state")
 
+				-- git stash commands {{{
 				---@param prompt_bufnr integer
 				---@param action_name string
 				---@param stash_sub_command string
@@ -795,6 +851,7 @@ require("lazy").setup(
 						})
 					end
 				end
+				-- }}}
 
 				local user_action = {
 					git_pop_stash = function(prompt_bufnr)
@@ -934,68 +991,6 @@ require("lazy").setup(
 							},
 						},
 					},
-				})
-
-				-- keymaps
-				local maps = {
-					["<leader>so"] = { fn = B.oldfiles, desc = "[S]earch recently [O]pened files" },
-					["<leader>sf"] = { fn = B.find_files, desc = "[S]earch [F]iles" },
-					["<leader>sb"] = { fn = B.buffers, desc = "[S]earch existing [B]uffers" },
-					["<leader>sg"] = { fn = B.live_grep, desc = "[S]earch by [G]rep" },
-					["<leader>s/"] = { fn = B.current_buffer_fuzzy_find, desc = "[S]earch in Current Buffer like [/]" },
-					["<leader>ss"] = { fn = B.search_history, desc = "[S]earch [S]earch History" },
-					["<leader>sm"] = { fn = B.marks, desc = "[S]earch [M]ark" },
-					["<leader>sj"] = { fn = B.jumplist, desc = "[S]et [J]umplist" },
-					["<leader>sr"] = { fn = B.registers, desc = "[S]earch [R]egisters" },
-					["<leader>st"] = { fn = B.filetypes, desc = "[S]et File[t]ype" },
-					["<leader>sh"] = { fn = B.help_tags, desc = "[S]earch [H]elp" },
-					["<leader>sw"] = { fn = B.grep_string, desc = "[S]earch [W]ord" },
-					["<leader>sd"] = { fn = B.diagnostics, desc = "[S]earch [D]iagnostics" },
-					-- override by builtin.lsp_document_symbols
-					["<leader>ds"] = { fn = B.diagnostics, desc = "Treesitter [D]ocument [S]ymbols" },
-
-					["<leader>;"] = { fn = B.commands, desc = "List Commands" },
-				}
-
-				for lhs, map in pairs(maps) do
-					keymap.set("n", lhs, map.fn, { desc = map.desc })
-				end
-
-				api.nvim_create_autocmd("LspAttach", {
-					group = liu_augroup("lsp_attach_telescope_keymaps"),
-					callback = function(args)
-						local map = function(l, r, desc)
-							keymap.set("n", l, r, { buffer = args.buf, desc = desc })
-						end
-
-						map(
-							"<leader>ds",
-							B.lsp_document_symbols,
-							"Lists LSP [D]ocument [S]ymbols in the current buffer"
-						)
-
-						map("gd", function()
-							B.lsp_definitions()
-						end, "[G]oto [D]efinition")
-
-						map("gy", function()
-							B.lsp_type_definitions()
-						end, "[G]oto T[y]pe Definition")
-
-						map("gr", function()
-							B.lsp_references({
-								include_declaration = false,
-								include_current_line = false,
-							})
-						end, "[G]oto [R]eferences")
-
-						map("gi", function()
-							B.lsp_implementations({})
-						end, "[G]oto [I]mplementation")
-
-						map("gI", B.lsp_incoming_calls, "[G]oto [I]ncomingCalls") -- this function as callee
-						-- map("gO", builtin.lsp_outgoing_calls, "[G]oto [O]utgoingCalls") -- this function as caller
-					end,
 				})
 
 				api.nvim_create_autocmd("User", {
