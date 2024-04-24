@@ -719,6 +719,7 @@ require("lazy").setup(
 				require("hover").setup({
 					init = function()
 						require("hover.providers.lsp")
+						require("hover.providers.dap")
 						require("hover.providers.man")
 					end,
 					preview_opts = {
@@ -728,15 +729,23 @@ require("lazy").setup(
 					title = true,
 				})
 
+				local h = require("hover")
 				keymap.set("n", "K", function()
 					local hover_win = vim.b.hover_preview
 					if hover_win and api.nvim_win_is_valid(hover_win) then
 						api.nvim_set_current_win(hover_win)
 					else
-						require("hover").hover()
+						h.hover()
 					end
 				end, { desc = "hover.nvim" })
-				keymap.set("n", "gK", require("hover").hover_select, { desc = "hover.nvim (select)" })
+				keymap.set("n", "gK", h.hover_select, { desc = "hover.nvim (select)" })
+
+				create_command("HoverPrec", function(opts)
+					h.hover_switch("previous")
+				end, { nargs = 0, desc = "hover.nvim (previous source)" })
+				create_command("HoverNext", function(opts)
+					h.hover_switch("next")
+				end, { nargs = 0, desc = "hover.nvim (next source)" })
 			end,
 		},
 		--}}}
