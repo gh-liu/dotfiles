@@ -2925,7 +2925,12 @@ keymap.set("n", "<leader>td", function()
 	diagnostic.config(opts)
 end)
 
-keymap.set("n", "<leader>dp", diagnostic.open_float, { desc = "[D]iagnostic [S]how" })
+-- keymap.set("n", "<leader>dp", diagnostic.open_float, { desc = "[D]iagnostic [S]how" })
+for _, lhs in ipairs({ "<C-W>d", "<C-W><C-D>" }) do
+	keymap.set("n", lhs, function()
+		vim.diagnostic.open_float()
+	end, { desc = "Open a floating window showing diagnostics under the cursor" })
+end
 keymap.set("n", "d0", function()
 	local severity = vim.diagnostic.severity
 	local count = vim.v.count -- use count as level
@@ -3008,7 +3013,7 @@ autocmd("LspAttach", {
 		end
 
 		if client.supports_method(ms.textDocument_rename) then
-			nmap("<leader>rn", lsp.buf.rename, "[R]e[n]ame")
+			nmap("crn", lsp.buf.rename, "[R]e[n]ame")
 		end
 
 		nmap("<leader>ca", lsp.buf.code_action, "[C]ode [A]ction")
@@ -3026,7 +3031,7 @@ autocmd("LspAttach", {
 
 		-- nmap("K", lsp.buf.hover, "Hover Documentation")
 
-		keymap.set("i", "<C-k>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
+		keymap.set("i", "<C-]>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
 	end,
 })
 -- }}}
