@@ -2607,6 +2607,36 @@ end, {
 	end,
 })
 
+--- Zoom in and out of a buffer, making it full screen in a floating window
+---
+--- This function is useful when working with multiple windows but temporarily
+--- needing to zoom into one to see more of the code from that buffer. Call it
+--- again (without arguments) to zoom out.
+---
+---@param buf_id number|nil Buffer identifier (see |bufnr()|) to be zoomed.
+---   Default: 0 for current.
+---@param config table|nil Optional config for window (as for |nvim_open_win()|).
+local zoom = function(buf_id, config)
+	if vim.t.zoom_winid and vim.api.nvim_win_is_valid(vim.t.zoom_winid) then
+		vim.api.nvim_win_close(vim.t.zoom_winid, true)
+		vim.t.zoom_winid = nil
+	else
+		buf_id = buf_id or 0
+		-- Currently very big `width` and `height` get truncated to maximum allowed
+		local default_config = { relative = "editor", row = 0, col = 0, width = 1000, height = 1000 }
+		config = vim.tbl_deep_extend("force", default_config, config or {})
+		vim.t.zoom_winid = vim.api.nvim_open_win(buf_id, true, config)
+		vim.wo.winblend = 0
+		vim.cmd("normal! zz")
+	end
+end
+create_command("BufZoom", function(opts)
+	zoom(0, nil)
+end, {
+	nargs = 0,
+	desc = "Zoom in and out of a buffer, making it full screen in a floating window",
+})
+
 require("liu.utils.term").setup_cmd()
 
 create_command("FindAndReplace", function(opts)
