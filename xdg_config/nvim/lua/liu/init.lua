@@ -2706,15 +2706,47 @@ end, {})
 -- }}}
 
 -- Autocmds {{{1
+local restore_cursor = function()
+	-- Stop if not a normal buffer
+	if vim.bo.buftype ~= "" then
+		return
+	end
+
+	if vim.b.disable_restore_cursor then
+		return
+	end
+
+	-- Stop if line is already specified (like during start with `nvim file +num`)
+	local cursor_line = vim.api.nvim_win_get_cursor(0)[1]
+	if cursor_line > 1 then
+		return
+	end
+
+	-- Stop if can't restore proper line for some reason
+	local mark_line = vim.api.nvim_buf_get_mark(0, [["]])[1]
+	local n_lines = vim.api.nvim_buf_line_count(0)
+	if not (1 <= mark_line and mark_line <= n_lines) then
+		return
+	end
+
+	-- Restore cursor and
+	vim.cmd([[normal! g`"]])
+	-- Open just enough folds
+	vim.cmd([[normal! zv]])
+
+	-- Center window
+	vim.cmd("normal! zz")
+end
 autocmd("BufReadPost", {
 	desc = "Go to the last location when opening a buffer",
 	group = liu_augroup("last_location"),
 	callback = function(args)
-		local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
-		local line_count = vim.api.nvim_buf_line_count(args.buf)
-		if mark[1] > 0 and mark[1] <= line_count then
-			vim.cmd('normal! g`"zz')
-		end
+		-- local mark = vim.api.nvim_buf_get_mark(args.buf, '"')
+		-- local line_count = vim.api.nvim_buf_line_count(args.buf)
+		-- if mark[1] > 0 and mark[1] <= line_count then
+		-- 	vim.cmd('normal! g`"zz')
+		-- end
+		restore_cursor()
 	end,
 })
 
