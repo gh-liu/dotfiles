@@ -119,12 +119,14 @@ require("lazy").setup(
 
 				local edit = require("liu.treesitter.edit")
 				vim.keymap.set("n", "<leader>rn", edit.smart_rename)
+
 				-- local nav = require("liu.treesitter.navigation")
 				-- nav.map_object_pair_move("f", "@function.outer", true)
 				-- nav.map_object_pair_move("F", "@function.outer", false)
-				-- local usage = nav.usage
-				-- vim.keymap.set("n", "]v", usage.goto_next)
-				-- vim.keymap.set("n", "[v", usage.goto_prev)
+
+				local usage = require("liu.treesitter.usage")
+				vim.keymap.set("n", "]v", usage.goto_next)
+				vim.keymap.set("n", "[v", usage.goto_prev)
 			end,
 		},
 		{
