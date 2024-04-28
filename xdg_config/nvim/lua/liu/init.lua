@@ -2926,11 +2926,11 @@ keymap.set("n", "<leader>td", function()
 end)
 
 -- keymap.set("n", "<leader>dp", diagnostic.open_float, { desc = "[D]iagnostic [S]how" })
-for _, lhs in ipairs({ "<C-W>d", "<C-W><C-D>" }) do
-	keymap.set("n", lhs, function()
-		vim.diagnostic.open_float()
-	end, { desc = "Open a floating window showing diagnostics under the cursor" })
-end
+-- for _, lhs in ipairs({ "<C-W>d", "<C-W><C-D>" }) do
+-- 	keymap.set("n", lhs, function()
+-- 		vim.diagnostic.open_float()
+-- 	end, { desc = "Open a floating window showing diagnostics under the cursor" })
+-- end
 keymap.set("n", "d0", function()
 	local severity = vim.diagnostic.severity
 	local count = vim.v.count -- use count as level
@@ -2956,8 +2956,8 @@ local diagnostic_goto = function(next, severity)
 		go({ severity = severity })
 	end
 end
-setmap("n", "]d", diagnostic_goto(true))
-setmap("n", "[d", diagnostic_goto(false))
+-- setmap("n", "]d", diagnostic_goto(true))
+-- setmap("n", "[d", diagnostic_goto(false))
 setmap("n", "]e", diagnostic_goto(true, vim.diagnostic.severity.ERROR))
 setmap("n", "[e", diagnostic_goto(false, vim.diagnostic.severity.ERROR))
 setmap("n", "]w", diagnostic_goto(true, vim.diagnostic.severity.WARN))
