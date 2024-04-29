@@ -2244,16 +2244,40 @@ require("lazy").setup(
 		},
 		{
 			"jbyuki/venn.nvim",
-			enabled = false,
+			enabled = true,
 			lazy = true,
-			cmd = {
-				"VBox",
-				"VBoxD",
-				"VBoxDO",
-				"VBoxH",
-				"VBoxHO",
-				"VBoxO",
-			},
+			cmd = { "ToggleVBox" },
+			config = function(self, opts)
+				local function toggle_venn()
+					local api = vim.api
+					if not vim.b.venn_enabled then
+						vim.b.venn_enabled = true
+						print("venn enabled")
+
+						vim.cmd([[setlocal ve=all]])
+
+						-- draw a line on HJKL keystokes
+						vim.keymap.set("n", "H", "<C-v>h:VBox<CR>", { buffer = 0, noremap = true })
+						vim.keymap.set("n", "J", "<C-v>j:VBox<CR>", { buffer = 0, noremap = true })
+						vim.keymap.set("n", "K", "<C-v>k:VBox<CR>", { buffer = 0, noremap = true })
+						vim.keymap.set("n", "L", "<C-v>l:VBox<CR>", { buffer = 0, noremap = true })
+					else
+						vim.b.venn_enabled = false
+						print("venn disabled")
+
+						vim.cmd([[setlocal ve=]])
+
+						vim.keymap.del("n", "H", { buffer = 0 })
+						vim.keymap.del("n", "J", { buffer = 0 })
+						vim.keymap.del("n", "K", { buffer = 0 })
+						vim.keymap.del("n", "L", { buffer = 0 })
+					end
+				end
+
+				create_command(self.cmd[1], function(opts)
+					toggle_venn()
+				end, { nargs = 0 })
+			end,
 		},
 		{
 			"NvChad/nvim-colorizer.lua",
