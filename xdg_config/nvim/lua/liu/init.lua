@@ -132,7 +132,12 @@ require("lazy").setup(
 		{
 			"nvim-treesitter/nvim-treesitter-context",
 			event = "VeryLazy",
-			opts = { enable = true },
+			opts = {
+				enable = true,
+				line_numbers = true,
+				separator = "-",
+				-- on_attach = function(buf) end,
+			},
 			config = function(self, opts)
 				local ts_ctx = require("treesitter-context")
 				ts_ctx.setup(opts)
@@ -142,9 +147,7 @@ require("lazy").setup(
 				end, { desc = "go to [cO]ntext" })
 
 				set_hls({
-					TreesitterContext = { link = "StatusLine" },
-					TreesitterContextLineNumber = { link = "Tag" },
-					-- TreesitterContextBottom = { underline = true },
+					TreesitterContextSeparator = { fg = config.colors.gray },
 				})
 			end,
 		},
