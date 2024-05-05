@@ -515,7 +515,15 @@ api.nvim_create_autocmd({
 	"DiagnosticChanged",
 	"ModeChanged",
 }, {
-	command = "redrawstatus",
+	-- command = "redrawstatus",
+	callback = function(ev)
+		local buf = ev.buf
+		if vim.api.nvim__redraw ~= nil then
+			vim.api.nvim__redraw({ buf = buf, valid = true, statusline = true })
+		else
+			vim.cmd.redrawstatus()
+		end
+	end,
 })
 
 vim.o.statusline = "%!v:lua.nvim_statsline()"
