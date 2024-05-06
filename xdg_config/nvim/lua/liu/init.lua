@@ -1,12 +1,13 @@
 local fn = vim.fn
-local api = vim.api
 local uv = vim.uv
 local keymap = vim.keymap
-local lsp = vim.lsp
-local lsp_protocol = lsp.protocol
+
+local api = vim.api
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
 local create_command = api.nvim_create_user_command
+
+local lsp = vim.lsp
 
 local paire_move = require("liu.utils.pair_move")
 
@@ -32,22 +33,12 @@ _G.set_cmds = function(cmds)
 		create_command(key, cmd, { bang = true, nargs = 0 })
 	end
 end
+-- }}}
 
+-- helper functions {{{
 ---@param group_name string
-_G.liu_augroup = function(group_name)
+local liu_augroup = function(group_name)
 	return augroup("liu/" .. group_name, { clear = true })
-end
-
----@param win integer,
----@param fn fun(conf: vim.api.keyset.win_config): vim.api.keyset.win_config?
-local function win_update_config(win, fn)
-	local api = vim.api
-	local config = api.nvim_win_get_config(win)
-	local res = fn(config)
-	if res ~= nil then
-		config = res
-	end
-	api.nvim_win_set_config(win, config)
 end
 
 ---@param buf integer
@@ -156,11 +147,6 @@ require("lazy").setup(
 			"gh-liu/nvim-treesitter-textobjects",
 			event = "VeryLazy",
 		},
-		{
-			"JoosepAlviste/nvim-ts-context-commentstring",
-			enabled = false,
-			event = "VeryLazy",
-		},
 		-- }}}
 
 		-- lsp {{{2
@@ -195,7 +181,7 @@ require("lazy").setup(
 				implementation = { enabled = true },
 			},
 			config = function(_, opts)
-				local SymbolKind = lsp_protocol.SymbolKind
+				local SymbolKind = lsp.protocol.SymbolKind
 				opts = vim.tbl_extend("force", opts, {
 					filetypes = {
 						go = {
@@ -309,18 +295,6 @@ require("lazy").setup(
 
 		-- text edit {{{2
 		{
-			"numToStr/Comment.nvim",
-			enabled = false,
-			lazy = true,
-			keys = {
-				{ "gc", mode = { "n", "x" } },
-				{ "gb", mode = { "n", "x" } },
-			},
-			opts = {
-				ignore = "^$",
-			},
-		},
-		{
 			"stevearc/conform.nvim",
 			lazy = true,
 			init = function(self)
@@ -337,44 +311,29 @@ require("lazy").setup(
 			ft = function(self, ft)
 				return vim.tbl_keys(self.opts.formatters_by_ft)
 			end,
-			cmd = { "Format" },
 			opts = {
 				formatters_by_ft = {
 					go = { "goimports", "gofumpt" },
-					zig = { "zigfmt" },
-					rust = { "rustfmt" },
-					lua = { "stylua" },
-					sh = { "shfmt" },
-					zsh = { "shfmt" },
 					json = { "jq" },
 					just = { "just" },
+					lua = { "stylua" },
 					proto = { "buf" },
+					rust = { "rustfmt" },
+					sh = { "shfmt" },
 					sql = { "sql_formatter" },
+					zig = { "zigfmt" },
+					zsh = { "shfmt" },
 				},
 			},
 			config = function(self, opts)
 				opts.format_on_save = function(bufnr)
-					-- Disable with a global or buffer-local variable
 					if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
 						return
 					end
+
 					return { timeout_ms = 500, lsp_fallback = true }
 				end
 				require("conform").setup(opts)
-
-				create_command(self.cmd[1], function(args)
-					local range = nil
-					if args.count ~= -1 then
-						local end_line = api.nvim_buf_get_lines(0, args.line2 - 1, args.line2, true)[1]
-						range = {
-							start = { args.line1, 0 },
-							["end"] = { args.line2, end_line:len() },
-						}
-					end
-					require("conform").format({ async = true, lsp_fallback = true, range = range })
-				end, {
-					range = true,
-				})
 			end,
 		},
 		{
@@ -403,20 +362,18 @@ require("lazy").setup(
 				})
 
 				config.augends:on_filetype({
-					go = vim.list_extend({
-						augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }),
-					}, default),
-					lua = vim.list_extend({
-						augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
-					}, default),
+					go = vim.list_extend(
+						{ augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }) },
+						default
+					),
+					lua = vim.list_extend(
+						{ augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }) },
+						default
+					),
+					markdown = vim.list_extend({ augend.misc.alias.markdown_header }, default),
 					rust = vim.list_extend({}, default),
+					toml = vim.list_extend({ augend.semver.alias.semver }, default),
 					zig = vim.list_extend({}, default),
-					toml = vim.list_extend({
-						augend.semver.alias.semver,
-					}, default),
-					markdown = vim.list_extend({
-						augend.misc.alias.markdown_header,
-					}, default),
 				})
 			end,
 		},
@@ -437,10 +394,7 @@ require("lazy").setup(
 					desc = "splitting blocks of code like arrays, hashes, statements, objects, dictionaries, etc.",
 				},
 			},
-			cmd = {
-				"TSJSplit",
-				"TSJJoin",
-			},
+			cmd = { "TSJSplit", "TSJJoin" },
 			opts = {
 				use_default_keymaps = false,
 				max_join_length = 300,
@@ -479,11 +433,8 @@ require("lazy").setup(
 		{
 			"echasnovski/mini.surround",
 			keys = {
-				-- Add surrounding in Normal and Visual modes
 				{ "ys", mode = { "x", "n" } },
-				-- Delete surrounding
 				{ "ds", mode = { "n" } },
-				-- Replace surrounding
 				{ "cs", mode = { "n" } },
 			},
 			config = function(self, _)
@@ -528,22 +479,15 @@ require("lazy").setup(
 			},
 			opts = {
 				replace = {
-					-- Replace text with register
 					prefix = "s",
-					-- Whether to reindent new text to match previous indent
 					reindent_linewise = true,
 				},
 				exchange = {
-					-- Exchange text regions
 					prefix = "cx",
-					-- Whether to reindent new text to match previous indent
 					reindent_linewise = true,
 				},
-				-- Evaluate text and replace with output
 				evaluate = { prefix = "g=" },
-				-- Multiply (duplicate) text
 				multiply = { prefix = "" },
-				-- Sort text
 				sort = { prefix = "" },
 			},
 		},
@@ -649,6 +593,7 @@ require("lazy").setup(
 		},
 		{
 			"utilyre/sentiment.nvim",
+			enabled = true,
 			event = "VeryLazy",
 			init = function()
 				-- `matchparen.vim` needs to be disabled manually in case of lazy loading
@@ -657,55 +602,20 @@ require("lazy").setup(
 			opts = {},
 		},
 		{
-			-- Dim inactive windows
-			"levouh/tint.nvim",
-			enabled = false,
-			event = "WinNew",
-			opts = {
-				tint = -10,
-				saturation = 0.5,
-				highlight_ignore_patterns = { "WinSeparator", "Status.*" },
-				window_ignore_function = function(winid)
-					local bufnr = api.nvim_win_get_buf(winid)
-
-					-- Do not tint `terminal` or `quickfix` window
-					local wininfo = fn.getwininfo(winid)[1]
-					if wininfo.quickfix == 1 or wininfo.terminal == 1 then
-						return true
-					end
-					-- Do not tint floating windows
-					if api.nvim_win_get_config(winid).relative ~= "" then
-						return true
-					end
-
-					-- local diff = api.nvim_get_option_value("diff", { win = winid })
-					-- if diff then
-					-- 	return true
-					-- end
-
-					local ignored_filetypes = { "fugitive", "floggraph" }
-					local is_ignored_filetype =
-						vim.tbl_contains(ignored_filetypes, api.nvim_get_option_value("filetype", { buf = bufnr }))
-
-					return is_ignored_filetype
-				end,
-			},
-		},
-		{
 			"j-hui/fidget.nvim",
 			enabled = true,
-			lazy = true,
 			event = "LspAttach",
-			init = function()
-				local notify = nil
-				---@diagnostic disable-next-line: duplicate-set-field
-				vim.notify = function(...)
-					if not notify then
-						notify = require("fidget").notify
-					end
-					notify(...)
-				end
-			end,
+			-- lazy = true,
+			-- init = function()
+			-- 	local notify = nil
+			-- 	---@diagnostic disable-next-line: duplicate-set-field
+			-- 	vim.notify = function(...)
+			-- 		if not notify then
+			-- 			notify = require("fidget").notify
+			-- 		end
+			-- 		notify(...)
+			-- 	end
+			-- end,
 			cmd = { "Fidget" },
 			opts = {
 				-- LSP progress
@@ -829,7 +739,6 @@ require("lazy").setup(
 			},
 			config = function()
 				local A = require("telescope.actions")
-
 				local utils = require("telescope.utils")
 				local action_state = require("telescope.actions.state")
 
@@ -960,7 +869,6 @@ require("lazy").setup(
 						-- stylua: ignore start
 						borderchars = { borders[2], borders[4], borders[6], borders[8], borders[1], borders[3], borders[5], borders[7] },
 						-- stylua: ignore end
-						winblend = 10,
 						layout_config = {
 							horizontal = { prompt_position = "top", preview_width = 0.6, results_width = 0.8 },
 							vertical = { mirror = false },
@@ -968,6 +876,7 @@ require("lazy").setup(
 							height = 0.8,
 							preview_cutoff = 120,
 						},
+						-- winblend = 10,
 						sorting_strategy = "ascending",
 						path_display = {
 							"truncate",
@@ -1080,7 +989,7 @@ require("lazy").setup(
 						local win = cx.win_id
 						local buf = cx.bufnr
 
-						win_update_config(win, function(config)
+						require("liu.utils.win").win_update_config(win, function(config)
 							config.footer = harpoon.ui.active_list.name
 							config.footer_pos = "right"
 
@@ -1259,6 +1168,9 @@ require("lazy").setup(
 				mappings = {
 					go_in = "<C-l>",
 					go_out = "<C-h>",
+					-- Use `''` (empty string) to not create one.
+					go_in_plus = "",
+					go_out_plus = "",
 				},
 				options = {
 					use_as_default_explorer = false,
@@ -1981,22 +1893,6 @@ require("lazy").setup(
 					MiniBufremove.wipeout(buf_id(opts), opts.bang)
 				end, cmd_opts)
 			end,
-		},
-		{
-			"dstein64/vim-win",
-			enabled = false,
-			config = function(self, opts)
-				vim.g.win_ext_command_map = {
-					c = "wincmd c",
-					C = "close!",
-					q = "quit",
-					Q = "quit!",
-					["="] = "wincmd =",
-					x = "Win#exit",
-				}
-			end,
-			keys = { "<leader>w" },
-			cmd = { "Win" },
 		},
 		-- }}}
 
@@ -2928,305 +2824,4 @@ autocmd("BufHidden", {
 })
 -- }}}
 
--- Diagnostic {{{1
--- https://neovim.io/doc/user/diagnostic.html
-local diagnostic = vim.diagnostic
-local min_serverity = diagnostic.severity.INFO
-local opts = {
-	underline = { severity = { min = min_serverity } },
-	signs = {
-		severity = { min = min_serverity },
-		text = config.icons.diagnostics,
-	},
-	float = { source = true, border = config.borders, show_header = false },
-	severity_sort = true,
-	virtual_text = false,
-	update_in_insert = false,
-}
-diagnostic.config(opts)
-
-vim.g.disgnostic_sign_disable = false
-keymap.set("n", "<leader>td", function()
-	opts.signs = vim.g.disgnostic_sign_disable
-	vim.g.disgnostic_sign_disable = not vim.g.disgnostic_sign_disable
-	diagnostic.config(opts)
-end)
-
--- keymap.set("n", "<leader>dp", diagnostic.open_float, { desc = "[D]iagnostic [S]how" })
--- for _, lhs in ipairs({ "<C-W>d", "<C-W><C-D>" }) do
--- 	keymap.set("n", lhs, function()
--- 		vim.diagnostic.open_float()
--- 	end, { desc = "Open a floating window showing diagnostics under the cursor" })
--- end
-keymap.set("n", "d0", function()
-	local severity = vim.diagnostic.severity
-	local count = vim.v.count -- use count as level
-	local opts = {}
-	if severity.HINT >= count and count >= severity.ERROR then
-		opts.severity = count
-	end
-	diagnostic.setqflist(opts)
-end, { desc = "[D]iagnostic [0]All" })
-keymap.set("n", "dc", function()
-	local severity = vim.diagnostic.severity
-	local count = vim.v.count -- use count as level
-	local opts = {}
-	if severity.HINT >= count and count >= severity.ERROR then
-		opts.severity = count
-	end
-	diagnostic.setloclist(opts)
-end, { desc = "[D]iagnostic [C]urrent Buffer" })
-local diagnostic_goto = function(next, severity)
-	local go = next and diagnostic.goto_next or vim.diagnostic.goto_prev
-	severity = severity and diagnostic.severity[severity]
-	return function()
-		go({ severity = severity })
-	end
-end
--- setmap("n", "]d", diagnostic_goto(true))
--- setmap("n", "[d", diagnostic_goto(false))
-setmap("n", "]e", diagnostic_goto(true, vim.diagnostic.severity.ERROR))
-setmap("n", "[e", diagnostic_goto(false, vim.diagnostic.severity.ERROR))
-setmap("n", "]w", diagnostic_goto(true, vim.diagnostic.severity.WARN))
-setmap("n", "[w", diagnostic_goto(false, vim.diagnostic.severity.WARN))
-
-local diagnostic_icons = config.icons.diagnostics
-fn.sign_define("DiagnosticSignError", { text = diagnostic_icons.ERROR, texthl = "DiagnosticSignError" })
-fn.sign_define("DiagnosticSignWarn", { text = diagnostic_icons.WARN, texthl = "DiagnosticSignWarn" })
-fn.sign_define("DiagnosticSignInfo", { text = diagnostic_icons.INFO, texthl = "DiagnosticSignInfo" })
-fn.sign_define("DiagnosticSignHint", { text = diagnostic_icons.HINT, texthl = "DiagnosticSignHint" })
--- }}}
-
--- Lsp {{{1
-local ms = lsp_protocol.Methods
-
--- Log Levels {{{2
-lsp.set_log_level("OFF")
-
-local levels = { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF" }
-create_command("LspSetLogLevel", function(opts)
-	local level = unpack(opts.fargs)
-	lsp.set_log_level(level)
-	vim.notify("Set: " .. level, vim.log.levels.WARN)
-end, {
-	desc = "Set Lsp Log Level",
-	nargs = 1,
-	complete = function()
-		return levels
-	end,
-})
--- }}}
-
--- keymaps {{{2
-autocmd("LspAttach", {
-	group = liu_augroup("lsp_keymaps"),
-	callback = function(args)
-		local bufnr = args.buf
-
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if not client then
-			return
-		end
-
-		vim.bo[bufnr].omnifunc = "v:lua.lsp.omnifunc"
-		-- vim.bo[bufnr].tagfunc = "v:lua.lsp.tagfunc"
-		-- vim.bo[bufnr].formatexpr = "v:lua.lsp.formatexpr(#{timeout_ms:250})"
-
-		local nmap = function(keys, func, desc)
-			if desc then
-				desc = "LSP: " .. desc
-			end
-			keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
-		end
-
-		if client.supports_method(ms.textDocument_rename) then
-			nmap("crn", lsp.buf.rename, "[R]e[n]ame")
-		end
-
-		nmap("<leader>ca", lsp.buf.code_action, "[C]ode [A]ction")
-		nmap("<leader>cl", lsp.codelens.run, "[C]ode [L]en")
-
-		nmap("gD", lsp.buf.declaration, "[G]oto [D]eclaration")
-
-		-- nmap("gd", lsp.buf.definition, "[G]oto [D]efinition")
-
-		-- nmap("gy", lsp.buf.type_definition, "[G]oto T[y]pe Definition")
-
-		-- nmap("gr", lsp.buf.references, "[G]oto [R]eferences")
-
-		-- nmap("gi", lsp.buf.implementation, "[G]oto [I]mplementation")
-
-		-- nmap("K", lsp.buf.hover, "Hover Documentation")
-
-		keymap.set("i", "<C-]>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
-	end,
-})
--- }}}
-
--- workspace {{{2
-autocmd("LspAttach", {
-	group = liu_augroup("lsp_workspace"),
-	callback = function(args)
-		local bufnr = args.buf
-		local client = lsp.get_client_by_id(args.data.client_id)
-
-		api.nvim_buf_create_user_command(bufnr, "LspWorkspaceFolderAdd", function(opts)
-			lsp.buf.add_workspace_folder()
-		end, { nargs = 0 })
-
-		api.nvim_buf_create_user_command(bufnr, "LspWorkspaceFolderList", function(opts)
-			vim.print(lsp.buf.list_workspace_folders())
-		end, { nargs = 0 })
-
-		api.nvim_buf_create_user_command(bufnr, "LspWorkspaceFolderDelete", function(opts)
-			lsp.buf.remove_workspace_folder(opts.fargs[1])
-		end, {
-			nargs = 1,
-			complete = function()
-				return lsp.buf.list_workspace_folders()
-			end,
-		})
-	end,
-})
--- }}}
-
--- codelens {{{2
-autocmd("LspAttach", {
-	group = liu_augroup("lsp_codelens"),
-	callback = function(args)
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if client and client.supports_method("textDocument/codeLens") then
-			local bufnr = args.buf
-			autocmd({ "CursorHold", "InsertLeave" }, {
-				callback = function(ev)
-					lsp.codelens.refresh({ bufnr = ev.buf })
-				end,
-				buffer = bufnr,
-			})
-		end
-	end,
-})
--- }}}
-
--- inlayhint {{{2
-autocmd("LspAttach", {
-	group = liu_augroup("lsp_inlayhint"),
-	callback = function(args)
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if client and client.supports_method("textDocument/inlayHint") then
-			local bufnr = args.buf
-
-			local inlay_hint = lsp.inlay_hint
-			inlay_hint.enable(true, { bufnr = bufnr })
-
-			api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
-				inlay_hint.enable(not inlay_hint.is_enabled(bufnr), { bufnr = bufnr })
-			end, { nargs = 0 })
-
-			api.nvim_buf_create_user_command(bufnr, "InlayHintRefresh", function(opts)
-				inlay_hint.enable(false, { bufnr = bufnr })
-				inlay_hint.enable(true, { bufnr = bufnr })
-			end, { nargs = 0 })
-		end
-	end,
-})
--- }}}
-
--- document highlight {{{2
-autocmd("LspAttach", {
-	group = liu_augroup("lsp_document_highlight"),
-	callback = function(args)
-		if vim.b.lsp_document_highlight_disable then
-			return
-		end
-
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if client and client.supports_method(ms.textDocument_documentHighlight) then
-			local bufnr = args.buf
-
-			local aug = augroup("liu/lsp_document_highlight", { clear = false })
-
-			do
-				api.nvim_clear_autocmds({ buffer = bufnr, group = aug })
-				autocmd({ "CursorHold", "CursorHoldI" }, {
-					group = aug,
-					buffer = bufnr,
-					callback = lsp.buf.document_highlight,
-				})
-				autocmd({ "CursorMoved", "CursorMovedI" }, {
-					group = aug,
-					buffer = bufnr,
-					callback = lsp.buf.clear_references,
-				})
-			end
-
-			do
-				local document_highlight = require("liu.lsp.helper").document_highlight
-				keymap.set("n", "]v", document_highlight.goto_next, { buffer = bufnr })
-				keymap.set("n", "[v", document_highlight.goto_prev, { buffer = bufnr })
-			end
-
-			autocmd("LspDetach", {
-				group = aug,
-				callback = function()
-					api.nvim_clear_autocmds({ group = aug, buffer = bufnr })
-					keymap.del("n", "]v", { buffer = bufnr })
-					keymap.del("n", "[v", { buffer = bufnr })
-
-					lsp.buf.clear_references()
-				end,
-				buffer = bufnr,
-			})
-		end
-	end,
-})
--- }}}
-
--- handlers {{{2
-local handlers = lsp.handlers
-
-local old_hover = handlers[ms.textDocument_hover]
-local old_signature = handlers[ms.textDocument_signatureHelp]
-handlers[ms.textDocument_hover] = lsp.with(old_hover, { border = config.borders })
-handlers[ms.textDocument_signatureHelp] = lsp.with(old_signature, { border = config.borders })
-
-local old_rename = handlers[ms.textDocument_rename]
-handlers[ms.textDocument_rename] = function(...)
-	local function rename_notify(err, result, _, _)
-		if err or not result then
-			return
-		end
-
-		local changed_instances = 0
-		local changed_files = 0
-
-		local with_edits = result.documentChanges ~= nil
-		for _, change in pairs(result.documentChanges or result.changes) do
-			changed_instances = changed_instances + (with_edits and #change.edits or #change)
-			changed_files = changed_files + 1
-		end
-
-		local message = string.format(
-			"[LSP] Renamed %s instance%s in %s file%s.",
-			changed_instances,
-			changed_instances == 1 and "" or "s",
-			changed_files,
-			changed_files == 1 and "" or "s"
-		)
-		vim.notify(message, vim.log.levels.INFO)
-	end
-	old_rename(...)
-	rename_notify(...)
-end
-
--- handlers[ms.workspace_diagnostic_refresh] = function(_, result, ctx, _)
--- 	local ns = lsp.diagnostic.get_namespace(ctx.client_id)
--- 	diagnostic.reset(ns, api.nvim_get_current_buf())
--- 	vim.notify("Lsp Workspace Diagnostic Refresh.", vim.log.levels.WARN)
--- 	return true
--- end
-
--- }}}
--- }}}
-
--- vim: foldmethod=marker foldlevel=0
+-- vim: foldmethod=marker

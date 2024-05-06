@@ -1,9 +1,20 @@
-if false then
-	return
-end
-
 local autocmd = vim.api.nvim_create_autocmd
 local augroup = vim.api.nvim_create_augroup
+autocmd("TextYankPost", {
+	desc = "Highlight when yanking",
+	group = augroup("liu/highlight_yank", { clear = true }),
+	pattern = "*",
+	callback = function()
+		vim.highlight.on_yank({
+			timeout = vim.o.updatetime,
+			priority = vim.highlight.priorities.user + 1,
+		})
+	end,
+})
+
+if true then
+	return
+end
 
 local yankg = augroup("liu/yank_setting", { clear = true })
 local cursor_pos
@@ -35,15 +46,3 @@ if os.getenv("TMUX") == nil then
 		end,
 	})
 end
-
-autocmd("TextYankPost", {
-	desc = "Highlight when yanking",
-	group = augroup("liu/highlight_yank", { clear = true }),
-	pattern = "*",
-	callback = function()
-		vim.highlight.on_yank({
-			timeout = vim.o.updatetime,
-			priority = vim.highlight.priorities.user + 1,
-		})
-	end,
-})

@@ -1,4 +1,4 @@
-if false then
+if true then
 	return
 end
 
@@ -7,31 +7,7 @@ local fn = vim.fn
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
 
--- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
-local silent_mods = { mods = { silent = true, emsg_silent = true } }
-vim.keymap.set("n", "<leader>xq", function()
-	if fn.getqflist({ winid = 0 }).winid ~= 0 then
-		vim.cmd.cclose(silent_mods)
-	elseif #fn.getqflist() > 0 then
-		local win = api.nvim_get_current_win()
-		vim.cmd.copen(silent_mods)
-		if win ~= api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
-	end
-end, { desc = "Toggle quickfix list" })
-vim.keymap.set("n", "<leader>xl", function()
-	if fn.getloclist(0, { winid = 0 }).winid ~= 0 then
-		vim.cmd.lclose(silent_mods)
-	elseif #fn.getloclist(0) > 0 then
-		local win = api.nvim_get_current_win()
-		vim.cmd.lopen(silent_mods)
-		if win ~= api.nvim_get_current_win() then
-			vim.cmd.wincmd("p")
-		end
-	end
-end, { desc = "Toggle location list" })
-
+-- Quickfixtextfunc {{{
 local QFTEXT = {}
 
 ---Traverse the qflist and get the maximum display width of the
@@ -201,6 +177,34 @@ _G.nvim_qftf = QFTEXT.qftf
 ---See `:h 'quickfixtextfunc'`
 vim.o.quickfixtextfunc = [[v:lua.nvim_qftf]]
 
+-- }}}
+
+-- Maps {{{
+-- When toggling these, ignore error messages and restore the cursor to the original window when opening the list.
+local silent_mods = { mods = { silent = true, emsg_silent = true } }
+vim.keymap.set("n", "<leader>xq", function()
+	if fn.getqflist({ winid = 0 }).winid ~= 0 then
+		vim.cmd.cclose(silent_mods)
+	elseif #fn.getqflist() > 0 then
+		local win = api.nvim_get_current_win()
+		vim.cmd.copen(silent_mods)
+		if win ~= api.nvim_get_current_win() then
+			vim.cmd.wincmd("p")
+		end
+	end
+end, { desc = "Toggle quickfix list" })
+vim.keymap.set("n", "<leader>xl", function()
+	if fn.getloclist(0, { winid = 0 }).winid ~= 0 then
+		vim.cmd.lclose(silent_mods)
+	elseif #fn.getloclist(0) > 0 then
+		local win = api.nvim_get_current_win()
+		vim.cmd.lopen(silent_mods)
+		if win ~= api.nvim_get_current_win() then
+			vim.cmd.wincmd("p")
+		end
+	end
+end, { desc = "Toggle location list" })
+
 local ACKMAP = {}
 
 vim.g.qf_mapping_ack_style = 1
@@ -340,8 +344,8 @@ autocmd({ "FileType" }, {
 		ACKMAP.setup()
 	end,
 })
+-- }}}
 
-vim.g.qf_auto_quit = 1
 autocmd({ "FileType" }, {
 	pattern = "qf",
 	callback = function(ev)
@@ -349,7 +353,7 @@ autocmd({ "FileType" }, {
 		-- quit Vim if the last window is a quickfix window
 		autocmd({ "BufEnter" }, {
 			callback = function(ev)
-				if vim.g.qf_auto_quit and fn.winnr("$") < 2 then
+				if fn.winnr("$") < 2 then
 					vim.cmd.quit()
 				end
 			end,
@@ -358,3 +362,5 @@ autocmd({ "FileType" }, {
 		})
 	end,
 })
+
+-- vim: foldmethod=marker
