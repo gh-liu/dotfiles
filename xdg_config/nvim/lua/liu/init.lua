@@ -929,6 +929,7 @@ require("lazy").setup(
 		-- navigation {{{
 		{
 			"ThePrimeagen/harpoon",
+			enabled = false,
 			branch = "harpoon2",
 			lazy = true,
 			dependencies = { "plenary.nvim" },
@@ -1015,6 +1016,39 @@ require("lazy").setup(
 					end,
 				})
 			end,
+		},
+		{
+			"cbochs/grapple.nvim",
+			opts = {
+				-- scope = "git", -- also try out "git_branch"
+				icons = true, -- setting to "true" requires "nvim-web-devicons"
+				status = true,
+				win_opts = {
+					width = 0.4,
+					height = 0.3,
+					row = 0.5,
+					col = 0.5,
+
+					relative = "editor",
+					border = config.borders,
+					focusable = false,
+					style = "minimal",
+					title_pos = "center",
+
+					-- Custom: fallback title for Grapple windows
+					title = "Grapple",
+					-- Custom: adds padding around window title
+					title_padding = " ",
+				},
+			},
+			cmd = "Grapple",
+			keys = {
+				{ "<leader>A", "<cmd>Grapple tag<cr>", desc = "Tag a file" },
+				{ "<leader>D", "<cmd>Grapple untag<cr>", desc = "Untag a file" },
+				{ "<leader>E", "<cmd>Grapple toggle_tags<cr>", desc = "Toggle tags menu" },
+				{ "<leader>l", "<cmd>Grapple cycle_tags next<cr>", desc = "Go to next tag" },
+				{ "<leader>h", "<cmd>Grapple cycle_tags prev<cr>", desc = "Go to previous tag" },
+			},
 		},
 		{
 			"echasnovski/mini.files",
