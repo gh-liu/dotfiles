@@ -2141,12 +2141,15 @@ require("lazy").setup(
 		{
 			"tpope/vim-dadbod",
 			cmd = { "DB" },
-			ft = { "sql" },
-			config = function()
-				vim.cmd([[
-				 nmap <expr> Q db#op_exec()
-				 xmap <expr> Q db#op_exec()
-				]])
+			ft = { "sql", "mysql" },
+			init = function(self)
+				autocmd("FileType", {
+					pattern = self.ft,
+					callback = function(ev)
+						vim.keymap.set({ "n", "x" }, "Q", "db#op_exec()", { expr = true, buffer = ev.buf })
+					end,
+					desc = "vim-dadbod `db#op_exec()`",
+				})
 			end,
 		},
 		{
