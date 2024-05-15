@@ -2149,6 +2149,39 @@ require("lazy").setup(
 				]])
 			end,
 		},
+		{
+			"kristijanhusak/vim-dadbod-ui",
+			dependencies = { "tpope/vim-dadbod" },
+			init = function()
+				vim.g.db_ui_show_help = 0
+				vim.g.db_ui_use_nerd_fonts = 1
+				vim.g.db_ui_execute_on_save = 1
+				vim.g.db_ui_force_echo_notifications = 1
+
+				--  Five variables: `{table}`, `{schema}`, `{optional_schema}`, `{dbname}`, `{last_query}`
+				vim.g.db_ui_table_helpers = {
+					postgresql = {
+						Count = "select count(*) from {optional_schema}{table}",
+					},
+					mysql = {
+						Count = "select count(*) from {table}",
+					},
+				}
+			end,
+			cmd = {
+				"DBUI",
+				"DBUIToggle",
+			},
+			config = function(self, opts)
+				-- :h vim-dadbod-ui-highlights
+				set_hls({
+					NotificationInfo = { link = "DiagnosticInfo" },
+					NotificationWarning = { link = "DiagnosticWarn" },
+					NotificationError = { link = "DiagnosticError" },
+				})
+			end,
+		},
+
 		-- }}}
 
 		-- misc {{{2
