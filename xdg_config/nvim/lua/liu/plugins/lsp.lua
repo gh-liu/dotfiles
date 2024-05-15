@@ -246,6 +246,9 @@ local servers = {
 	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#ast_grep
 	-- cargo install ast-grep
 	ast_grep = {},
+	-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/server_configurations.md#asm_lsp
+	-- cargo install asm-lsp
+	asm_lsp = {},
 }
 
 -- setup neodev BEFORE lspconfig

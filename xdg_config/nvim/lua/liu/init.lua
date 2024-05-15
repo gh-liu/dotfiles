@@ -1956,10 +1956,10 @@ require("lazy").setup(
 			"fladson/vim-kitty",
 			ft = "kitty",
 		},
-		{
-			"zchee/vim-goasm",
-			ft = "goasm",
-		},
+		-- {
+		-- 	"zchee/vim-goasm",
+		-- 	ft = "goasm",
+		-- },
 		{
 			"ellisonleao/glow.nvim",
 			cond = function()
