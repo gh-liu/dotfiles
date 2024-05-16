@@ -26,27 +26,6 @@ local parse = require("luasnip.util.parser").parse_snippet
 local ms = ls.multi_snippet
 local k = require("luasnip.nodes.key_indexer").new_key
 
--- uuid {{{
-local function fn(args, parent, user_args)
-	-- https://gist.github.com/jrus/3197011
-	local random = math.random
-	local function uuid()
-		local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-		return string.gsub(template, "[xy]", function(c)
-			local v = (c == "x") and random(0, 0xf) or random(8, 0xb)
-			return string.format("%x", v)
-		end)
-	end
-	return uuid()
-end
-ls.add_snippets("all", {
-	s("uuid", {
-		f(fn),
-		i(0),
-	}),
-})
--- }}}
-
 -- todo-comments {{{1
 local username = vim.fn.system("git config --get user.name"):gsub("[\n\r]", "")
 local email = vim.fn.system("git config --get user.email"):gsub("[\n\r]", "")
@@ -56,17 +35,20 @@ local get_date = function()
 end
 
 --- Get the comment string {beg, end} table
----@param comment_type integer 1 for `line`-comment and 2 for `block`-comment
 ---@return table comment_strings {begcstring, endcstring}
-local get_comment_string = function(comment_type)
-	local utils = require("Comment.utils")
-	-- use the `Comments.nvim` API to fetch the comment string for the region (eq. '--%s' or '--[[%s]]' for `lua`)
-	local cstring = require("Comment.ft").calculate({
-		ctype = comment_type,
-		range = utils.get_region(),
-	}) or vim.bo.commentstring
+local get_comment_string = function()
+	local unwrap_cstr = function(cstr)
+		local left, right = string.match(cstr, "(.*)%%s(.*)")
+		assert(
+			(left or right),
+			{ msg = string.format("Invalid commentstring for %s! Read `:h commentstring` for help.", vim.bo.filetype) }
+		)
+
+		return vim.trim(left), vim.trim(right)
+	end
+	local cstring = vim.bo.commentstring
 	-- as we want only the strings themselves and not strings ready for using `format` we want to split the left and right side
-	local left, right = utils.unwrap_cstr(cstring)
+	local left, right = unwrap_cstr(cstring)
 	-- create a `{left, right}` table for it
 	return { left, right }
 end
@@ -135,7 +117,6 @@ local generate_todo_comment_snippet = function(context, aliases, opts)
 	end
 	aliases = type(aliases) == "string" and { aliases } or aliases -- if we do not have aliases, be smart about the function parameters
 	opts = opts or {}
-	opts.comment_type = opts.comment_type or 1 -- comment type can be passed in the `opts` table, but if it is not, we have to ensure, it is defined
 	local alias_string = table.concat(aliases, "|") -- `choice_node` documentation
 	context.name = context.name or (alias_string .. " comment") -- generate the `name` of the snippet if not defined
 	context.dscr = context.dscr or (alias_string .. " comment with a signature-mark") -- generate the `dscr` if not defined
@@ -151,13 +132,6 @@ local todo_snippet_specs = {
 	{ { trig = "warn" }, { "WARN", "WARNING", "XXX" } },
 	{ { trig = "perf" }, { "PERF", "PERFORMANCE", "OPTIM", "OPTIMIZE" } },
 	{ { trig = "note" }, { "NOTE", "INFO" } },
-	-- NOTE: Block commented todo-comments
-	{ { trig = "todob" }, "TODO", { comment_type = 2 } },
-	{ { trig = "fixb" }, { "FIX", "BUG", "ISSUE", "FIXIT" }, { comment_type = 2 } },
-	{ { trig = "hackb" }, "HACK", { comment_type = 2 } },
-	{ { trig = "warnb" }, { "WARN", "WARNING", "XXX" }, { comment_type = 2 } },
-	{ { trig = "perfb" }, { "PERF", "PERFORMANCE", "OPTIM", "OPTIMIZE" }, { comment_type = 2 } },
-	{ { trig = "noteb" }, { "NOTE", "INFO" }, { comment_type = 2 } },
 }
 
 local todo_comment_snippets = {}
