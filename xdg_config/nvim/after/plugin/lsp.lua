@@ -63,8 +63,8 @@ autocmd("LspAttach", {
 			nmap("crn", lsp.buf.rename, "[R]e[n]ame")
 		end
 
-		nmap("<leader>ca", lsp.buf.code_action, "[C]ode [A]ction")
 		nmap("<leader>cl", lsp.codelens.run, "[C]ode [L]en")
+		keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, { buffer = bufnr, desc = "[C]ode [A]ction" })
 
 		keymap.set("i", "<C-]>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
 	end,
