@@ -46,7 +46,8 @@ local get_comment_string = function()
 
 		return vim.trim(left), vim.trim(right)
 	end
-	local cstring = vim.bo.commentstring
+	-- local cstring = vim.bo.commentstring
+	local cstring = require("liu.utils.commentstring").get_commentstring()
 	-- as we want only the strings themselves and not strings ready for using `format` we want to split the left and right side
 	local left, right = unwrap_cstr(cstring)
 	-- create a `{left, right}` table for it
