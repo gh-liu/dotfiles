@@ -158,18 +158,6 @@ require("lazy").setup(
 			end,
 		},
 		{
-			"kosayoda/nvim-lightbulb",
-			event = "LspAttach",
-			opts = {
-				autocmd = { enabled = true },
-				priority = 20, -- priority of dap signs is 21
-				sign = {
-					enabled = true,
-					text = config.icons.bulb,
-				},
-			},
-		},
-		{
 			"Wansmer/symbol-usage.nvim",
 			enabled = false,
 			event = "LspAttach",

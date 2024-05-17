@@ -245,4 +245,6 @@ handlers[ms.textDocument_rename] = function(...)
 end
 -- }}}
 
+require("liu.lsp.lightbulb")
+
 -- vim: foldmethod=marker
