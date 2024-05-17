@@ -82,7 +82,7 @@ M.on_attach = function(client, bufnr)
 		})
 	end
 
-	vim.keymap.set("n", "<leader>gi", function()
+	vim.keymap.set("n", "g<C-i>", function()
 		M.impl()
 	end, { buffer = bufnr, desc = "Go impl" })
 end
