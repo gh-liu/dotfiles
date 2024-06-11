@@ -1,98 +1,103 @@
 #! /usr/bin/bash
-function git_clone_or_update() {
-	git clone "$1" "$2" 2>/dev/null && echo 'Update status: Success' || (
-		cd "$2"
-		git pull
-	)
-}
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
+
+. $SCRIPT_DIR/helper.sh --source-only
 
 function update_tmux() {
-	# echo "========================================"
-	# PWD=$(pwd)
+	local tool=tmux
+	install_start $tool
 
-	# url="https://api.github.com/repos/tmux/tmux/tags"
-	# version=$(curl -s $url | jq -r '.[0].name')
-	# echo "Installing tmux-$version..."
+	PWD=$(pwd)
+	url="https://api.github.com/repos/tmux/tmux/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	echo "Version $version"
 
-	# mkdir $LIU_TOOLS/tmux && cd $LIU_TOOLS/tmux
-	# wget https://github.com/tmux/tmux/releases/download/$version/tmux-$version.tar.gz
-	# test $? -eq 1 && echo "fial to download tmux" && return
+	mkdir_tool_dir $tool
 
-	# tar -zxvf ./tmux-$version.tar.gz
-	# cd ./tmux-$version
-	# ./configure
-	# make && sudo make install
+	local file=tmux-$version.tar.gz
+	github_download $tool $tool $version $file
+	test $? -eq 1 && echo "fial to download $tool" && return
 
-	# mkdir -p $HOME/.local/bin
-	# ln -svf $(pwd)/tmux $HOME/.local/bin/tmux
+	tar -zxvf $file
+	cd ./tmux-$version
+	./configure
+	make && sudo make install
 
-	# cd $PWD
-	# echo "========================================"
+	link_bin $(pwd)/tmux tmux
 
-	echo "========================================"
-	echo "Installing tpm..."
+	cd $PWD
+	install_end
+}
+
+function update_tpm() {
+	install_start tpm
+
 	mkdir -p $XDG_CONFIG_HOME/tmux/plugins/tpm
 	git_clone_or_update https://github.com/tmux-plugins/tpm $XDG_CONFIG_HOME/tmux/plugins/tpm
-	echo "========================================"
+
+	install_end
 }
 
 function nvim_nightly() {
 	sudo apt-get install ninja-build gettext cmake unzip curl
-	echo "========================================BEGIN"
-	mkdir -p $LIU_TOOLS/nvim
+
+	install_start nvim_nightly
+	mkdir_tool_dir nvim
 	git_clone_or_update https://github.com/neovim/neovim $LIU_TOOLS/nvim
-	cd $LIU_TOOLS/nvim
 	make CMAKE_BUILD_TYPE=Release
 	sudo make install
-	echo "========================================END"
+
+	install_end
 }
 
 function update_marksman() {
-	echo "========================================BEGIN"
+	install_start marksman
+
 	url="https://api.github.com/repos/artempyanykh/marksman/tags"
 	version=$(curl -s $url | jq -r '.[0].name')
-	echo "Installing marksman-$version..."
+	echo "version $version..."
 
-	[ -d $LIU_TOOLS/marksman ] && mv $LIU_TOOLS/marksman $LIU_TOOLS/marksman$(date +%s)
-	mkdir -p $LIU_TOOLS/marksman
-	cd $LIU_TOOLS/marksman
+	mkdir_tool_dir marksman
 
-	wget https://github.com/artempyanykh/marksman/releases/download/$version/marksman-linux-x64 -q --show-progres
-	test $? -eq 1 && echo "fial to download" && return
+	local file=marksman-linux-x64
+	github_download artempyanykh marksman $version $file
+	test $? -eq 1 && echo "fial to download " && return
 
-	chmod +x $(pwd)/marksman-linux-x64
-	ln -svf $(pwd)/marksman-linux-x64 $HOME/.local/bin/marksman
-	echo "========================================END"
+	chmod +x $(pwd)/$file
+	link_bin $(pwd)/marksman-linux-x64 marksman
+
+	install_end
 }
 
 function update_fzf() {
-	echo "========================================"
-	echo "Installing fzf..."
+	install_start fzf
 
-	git_clone_or_update https://github.com/junegunn/fzf.git $LIU_TOOLS/fzf
+	mkdir_tool_dir fzf
+	git_clone_or_update https://github.com/junegunn/fzf $LIU_TOOLS/fzf
 	$LIU_TOOLS/fzf/install
 
-	mkdir -p $HOME/.local/bin
-	ln -svf $LIU_TOOLS/fzf/bin/fzf $HOME/.local/bin/fzf
+	link_bin $LIU_TOOLS/fzf/bin/fzf fzf
 
-	echo "========================================"
+	install_end
 }
 
 function update_wrk() {
-	echo "========================================"
-	PWD=$(pwd)
-	echo "Installing wrk..."
+	install_start wrk
 
-	git_clone_or_update https://github.com/wg/wrk.git $LIU_TOOLS/wrk
+	PWD=$(pwd)
+
+	mkdir wrk
+	mkdir_tool_dir wrk
+	git_clone_or_update https://github.com/wg/wrk $LIU_TOOLS/wrk
 
 	cd $LIU_TOOLS/wrk
 	sudo make
 
-	mkdir -p $HOME/.local/bin
-	ln -svf $LIU_TOOLS/wrk/wrk $HOME/.local/bin/wrk
+	link_bin $LIU_TOOLS/wrk/wrk wrk
 
 	cd $PWD
-	echo "========================================"
+
+	install_end
 }
 
 bins() {
@@ -129,7 +134,8 @@ bins() {
 
 	npm i -g vim-language-server
 	npm i -g bash-language-server
-	npm i -g vscode-langservers-extracted # jsonls
+	# npm i -g vscode-langservers-extracted # jsonls
+	npm i -g vscode-json-languageserver
 	npm i -g yaml-language-server
 	npm i -g typescript typescript-language-server
 	npm i -g pyright
@@ -158,47 +164,10 @@ bins() {
 	cargo install cargo-binutils
 }
 
-function update_protobuf() {
-	echo "========================================BEGIN"
-	url="https://api.github.com/repos/protocolbuffers/protobuf/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	version="${version:1}"
-	echo "Installing protobuf-$version..."
-
-	[ -d $LIU_TOOLS/protobuf ] && mv $LIU_TOOLS/protobuf $LIU_TOOLS/protobuf$(date +%s)
-	mkdir -p $LIU_TOOLS/protobuf
-	cd $LIU_TOOLS/protobuf
-
-	pkg="protoc-$version-linux-x86_64.zip"
-	wget https://github.com/protocolbuffers/protobuf/releases/download/v$version/$pkg -q --show-progres
-	test $? -eq 1 && echo "fial to download" && return
-
-	unzip ./$pkg
-	ln -svf $(pwd)/bin/protoc $HOME/.local/bin/protoc
-	echo "========================================END"
-}
-
-# Install Docker Engine on Ubuntu
-install_docker() {
-	for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
-
-	sudo apt-get update
-	sudo apt-get install ca-certificates curl gnupg
-	sudo install -m 0755 -d /etc/apt/keyrings
-	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-	sudo chmod a+r /etc/apt/keyrings/docker.gpg
-	CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut --delimiter="=" --fields=2)
-	echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $CODENAME stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
-	sudo apt-get update
-
-	sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-	sudo docker run hello-world
-}
-
 case $1 in
 "tmux")
 	update_tmux
+	update_tpm
 	;;
 "nvim_nightly")
 	nvim_nightly
