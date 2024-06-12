@@ -35,6 +35,17 @@ function update_gopls_dlv() {
 	install_end
 }
 
+function update_golangci-lint() {
+	install_start golangci-lint
+
+	url="https://api.github.com/repos/golangci/golangci-lint/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	echo "vesrion $version..."
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin $version
+
+	install_end
+}
+
 function update_zig() {
 	install_start zig
 
@@ -205,6 +216,7 @@ case $1 in
 "go")
 	update_go
 	update_gopls_dlv
+	update_golangci-lint
 	;;
 "zig")
 	update_zig
