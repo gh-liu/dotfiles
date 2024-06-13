@@ -129,6 +129,7 @@ bins() {
 	go install honnef.co/go/gotraceui/cmd/gotraceui@latest
 
 	go install github.com/boyter/scc/v3@latest
+	go install rsc.io/grepdiff@latest
 
 	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
