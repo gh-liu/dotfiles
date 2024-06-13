@@ -106,6 +106,7 @@ function update_codelldb() {
 	version=$(curl -s $url | jq -r '.[0].name')
 	echo "vesrion codelldb-$version..."
 
+	# LET NVIM DAP KNOW THE PATH
 	mkdir_env_dir codelldb
 
 	pkg="codelldb-x86_64-linux.vsix"
@@ -113,6 +114,7 @@ function update_codelldb() {
 	test $? -eq 1 && echo "fial to download codelldb" && return
 
 	unzip $pkg
+	link_bin $(pwd)/extension/adapter/codelldb codelldb
 
 	install_end
 }
