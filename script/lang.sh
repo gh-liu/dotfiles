@@ -186,6 +186,7 @@ function update_luarocks() {
 	make && sudo make install
 
 	sudo luarocks install luasocket
+	sudo luarocks install busted # test
 
 	install_end
 }
