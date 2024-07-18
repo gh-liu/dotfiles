@@ -69,6 +69,26 @@ function update_marksman() {
 	install_end
 }
 
+function update_mesonlsp() {
+	install_start mesonlsp
+
+	url="https://api.github.com/repos/JCWasmx86/mesonlsp/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	echo "version $version..."
+
+	mkdir_tool_dir mesonlsp
+
+	local file=mesonlsp-x86_64-unknown-linux-musl.zip
+
+	github_download JCWasmx86 mesonlsp $version $file
+	test $? -eq 1 && echo "fial to download " && return
+
+	unzip $(pwd)/$file
+	link_bin $(pwd)/mesonlsp mesonlsp
+
+	install_end
+}
+
 function update_fzf() {
 	install_start fzf
 
@@ -175,6 +195,9 @@ case $1 in
 	;;
 "mdls")
 	update_marksman
+	;;
+"mesonlsp")
+	update_mesonlsp
 	;;
 "wrk")
 	update_wrk
