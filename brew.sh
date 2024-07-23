@@ -28,7 +28,7 @@ brew install lua-language-server
 
 brew install fd
 brew install bat
-brew install exa
+brew install eza
 brew install just
 brew install zoxide
 brew install ripgrep

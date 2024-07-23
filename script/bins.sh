@@ -165,7 +165,7 @@ bins() {
 	npm i -g sql-formatter
 
 	cargo install bat
-	cargo install exa
+	cargo install eza
 	cargo install just
 	cargo install stylua
 	cargo install zoxide

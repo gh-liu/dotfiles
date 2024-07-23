@@ -9,7 +9,7 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
-which exa &>/dev/null && alias ls="exa"
+which eza &>/dev/null && alias ls="eza"
 which bat &>/dev/null && alias cat="bat --theme=\"Nord\" --style=\"changes\""
 which fd &>/dev/null && alias find="fd"
 
