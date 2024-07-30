@@ -206,6 +206,7 @@ function update_nodejs() {
 
 	xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
 	tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar
+	rm -rf node
 	mv node-$NODEJSVERSION-linux-$NODEJSARCH node
 	rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
 
