@@ -60,4 +60,8 @@ alias gfhf='git flow hotfix finish'
 # }}}
 # }}}
 
+# empty commit: https://stackoverflow.com/questions/40883798/how-to-get-git-diff-of-the-first-commit#comment68984343%5F40884093
+# export EMPTY_GIT_TREE=$(printf '' | git hash-object -t tree --stdin)
+export EMPTY_GIT_TREE="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
+
 # vim: foldmethod=marker
