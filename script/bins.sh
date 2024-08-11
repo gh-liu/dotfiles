@@ -133,6 +133,7 @@ bins() {
 	go install github.com/josharian/impl@latest
 	go install github.com/fatih/gomodifytags@latest
 	go install golang.org/x/tools/cmd/goimports@latest
+	go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 
 	go install github.com/bufbuild/buf-language-server/cmd/bufls@latest
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
