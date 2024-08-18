@@ -259,6 +259,10 @@ export OPAMROOT=$LIU_ENV/ocaml/.opam
 
 [ -f "$(which opam)" ] && eval $(opam config env)
 # }}}
+# python {{{
+export PYTHONBIN=$LIU_ENV/python/bin
+export PATH=$PATH:$PYTHONBIN
+# }}}
 # }}}
 
 # Tools {{{1
