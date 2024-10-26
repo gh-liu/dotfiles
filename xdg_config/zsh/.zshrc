@@ -262,6 +262,17 @@ export OPAMROOT=$LIU_ENV/ocaml/.opam
 # python {{{
 export PYTHONBIN=$LIU_ENV/python/bin
 export PATH=$PATH:$PYTHONBIN
+
+## pyenv
+# curl https://pyenv.run | bash
+export PYENV_ROOT="$HOME/.pyenv"
+if [[ -d $PYENV_ROOT/bin ]]; then
+	export PATH="$PYENV_ROOT/bin:$PATH"
+	eval "$(pyenv init -)"
+	# Load pyenv-virtualenv automatically by adding
+	eval "$(pyenv virtualenv-init -)"
+fi
+
 # }}}
 # }}}
 
