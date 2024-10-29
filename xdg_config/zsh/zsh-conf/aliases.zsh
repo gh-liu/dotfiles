@@ -25,7 +25,7 @@ alias cls='clear'
 
 alias now='date +%s'
 
-alias ll='ls -Falh'
+alias ll='ls -F -a -l -h'
 
 alias e=nvim
 alias pm=podman
@@ -40,6 +40,8 @@ hugon() {
 }
 
 alias grep="grep --color"
+
+alias sshagent='eval $(ssh-agent -s) && ssh-add'
 
 # podman
 # podman pull docker.io/arigaio/atlas:latest
