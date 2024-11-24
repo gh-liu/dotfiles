@@ -64,4 +64,10 @@ alias gfhf='git flow hotfix finish'
 # export EMPTY_GIT_TREE=$(printf '' | git hash-object -t tree --stdin)
 export EMPTY_GIT_TREE="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
+# https://lobste.rs/s/2iogwz/git_programmatic_staging
+# go install rsc.io/grepdiff@latest
+# https://en.wikipedia.org/wiki/Process_substitution
+function gam {
+	grepdiff $1 <(git diff) | git apply --cached
+}
 # vim: foldmethod=marker
