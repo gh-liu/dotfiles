@@ -216,79 +216,14 @@ function update_nodejs() {
 	install_end
 }
 
-function update_python() {
-	sudo apt-get install -y make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev libncursesw5-dev xz-utils tk-dev liblzma-dev tk-dev
+function install_python() {
+	# or https://www.build-python-from-source.com
 
-	PYVERSION=$1
-	MAJVERSION=$(echo $PYVERSION | cut -c1)
-	BINVERSION=$2
-
-	mkdir_env_dir python
-	PYDIR=$LIU_ENV/python
-
-	PYBINDIR=$LIU_ENV/python/bin
-	mkdir -p $PYBINDIR
-
-	wget "https://www.python.org/ftp/python/$PYVERSION/Python-$PYVERSION.tgz" -q --show-progress
-	test $? -eq 1 && echo "fial to download $PYVERSION" && return
-
-	sudo rm -rf $PYVERSION
-	tar -xvzf Python-$PYVERSION.tgz
-	mv Python-$PYVERSION $PYVERSION
-	cd $PYVERSION
-
-	PREFIX=$PYDIR/opt/python/$PYVERSION
-	sudo rm -rf $PREFIX
-	mkdir -p $PREFIX
-
-	# https://www.build-python-from-source.com
-	# https://devguide.python.org/getting-started/setup-building
-	sudo ./configure --prefix=$PREFIX --enable-optimizations --with-lto --with-computed-gotos --with-system-ffi
-	sudo make -j "$(nproc)"
-	sudo make altinstall
-
-	sudo $PREFIX/bin/python$BINVERSION -m pip install --upgrade pip setuptools wheel
-
-	sudo ln -svf $PREFIX/bin/python$PYVERSION $PYBINDIR/python$MAJVERSION
-	sudo ln -svf $PREFIX/bin/python$PYVERSION $PYBINDIR/python
-	sudo ln -svf $PREFIX/bin/pip$PYVERSION $PYBINDIR/pip$MAJVERSION
-	sudo ln -svf $PREFIX/bin/pip$PYVERSION $PYBINDIR/pip
-	sudo ln -svf $PREFIX/bin/pydoc$PYVERSION $PYBINDIR/pydoc$MAJVERSION
-	sudo ln -svf $PREFIX/bin/pydoc$PYVERSION $PYBINDIR/pydoc
-	sudo ln -svf $PREFIX/bin/idle$PYVERSION $PYBINDIR/idle$MAJVERSION
-	sudo ln -svf $PREFIX/bin/idle$PYVERSION $PYBINDIR/idle
-	sudo ln -svf $PREFIX/bin/python$PYVERSION-config $PYBINDIR/python-config$MAJVERSION
-	sudo ln -svf $PREFIX/bin/python$PYVERSION-config $PYBINDIR/python-config
-
-	if [ "$MAJVERSION" == "2" ]; then
-		sudo $PREFIX/bin/python$PYVERSION -m ensurepip --default-pip
-	fi
-}
-
-function update_python3() {
-	install_start python3
-
-	PYVERSION="3.12.5"
-	echo "updating to py-$PYVERSION ..."
-
-	BINVERSION="3.12"
-
-	update_python $PYVERSION $BINVERSION
-
-	install_end
-}
-
-function update_python2() {
-	install_start python2
-
-	PYVERSION="2.7.18"
-	echo "updating to py-$PYVERSION ..."
-
-	BINVERSION="2.7"
-
-	update_python $PYVERSION $BINVERSION
-
-	install_end
+	# or  https://github.com/pyenv/pyenv
+	# curl https://pyenv.run | bash
+	
+	# https://docs.astral.sh/uv
+	curl -LsSf https://astral.sh/uv/install.sh | sh
 }
 
 case $1 in
@@ -313,11 +248,8 @@ case $1 in
 "nodejs")
 	update_nodejs
 	;;
-"python3")
-	update_python3
-	;;
-"python2")
-	update_python2
+"python")
+	install_python
 	;;
 *)
 	echo "select one language"
