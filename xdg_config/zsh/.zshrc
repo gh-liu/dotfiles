@@ -273,6 +273,11 @@ if [[ -d $PYENV_ROOT/bin ]]; then
 	eval "$(pyenv virtualenv-init -)"
 fi
 
+# curl -LsSf https://astral.sh/uv/install.sh | sh 
+if [[ -f "$(which uv)" ]]; then
+	eval "$(uv generate-shell-completion zsh)"
+	eval "$(uvx --generate-shell-completion zsh)"
+fi
 # }}}
 # }}}
 
