@@ -259,6 +259,7 @@ export OPAMROOT=$LIU_ENV/ocaml/.opam
 
 [ -f "$(which opam)" ] && eval $(opam config env)
 # }}}
+
 # python {{{
 export PYTHONBIN=$LIU_ENV/python/bin
 export PATH=$PATH:$PYTHONBIN
@@ -273,11 +274,15 @@ if [[ -d $PYENV_ROOT/bin ]]; then
 	eval "$(pyenv virtualenv-init -)"
 fi
 
+
 # curl -LsSf https://astral.sh/uv/install.sh | sh 
 if [[ -f "$(which uv)" ]]; then
 	eval "$(uv generate-shell-completion zsh)"
 	eval "$(uvx --generate-shell-completion zsh)"
 fi
+# export UV_PYTHON_INSTALL_DIR="$HOME/.uvpython"
+# export UV_TOOL_BIN_DIR=$LIU_ENV/uvpython/bin
+# export PATH=$PATH:$UV_TOOL_BIN_DIR
 # }}}
 # }}}
 

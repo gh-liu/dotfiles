@@ -224,6 +224,8 @@ function install_python() {
 	
 	# https://docs.astral.sh/uv
 	curl -LsSf https://astral.sh/uv/install.sh | sh
+
+	# uv python install 3.11
 }
 
 case $1 in
