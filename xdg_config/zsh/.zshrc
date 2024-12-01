@@ -47,7 +47,7 @@ fi
 
 if [[ $OS == linux ]]; then
 	export HOSTIP=$(hostname -I | awk '{print $1}')
-	export LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}')
+	# export LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}')
 fi
 
 # $EDITOR
