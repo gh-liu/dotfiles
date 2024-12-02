@@ -152,6 +152,8 @@ bins() {
 	go install github.com/boyter/scc/v3@latest
 	go install rsc.io/grepdiff@latest
 
+	go install github.com/rakyll/hey@latest
+
 	# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 	npm i -g vim-language-server
