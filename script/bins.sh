@@ -162,10 +162,12 @@ bins() {
 	npm i -g vscode-json-languageserver
 	npm i -g yaml-language-server
 	npm i -g typescript typescript-language-server
-	npm i -g pyright
+	# npm i -g pyright
 
 	npm i -g @bufbuild/buf
 	npm i -g sql-formatter
+	
+	uv tool install pyright
 
 	cargo install bat
 	cargo install eza
