@@ -85,8 +85,8 @@ function update_zsh_plugins() {
 
 	git_clone_or_update https://github.com/jeffreytse/zsh-vi-mode $HOME/.zsh-plugins/zsh-vi-mode
 
-	git_clone_or_update https://github.com/hutusi/git-paging.git $HOME/.zsh-plugins/git-paging
-	ln -svf $HOME/.zsh-plugins/git-paging/git-* $HOME/.local/bin
+	# git_clone_or_update https://github.com/hutusi/git-paging.git $HOME/.zsh-plugins/git-paging
+	# ln -svf $HOME/.zsh-plugins/git-paging/git-* $HOME/.local/bin
 }
 
 # https://github.com/zsh-users/zsh-autosuggestions
@@ -136,7 +136,7 @@ bindkey -M menuselect 'K' vi-up-line-or-history
 bindkey -M menuselect 'J' vi-down-line-or-history
 bindkey -M menuselect 'L' vi-forward-char
 # bindkey -M menuselect '^xg' clear-screen
-bindkey -M menuselect 'U' undo
+# bindkey -M menuselect 'U' undo
 
 zstyle ':completion:*' menu select
 zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}-- %D %d --%f'
@@ -246,36 +246,22 @@ export PATH=$PATH:$CARGO_BIN
 export PATH=$PATH:$LIU_ENV/nodejs/node/bin
 # }}}
 
-# OCaml{{{2
-export OPAMROOT=$LIU_ENV/ocaml/.opam
-
-# BEGIN opam configuration
-# This is useful if you're using opam as it adds:
-#   - the correct directories to the PATH
-#   - auto-completion for the opam binary
-# This section can be safely removed at any time if needed.
-[[ ! -r $HOME/.opam/opam-init/init.zsh ]] || source $HOME/.opam/opam-init/init.zsh >/dev/null 2>/dev/null
-# END opam configuration
-
-[ -f "$(which opam)" ] && eval $(opam config env)
-# }}}
-
 # python {{{
 export PYTHONBIN=$LIU_ENV/python/bin
 export PATH=$PATH:$PYTHONBIN
 
 function _venv() {
-    local venv_path=${1:=".venv"}
-    if [ -d "$venv_path" ]; then
-        source "$venv_path/bin/activate"
-    else
-        echo "Virtual environment not found: $venv_path"
-        return 1
-    fi
+	local venv_path=${1:=".venv"}
+	if [ -d "$venv_path" ]; then
+		source "$venv_path/bin/activate"
+	else
+		echo "Virtual environment not found: $venv_path"
+		return 1
+	fi
 }
 alias venv=_venv
 
-# curl -LsSf https://astral.sh/uv/install.sh | sh 
+# curl -LsSf https://astral.sh/uv/install.sh | sh
 if [[ -f "$(which uv)" ]]; then
 	eval "$(uv generate-shell-completion zsh)"
 	eval "$(uvx --generate-shell-completion zsh)"
