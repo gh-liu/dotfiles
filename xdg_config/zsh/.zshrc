@@ -264,17 +264,6 @@ export OPAMROOT=$LIU_ENV/ocaml/.opam
 export PYTHONBIN=$LIU_ENV/python/bin
 export PATH=$PATH:$PYTHONBIN
 
-## pyenv
-# curl https://pyenv.run | bash
-export PYENV_ROOT="$HOME/.pyenv"
-if [[ -d $PYENV_ROOT/bin ]]; then
-	export PATH="$PYENV_ROOT/bin:$PATH"
-	eval "$(pyenv init -)"
-	# Load pyenv-virtualenv automatically by adding
-	eval "$(pyenv virtualenv-init -)"
-fi
-
-
 # curl -LsSf https://astral.sh/uv/install.sh | sh 
 if [[ -f "$(which uv)" ]]; then
 	eval "$(uv generate-shell-completion zsh)"
