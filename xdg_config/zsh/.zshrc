@@ -264,6 +264,17 @@ export OPAMROOT=$LIU_ENV/ocaml/.opam
 export PYTHONBIN=$LIU_ENV/python/bin
 export PATH=$PATH:$PYTHONBIN
 
+function _venv() {
+    local venv_path=${1:=".venv"}
+    if [ -d "$venv_path" ]; then
+        source "$venv_path/bin/activate"
+    else
+        echo "Virtual environment not found: $venv_path"
+        return 1
+    fi
+}
+alias venv=_venv
+
 # curl -LsSf https://astral.sh/uv/install.sh | sh 
 if [[ -f "$(which uv)" ]]; then
 	eval "$(uv generate-shell-completion zsh)"
