@@ -1,73 +1,47 @@
-# https://starship.rs/config
+"$schema" = 'https://starship.rs/config-schema.json'
 
+# https://starship.rs/config/#prompt
 # Prompt {{{
+# https://starship.rs/config/#default-prompt-format
 format = """
 $directory\
 $character\
 """
 
+# https://starship.rs/advanced-config/#enable-right-prompt
 right_format = """
 $git_branch\
 $hostname\
 """
 
 add_newline = false
+scan_timeout = 10
 # }}}
 
-[username]
-disabled = true
-
-[hostname]
-disabled = false
-ssh_only = true
-format = '[$hostname]($style) in '
-
-[localip]
-disabled = true
-
+# left {{{
 [directory]
 style = "bold cyan"
 truncate_to_repo = false
-truncation_length = 8
+truncation_length = 9
+truncation_symbol = '…/'
 
 [character]
 # success_symbol = "[➜](bold green)"
 # error_symbol = "[✘](bold red) "
 success_symbol = "[>](bold green)"
 error_symbol = "[x](bold red)"
-vicmd_symbol = "[<](bold green)"
+vimcmd_symbol = "[<](bold green)"
+# }}}
 
-[line_break]
-disabled = true
-
-[package]
-disabled = true
-
-# [memory_usage]
-# disabled = false
-# threshold = -1
-# symbol = " "
-# style = "bold dimmed green"
-
-# Git {{{1
+# right {{{
 [git_branch]
 disabled = true
 format = " [$symbol$branch]($style) "
 
-[git_status]
-disabled = true
-
-[git_commit]
-disabled = true
+[hostname]
+disabled = false
+ssh_only = true
+format = '[$hostname]($style) in '
 # }}}
-
-# Languages {{{
-[golang]
-disabled = true
-
-[lua]
-disabled = true
-# }}}
-
 
 ## vim: foldmethod=marker
