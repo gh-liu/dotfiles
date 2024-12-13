@@ -1,9 +1,4 @@
 #!/bin/zsh
-if [[ $LinuxDistro == Ubuntu ]]; then
-	alias sai='sudo apt install '
-	alias sau="sudo apt update -y && sudo apt upgrade -y"
-fi
-
 alias .='cd .'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -28,9 +23,6 @@ alias now='date +%s'
 alias ll='ls -F -a -l -h'
 
 alias e=nvim
-alias pm=podman
-alias lzg=lazygit
-alias lzd=lazydocker
 alias hugos="hugo server -D --bind="0.0.0.0" --baseURL=http://$HOSTIP:1313"
 if [[ $OS == darwin ]]; then
 	alias hugoso="open http://$HOSTIP:1313"
@@ -42,10 +34,3 @@ hugon() {
 alias grep="grep --color"
 
 alias sshagent='eval $(ssh-agent -s) && ssh-add'
-
-# podman
-# podman pull docker.io/arigaio/atlas:latest
-alias atlas1="podman run --rm arigaio/atlas"
-atlas1schemadiff() {
-	atlas1 schema diff --to $1 --from $2
-}
