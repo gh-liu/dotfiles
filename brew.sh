@@ -1,30 +1,61 @@
 #!/bin/bash
+## ------
+## cask
+## ------
 brew tap homebrew/cask-fonts
 brew install --cask font-fira-code
+brew install --cask font-fira-mono-nerd-font
+brew install --cask font-jetbrains-mono-nerd-font
 
-brew install --cask iterm2
-brew install --cask wezterm
+# brew install --cask iterm2
+# brew install --cask wezterm
+brew install --cask kitty
 brew install --cask visual-studio-code
 
-brew install --HEAD neovim
+brew install --cask google-chrome
+
+brew install --cask calibre
+brew install --cask obsidian
+
+brew install --cask dropbox
+brew install --cask snipaste
+brew install --cask stats
+brew install --cask hiddenbar
+brew install --cask rectangle
+brew install --cask hammerspoon
+
+brew install --cask iina
+brew install --cask spotify
+brew install --cask discord
+
+## ------
+## formula
+## ------
 brew install tmux
+brew install tmuxp
 brew install starship
 
-brew install emacs
-
-brew install fzf
-brew install gh
-
+# golang
 brew install go
 brew install gopls
 brew install delve
 brew install golangci-lint
 
-brew install node
-
+# lua
 brew install lua
 brew install busted
 brew install lua-language-server
+brew install stylua
+
+# node
+brew install node
+
+# python
+brew install uv
+
+# zig
+brew install zig
+brew install zls
 
 brew install fd
 brew install bat
@@ -32,20 +63,13 @@ brew install eza
 brew install just
 brew install zoxide
 brew install ripgrep
-brew install stylua
 
-brew install --cask nutstore
-brew install --cask dropbox
-brew install --cask spotify
-brew install --cask google-chrome
-brew install --cask microsoft-edge
-brew install --cask obsidian
-brew install --cask snipaste
-brew install --cask alfred
-brew install --cask discord
-brew install --cask rectangle
-brew install --cask alfred
-# brew install --cask hiddenbar
-# brew install --cask craft
+brew install fzf
+brew install scc
 
-brew install --cask hammerspoon
+brew install btop
+
+brew install gh
+brew install frpc
+# brew install cloc
+brew install git-absorb
