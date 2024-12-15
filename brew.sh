@@ -47,3 +47,5 @@ brew install --cask rectangle
 brew install --cask alfred
 # brew install --cask hiddenbar
 # brew install --cask craft
+
+brew install --cask hammerspoon
