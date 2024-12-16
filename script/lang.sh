@@ -221,11 +221,13 @@ function install_python() {
 
 	# or  https://github.com/pyenv/pyenv
 	# curl https://pyenv.run | bash
-	
-	# https://docs.astral.sh/uv
-	curl -LsSf https://astral.sh/uv/install.sh | sh
 
-	# uv python install 3.11
+	# https://docs.astral.sh/uv
+
+	if [[ ! -f "$(which uv)" ]]; then
+		curl -LsSf https://astral.sh/uv/install.sh | sh
+	fi
+	uv python install 3.12
 }
 
 case $1 in
