@@ -58,6 +58,10 @@ else
 	export EDITOR=vim
 fi
 
+if [[ $OS == darwin ]]; then
+	export HOMEBREW_BUNDLE_FILE=$XDG_CONFIG_HOME/Brewfile
+fi
+
 # user directions
 export LIU_ENV=$HOME/env
 export LIU_DEV=$HOME/dev
