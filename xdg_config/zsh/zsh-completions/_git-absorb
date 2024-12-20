@@ -14,10 +14,10 @@ _git-absorb() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" \
-'-b+[Use this commit as the base of the absorb stack]' \
-'--base=[Use this commit as the base of the absorb stack]' \
-'--gen-completions=[Generate completions]: :(bash fish zsh powershell elvish)' \
+    _arguments "${_arguments_options[@]}" : \
+'-b+[Use this commit as the base of the absorb stack]:BASE:_default' \
+'--base=[Use this commit as the base of the absorb stack]:BASE:_default' \
+'--gen-completions=[Generate completions]:GEN_COMPLETIONS:(bash fish nushell zsh powershell elvish)' \
 '-n[Don'\''t make any actual changes]' \
 '--dry-run[Don'\''t make any actual changes]' \
 '-f[Skip safety checks]' \
@@ -26,24 +26,25 @@ _git-absorb() {
 '--verbose[Display more output]' \
 '-r[Run rebase if successful]' \
 '--and-rebase[Run rebase if successful]' \
-'-w[Match the change against the complete file   ]' \
-'--whole-file[Match the change against the complete file   ]' \
+'-w[Match the change against the complete file]' \
+'--whole-file[Match the change against the complete file]' \
 '-F[Only generate one fixup per commit]' \
 '--one-fixup-per-commit[Only generate one fixup per commit]' \
-'-h[Prints help information]' \
-'--help[Prints help information]' \
-'-V[Prints version information]' \
-'--version[Prints version information]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
 && ret=0
-    
 }
 
 (( $+functions[_git-absorb_commands] )) ||
 _git-absorb_commands() {
-    local commands; commands=(
-        
-    )
+    local commands; commands=()
     _describe -t commands 'git-absorb commands' commands "$@"
 }
 
-_git-absorb "$@"
+if [ "$funcstack[1]" = "_git-absorb" ]; then
+    _git-absorb "$@"
+else
+    compdef _git-absorb git-absorb
+fi
