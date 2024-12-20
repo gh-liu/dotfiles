@@ -40,15 +40,15 @@ export SAVEHIST=100000
 # https://github.com/neovim/neovim/wiki/FAQ#colors-arent-displayed-correctly
 # export TERM=xterm-256color
 
-export OS=$(echo $(uname) | tr '[:upper:]' '[:lower:]')
+export OS=$(echo $(uname -s) | tr '[:upper:]' '[:lower:]')
 if [[ $OS == darwin ]]; then
 	export HOSTIP=$(ipconfig getifaddr en0)
 fi
-
 if [[ $OS == linux ]]; then
 	export HOSTIP=$(hostname -I | awk '{print $1}')
-	# export LinuxDistro=$(lsb_release -d | awk -F"\t" '{print $2}' | awk -F " " '{print $1}')
 fi
+
+export ARCH=$(echo $(uname -m) | tr '[:upper:]' '[:lower:]')
 
 # $EDITOR
 if command -v nvim &>/dev/null; then
