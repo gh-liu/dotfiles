@@ -228,6 +228,11 @@ function install_python() {
 		curl -LsSf https://astral.sh/uv/install.sh | sh
 	fi
 	uv python install 3.12
+
+	# NOTE: Use venv in python2
+	# 1. pip install virtualenv
+	# 2. virtualenv -p $(which python2) myenv
+	# 3. source myenv/bin/activate
 }
 
 case $1 in
