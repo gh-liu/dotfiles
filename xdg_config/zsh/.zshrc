@@ -244,6 +244,11 @@ export PATH=$PATH:$CARGO_BIN
 
 # Nodejs {{{2
 export PATH=$PATH:$LIU_ENV/nodejs/node/bin
+
+# curl -fsSL https://bun.sh/install | bash
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
 # }}}
 
 # python {{{

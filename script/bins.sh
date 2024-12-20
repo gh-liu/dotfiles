@@ -95,17 +95,19 @@ bins() {
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	fi
 
-	if [ -f "$(which npm)" ]; then
-		npm i -g vim-language-server
-		npm i -g bash-language-server
-		# npm i -g vscode-langservers-extracted # jsonls
-		npm i -g vscode-json-languageserver
-		npm i -g yaml-language-server
-		npm i -g typescript typescript-language-server
-		# npm i -g pyright
+	if [ -f "$(which bun)" ]; then
+		bun i -g vim-language-server
+		bun i -g bash-language-server
+		# bun i -g vscode-langservers-extracted # jsonls
+		bun i -g vscode-json-languageserver
+		bun i -g yaml-language-server
+		bun i -g typescript typescript-language-server
+		# bun i -g prettier
+		bun i -g @biomejs/biome
+		# bun i -g pyright
 
-		npm i -g @bufbuild/buf
-		npm i -g sql-formatter
+		bun i -g @bufbuild/buf
+		bun i -g sql-formatter
 	fi
 
 	if [ -f "$(which uv)" ]; then

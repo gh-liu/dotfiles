@@ -6,3 +6,4 @@ gh completion -s zsh >$XDG_CONFIG_HOME/zsh/zsh-completions/_gh
 just --completions=zsh >$XDG_CONFIG_HOME/zsh/zsh-completions/_just
 git-absorb --gen-completions zsh >$XDG_CONFIG_HOME/zsh/zsh-completions/_git-absorb
 docker completion zsh >$XDG_CONFIG_HOME/zsh/zsh-completions/_docker
+SHELL=zsh bun completions >$XDG_CONFIG_HOME/zsh/zsh-completions/_bun
