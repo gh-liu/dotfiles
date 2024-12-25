@@ -191,6 +191,14 @@ function update_luarocks() {
 	install_end
 }
 
+function update_bun() {
+	if [[ ! -f "$(which bun)" ]]; then
+		curl -fsSL https://bun.sh/install | bash
+	else
+		bun upgrade
+	fi
+}
+
 function update_nodejs() {
 	install_start nodejs
 
@@ -216,7 +224,7 @@ function update_nodejs() {
 	install_end
 }
 
-function install_python() {
+function install_uv() {
 	# or https://www.build-python-from-source.com
 
 	# or  https://github.com/pyenv/pyenv
@@ -226,8 +234,10 @@ function install_python() {
 
 	if [[ ! -f "$(which uv)" ]]; then
 		curl -LsSf https://astral.sh/uv/install.sh | sh
+		uv python install 3.12
+	else
+		uv self update
 	fi
-	uv python install 3.12
 
 	# NOTE: Use venv in python2
 	# 1. pip install virtualenv
@@ -255,10 +265,11 @@ case $1 in
 	update_luarocks
 	;;
 "nodejs")
-	update_nodejs
+	# update_nodejs
+	update_bun
 	;;
 "python")
-	install_python
+	install_uv
 	;;
 *)
 	echo "select one language"
