@@ -9,6 +9,10 @@ dev: zsh tmux nvim_nightly
 zsh: starship
 	@ ln -svf $$HOME/tools/dotfiles/.zshenv ~/.zshenv
 	
+.PHONY: ghostty
+ghostty:
+	@ ln -svf $$HOME/tools/dotfiles/xdg_config/ghostty ~/.config/ghostty
+	
 .PHONY: hammerspoon
 hammerspoon:
 	@ ln -svf $$HOME/tools/dotfiles/xdg_config/hammerspoon/init.lua ~/.hammerspoon/init.lua

@@ -1,0 +1,17 @@
+theme = "nord"
+
+font-family = "JetBrainsMonoNL Nerd Font Mono"
+font-size = 15
+
+background-opacity = 0.99
+
+macos-titlebar-style=tabs
+
+window-save-state = never
+
+confirm-close-surface = false
+
+# keybindings
+## NOTE: super is command on mac
+
+# vim:ft=config

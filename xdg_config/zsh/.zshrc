@@ -303,6 +303,10 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 
 ## zoxide
 [ -f "$(which zoxide)" ] && eval "$(zoxide init zsh)" # must be added after compinit is called.
+
+if [[ -n $GHOSTTY_RESOURCES_DIR ]]; then
+	source $GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration
+fi
 # }}}
 
 ## vim: foldmethod=marker foldlevel=0
