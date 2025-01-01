@@ -91,6 +91,7 @@ bins() {
 		go install github.com/jesseduffield/lazygit@latest
 		go install github.com/jesseduffield/lazydocker@latest
 
+		go install -ldflags "-s -w" github.com/tristanisham/zvm@latest
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 	fi
 

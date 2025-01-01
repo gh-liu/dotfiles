@@ -255,6 +255,12 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 # }}}
 
+# zig:zvm {{{
+# zvm i master
+# zvm i --zls master
+export PATH=$PATH:$HOME/.zvm/bin
+# }}}
+
 # python {{{
 export PYTHONBIN=$LIU_ENV/python/bin
 export PATH=$PATH:$PYTHONBIN
