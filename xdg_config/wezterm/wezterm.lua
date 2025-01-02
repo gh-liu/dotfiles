@@ -41,6 +41,8 @@ end)
 -- Config
 local config = {
 	check_for_updates = false,
+	-- https://wezfurlong.org/wezterm/config/lua/config/term.html
+	term = "wezterm",
 	font_size = 13.0,
 	-- https://wezfurlong.org/wezterm/config/fonts.html
 	-- https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode/Regular/complete
