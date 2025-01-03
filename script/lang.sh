@@ -47,41 +47,49 @@ function update_golangci-lint() {
 }
 
 function update_zig() {
-	install_start zig
+	if [[ -f "$(which zvm)" ]]; then
+		zvm i master
+	else
+		install_start zig
 
-	VERSION=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."version"')
-	echo "updating to $VERSION ..."
+		VERSION=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."version"')
+		echo "updating to $VERSION ..."
 
-	mkdir_env_dir zig
-	backup zig
+		mkdir_env_dir zig
+		backup zig
 
-	wget $(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball') -q --show-progress
-	test $? -eq 1 && echo "fial to download zig" && return
+		wget $(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball') -q --show-progress
+		test $? -eq 1 && echo "fial to download zig" && return
 
-	tar xvJf zig-linux-x86_64-$VERSION.tar.xz
-	rm zig-linux-x86_64-$VERSION.tar.xz
-	mv zig-linux-x86_64-$VERSION zig
+		tar xvJf zig-linux-x86_64-$VERSION.tar.xz
+		rm zig-linux-x86_64-$VERSION.tar.xz
+		mv zig-linux-x86_64-$VERSION zig
 
-	link_bin $(pwd)/zig/zig zig
+		link_bin $(pwd)/zig/zig zig
 
-	install_end
+		install_end
+	fi
 }
 
 function update_zls() {
-	install_start zls
+	if [[ -f "$(which zvm)" ]]; then
+		zvm i --zls master
+	else
+		install_start zls
 
-	mkdir_env_dir zls
+		mkdir_env_dir zls
 
-	git_clone_or_update https://github.com/zigtools/zls $LIU_ENV/zls
+		git_clone_or_update https://github.com/zigtools/zls $LIU_ENV/zls
 
-	zig build -Doptimize=ReleaseSafe
-	test $? -eq 1 && echo "fial to build zls" && return
+		zig build -Doptimize=ReleaseSafe
+		test $? -eq 1 && echo "fial to build zls" && return
 
-	chmod +x $(pwd)/zig-out/bin/zls
+		chmod +x $(pwd)/zig-out/bin/zls
 
-	link_bin $(pwd)/zig-out/bin/zls zls
+		link_bin $(pwd)/zig-out/bin/zls zls
 
-	install_end
+		install_end
+	fi
 }
 
 function update_rust() {
