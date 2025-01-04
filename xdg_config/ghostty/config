@@ -11,6 +11,8 @@ window-save-state = never
 
 confirm-close-surface = false
 
+shell-integration = zsh
+
 # keybindings
 ## NOTE: super is command on mac
 
