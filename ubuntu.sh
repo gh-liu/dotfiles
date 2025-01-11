@@ -28,6 +28,8 @@ sudo apt install -y gcc g++
 sudo apt install -y clangd
 sudo apt install -y gdb lldb-14
 
+sudo apt install -y  bpfcc-tools linux-headers-$(uname -r)
+
 # build
 sudo apt install -y make cmake ninja-build
 
