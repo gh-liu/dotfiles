@@ -29,7 +29,8 @@ truncation_symbol = '…/'
 # success_symbol = "[➜](bold green)"
 # error_symbol = "[✘](bold red) "
 success_symbol = "[>](bold green)"
-error_symbol = "[x](bold red)"
+error_symbol = "[>](bold red)"
+# error_symbol = "[x](bold red)"
 vimcmd_symbol = "[<](bold green)"
 # }}}
 
