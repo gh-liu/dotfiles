@@ -29,6 +29,8 @@ sudo apt install -y clangd
 sudo apt install -y gdb lldb-14
 
 sudo apt install -y  bpfcc-tools linux-headers-$(uname -r)
+# dtrace
+sudo apt-get install systemtap-sdt-dev 
 
 # build
 sudo apt install -y make cmake ninja-build
