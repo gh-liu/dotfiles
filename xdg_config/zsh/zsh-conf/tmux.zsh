@@ -55,4 +55,41 @@ ftmux() {
 alias f='ftmux'
 # }}}
 
+if test -n "${TMUX}"; then
+	# https://github.com/von/homestuff/blob/b624fbcf5d5f4e385cbc75b57466f342ce36a977/home/dot_zsh.d/tmux.zsh#L69
+	tmux-last-command-output() {
+		# There doesn't seem to be any way to output the tux selection directly
+		# to stdout, so we use a named pipe.
+		local pipedir=$(mktemp -d -t tmux-lco)
+		local pipefile="${pipedir}/fifo"
+		mkfifo -m 600 ${pipefile}
+		tmux copy-mode \; \
+			send-keys -X previous-prompt -o \; \
+			send-keys -X begin-selection \; \
+			send-keys -X next-prompt \; \
+			send-keys -X cursor-up \; \
+			send-keys -X end-of-line \; \
+			send-keys -X stop-selection \; \
+			send-keys -X copy-pipe-and-cancel "cat > ${pipefile}"
+		cat ${pipefile}
+		# Clean up
+		rm -f ${pipefile}
+		rmdir -rf ${pipedir}
+	}
+
+	alias lco='tmux-last-command-output'
+
+	# See:
+	# https://github.com/tmux/tmux/issues/4259
+	# https://github.com/tmux/tmux/issues/3734
+	TMUX_COMMAND_OUTPUT_MARK=$'\e]133;C\e\\'
+
+	# Mark the start of command output
+	tmux-mark-command-start() {
+		echo -ne ${TMUX_COMMAND_OUTPUT_MARK}
+	}
+
+	add-zsh-hook preexec tmux-mark-command-start
+fi
+
 # vim: foldmethod=marker
