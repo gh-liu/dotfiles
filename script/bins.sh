@@ -111,7 +111,7 @@ bins() {
 	fi
 
 	if [ -f "$(which uv)" ]; then
-		uv tool install pyright
+		uv tool install --force pyright
 	fi
 
 	if [ -f "$(which cargo)" ]; then
