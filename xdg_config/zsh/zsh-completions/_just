@@ -15,8 +15,9 @@ _just() {
 
     local context curcontext="$curcontext" state line
     local common=(
+'(--no-aliases)--alias-style=[Set list command alias display style]: :(left right separate)' \
 '--chooser=[Override binary invoked by \`--choose\`]: :_default' \
-'--color=[Print colorful output]: :(auto always never)' \
+'--color=[Print colorful output]: :(always auto never)' \
 '--command-color=[Echo recipe lines in <COMMAND-COLOR>]: :(black blue cyan green purple red yellow)' \
 '(-E --dotenv-path)--dotenv-filename=[Search for environment file named <DOTENV-FILENAME> instead of \`.env\`]: :_default' \
 '-E+[Load <DOTENV-PATH> as environment file instead of searching for one]: :_files' \
@@ -35,8 +36,8 @@ _just() {
 '*-c+[Run an arbitrary command with the working directory, \`.env\`, overrides, and exports set]: :_default' \
 '*--command=[Run an arbitrary command with the working directory, \`.env\`, overrides, and exports set]: :_default' \
 '--completions=[Print shell completion script for <SHELL>]:SHELL:(bash elvish fish nushell powershell zsh)' \
-'()-l+[List available recipes]' \
-'()--list=[List available recipes]' \
+'()-l+[List available recipes in <MODULE> or root if omitted]' \
+'()--list=[List available recipes in <MODULE> or root if omitted]' \
 '--request=[Execute <REQUEST>. For internal testing purposes only. May be changed or removed at any time.]: :_default' \
 '-s+[Show recipe at <PATH>]: :(_just_commands)' \
 '--show=[Show recipe at <PATH>]: :(_just_commands)' \

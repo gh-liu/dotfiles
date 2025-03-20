@@ -17,11 +17,13 @@ _git-absorb() {
     _arguments "${_arguments_options[@]}" : \
 '-b+[Use this commit as the base of the absorb stack]:BASE:_default' \
 '--base=[Use this commit as the base of the absorb stack]:BASE:_default' \
-'--gen-completions=[Generate completions]:GEN_COMPLETIONS:(bash fish nushell zsh powershell elvish)' \
+'--gen-completions=[Generate completions]:SHELL:(bash fish nushell zsh powershell elvish)' \
 '-n[Don'\''t make any actual changes]' \
 '--dry-run[Don'\''t make any actual changes]' \
-'-f[Skip safety checks]' \
-'--force[Skip safety checks]' \
+'--force-author[Generate fixups to commits not made by you]' \
+'--force-detach[Generate fixups even when on a non-branch (detached) HEAD]' \
+'-f[Skip all safety checks as if all --force-* flags were given]' \
+'--force[Skip all safety checks as if all --force-* flags were given]' \
 '-v[Display more output]' \
 '--verbose[Display more output]' \
 '-r[Run rebase if successful]' \
@@ -34,6 +36,7 @@ _git-absorb() {
 '--help[Print help]' \
 '-V[Print version]' \
 '--version[Print version]' \
+'*::rebase_options -- Extra arguments to pass to git rebase. Only valid if --and-rebase is set:_default' \
 && ret=0
 }
 
