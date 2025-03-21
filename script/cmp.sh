@@ -7,3 +7,7 @@
 [ -f "$(which docker)" ] && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 [ -f "$(which podman)" ] && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
 [ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
+
+# completion in xdg_config/zsh/.zshrc
+# [ -f "$(which uv)" ] && uv generate-shell-completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_uv
+# [ -f "$(which uvx)" ] && uvx --generate-shell-completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_uvx
