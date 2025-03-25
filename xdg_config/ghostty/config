@@ -16,6 +16,9 @@ confirm-close-surface = false
 
 shell-integration = zsh
 
+clipboard-read = allow
+clipboard-write = allow
+
 # keybindings
 ## NOTE: super is command on mac
 
