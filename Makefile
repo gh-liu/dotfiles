@@ -16,6 +16,13 @@ ghostty:
 .PHONY: hammerspoon
 hammerspoon:
 	@ ln -svf $$HOME/tools/dotfiles/xdg_config/hammerspoon/init.lua ~/.hammerspoon/init.lua
+	
+.PHONY: brew
+brew:
+	@ brew bundle install --file=$$HOME/tools/dotfiles/xdg_config/Brewfile
+.PHONY: brewdump
+brewdump:
+	@ brew bundle dump --force --file=$$HOME/tools/dotfiles/xdg_config/Brewfile
 
 .PHONY: starship
 starship:
