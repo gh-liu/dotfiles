@@ -108,6 +108,8 @@ bins() {
 
 		bun i -g @bufbuild/buf
 		bun i -g sql-formatter
+		bun i -g @anthropic-ai/claude-code
+
 	fi
 
 	if [ -f "$(which uv)" ]; then
