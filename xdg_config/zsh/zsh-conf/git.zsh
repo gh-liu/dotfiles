@@ -70,4 +70,19 @@ export EMPTY_GIT_TREE="4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 function gam {
 	grepdiff $1 <(git diff) | git apply --cached
 }
+
+HASH="%C(always,yellow)%h%C(always,reset)"
+RELATIVE_TIME="%C(always,green)%ar%C(always,reset)"
+AUTHOR="%C(always,bold blue)%an%C(always,reset)"
+REFS="%C(always,red)%d%C(always,reset)"
+SUBJECT="%s"
+
+FORMAT="$HASH $RELATIVE_TIME{$AUTHOR{$REFS $SUBJECT"
+
+pretty_git_log() {
+	git log --graph --pretty="tformat:$FORMAT" $* |
+		column -t -s '{' |
+		less -XRS --quit-if-one-screen
+}
+
 # vim: foldmethod=marker
