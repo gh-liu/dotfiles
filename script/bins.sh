@@ -113,7 +113,9 @@ bins() {
 	if [ -f "$(which uv)" ]; then
 		uv tool install --force pyright
 		uv tool install --force debugpy
+
 		uv tool install --force pre-commit
+		uv tool install --force git-filter-repo
 	fi
 
 	if [ -f "$(which cargo)" ]; then
