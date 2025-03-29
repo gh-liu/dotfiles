@@ -1,0 +1,14 @@
+{
+  "xdg_config/zsh/.zshrc": {
+    "type": "zshrc"
+  },
+  "xdg_config/zsh/zsh-conf/custom.zsh": {
+    "type": "zshcustom"
+  },
+  "xdg_config/zsh/starship/starship.toml": {
+    "type": "startship"
+  },
+  "xdg_config/tmux/tmux.conf": {
+    "type": "tmux"
+  }
+}
