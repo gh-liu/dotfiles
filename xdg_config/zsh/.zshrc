@@ -159,10 +159,6 @@ autoload -U +X bashcompinit && bashcompinit
 autoload -U +X compinit && compinit
 # }}}
 
-# User Configuration {{{1
-[ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
-# }}}
-
 # {{{1 Path
 # https://zsh.sourceforge.io/Guide/zshguide02.html#l24
 typeset -U path
@@ -454,5 +450,8 @@ function extract {
 }
 alias extr='extract '
 # }}}
+
+# User Configuration
+[ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 
 ## vim: foldmethod=marker foldlevel=0
