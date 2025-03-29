@@ -1,132 +1,46 @@
 # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
 # setxkbmap -option ctrl:swapcaps
 
-# Options {{{1
-# https://zsh.sourceforge.io/Doc/Release/Options.html
-setopt EXTENDED_HISTORY
-setopt APPEND_HISTORY
-# setopt INC_APPEND_HISTORY
-setopt HIST_IGNORE_SPACE
-setopt HIST_IGNORE_DUPS
-# setopt HIST_VERIFY # !!
+typeset -U path # keep path unique
 
-setopt AUTO_PUSHD
-setopt PUSHD_IGNORE_DUPS
-setopt PUSHD_SILENT
-# for index ({1..9}) alias "$index"="cd +${index}"; unset index
-alias d='dirs -v'
+export OS=$(echo $(uname -s) | tr '[:upper:]' '[:lower:]')
+export ARCH=$(echo $(uname -m) | tr '[:upper:]' '[:lower:]')
 
-setopt NO_CASE_GLOB
-
-setopt AUTO_CD
-
-# setopt CORRECT
-# setopt CORRECT_ALL
-
-# revert the options: emulate -LR zsh
-# list the options: emulate -lLR zsh
-# }}}
-
-# Envs {{{1
-export SHELL=$(which zsh)
-
-export LC_ALL=en_US.UTF-8
-export LANG=en_US.UTF-8
-
+# https://zsh.sourceforge.io/Doc/Release/Options.html#History
+# HISTORY {{{1
 export HISTFILE=${ZDOTDIR:-$HOME}/.zsh_history
 export HISTSIZE=100000
 export SAVEHIST=100000
 
-# https://github.com/neovim/neovim/wiki/FAQ#colors-arent-displayed-correctly
-# export TERM=xterm-256color
-
-export OS=$(echo $(uname -s) | tr '[:upper:]' '[:lower:]')
-if [[ $OS == darwin ]]; then
-	export HOSTIP=$(ipconfig getifaddr en0)
-fi
-if [[ $OS == linux ]]; then
-	export HOSTIP=$(hostname -I | awk '{print $1}')
-fi
-
-export ARCH=$(echo $(uname -m) | tr '[:upper:]' '[:lower:]')
-
-# $EDITOR
-if command -v nvim &>/dev/null; then
-	export EDITOR=nvim
-	export MANPAGER='nvim +Man!'
-else
-	export EDITOR=vim
-fi
-
-if [[ $OS == darwin ]]; then
-	export HOMEBREW_BUNDLE_FILE=$XDG_CONFIG_HOME/Brewfile
-fi
-
-# user directions
-export LIU_ENV=$HOME/env
-export LIU_DEV=$HOME/dev
-export LIU_TOOLS=$HOME/tools
-
-if [[ -f $LIU_ENV/pwd.sh ]]; then
-	export SUDO_ASKPASS=$LIU_ENV/pwd.sh
-fi
-
+setopt INC_APPEND_HISTORY     # Immediately append to history file.
+setopt EXTENDED_HISTORY       # Record timestamp in history.
+setopt HIST_EXPIRE_DUPS_FIRST # Expire duplicate entries first when trimming history.
+setopt HIST_IGNORE_DUPS       # Dont record an entry that was just recorded again.
+setopt HIST_IGNORE_ALL_DUPS   # Delete old recorded entry if new entry is a duplicate.
+setopt HIST_FIND_NO_DUPS      # Do not display a line previously found.
+setopt HIST_IGNORE_SPACE      # Dont record an entry starting with a space.
+setopt HIST_SAVE_NO_DUPS      # Dont write duplicate entries in the history file.
+setopt SHARE_HISTORY          # Share history between all sessions.
+unsetopt HIST_VERIFY          # Execute commands using history (e.g.: using !$) immediately
+# setopt HIST_VERIFY # !!
 # }}}
 
-# Plugins {{{1
-function git_clone_or_update() {
-	git clone "$1" "$2" 2>/dev/null && echo 'Clone status: Success' || (
-		cd "$2"
-		git pull
-	)
-}
-function update_zsh_plugins() {
-	mkdir -p $HOME/.zsh-plugins
-	git_clone_or_update https://github.com/zsh-users/zsh-autosuggestions $HOME/.zsh-plugins/zsh-autosuggestions
-	git_clone_or_update https://github.com/zsh-users/zsh-syntax-highlighting $HOME/.zsh-plugins/zsh-syntax-highlighting
-	git_clone_or_update https://github.com/zsh-users/zsh-completions.git $HOME/.zsh-plugins/zsh-completions
-	# git_clone_or_update https://github.com/marlonrichert/zsh-autocomplete.git $HOME/.zsh-plugins/zsh-autocomplete
+# https://zsh.sourceforge.io/Doc/Release/Options.html#Changing-Directories
+# Changing Directories {{{1
+# setopt AUTO_CD
+setopt AUTO_PUSHD
+setopt PUSHD_IGNORE_DUPS
+setopt PUSHD_SILENT
 
-	git_clone_or_update https://github.com/jeffreytse/zsh-vi-mode $HOME/.zsh-plugins/zsh-vi-mode
-
-	# git_clone_or_update https://github.com/hutusi/git-paging.git $HOME/.zsh-plugins/git-paging
-	# ln -svf $HOME/.zsh-plugins/git-paging/git-* $HOME/.local/bin
-}
-
-# https://github.com/zsh-users/zsh-autosuggestions
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=12
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-source $HOME/.zsh-plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-bindkey '^l' forward-word
-
-# https://github.com/zsh-users/zsh-syntax-highlighting
-source $HOME/.zsh-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-# https://github.com/zsh-users/zsh-completions
-fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
-
-# https://github.com/jeffreytse/zsh-vi-mode
-function zvm_config() {
-	ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
-
-	ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
-	ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
-	# ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
-}
-# disable in nvim terminal buffer
-if [[ -z "${NVIM}" ]]; then
-	source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
-fi
-# zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
+# for index ({1..9}) alias "$index"="cd +${index}"; unset index
+alias dirs='dirs -v'
 # }}}
 
-# Completion {{{1
+# https://zsh.sourceforge.io/Doc/Release/Options.html#Completion-4
 # https://zsh.sourceforge.io/Doc/Release/Completion-System.html
+# Completion {{{1
 # completion https://thevaluable.dev/zsh-completion-guide-examples
 if [[ $OS == darwin ]]; then
-	if type brew &>/dev/null; then
-		FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-	fi
 fi
 
 fpath=($XDG_CONFIG_HOME/zsh/zsh-completions $fpath)
@@ -159,18 +73,84 @@ autoload -U +X bashcompinit && bashcompinit
 autoload -U +X compinit && compinit
 # }}}
 
-# {{{1 Path
-# https://zsh.sourceforge.io/Guide/zshguide02.html#l24
-typeset -U path
+# Envs {{{1
+export SHELL=$(which zsh)
+
+export LC_ALL=en_US.UTF-8
+export LANG=en_US.UTF-8
+
+# https://github.com/neovim/neovim/wiki/FAQ#colors-arent-displayed-correctly
+# export TERM=xterm-256color
+
+# if [[ $OS == darwin ]]; then
+# 	export HOSTIP=$(ipconfig getifaddr en0)
+# fi
+# if [[ $OS == linux ]]; then
+# 	export HOSTIP=$(hostname -I | awk '{print $1}')
+# fi
+
+# $EDITOR
+if command -v nvim &>/dev/null; then
+	export EDITOR=nvim
+	export MANPAGER='nvim +Man!'
+else
+	export EDITOR=vim
+fi
 
 export PATH=$PATH:$HOME/bin:$HOME/.local/bin
 
-if [[ $OS == darwin ]]; then
-	export PATH=$PATH:/opt/homebrew/bin
-fi
+# user directions
+export LIU_ENV=$HOME/env
+export LIU_DEV=$HOME/dev
+export LIU_TOOLS=$HOME/tools
+# }}}
 
-# Remove duplicate env var
-# export PATH=$(echo $PATH | tr : "\n" | sort | uniq | tr "\n" :)
+# Plugins {{{1
+function git_clone_or_update() {
+	git clone "$1" "$2" 2>/dev/null && echo 'Clone status: Success' || (
+		cd "$2"
+		git pull
+	)
+}
+function update_zsh_plugins() {
+	mkdir -p $HOME/.zsh-plugins
+	git_clone_or_update https://github.com/zsh-users/zsh-autosuggestions $HOME/.zsh-plugins/zsh-autosuggestions
+	git_clone_or_update https://github.com/zsh-users/zsh-syntax-highlighting $HOME/.zsh-plugins/zsh-syntax-highlighting
+	git_clone_or_update https://github.com/zsh-users/zsh-completions.git $HOME/.zsh-plugins/zsh-completions
+	# git_clone_or_update https://github.com/marlonrichert/zsh-autocomplete.git $HOME/.zsh-plugins/zsh-autocomplete
+
+	git_clone_or_update https://github.com/jeffreytse/zsh-vi-mode $HOME/.zsh-plugins/zsh-vi-mode
+
+	# git_clone_or_update https://github.com/hutusi/git-paging.git $HOME/.zsh-plugins/git-paging
+	# ln -svf $HOME/.zsh-plugins/git-paging/git-* $HOME/.local/bin
+}
+
+# https://github.com/zsh-users/zsh-autosuggestions
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=12
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+source $HOME/.zsh-plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+bindkey '^l' forward-word
+
+# https://github.com/zsh-users/zsh-syntax-highlighting
+source $HOME/.zsh-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Additional completion
+# https://github.com/zsh-users/zsh-completions
+fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
+
+# https://github.com/jeffreytse/zsh-vi-mode
+function zvm_config() {
+	ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
+
+	ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
+	ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
+	# ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
+}
+# disable in nvim terminal buffer
+if [[ -z "${NVIM}" ]]; then
+	source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+fi
+# zvm_bindkey vicmd '^e' zvm_vi_edit_command_line
 # }}}
 
 # Langs {{{1
@@ -232,12 +212,11 @@ export PATH=$PATH:$CARGO_BIN
 # }}}
 
 # Nodejs {{{2
-export PATH=$PATH:$LIU_ENV/nodejs/node/bin
+# export PATH=$PATH:$LIU_ENV/nodejs/node/bin
 
 # curl -fsSL https://bun.sh/install | bash
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-
 # }}}
 
 # zig:zvm {{{
@@ -247,8 +226,8 @@ export PATH=$PATH:$HOME/.zvm/bin
 # }}}
 
 # python {{{
-export PYTHONBIN=$LIU_ENV/python/bin
-export PATH=$PATH:$PYTHONBIN
+# export PYTHONBIN=$LIU_ENV/python/bin
+# export PATH=$PATH:$PYTHONBIN
 
 function _venv() {
 	local venv_path=${1:=".venv"}
@@ -259,7 +238,7 @@ function _venv() {
 		return 1
 	fi
 }
-alias venv=_venv
+alias venva=_venv
 
 # curl -LsSf https://astral.sh/uv/install.sh | sh
 if [[ -f "$(which uv)" ]]; then
@@ -273,6 +252,16 @@ fi
 # }}}
 
 # Tools {{{1
+## brew
+if [[ $OS == darwin ]]; then
+	# See: https://docs.brew.sh/Shell-Completion
+	if type brew &>/dev/null; then
+		FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+	fi
+	export PATH=$PATH:/opt/homebrew/bin
+	export HOMEBREW_BUNDLE_FILE=$XDG_CONFIG_HOME/Brewfile
+fi
+
 ## starship
 # curl -sS https://starship.rs/install.sh | sh
 export STARSHIP_CONFIG=$ZDOTDIR/starship/starship.toml
