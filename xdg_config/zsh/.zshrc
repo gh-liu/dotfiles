@@ -163,7 +163,6 @@ autoload -U +X compinit && compinit
 sources=(
 	'functions'
 	'aliases'
-	'tmux'
 )
 
 for s in "${sources[@]}"; do
@@ -380,6 +379,32 @@ po() {
 	gh pr list | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
 }
 
+# }}}
+
+# Tmux {{{1
+ftmux() {
+	if [[ ! -n $TMUX ]]; then
+		# get the IDs
+		ID="$(tmux list-sessions)"
+		if [[ -z "$ID" ]]; then
+			tmux new-session
+		else
+			create_new_session="Create New Session"
+			ID="$ID\n${create_new_session}:"
+			ID="$(echo $ID | fzf | cut -d: -f1)"
+			if [[ "$ID" = "${create_new_session}" ]]; then
+				tmux new-session
+			elif [[ -n "$ID" ]]; then
+				printf '\033]777;tabbedx;set_tab_name;%s\007' "$ID"
+				tmux attach-session -t "$ID"
+			else
+				: # Start terminal normally
+			fi
+		fi
+	fi
+}
+
+alias f='ftmux'
 # }}}
 
 ## vim: foldmethod=marker foldlevel=0
