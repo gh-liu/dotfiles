@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+mkdir -p "$XDG_CONFIG_HOME"/zsh/zsh-completions
+
 [ -f "$(which rustup)" ] && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
 [ -f "$(which gh)" ] && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
 [ -f "$(which just)" ] && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
