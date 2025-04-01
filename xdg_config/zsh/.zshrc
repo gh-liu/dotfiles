@@ -384,6 +384,13 @@ ftmux() {
 }
 
 alias f='ftmux'
+
+ftmuxp() {
+	sessions="$(tmuxp ls)"
+	session=$(echo "$sessions" | eval "fzf --header \"tmux sessions\"")
+	[[ -z "$session" ]] && exit
+	tmuxp load --yes $session >/dev/null
+}
 # }}}
 
 # aliases & functions {{{
