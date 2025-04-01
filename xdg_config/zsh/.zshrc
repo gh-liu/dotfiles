@@ -363,13 +363,16 @@ ftmux() {
 		# get the IDs
 		ID="$(tmux list-sessions)"
 		if [[ -z "$ID" ]]; then
-			tmux new-session
+			session=$(basename "$PWD")
+			tmux new-session -s $session
 		else
 			create_new_session="Create New Session"
 			ID="$ID\n${create_new_session}:"
 			ID="$(echo $ID | fzf | cut -d: -f1)"
 			if [[ "$ID" = "${create_new_session}" ]]; then
-				tmux new-session
+				printf "%s" "Enter session name: "
+				read session
+				tmux new-session -s $session
 			elif [[ -n "$ID" ]]; then
 				printf '\033]777;tabbedx;set_tab_name;%s\007' "$ID"
 				tmux attach-session -t "$ID"
