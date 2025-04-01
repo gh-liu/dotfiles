@@ -41,9 +41,18 @@ alias dirs='dirs -v'
 # Completion {{{1
 # completion https://thevaluable.dev/zsh-completion-guide-examples
 if [[ $OS == darwin ]]; then
+	# See: https://docs.brew.sh/Shell-Completion
+	if type brew &>/dev/null; then
+		FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
+	fi
 fi
 
+# Additional completion
+# https://github.com/zsh-users/zsh-completions.git
 fpath=($XDG_CONFIG_HOME/zsh/zsh-completions $fpath)
+
+# https://github.com/zsh-users/zsh-completions
+fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
 
 setopt MENU_COMPLETE # Automatically highlight first element of completion menu
 
@@ -133,10 +142,6 @@ bindkey '^l' forward-word
 
 # https://github.com/zsh-users/zsh-syntax-highlighting
 source $HOME/.zsh-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-
-# Additional completion
-# https://github.com/zsh-users/zsh-completions
-fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
 
 # https://github.com/jeffreytse/zsh-vi-mode
 function zvm_config() {
@@ -254,10 +259,6 @@ fi
 # Tools {{{1
 ## brew
 if [[ $OS == darwin ]]; then
-	# See: https://docs.brew.sh/Shell-Completion
-	if type brew &>/dev/null; then
-		FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-	fi
 	export PATH=$PATH:/opt/homebrew/bin
 	export HOMEBREW_BUNDLE_FILE=$XDG_CONFIG_HOME/Brewfile
 fi
