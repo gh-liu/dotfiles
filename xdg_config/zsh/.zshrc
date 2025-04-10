@@ -310,6 +310,7 @@ alias gst='git status'
 
 alias gb='git branch'
 alias ga='git add '
+alias gc='git commit '
 
 alias ggl='git pull '
 alias ggp='git push '
