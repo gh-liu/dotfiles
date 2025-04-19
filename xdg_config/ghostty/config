@@ -19,6 +19,8 @@ shell-integration = zsh
 clipboard-read = allow
 clipboard-write = allow
 
+macos-option-as-alt = true
+
 # keybindings
 ## NOTE: super is command on mac
 
