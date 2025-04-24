@@ -351,10 +351,10 @@ pretty_git_log() {
 fo() {
 	git branch --no-color --sort=-committerdate --format='%(refname:short)' | fzf --header 'git checkout' | xargs git checkout
 }
-# [p]ull request check[o]ut
-po() {
+# [f]uzzy [p]ull request check[o]ut
+fpo() {
 	# gh pr list --author "@me" | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
-	gh pr list | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
+	gh pr list | fzf --header 'checkout PR' | awk '{print $(1)}' | xargs gh pr checkout
 }
 
 # }}}
