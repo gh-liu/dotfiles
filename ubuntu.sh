@@ -43,6 +43,11 @@ sudo apt install -y mysql-client
 # lang
 # sudo apt install -y python3-pip
 
+# nodejs
+# https://deb.nodesource.com/
+# curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+sudo apt install -y nodejs
+
 # libs
 sudo apt install -y libncurses5-dev libevent-dev
 
