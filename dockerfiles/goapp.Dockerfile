@@ -8,9 +8,10 @@ RUN CGO_ENABLED=0 go build -gcflags "all=-N -l" -o app
 RUN chmod +x app
 # RUN which dlv
 
-FROM scratch
+# FROM scratch
+FROM docker.io/library/alpine:latest
 COPY --from=build /go/bin/dlv /dlv
 COPY --from=build /app /app
 
-ENTRYPOINT [ "/dlv", "exec", "app", "--headless", "--listen=:5678", "--accept-multiclient", "--continue" ]
 # ENTRYPOINT [ "/app" ]
+ENTRYPOINT [ "/dlv", "exec", "/app", "--headless", "--listen=:5678", "--accept-multiclient", "--api-version=2", "--log", "--log-output=debugger,gdbwire,lldbout,debuglineerr,rpc,dap,fncall,minidump,stack", "--continue" ]
