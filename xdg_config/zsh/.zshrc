@@ -292,6 +292,12 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 if [[ -n $GHOSTTY_RESOURCES_DIR ]]; then
 	source $GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration
 fi
+
+## go tool present: https://pkg.go.dev/golang.org/x/tools/present
+_gopresent() {
+	present -http "$(hostname -I | awk '{print $1}'):3999"
+}
+alias gopresent=_gopresent
 # }}}
 
 # Git {{{1
