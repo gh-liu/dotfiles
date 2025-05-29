@@ -91,12 +91,14 @@ export LANG=en_US.UTF-8
 # https://github.com/neovim/neovim/wiki/FAQ#colors-arent-displayed-correctly
 # export TERM=xterm-256color
 
-# if [[ $OS == darwin ]]; then
-# 	export HOSTIP=$(ipconfig getifaddr en0)
-# fi
-# if [[ $OS == linux ]]; then
-# 	export HOSTIP=$(hostname -I | awk '{print $1}')
-# fi
+if [[ -z "${HOSTIP}" ]]; then
+	if [[ $OS == darwin ]]; then
+		export HOSTIP=$(ipconfig getifaddr en0)
+	fi
+	if [[ $OS == linux ]]; then
+		export HOSTIP=$(hostname -I | awk '{print $1}')
+	fi
+fi
 
 # $EDITOR
 if command -v nvim &>/dev/null; then
