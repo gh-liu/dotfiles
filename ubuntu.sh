@@ -34,6 +34,7 @@ sudo apt-get install systemtap-sdt-dev
 
 # build
 sudo apt install -y make cmake ninja-build
+sudo apt install -y graphviz                                                                                                                                                              allen in
 
 # databases
 sudo apt install -y sqlite3
