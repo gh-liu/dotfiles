@@ -382,6 +382,9 @@ ftmux() {
 			if [[ "$ID" = "${create_new_session}" ]]; then
 				printf "%s" "Enter session name: "
 				read session
+				if [ -z "$session" ]; then
+					session=$(basename $(pwd))
+				fi
 				tmux new-session -s $session
 			elif [[ -n "$ID" ]]; then
 				printf '\033]777;tabbedx;set_tab_name;%s\007' "$ID"
