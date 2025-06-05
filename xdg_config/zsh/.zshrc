@@ -1,6 +1,11 @@
 # https://unix.stackexchange.com/questions/332791/how-to-permanently-disable-ctrl-s-in-terminal
 # setxkbmap -option ctrl:swapcaps
 
+# TODO: zsh zle
+# https://zsh.sourceforge.io/Guide/zshguide04.html
+# https://zsh.sourceforge.io/Doc/Release/Zsh-Line-Editor.html#Zle-Widgets
+# man zshzle
+
 typeset -U path # keep path unique
 
 export OS=$(echo $(uname -s) | tr '[:upper:]' '[:lower:]')
