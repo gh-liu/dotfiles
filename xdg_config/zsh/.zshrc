@@ -147,7 +147,7 @@ source $HOME/.zsh-plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 # https://github.com/jeffreytse/zsh-vi-mode
 function zvm_config() {
-	ZVM_VI_INSERT_ESCAPE_BINDKEY=jj
+	ZVM_VI_INSERT_ESCAPE_BINDKEY=jk
 
 	ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
 	ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
