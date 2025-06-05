@@ -152,6 +152,12 @@ function zvm_config() {
 	ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
 	ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
 	# ZVM_NORMAL_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BLOCK
+
+	# https://github.com/jeffreytse/zsh-vi-mode?tab=readme-ov-file#custom-widgets-and-keybindings
+	# zvm_bindkey <keymap> <keys> <widget>
+	# NOTE: Run `cat` then press keys to see the codes your shortcut send
+	zvm_bindkey viins '^[f' vi-forward-word
+	zvm_bindkey viins '^[b' vi-backward-word
 }
 # disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
