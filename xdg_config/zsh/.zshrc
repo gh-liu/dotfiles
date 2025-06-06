@@ -477,4 +477,17 @@ alias extr='extract '
 # User Configuration
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 
+# NOTE: `man zshmisc`, see `EXPANSION`
+# %n     $USERNAME.
+# %M     The full machine hostname.
+# %~     Current working directory.
+#
+# https://www.x.org/docs/xterm/ctlseqs.pdf
+# \e]2;balabala  -> Change Window Title to balabala
+# 
+# https://zsh.sourceforge.io/Doc/Release/Functions.html
+# precmd: Executed before each prompt.
+# chpwd: Executed whenever the current working directory is changed.
+chpwd() {print -Pn "\e]2;%n@%M: %~\a"}
+
 ## vim: foldmethod=marker foldlevel=0
