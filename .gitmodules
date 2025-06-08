@@ -1,3 +1,0 @@
-[submodule "xdg_config/nvim"]
-	path = xdg_config/nvim
-	url = https://github.com/gh-liu/config.nvim
