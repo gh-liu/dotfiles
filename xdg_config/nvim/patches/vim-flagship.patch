@@ -1,0 +1,17 @@
+diff --git a/autoload/flagship.vim b/autoload/flagship.vim
+index 3f0bca7..f76ae74 100644
+--- a/autoload/flagship.vim
++++ b/autoload/flagship.vim
+@@ -140,6 +140,12 @@ function! flagship#tabmodified(...) abort
+   let tab = a:0 ? a:1 : v:lnum
+   let str = ''
+   for tab in tab ? [tab] : range(1, tabpagenr('$'))
++    let tabinfo = gettabinfo(tab)[0]
++    for windowid in tabinfo.windows
++    if gettabwinvar(tab, windowid, '&diff')
++        let str .= '*'
++    endif
++    endfor
+     for buf in tabpagebuflist(tab)
+       if getbufvar(buf, '&buftype') ==# 'terminal'
+         let str .= '!'

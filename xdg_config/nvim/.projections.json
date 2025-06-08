@@ -1,0 +1,34 @@
+{
+  "lsp/*.lua": {
+    "type": "lsp",
+    "alternate": "lua/liu/lsp/servers/{}.lua"
+  },
+  "lua/liu/lsp/servers/*.lua": {
+    "type": "lsp_ex",
+    "alternate": "lsp/{}.lua"
+  },
+  "lua/liu/lsp/init.lua": {
+    "type": "lsp_init"
+  },
+  "lua/liu/dap/adapters/*.lua": {
+    "type": "dap"
+  },
+  "lua/liu/dap/init.lua": {
+    "type": "dap_init"
+  },
+  "lua/liu/config/*.lua": {
+    "type": "config"
+  },
+  "lua/liu/plugins/*.lua": {
+    "type": "plugin_spec"
+  },
+  "after/ftplugin/*.lua": {
+    "type": "ftplugin"
+  },
+  "after/plugin/*.lua": {
+    "type": "after_plugin"
+  },
+  "after/plugin/*.vim": {
+    "type": "after_plugin"
+  }
+}

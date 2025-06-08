@@ -1,0 +1,13 @@
+{
+  "nvim-autocmd-filetype": {
+    "prefix": "nauft",
+    "body": [
+      "vim.api.nvim_create_autocmd(\"FileType\", {",
+      "pattern = \"$1\",",
+      "callback = function(args)",
+      "$2",
+      "end})"
+    ],
+    "description": "nvim fileType autocmd"
+  }
+}
