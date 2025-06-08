@@ -91,6 +91,7 @@ bins() {
 		go install github.com/jesseduffield/lazygit@latest
 		go install github.com/jesseduffield/lazydocker@latest
 
+		go install github.com/gohugoio/hugo@latest
 		go install golang.org/x/tools/cmd/present@latest
 
 		go install -ldflags "-s -w" github.com/tristanisham/zvm@latest
