@@ -33,8 +33,9 @@ return {
 							},
 							format = { enable = false }, -- instead of using stylua
 							telemetry = { enable = false },
-							-- workspace = { checkThirdParty = false },
-							diagnostics = { globals = { "vim" } },
+							workspace = {
+								library = { "$VIMRUNTIME/lua" },
+							},
 							completion = {
 								-- https://github.com/LuaLS/lua-language-server/wiki/Settings#completioncallsnippet
 								callSnippet = "Replace",
