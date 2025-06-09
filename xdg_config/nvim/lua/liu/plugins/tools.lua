@@ -61,6 +61,15 @@ return {
 	{
 		"craigmac/vim-mermaid",
 		ft = "mermaid",
+		init = function()
+			-- @need-install: bun install -g @mermaid-js/mermaid-cli
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = "mermaid",
+				callback = function(args)
+					vim.b.dispatch = "mmdc -i % -o %:r:t.svg"
+				end,
+			})
+		end,
 	},
 	{
 		"mmarchini/bpftrace.vim",
