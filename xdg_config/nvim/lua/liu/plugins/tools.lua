@@ -2,7 +2,18 @@ return {
 	{
 		"tpope/vim-dadbod",
 		init = function()
-			vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
+			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
+
+			vim.cmd([[
+			    xnoremap <expr> <Plug>(DBExe)     db#op_exec()
+				nnoremap <expr> <Plug>(DBExe)     db#op_exec()
+				nnoremap <expr> <Plug>(DBExeLine) db#op_exec() . '_'
+				
+				xmap yq  <Plug>(DBExe)
+				nmap yq  <Plug>(DBExe)
+				omap yq  <Plug>(DBExe)
+				nmap yqq <Plug>(DBExeLine)
+			]])
 		end,
 	},
 	{
