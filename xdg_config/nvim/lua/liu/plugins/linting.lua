@@ -4,7 +4,6 @@ local linters_by_ft = {
 	proto = { "buf_lint" },
 	bash = { "shellcheck" }, -- sudo apt install shellcheck
 	python = { "pylint" }, -- @need-install: uv tool install --force pylint
-	sql = { "sqlfluff" }, -- @need-install: uv tool install --force sqlfluff
 
 	-- Use the "*" filetype to run linters on all filetypes.
 	-- ['*'] = { 'global linter' },
