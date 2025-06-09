@@ -31,7 +31,7 @@ return { -- Git {{{2
 
 			vim.keymap.set("n", "\\g", ":Git ")
 			vim.keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
-			vim.keymap.set("n", "<leader>gw", "<cmd>Gwrite<cr>")
+			vim.keymap.set("n", "<leader>gw", "<cmd> try | Gwrite | catch /.*/ | update | endtry <cr>")
 
 			local g = vim.api.nvim_create_augroup("liu/fugitive/setup", { clear = true })
 			--- Toggle summary window {{{3
