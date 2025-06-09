@@ -153,6 +153,26 @@ return {
 						},
 					}
 				end,
+				markdown = function()
+					return {
+						B = {
+							input = { "%[%[().-()%]%]" },
+							output = { left = "**", right = "**" },
+						},
+						I = {
+							input = { "%[%[().-()%]%]" },
+							output = { left = "*", right = "*" },
+						},
+						U = {
+							input = { "%[%[().-()%]%]" },
+							output = function()
+								local MiniSurround = require("mini.surround")
+								local link = MiniSurround.user_input("Link")
+								return { left = "[", right = "](" .. link .. ")" }
+							end,
+						},
+					}
+				end,
 			}
 			vim.api.nvim_create_autocmd("FileType", {
 				pattern = vim.tbl_keys(ft_custom_surrounding_fn),
