@@ -37,6 +37,7 @@ local formatters_by_ft = {
 	zsh = {
 		"shfmt",
 	},
+	sql = { "sqlfluff" }, -- @need-install: uv tool install --force sqlfluff
 	just = { "just" },
 	proto = { "buf" },
 	query = { "format-queries" },
