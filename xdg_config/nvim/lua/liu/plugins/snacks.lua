@@ -139,7 +139,7 @@ return {
 							["<a-w>"] = "cycle_win",
 						},
 						wo = {
-							winbar = "%{SnacksPreviewWinbar()}%<",
+							-- winbar = "%{SnacksPreviewWinbar()}%<",
 						},
 					},
 				},
