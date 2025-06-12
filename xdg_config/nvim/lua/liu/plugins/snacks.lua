@@ -134,6 +134,8 @@ return {
 					},
 					-- preview window
 					preview = {
+						-- https://github.com/folke/snacks.nvim/issues/1027#issuecomment-2646133491
+						-- When an existing buffer is shown in the preview, the buffer-local keymaps are not added
 						keys = {
 							["i"] = "focus_input",
 							--
