@@ -88,6 +88,9 @@ return {
 						b = {
 							minipairs_disable = true,
 						},
+						wo = {
+							stl = "%f",
+						},
 					},
 					-- result list window
 					list = {
@@ -126,6 +129,7 @@ return {
 						wo = {
 							conceallevel = 2,
 							concealcursor = "nvc",
+							stl = "%f",
 						},
 					},
 					-- preview window
@@ -140,6 +144,7 @@ return {
 						},
 						wo = {
 							-- winbar = "%{SnacksPreviewWinbar()}%<",
+							stl = "%f",
 						},
 					},
 				},
