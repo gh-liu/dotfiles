@@ -71,13 +71,13 @@ nnoremap + <c-w>+
 nnoremap <M-_> <c-w><
 nnoremap <M-+> <c-w>>
 
-nnoremap ,t <cmd>tabnew <bar> tcd .<cr>
-nnoremap ,1 1gt
-nnoremap ,2 2gt
-nnoremap ,3 3gt
-nnoremap ,4 4gt
-nnoremap ,5 5gt
-nnoremap ,6 6gt
+nnoremap \t <cmd>tabnew <bar> tcd .<cr>
+nnoremap \1 1gt
+nnoremap \2 2gt
+nnoremap \3 3gt
+nnoremap \4 4gt
+nnoremap \5 5gt
+nnoremap \6 6gt
 ]])
 
 -- path
