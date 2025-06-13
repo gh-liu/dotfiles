@@ -159,6 +159,7 @@ nnoremap / ms/
 
 " search current buffer and open results in loclist
 "nnoremap \c   ms:<c-u>lvimgrep // % <bar> lw<s-left><s-left><s-left><s-left><right>
+nnoremap \c   ms:<c-u>lgrep  % <bar> lw<s-left><s-left><s-left><s-left>
 
 " search all files and open results in quickfix
 "nnoremap \C mS:<c-u>noau vimgrep /\v\C/j **/*<s-left><left><left><left>
