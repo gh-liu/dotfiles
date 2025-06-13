@@ -153,7 +153,7 @@ vim.g.loaded_python3_provider = 0 -- disable python3 support
 vim.g.loaded_netrwPlugin = 1 -- disable netrw
 vim.g.did_install_default_menus = 1 -- avoid stupid menu.vim (saves ~100ms)
 -- Language specified
--- vim.g.rst_fold_enabled = 1
+vim.g.rst_fold_enabled = 1 -- treesitter not support rst fold
 -- vim.g.markdown_folding = 1
 
 if not vim.env.TMUX and not vim.g.clipboard then
