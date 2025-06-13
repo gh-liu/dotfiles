@@ -140,12 +140,12 @@ noremap gzo :call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 -- Split
 vim.cmd([[
 " _opt-in_ to sloppy-search https://github.com/neovim/neovim/issues/3209#issuecomment-133183790
-nnoremap ,e :edit **/
-nnoremap ,s :split **/
-nnoremap ,v :vsplit **/
-nnoremap ,E :e <C-R>=expand("%:p:h") . "/**" <CR>
-nnoremap ,S :split <C-R>=expand("%:p:h") . "/**" <CR>
-nnoremap ,V :vsplit <C-R>=expand("%:p:h") . "/**" <CR>
+nnoremap \e :edit **/
+nnoremap \s :split **/
+nnoremap \v :vsplit **/
+"nnoremap \E :e <C-R>=expand("%:p:h") . "/**" <CR>
+"nnoremap \S :split <C-R>=expand("%:p:h") . "/**" <CR>
+"nnoremap \V :vsplit <C-R>=expand("%:p:h") . "/**" <CR>
 ]])
 
 -- Search
