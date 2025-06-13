@@ -29,7 +29,7 @@ return { -- Git {{{2
 				["="] = "<TAB>",
 			}
 
-			vim.keymap.set("n", "\\g", ":Git ")
+			-- vim.keymap.set("n", "\\g", ":Git ")
 			vim.keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
 			vim.keymap.set("n", "<leader>gw", "<cmd> try | Gwrite | catch /.*/ | update | endtry <cr>")
 
@@ -471,7 +471,7 @@ return { -- Git {{{2
 			"DiffviewFileHistory",
 		},
 		keys = {
-			{ "\\d", ":DiffviewOpen " },
+			-- { "\\d", ":DiffviewOpen " },
 			-- { "d.", ":DiffviewOpen " },
 			-- { "dO", "<cmd>DiffviewOpen<cr>" },
 			-- { "dY", "<cmd>DiffviewFileHistory %<cr>" },

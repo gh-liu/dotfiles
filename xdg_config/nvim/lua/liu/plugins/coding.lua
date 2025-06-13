@@ -491,10 +491,10 @@ return {
 		init = function(self)
 			vim.g.abolish_save_file = fn.stdpath("config") .. "/after/plugin/abolish.vim"
 
-			vim.cmd([[
-				nnoremap \s mS:Abolish -search 
-				nnoremap \S mS:%Subvert 
-			]])
+			-- vim.cmd([[
+			-- 	nnoremap \s mS:Abolish -search 
+			-- 	nnoremap \S mS:%Subvert 
+			-- ]])
 		end,
 		keys = {
 			"cr",

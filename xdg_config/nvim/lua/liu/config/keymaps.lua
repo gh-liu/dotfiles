@@ -154,10 +154,10 @@ vim.cmd([[
 nnoremap / ms/
 
 " search current buffer and open results in loclist
-nnoremap \c   ms:<c-u>lvimgrep // % <bar> lw<s-left><s-left><s-left><s-left><right>
+"nnoremap \c   ms:<c-u>lvimgrep // % <bar> lw<s-left><s-left><s-left><s-left><right>
 
 " search all files and open results in quickfix
-nnoremap \C mS:<c-u>noau vimgrep /\v\C/j **/*<s-left><left><left><left>
+"nnoremap \C mS:<c-u>noau vimgrep /\v\C/j **/*<s-left><left><left><left>
 
 " Hit space to match multiline whitespace.
 "cnoremap <expr> <Space> getcmdtype() =~ '[/?]' ? '\_s\+' : ' '
