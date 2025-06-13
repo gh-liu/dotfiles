@@ -120,7 +120,8 @@ end)
 vim.cmd([[
 " print unix time at cursor as human-readable datetime. 1677604904 => '2023-02-28 09:21:45'
 "nnoremap <C-G><C-T> :echo strftime('%Y-%m-%d %H:%M:%S', '<c-r><c-w>')<cr>
-nnoremap <C-G><C-T> :echo strftime('%Y-%m-%d %H:%M:%S', len(expand('<cword>')) > 10 ? str2nr(expand('<cword>')) / 1000 : str2nr(expand('<cword>')))<CR>
+"nnoremap <C-G><C-T> :echo strftime('%Y-%m-%d %H:%M:%S', len(expand('<cword>')) > 10 ? str2nr(expand('<cword>')) / 1000 : str2nr(expand('<cword>')))<CR>
+nnoremap g<C-T> :echo strftime('%Y-%m-%d %H:%M:%S', len(expand('<cword>')) > 10 ? str2nr(expand('<cword>')) / 1000 : str2nr(expand('<cword>')))<CR>
 
 " insert formatted datetime (from @tpope vimrc).
 inoremap <silent> <C-G><C-T> <C-R>=repeat(complete(col('.'),map(["%Y-%m-%d %H:%M:%S","%a, %d %b %Y %H:%M:%S %z","%Y %b %d","%d-%b-%y","%a %b %d %T %Z %Y","%Y%m%d"],'strftime(v:val)')+[localtime()]),0)<CR>
