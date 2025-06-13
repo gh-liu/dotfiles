@@ -136,6 +136,9 @@ nnoremap g: :lua =
 
 " jump to context
 noremap gzo :call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
+
+noremap gzn <cmd>lnext<cr>
+noremap gzp <cmd>lprev<cr>
 ]])
 
 -- Split
