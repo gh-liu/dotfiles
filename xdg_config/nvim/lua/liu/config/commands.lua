@@ -9,4 +9,13 @@ command! -nargs=+ -bang -complete=command R if !<bang>0 | wincmd n | endif
 inoremap <c-r>R <c-o>:<up><home>R! <cr>
 ]])
 
+-- :h usr_29.txt
+local ctags_exclude = { ".git", ".svn", ".hg" }
+local ctags_exclude_str = vim.iter(ctags_exclude)
+	:map(function(item)
+		return "--exclude=" .. item
+	end)
+	:join(" ")
+create_command("Tags", string.format("!ctags %s --tag-relative=yes -R *", ctags_exclude_str), { nargs = 0 })
+
 -- vim: foldmethod=marker
