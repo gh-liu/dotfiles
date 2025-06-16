@@ -59,6 +59,14 @@ return {
 		cmd = "ShowkeysToggle",
 	},
 	{
+		"dhananjaylatkar/cscope_maps.nvim",
+		opts = {
+			disable_maps = true,
+			prefix = false,
+		},
+		cmd = { "Cs" },
+	},
+	{
 		"craigmac/vim-mermaid",
 		ft = "mermaid",
 		init = function()
