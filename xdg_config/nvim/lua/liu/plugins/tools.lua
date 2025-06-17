@@ -101,8 +101,4 @@ return {
 		"gh-liu/nvim-stevedore",
 		dev = true,
 	},
-	{
-		"gh-liu/nvim-tasks",
-		dev = true,
-	},
 }
