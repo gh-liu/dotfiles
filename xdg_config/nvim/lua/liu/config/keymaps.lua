@@ -85,7 +85,7 @@ vim.cmd([[
 " copy full path
 "noremap y<cr> :execute 'let @+ = expand("%:p")' <Bar> echo 'copy:' @+ <CR>
 " copy path
-noremap yY :execute 'let @+ = expand("%")' <Bar> echo 'copy:' @+ <CR>
+noremap yY :execute 'let @+ = trim(expand("%:p"), getcwd())' <Bar> echo 'copy:' @+ <CR>
 " go to parent dir
 "noremap - :<C-U>cd .. <CR>
 ]])
