@@ -177,14 +177,25 @@ return {
 					local MiniFiles = require("mini.files")
 					if not MiniFiles.close() then
 						local bufname = api.nvim_buf_get_name(0)
+						local is_dir = vim.fn.isdirectory(bufname) == 1
 						local dirs = {}
-						if bufname == "" or vim.fn.filereadable(bufname) == 0 then
-							bufname = vim.fs.normalize(vim.fn.getcwd(), {})
+						if is_dir then
 							table.insert(dirs, bufname)
+						else
+							local file_not_valid = bufname == "" or vim.fn.filereadable(bufname) == 0
+							if file_not_valid then
+								-- vim.api.nvim_echo({
+								-- 	{ "mini.files: ", "" },
+								-- 	{ "buffer name not valid", "DiagnosticWarn" },
+								-- }, false, {})
+								bufname = vim.fs.normalize(vim.fn.getcwd(), {})
+								table.insert(dirs, bufname)
+							end
 						end
 						for dir in vim.fs.parents(bufname) do
 							table.insert(dirs, dir)
 						end
+
 						local count = vim.v.count1
 						local path = dirs[count]
 						if count == 1 and vim.fn.isdirectory(bufname) == 0 then
