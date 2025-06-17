@@ -75,6 +75,11 @@ return {
 				pattern = "mermaid",
 				callback = function(args)
 					vim.b.dispatch = "mmdc -i % -o %:r:t.svg"
+
+					vim.api.nvim_create_autocmd("BufWritePost", {
+						buffer = args.buf,
+						command = "Dispatch",
+					})
 				end,
 			})
 		end,
