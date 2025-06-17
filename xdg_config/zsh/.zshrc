@@ -353,6 +353,11 @@ function gam {
 	grepdiff $1 <(git diff) | git apply --cached
 }
 
+function gdir() {
+	cd $(git rev-parse --git-dir)
+	cd ..
+}
+
 HASH="%C(always,yellow)%h%C(always,reset)"
 RELATIVE_TIME="%C(always,green)%ar%C(always,reset)"
 AUTHOR="%C(always,bold blue)%an%C(always,reset)"
