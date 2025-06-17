@@ -7,7 +7,7 @@ dev: zsh tmux nvim_nightly
 
 .PHONY: zsh
 zsh: starship
-	@ ln -svf $$HOME/tools/dotfiles/.zshenv ~/.zshenv
+	@ ln -svf $$HOME/tools/dotfiles/xdg_config/zsh/.zshenv ~/.zshenv
 	
 .PHONY: ghostty
 ghostty:
