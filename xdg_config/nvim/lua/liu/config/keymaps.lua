@@ -58,7 +58,8 @@ vim.cmd([[
 " switch to alternate buffer
 "nnoremap <bs> <c-^>
 "nnoremap <leader>bb <c-^>
-nnoremap <leader><tab> <c-^>
+"nnoremap <leader><tab> <c-^>
+nnoremap z<leader> <c-^>
 
 nnoremap <c-w>O <cmd>tabonly<cr>
 nnoremap <silent> <C-w>Q :tabclose<CR>
