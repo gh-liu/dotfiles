@@ -187,11 +187,12 @@ return {
 						end
 						local count = vim.v.count1
 						local path = dirs[count]
-						MiniFiles.open(path, false)
-						-- search file in current dir
 						if count == 1 and vim.fn.isdirectory(bufname) == 0 then
-							local base = vim.fs.basename(bufname)
-							vim.fn.search(base)
+							-- If it is a path to file, its parent directory is used as anchor
+							-- while explorer will focus on the supplied file.
+							MiniFiles.open(bufname, false)
+						else
+							MiniFiles.open(path, false)
 						end
 					end
 				end,
