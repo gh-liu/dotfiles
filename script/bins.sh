@@ -146,6 +146,10 @@ bins() {
 		cargo install cargo-nextest
 		cargo install cargo-binutils
 	fi
+
+	if [ -f "$(which gh)" ]; then
+		gh extension install yusukebe/gh-markdown-preview
+	fi
 }
 
 case $1 in
