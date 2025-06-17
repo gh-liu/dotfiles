@@ -78,7 +78,7 @@ return {
 
 					vim.api.nvim_create_autocmd("BufWritePost", {
 						buffer = args.buf,
-						command = "Dispatch",
+						command = "Dispatch!",
 					})
 				end,
 			})
