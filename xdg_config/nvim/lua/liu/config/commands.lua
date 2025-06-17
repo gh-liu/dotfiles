@@ -10,6 +10,11 @@ inoremap <c-r>R <c-o>:<up><home>R! <cr>
 ]])
 
 -- :h usr_29.txt
+--
+-- https://ctags.io
+-- https://github.com/universal-ctags/ctags
+-- 
+-- see the `--list-languages` and `--list-kinds` options.
 local ctags_exclude = { ".git", ".svn", ".hg" }
 local ctags_exclude_str = vim.iter(ctags_exclude)
 	:map(function(item)
