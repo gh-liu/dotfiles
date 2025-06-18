@@ -11,6 +11,15 @@
   "xdg_config/nvim/init.lua": {
     "type": "nvim"
   },
+  "xdg_config/ghostty/config": {
+    "type": "ghostty"
+  },
+  "xdg_config/kitty/kitty.conf": {
+    "type": "kitty"
+  },
+  "xdg_config/wezterm/wezterm.lua": {
+    "type": "wezterm"
+  },
   "xdg_config/tmux/tmux.conf": {
     "type": "tmux"
   }
