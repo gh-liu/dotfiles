@@ -14,6 +14,8 @@ M.schemas = {
 		"sgconfig.yml",
 	},
 	--TODO https://raw.githubusercontent.com/ast-grep/ast-grep/refs/heads/main/schemas/rule.json
+	["http://json.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
+	["http://json.schemastore.org/github-action.json"] = ".github/action.{yml,yaml}",
 }
 
 return M
