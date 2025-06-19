@@ -1,0 +1,37 @@
+{
+  "Flowcharts": {
+    "prefix": "flowchart",
+    "body": [
+      "flowchart"
+    ],
+    "description": "Flowcharts"
+  },
+  "Sequence diagrams": {
+    "prefix": "sequence",
+    "body": [
+      "sequenceDiagram"
+    ],
+    "description": "Sequence diagrams"
+  },
+  "Class diagrams": {
+    "prefix": "class",
+    "body": [
+      "classDiagram"
+    ],
+    "description": "Class diagrams"
+  },
+  "State diagrams": {
+    "prefix": "state",
+    "body": [
+      "stateDiagram-v2"
+    ],
+    "description": "State diagrams"
+  },
+  "Gantt diagrams": {
+    "prefix": "gantt",
+    "body": [
+      "gantt"
+    ],
+    "description": "Gantt diagrams"
+  }
+}
