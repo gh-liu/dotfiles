@@ -100,5 +100,8 @@ return {
 	{
 		"gh-liu/nvim-stevedore",
 		dev = true,
+		init = function()
+			vim.g.stevedore_runtime = "stevedore.runtime.docker"
+		end,
 	},
 }
