@@ -138,6 +138,7 @@ return {
 	{
 		"echasnovski/mini.surround",
 		keys = {
+			-- TODO: y will be used in x mode
 			{ "ys", mode = { "x", "n" } },
 			{ "ds", mode = { "n" } },
 			{ "cs", mode = { "n" } },
