@@ -60,6 +60,7 @@ return {
 	},
 	{
 		"dhananjaylatkar/cscope_maps.nvim",
+		enabled = false,
 		opts = {
 			disable_maps = true,
 			prefix = false,
