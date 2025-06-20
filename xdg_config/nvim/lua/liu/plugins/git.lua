@@ -242,6 +242,10 @@ return { -- Git {{{2
 				end,
 			})
 
+			set_cmds({
+				Gfiles = "G difftool --name-only --cached",
+			})
+
 			set_hls({
 				diffAdded = { link = "DiffAdd" },
 				diffRemoved = { link = "DiffDelete" },
