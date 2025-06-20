@@ -33,6 +33,10 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 							vim.cmd("wincmd p")
 						end)
 					end
+					vim.keymap.set("n", "D", function()
+						vim.cmd("vert diffsplit " .. vim.b[buf].diff_filename)
+						vim.cmd("wincmd p")
+					end, { buffer = buf })
 				end
 			end,
 		})
