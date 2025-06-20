@@ -525,15 +525,6 @@ return {
 			end
 			require("mini.diff").setup(opts)
 
-			vim.api.nvim_create_user_command("DiffHunks", function(args)
-				local export_opts = { scope = "current" }
-				if opts.bang then
-					export_opts.scope = "all"
-				end
-				vim.fn.setqflist(MiniDiff.export("qf", export_opts))
-				vim.cmd.copen()
-			end, { bang = true, nargs = 0 })
-
 			vim.keymap.set({ "n" }, "yud", "<cmd>lua MiniDiff.toggle_overlay()<cr>", { noremap = true, silent = true })
 
 			vim.keymap.set({ "n" }, "[c", function()
