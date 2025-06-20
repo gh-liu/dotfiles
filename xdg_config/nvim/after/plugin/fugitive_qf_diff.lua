@@ -1,4 +1,4 @@
-vim.g.DiffEnabled = 1
+vim.g.DiffEnabled = 0
 -- https://github.com/tpope/vim-fugitive/issues/132
 vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 	pattern = "cfugitive-difftool",
