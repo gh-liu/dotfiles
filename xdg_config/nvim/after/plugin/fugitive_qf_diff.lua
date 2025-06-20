@@ -3,14 +3,30 @@ vim.g.DiffEnabled = 1
 vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 	pattern = "cfugitive-difftool",
 	callback = function()
-		local qflist = vim.fn.getqflist({ items = 0, qfbufnr = 0 })
+		local qflist = vim.fn.getqflist({ items = 0, qfbufnr = 0, context = 0, idx = 0 })
 		local qfbufnr = qflist.qfbufnr
 		local items = qflist.items
+
+		local set_buf_stuff = function(buf, qf)
+			qf = qf or vim.fn.getqflist({ context = 0, idx = 0 })
+			local diffs = qf.context.items[qf.idx].diff
+			local diff = diffs[1]
+			vim.b[buf].diff_filename = diff.filename
+			vim.b[buf].diff_buf = vim.fn.bufnr(diff.filename, true)
+
+			vim.keymap.set("n", "D", function()
+				vim.cmd("vert diffsplit " .. vim.b[buf].diff_filename)
+				vim.cmd("wincmd p")
+			end, { buffer = buf })
+		end
 
 		local bufs = {}
 		for _, item in ipairs(items) do
 			local buf = item.bufnr
 			bufs[buf] = true
+			if vim.fn.bufloaded(buf) == 1 then
+				set_buf_stuff(buf, qflist)
+			end
 		end
 
 		local g = vim.api.nvim_create_augroup(string.format("fugitive/qf:%d/diff", qfbufnr), { clear = true })
@@ -21,22 +37,13 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			callback = function(args)
 				local buf = args.buf
 				if bufs[buf] then
-					local qf = vim.fn.getqflist({ context = 0, idx = 0 })
-					local diffs = qf.context.items[qf.idx].diff
-					local diff = diffs[1]
-					vim.b[buf].diff_filename = diff.filename
-					vim.b[buf].diff_buf = vim.fn.bufnr(diff.filename, true)
-
+					set_buf_stuff(buf)
 					if vim.g.DiffEnabled == 1 then
 						vim.schedule(function()
 							vim.cmd("vert diffsplit " .. vim.b[buf].diff_filename)
 							vim.cmd("wincmd p")
 						end)
 					end
-					vim.keymap.set("n", "D", function()
-						vim.cmd("vert diffsplit " .. vim.b[buf].diff_filename)
-						vim.cmd("wincmd p")
-					end, { buffer = buf })
 				end
 			end,
 		})
