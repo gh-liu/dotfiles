@@ -14,7 +14,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			vim.b[buf].diff_filename = diff.filename
 			vim.b[buf].diff_buf = vim.fn.bufnr(diff.filename, true)
 
-			vim.keymap.set("n", "D", function()
+			vim.keymap.set("n", "\\d", function()
 				vim.cmd("vert diffsplit " .. vim.b[buf].diff_filename)
 				vim.cmd("wincmd p")
 			end, { buffer = buf })
