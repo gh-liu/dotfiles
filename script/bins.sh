@@ -3,6 +3,19 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 . $SCRIPT_DIR/helper.sh --source-only
 
+function update_protobuf() {
+	local tool=protobuf
+	install_start $tool
+	url="https://api.github.com/repos/protocolbuffers/protobuf/tags"
+	version=$(curl -s $url | jq -r '.[0].name')
+	vv=$(echo $version | sed "s/^v//")
+	pkg=protoc-$vv-linux-x86_64.zip
+	mkdir_tool_dir $tool
+	curl -LO https://github.com/protocolbuffers/protobuf/releases/download/$version/$pkg
+	unzip $pkg
+	install_end 
+}
+
 function update_tmux() {
 	local tool=tmux
 	install_start $tool
