@@ -1,11 +1,20 @@
 vim.g.DiffEnabled = 0
 -- https://github.com/tpope/vim-fugitive/issues/132
+-- apply event: https://github.com/tpope/vim-fugitive/blob/593f831d6f6d779cbabb70a4d1e6b1b1936a88af/autoload/fugitive.vim#L1575
 vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 	pattern = "cfugitive-difftool",
 	callback = function()
 		local qflist = vim.fn.getqflist({ items = 0, qfbufnr = 0, context = 0, idx = 0 })
 		local qfbufnr = qflist.qfbufnr
 		local items = qflist.items
+
+		if vim.g.DiffEnabled == 1 and #items > 0 then
+			local module = items[1].module
+			-- https://github.com/tpope/vim-fugitive/blob/593f831d6f6d779cbabb70a4d1e6b1b1936a88af/autoload/fugitive.vim#L5645
+			if vim.startswith(module, ":2:") or vim.startswith(module, ":3:") then
+				return
+			end
+		end
 
 		local set_buf_stuff = function(buf, qf)
 			qf = qf or vim.fn.getqflist({ context = 0, idx = 0 })
