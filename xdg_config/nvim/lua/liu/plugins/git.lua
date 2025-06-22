@@ -32,6 +32,14 @@ return { -- Git {{{2
 			-- vim.keymap.set("n", "\\g", ":Git ")
 			vim.keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
 			vim.keymap.set("n", "<leader>gw", "<cmd> try | Gwrite | catch /.*/ | update | endtry <cr>")
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = "fugitive",
+				callback = function(args)
+					vim.cmd([[
+					nnoremap <buffer> rt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
+					]])
+				end,
+			})
 
 			local g = vim.api.nvim_create_augroup("liu/fugitive/setup", { clear = true })
 			--- Toggle summary window {{{3
