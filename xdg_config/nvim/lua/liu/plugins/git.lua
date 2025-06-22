@@ -305,6 +305,7 @@ return { -- Git {{{2
 	},
 	{
 		"sindrets/diffview.nvim",
+		enabled = false,
 		init = function()
 			set_hls({
 				DiffviewStatusAdded = { link = "Added" },
