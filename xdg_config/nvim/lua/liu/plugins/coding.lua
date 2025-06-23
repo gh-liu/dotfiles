@@ -290,6 +290,16 @@ return {
 		"echasnovski/mini.pairs",
 		enabled = true,
 		event = "InsertEnter",
+		init = function()
+			_G.MiniConfigChanged = function(d, k, z)
+				if z["new"] then
+					vim.g.MinipairsDisable = 1
+				else
+					vim.g.MinipairsDisable = 0
+				end
+			end
+			vim.cmd([[ call dictwatcheradd(g:, 'minipairs_disable', 'v:lua._G.MiniConfigChanged') ]])
+		end,
 		keys = {
 			{
 				"yoP",
