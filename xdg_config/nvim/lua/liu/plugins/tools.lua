@@ -32,9 +32,9 @@ return {
 					vim.keymap.set("n", "[[", require("kulala").jump_prev, { buffer = buffer })
 					vim.keymap.set("n", "]]", require("kulala").jump_next, { buffer = buffer })
 
-					vim.keymap.set("n", "<localleader>r", require("kulala").run, { buffer = buffer })
-					vim.keymap.set("n", "<localleader>R", require("kulala").replay, { buffer = buffer })
-					vim.keymap.set("n", "<localleader>c", require("kulala").copy, { buffer = buffer })
+					-- vim.keymap.set("n", "<localleader>r", require("kulala").run, { buffer = buffer })
+					-- vim.keymap.set("n", "<localleader>R", require("kulala").replay, { buffer = buffer })
+					-- vim.keymap.set("n", "<localleader>c", require("kulala").copy, { buffer = buffer })
 
 					vim.b.UserBufFlagship = function()
 						local CONFIG = require("kulala.config")
