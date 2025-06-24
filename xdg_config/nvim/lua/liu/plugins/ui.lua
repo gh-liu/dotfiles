@@ -180,7 +180,7 @@ return {
 			autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
 			autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}")
 
-			autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
+			"autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
 			]])
 		end,
 	},
