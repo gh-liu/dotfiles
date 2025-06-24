@@ -1,12 +1,49 @@
 {
+  "Importing Definitions": {
+    "prefix": "import",
+    "body": [
+      "import \"$1\";"
+    ],
+    "description": "Importing Definitions"
+  },
+  "Importing Public Definitions": {
+    "prefix": "importp",
+    "body": [
+      "import public \"$1\";"
+    ],
+    "description": "Importing Public Definitions"
+  },
+  "Importing Google Definitions": {
+    "prefix": "importg",
+    "body": [
+      "import \"google/protobuf/$1\";"
+    ],
+    "description": "Importing Google Definitions"
+  },
+  "Enumerations": {
+    "prefix": "enum",
+    "body": [
+      "enum ${1:YourEnum} {",
+      "\t${2:ENUM1 = 0;}",
+      "}"
+    ],
+    "description": "Enumerations"
+  },
   "Defining A Message Type": {
     "prefix": "message",
     "body": [
       "message ${1:YourMessage} {",
-      "${2:Body}",
+      "\t${2:type} ${3:name = 1};",
       "}"
     ],
     "description": "Defining A Message Type"
+  },
+  "Defining RPC": {
+    "prefix": "rpc",
+    "body": [
+      "rpc ${2:YourProcedure}(${3:stream} ${4:YourRequest}) returns (${5:strem} ${6:YourResponse});"
+    ],
+    "description": "Defining RPC"
   },
   "Defining Services": {
     "prefix": "service",
