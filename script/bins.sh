@@ -13,7 +13,8 @@ function update_protobuf() {
 	mkdir_tool_dir $tool
 	curl -LO https://github.com/protocolbuffers/protobuf/releases/download/$version/$pkg
 	unzip $pkg
-	install_end 
+	link_bin $LIU_TOOLS/$tool/bin/protoc $tool
+	install_end
 }
 
 function update_tmux() {
