@@ -49,7 +49,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 					set_buf_stuff(buf)
 					if vim.g.DiffEnabled == 1 then
 						vim.schedule(function()
-							vim.cmd("vert diffsplit " .. vim.b[buf].diff_filename)
+							vim.cmd("leftabove vert diffsplit " .. vim.b[buf].diff_filename)
 							vim.cmd("wincmd p")
 						end)
 					end
