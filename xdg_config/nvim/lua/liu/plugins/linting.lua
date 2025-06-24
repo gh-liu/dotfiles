@@ -27,18 +27,23 @@ end
 function M.lint()
 	local lint = require("lint")
 
-	local ft = vim.bo.filetype
-	local linters = linters_by_ft[ft] or {}
-	linters = vim.list_extend({}, linters)
+	local linters = vim.b.linters
+	if not linters then
+		local ft = vim.bo.filetype
+		linters = linters_by_ft[ft] or {}
+		linters = vim.list_extend({}, linters)
 
-	-- Add fallback linters.
-	if #linters == 0 then
-		vim.list_extend(linters, lint.linters_by_ft["_"] or {})
+		-- Add fallback linters.
+		if #linters == 0 then
+			vim.list_extend(linters, lint.linters_by_ft["_"] or {})
+		end
+		-- Add global linter
+		if lint.linters_by_ft["*"] then
+			vim.list_extend(linters, lint.linters_by_ft["*"])
+		end
+		vim.b.linters = linters
 	end
-	-- Add global linter
-	if lint.linters_by_ft["*"] then
-		vim.list_extend(linters, lint.linters_by_ft["*"])
-	end
+
 	-- Run linters.
 	if #linters > 0 then
 		lint.try_lint(linters)
