@@ -1,0 +1,20 @@
+{
+  "Defining A Message Type": {
+    "prefix": "message",
+    "body": [
+      "message ${1:YourMessage} {",
+      "${2:Body}",
+      "}"
+    ],
+    "description": "Defining A Message Type"
+  },
+  "Defining Services": {
+    "prefix": "service",
+    "body": [
+      "service ${1:YourService} {",
+      "rpc ${2:YourProcedure}(${3:YourRequest}) returns (${4:YourResponse});",
+      "}"
+    ],
+    "description": "Defining Services"
+  }
+}
