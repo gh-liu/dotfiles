@@ -35,10 +35,6 @@ function M.lint()
 	if #linters == 0 then
 		vim.list_extend(linters, lint.linters_by_ft["_"] or {})
 	end
-	-- Add fallback linters.
-	if #linters == 0 then
-		vim.list_extend(linters, lint.linters_by_ft["_"] or {})
-	end
 	-- Run linters.
 	if #linters > 0 then
 		lint.try_lint(linters)
