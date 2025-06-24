@@ -694,7 +694,13 @@ return {
 		-- event = "VeryLazy",
 	},
 	{
+
 		"tpope/vim-projectionist",
+		-- NOTE:
+		-- 1. diff between `alternate` and `related`
+		-- A* commands use the `alternate`;
+		-- navigation commands created by the `type` will use the `related` is has zero args,
+		-- if `related` not exist, use `alternate` as default
 		lazy = false,
 		-- event = "VeryLazy",
 		init = function(self)
