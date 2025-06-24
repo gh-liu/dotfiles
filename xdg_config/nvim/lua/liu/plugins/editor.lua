@@ -758,6 +758,19 @@ return {
 						start = "go run {file|dirname}",
 						make = "go build {file|dirname}",
 					},
+					["*.proto"] = {
+						dispatch = "protoc "
+							.. "--go_out={file|dirname} --go_opt=paths=source_relative "
+							.. "--go-grpc_out={file|dirname} --go-grpc_opt=paths=source_relative "
+							.. "--proto_path={file|dirname} "
+							.. "{file}",
+						type = "proto",
+						template = vim.iter({
+							[[syntax = "proto3";]],
+							[[package {basename};]],
+							[[option go_package="{basename}";]],
+						}):join("\n"),
+					},
 				},
 				-- }}}
 				-- python {{{
