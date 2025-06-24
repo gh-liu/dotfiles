@@ -35,6 +35,10 @@ function M.lint()
 	if #linters == 0 then
 		vim.list_extend(linters, lint.linters_by_ft["_"] or {})
 	end
+	-- Add global linter
+	if lint.linters_by_ft["*"] then
+		vim.list_extend(linters, lint.linters_by_ft["*"])
+	end
 	-- Run linters.
 	if #linters > 0 then
 		lint.try_lint(linters)
