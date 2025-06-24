@@ -660,6 +660,23 @@ return {
 				["golangci-lint run"] = "go",
 			}
 
+			local fts = {
+				dockerfile = {
+					dispatch = "podman build -t %:p:h:t .",
+					start = 'podman run --name test_%:p:h:t --rm --security-opt="apparmor=unconfined" --cap-add=SYS_PTRACE %:p:h:t',
+				},
+			}
+			vim.api.nvim_create_autocmd("FileType", {
+				desc = "b:dispatch or b:start for FileType",
+				pattern = vim.tbl_keys(fts),
+				callback = function(args)
+					local ft = args.match
+					for key, value in pairs(fts[ft]) do
+						vim.b[key] = value
+					end
+				end,
+			})
+
 			vim.cmd([[
 			autocmd BufReadPost *
 			\ if getline(1) =~# '^#!' |
@@ -708,10 +725,6 @@ return {
 				["*"] = {
 					["README.md"] = { type = "doc" },
 					[".projections.json"] = { type = "projections" },
-					["Dockerfile"] = {
-						dispatch = "podman build -t {project|basename} .",
-						start = 'podman run --name test_{project|basename} --rm --security-opt="apparmor=unconfined" --cap-add=SYS_PTRACE {project|basename}',
-					},
 				},
 				-- c {{{
 				["*.c&*.h"] = {
