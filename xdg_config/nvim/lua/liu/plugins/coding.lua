@@ -492,6 +492,17 @@ return {
 		init = function(self)
 			vim.g.abolish_save_file = fn.stdpath("config") .. "/after/plugin/abolish.vim"
 
+			-- NOTE: Extra Coercions
+			-- https://github.com/tpope/vim-abolish/blob/dcbfe065297d31823561ba787f51056c147aa682/plugin/abolish.vim#L600
+			-- vim.g.Abolish = {
+			-- 	Coercions = {
+			-- 		l = function(word)
+			-- 			local char = vim.fn.nr2char(vim.fn.getchar())
+			-- 			return word .. char
+			-- 		end,
+			-- 	},
+			-- }
+
 			-- vim.cmd([[
 			-- 	nnoremap \s mS:Abolish -search 
 			-- 	nnoremap \S mS:%Subvert 
