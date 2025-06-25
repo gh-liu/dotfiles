@@ -257,6 +257,16 @@ return { -- Git {{{2
 				Gconflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
 			})
 
+			-- NOTE: review workflow
+			-- 1. checkout remote branch
+			-- 2. checkout back to master branch
+			set_cmds({
+				-- 3. GRcommit to show commits
+				GRcommit = "Gclog<bang> @..FETCH_HEAD",
+				-- 4. GRfiles to show files
+				GRfiles = 'exec "G<bang> difftool --name-only " .. trim(execute("G merge-base @ FETCH_HEAD")) ..  " FETCH_HEAD"',
+			})
+
 			set_hls({
 				diffAdded = { link = "DiffAdd" },
 				diffRemoved = { link = "DiffDelete" },
