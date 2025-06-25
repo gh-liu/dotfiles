@@ -82,19 +82,6 @@ return { -- Git {{{2
 			end
 			-- }}}
 
-			--- buffer: stage type {{{3
-			api.nvim_create_autocmd("User", {
-				group = g,
-				pattern = { "FugitiveStageBlob" },
-				desc = "set stage type for git stage blob buffer",
-				callback = function(data)
-					local buf = data.buf
-					local buf_name = api.nvim_buf_get_name(buf)
-					local _, _, stage, _ = buf_name:find([[^fugitive://.*/%.git.*/(%x-)/(.*)]])
-					vim.b[buf].fugitive_stage_type = stage
-				end,
-			})
-			---}}}
 			--- buffer: object hash {{{3
 			---@type function(buf_name: string): string|nil
 			local fugitive_buffer_hash = (function()
