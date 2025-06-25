@@ -194,7 +194,11 @@ return {
 						yaml = {
 							format = { enable = true },
 							schemas = require("liu.lsp.servers.yamlls").schemas,
-							schemaStore = { enable = true },
+							schemaStore = {
+								-- pull in all available schemas
+								enable = true,
+								url = "https://www.schemastore.org/api/json/catalog.json",
+							},
 							validate = { enable = true },
 						},
 					},
