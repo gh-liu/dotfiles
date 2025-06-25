@@ -250,6 +250,19 @@ return { -- Git {{{2
 				end,
 			})
 
+			api.nvim_create_autocmd("User", {
+				group = g,
+				pattern = { "FugitiveCommit" },
+				callback = function(ev)
+					vim.api.nvim_buf_create_user_command(
+						ev.buf,
+						"Gfiles",
+						":let commit=fugitive#Object(@%) | exec 'G<bang> difftool --name-only ' .. commit .. '~' .. ' '.. commit",
+						{ bang = true }
+					)
+				end,
+			})
+
 			set_cmds({
 				Gfiles = "G<bang> difftool --name-only",
 				-- 3 way diff
@@ -262,6 +275,7 @@ return { -- Git {{{2
 			-- 2. checkout back to master branch
 			set_cmds({
 				-- 3. GRcommit to show commits
+				-- 3.1 there is a `Gfiles` command to show files of current commit
 				GRcommit = "Gclog<bang> @..FETCH_HEAD",
 				-- 4. GRfiles to show files
 				GRfiles = 'exec "G<bang> difftool --name-only " .. trim(execute("G merge-base @ FETCH_HEAD")) ..  " FETCH_HEAD"',
