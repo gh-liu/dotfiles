@@ -180,17 +180,10 @@ return { -- Git {{{2
 			--- }}}
 			api.nvim_create_autocmd("FileType", {
 				desc = "fold method for git buffer",
-				pattern = "git",
+				pattern = { "git", "fugitive" },
 				callback = function(args)
 					vim.wo[0][0].foldmethod = "syntax"
 				end,
-			})
-
-			api.nvim_create_autocmd("FileType", {
-				desc = "fold for fugitive buffer",
-				group = g,
-				pattern = "fugitive",
-				command = "setlocal foldlevel=1 | setlocal foldmethod=syntax",
 			})
 
 			api.nvim_create_autocmd("User", {
