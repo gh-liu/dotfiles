@@ -251,7 +251,7 @@ return { -- Git {{{2
 			})
 
 			set_cmds({
-				Gfiles = "G difftool --name-only --cached",
+				Gfiles = "G<bang> difftool --name-only",
 				-- 3 way diff
 				-- https://dzx.fr/blog/introduction-to-vim-fugitive/#3-way-diff
 				Gconflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
