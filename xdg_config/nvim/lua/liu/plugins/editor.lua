@@ -534,6 +534,7 @@ return {
 				else
 					MiniDiff.goto_hunk("prev")
 				end
+				vim.cmd.normal("zz")
 			end, {
 				desc = 'MiniDiff.goto_hunk("prev") or [c',
 				noremap = true,
@@ -545,6 +546,7 @@ return {
 				else
 					MiniDiff.goto_hunk("next")
 				end
+				vim.cmd.normal("zz")
 			end, {
 				desc = 'MiniDiff.goto_hunk("next") or ]c',
 				noremap = true,
