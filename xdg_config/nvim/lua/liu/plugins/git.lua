@@ -57,6 +57,10 @@ return { -- Git {{{2
 				end,
 			}
 
+			vim.keymap.set("n", "g<space>", function()
+				G:toggle()
+			end, { silent = true })
+
 			api.nvim_create_autocmd("User", {
 				group = g,
 				pattern = { "FugitiveIndex" },
@@ -75,11 +79,6 @@ return { -- Git {{{2
 				end,
 			})
 
-			for _, lhs in ipairs({ "<leader>gg", "g<space>" }) do
-				vim.keymap.set("n", lhs, function()
-					G:toggle()
-				end, { silent = true })
-			end
 			-- }}}
 
 			--- Absorb {{{
