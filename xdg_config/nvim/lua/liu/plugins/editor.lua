@@ -470,7 +470,8 @@ return {
 				if summary == nil or summary == "" then
 					return ""
 				end
-				return string.format("[%s]", summary)
+				local source = vim.b.minidiff_summary.source_name
+				return string.format("[%s: %s]", source, summary)
 			end
 			vim.cmd([[
 			autocmd User Flags call Hoist("buffer", 6, "%{v:lua.Flag_diff_summary()}")
