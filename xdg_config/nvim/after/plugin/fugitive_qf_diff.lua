@@ -20,7 +20,6 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			if fname then
 				vim.cmd("leftabove vert diffsplit " .. fname)
 				vim.cmd("wincmd p")
-				vim.cmd("windo normal zz")
 			end
 		end
 
