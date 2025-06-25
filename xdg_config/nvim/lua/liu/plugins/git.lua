@@ -42,7 +42,6 @@ return { -- Git {{{2
 					]])
 				end,
 			})
-
 			api.nvim_create_autocmd("User", {
 				group = g,
 				pattern = { "FugitiveObject", "FugitiveIndex" },
@@ -113,14 +112,6 @@ return { -- Git {{{2
 				end,
 			})
 
-			api.nvim_create_autocmd("BufReadPost", {
-				group = g,
-				pattern = { "fugitive://*", ".git/*" },
-				callback = function(data)
-					vim.b[data.buf].minivisits_disable = true
-				end,
-			})
-
 			api.nvim_create_autocmd("User", {
 				group = g,
 				pattern = { "FugitivePager" },
@@ -167,7 +158,6 @@ return { -- Git {{{2
 				end,
 			})
 
-			--- Stash message {{{4
 			api.nvim_create_autocmd("User", {
 				group = g,
 				pattern = { "FugitiveIndex" },
@@ -177,8 +167,15 @@ return { -- Git {{{2
 					-- vim.keymap.set("n", "czms", ":G stash save -S<space>", { buffer = 0 })
 				end,
 			})
-			-- }}}
 			--- }}}
+
+			api.nvim_create_autocmd("BufReadPost", {
+				group = g,
+				pattern = { "fugitive://*", ".git/*" },
+				callback = function(data)
+					vim.b[data.buf].minivisits_disable = true
+				end,
+			})
 
 			api.nvim_create_autocmd("FileType", {
 				desc = "fold method for git buffer",
