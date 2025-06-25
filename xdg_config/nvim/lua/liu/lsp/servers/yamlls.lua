@@ -17,6 +17,11 @@ M.schemas = {
 	-- NOTE: github workflow/action
 	["https://www.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
 	["https://www.schemastore.org/github-action.json"] = ".github/action.{yml,yaml}",
+	-- TODO: kubernetes https://kubernetesjsonschema.dev
+	-- https://kubernetesjsonschema.dev/v1.14.0/$RESOURCENAME-APIVERSION.json
+	["https://kubernetesjsonschema.dev/v1.14.0/service-v1.json"] = "*service.{yaml,yml}",
+	["https://kubernetesjsonschema.dev/v1.14.0/deployment-apps-v1.json"] = "*deployment.{yaml,yml}",
+
 	-- NOTE: golangci-lint https://golangci-lint.run/usage/configuration/
 	["https://golangci-lint.run/jsonschema/custom-gcl.jsonschema.json"] = ".golangci.{yaml,yml}",
 }
