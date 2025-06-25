@@ -32,7 +32,9 @@ return { -- Git {{{2
 			-- vim.keymap.set("n", "\\g", ":Git ")
 			vim.keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
 			vim.keymap.set("n", "<leader>gw", "<cmd> try | Gwrite | catch /.*/ | update | endtry <cr>")
+			local g = vim.api.nvim_create_augroup("liu/fugitive/setup", { clear = true })
 			vim.api.nvim_create_autocmd("FileType", {
+				group = g,
 				pattern = "fugitive",
 				callback = function(args)
 					vim.cmd([[
@@ -41,7 +43,6 @@ return { -- Git {{{2
 				end,
 			})
 
-			local g = vim.api.nvim_create_augroup("liu/fugitive/setup", { clear = true })
 			api.nvim_create_autocmd("User", {
 				group = g,
 				pattern = { "FugitiveObject", "FugitiveIndex" },
@@ -178,6 +179,7 @@ return { -- Git {{{2
 			})
 			-- }}}
 			--- }}}
+
 			api.nvim_create_autocmd("FileType", {
 				desc = "fold method for git buffer",
 				pattern = { "git", "fugitive" },
