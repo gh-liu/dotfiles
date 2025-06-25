@@ -15,6 +15,10 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 				return
 			end
 		end
+		local do_diff = function(buf)
+			vim.cmd("leftabove vert diffsplit " .. vim.b[buf].diff_filename)
+			vim.cmd("wincmd p")
+		end
 
 		local set_buf_stuff = function(buf, qf)
 			qf = qf or vim.fn.getqflist({ context = 0, idx = 0 })
@@ -24,8 +28,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			vim.b[buf].diff_buf = vim.fn.bufnr(diff.filename, true)
 
 			vim.keymap.set("n", "\\d", function()
-				vim.cmd("leftabove vert diffsplit " .. vim.b[buf].diff_filename)
-				vim.cmd("wincmd p")
+				do_diff(buf)
 			end, { buffer = buf })
 		end
 
@@ -49,8 +52,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 					set_buf_stuff(buf)
 					if vim.g.DiffEnabled == 1 then
 						vim.schedule(function()
-							vim.cmd("leftabove vert diffsplit " .. vim.b[buf].diff_filename)
-							vim.cmd("wincmd p")
+							do_diff(buf)
 						end)
 					end
 				end
