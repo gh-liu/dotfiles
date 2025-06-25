@@ -42,6 +42,15 @@ return { -- Git {{{2
 			})
 
 			local g = vim.api.nvim_create_augroup("liu/fugitive/setup", { clear = true })
+			api.nvim_create_autocmd("User", {
+				group = g,
+				pattern = { "FugitiveObject", "FugitiveIndex" },
+				callback = function(data)
+					local buf = data.buf
+					vim.keymap.set("n", "q", "<cmd>bd<cr>", { buffer = buf })
+				end,
+			})
+
 			--- Toggle summary window {{{3
 			local G = {
 				buf = -1,
@@ -74,8 +83,6 @@ return { -- Git {{{2
 						end,
 						buffer = data.buf,
 					})
-
-					vim.keymap.set("n", "q", "<cmd>bw<cr>", { buffer = G.buf, remap = true })
 				end,
 			})
 
@@ -184,15 +191,6 @@ return { -- Git {{{2
 				group = g,
 				pattern = "fugitive",
 				command = "setlocal foldlevel=1 | setlocal foldmethod=syntax",
-			})
-
-			api.nvim_create_autocmd("User", {
-				group = g,
-				pattern = { "FugitiveObject" },
-				callback = function(data)
-					local buf = data.buf
-					vim.keymap.set("n", "q", "<cmd>bd<cr>", { buffer = buf })
-				end,
 			})
 
 			api.nvim_create_autocmd("User", {
