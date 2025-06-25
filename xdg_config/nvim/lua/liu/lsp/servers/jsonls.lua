@@ -18,6 +18,10 @@ M.schemas = {
 		fileMatch = { ".projections.json" },
 		url = "https://raw.githubusercontent.com/gh-liu/dotfiles/refs/heads/master/schema/projectionist.json",
 	},
+	{
+		fileMatch = { "snippets/*.json" },
+		url = "https://raw.githubusercontent.com/Yash-Singh1/vscode-snippets-json-schema/main/schema.json",
+	},
 }
 
 return M
