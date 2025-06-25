@@ -59,14 +59,6 @@ return {
 		ft = "direnv",
 	},
 	{
-		"nvzone/showkeys",
-		opts = {
-			---@type 'bottom-left'|'bottom-right'|'bottom-center'|'top-left'|'top-right'|'top-center'
-			position = "top-right",
-		},
-		cmd = "ShowkeysToggle",
-	},
-	{
 		"dhananjaylatkar/cscope_maps.nvim",
 		enabled = false,
 		opts = {
