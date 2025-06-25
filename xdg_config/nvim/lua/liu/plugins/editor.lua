@@ -549,21 +549,6 @@ return {
 				noremap = true,
 				silent = true,
 			})
-
-			vim.api.nvim_create_user_command("MiniDiffWith", function(args)
-				local buf = vim.api.nvim_get_current_buf()
-				local obj = args.fargs[1]
-				local path = vim.uv.fs_realpath(vim.api.nvim_buf_get_name(buf))
-				local cwd, basename = vim.fn.fnamemodify(path, ":h"), vim.fn.fnamemodify(path, ":t")
-				local obj = obj .. ":./" .. basename
-				-- local obj = vim.system({ "git", "rev-parse", obj }, { cwd = cwd }):wait()
-				-- print(obj.stdout)
-				-- local obj = vim.system({ "git", "describe", obj }, { cwd = cwd }):wait()
-				-- print(obj.stdout)
-				local obj = vim.system({ "git", "show", obj }, { cwd = cwd }):wait()
-				local lines = vim.split(obj.stdout, "\n", {})
-				pcall(MiniDiff.set_ref_text, buf, lines)
-			end, { complete = "customlist,fugitive#EditComplete", nargs = 1 })
 		end,
 	},
 	{
