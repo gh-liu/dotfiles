@@ -708,47 +708,14 @@ return {
 		-- event = "VeryLazy",
 		init = function(self)
 			local APPLYTEMPLATE = "APPLYTEMPLATE"
-			local config_dir = vim.fn.stdpath("config")
-			local template_dir = config_dir .. "/templates"
 			vim.api.nvim_create_autocmd("User", {
 				pattern = "ProjectionistApplyTemplate",
 				callback = function(ev)
 					local line = vim.fn.getline(1)
 					if line == APPLYTEMPLATE then
 						vim.cmd.delete() -- delete 1st placeholder line
-						local filetype = vim.bo.filetype
-						local file = vim.fn.bufname(ev.buf)
-						local fname = vim.fn.fnamemodify(file, ":t")
-						local ext = vim.fn.fnamemodify(file, ":e")
-						if #ext > 0 then
-							ext = "." .. ext
-						end
-						-- `.tpl` files are read as is into the buffer,
-						-- `.stpl` files treated as snippet which expand via vim.snippet.expand.
-						local candidates = {
-							fname .. ".tpl" .. ext,
-							filetype .. ".tpl",
-						}
-						for _, candidate in ipairs(candidates) do
-							local tmpl = vim.fs.joinpath(template_dir, candidate)
-							if vim.uv.fs_stat(tmpl) then
-								vim.cmd("0r " .. tmpl)
-								return
-							end
-						end
-						local snippet_candidates = {
-							fname .. ".stpl" .. ext,
-							filetype .. ".stpl",
-						}
-						for _, candidate in ipairs(snippet_candidates) do
-							local tmpl = vim.fs.joinpath(template_dir, candidate)
-							local f = io.open(tmpl, "r")
-							if f then
-								local content = f:read("*a")
-								vim.snippet.expand(content)
-								f:close()
-								return
-							end
+						if _G.apply_template then
+							_G.apply_template(ev.buf)
 						end
 					end
 				end,
