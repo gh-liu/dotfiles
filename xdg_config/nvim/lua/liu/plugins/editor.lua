@@ -725,7 +725,6 @@ return {
 				["*"] = {
 					["README.md"] = { type = "doc" },
 					[".projections.json"] = { type = "projections" },
-					["Dockerfile"] = { template = APPLYTEMPLATE },
 				},
 				-- c {{{
 				["*.c&*.h"] = {
