@@ -1,0 +1,9 @@
+{
+  "yaml lsp inlined schema": {
+    "prefix": "inlineschema",
+    "body": [
+      "# yaml-language-server: \\$schema=${1:urlToTheSchema}"
+    ],
+    "description": "Using inlined schema"
+  }
+}
