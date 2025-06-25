@@ -142,6 +142,7 @@ return {
 			{ "ys", mode = { "x", "n" } },
 			{ "ds", mode = { "n" } },
 			{ "cs", mode = { "n" } },
+			{ "yS", "ys$", remap = true },
 			{ "yss", "ys_", remap = true },
 		},
 		init = function()
