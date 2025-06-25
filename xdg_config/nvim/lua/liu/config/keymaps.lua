@@ -53,6 +53,11 @@ nnoremap <silent> gq<leader> :let b:winview=winsaveview() <bar> exe 'keepjumps k
 nnoremap gq? <Cmd>set formatprg? formatexpr?<CR>
 ]])
 
+-- Paste before/after linewise. See `:h put`
+local cmd = vim.fn.has("nvim-0.12") == 1 and "iput" or "put"
+vim.keymap.set({ "n", "x" }, "[p", '<Cmd>exe "' .. cmd .. '! " . v:register<CR>', { desc = "Paste Above" })
+vim.keymap.set({ "n", "x" }, "]p", '<Cmd>exe "' .. cmd .. ' "  . v:register<CR>', { desc = "Paste Below" })
+
 -- Tab/Win/Buffer
 vim.cmd([[
 " switch to alternate buffer
