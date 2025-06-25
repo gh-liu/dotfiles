@@ -505,8 +505,8 @@ return {
 			-- }
 
 			-- vim.cmd([[
-			-- 	nnoremap \s mS:Abolish -search 
-			-- 	nnoremap \S mS:%Subvert 
+			-- 	nnoremap \s mS:Abolish -search
+			-- 	nnoremap \S mS:%Subvert
 			-- ]])
 		end,
 		keys = {
