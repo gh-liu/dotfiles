@@ -22,6 +22,10 @@ M.schemas = {
 		fileMatch = { "snippets/*.json" },
 		url = "https://raw.githubusercontent.com/Yash-Singh1/vscode-snippets-json-schema/main/schema.json",
 	},
+	{
+		fileMatch = { ".golangci.json" },
+		url = "https://golangci-lint.run/jsonschema/custom-gcl.jsonschema.json",
+	},
 }
 
 return M

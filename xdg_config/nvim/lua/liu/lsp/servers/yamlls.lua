@@ -17,6 +17,8 @@ M.schemas = {
 	-- NOTE: github workflow/action
 	["https://www.schemastore.org/github-workflow.json"] = ".github/workflows/*.{yml,yaml}",
 	["https://www.schemastore.org/github-action.json"] = ".github/action.{yml,yaml}",
+	-- NOTE: golangci-lint https://golangci-lint.run/usage/configuration/
+	["https://golangci-lint.run/jsonschema/custom-gcl.jsonschema.json"] = ".golangci.{yaml,yml}",
 }
 
 return M
