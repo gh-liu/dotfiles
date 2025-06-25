@@ -488,7 +488,7 @@ return {
 			},
 			-- Source for how reference text is computed/updated/etc
 			-- Uses content from Git index by default
-			source = nil,
+			source = nil, -- NOTE(liu): be changed in config function
 			-- Delays (in ms) defining asynchronous processes
 			delay = {
 				-- How much to wait before update following every text change
@@ -521,9 +521,9 @@ return {
 		config = function(self, opts)
 			local MiniDiff = require("mini.diff")
 
-			if #vim.fs.find({ ".git" }, {}) == 0 then
-				opts.source = MiniDiff.gen_source.save()
-			end
+			-- :h MiniDiff-source-specification
+			-- Sources in array are attempted to attach in order;
+			opts.source = { MiniDiff.gen_source.git(), MiniDiff.gen_source.save() }
 			require("mini.diff").setup(opts)
 
 			vim.keymap.set({ "n" }, "yud", "<cmd>lua MiniDiff.toggle_overlay()<cr>", { noremap = true, silent = true })
