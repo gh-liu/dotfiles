@@ -82,47 +82,6 @@ return { -- Git {{{2
 			end
 			-- }}}
 
-			--- buffer: object hash {{{3
-			---@type function(buf_name: string): string|nil
-			local fugitive_buffer_hash = (function()
-				local hash_cache = {}
-				return function(buf_name)
-					local hash = hash_cache[buf_name]
-					if hash then
-						-- print("use cache")
-						return hash
-					end
-
-					local obj_type = vim.b.fugitive_type
-					local obj = vim.fn["fugitive#Object"](buf_name)
-					if obj_type == "blob" or obj_type == "tree" then
-						local hash = vim.fn["fugitive#RevParse"](obj)
-						hash_cache[buf_name] = hash
-						return hash
-					else
-						-- commit or tag
-						hash_cache[buf_name] = obj
-						return obj
-					end
-				end
-			end)()
-
-			api.nvim_create_autocmd("User", {
-				group = g,
-				pattern = { "FugitiveObject" },
-				desc = "set hash for git object buffer",
-				callback = function(data)
-					local buf = data.buf
-
-					local buf_name = api.nvim_buf_get_name(buf)
-					local hash = fugitive_buffer_hash(buf_name)
-					if hash then
-						vim.b[buf].fugitive_hash = hash
-					end
-				end,
-			})
-			---}}}
-
 			--- Absorb {{{
 			api.nvim_create_autocmd("User", {
 				group = g,
