@@ -3,9 +3,9 @@ local api = vim.api
 -- local fn = vim.fn
 
 ---@param cmds table
-local set_cmds = function(cmds)
+local set_cmds = function(cmds, opts)
 	for key, cmd in pairs(cmds) do
-		vim.api.nvim_create_user_command(key, cmd, { bang = true, nargs = 0 })
+		vim.api.nvim_create_user_command(key, cmd, opts or { bang = true, nargs = 0 })
 	end
 end
 
