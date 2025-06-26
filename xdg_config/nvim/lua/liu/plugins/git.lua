@@ -212,9 +212,12 @@ return { -- Git {{{2
 			set_cmds({
 				-- 3. GRcommit to show commits
 				-- 3.1 there is a `Gfiles` command to show files of current commit
-				GRcommit = 'let target = len(<q-args>)==0?"FETCH_HEAD":<q-args> | exec "Gclog<bang> @.." .. target',
+				GRcommit = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
+					.. '| exec "Gclog<bang> @.." .. g:diff_target',
 				-- 4. GRfiles to show files
-				GRfiles = 'let target = len(<q-args>)==0?"FETCH_HEAD":<q-args> | exec "G<bang> difftool --name-only " .. trim(execute("G merge-base @ " .. target)) ..  " " .. target',
+				GRfiles = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
+					.. '| let g:diff_base = trim(execute("G merge-base @ " .. g:diff_target))'
+					.. '| exec "G<bang> difftool --name-only " .. g:diff_base ..  " " .. g:diff_target',
 			}, {
 				bang = true,
 				nargs = "?",
