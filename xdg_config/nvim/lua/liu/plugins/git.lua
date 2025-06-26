@@ -85,6 +85,7 @@ return { -- Git {{{2
 				pattern = { "FugitiveIndex" },
 				callback = function(data)
 					vim.bo.bufhidden = "wipe"
+					vim.bo.buflisted = false
 
 					G.buf = data.buf
 					api.nvim_create_autocmd("BufDelete", {
