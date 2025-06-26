@@ -449,9 +449,11 @@ return {
 						SnacksWithPaths(string.format("Mini Visits(%s)", cwd), function()
 							local paths = MiniVisits.list_paths(cwd, {
 								sort = gen_sort(),
-								-- filter = function(path_data)
-								-- 	return path_data.path ~= cwd
-								-- end,
+								filter = function(path_data)
+									-- skip directory
+									return vim.fn.isdirectory(path_data.path) == 0
+									-- return path_data.path ~= cwd
+								end,
 							})
 							return paths
 						end)
