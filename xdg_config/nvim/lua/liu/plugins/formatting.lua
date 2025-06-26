@@ -93,6 +93,17 @@ return {
 		end
 		require("conform").setup(opts)
 
+		local cf = require("conform")
+		local old_list_formatters_for_buffer = cf.list_formatters_for_buffer
+		cf.list_formatters_for_buffer = function(buf)
+			local formatters = vim.b[buf].formatters
+			if formatters and type(formatters) == "table" then
+				return formatters
+			else
+				vim.b[buf].formatters = old_list_formatters_for_buffer(buf)
+			end
+		end
+
 		vim.api.nvim_create_user_command("Format", function(args)
 			local range = nil
 			if args.count ~= -1 then
