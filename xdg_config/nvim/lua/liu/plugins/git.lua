@@ -206,7 +206,7 @@ return { -- Git {{{2
 				callback = function(ev)
 					vim.api.nvim_buf_create_user_command(
 						ev.buf,
-						"Gfiles",
+						"GFiles",
 						":let commit=fugitive#Object(@%) | exec 'G<bang> difftool --name-only ' .. commit .. '~' .. ' '.. commit",
 						{ bang = true }
 					)
@@ -215,10 +215,10 @@ return { -- Git {{{2
 			})
 
 			set_cmds({
-				Gfiles = "G<bang> difftool --name-only",
+				GFiles = "G<bang> difftool --name-only",
 				-- 3 way diff
 				-- https://dzx.fr/blog/introduction-to-vim-fugitive/#3-way-diff
-				Gconflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
+				GConflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
 			})
 
 			-- NOTE: review workflow
@@ -228,10 +228,10 @@ return { -- Git {{{2
 			set_cmds({
 				-- 3. GRcommit to show commits
 				-- 3.1 there is a `Gfiles` command to show files of current commit
-				GRcommit = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
+				GRCommit = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
 					.. '| exec "Gclog<bang> @.." .. g:diff_target',
 				-- 4. GRfiles to show files
-				GRfiles = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
+				GRFiles = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
 					.. '| let g:diff_base = trim(execute("G merge-base @ " .. g:diff_target))'
 					.. '| exec "G<bang> difftool --name-only " .. g:diff_base ..  " " .. g:diff_target',
 			}, {
