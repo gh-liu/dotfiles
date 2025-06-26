@@ -16,6 +16,11 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			end
 		end
 		local do_diff = function(buf)
+			local cur_qfid = vim.fn.getqflist({ id = 0 }).id
+			if cur_qfid ~= qfid then
+				return
+			end
+
 			local fname = vim.b[buf].diff_filename
 			if fname then
 				vim.cmd("leftabove vert diffsplit " .. fname)
@@ -24,7 +29,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 		end
 
 		local set_buf_stuff = function(buf, qf)
-			qf = qf or vim.fn.getqflist({ context = 0, idx = 0 })
+			qf = qf or vim.fn.getqflist({ context = 0, idx = 0, id = qfid })
 			local diffs = qf.context.items[qf.idx].diff
 			if not diffs or #diffs == 0 then
 				return
