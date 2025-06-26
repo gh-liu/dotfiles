@@ -698,6 +698,7 @@ return {
 	},
 	{
 		"tpope/vim-tbone",
+		enabled = false,
 		-- event = "VeryLazy",
 	},
 	{
