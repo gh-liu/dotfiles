@@ -59,7 +59,10 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 					set_buf_stuff(buf)
 					if vim.g.DiffEnabled == 1 then
 						vim.schedule(function()
-							do_diff(buf)
+							local cur_buf = vim.api.nvim_get_current_buf()
+							if cur_buf == buf then
+								do_diff(buf)
+							end
 						end)
 					end
 				end
