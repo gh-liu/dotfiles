@@ -71,7 +71,7 @@ return { -- Git {{{2
 							self.buf = -1
 						end)
 					else
-						vim.cmd.G({ mods = { keepalt = true, keepjumps = true } })
+						vim.cmd.G({ mods = { keepalt = true } })
 					end
 				end,
 			}
