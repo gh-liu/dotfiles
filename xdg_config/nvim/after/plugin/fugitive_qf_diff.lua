@@ -4,8 +4,8 @@ vim.g.DiffEnabled = 0
 vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 	pattern = "cfugitive-difftool",
 	callback = function()
-		local qflist = vim.fn.getqflist({ items = 0, qfbufnr = 0, context = 0, idx = 0 })
-		local qfbufnr = qflist.qfbufnr
+		local qflist = vim.fn.getqflist({ items = 0, id = 0, context = 0, idx = 0 })
+		local qfid = qflist.id
 		local items = qflist.items
 
 		if vim.g.DiffEnabled == 1 and #items > 0 then
@@ -51,7 +51,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			end
 		end
 
-		local g = vim.api.nvim_create_augroup(string.format("fugitive/qf:%d/diff", qfbufnr), { clear = true })
+		local g = vim.api.nvim_create_augroup(string.format("fugitive/qfid:%d/diff", qfid), { clear = true })
 		-- https://github.com/tpope/vim-fugitive/blob/593f831d6f6d779cbabb70a4d1e6b1b1936a88af/autoload/fugitive.vim#L3072
 		-- seems all fugitive files be set option `bufhidden=delete`, so toggle between qf items will cause the buffer be deleted
 		vim.api.nvim_create_autocmd("BufAdd", {
