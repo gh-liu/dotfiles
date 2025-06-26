@@ -25,8 +25,18 @@ return { -- Git {{{2
 		},
 		config = function()
 			-- https://github.com/tpope/vim-fugitive/issues/1080#issuecomment-521100430
+			vim.g.oremap = {
+				["[m"] = "[f",
+				["]m"] = "]f",
+			}
+			vim.g.xremap = {
+				["[m"] = "[f",
+				["]m"] = "]f",
+			}
 			vim.g.nremap = {
 				["="] = "<TAB>",
+				["[m"] = "[f",
+				["]m"] = "]f",
 			}
 
 			-- vim.keymap.set("n", "\\g", ":Git ")
