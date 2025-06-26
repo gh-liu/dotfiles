@@ -233,7 +233,7 @@ return { -- Git {{{2
 				-- 4. GRfiles to show files
 				GRFiles = 'let g:diff_target = get(g:, "diff_target", len(<q-args>)==0?"FETCH_HEAD":<q-args>)'
 					.. '| let g:diff_base = trim(execute("G merge-base @ " .. g:diff_target))'
-					.. '| exec "G<bang> difftool --name-only " .. g:diff_base ..  " " .. g:diff_target',
+					.. '| exec "G<bang> difftool --name-status " .. g:diff_base ..  " " .. g:diff_target',
 			}, {
 				bang = true,
 				nargs = "?",
