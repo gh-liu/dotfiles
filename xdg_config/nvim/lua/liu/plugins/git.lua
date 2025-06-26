@@ -210,6 +210,7 @@ return { -- Git {{{2
 						":let commit=fugitive#Object(@%) | exec 'G<bang> difftool --name-only ' .. commit .. '~' .. ' '.. commit",
 						{ bang = true }
 					)
+					vim.wo[0][0].foldlevel = 0
 				end,
 			})
 
