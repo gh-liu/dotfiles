@@ -57,7 +57,7 @@ return { -- Git {{{2
 				pattern = { "FugitiveObject", "FugitiveIndex" },
 				callback = function(data)
 					local buf = data.buf
-					vim.keymap.set("n", "q", "<cmd>bd<cr>", { buffer = buf })
+					vim.keymap.set("n", "q", "<cmd>bw!<cr>", { buffer = buf })
 				end,
 			})
 
@@ -67,7 +67,7 @@ return { -- Git {{{2
 				toggle = function(self)
 					if self.buf > 0 then
 						api.nvim_buf_call(self.buf, function()
-							vim.cmd.bw()
+							vim.cmd("bw!")
 							self.buf = -1
 						end)
 					else
@@ -88,7 +88,7 @@ return { -- Git {{{2
 					vim.bo.buflisted = false
 
 					G.buf = data.buf
-					api.nvim_create_autocmd("BufDelete", {
+					api.nvim_create_autocmd("BufWipeout", {
 						callback = function()
 							G.buf = -1
 						end,
