@@ -1,3 +1,4 @@
+-- NOTE: add filetype plugins at bottom
 return {
 	{
 		"tpope/vim-dadbod",
@@ -55,10 +56,6 @@ return {
 		},
 	},
 	{
-		"direnv/direnv.vim",
-		ft = "direnv",
-	},
-	{
 		"dhananjaylatkar/cscope_maps.nvim",
 		enabled = false,
 		opts = {
@@ -66,6 +63,18 @@ return {
 			prefix = false,
 		},
 		cmd = { "Cs" },
+	},
+	{
+		"gh-liu/nvim-stevedore",
+		dev = true,
+		init = function()
+			vim.g.stevedore_runtime = "stevedore.runtime.docker"
+		end,
+	},
+	-- filetype plugins below
+	{
+		"direnv/direnv.vim",
+		ft = "direnv",
 	},
 	{
 		"craigmac/vim-mermaid",
@@ -96,13 +105,6 @@ return {
 					vim.b.blink_cmp_provider = { "buffer", "omni" }
 				end,
 			})
-		end,
-	},
-	{
-		"gh-liu/nvim-stevedore",
-		dev = true,
-		init = function()
-			vim.g.stevedore_runtime = "stevedore.runtime.docker"
 		end,
 	},
 }
