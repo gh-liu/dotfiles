@@ -26,6 +26,9 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 		local set_buf_stuff = function(buf, qf)
 			qf = qf or vim.fn.getqflist({ context = 0, idx = 0 })
 			local diffs = qf.context.items[qf.idx].diff
+			if not diffs or #diffs == 0 then
+				return
+			end
 			local diff = diffs[1]
 			vim.b[buf].diff_filename = diff.filename
 			vim.b[buf].diff_buf = vim.fn.bufnr(diff.filename, true)
