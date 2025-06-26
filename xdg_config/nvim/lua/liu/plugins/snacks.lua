@@ -309,7 +309,7 @@ return {
 						actions = {
 							exec_cmd = function(picker, item)
 								picker:close()
-								if item and item.command and item.command.nargs == "0" then
+								if item and item.command and item.command.nargs == "0" and not item.command.bang then
 									vim.schedule(function()
 										vim.cmd(item.cmd)
 										vim.fn.histadd("cmd", item.cmd)
