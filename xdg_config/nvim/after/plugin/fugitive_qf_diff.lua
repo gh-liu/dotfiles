@@ -40,6 +40,16 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 				do_diff(buf)
 				vim.g.DiffEnabled = 1
 			end, { buffer = buf })
+			vim.api.nvim_buf_create_user_command(buf, "GDiffWithCtx", function(args)
+				if args.bang and vim.g.DiffEnabled == 1 then
+					vim.g.DiffEnabled = 0
+					return
+				end
+				if args.bang then
+					vim.g.DiffEnabled = 1
+				end
+				do_diff(buf)
+			end, { bang = true, nargs = 0 })
 		end
 
 		local bufs = {}
