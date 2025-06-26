@@ -61,7 +61,7 @@ fo() {
 ## [f]uzzy [p]ull request check[o]ut
 fpo() {
 	# gh pr list --author "@me" | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
-	gh pr list | fzf --header 'checkout PR' | awk '{print $(1)}' | xargs gh pr checkout
+	gh pr list --limit 1000 | fzf --header 'checkout PR' | awk '{print $(1)}' | xargs gh pr checkout
 }
 # }}}
 
