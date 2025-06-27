@@ -495,14 +495,25 @@ return {
 
 			-- NOTE: Extra Coercions
 			-- https://github.com/tpope/vim-abolish/blob/dcbfe065297d31823561ba787f51056c147aa682/plugin/abolish.vim#L600
-			-- vim.g.Abolish = {
-			-- 	Coercions = {
-			-- 		l = function(word)
-			-- 			local char = vim.fn.nr2char(vim.fn.getchar())
-			-- 			return word .. char
-			-- 		end,
-			-- 	},
-			-- }
+			vim.g.Abolish = {
+				Coercions = {
+					l = function(word)
+						local char = vim.fn.nr2char(vim.fn.getchar())
+						vim.cmd("normal cr" .. char)
+						local word2 = vim.fn.expand("<cword>")
+						if word ~= word2 then
+							local pos = vim.fn.getpos(".")
+							vim.cmd(string.format([[undojoin | s/%s/%s/eI]], word2, word))
+							vim.fn.setpos(".", pos)
+							local expr = string.format('vim.lsp.buf.rename(\\"%s\\")', word2)
+							-- FIX: undojoin here not work
+							local cmd = string.format([[undojoin | call luaeval("%s")]], expr)
+							vim.cmd(cmd)
+						end
+						return word
+					end,
+				},
+			}
 
 			-- vim.cmd([[
 			-- 	nnoremap \s mS:Abolish -search
