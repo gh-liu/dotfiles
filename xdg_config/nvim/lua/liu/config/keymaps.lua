@@ -143,8 +143,8 @@ nnoremap g: :lua =
 " jump to context
 noremap gzo :call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 
-noremap gzn <cmd>lnext<cr>
-noremap gzp <cmd>lprev<cr>
+noremap [1 <cmd>lprev<cr>
+noremap ]1 <cmd>lnext<cr>
 
 noremap [@ <cmd>colder<cr>
 noremap ]@ <cmd>cnewer<cr>
