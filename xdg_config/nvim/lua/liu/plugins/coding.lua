@@ -499,16 +499,18 @@ return {
 				Coercions = {
 					l = function(word)
 						local char = vim.fn.nr2char(vim.fn.getchar())
+						vim.cmd("let b:tmp_undolevels = &l:undolevels | setlocal undolevels=-1")
 						vim.cmd("normal cr" .. char)
+						vim.cmd("let &l:undolevels = b:tmp_undolevels | unlet b:tmp_undolevels")
 						local word2 = vim.fn.expand("<cword>")
 						if word ~= word2 then
 							local pos = vim.fn.getpos(".")
-							vim.cmd(string.format([[undojoin | s/%s/%s/eI]], word2, word))
+							vim.cmd("let b:tmp_undolevels = &l:undolevels | setlocal undolevels=-1")
+							vim.cmd(string.format([[s/%s/%s/eI]], word2, word))
+							vim.cmd("let &l:undolevels = b:tmp_undolevels | unlet b:tmp_undolevels")
 							vim.fn.setpos(".", pos)
-							local expr = string.format('vim.lsp.buf.rename(\\"%s\\")', word2)
-							-- FIX: undojoin here not work
-							local cmd = string.format([[undojoin | call luaeval("%s")]], expr)
-							vim.cmd(cmd)
+
+							vim.cmd(string.format('lua vim.lsp.buf.rename("%s")', word2))
 						end
 						return word
 					end,
