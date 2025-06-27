@@ -145,6 +145,9 @@ noremap gzo :call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 
 noremap gzn <cmd>lnext<cr>
 noremap gzp <cmd>lprev<cr>
+
+noremap [@ <cmd>colder<cr>
+noremap ]@ <cmd>cnewer<cr>
 ]])
 
 -- Split
