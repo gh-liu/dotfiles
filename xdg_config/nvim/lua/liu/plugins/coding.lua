@@ -498,7 +498,10 @@ return {
 			vim.g.Abolish = {
 				Coercions = {
 					l = function(word)
-						local char = vim.fn.nr2char(vim.fn.getchar())
+						local ok, char = pcall(vim.fn.getcharstr)
+						if not ok then
+							return word
+						end
 						vim.cmd("let b:tmp_undolevels = &l:undolevels | setlocal undolevels=-1")
 						vim.cmd("normal cr" .. char)
 						vim.cmd("let &l:undolevels = b:tmp_undolevels | unlet b:tmp_undolevels")
