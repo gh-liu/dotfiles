@@ -192,7 +192,7 @@ return {
 					-- https://github.com/redhat-developer/yaml-language-server#language-server-settings
 					settings = {
 						yaml = {
-							format = { enable = true },
+							format = { enable = false },
 							schemas = require("liu.lsp.servers.yamlls").schemas,
 							schemaStore = {
 								-- pull in all available schemas
@@ -215,7 +215,7 @@ return {
 					-- https://github.com/microsoft/vscode/tree/main/extensions/json-language-features/server#settings
 					settings = {
 						json = {
-							format = { enable = true },
+							format = { enable = false },
 							schemaDownload = { enable = true },
 							schemas = require("liu.lsp.servers.jsonls").schemas,
 							validate = { enable = true },
