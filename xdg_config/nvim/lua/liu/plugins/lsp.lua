@@ -52,7 +52,7 @@ return {
 					settings = {
 						gopls = {
 							buildFlags = { "-tags", "debug" },
-							gofumpt = true,
+							gofumpt = false,
 							-- https://github.com/golang/tools/blob/master/gopls/doc/settings.md#code-lenses
 							codelenses = {
 								test = false,
