@@ -1,0 +1,28 @@
+#! /usr/bin/env python3
+
+import subprocess
+import json
+import sys
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("need mod url")
+        return
+    mod = sys.argv[1]
+    mod = mod + "@nomeaningversion"  # fake version make it always include Origin data
+    result = subprocess.run(
+        ["go", "mod", "download", "--json", mod], capture_output=True
+    )
+    obj = json.loads(result.stdout)
+    if obj["Origin"] is not None:
+        originData = obj["Origin"]
+        if originData["VCS"] == "git":
+            repo = originData["URL"]
+            print("### clone " + repo)
+            subprocess.run(["git", "clone", repo])
+            return
+
+
+if __name__ == "__main__":
+    main()
