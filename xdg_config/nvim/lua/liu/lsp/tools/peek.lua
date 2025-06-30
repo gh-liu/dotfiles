@@ -44,6 +44,9 @@ local preview_location = function(loc, _, _)
 		local timer = vim.uv.new_timer()
 		timer:start(1000, 0, function()
 			vim.schedule(function()
+				if vim.api.nvim_get_current_win() ~= pvwinid then
+					return
+				end
 				vim.fn.matchdelete(m, pvwinid)
 			end)
 			timer:close()
