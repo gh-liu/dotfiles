@@ -414,6 +414,7 @@ _set_title() {
 	print -Pn " [%l]\a"
 }
 
+export PATH=$PATH:$XDG_CONFIG_HOME/bin
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 # }}}
 
