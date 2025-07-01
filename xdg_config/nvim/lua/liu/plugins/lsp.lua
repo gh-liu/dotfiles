@@ -289,4 +289,25 @@ return {
 			})
 		end,
 	},
+	{
+		"rachartier/tiny-code-action.nvim",
+		event = "LspAttach",
+		keys = {
+			{
+				"gra",
+				function()
+					require("tiny-code-action").code_action()
+				end,
+				mode = { "x", "n" },
+			},
+		},
+		opts = {
+			picker = {
+				"buffer",
+				opts = {
+					auto_preview = true,
+				},
+			},
+		},
+	},
 }
