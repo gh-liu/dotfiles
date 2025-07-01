@@ -226,6 +226,7 @@ return {
 			{ "dr", mode = { "n", "x" } },
 			{ "dR", "<cmd>normal dr$<cr>", silent = true },
 			{ "cx", mode = { "n", "x" } },
+			{ "cX", "<cmd>normal cx$<cr>", silent = true },
 			{ "g=", mode = { "n", "x" } },
 		},
 		opts = {
