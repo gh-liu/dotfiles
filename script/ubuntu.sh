@@ -8,7 +8,7 @@ sudo apt install -y openssh-server
 sudo apt install -y build-essential
 sudo apt install -y linux-tools-common linux-tools-generic linux-tools-$(uname -r)
 
-sudo apt install -y sysstat net-tools
+sudo apt install -y sysstat net-tools bridge-utils
 sudo apt install -y binutils
 
 sudo apt install -y patchutils # grepdiff
