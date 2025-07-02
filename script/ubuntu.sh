@@ -17,7 +17,7 @@ sudo apt install -y git git-flow
 sudo apt install -y gh
 sudo apt install -y kitty
 
-sudo apt install -y curl wget
+sudo apt install -y curl wget nghttp2
 sudo apt install -y zip unzip
 
 sudo apt install -y vim zsh tmux tmuxp
