@@ -9,6 +9,19 @@ command! -nargs=+ -bang -complete=command R if !<bang>0 | wincmd n | endif
 inoremap <c-r>R <c-o>:<up><home>R! <cr>
 ]])
 
+-- :h modeline
+create_command("AddModeline", function()
+	local options = {
+		"filetype=" .. vim.bo.ft,
+		"tabstop=" .. vim.bo.ts,
+		"shiftwidth=" .. vim.bo.sw,
+		(vim.bo.expandtab and "" or "no") .. "expandtab",
+		(vim.bo.autoindent and "" or "no") .. "autoindent",
+	}
+	local modeline = string.format("vim: set %s :", vim.iter(options):join(" "))
+	vim.api.nvim_buf_set_lines(0, -1, -1, false, { string.format(vim.bo.commentstring, modeline) })
+end, { nargs = 0 })
+
 -- :h usr_29.txt
 --
 -- https://ctags.io
