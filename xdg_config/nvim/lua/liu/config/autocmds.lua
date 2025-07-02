@@ -186,11 +186,14 @@ autocmd("FileType", {
 -- 		end
 -- 	end,
 -- })
-api.nvim_create_autocmd("InsertEnter", {
-	callback = vim.schedule_wrap(function()
-		vim.cmd.nohlsearch()
-	end),
-})
+
+vim.cmd("packadd nohlsearch")
+
+-- api.nvim_create_autocmd("InsertEnter", {
+-- 	callback = vim.schedule_wrap(function()
+-- 		vim.cmd.nohlsearch()
+-- 	end),
+-- })
 -- }}}
 
 local term_startinsert = liu_augroup("term_insert")
