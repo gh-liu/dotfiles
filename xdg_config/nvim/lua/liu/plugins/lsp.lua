@@ -157,7 +157,6 @@ return {
 				},
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#pyright
 				-- @need-install: uv tool install --force pyright
-				-- @need-install: bun i -g pyright
 				pyright = {
 					-- https://github.com/microsoft/pyright/blob/main/docs/settings.md
 					-- https://microsoft.github.io/pyright/#/settings

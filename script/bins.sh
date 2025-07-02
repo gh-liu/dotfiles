@@ -124,7 +124,6 @@ bins() {
 		bun i -g typescript typescript-language-server
 		# bun i -g prettier
 		bun i -g @biomejs/biome
-		# bun i -g pyright
 
 		bun i -g @bufbuild/buf
 		bun i -g sql-formatter
