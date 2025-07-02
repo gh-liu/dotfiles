@@ -333,7 +333,7 @@ M.set_highlights = function()
 		-- ["@function"] = { link = "Function" },
 		-- ["@function.builtin"] = { link = "Special" },
 		-- ["@function.macro"] = { link = "Macro" },
-		-- ["@constructor"] = { link = "Special" },
+		["@constructor"] = { link = "Type" },
 		-- ["@operator"] = { link = "Operator" },
 		-- ["@keyword"] = { link = "Keyword" },
 		-- ["@keyword.function"] = { link = "Statement" },
