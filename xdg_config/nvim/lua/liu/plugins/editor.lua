@@ -665,6 +665,8 @@ return {
 				-- python
 				["uv run"] = "python",
 				["python3"] = "python",
+				["python -m pytest"] = "pytest",
+				["python3 -m pytest"] = "pytest",
 				-- golang
 				["golangci-lint run"] = "go",
 			}
@@ -818,22 +820,12 @@ return {
 					["*.py"] = {
 						type = "source",
 						alternate = "tests/{dirname}/test_{basename}.py",
-						dispatch = "uv run %",
+						dispatch = "python %",
 					},
 					["tests/**/test_*.py"] = {
 						type = "test",
 						alternate = "{dirname}/{basename}.py",
-						template = {
-							"import unittest",
-							"from unittest import mock",
-							"",
-							"class {dirname|underscore|camelcase|capitalize}{basename|camelcase|capitalize}Test(unittest.TestCase):",
-							"    pass",
-							"",
-							"",
-							'if __name__ == "__main__":',
-							"    unittest.main()",
-						},
+						dispatch = "python -m pytest -s %",
 					},
 				},
 				-- }}}
