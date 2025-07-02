@@ -251,6 +251,9 @@ end
 
 vim.keymap.set("n", "<c-g>", ctrl_g)
 
+-- :h default-mappings
+---@param modes string|table
+---@param lhs string
 local unmap = function(modes, lhs)
 	local modes_str = modes
 	if type(modes) == "table" then
