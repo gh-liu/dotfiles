@@ -92,7 +92,7 @@ api.nvim_create_autocmd("LspAttach", {
 		-- end
 
 		-- NOTE: default lsp mapping prefix with `gr`
-		nmap("gr", lsp.codelens.run, "Code [L]en")
+		nmap("grl", lsp.codelens.run, "Code [L]en")
 
 		vim.keymap.set("i", "<C-]>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
 	end,
