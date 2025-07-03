@@ -157,22 +157,22 @@ return {
 				},
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#pyright
 				-- @need-install: uv tool install --force pyright
-				pyright = {
-					-- https://github.com/microsoft/pyright/blob/main/docs/settings.md
-					-- https://microsoft.github.io/pyright/#/settings
-					on_init = function(...)
-						require("liu.lsp.servers.pyright").on_init(...)
-					end,
-					settings = {
-						python = {
-							analysis = {
-								autoSearchPaths = true,
-								diagnosticMode = "openFilesOnly",
-								useLibraryCodeForTypes = true,
-							},
-						},
-					},
-				},
+				-- pyright = {
+				-- 	-- https://github.com/microsoft/pyright/blob/main/docs/settings.md
+				-- 	-- https://microsoft.github.io/pyright/#/settings
+				-- 	on_init = function(...)
+				-- 		require("liu.lsp.servers.pyright").on_init(...)
+				-- 	end,
+				-- 	settings = {
+				-- 		python = {
+				-- 			analysis = {
+				-- 				autoSearchPaths = true,
+				-- 				diagnosticMode = "openFilesOnly",
+				-- 				useLibraryCodeForTypes = true,
+				-- 			},
+				-- 		},
+				-- 	},
+				-- },
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#ruff
 				-- @need-install: uv tool install --force ruff
 				-- pip install ruff
