@@ -4,6 +4,7 @@ local linters_by_ft = {
 	proto = { "buf_lint" },
 	bash = { "shellcheck" }, -- sudo apt install shellcheck
 	python = { "pylint" }, -- @need-install: uv tool install --force pylint
+	sql = { "sqlfluff" },
 
 	-- Use the "*" filetype to run linters on all filetypes.
 	-- ['*'] = { 'global linter' },
@@ -69,6 +70,20 @@ return {
 	},
 	config = function(self, opts)
 		require("lint").linters_by_ft = opts.linters_by_ft
+
+		local ori_sqlfluff = require("lint").linters.sqlfluff
+		require("lint").linters.sqlfluff = function()
+			local linter = ori_sqlfluff
+			local dialect = vim.b.sql_dialect or vim.b.sql_type_override or vim.g.sql_type_default
+			if dialect then
+				linter.args = {
+					"lint",
+					"--format=json",
+					"--dialect=" .. dialect,
+				}
+			end
+			return linter
+		end
 	end,
 }
 -- }}}
