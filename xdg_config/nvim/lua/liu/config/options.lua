@@ -155,6 +155,8 @@ vim.g.did_install_default_menus = 1 -- avoid stupid menu.vim (saves ~100ms)
 -- Language specified
 vim.g.rst_fold_enabled = 1 -- treesitter not support rst fold
 -- vim.g.markdown_folding = 1
+-- $VIMRUNTIME/ftplugin/sql.vim
+vim.g.ftplugin_sql_omni_key = "<leader>S"
 
 if not vim.env.TMUX and not vim.g.clipboard then
 	vim.g.clipboard = {
