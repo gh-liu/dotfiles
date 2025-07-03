@@ -43,6 +43,7 @@ local formatters_by_ft = {
 	javascript = { "prettier" }, -- @need-install: bun i -g prettier
 	typescript = { "prettier" },
 	markdown = { "injected" },
+	sql = { "sqlfluff" },
 }
 
 return {
@@ -104,5 +105,20 @@ return {
 			end
 			require("conform").format({ async = true, lsp_format = "fallback", range = range })
 		end, { range = true })
+
+		require("conform").formatters.sqlfluff = function(bufnr)
+			local dialect = vim.b[bufnr].sql_dialect or vim.b.sql_type_override or vim.g.sql_type_default
+			if dialect then
+				return {
+					args = {
+						"fix",
+						"--dialect",
+						dialect,
+						"-",
+					},
+					require_cwd = false,
+				}
+			end
+		end
 	end,
 }
