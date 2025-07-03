@@ -90,8 +90,6 @@ local auto_root_dirs = {
 	-- "Cargo.toml", -- rust
 	-- "build.zig.zon", -- zig
 	-- "pyproject.toml", -- python
-	".nvim.lua",
-	".projections.json",
 	".nvimrc", -- :h exrc
 	".nvim.lua", -- :h exrc
 	".projections.json", -- :h projectionist-setup
@@ -104,10 +102,11 @@ autocmd("BufEnter", {
 	callback = function(data)
 		-- vim.o.autochdir = false
 		local root = vim.fs.root(data.buf, auto_root_dirs)
-		if root == nil then
+		if root == nil or root == vim.fn.getcwd() then
 			return
 		end
 		vim.fn.chdir(root)
+		vim.api.nvim_echo({ { "chdir to " .. root, "WarningMsg" } }, true, {})
 	end,
 	desc = "Find root and change current directory",
 	once = true,
