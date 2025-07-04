@@ -68,6 +68,10 @@ return {
 						-- })
 					end
 
+					vim.keymap.set("n", "gx", function()
+						vim.ui.open(MiniFiles.get_fs_entry().path)
+					end, { buffer = buf, desc = "OS open" })
+
 					vim.keymap.set("n", "<CR>", function()
 						MiniFiles.go_in({ close_on_file = true })
 					end, { buffer = buf })
