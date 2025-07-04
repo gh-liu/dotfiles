@@ -266,8 +266,20 @@ zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}-- %D %d --%f'
 zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
 zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
 
+# autoload
+# +X  load the definition without executing
+# compinit
+# https://github.com/zsh-users/zsh/blob/f5abf18f2c0cb1ad5fae67d12e218148b9541d66/Completion/compinit#L67
+# -C  bypasses both the check for rebuilding the dump file and the usual call to compaudit
 autoload -U +X bashcompinit && bashcompinit
-autoload -U +X compinit && compinit -u
+# autoload -U +X compinit && compinit -u
+autoload -U +X compinit
+if [[ -z "${USERCOMPINITDONE}" ]]; then
+	export USERCOMPINITDONE=1
+	compinit
+else
+	compinit -C
+fi
 # }}}
 
 # 7. lang: go{{{
