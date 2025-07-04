@@ -24,6 +24,11 @@ nnoremap H Hzz
 
 nnoremap <c-d> <c-d>zz
 nnoremap <c-u> <c-u>zz
+
+nnoremap g, g,zvzz
+nnoremap g; g;zvzz
+"nmap g<C-o> g;
+"nmap g<C-i> g,
 ]])
 
 -- Coding
