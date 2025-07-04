@@ -1,3 +1,7 @@
+# time  zsh -i -c exit
+# NOTE: uncomment below line for profile
+# zmodload zsh/zprof
+
 typeset -U path # keep path unique
 
 # 1. env vars{{{
@@ -417,5 +421,8 @@ _set_title() {
 export PATH=$PATH:$XDG_CONFIG_HOME/bin
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 # }}}
+
+# NOTE: uncomment below line for profile
+# zprof
 
 ## vim: foldmethod=marker foldlevel=0
