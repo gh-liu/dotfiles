@@ -368,11 +368,11 @@ return {
 				{ "<leader>st", "treesitter" },
 				{ "<leader>ss", "lsp_symbols" },
 				{ "<leader>sS", "lsp_workspace_symbols" },
-				{ "gd", "lsp_definitions" },
-				{ "gD", "lsp_declarations" },
-				{ "gr", "lsp_references" },
-				{ "gI", "lsp_implementations" },
-				{ "gy", "lsp_type_definitions" },
+				-- { "gd", "lsp_definitions" },
+				-- { "gD", "lsp_declarations" },
+				-- { "gr", "lsp_references" },
+				-- { "gI", "lsp_implementations" },
+				-- { "gy", "lsp_type_definitions" },
 			}
 			for _, key in ipairs(keys) do
 				vim.keymap.set(key["mode"] or { "n" }, key[1], function()
