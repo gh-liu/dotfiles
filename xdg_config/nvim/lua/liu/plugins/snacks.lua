@@ -322,8 +322,8 @@ return {
 						confirm = "exec_cmd",
 					},
 				},
-				{ "<leader>sd", "diagnostics" },
-				{ "<leader>sD", "diagnostics_buffer" },
+				{ "<leader>sD", "diagnostics" },
+				{ "<leader>sd", "diagnostics_buffer" },
 				{ "<leader>sh", "help" },
 				{ "<leader>sj", "jumps" },
 				{
