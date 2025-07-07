@@ -253,4 +253,5 @@ api.nvim_create_autocmd("LspAttach", {
 	end,
 })
 
+vim.lsp.enable("gopls")
 -- vim: foldmethod=marker
