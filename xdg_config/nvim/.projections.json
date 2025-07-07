@@ -1,11 +1,11 @@
 {
-  "lsp/*.lua": {
+  "after/lsp/*.lua": {
     "type": "lsp",
     "alternate": "lua/liu/lsp/servers/{}.lua"
   },
   "lua/liu/lsp/servers/*.lua": {
     "type": "lsp_ex",
-    "alternate": "lsp/{}.lua"
+    "alternate": "after/lsp/{}.lua"
   },
   "lua/liu/lsp/init.lua": {
     "type": "lsp_init"
