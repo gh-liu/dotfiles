@@ -366,7 +366,7 @@ return {
 				{ "<leader>sl", "loclist" },
 				{ "<leader>sq", "qflist" },
 				{ "<leader>st", "treesitter" },
-				{ "<leader>ss", "lsp_symbols" },
+				{ "<leader>ss", "lsp_symbols", opts = { layout = "left" } },
 				{ "<leader>sS", "lsp_workspace_symbols" },
 				-- { "gd", "lsp_definitions" },
 				-- { "gD", "lsp_declarations" },
