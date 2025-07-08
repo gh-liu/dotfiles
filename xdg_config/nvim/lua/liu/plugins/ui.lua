@@ -165,6 +165,11 @@ return {
 					end
 				end
 				if #summary_strs > 0 then
+					table.sort(summary_strs, function(str1, str2)
+						local l1 = string.sub(str1, 1, 1)
+						local l2 = string.sub(str2, 1, 1)
+						return diag[l1] > diag[l2]
+					end)
 					return vim.fn["flagship#surround"](vim.iter(summary_strs):join(" "))
 				end
 				return ""
