@@ -110,13 +110,6 @@ return {
 				-- 		},
 				-- 	},
 				-- },
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#basedpyright
-				-- @need-install: uv tool install --force basedpyright
-				basedpyright = {},
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#ruff
-				-- @need-install: uv tool install --force ruff
-				-- pip install ruff
-				ruff = {},
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#clangd
 				-- sudo apt-get -y install clangd
 				clangd = {

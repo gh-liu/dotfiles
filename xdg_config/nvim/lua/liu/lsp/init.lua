@@ -255,5 +255,6 @@ api.nvim_create_autocmd("LspAttach", {
 
 vim.lsp.enable("gopls")
 vim.lsp.enable("lua_ls")
+vim.lsp.enable({ "ruff", "basedpyright" })
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
 -- vim: foldmethod=marker
