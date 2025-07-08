@@ -163,16 +163,12 @@ return {
 	},
 	{
 		"rachartier/tiny-code-action.nvim",
-		event = "LspAttach",
-		keys = {
-			{
-				"gra",
-				function()
-					require("tiny-code-action").code_action()
-				end,
-				mode = { "x", "n" },
-			},
-		},
+		lazy = true,
+		init = function()
+			vim.lsp.buf.code_action = function(...)
+				require("tiny-code-action").code_action(...)
+			end
+		end,
 		opts = {
 			picker = {
 				"buffer",
