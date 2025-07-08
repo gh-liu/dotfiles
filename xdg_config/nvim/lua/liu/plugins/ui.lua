@@ -161,7 +161,7 @@ return {
 				for key, serverity in pairs(diag) do
 					local count = get_counts(0, serverity)
 					if count and count > 0 then
-						table.insert(summary_strs, key .. " " .. tostring(count))
+						table.insert(summary_strs, key .. ":" .. tostring(count))
 					end
 				end
 				if #summary_strs > 0 then
