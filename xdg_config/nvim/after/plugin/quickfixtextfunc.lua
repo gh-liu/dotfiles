@@ -39,6 +39,9 @@ function _G.QuickfixTextFunc(info)
 
 	local align_str = function(fname, limit)
 		limit = limit or 31
+		if limit > 31 then
+			limit = 66
+		end
 		local fmt1 = "%-" .. limit .. "s"
 		local fmt2 = "…%." .. (limit - 1) .. "s"
 		if #fname <= limit then
