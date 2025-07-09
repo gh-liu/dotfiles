@@ -580,6 +580,9 @@ return {
 		end,
 	},
 	{
+		"will133/vim-dirdiff",
+	},
+	{
 		"MagicDuck/grug-far.nvim",
 		opts = {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
