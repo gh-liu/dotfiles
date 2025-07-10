@@ -134,7 +134,7 @@ function ACKMAP.setup()
 		local item = items[line]
 		tabedit_go_to(item.bufnr, item.lnum, item.col)
 	end, "open entry in a new tab")
-	map("g<c-p>", function()
+	map("gK", function()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		vim.schedule(function()
