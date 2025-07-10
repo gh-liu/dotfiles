@@ -694,6 +694,9 @@ return {
 					end
 				end,
 			})
+			vim.cmd([[
+			autocmd BufReadPost docker-compose.*.y*ml let b:dispatch='docker compose -f % up -d'
+			]])
 
 			vim.cmd([[
 			autocmd BufReadPost *
