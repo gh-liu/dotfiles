@@ -167,6 +167,13 @@ bins() {
 	if [ -f "$(which gh)" ]; then
 		gh extension install yusukebe/gh-markdown-preview
 	fi
+
+	if [ -f "$(which kubectl)" ]; then
+		# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+		kubectlVersion=v1.33.1
+		# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+		curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
+	fi
 }
 
 case $1 in
