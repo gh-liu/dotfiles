@@ -365,7 +365,7 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 # }}}
 
-# 9. tools: AS many tools install by lang, so let it at BOTTOM{{{ 
+# 9. tools: AS many tools install by lang, so let it at BOTTOM{{{
 ## brew: all the bins installed by brew should put after
 if [[ $OS == darwin ]]; then
 	export PATH=$PATH:/opt/homebrew/bin
@@ -414,7 +414,9 @@ which bat &>/dev/null && alias cat="bat --theme=\"Nord\" --style=\"changes\""
 # https://zsh.sourceforge.io/Doc/Release/Functions.html
 # precmd: Executed before each prompt.
 # chpwd: Executed whenever the current working directory is changed.
-precmd () { _set_title "$@" }
+precmd() {
+	_set_title "$@"
+}
 ## from: https://github.com/tpope/dotfiles/blob/30b0609c6bdc38eb607530d6a1b603dbfdc8a8ef/.zshrc#L52
 _set_title() {
 	case "$1" in
