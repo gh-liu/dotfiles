@@ -174,6 +174,14 @@ bins() {
 		# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 		curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
 	fi
+	if [ -f "$(which helm)" ]; then
+		helmVersion=v3.18.4
+		curl -O -L "https://get.helm.sh/helm-$helmVersion-linux-amd64.tar.gz"
+		tar -zxvf helm-$helmVersion-linux-amd64.tar.gz
+		mv linux-amd64/helm ~/.local/bin/helm
+		rm -r linux-amd64
+	fi
+
 }
 
 case $1 in
