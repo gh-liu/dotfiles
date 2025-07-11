@@ -168,18 +168,20 @@ bins() {
 		gh extension install yusukebe/gh-markdown-preview
 	fi
 
-	if [ -f "$(which kubectl)" ]; then
-		# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
-		kubectlVersion=v1.33.1
-		# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-		curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
-	fi
-	if [ -f "$(which helm)" ]; then
-		helmVersion=v3.18.4
-		curl -O -L "https://get.helm.sh/helm-$helmVersion-linux-amd64.tar.gz"
-		tar -zxvf helm-$helmVersion-linux-amd64.tar.gz
-		mv linux-amd64/helm ~/.local/bin/helm
-		rm -r linux-amd64
+	if [[ $OS == linux ]]; then
+		if [ -f "$(which kubectl)" ]; then
+			# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+			kubectlVersion=v1.33.1
+			# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+			curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
+		fi
+		if [ -f "$(which helm)" ]; then
+			helmVersion=v3.18.4
+			curl -O -L "https://get.helm.sh/helm-$helmVersion-linux-amd64.tar.gz"
+			tar -zxvf helm-$helmVersion-linux-amd64.tar.gz
+			mv linux-amd64/helm ~/.local/bin/helm
+			rm -r linux-amd64
+		fi
 	fi
 
 }
