@@ -312,6 +312,8 @@ if [[ -z "${USERCOMPINITDONE}" ]]; then
 else
 	compinit -C
 fi
+
+[ -f "$(which terraform)" ] && complete -o nospace -C $(which terraform) terraform
 # }}}
 
 # 7. lang: go{{{
