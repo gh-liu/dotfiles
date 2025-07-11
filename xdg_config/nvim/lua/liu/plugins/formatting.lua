@@ -44,6 +44,7 @@ local formatters_by_ft = {
 	typescript = { "prettier" },
 	markdown = { "injected" },
 	sql = { "sqlfluff" },
+	terraform = { "terraform_fmt" },
 }
 
 return {
