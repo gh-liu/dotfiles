@@ -295,6 +295,9 @@ zstyle ':completion:*:*:*:*:warnings' format '%F{red}-- no matches found --%f'
 zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}!- %d (errors: %e) -!%f'
 zstyle ':completion:*:*:*:*:messages' format ' %F{purple} -- %d --%f' # ? what's messages?
 
+# FIXME: filter the underscore prefixed name
+zstyle -e ':completion:*:(ssh|scp|sftp|sshfs|ping|telnet|nc|rsync):*' hosts 'reply=( ${=${${(M)${(f)"$(<~/.ssh/config)"}:#Host*}#Host }:#*\**} )'
+
 # autoload
 # +X  load the definition without executing
 # compinit
