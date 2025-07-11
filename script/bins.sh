@@ -90,7 +90,7 @@ bins() {
 
 		go install github.com/josharian/impl@latest
 		go install github.com/fatih/gomodifytags@latest
-		go install honnef.co/go/gotraceui/cmd/gotraceui@latest
+		# go install honnef.co/go/gotraceui/cmd/gotraceui@latest
 
 		go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 		go install mvdan.cc/sh/v3/cmd/shfmt@latest
