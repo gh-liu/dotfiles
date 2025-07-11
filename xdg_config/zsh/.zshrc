@@ -276,11 +276,24 @@ bindkey -M menuselect 'L' vi-forward-char
 ## Tab and ShiftTab cycle completions
 bindkey '^I' menu-complete
 bindkey "$terminfo[kcbt]" reverse-menu-complete
-## style
-zstyle ':completion:*' menu select
-zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}-- %D %d --%f'
-zstyle ':completion:*:messages' format ' %F{purple} -- %d --%f'
-zstyle ':completion:*:warnings' format ' %F{red}-- no matches found --%f'
+## NOTE: zstyle <pattern> <style> <values>
+### 1. The <pattern> act as a namespace
+### :completion:<function>:<completer>:<command>:<argument>:<tag>
+### Think of a <tag> as a type of match. `man zshcompsys` - Search for 'Standard Tags'
+### 2. The <style>. `man zshcompsys` - Search for 'Standard Styles'
+### NOTE: the sequence %F %f in the style’s value to use a foreground color
+### the sequence %K %k in the style’s value to use a background color
+### %B %b for Bold, %U %u for Underline
+### %d for description or context specific?
+zstyle ':completion:*' menu select                                  # menu-driven completion
+zstyle ':completion:*' group-name ''                                # group the matches under their descriptions
+zstyle ':completion:*' file-list all                                # files and folder matched with more details
+zstyle ':completion:*' completer _extensions _complete _approximate # `man zshcompsys` - Search for 'Control Functions'
+# zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}'        # try a case-insensitive completion if nothing matches
+zstyle ':completion:*:*:*:*:descriptions' format '%F{blue}-- %d --%f'
+zstyle ':completion:*:*:*:*:warnings' format '%F{red}-- no matches found --%f'
+zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}!- %d (errors: %e) -!%f'
+zstyle ':completion:*:*:*:*:messages' format ' %F{purple} -- %d --%f' # ? what's messages?
 
 # autoload
 # +X  load the definition without executing
