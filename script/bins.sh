@@ -170,6 +170,8 @@ bins() {
 
 	if [[ $OS == linux ]]; then
 		if [ -f "$(which kubectl)" ]; then
+			curl -o ~/.local/bin/minikube -L https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+
 			# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
 			kubectlVersion=v1.33.1
 			# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)

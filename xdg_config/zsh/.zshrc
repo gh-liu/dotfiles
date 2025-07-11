@@ -244,6 +244,7 @@ update_zsh_completions() {
 	[ -f "$(which docker)" ] && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 	[ -f "$(which podman)" ] && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
 	[ -f "$(which kubectl)" ] && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
+	[ -f "$(which minikube)" ] && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
 	[ -f "$(which helm)" ] && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
 	[ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
 
