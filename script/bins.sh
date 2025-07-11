@@ -182,6 +182,12 @@ bins() {
 			mv linux-amd64/helm ~/.local/bin/helm
 			rm -r linux-amd64
 		fi
+		if [ -f "$(which terraform)" ]; then
+			terrVersion=1.12.2
+			curl -O -L "https://releases.hashicorp.com/terraform/$terrVersion/terraform_"$terrVersion"_linux_amd64.zip"
+			unzip terraform_"$terrVersion"_linux_amd64.zip -x "LICENSE.txt"
+			mv terraform ~/.local/bin/terraform
+		fi
 	fi
 
 }
