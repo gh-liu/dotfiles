@@ -257,4 +257,5 @@ vim.lsp.enable("gopls")
 vim.lsp.enable("lua_ls")
 vim.lsp.enable({ "ruff", "basedpyright" })
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
+vim.lsp.enable("terraformls")
 -- vim: foldmethod=marker
