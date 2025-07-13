@@ -879,9 +879,16 @@ return {
 
 			-- Extra transformers
 			-- https://github.com/tpope/vim-projectionist/blob/5ff7bf79a6ef741036d2038a226bcb5f8b1cd296/autoload/projectionist.vim#L255
-			-- if not vim.g.projectionist_transformations then
-			-- 	vim.g.projectionist_transformations = vim.empty_dict()
-			-- end
+			if not vim.g.projectionist_transformations then
+				vim.g.projectionist_transformations = vim.empty_dict()
+			end
+			vim.cmd([[
+			"https://github.com/Bekaboo/dot/blob/8e5357d51f7c5b07a329e2ef8a5c6befd268690e/.config/nvim/lua/configs/vim-projectionist.lua#L10
+			" Remove first slash separated component
+			function! g:projectionist_transformations.tail(input, o) abort
+				return substitute(a:input, '\(\/\)*[^/]\+\/*', '\1', '')
+			endfunction
+			]])
 
 			-- autocmds {{{
 			-- autocmd("User", {
