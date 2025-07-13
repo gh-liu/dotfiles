@@ -94,7 +94,7 @@ local auto_root_dirs = {
 	".nvim.lua", -- :h exrc
 	".projections.json", -- :h projectionist-setup
 }
-if vim.fn.has("nvim-0.12") == 1 then
+if vim.fn.has("nvim-0.11.3") == 1 then
 	auto_root_dirs = { auto_root_dirs }
 end
 autocmd("BufEnter", {
