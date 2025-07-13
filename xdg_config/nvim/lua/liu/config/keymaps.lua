@@ -219,6 +219,10 @@ vim.api.nvim_create_autocmd({ "TermOpen" }, {
 	end,
 })
 
+-- stylua: ignore start
+vim.keymap.set({ 'n' }, 'dCl', function() vim.diagnostic.setloclist() end, { desc = 'Show document diagnostics' })
+vim.keymap.set({ 'n' }, 'dCq', function() vim.diagnostic.setqflist() end, { desc = 'Show workspace diagnostics' })
+-- stylua: ignore end
 -- https://github.com/justinmk/config/blob/5d4fd3d3d75daf6543596d412f1d0d01ad0f66be/.config/nvim/plugin/fug.lua#L92
 local function ctrl_g()
 	local fn = vim.fn
