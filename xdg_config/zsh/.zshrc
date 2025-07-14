@@ -426,10 +426,6 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 [ -f "$(which fzf)" ] && source <(fzf --zsh)
 ## zoxide
 [ -f "$(which zoxide)" ] && eval "$(zoxide init zsh)" # must be added after compinit is called.
-## ghostty
-if [[ -n $GHOSTTY_RESOURCES_DIR ]]; then
-	source $GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration
-fi
 
 which nvim &>/dev/null && alias e=nvim
 which fd &>/dev/null && alias find="fd"
