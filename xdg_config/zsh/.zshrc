@@ -296,8 +296,9 @@ zstyle ':completion:*:*:*:*:warnings' format '%F{red}-- no matches found --%f'
 zstyle ':completion:*:*:*:*:corrections' format '%F{yellow}!- %d (errors: %e) -!%f'
 zstyle ':completion:*:*:*:*:messages' format ' %F{purple} -- %d --%f' # ? what's messages?
 
-# FIXME: filter the underscore prefixed name
-zstyle -e ':completion:*:(ssh|scp|sftp|sshfs|ping|telnet|nc|rsync):*' hosts 'reply=( ${=${${(M)${(f)"$(<~/.ssh/config)"}:#Host*}#Host }:#*\**} )'
+zstyle ':completion:*:(ssh|scp):*:hosts' hosts
+zstyle ':completion:*:ssh:argument-1:' tag-order hosts users
+zstyle ':completion:*:scp:argument-rest:' tag-order hosts files users
 
 zstyle ':completion:*:*:kill:*' command 'ps -u $USER -o pid,user,%cpu,tty,cputime,cmd'
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;32'
