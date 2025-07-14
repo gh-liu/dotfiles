@@ -299,6 +299,9 @@ zstyle ':completion:*:*:*:*:messages' format ' %F{purple} -- %d --%f' # ? what's
 # FIXME: filter the underscore prefixed name
 zstyle -e ':completion:*:(ssh|scp|sftp|sshfs|ping|telnet|nc|rsync):*' hosts 'reply=( ${=${${(M)${(f)"$(<~/.ssh/config)"}:#Host*}#Host }:#*\**} )'
 
+zstyle ':completion:*:*:kill:*' command 'ps -u $USER -o pid,user,%cpu,tty,cputime,cmd'
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;32'
+
 # autoload
 # +X  load the definition without executing
 # compinit
