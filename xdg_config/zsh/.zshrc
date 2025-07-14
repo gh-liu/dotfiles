@@ -319,6 +319,10 @@ fi
 
 [ -f "$(which terraform)" ] && complete -o nospace -C $(which terraform) terraform
 # }}}
+# 8. functions{{{
+## https://github.com/zsh-users/zsh/blob/master/Functions/Misc/zmv
+autoload -Uz zmv
+# }}}
 
 # 7. lang: go{{{
 export GO111MODULE=on
