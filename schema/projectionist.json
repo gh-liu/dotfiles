@@ -5,7 +5,13 @@
     "type": "object",
     "properties": {
       "alternate": {
-        "type": "string",
+        "type": [
+          "string",
+          "array"
+        ],
+        "items": {
+          "type": "string"
+        },
         "description": "Determines the destination of the |projectionist-:A| command.  If this is a list, the first readable file will be used.  Will also be used as a default for |projectionist-related|."
       },
       "console": {
