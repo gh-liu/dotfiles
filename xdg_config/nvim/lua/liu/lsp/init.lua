@@ -254,7 +254,11 @@ api.nvim_create_autocmd("LspAttach", {
 })
 
 vim.lsp.enable("gopls")
-vim.lsp.enable("lua_ls")
+if vim.fn.executable("emmylua_ls") == 1 then
+	vim.lsp.enable({ "emmylua_ls" })
+else
+	vim.lsp.enable("lua_ls")
+end
 vim.lsp.enable({ "ruff", "basedpyright" })
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
 vim.lsp.enable("terraformls")
