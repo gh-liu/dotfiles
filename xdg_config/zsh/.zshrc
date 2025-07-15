@@ -422,6 +422,7 @@ export STARSHIP_CONFIG=$ZDOTDIR/starship/starship.toml
 # curl -sfL https://direnv.net/install.sh | bash
 [ -f "$(which direnv)" ] && eval "$(direnv hook zsh)"
 ## fzf
+export FZF_COMPLETION_TRIGGER=',,'
 # NOTE: https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax
 # NOTE: https://github.com/junegunn/fzf?tab=readme-ov-file#key-bindings-for-command-line
 export FZF_DEFAULT_OPTS='--height 50% --border --reverse'
