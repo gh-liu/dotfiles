@@ -169,14 +169,17 @@ bins() {
 	fi
 
 	if [[ $OS == linux ]]; then
-		if [ -f "$(which kubectl)" ]; then
-			curl -o ~/.local/bin/minikube -L https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-
-			# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
-			kubectlVersion=v1.33.1
-			# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-			curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
-		fi
+		# if [ -f "$(which kubectl)" ]; then
+		# 	curl -o ~/.local/bin/minikube -L https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+		#
+		# 	# NOTE: kubeadm
+		# 	# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm
+		#
+		# 	# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
+		# 	kubectlVersion=v1.33.1
+		# 	# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+		# 	curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
+		# fi
 		if [ -f "$(which helm)" ]; then
 			helmVersion=v3.18.4
 			curl -O -L "https://get.helm.sh/helm-$helmVersion-linux-amd64.tar.gz"
