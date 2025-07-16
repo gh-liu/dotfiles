@@ -96,7 +96,7 @@ vim.cmd([[
 " copy full path
 "noremap y<cr> :execute 'let @+ = expand("%:p")' <Bar> echo 'copy:' @+ <CR>
 " copy path
-nnoremap yY :execute 'let @+ = substitute(expand("%:p"), getcwd()."/","","")' <Bar> echo 'copy:' @+ <CR>
+nnoremap y<leader> :execute 'let @+ = substitute(expand("%:p"), getcwd()."/","","")' <Bar> echo 'copy:' @+ <CR>
 " go to parent dir
 "noremap - :<C-U>cd .. <CR>
 ]])
@@ -139,9 +139,9 @@ inoremap <silent> <C-G><C-T> <C-R>=repeat(complete(col('.'),map(["%Y-%m-%d %H:%M
 
 
 " copy entire file contents (to gui-clipboard if available)
-nnoremap <silent> y<leader> :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:winview) <cr>
+nnoremap <silent> yY :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:winview) <cr>
 
-nnoremap d<leader> :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
+nnoremap dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
 
 nnoremap g: :lua =
 
