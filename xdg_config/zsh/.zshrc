@@ -432,6 +432,14 @@ export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
 --color=fg+:#e5e9f0,bg+:#2E3440,hl+:#81a1c1
 --color=info:#eacb8a,prompt:#bf6069,pointer:#b48dac
 --color=marker:#a3be8b,spinner:#b48dac,header:#a3be8b'
+if [ -f "$(which fd)" ]; then
+	_fzf_compgen_path() {
+		fd --color never --hidden --follow --exclude ".git" . "$1"
+	}
+	_fzf_compgen_dir() {
+		fd --type d --color never --hidden --follow --exclude ".git" . "$1"
+	}
+fi
 [ -f "$(which fzf)" ] && source <(fzf --zsh)
 ## zoxide
 [ -f "$(which zoxide)" ] && eval "$(zoxide init zsh)" # must be added after compinit is called.
