@@ -247,6 +247,7 @@ update_zsh_completions() {
 	[ -f "$(which minikube)" ] && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
 	[ -f "$(which helm)" ] && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
 	[ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
+	[ -f "$(which starship)" ] && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
 
 	compinit
 }
