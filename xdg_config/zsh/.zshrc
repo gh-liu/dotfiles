@@ -237,16 +237,16 @@ unsetopt HIST_VERIFY          # Execute commands using history (e.g.: using !$) 
 update_zsh_completions() {
 	mkdir -p "$XDG_CONFIG_HOME"/zsh/zsh-completions
 
-	[ -f "$(which rustup)" ] && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
-	[ -f "$(which gh)" ] && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
-	[ -f "$(which just)" ] && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
-	[ -f "$(which git-absorb)" ] && git-absorb --gen-completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_git-absorb
+	[ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
 	[ -f "$(which docker)" ] && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
-	[ -f "$(which podman)" ] && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
+	[ -f "$(which gh)" ] && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
+	[ -f "$(which git-absorb)" ] && git-absorb --gen-completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_git-absorb
+	[ -f "$(which helm)" ] && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
+	[ -f "$(which just)" ] && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
 	[ -f "$(which kubectl)" ] && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
 	[ -f "$(which minikube)" ] && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
-	[ -f "$(which helm)" ] && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
-	[ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
+	[ -f "$(which podman)" ] && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
+	[ -f "$(which rustup)" ] && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
 	[ -f "$(which starship)" ] && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
 
 	compinit
