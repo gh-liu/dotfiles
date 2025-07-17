@@ -237,6 +237,7 @@ unsetopt HIST_VERIFY          # Execute commands using history (e.g.: using !$) 
 update_zsh_completions() {
 	mkdir -p "$XDG_CONFIG_HOME"/zsh/zsh-completions
 
+	[ -f "$(which atuin)" ] && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
 	[ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
 	[ -f "$(which docker)" ] && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 	[ -f "$(which gh)" ] && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
