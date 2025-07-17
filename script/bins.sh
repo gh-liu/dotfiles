@@ -162,6 +162,8 @@ bins() {
 		cargo install cargo-binutils
 
 		cargo install hyperfine # command-line benchmarking
+
+		cargo install nu
 	fi
 
 	if [ -f "$(which gh)" ]; then
