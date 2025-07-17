@@ -141,6 +141,9 @@ bins() {
 	fi
 
 	if [ -f "$(which cargo)" ]; then
+		# NOTE: use `cargo binstall` to install bins
+		cargo install cargo-binstall
+
 		cargo install bat
 		cargo install eza
 		cargo install just
