@@ -262,4 +262,5 @@ end
 vim.lsp.enable({ "ruff", "basedpyright" })
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
 vim.lsp.enable("terraformls")
+vim.lsp.enable("nushell")
 -- vim: foldmethod=marker

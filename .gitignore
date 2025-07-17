@@ -9,3 +9,4 @@ xdg_config/tmux/plugins/
 
 xdg_config/nvim/lazy-lock.json
 
+/xdg_config/nushell/history.txt

@@ -5,6 +5,12 @@
   "xdg_config/zsh/zsh-conf/custom.zsh": {
     "type": "zshcustom"
   },
+  "xdg_config/nushell/*.nu": {
+    "type": "nushell"
+  },
+  "xdg_config/nushell/config.nu": {
+    "type": "nushell"
+  },
   "xdg_config/zsh/starship/starship.toml": {
     "type": "startship"
   },
