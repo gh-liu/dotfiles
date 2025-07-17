@@ -121,18 +121,9 @@ return {
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#bashls
 				-- @need-install: bun i -g bash-language-server
 				bashls = {},
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#ast_grep
-				-- @need-install: cargo install ast-grep
-				ast_grep = {},
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#dockerls
-				-- @need-install: bun i -g dockerfile-language-server-nodejs
-				dockerls = {},
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#vimls
 				-- @need-install: bun i -g vim-language-server
 				vimls = {},
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#buf_ls
-				-- @need-install: go install github.com/bufbuild/buf/cmd/buf@latest
-				buf_ls = {},
 			}
 
 			local other_caps = {}

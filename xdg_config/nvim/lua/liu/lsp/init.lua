@@ -261,6 +261,9 @@ else
 end
 vim.lsp.enable({ "ruff", "basedpyright" })
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
+vim.lsp.enable("ast_grep")
+vim.lsp.enable("buf_ls")
+vim.lsp.enable("dockerls")
 vim.lsp.enable("terraformls")
 vim.lsp.enable("nushell")
 -- vim: foldmethod=marker
