@@ -110,11 +110,6 @@ return {
 				-- 		},
 				-- 	},
 				-- },
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#clangd
-				-- sudo apt-get -y install clangd
-				clangd = {
-					filetypes = { "c", "cpp", "objc", "objcpp" },
-				},
 				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#ts_ls
 				-- @need-install: bun i -g typescript typescript-language-server
 				ts_ls = {},

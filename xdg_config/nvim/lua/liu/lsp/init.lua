@@ -261,6 +261,7 @@ else
 end
 vim.lsp.enable({ "ruff", "basedpyright" })
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
+vim.lsp.enable("clangd")
 vim.lsp.enable("ast_grep")
 vim.lsp.enable("buf_ls")
 vim.lsp.enable("dockerls")
