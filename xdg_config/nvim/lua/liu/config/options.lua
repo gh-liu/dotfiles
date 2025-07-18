@@ -120,13 +120,6 @@ vim.cmd([[
 set includeexpr=substitute(v:fname,'^[^\/]*/','','')
 ]])
 
--- diff
-if vim.fn.exists("&diffanchors") == 1 then
-	local opts = vim.fn.split(vim.o.diffopt, ",")
-	table.insert(opts, "anchor")
-	vim.o.diffopt = vim.iter(opts):join(",")
-end
-
 -- jumplist
 -- vim.o.jumpoptions = "stack" -- stack or view
 vim.cmd([[
