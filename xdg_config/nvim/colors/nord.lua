@@ -257,6 +257,7 @@ M.set_highlights = function()
 		-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_semanticTokens
 		-- build in
 		["@lsp"] = {},
+		["@lsp.type.string"] = {},
 		-- ["@lsp.type.class"] = { link = "@type" },
 		-- ["@lsp.type.comment"] = { link = "@comment" },
 		-- ["@lsp.type.decorator"] = { link = "@attribute" },
