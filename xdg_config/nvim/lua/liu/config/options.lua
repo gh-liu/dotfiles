@@ -120,6 +120,12 @@ vim.cmd([[
 set includeexpr=substitute(v:fname,'^[^\/]*/','','')
 ]])
 
+-- diff
+local diffoptS = vim.fn.split(vim.o.diffopt, ",")
+-- `inline:char` or `inline:word`
+table.insert(diffoptS, "inline:char")
+vim.o.diffopt = vim.iter(diffoptS):join(",")
+
 -- jumplist
 -- vim.o.jumpoptions = "stack" -- stack or view
 vim.cmd([[
