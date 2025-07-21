@@ -234,7 +234,7 @@ return {
 				go_out_plus = "",
 
 				mark_set = "m",
-				mark_goto = "M",
+				mark_goto = "`",
 			},
 			options = { use_as_default_explorer = false },
 		},
