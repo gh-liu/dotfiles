@@ -13,6 +13,24 @@ local linters_by_ft = {
 	-- ["*"] = { "typos" },
 }
 
+---@class LinterCondCtx
+---@field filename string
+---@field dirname string
+
+---@type table<string,table>
+local linters_opt = {
+	golangcilint = {
+		---@param ctx LinterCondCtx
+		---@return boolean
+		condition = function(ctx)
+			return #vim.fs.find(
+				{ ".golangci.yml", ".golangci.yaml", ".golangci.toml", ".golangci.json" },
+				{ path = ctx.dirname, upward = true }
+			) > 0
+		end,
+	},
+}
+
 local M = {}
 
 function M.debounce(ms, fn)
@@ -44,7 +62,21 @@ function M.lint()
 		end
 		vim.b.linters = linters
 	end
-
+	if #linters > 0 then
+		-- Filter out linters that don't exist or don't match the condition.
+		local ctx = { filename = vim.api.nvim_buf_get_name(0) }
+		ctx.dirname = vim.fn.fnamemodify(ctx.filename, ":h")
+		linters = vim.iter(linters)
+			:filter(function(name)
+				local linter_opt = linters_opt[name]
+				if linter_opt and type(linter_opt) == "table" and linter_opt.condition then
+					return linter_opt.condition(ctx)
+				end
+				return true
+			end)
+			:totable()
+		vim.b.linters = linters
+	end
 	-- Run linters.
 	if #linters > 0 then
 		lint.try_lint(linters)
