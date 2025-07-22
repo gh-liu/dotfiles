@@ -62,6 +62,10 @@ glogp() {
 fo() {
 	git branch --no-color --sort=-committerdate --format='%(refname:short)' | fzf --header 'git checkout' | xargs git checkout
 }
+## [f]uzzy [r]emote check[o]ut
+fro() {
+	git branch --no-color --sort=-committerdate --format='%(refname:short)' --remote | fzf --header 'git checkout remote' | xargs git checkout -t
+}
 ## [f]uzzy [p]ull request check[o]ut
 fpo() {
 	# gh pr list --author "@me" | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
