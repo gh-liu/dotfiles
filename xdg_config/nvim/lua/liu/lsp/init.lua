@@ -1,6 +1,18 @@
 local api = vim.api
 local lsp = vim.lsp
 
+local old_lsp_start = vim.lsp.start
+
+vim.lsp.start = function(...)
+	local _, opt = unpack({ ... })
+	if opt and opt.bufnr then
+		if vim.b[opt.bufnr].fugitive_type then
+			return
+		end
+	end
+	old_lsp_start(...)
+end
+
 -- Log Levels {{{1
 api.nvim_create_user_command("LspSetLogLevel", function(opts)
 	local level = unpack(opts.fargs)
