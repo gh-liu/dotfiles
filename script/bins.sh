@@ -205,6 +205,9 @@ bins() {
 _llm_clis() {
 	# https://qwenlm.github.io/zh/blog/qwen3-coder
 	bun i -g @qwen-code/qwen-code
+
+	# https://www.anthropic.com/claude-code
+	bun i -g @anthropic-ai/claude-code
 }
 
 case $1 in
