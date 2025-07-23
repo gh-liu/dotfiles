@@ -165,10 +165,11 @@ return {
 					if bufnr > 0 then
 						-- delte buffer
 						-- require("mini.bufremove").delete(bufnr, false)
-						--
-						-- 	Snacks.bufdelete(bufnr)
-						if _G.bufdelete then
-							bufdelete(bufnr)
+						if vim.api.nvim_buf_is_valid(bufnr) then
+							vim.api.nvim_buf_call(bufnr, function()
+								vim.cmd([[buf#]])
+								vim.api.nvim_buf_delete(bufnr, { force = true })
+							end)
 						end
 					end
 				end,
