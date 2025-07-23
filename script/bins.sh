@@ -202,6 +202,11 @@ bins() {
 
 }
 
+_llm_clis() {
+	# https://qwenlm.github.io/zh/blog/qwen3-coder
+	bun i -g @qwen-code/qwen-code
+}
+
 case $1 in
 "nvim_nightly")
 	nvim_nightly
