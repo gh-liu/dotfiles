@@ -1,4 +1,4 @@
-vim.g.DiffEnabled = 0
+vim.g.diff_enabled = 0
 -- https://github.com/tpope/vim-fugitive/issues/132
 -- apply event: https://github.com/tpope/vim-fugitive/blob/593f831d6f6d779cbabb70a4d1e6b1b1936a88af/autoload/fugitive.vim#L1575
 vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
@@ -8,7 +8,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 		local qfid = qflist.id
 		local items = qflist.items
 
-		if vim.g.DiffEnabled == 1 and #items > 0 then
+		if vim.g.diff_enabled == 1 and #items > 0 then
 			local module = items[1].module
 			-- https://github.com/tpope/vim-fugitive/blob/593f831d6f6d779cbabb70a4d1e6b1b1936a88af/autoload/fugitive.vim#L5645
 			if vim.startswith(module, ":2:") or vim.startswith(module, ":3:") then
@@ -43,11 +43,11 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			end, { buffer = buf })
 			vim.keymap.set("n", "\\D", function()
 				do_diff(buf)
-				vim.g.DiffEnabled = 1
+				vim.g.diff_enabled = 1
 			end, { buffer = buf })
 			vim.api.nvim_buf_create_user_command(buf, "GDiffWithCtx", function(args)
-				if args.bang and vim.g.DiffEnabled == 1 then
-					vim.g.DiffEnabled = 0
+				if args.bang and vim.g.diff_enabled == 1 then
+					vim.g.diff_enabled = 0
 					vim.api.nvim_exec_autocmds("BufDelete", {
 						modeline = false,
 						buffer = buf,
@@ -55,7 +55,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 					return
 				end
 				if args.bang then
-					vim.g.DiffEnabled = 1
+					vim.g.diff_enabled = 1
 				end
 				do_diff(buf)
 			end, { bang = true, nargs = 0 })
@@ -79,7 +79,7 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 				local buf = args.buf
 				if bufs[buf] then
 					set_buf_stuff(buf)
-					if vim.g.DiffEnabled == 1 then
+					if vim.g.diff_enabled == 1 then
 						vim.schedule(function()
 							local cur_buf = vim.api.nvim_get_current_buf()
 							if cur_buf == buf then
