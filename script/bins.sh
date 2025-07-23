@@ -209,6 +209,10 @@ _llm_clis() {
 	# https://www.anthropic.com/claude-code
 	bun i -g @anthropic-ai/claude-code
 
+	# https://openai.com/codex
+	# https://github.com/openai/codex
+	bun i -g @openai/codex
+
 	# https://github.com/google-gemini/gemini-cli
 	bun i -g @google/gemini-cli
 }
