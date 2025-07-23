@@ -1,13 +1,3 @@
---- can be override by snacks.bufdelete or require("mini.bufremove").delete
----@param buf number
-_G.bufdelete = function(buf)
-	vim.api.nvim_buf_call(buf, function()
-		vim.cmd([[buf# | bd#]])
-
-		-- vim.cmd([[buf#]])
-		-- vim.api.nvim_buf_delete(buf, { force = true })
-	end)
-end
 vim.api.nvim_create_autocmd("VimEnter", {
 	callback = function()
 		local config = require("liu.user_config")

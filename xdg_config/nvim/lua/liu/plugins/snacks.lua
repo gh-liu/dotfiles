@@ -206,7 +206,6 @@ return {
 			-- }}}
 
 			-- bufdelete {{{3
-			_G.bufdelete = Snacks.bufdelete
 			vim.keymap.set({ "n" }, "<leader>bd", function()
 				Snacks.bufdelete()
 			end, {})
