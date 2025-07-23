@@ -208,6 +208,9 @@ _llm_clis() {
 
 	# https://www.anthropic.com/claude-code
 	bun i -g @anthropic-ai/claude-code
+
+	# https://github.com/google-gemini/gemini-cli
+	bun i -g @google/gemini-cli
 }
 
 case $1 in
