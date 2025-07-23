@@ -148,6 +148,9 @@ nnoremap g: :lua =
 " jump to context
 noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 
+" `bdelete` but keep window
+nnoremap d<leader> <cmd>buf#<bar>bd#<cr>
+
 noremap [1 <cmd>lprev<cr>
 noremap ]1 <cmd>lnext<cr>
 
