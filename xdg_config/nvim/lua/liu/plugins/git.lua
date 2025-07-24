@@ -264,6 +264,13 @@ return { -- Git {{{2
 				end,
 			})
 
+			-- skip and do it by myself
+			vim.g.flagship_skip = "^FugitiveStatusline$"
+			vim.cmd([[
+				"autocmd User Flags call Hoist('buffer', 5, function('FugitiveStatusline'))
+				autocmd User Flags call Hoist('buffer', 6, '%{FugitiveStatusline() . flagship#surround(toupper(get(b:,"fugitive_type","")))}')
+			]])
+
 			set_hls({
 				diffAdded = { link = "DiffAdd" },
 				diffRemoved = { link = "DiffDelete" },
