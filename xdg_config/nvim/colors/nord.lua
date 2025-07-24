@@ -83,7 +83,7 @@ M.set_highlights = function()
 		DiffAdd = { fg = c.green, bg = c.gray },
 		DiffChange = { fg = c.yellow, bg = c.gray },
 		DiffDelete = { fg = c.red, bg = c.gray },
-		DiffText = { fg = c.blue, bg = c.gray },
+		DiffText = { fg = c.blue, bg = c.gray, underdotted = true },
 
 		-- float window
 		FloatBorder = { fg = c.blue },
