@@ -206,9 +206,6 @@ return {
 			-- }}}
 
 			-- bufdelete {{{3
-			vim.keymap.set({ "n" }, "<leader>bd", function()
-				Snacks.bufdelete()
-			end, {})
 			vim.cmd([[
 				function! UserBufDelete() abort
 					call v:lua._G.Snacks.bufdelete()
