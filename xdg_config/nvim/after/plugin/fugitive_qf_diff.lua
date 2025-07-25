@@ -106,11 +106,10 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			callback = function(args)
 				local buf = args.buf
 				if bufs[buf] then
-					vim.fn["fugitive#DiffClose"]()
-					-- local diff_buf = vim.b[buf].diff_buf
-					-- if diff_buf and vim.api.nvim_buf_is_valid(diff_buf) then
-					-- 	vim.api.nvim_buf_delete(diff_buf, { force = true })
-					-- end
+					local diff_buf = vim.b[buf].diff_buf
+					if diff_buf and vim.api.nvim_buf_is_valid(diff_buf) then
+						vim.api.nvim_buf_delete(diff_buf, { force = true })
+					end
 				end
 			end,
 		})
