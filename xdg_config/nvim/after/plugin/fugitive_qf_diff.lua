@@ -20,6 +20,16 @@ vim.api.nvim_create_autocmd({ "QuickFixCmdPost" }, {
 			if cur_qfid ~= qfid then
 				return
 			end
+			local showed = vim.iter(vim.api.nvim_list_wins())
+				:map(function(winid)
+					return vim.api.nvim_win_get_buf(winid)
+				end)
+				:any(function(bufnr)
+					return vim.b[buf].diff_buf == bufnr
+				end)
+			if showed then
+				return
+			end
 
 			local fname = vim.b[buf].diff_filename
 			if fname then
