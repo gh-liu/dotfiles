@@ -6,7 +6,7 @@ local old_lsp_start = vim.lsp.start
 vim.lsp.start = function(...)
 	local _, opt = unpack({ ... })
 	if opt and opt.bufnr then
-		if vim.b[opt.bufnr].fugitive_type then
+		if vim.api.nvim_buf_is_valid(opt.bufnr) and vim.b[opt.bufnr].fugitive_type then
 			return
 		end
 	end
