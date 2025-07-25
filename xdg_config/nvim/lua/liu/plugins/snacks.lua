@@ -217,11 +217,11 @@ return {
 			vim.cmd([[nnoremap \f :lua Snacks.picker.()<left><left>]])
 
 			local keys = {
-				{ "<leader>sb", "buffers" },
-				{ "<leader>sg", "grep" },
-				{ "<leader>sf", "files" },
+				{ "sb", "buffers" },
+				{ "sg", "grep" },
+				{ "sf", "files" },
 				{
-					"<leader>sp",
+					"sp",
 					"projects",
 					opts = {
 						layout = "default",
@@ -269,10 +269,10 @@ return {
 						},
 					},
 				},
-				{ "<leader>s/", "lines", opts = { layout = "default" } },
-				{ "<leader>sw", "grep_word", mode = { "n", "x" } },
+				{ "s/", "lines", opts = { layout = "default" } },
+				{ "sw", "grep_word", mode = { "n", "x" } },
 				{
-					"<leader>sr",
+					"sr",
 					"registers",
 					opts = {
 						-- transform = function(item)
@@ -323,12 +323,12 @@ return {
 						confirm = "exec_cmd",
 					},
 				},
-				{ "<leader>sD", "diagnostics" },
-				{ "<leader>sd", "diagnostics_buffer" },
-				{ "<leader>sh", "help" },
-				{ "<leader>sj", "jumps" },
+				{ "sD", "diagnostics" },
+				{ "sd", "diagnostics_buffer" },
+				{ "sh", "help" },
+				{ "sj", "jumps" },
 				{
-					"<leader>sm",
+					"sm",
 					"marks",
 					opts = {
 						transform = function(item)
@@ -364,11 +364,11 @@ return {
 						},
 					},
 				},
-				{ "<leader>sl", "loclist" },
-				{ "<leader>sq", "qflist" },
-				{ "<leader>st", "treesitter" },
-				{ "<leader>ss", "lsp_symbols", opts = { layout = "left" } },
-				{ "<leader>sS", "lsp_workspace_symbols" },
+				{ "sl", "loclist" },
+				{ "sq", "qflist" },
+				{ "st", "treesitter" },
+				{ "ss", "lsp_symbols", opts = { layout = "left" } },
+				{ "sS", "lsp_workspace_symbols" },
 				-- { "gd", "lsp_definitions" },
 				-- { "gD", "lsp_declarations" },
 				-- { "gr", "lsp_references" },
@@ -381,7 +381,7 @@ return {
 					Snacks.picker[key[2]](opts)
 				end)
 			end
-			vim.keymap.set("n", "<leader>sc", function()
+			vim.keymap.set("n", "sc", function()
 				Snacks.picker({
 					title = "Compilers",
 					finder = function()
