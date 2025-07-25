@@ -206,7 +206,7 @@ return { -- Git {{{2
 				callback = function(ev)
 					vim.api.nvim_buf_create_user_command(
 						ev.buf,
-						"GFiles",
+						"GCFiles",
 						":let commit=fugitive#Object(@%) | exec 'G<bang> difftool --name-only ' .. commit .. '~' .. ' '.. commit",
 						{ bang = true }
 					)
