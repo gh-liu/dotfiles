@@ -71,6 +71,10 @@ fpo() {
 	# gh pr list --author "@me" | fzf --header 'checkout PR' | awk '{print $(NF-5)}' | xargs git checkout
 	gh pr list --limit 1000 | fzf --header 'checkout PR' | awk '{print $(1)}' | xargs gh pr checkout
 }
+## [f]uzzy gh [r]epo [c]lone
+frc() {
+	gh repo list --limit 1000 $1 | fzf --header 'clone repo' | awk '{print $(1)}' | xargs gh repo clone
+}
 # }}}
 
 # 3. tmux{{{
