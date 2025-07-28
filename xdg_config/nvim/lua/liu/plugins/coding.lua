@@ -9,7 +9,7 @@ return {
 		dependencies = {
 			{
 				-- "nvim-treesitter/nvim-treesitter-textobjects",
-				"gh-liu/nvim-treesitter-textobjects",
+				"gh-liu/nvim-treesitter-textobjects", -- NOTE: pull from main branch of upstream
 				event = "VeryLazy",
 			},
 		},
