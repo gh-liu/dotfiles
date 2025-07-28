@@ -37,7 +37,9 @@ local do_diff = function(buf)
 
 	local fname = vim.b[buf].diff_filename
 	if fname then
-		vim.cmd("leftabove vert diffsplit " .. fname)
+		vim.fn["fugitive#DiffClose"]()
+		-- vim.cmd("leftabove vert diffsplit " .. fname)
+		pcall(vim.cmd, "leftabove vert diffsplit " .. fname)
 		vim.cmd("wincmd p")
 	end
 end
