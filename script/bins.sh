@@ -129,6 +129,7 @@ bins() {
 		bun i -g sql-formatter
 		bun i -g @anthropic-ai/claude-code
 
+		# bun i -g tree-sitter-cli
 	fi
 
 	if [ -f "$(which uv)" ]; then
@@ -167,6 +168,8 @@ bins() {
 		cargo install hyperfine # command-line benchmarking
 
 		cargo install nu
+
+		cargo install tree-sitter-cli
 	fi
 
 	if [ -f "$(which gh)" ]; then
