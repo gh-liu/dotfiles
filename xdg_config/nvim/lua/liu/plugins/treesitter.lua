@@ -18,7 +18,8 @@ return {
 							return
 						end
 
-						if not vim.tbl_contains(require("nvim-treesitter").get_available(), lang) then
+						if not vim.tbl_contains(require("nvim-treesitter").get_installed(), lang) then
+							require("nvim-treesitter").install(lang, {})
 							return
 						end
 
