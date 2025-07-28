@@ -1,3 +1,10 @@
+---@class TSCapabilities
+---@field highlight boolean
+---@field fold boolean
+---@field indent boolean
+
+local cache_fts = {} ---@type table<string,TSCapabilities>
+
 return {
 	{
 		"nvim-treesitter/nvim-treesitter",
@@ -5,21 +12,32 @@ return {
 			vim.api.nvim_create_autocmd("FileType", {
 				callback = function(event)
 					local filetype = event.match
-					local lang = vim.treesitter.language.get_lang(filetype)
-					if not lang then
-						return
+					if not cache_fts[filetype] then
+						local lang = vim.treesitter.language.get_lang(filetype)
+						if not lang then
+							return
+						end
+
+						if not vim.tbl_contains(require("nvim-treesitter").get_available(), lang) then
+							return
+						end
+
+						cache_fts[filetype] = { highlight = true }
+						if vim.treesitter.query.get(lang, "folds") then
+							cache_fts[filetype].folds = true
+						end
+						if vim.treesitter.query.get(lang, "indents") then
+							cache_fts[filetype].indent = true
+						end
 					end
 
-					if not vim.tbl_contains(require("nvim-treesitter").get_available(), lang) then
-						return
+					if cache_fts[filetype].highlight then
+						vim.treesitter.start()
 					end
-
-					vim.treesitter.start()
-
-					if vim.treesitter.query.get(lang, "folds") then
-						vim.wo.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+					if cache_fts[filetype].fold then
+						vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
 					end
-					if vim.treesitter.query.get(lang, "indents") then
+					if cache_fts[filetype].indent then
 						vim.bo.indentexpr = "v:lua.require('nvim-treesitter').indentexpr()"
 					end
 				end,
