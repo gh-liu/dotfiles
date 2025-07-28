@@ -152,6 +152,13 @@ noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 "nnoremap d<leader> <cmd>buf#<bar>bd#<cr>
 nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
 
+noremap z? <cmd> setlocal foldenable? 
+\ <bar> setlocal foldlevel? 
+\ <bar> setlocal foldmethod? 
+\ <bar> setlocal foldexpr? 
+\ <bar> setlocal foldmarker? 
+\ <cr>
+
 noremap [1 <cmd>lprev<cr>
 noremap ]1 <cmd>lnext<cr>
 
