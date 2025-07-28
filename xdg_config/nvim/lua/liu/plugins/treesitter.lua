@@ -24,7 +24,7 @@ return {
 
 						cache_fts[filetype] = { highlight = true }
 						if vim.treesitter.query.get(lang, "folds") then
-							cache_fts[filetype].folds = true
+							cache_fts[filetype].fold = true
 						end
 						if vim.treesitter.query.get(lang, "indents") then
 							cache_fts[filetype].indent = true
