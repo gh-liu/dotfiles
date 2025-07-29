@@ -198,6 +198,14 @@ if lsp.foldexpr then
 end
 -- }}}
 
+-- semantic tokens
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "gotmpl" },
+	callback = function()
+		vim.lsp.semantic_tokens.enable(false, { bufnr = 0 })
+	end,
+})
+
 local ms = lsp.protocol.Methods
 -- Handlers {{{1
 local function with(f, config)
