@@ -49,6 +49,15 @@ return {
 					vim.t.sp_tab_title = "kulala"
 				end,
 			})
+
+			vim.api.nvim_create_autocmd("BufEnter", {
+				pattern = "kulala://ui",
+				callback = function(data)
+					if vim.fn.winnr("$") < 2 then
+						vim.cmd.bdelete({ bang = true, mods = { silent = true } })
+					end
+				end,
+			})
 		end,
 		ft = { "http" },
 		opts = {
