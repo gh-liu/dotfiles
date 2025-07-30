@@ -25,6 +25,8 @@ return {
 	},
 	{
 		"mistweaverco/kulala.nvim",
+		-- @need-install: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+		-- @need-install: cargo install websocat
 		init = function()
 			vim.api.nvim_create_autocmd({ "FileType" }, {
 				pattern = "http",
