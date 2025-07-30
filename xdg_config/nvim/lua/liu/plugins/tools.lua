@@ -63,6 +63,9 @@ return {
 		ft = { "http" },
 		opts = {
 			global_keymaps = false,
+			-- https://neovim.getkulala.net/docs/getting-started/configuration-options#certificates
+			certificates = {},
+			custom_dynamic_variables = {}, ---@type { [string]: fun():string }[]
 		},
 	},
 	{
