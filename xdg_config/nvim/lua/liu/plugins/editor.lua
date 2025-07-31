@@ -552,8 +552,6 @@ return {
 			opts.source = { MiniDiff.gen_source.git(), MiniDiff.gen_source.save() }
 			require("mini.diff").setup(opts)
 
-			vim.keymap.set({ "n" }, "yud", "<cmd>lua MiniDiff.toggle_overlay()<cr>", { noremap = true, silent = true })
-
 			vim.keymap.set({ "n" }, "[c", function()
 				if vim.wo.diff then
 					vim.cmd.normal({ "[c", bang = true })
@@ -633,7 +631,6 @@ return {
 			-- stylua: ignore end
 		end,
 		cmd = { "UndotreeToggle" },
-		keys = { { "yuu", "<cmd>UndotreeToggle<cr>" } },
 	},
 	{
 		"jpalardy/vim-slime",

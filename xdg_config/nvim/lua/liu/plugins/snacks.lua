@@ -170,9 +170,9 @@ return {
 			Snacks.toggle.option("list", { name = "List" }):map("yol")
 			Snacks.toggle.option("previewwindow", { name = "Previewwindow" }):map("yop")
 			Snacks.toggle.option("ignorecase", { name = "Ignorecase" }):map("yoi")
-
 			Snacks.toggle.option("winfixbuf", { name = "winFixbuf" }):map("yof")
-			Snacks.toggle.zoom():map("yuz")
+
+			Snacks.toggle.zoom():map("yoz")
 			Snacks.toggle.line_number():map("yon")
 			Snacks.toggle({
 				name = "Quickfix",
@@ -191,7 +191,7 @@ return {
 						vim.cmd("cclose")
 					end
 				end,
-			}):map("yuq")
+			}):map("yoq")
 			-- }}}
 
 			require("snacks").setup(opts)
