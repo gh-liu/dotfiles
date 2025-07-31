@@ -323,14 +323,14 @@ return {
 					pattern = "MiniFilesBufferCreate",
 					callback = function(args)
 						local buf = args.data.buf_id
-						vim.keymap.set("n", "<leader>v", function()
+						vim.keymap.set("n", "yA", function()
 							local minifiles = require("mini.files")
 							local entry = minifiles.get_fs_entry()
 							local MiniVisits = require("mini.visits")
 							MiniVisits.add_label(label, entry.path, visit_cwd())
 							hi_entry_add(entry, buf, vim.fn.line("."))
 						end, { buffer = buf })
-						vim.keymap.set("n", "<leader>V", function()
+						vim.keymap.set("n", "yD", function()
 							local minifiles = require("mini.files")
 							local entry = minifiles.get_fs_entry()
 							local MiniVisits = require("mini.visits")
@@ -423,7 +423,7 @@ return {
 
 			local maps = {
 				{
-					"<leader>v",
+					"yA",
 					function()
 						local MiniVisits = require("mini.visits")
 						MiniVisits.add_label(label, nil, visit_cwd())
@@ -431,7 +431,7 @@ return {
 					end,
 				},
 				{
-					"<leader>V",
+					"yD",
 					function()
 						local MiniVisits = require("mini.visits")
 						MiniVisits.remove_label(label, nil, visit_cwd())
