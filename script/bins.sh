@@ -159,6 +159,7 @@ bins() {
 		cargo install --features lsp --locked taplo-cli
 		cargo install ast-grep
 		cargo install asm-lsp
+		cargo install skim
 
 		cargo install git-absorb # git absorb
 
