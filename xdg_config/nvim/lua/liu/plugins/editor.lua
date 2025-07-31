@@ -272,26 +272,7 @@ return {
 						if not labels or #labels == 0 then
 							return ""
 						end
-
-						local parts = {}
-						for _, label in ipairs(labels) do
-							local paths = MiniVisits.list_paths(visit_cwd(), {
-								sort = MiniVisits.gen_sort.default({ recency_weight = 1 }),
-								filter = function(path_data)
-									if path_data.labels and path_data.labels[label] then
-										return true
-									end
-									return false
-								end,
-							})
-							for i, path in ipairs(paths) do
-								if path == bufname then
-									table.insert(parts, i .. ":" .. label)
-									break
-								end
-							end
-						end
-						return "➚" .. vim.fn.join(parts, ",")
+						return "::" .. vim.fn.join(labels, ",")
 					end)
 				end,
 			})
