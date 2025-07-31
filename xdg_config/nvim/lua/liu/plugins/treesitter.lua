@@ -50,4 +50,20 @@ return {
 		build = ":TSUpdate",
 		opts = {},
 	},
+	{
+		"nvim-treesitter/nvim-treesitter-context",
+		event = "VeryLazy",
+		init = function()
+			vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { link = "Title" })
+		end,
+		opts = {
+			multiwindow = true,
+			max_lines = 1,
+			min_window_height = 0,
+			line_numbers = true,
+			trim_scope = "outer",
+			mode = "topline", ---@type 'cursor' | 'topline'
+			separator = nil,
+		},
+	},
 }
