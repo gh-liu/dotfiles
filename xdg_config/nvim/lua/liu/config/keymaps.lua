@@ -159,6 +159,8 @@ noremap z? <cmd> setlocal foldenable?
 \ <bar> setlocal foldmarker? 
 \ <cr>
 
+noremap ZR <cmd>restart<cr>
+
 noremap [1 <cmd>lprev<cr>
 noremap ]1 <cmd>lnext<cr>
 
