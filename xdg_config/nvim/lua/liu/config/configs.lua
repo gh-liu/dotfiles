@@ -4,25 +4,23 @@ vim.api.nvim_create_autocmd("VimEnter", {
 		local diag_icons = config.icons.diagnostics
 		-- https://neovim.io/doc/user/diagnostic.html
 		local diagnostic = vim.diagnostic
-		local min_serverity = diagnostic.severity.INFO
 		diagnostic.config({
-			underline = { severity = { min = min_serverity } },
-			signs = false,
-			-- signs = {
-			-- 	severity = { min = min_serverity },
-			-- 	text = diag_icons,
-			-- },
+			severity_sort = true,
+			update_in_insert = false,
+			jump = {},
 			float = {
 				source = true,
 				border = config.borders,
-				show_header = false,
+				show_header = true,
 				prefix = function(diag)
 					local level = vim.diagnostic.severity[diag.severity]
 					local prefix = string.format(" %s ", diag_icons[level])
 					return prefix, "Diagnostic" .. level:gsub("^%l", string.upper)
 				end,
 			},
-			severity_sort = true,
+			signs = false,
+			underline = true,
+			virtual_lines = false,
 			virtual_text = {
 				prefix = "",
 				spacing = 2,
@@ -46,7 +44,6 @@ vim.api.nvim_create_autocmd("VimEnter", {
 					return message .. " "
 				end,
 			},
-			update_in_insert = false,
 		})
 	end,
 })
