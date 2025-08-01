@@ -6,6 +6,15 @@ for _, file in ipairs(vim.fn.readdir(vim.fn.stdpath("config") .. "/lua/liu/dap/a
 end
 
 local dap = require("dap")
+if vim.g.dap_configurations and type(vim.g.dap_configurations) == "table" then
+	for lang, config in pairs(vim.g.dap_configurations) do
+		if dap.configurations[lang] and type(dap.configurations[lang]) == "table" then
+			for _, c in ipairs(config) do
+				table.insert(dap.configurations[lang], c)
+			end
+		end
+	end
+end
 dap.defaults.fallback.switchbuf = "useopen,uselast"
 -- dap.defaults.fallback.focus_terminal = true
 -- dap.defaults.fallback.force_external_terminal = true
