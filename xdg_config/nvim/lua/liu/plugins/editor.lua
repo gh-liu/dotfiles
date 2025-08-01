@@ -434,7 +434,7 @@ return {
 					end,
 				},
 				{
-					"sv",
+					"<leader>sv",
 					function()
 						local MiniVisits = require("mini.visits")
 						SnacksWithPaths("Mini Visits(" .. label .. ")", function()
@@ -447,7 +447,7 @@ return {
 					end,
 				},
 				{
-					"so",
+					"<leader>so",
 					function()
 						local cwd = visit_cwd()
 						local MiniVisits = require("mini.visits")
