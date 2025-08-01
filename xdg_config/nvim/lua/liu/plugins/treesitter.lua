@@ -54,7 +54,8 @@ return {
 		"nvim-treesitter/nvim-treesitter-context",
 		event = "VeryLazy",
 		init = function()
-			vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { link = "Title" })
+			-- vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { link = "Tag" })
+			vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined" })
 		end,
 		opts = {
 			multiwindow = true,
