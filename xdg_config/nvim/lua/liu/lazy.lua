@@ -35,6 +35,9 @@ require("lazy").setup(
 			patterns = {},
 			fallback = true, -- Fallback to git when local plugin doesn't exist
 		},
+		install = {
+			missing = false,
+		},
 		performance = {
 			rtp = {
 				---@type string[]
