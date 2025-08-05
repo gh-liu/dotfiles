@@ -560,6 +560,17 @@ return {
 		end,
 	},
 	{
+		"echasnovski/mini.bufremove",
+		lazy = true,
+		init = function()
+			vim.cmd([[
+				function! UserBufDelete() abort
+					call v:lua.require("mini.bufremove").delete()
+				endfunction
+			]])
+		end,
+	},
+	{
 		"will133/vim-dirdiff",
 	},
 	{
