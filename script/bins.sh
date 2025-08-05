@@ -219,6 +219,8 @@ _llm_clis() {
 
 	# https://github.com/google-gemini/gemini-cli
 	bun i -g @google/gemini-cli
+
+	go install github.com/charmbracelet/crush@latest
 }
 
 case $1 in
