@@ -205,14 +205,6 @@ return {
 			end, {})
 			-- }}}
 
-			-- bufdelete {{{3
-			vim.cmd([[
-				function! UserBufDelete() abort
-					call v:lua._G.Snacks.bufdelete()
-				endfunction
-			]])
-			-- }}}
-
 			-- Picker {{{
 			vim.cmd([[nnoremap \f :lua Snacks.picker.()<left><left>]])
 
