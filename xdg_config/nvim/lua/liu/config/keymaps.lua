@@ -56,6 +56,8 @@ xnoremap <expr> A (mode()=~#'[vV]'?'<C-v>0o$A':'A')
 "nnoremap gq= mzgggqG`z
 nnoremap <silent> gq<leader> :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:winview) <cr>
 nnoremap gq? <Cmd>set formatprg? formatexpr?<CR>
+
+inoremap <c-c> <esc>
 ]])
 
 -- Paste before/after linewise. See `:h put`
