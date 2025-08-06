@@ -47,6 +47,7 @@ local config = {
 	-- https://wezfurlong.org/wezterm/config/fonts.html
 	-- https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode/Regular/complete
 	-- font = wezterm.font("FiraCode NF"),
+	-- font = wezterm.font("Google Sans Code NF"),
 	line_height = 1.1,
 	-- https://wezfurlong.org/wezterm/colorschemes/index.html
 	color_scheme = "nord",
