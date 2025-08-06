@@ -94,6 +94,9 @@ return {
 				.. "%#DiagnosticHint#"
 				.. "%{v:lua.Flag_diagnostic.Get(4)}"
 
+			vim.cmd([[ autocmd LspProgress * redrawtabline ]])
+			vim.g.tabsuffix = "%{v:lua.vim.lsp.status()}" .. vim.g.tabsuffix
+
 			local icons = require("liu.user_config").icons
 
 			_G.Flag_sp_tab_title = function()
