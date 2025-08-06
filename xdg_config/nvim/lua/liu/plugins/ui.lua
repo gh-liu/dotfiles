@@ -79,9 +79,12 @@ return {
 
 			vim.g.tabprefix = ""
 			-- vim.g.tablabel = "%N%{flagship#tabmodified()} %{flagship#tabcwds('shorten',',')}"
-			vim.g.tabsuffix = ""
-				.. "%#Debug#"
-				.. "%{v:lua.Flag_dap_staus()}"
+			vim.g.tabsuffix = "" .. "%#Debug#" .. "%{v:lua.Flag_dap_staus()}"
+			-- .. "%#ModeMsg#"
+			-- .. "%{v:lua.Flag_lsp_clients()}"
+
+			vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
+			vim.g.tabsuffix = vim.g.tabsuffix
 				.. "%#DiagnosticError#"
 				.. "%{v:lua.Flag_diagnostic.Get(1)}"
 				.. "%#DiagnosticWarn#"
@@ -90,8 +93,6 @@ return {
 				.. "%{v:lua.Flag_diagnostic.Get(3)}"
 				.. "%#DiagnosticHint#"
 				.. "%{v:lua.Flag_diagnostic.Get(4)}"
-			-- .. "%#ModeMsg#"
-			-- .. "%{v:lua.Flag_lsp_clients()}"
 
 			local icons = require("liu.user_config").icons
 
