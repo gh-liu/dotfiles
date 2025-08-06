@@ -40,6 +40,8 @@ sudo apt install -y graphviz
 sudo apt install -y sqlite3
 sudo apt install -y redis-tools
 sudo apt install -y mysql-client
+# mongodb: https://www.mongodb.com/try/download/shell
+wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.6_amd64.deb | sudo apt install ./mongodb-mongosh_2.5.6_amd64.deb
 
 # lang
 # sudo apt install -y python3-pip
