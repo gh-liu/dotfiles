@@ -1,6 +1,6 @@
 local api = vim.api
 
-api.nvim_set_hl(0, "MarkSign", { link = "MoreMsg", default = true })
+api.nvim_set_hl(0, "MarkSign", { link = "Title", default = true })
 -- api.nvim_set_hl(0, "MarkSignPos", { default = true })
 
 local ns = api.nvim_create_namespace("liu/marksigns")
