@@ -133,4 +133,8 @@ return {
 			})
 		end,
 	},
+	{
+		"DrKJeff16/wezterm-types",
+		lazy = true,
+	},
 }
