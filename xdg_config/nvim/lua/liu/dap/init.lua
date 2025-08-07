@@ -68,9 +68,10 @@ api.nvim_create_autocmd("User", {
 		map_dap("k", [[:lua require("dap").up()<CR>]], "Go up in current stacktrace without stepping")
 		map_dap("f", [[:lua require("dap").focus_frame()<CR>]], "Jump/focus the current frame")
 
-		-- map("r", function()
-		-- 	dap.repl.toggle({ height = 12, winfixheight = true })
-		-- end)
+		map_dap("r", function()
+			dap.repl.toggle({ height = 12, winfixheight = true })
+		end)
+		map_dap("q", [[:lua require("dap").terminate()<CR>]], "Terminates the debug session")
 
 		-- map_dap("L", function()
 		-- 	local logpoint = vim.fn.input({ prompt = "Log point message: " })
@@ -86,7 +87,7 @@ api.nvim_create_autocmd("User", {
 		-- end)
 
 		local widgets = require("dap.ui.widgets")
-		map_dap("H", function()
+		map_dap("K", function()
 			widgets.hover()
 		end, "hover", { "n", "v" })
 		map_dap("P", function()
