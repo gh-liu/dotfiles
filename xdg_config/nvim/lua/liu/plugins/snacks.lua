@@ -30,9 +30,6 @@ return {
 			},
 			-- scroll = {},
 			bigfile = {},
-			words = {
-				modes = { "n" },
-			},
 			---@type snacks.picker.Config
 			picker = {
 				ui_select = true, -- vim.ui.select
@@ -195,15 +192,6 @@ return {
 			-- }}}
 
 			require("snacks").setup(opts)
-
-			-- words {{{3
-			vim.keymap.set({ "n" }, "]w", function()
-				Snacks.words.jump(vim.v.count1, true)
-			end, {})
-			vim.keymap.set({ "n" }, "[w", function()
-				Snacks.words.jump(-vim.v.count1, true)
-			end, {})
-			-- }}}
 
 			-- Picker {{{
 			vim.cmd([[nnoremap \f :lua Snacks.picker.()<left><left>]])
