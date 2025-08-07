@@ -11,6 +11,10 @@ end
 -- https://github.com/microsoft/vscode/tree/main/extensions/json-language-features/server#settings
 M.schemas = {
 	{
+		fileMatch = { ".emmyrc.json" },
+		url = "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
+	},
+	{
 		fileMatch = { ".vscode/launch.json" },
 		url = "https://raw.githubusercontent.com/mfussenegger/dapconfig-schema/master/dapconfig-schema.json",
 	},
