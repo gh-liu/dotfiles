@@ -1,0 +1,16 @@
+{
+  "workspace": {
+    "enableReindex": false,
+    "encoding": "utf-8",
+    "ignoreDir": [],
+    "ignoreGlobs": [],
+    "library": [
+      "$VIMRUNTIME/lua",
+      "$XDG_CONFIG_HOME/nvim/lua"
+    ],
+    "moduleMap": [],
+    "preloadFileSize": 0,
+    "reindexDuration": 5000,
+    "workspaceRoots": []
+  }
+}
