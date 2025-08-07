@@ -14,6 +14,8 @@ return {
 				nmap dq  <Plug>(DBExe)
 				omap dq  <Plug>(DBExe)
 				nmap dqq <Plug>(DBExeLine)
+
+				nmap dq? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
 			]])
 
 			-- NOTE: define your adapters:
