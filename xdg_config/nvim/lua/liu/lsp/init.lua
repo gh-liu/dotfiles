@@ -27,6 +27,7 @@ end, {
 })
 -- }}}
 
+-- on list {{{1
 local function on_list(items)
 	if #items.items == 1 then
 		local bufnr = items.context.bufnr
@@ -50,6 +51,7 @@ local function on_list(items)
 		vim.cmd("normal zz")
 	end
 end
+-- }}}
 
 -- keymaps {{{1
 api.nvim_create_autocmd("LspAttach", {
