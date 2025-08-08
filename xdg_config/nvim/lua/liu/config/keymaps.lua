@@ -257,4 +257,20 @@ end
 unmap("x", "in")
 unmap({ "x" }, "an")
 
+vim.keymap.set("n", "yoz", function()
+	local option_name = "foldmethod"
+	local option_values = { "manual", "indent", "expr", "marker", "syntax", "diff" }
+
+	local option_value = vim.api.nvim_get_option_value(option_name, { scope = "local" })
+	local idx = 0
+	for i, value in ipairs(option_values) do
+		if option_value == value then
+			idx = i
+		end
+	end
+	local idx1 = idx % #option_values + 1
+	vim.api.nvim_set_option_value(option_name, option_values[idx1], { scope = "local" })
+	vim.cmd([[setlocal ]] .. option_name .. "?")
+end)
+
 -- vim: foldmethod=marker
