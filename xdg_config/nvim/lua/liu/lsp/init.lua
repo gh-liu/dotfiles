@@ -163,6 +163,14 @@ api.nvim_create_autocmd("LspAttach", {
 			end
 		end
 		-- }}}
+
+		-- document_color {{{1
+		if lsp.document_color then
+			if client:supports_method("textDocument/documentColor") then
+				lsp.document_color.enable(true, bufnr, { style = "virtual" })
+			end
+		end
+		-- }}}
 	end,
 })
 -- semantic tokens
