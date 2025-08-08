@@ -15,7 +15,7 @@ if vim.g.dap_configurations and type(vim.g.dap_configurations) == "table" then
 		end
 	end
 end
-dap.defaults.fallback.switchbuf = "useopen,uselast"
+dap.defaults.fallback.switchbuf = "usetab,uselast"
 -- dap.defaults.fallback.focus_terminal = true
 -- dap.defaults.fallback.force_external_terminal = true
 -- dap.defaults.fallback.external_terminal = {
