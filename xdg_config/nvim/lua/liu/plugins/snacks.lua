@@ -169,7 +169,7 @@ return {
 			Snacks.toggle.option("ignorecase", { name = "Ignorecase" }):map("yoi")
 			Snacks.toggle.option("winfixbuf", { name = "winFixbuf" }):map("yof")
 
-			Snacks.toggle.zoom():map("yoz")
+			Snacks.toggle.zoom():map("yoZ")
 			Snacks.toggle.line_number():map("yon")
 			Snacks.toggle({
 				name = "Quickfix",
