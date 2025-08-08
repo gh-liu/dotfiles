@@ -434,6 +434,12 @@ return {
 				augend.constant.alias.bool,
 			}
 
+			local http_methods = augend.constant.new({
+				elements = { "GET", "POST", "PUT", "PATCH" },
+				word = true,
+				cyclic = true,
+			})
+
 			config.augends:register_group({
 				default = default,
 			})
@@ -455,6 +461,7 @@ return {
 				rust = vim.list_extend({}, default),
 				toml = vim.list_extend({ augend.semver.alias.semver }, default),
 				zig = vim.list_extend({}, default),
+				http = vim.list_extend({ http_methods }, default),
 			})
 		end,
 	},
