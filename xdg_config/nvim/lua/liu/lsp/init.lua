@@ -111,17 +111,17 @@ api.nvim_create_autocmd("LspAttach", {
 })
 -- }}}
 
--- codelens {{{1
 api.nvim_create_autocmd("LspAttach", {
-	group = api.nvim_create_augroup("liu/codelens", { clear = true }),
+	group = api.nvim_create_augroup("liu/lsp_feat", { clear = true }),
 	callback = function(args)
 		local client = lsp.get_client_by_id(args.data.client_id)
 		if not client then
 			return
 		end
 
+		local bufnr = args.buf
+		-- codelens {{{1
 		if client and client:supports_method("textDocument/codeLens") then
-			local bufnr = args.buf
 			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
 				callback = function(ev)
 					lsp.codelens.refresh({ bufnr = ev.buf })
@@ -129,19 +129,9 @@ api.nvim_create_autocmd("LspAttach", {
 				buffer = bufnr,
 			})
 		end
-	end,
-})
--- }}}
+		-- }}}
 
--- inlayhint {{{1
-api.nvim_create_autocmd("LspAttach", {
-	group = api.nvim_create_augroup("liu/inlayhint", { clear = true }),
-	callback = function(args)
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if not client then
-			return
-		end
-
+		-- inlayhint {{{1
 		if client:supports_method("textDocument/inlayHint") then
 			local bufnr = args.buf
 			local inlay_hint = lsp.inlay_hint
@@ -162,11 +152,27 @@ api.nvim_create_autocmd("LspAttach", {
 				inlay_hint.enable(true, filter)
 			end, { nargs = 0 })
 		end
+		-- }}}
+
+		-- folding {{{1
+		if lsp.foldexpr then
+			if client:supports_method("textDocument/foldingRange") then
+				vim.wo[0][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+				-- set_local_default("foldexpr", "v:lua.vim.lsp.foldexpr()")
+				-- vim.wo[0][0].foldtext = "v:lua.vim.lsp.foldtext()"
+			end
+		end
+		-- }}}
 	end,
 })
--- }}}
+-- semantic tokens
+vim.api.nvim_create_autocmd("FileType", {
+	pattern = { "gotmpl" },
+	callback = function()
+		vim.lsp.semantic_tokens.enable(false, { bufnr = 0 })
+	end,
+})
 
--- folding {{{1
 --- set the local value only when the global value is not set
 ---@param name string
 ---@param value any
@@ -178,33 +184,6 @@ local function set_local_default(name, value)
 		vim.api.nvim_set_option_value(name, value, { scope = "local" })
 	end
 end
-
-if lsp.foldexpr then
-	api.nvim_create_autocmd("LspAttach", {
-		group = api.nvim_create_augroup("liu/folding", { clear = true }),
-		callback = function(args)
-			local client = lsp.get_client_by_id(args.data.client_id)
-			if not client then
-				return
-			end
-			-- local bufnr = args.buf
-			if client:supports_method("textDocument/foldingRange") then
-				-- vim.wo[0][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
-				set_local_default("foldexpr", "v:lua.vim.lsp.foldexpr()")
-				-- vim.wo[0][0].foldtext = "v:lua.vim.lsp.foldtext()"
-			end
-		end,
-	})
-end
--- }}}
-
--- semantic tokens
-vim.api.nvim_create_autocmd("FileType", {
-	pattern = { "gotmpl" },
-	callback = function()
-		vim.lsp.semantic_tokens.enable(false, { bufnr = 0 })
-	end,
-})
 
 local ms = lsp.protocol.Methods
 -- Handlers {{{1
