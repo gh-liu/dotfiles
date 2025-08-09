@@ -160,14 +160,14 @@ return {
 			-- Toggle {{{
 			-- :h *unimpaired-toggling*
 			-- https://github.com/tpope/vim-unimpaired/blob/6d44a6dc2ec34607c41ec78acf81657248580bf1/doc/unimpaired.txt#L77
-			Snacks.toggle.option("spell", { name = "Spelling" }):map("yos")
-			Snacks.toggle.option("wrap", { name = "Wrap" }):map("yow")
-			Snacks.toggle.option("diff", { name = "Diff" }):map("yod")
-			Snacks.toggle.option("hlsearch", { name = "Hlsearch" }):map("yoh")
-			Snacks.toggle.option("list", { name = "List" }):map("yol")
-			Snacks.toggle.option("previewwindow", { name = "Previewwindow" }):map("yop")
-			Snacks.toggle.option("ignorecase", { name = "Ignorecase" }):map("yoi")
-			Snacks.toggle.option("winfixbuf", { name = "winFixbuf" }):map("yof")
+			-- Snacks.toggle.option("spell", { name = "Spelling" }):map("yos")
+			-- Snacks.toggle.option("wrap", { name = "Wrap" }):map("yow")
+			-- Snacks.toggle.option("diff", { name = "Diff" }):map("yod")
+			-- Snacks.toggle.option("hlsearch", { name = "Hlsearch" }):map("yoh")
+			-- Snacks.toggle.option("list", { name = "List" }):map("yol")
+			-- Snacks.toggle.option("previewwindow", { name = "Previewwindow" }):map("yop")
+			-- Snacks.toggle.option("ignorecase", { name = "Ignorecase" }):map("yoi")
+			-- Snacks.toggle.option("winfixbuf", { name = "winFixbuf" }):map("yof")
 
 			Snacks.toggle.zoom():map("yoZ")
 			Snacks.toggle.line_number():map("yon")

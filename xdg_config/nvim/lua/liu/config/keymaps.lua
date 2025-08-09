@@ -273,4 +273,16 @@ vim.keymap.set("n", "yoz", function()
 	vim.cmd([[setlocal ]] .. option_name .. "?")
 end)
 
+local toggle = function(key, option)
+	vim.keymap.set("n", "yo" .. key, string.format("<cmd>setlocal %s! | setlocal %s? <cr>", option, option))
+end
+toggle("s", "spell")
+toggle("w", "wrap")
+toggle("d", "diff")
+toggle("h", "hlsearch")
+toggle("l", "list")
+toggle("p", "previewwindow")
+toggle("i", "ignorecase")
+toggle("f", "winfixbuf")
+
 -- vim: foldmethod=marker
