@@ -355,12 +355,12 @@ return {
 				-- { "gI", "lsp_implementations" },
 				-- { "gy", "lsp_type_definitions" },
 			}
-			for _, key in ipairs(keys) do
-				vim.keymap.set(key["mode"] or { "n" }, key[1], function()
-					local opts = key["opts"] or {}
-					Snacks.picker[key[2]](opts)
-				end)
-			end
+			-- for _, key in ipairs(keys) do
+			-- 	vim.keymap.set(key["mode"] or { "n" }, key[1], function()
+			-- 		local opts = key["opts"] or {}
+			-- 		Snacks.picker[key[2]](opts)
+			-- 	end)
+			-- end
 			vim.keymap.set("n", "<leader>sc", function()
 				Snacks.picker({
 					title = "Compilers",
