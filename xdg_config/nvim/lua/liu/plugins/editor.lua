@@ -574,6 +574,42 @@ return {
 		"will133/vim-dirdiff",
 	},
 	{
+		"ibhagwan/fzf-lua",
+		init = function()
+			local map = function(op, cmd, opts)
+				opts = opts or {}
+				vim.keymap.set("n", "<leader>s" .. op, function()
+					require("fzf-lua")[cmd](opts)
+				end)
+			end
+			map("b", "buffers")
+			map("d", "diagnostics_document")
+			map("f", "files")
+			map("g", "live_grep")
+			map("h", "helptags")
+			map("m", "marks")
+			map("s", "lsp_document_symbols")
+			vim.keymap.set("n", "<leader>;", function()
+				require("fzf-lua").commands({
+					winopts = {
+						width = 0.5,
+						height = 0.6,
+						preview = { hidden = "hidden" },
+					},
+				})
+			end)
+		end,
+		event = "VeryLazy",
+		opts = {
+			-- fzf_bin = "sk",
+			winopts = {
+				backdrop = 80,
+			},
+			keymap = {},
+			actions = {},
+		},
+	},
+	{
 		"MagicDuck/grug-far.nvim",
 		opts = {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
