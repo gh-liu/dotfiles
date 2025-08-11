@@ -358,6 +358,25 @@ return {
 				return MiniVisits.gen_sort.default({ recency_weight = 1 })
 			end
 
+			local FzfLuaWithPaths = function(title, path_gen_fn)
+				local items = path_gen_fn()
+				require("fzf-lua").fzf_exec(items, {
+					prompt = title,
+					actions = {
+						["default"] = function(selected)
+							vim.cmd("edit " .. selected[1])
+						end,
+						["ctrl-x"] = function(selected, opts)
+							for _, file in ipairs(selected) do
+								local MiniVisits = require("mini.visits")
+								print(file)
+								MiniVisits.remove_path(file, visit_cwd())
+								-- TODO: open picker
+							end
+						end,
+					},
+				})
+			end
 			local SnacksWithPaths = function(title, path_gen_fn)
 				Snacks.picker({
 					title = title,
@@ -437,7 +456,7 @@ return {
 					"<leader>sv",
 					function()
 						local MiniVisits = require("mini.visits")
-						SnacksWithPaths("Mini Visits(" .. label .. ")", function()
+						FzfLuaWithPaths("Mini Visits(" .. label .. ")", function()
 							local paths = MiniVisits.list_paths(visit_cwd(), {
 								sort = gen_sort(),
 								filter = has_label_core,
@@ -451,7 +470,7 @@ return {
 					function()
 						local cwd = visit_cwd()
 						local MiniVisits = require("mini.visits")
-						SnacksWithPaths(string.format("Mini Visits(%s)", cwd), function()
+						FzfLuaWithPaths(string.format("Mini Visits(%s)", cwd), function()
 							local paths = MiniVisits.list_paths(cwd, {
 								sort = gen_sort(),
 								filter = function(path_data)
