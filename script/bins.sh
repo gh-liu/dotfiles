@@ -173,6 +173,8 @@ bins() {
 		cargo install tree-sitter-cli
 
 		cargo install shpool
+
+		cargo install --locked --bin jj jj-cli
 	fi
 
 	if [ -f "$(which gh)" ]; then
