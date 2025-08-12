@@ -624,6 +624,9 @@ return {
 			winopts = {
 				backdrop = 80,
 			},
+			fzf_opts = {
+				["--cycle"] = true,
+			},
 			keymap = {},
 			actions = {},
 		},
