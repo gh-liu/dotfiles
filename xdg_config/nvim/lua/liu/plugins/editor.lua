@@ -623,6 +623,16 @@ return {
 			-- fzf_bin = "sk",
 			winopts = {
 				backdrop = 80,
+				on_create = function()
+					local laststatus = vim.o.laststatus
+					vim.o.laststatus = 0
+					local cur_win = vim.api.nvim_get_current_win()
+					vim.api.nvim_create_autocmd("WinClosed", {
+						pattern = tostring(cur_win),
+						command = "set laststatus=" .. laststatus,
+						once = true,
+					})
+				end,
 			},
 			fzf_opts = {
 				["--cycle"] = true,
