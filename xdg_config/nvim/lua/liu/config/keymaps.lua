@@ -257,6 +257,22 @@ end
 unmap("x", "in")
 unmap({ "x" }, "an")
 
+vim.keymap.set("n", "yoq", function()
+	local get = function()
+		for _, win in pairs(vim.fn.getwininfo()) do
+			if win["quickfix"] == 1 then
+				return true
+			end
+		end
+		return false
+	end
+
+	if get() then
+		vim.cmd("cclose")
+	else
+		vim.cmd("copen")
+	end
+end)
 vim.keymap.set("n", "yoz", function()
 	local option_name = "foldmethod"
 	local option_values = { "manual", "indent", "expr", "marker", "syntax", "diff" }

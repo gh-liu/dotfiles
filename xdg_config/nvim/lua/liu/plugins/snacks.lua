@@ -171,24 +171,24 @@ return {
 
 			Snacks.toggle.zoom():map("yoZ")
 			Snacks.toggle.line_number():map("yon")
-			Snacks.toggle({
-				name = "Quickfix",
-				get = function()
-					for _, win in pairs(vim.fn.getwininfo()) do
-						if win["quickfix"] == 1 then
-							return true
-						end
-					end
-					return false
-				end,
-				set = function(state)
-					if state then
-						vim.cmd("copen")
-					else
-						vim.cmd("cclose")
-					end
-				end,
-			}):map("yoq")
+			-- Snacks.toggle({
+			-- 	name = "Quickfix",
+			-- 	get = function()
+			-- 		for _, win in pairs(vim.fn.getwininfo()) do
+			-- 			if win["quickfix"] == 1 then
+			-- 				return true
+			-- 			end
+			-- 		end
+			-- 		return false
+			-- 	end,
+			-- 	set = function(state)
+			-- 		if state then
+			-- 			vim.cmd("copen")
+			-- 		else
+			-- 			vim.cmd("cclose")
+			-- 		end
+			-- 	end,
+			-- }):map("yoq")
 			-- }}}
 
 			require("snacks").setup(opts)
