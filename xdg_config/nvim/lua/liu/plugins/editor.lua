@@ -639,9 +639,15 @@ return {
 				["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
 			},
 			keymap = {
+				builtin = {
+					["<C-d>"] = "preview-page-down",
+					["<C-u>"] = "preview-page-up",
+					["<C-z>"] = "toggle-fullscreen",
+				},
 				fzf = {
 					["ctrl-k"] = "previous-history",
 					["ctrl-j"] = "next-history",
+					["ctrl-q"] = "select-all+accept",
 				},
 			},
 			actions = {},
