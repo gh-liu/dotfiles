@@ -651,6 +651,9 @@ return {
 				},
 			},
 			actions = {},
+			hls = {
+				border = "WinSeparator",
+			},
 		},
 	},
 	{
