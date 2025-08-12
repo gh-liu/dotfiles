@@ -636,8 +636,14 @@ return {
 			},
 			fzf_opts = {
 				["--cycle"] = true,
+				["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
 			},
-			keymap = {},
+			keymap = {
+				fzf = {
+					["ctrl-k"] = "previous-history",
+					["ctrl-j"] = "next-history",
+				},
+			},
 			actions = {},
 		},
 	},
