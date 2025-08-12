@@ -359,23 +359,38 @@ return {
 			end
 
 			local FzfLuaWithPaths = function(title, path_gen_fn)
-				local items = path_gen_fn()
-				require("fzf-lua").fzf_exec(items, {
+				local make_entry = require("fzf-lua.make_entry")
+				local make_opts = {
+					_type = "file",
+					strip_cwd_prefix = true,
+					path_shorten = false,
+					cwd = visit_cwd(),
+				}
+				local contents = function(cb)
+					local items = path_gen_fn()
+					for _, item in ipairs(items) do
+						cb(make_entry.file(item, make_opts))
+					end
+				end
+
+				local remove_path = function(selected)
+					for _, file in ipairs(selected) do
+						local MiniVisits = require("mini.visits")
+						MiniVisits.remove_path(file, visit_cwd())
+					end
+				end
+
+				local opts = {
 					prompt = title,
+					cwd = visit_cwd(),
+					previewer = "builtin",
+					fzf_opts = { ["--tiebreak"] = "index", ["--multi"] = true },
 					actions = {
-						["default"] = function(selected)
-							vim.cmd("edit " .. selected[1])
-						end,
-						["ctrl-x"] = function(selected, opts)
-							for _, file in ipairs(selected) do
-								local MiniVisits = require("mini.visits")
-								print(file)
-								MiniVisits.remove_path(file, visit_cwd())
-								-- TODO: open picker
-							end
-						end,
+						default = require("fzf-lua.actions").file_edit,
+						["ctrl-x"] = { fn = remove_path, reload = true },
 					},
-				})
+				}
+				require("fzf-lua").fzf_exec(contents, opts)
 			end
 			local SnacksWithPaths = function(title, path_gen_fn)
 				Snacks.picker({
@@ -470,7 +485,7 @@ return {
 					function()
 						local cwd = visit_cwd()
 						local MiniVisits = require("mini.visits")
-						FzfLuaWithPaths(string.format("Mini Visits(%s)", cwd), function()
+						FzfLuaWithPaths(string.format("Mini Visits(%s)", vim.fn.pathshorten(cwd, 2)), function()
 							local paths = MiniVisits.list_paths(cwd, {
 								sort = gen_sort(),
 								filter = function(path_data)
