@@ -371,6 +371,7 @@ return {
 					for _, item in ipairs(items) do
 						cb(make_entry.file(item, make_opts))
 					end
+					cb(nil)
 				end
 
 				local remove_path = function(selected)
