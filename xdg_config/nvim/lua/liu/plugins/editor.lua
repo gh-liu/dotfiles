@@ -648,11 +648,13 @@ return {
 				on_create = function()
 					local laststatus = vim.o.laststatus
 					vim.o.laststatus = 0
+					vim.o.showmode = not vim.o.showmode
 					local cur_win = vim.api.nvim_get_current_win()
 					vim.api.nvim_create_autocmd("WinClosed", {
 						pattern = tostring(cur_win),
 						command = vim.iter({
 							"set laststatus=" .. laststatus,
+							"set showmode!",
 						}):join("|"),
 						once = true,
 					})
