@@ -6,7 +6,7 @@ local match_words = function(word_groups)
 		:join(",")
 end
 vim.b.match_words = match_words({
-	{ [[^\<func\>]], [[\<return\>]], [[^}]] },
+	{ [[^\<func\>]], [[\<return\>]] },
 })
 
 local api = vim.api
