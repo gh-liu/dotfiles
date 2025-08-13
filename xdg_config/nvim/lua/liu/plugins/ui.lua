@@ -79,9 +79,12 @@ return {
 
 			vim.g.tabprefix = ""
 			-- vim.g.tablabel = "%N%{flagship#tabmodified()} %{flagship#tabcwds('shorten',',')}"
-			vim.g.tabsuffix = "" .. "%#Debug#" .. "%{v:lua.Flag_dap_staus()}"
+			vim.g.tabsuffix = ""
 			-- .. "%#ModeMsg#"
 			-- .. "%{v:lua.Flag_lsp_clients()}"
+
+			vim.cmd([[ autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline ]])
+			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_staus()}"
 
 			vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
 			vim.g.tabsuffix = vim.g.tabsuffix
