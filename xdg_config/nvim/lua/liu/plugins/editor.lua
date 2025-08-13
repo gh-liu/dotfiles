@@ -608,6 +608,7 @@ return {
 			map("h", "helptags")
 			map("m", "marks")
 			map("s", "lsp_document_symbols")
+			map("w", "grep_cword")
 			vim.keymap.set("n", "<leader>;", function()
 				require("fzf-lua").commands({
 					winopts = {
@@ -623,6 +624,11 @@ return {
 			-- fzf_bin = "sk",
 			winopts = {
 				backdrop = 80,
+				border = vim.o.winborder,
+				preview = {
+					border = vim.o.winborder,
+				},
+				-- winopts = {},
 				on_create = function()
 					local laststatus = vim.o.laststatus
 					vim.o.laststatus = 0
@@ -633,26 +639,38 @@ return {
 						once = true,
 					})
 				end,
-			},
-			fzf_opts = {
-				["--cycle"] = true,
-				["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
+				-- on_close = function() end,
 			},
 			keymap = {
 				builtin = {
+					false, -- do not inherit from the defaults
 					["<C-d>"] = "preview-page-down",
 					["<C-u>"] = "preview-page-up",
 					["<C-z>"] = "toggle-fullscreen",
 				},
 				fzf = {
+					false, -- do not inherit from the defaults
+					["ctrl-a"] = "beginning-of-line",
+					["ctrl-e"] = "end-of-line",
 					["ctrl-k"] = "previous-history",
 					["ctrl-j"] = "next-history",
 					["ctrl-q"] = "select-all+accept",
 				},
 			},
 			actions = {},
+			fzf_opts = {
+				["--cycle"] = true,
+				["--history"] = vim.fn.stdpath("data") .. "/fzf-lua-history",
+			},
 			hls = {
+				preview_border = "WinSeparator",
 				border = "WinSeparator",
+			},
+			previewers = {},
+			lsp = {
+				symbols = {
+					symbol_style = 3,
+				},
 			},
 		},
 	},
