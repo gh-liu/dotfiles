@@ -651,7 +651,9 @@ return {
 					local cur_win = vim.api.nvim_get_current_win()
 					vim.api.nvim_create_autocmd("WinClosed", {
 						pattern = tostring(cur_win),
-						command = "set laststatus=" .. laststatus,
+						command = vim.iter({
+							"set laststatus=" .. laststatus,
+						}):join("|"),
 						once = true,
 					})
 				end,
