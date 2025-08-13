@@ -1,0 +1,9 @@
+{
+  "workspace": {
+    "enableReindex": false,
+    "encoding": "utf-8",
+    "library": [
+      "$XDG_DATA_HOME/nvim/lazy/wezterm-types/lua"
+    ]
+  }
+}

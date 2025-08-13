@@ -1,3 +1,4 @@
+---@type Wezterm
 local wezterm = require("wezterm")
 local act = wezterm.action
 
@@ -39,6 +40,7 @@ wezterm.on("toggle-tabbar", function(window, pane)
 end)
 
 -- Config
+---@type Config
 local config = {
 	check_for_updates = false,
 	-- https://wezfurlong.org/wezterm/config/lua/config/term.html
