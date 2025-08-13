@@ -136,6 +136,9 @@ return {
 		end,
 	},
 	{
+		"brianhuster/unnest.nvim",
+	},
+	{
 		"DrKJeff16/wezterm-types",
 		lazy = true,
 	},
