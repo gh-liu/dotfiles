@@ -66,6 +66,7 @@ Impl.impl = function()
 	local bufnr = api.nvim_get_current_buf()
 
 	local utils = require("fzf-lua.utils")
+	local make_entry = require("fzf-lua.make_entry")
 	require("fzf-lua").fzf_live(function(args)
 		local query = args[1] or ""
 		local kind_interface = vim.lsp.protocol.SymbolKind.Interface
@@ -86,7 +87,15 @@ Impl.impl = function()
 						return item.kind == "Interface"
 					end)
 					:each(function(item)
-						cb(item.text)
+						-- cb(item.text)
+						local entry = item
+						local symbol = entry.text
+						entry.text = nil
+						local opts = {}
+						local entry0 = make_entry.lcol(entry, opts)
+						local entry1 = make_entry.file(entry0, opts)
+						entry1 = symbol .. utils.nbsp .. entry1
+						cb(entry1)
 					end)
 				cb(nil)
 			end
@@ -94,10 +103,11 @@ Impl.impl = function()
 		end
 	end, {
 		prompt = "Go Impl> ",
+		previewer = "builtin",
 		actions = {
 			default = function(selected, opts)
 				local select1 = selected[1]
-				local interfaceName, containerName = select1:match("%[Interface%]%s+(.+)%s+in%s+(.+)")
+				local interfaceName, containerName = select1:match("%[Interface%]%s+([%w/%.]+)%s+in%s+([%w/%.]+)")
 				-- vim.print(interfaceName, containerName)
 
 				local symbol_name = interfaceName
