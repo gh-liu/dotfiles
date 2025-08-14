@@ -20,6 +20,7 @@ vim.cmd([[
 return {
 	{
 		"folke/snacks.nvim",
+		enabled = false,
 		event = "VeryLazy",
 		opts = {
 			styles = {
