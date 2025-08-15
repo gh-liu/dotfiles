@@ -205,3 +205,52 @@ if not is_test() then
 		TEST.gen_or_jump()
 	end, { desc = "Go: generate or jump to test" })
 end
+
+-- gomodifytags
+-- gomodifytags -file demo.go
+-- -struct
+-- -field
+--
+-- -add-tags json,xml
+-- -transform camelcase
+--
+-- -template "field_name={field}"
+-- -add-options json=omitempty
+--
+-- -remove-tags json,xml
+-- -remove-options json=omitempty,xml=cdata
+--
+-- -line
+
+-- !gomodifytags -file % -line=18 -add-tags json -transform camelcase -w
+-- 当前行有结构体
+-- 当前行有结构体字段
+-- -add-options json=omitempty
+
+vim.api.nvim_buf_create_user_command(0, "Gomodifytags", function(args)
+	args = args ---@type vim.api.keyset.create_user_command.command_args
+	if args.line1 < args.line2 then
+		vim.system({
+			"gomodifytags",
+			"-file",
+			vim.api.nvim_buf_get_name(0),
+			"-line",
+			args.line1 .. "," .. args.line2,
+			"--add-tags",
+			"json",
+			"-format",
+			"json",
+		}, { text = true }, function(out)
+			if out.code == 0 and out.stdout then
+				-- vim.print(out.stdout)
+				result = vim.json.decode(out.stdout)
+				local start_line = result.start
+				local end_line = result["end"]
+				local lines = result.lines
+				vim.schedule(function()
+					vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, lines)
+				end)
+			end
+		end)
+	end
+end, { range = true })
