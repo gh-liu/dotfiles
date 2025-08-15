@@ -41,8 +41,10 @@ local build_flags = "-tags=debug"
 ---@field env string|nil
 ---@field stopOnEntry boolean|nil
 
+local configurations = {}
+
 ---@type liu.dap.config_delve[]
-dap.configurations.go = {
+configurations.go = {
 	{
 		name = "Nvim: Launch file",
 		type = "delve",
@@ -78,6 +80,37 @@ dap.configurations.go = {
 		program = "${fileDirname}",
 		buildFlags = build_flags,
 	},
+	-- https://github.com/golang/vscode-go/wiki/debugging#remote-debugging
+	{
+		name = "Nvim: Attach local",
+		type = "delve",
+		request = "attach",
+		mode = "local",
+		processId = utils.filtered_pick_process,
+	},
+	{
+		name = "Nvim: Attach remote",
+		type = "delve",
+		request = "attach",
+		mode = "remote",
+		host = function()
+			return coroutine.create(function(dap_run_co)
+				local host = vim.fn.input("Host [127.0.0.1]: ")
+				host = host ~= "" and host or "127.0.0.1"
+				coroutine.resume(dap_run_co, host)
+			end)
+		end,
+		port = function()
+			return coroutine.create(function(dap_run_co)
+				local port = tonumber(vim.fn.input("Port [5678]: ")) or 5678
+				coroutine.resume(dap_run_co, port)
+			end)
+		end,
+	},
+}
+
+---@type liu.dap.config_delve[]
+configurations.go_test = {
 	{
 		name = "Nvim: Launch test(go.mod)",
 		type = "delve",
@@ -132,31 +165,17 @@ dap.configurations.go = {
 		end,
 		buildFlags = build_flags,
 	},
-	-- https://github.com/golang/vscode-go/wiki/debugging#remote-debugging
-	{
-		name = "Nvim: Attach local",
-		type = "delve",
-		request = "attach",
-		mode = "local",
-		processId = utils.filtered_pick_process,
-	},
-	{
-		name = "Nvim: Attach remote",
-		type = "delve",
-		request = "attach",
-		mode = "remote",
-		host = function()
-			return coroutine.create(function(dap_run_co)
-				local host = vim.fn.input("Host [127.0.0.1]: ")
-				host = host ~= "" and host or "127.0.0.1"
-				coroutine.resume(dap_run_co, host)
-			end)
-		end,
-		port = function()
-			return coroutine.create(function(dap_run_co)
-				local port = tonumber(vim.fn.input("Port [5678]: ")) or 5678
-				coroutine.resume(dap_run_co, port)
-			end)
-		end,
-	},
 }
+
+---@return boolean
+local is_test = function(bufnr)
+	local fname = vim.api.nvim_buf_get_name(bufnr)
+	return vim.endswith(fname, "_test.go")
+end
+dap.providers.configs["delve"] = function(bufnr)
+	if is_test(bufnr) then
+		return configurations.go_test
+	else
+		return configurations.go
+	end
+end
