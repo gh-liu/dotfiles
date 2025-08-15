@@ -237,6 +237,7 @@ vim.api.nvim_create_autocmd({ "TermOpen" }, {
 -- neovim
 vim.cmd([[
 noremap ZR <cmd>restart<cr>
+noremap ZT <cmd>trust<cr>
 ]])
 
 -- stylua: ignore start
