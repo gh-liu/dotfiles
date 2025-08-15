@@ -611,6 +611,10 @@ return {
 	{
 		"ibhagwan/fzf-lua",
 		init = function()
+			vim.ui.select = function(...)
+				require("fzf-lua.providers.ui_select").ui_select(...)
+			end
+
 			local map = function(op, cmd, opts)
 				opts = opts or {}
 				vim.keymap.set("n", "<leader>s" .. op, function()
