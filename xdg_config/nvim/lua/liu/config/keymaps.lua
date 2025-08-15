@@ -162,7 +162,6 @@ noremap z? <cmd> setlocal foldenable?
 \ <bar> setlocal foldtext? 
 \ <cr>
 
-noremap ZR <cmd>restart<cr>
 
 noremap [1 <cmd>lprev<cr>
 noremap ]1 <cmd>lnext<cr>
@@ -234,6 +233,11 @@ vim.api.nvim_create_autocmd({ "TermOpen" }, {
 		vim.keymap.set("n", "dq", "<cmd>bd!<cr>", { buffer = buf, noremap = true })
 	end,
 })
+
+-- neovim
+vim.cmd([[
+noremap ZR <cmd>restart<cr>
+]])
 
 -- stylua: ignore start
 vim.keymap.set({ 'n' }, 'dCl', function() vim.diagnostic.setloclist() end, { desc = 'Show document diagnostics' })
