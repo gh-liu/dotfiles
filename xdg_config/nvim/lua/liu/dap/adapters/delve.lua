@@ -41,6 +41,9 @@ local build_flags = "-tags=debug"
 ---@field env string|nil
 ---@field stopOnEntry boolean|nil
 
+-- make vim.g.dap_configurations works.
+dap.configurations.go = {}
+
 local configurations = {}
 
 ---@type liu.dap.config_delve[]
