@@ -57,7 +57,7 @@ api.nvim_create_autocmd("User", {
 		-- map("c", [[:lua require("dap").continue()<CR>]], "Continue")
 		-- map("b", [[:lua require("dap").set_breakpoint()<CR>]], "Toggle Breakpoint")
 
-		map_dap("C", [[:lua require("dap").run_to_cursor()<CR>]], "run to Cursor")
+		map_dap("u", [[:lua require("dap").run_to_cursor()<CR>]], "Until to Cursor")
 
 		map_dap("n", [[:lua require("dap").step_over()<CR>]], "Step over")
 		map_dap("p", [[:lua require("dap").step_back()<CR>]], "Step back")
