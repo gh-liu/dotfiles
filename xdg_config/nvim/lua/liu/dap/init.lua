@@ -68,9 +68,9 @@ api.nvim_create_autocmd("User", {
 		map_dap("k", [[:lua require("dap").up()<CR>]], "Go up in current stacktrace without stepping")
 		map_dap("f", [[:lua require("dap").focus_frame()<CR>]], "Jump/focus the current frame")
 
-		map_dap("r", function()
-			dap.repl.toggle({ height = 12, winfixheight = true })
-		end)
+		-- map_dap("r", function()
+		-- 	dap.repl.toggle({ height = 12, winfixheight = true })
+		-- end)
 		map_dap("q", [[:lua require("dap").terminate()<CR>]], "Terminates the debug session")
 
 		-- map_dap("L", function()

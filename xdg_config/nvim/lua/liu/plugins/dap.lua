@@ -37,7 +37,7 @@ return {
 					end
 				end,
 			},
-			-- { "dcr", [[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]] },
+			{ "dcr", [[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]] },
 		},
 		cmd = {
 			"DapContinue",
