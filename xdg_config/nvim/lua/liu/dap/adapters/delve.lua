@@ -18,6 +18,7 @@ dap.adapters.go = {
 dap.adapters.delve = dap.adapters.go
 
 local build_flags = "-tags=debug"
+local outputMode = "remote"
 
 ---@class liu.dap.go_path_mapping
 ---@field from string
@@ -40,6 +41,8 @@ local build_flags = "-tags=debug"
 ---@field cwd string|nil
 ---@field env string|nil
 ---@field stopOnEntry boolean|nil
+-- https://github.com/go-delve/delve/pull/3253/files
+---@field outputMode 'remote'|'local'| nil
 
 -- make vim.g.dap_configurations works.
 dap.configurations.go = {}
@@ -55,6 +58,7 @@ configurations.go = {
 		mode = "debug",
 		program = "${file}",
 		buildFlags = build_flags,
+		outputMode = outputMode,
 	},
 	{
 		name = "Nvim: Launch file with args",
@@ -64,6 +68,7 @@ configurations.go = {
 		program = "${file}",
 		args = utils.args_fn,
 		buildFlags = build_flags,
+		outputMode = outputMode,
 	},
 	{
 		name = "Nvim: Launch main.go",
@@ -74,6 +79,7 @@ configurations.go = {
 			return require("dap.utils").pick_file({ filter = "**/main.go", executables = false })
 		end,
 		buildFlags = build_flags,
+		outputMode = outputMode,
 	},
 	{
 		name = "Nvim: Launch package",
@@ -82,6 +88,7 @@ configurations.go = {
 		mode = "debug",
 		program = "${fileDirname}",
 		buildFlags = build_flags,
+		outputMode = outputMode,
 	},
 	-- https://github.com/golang/vscode-go/wiki/debugging#remote-debugging
 	{
@@ -121,6 +128,7 @@ configurations.go_test = {
 		mode = "test",
 		program = "./${relativeFileDirname}",
 		buildFlags = build_flags,
+		outputMode = outputMode,
 		args = { "-test.v" },
 	},
 	{
@@ -167,6 +175,7 @@ configurations.go_test = {
 			return args
 		end,
 		buildFlags = build_flags,
+		outputMode = outputMode,
 	},
 }
 
