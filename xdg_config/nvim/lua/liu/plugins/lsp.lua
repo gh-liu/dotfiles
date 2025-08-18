@@ -39,15 +39,6 @@ return {
 				-- 		},
 				-- 	},
 				-- },
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#ts_ls
-				-- @need-install: bun i -g typescript typescript-language-server
-				ts_ls = {},
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#bashls
-				-- @need-install: bun i -g bash-language-server
-				bashls = {},
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#vimls
-				-- @need-install: bun i -g vim-language-server
-				vimls = {},
 			}
 
 			local other_caps = {}
