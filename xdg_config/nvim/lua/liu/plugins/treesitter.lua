@@ -54,6 +54,15 @@ return {
 		"nvim-treesitter/nvim-treesitter-context",
 		event = "VeryLazy",
 		init = function()
+			vim.api.nvim_create_autocmd("VimEnter", {
+				callback = function()
+					for _, query in ipairs(vim.api.nvim_get_runtime_file("after/queries/*/context.scm", true)) do
+						local lang = string.match(query, "after/queries/(.*)/context.scm")
+						vim.treesitter.query.set(lang, "context", vim.iter(vim.fn.readfile(query)):join("\n"))
+					end
+				end,
+			})
+
 			-- vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { link = "Tag" })
 			vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined" })
 		end,
