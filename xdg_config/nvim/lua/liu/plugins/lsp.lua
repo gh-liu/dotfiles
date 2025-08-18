@@ -20,26 +20,7 @@ return {
 		config = function(self, opts)
 			require("lspconfig.ui.windows").default_options.border = config.borders
 
-			local servers = {
-				-- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#pyright
-				-- @need-install: uv tool install --force pyright
-				-- pyright = {
-				-- 	-- https://github.com/microsoft/pyright/blob/main/docs/settings.md
-				-- 	-- https://microsoft.github.io/pyright/#/settings
-				-- 	on_init = function(...)
-				-- 		require("liu.lsp.servers.pyright").on_init(...)
-				-- 	end,
-				-- 	settings = {
-				-- 		python = {
-				-- 			analysis = {
-				-- 				autoSearchPaths = true,
-				-- 				diagnosticMode = "openFilesOnly",
-				-- 				useLibraryCodeForTypes = true,
-				-- 			},
-				-- 		},
-				-- 	},
-				-- },
-			}
+			local servers = {}
 
 			local other_caps = {}
 			local ok, blink_cmp = pcall(require, "blink.cmp")
