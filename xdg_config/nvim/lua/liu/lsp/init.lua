@@ -272,6 +272,7 @@ else
 	vim.lsp.enable("lua_ls")
 end
 vim.lsp.enable({ "ruff", "basedpyright" })
+vim.lsp.enable("rust_analyzer")
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
 vim.lsp.enable("clangd")
 vim.lsp.enable("ast_grep")
