@@ -86,16 +86,16 @@ return {
 			vim.cmd([[ autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline ]])
 			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_staus()}"
 
-			vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
-			vim.g.tabsuffix = vim.g.tabsuffix
-				.. "%#DiagnosticError#"
-				.. "%{v:lua.Flag_diagnostic.Get(1)}"
-				.. "%#DiagnosticWarn#"
-				.. "%{v:lua.Flag_diagnostic.Get(2)}"
-				.. "%#DiagnosticInfo#"
-				.. "%{v:lua.Flag_diagnostic.Get(3)}"
-				.. "%#DiagnosticHint#"
-				.. "%{v:lua.Flag_diagnostic.Get(4)}"
+			-- vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
+			-- vim.g.tabsuffix = vim.g.tabsuffix
+			-- 	.. "%#DiagnosticError#"
+			-- 	.. "%{v:lua.Flag_diagnostic.Get(1)}"
+			-- 	.. "%#DiagnosticWarn#"
+			-- 	.. "%{v:lua.Flag_diagnostic.Get(2)}"
+			-- 	.. "%#DiagnosticInfo#"
+			-- 	.. "%{v:lua.Flag_diagnostic.Get(3)}"
+			-- 	.. "%#DiagnosticHint#"
+			-- 	.. "%{v:lua.Flag_diagnostic.Get(4)}"
 
 			vim.cmd([[ autocmd LspProgress * redrawtabline ]])
 			vim.g.tabsuffix = "%(%{v:lua.vim.lsp.status()}%<%)" .. vim.g.tabsuffix
