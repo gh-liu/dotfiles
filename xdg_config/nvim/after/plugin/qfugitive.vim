@@ -58,7 +58,7 @@ function! s:qf_diff(qfid) abort
   let diff = diffs[0]
   call setbufvar(buf, "diff_filename", diff.filename)
 
-  command -bang -buffer GDiffWithCtx call s:diff_with_ctx(<bang>0, bufnr())
+  command! -bang -buffer GDiffWithCtx call s:diff_with_ctx(<bang>0, bufnr())
   nnoremap <buffer> \d <cmd>GDiffWithCtx<cr>
   nnoremap <buffer> \D <cmd>GDiffWithCtx!<cr>
 
