@@ -12,10 +12,10 @@ vim.g.maplocalleader = " "
 
 require("liu.config.options")
 require("liu.config.keymaps")
-require("liu.config.configs")
 require("liu.config.commands")
 require("liu.config.autocmds")
 
 require("liu.lazy")
 
 require("liu.lsp")
+require("liu.config.diagnostics")
