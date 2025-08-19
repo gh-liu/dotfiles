@@ -1,8 +1,8 @@
 local signs = {
-	DapStopped = { text = "", texthl = "MoreMsg", numhl = "MoreMsg", linehl = "" },
-	DapLogPoint = { text = "", texthl = "Tag", numhl = "Tag", linehl = "" },
-	DapBreakpoint = { text = "", texthl = "Debug", numhl = "Debug", linehl = "" },
-	DapBreakpointCondition = { text = "", texthl = "Conditional", numhl = "Conditional" },
+	DapStopped = { text = "", texthl = "ModeMsg", numhl = "ModeMsg", linehl = "ModeMsg" },
+	DapLogPoint = { text = "", texthl = "Tag", numhl = "Tag", linehl = "Tag" },
+	DapBreakpoint = { text = "", texthl = "Debug", numhl = "Debug", linehl = "Debug" },
+	DapBreakpointCondition = { text = "", texthl = "Conditional", numhl = "Conditional", linehl = "Conditional" },
 	DapBreakpointRejected = { text = "", texthl = "ErrorMsg", numhl = "ErrorMsg", linehl = "" },
 }
 for name, opt in pairs(signs) do
