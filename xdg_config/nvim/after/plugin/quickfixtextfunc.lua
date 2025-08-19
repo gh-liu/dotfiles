@@ -118,6 +118,12 @@ function _G.QuickfixTextFunc(info)
 			if show_module then
 				prefix_max_len = module_max_len
 				prefix_raw = modules[idx]
+
+				-- NOTE: for fugitive object
+				local hash, file = string.match(prefix_raw or "", "^(%x+):(.*)$")
+				if hash and file then
+					prefix_raw = string.sub(hash, 1, 7) .. ":" .. file
+				end
 			else
 				prefix_max_len = fname_max_len
 				prefix_raw = fnames[idx]
