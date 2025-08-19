@@ -70,7 +70,7 @@ function _G.QuickfixTextFunc(info)
 			col_max_len = col_str_len
 		end
 
-		local moduls = ""
+		-- local moduls = ""
 		local fname = ""
 		if item.valid == 1 then
 			if #item.module > 0 then
