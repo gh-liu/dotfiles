@@ -221,6 +221,7 @@ return { -- Git {{{2
 				-- https://dzx.fr/blog/introduction-to-vim-fugitive/#3-way-diff
 				GConflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
 			})
+			vim.keymap.set({ "n" }, "yqg", "<cmd>GFiles<cr>", {})
 
 			-- NOTE: review workflow
 			-- 0. review between @ and FETCH_HEAD or 1st args
