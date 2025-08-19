@@ -217,6 +217,9 @@ M.set_highlights = function()
 		String = { fg = c.green },
 		-- }}}
 
+		SnippetTabstop = { link = "Visual" },
+		SnippetTabstopActive = { link = "Search" },
+
 		-- termdebug
 		debugPC = { link = "Debug" },
 		debugBreakpoint = { link = "Debug" },
