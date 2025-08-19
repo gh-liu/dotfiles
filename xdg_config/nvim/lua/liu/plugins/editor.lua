@@ -439,18 +439,15 @@ return {
 
 			local maps = {
 				{
-					"yA",
+					"m<tab>",
 					function()
 						local MiniVisits = require("mini.visits")
-						MiniVisits.add_label(label, nil, visit_cwd())
-						visit_redrawstatusline()
-					end,
-				},
-				{
-					"yD",
-					function()
-						local MiniVisits = require("mini.visits")
-						MiniVisits.remove_label(label, nil, visit_cwd())
+						local labels = MiniVisits.list_labels(vim.fn.bufname(), visit_cwd())
+						local op = MiniVisits.add_label
+						if vim.tbl_contains(labels, label) then
+							op = MiniVisits.remove_label
+						end
+						op(label, nil, visit_cwd())
 						visit_redrawstatusline()
 					end,
 				},
