@@ -240,11 +240,6 @@ noremap ZR <cmd>restart<cr>
 noremap ZT <cmd>trust<cr>
 ]])
 
--- stylua: ignore start
-vim.keymap.set({ 'n' }, 'dCl', function() vim.diagnostic.setloclist() end, { desc = 'Show document diagnostics' })
-vim.keymap.set({ 'n' }, 'dCq', function() vim.diagnostic.setqflist() end, { desc = 'Show workspace diagnostics' })
--- stylua: ignore end
-
 -- :h default-mappings
 ---@param modes string|table
 ---@param lhs string

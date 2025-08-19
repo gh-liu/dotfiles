@@ -47,3 +47,15 @@ vim.api.nvim_create_autocmd("VimEnter", {
 		})
 	end,
 })
+
+local make_severity_params = function()
+	if vim.v.count > 0 then
+		return { severity = vim.v.count }
+	end
+	return {}
+end
+-- NOTE: yq: toggle qflist
+-- stylua: ignore start
+vim.keymap.set({ 'n' }, 'yqq', function() vim.diagnostic.setqflist(make_severity_params()) end, { desc = 'Show workspace diagnostics' })
+vim.keymap.set({ 'n' }, 'yql', function() vim.diagnostic.setloclist(make_severity_params()) end, { desc = 'Show document diagnostics' })
+-- stylua: ignore end
