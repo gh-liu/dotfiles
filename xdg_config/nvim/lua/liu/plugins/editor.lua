@@ -1066,9 +1066,13 @@ return {
 			"setglobal sessionoptions+=sesdir
 
 			autocmd VimEnter * nested
-					\ if !argc() && empty(bufname()) && empty(v:this_session) && filereadable('Session.vim') && !&modified |
-					\   source Session.vim |
-					\ endif
+				  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
+				  \   if filereadable('Session.vim') |
+				  \     source Session.vim |
+				  \   elseif filereadable('.git/Session.vim') |
+				  \     source .git/Session.vim |
+				  \   endif |
+				  \ endif
 			]])
 		end,
 	},
