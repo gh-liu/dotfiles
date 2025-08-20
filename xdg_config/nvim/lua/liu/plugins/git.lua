@@ -62,6 +62,7 @@ return { -- Git {{{2
 			})
 
 			--- Toggle summary window {{{3
+			-- TODO: multiply tabs not work
 			local G = {
 				buf = -1,
 				toggle = function(self)
@@ -75,10 +76,6 @@ return { -- Git {{{2
 					end
 				end,
 			}
-
-			vim.keymap.set("n", "g<space>", function()
-				G:toggle()
-			end, { silent = true })
 
 			api.nvim_create_autocmd("User", {
 				group = g,
@@ -97,6 +94,9 @@ return { -- Git {{{2
 				end,
 			})
 
+			vim.keymap.set("n", "g<space>", function()
+				G:toggle()
+			end, { silent = true })
 			-- }}}
 
 			--- Absorb {{{
