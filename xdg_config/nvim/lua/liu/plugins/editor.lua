@@ -641,9 +641,9 @@ return {
 			-- fzf_bin = "sk",
 			winopts = {
 				backdrop = 80,
-				border = vim.o.winborder,
+				border = config.borders,
 				preview = {
-					border = vim.o.winborder,
+					border = config.borders,
 				},
 				-- winopts = {},
 				on_create = function()
