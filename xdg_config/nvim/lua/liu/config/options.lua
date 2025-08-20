@@ -29,6 +29,8 @@ vim.o.cursorline = true
 vim.o.pumheight = 12
 
 vim.o.winborder = "single"
+-- NOTE: in other place, which should split into a table
+-- vim.o.winborder = vim.fn.join({ "┌", "─", "┐", "│", "┘", "─", "└", "│" }, ",")
 
 vim.o.guicursor = vim.iter({
 	-- "a:block",
