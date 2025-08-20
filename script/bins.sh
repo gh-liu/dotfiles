@@ -160,6 +160,7 @@ bins() {
 		cargo install ast-grep
 		cargo install asm-lsp
 		cargo install skim
+		cargo install --locked zellij
 
 		cargo install git-absorb # git absorb
 
