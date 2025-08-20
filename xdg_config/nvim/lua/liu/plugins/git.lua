@@ -87,14 +87,10 @@ return { -- Git {{{2
 					vim.bo.bufhidden = "wipe"
 					vim.bo.buflisted = false
 
-					local alt_bufname = vim.fn.getreg("#")
 					G.buf = data.buf
 					api.nvim_create_autocmd("BufWipeout", {
 						callback = function()
 							G.buf = -1
-							if alt_bufname and #alt_bufname > 0 then
-								vim.fn.setreg("#", alt_bufname)
-							end
 						end,
 						buffer = data.buf,
 					})
