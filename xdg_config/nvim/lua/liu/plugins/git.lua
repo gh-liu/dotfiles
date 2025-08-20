@@ -265,7 +265,8 @@ return { -- Git {{{2
 			vim.g.flagship_skip = "^FugitiveStatusline$"
 			vim.cmd([[
 				"autocmd User Flags call Hoist('buffer', 5, function('FugitiveStatusline'))
-				autocmd User Flags call Hoist('buffer', 6, '%{FugitiveStatusline() . flagship#surround(toupper(get(b:,"fugitive_type","")))}')
+				autocmd User Flags call Hoist('buffer', 6, '%{FugitiveStatusline()}')
+				autocmd User Flags call Hoist('buffer', 7, '%{flagship#surround(toupper(get(b:,"fugitive_type","")))}', {"hl":"ModeMsg"})
 			]])
 
 			set_hls({
