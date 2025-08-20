@@ -1,6 +1,14 @@
 -- NOTE: add filetype plugins at bottom
 return {
 	{
+		"olimorris/codecompanion.nvim",
+		event = "VeryLazy",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+		},
+		opts = {},
+	},
+	{
 		"tpope/vim-dadbod",
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
