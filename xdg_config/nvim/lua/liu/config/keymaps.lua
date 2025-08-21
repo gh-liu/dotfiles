@@ -162,6 +162,7 @@ noremap z? <cmd> setlocal foldenable?
 \ <bar> setlocal foldtext? 
 \ <cr>
 
+"TODO load arglist into qflist
 noremap yA <cmd>argedit % <bar> argdedupe <bar> args  <cr>
 noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
 
