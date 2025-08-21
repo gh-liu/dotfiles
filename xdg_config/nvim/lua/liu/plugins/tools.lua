@@ -27,6 +27,25 @@ return {
 			strategies = {
 				chat = {
 					adapter = "openai",
+					keymaps = {
+						options = {
+							modes = { n = "g?" },
+						},
+						stop = {
+							modes = { n = "gq" },
+						},
+						completion = {
+							modes = {
+								i = "<plug>(codecompanion.completion)",
+							},
+						},
+						close = {
+							modes = {
+								n = "<plug>(codecompanion.close)",
+								i = "<plug>(codecompanion.close)",
+							},
+						},
+					},
 				},
 				inline = {
 					adapter = "openai",
