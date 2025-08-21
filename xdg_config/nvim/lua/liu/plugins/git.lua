@@ -178,6 +178,27 @@ return { -- Git {{{2
 					-- vim.keymap.set("n", "czms", ":G stash save -S<space>", { buffer = 0 })
 				end,
 			})
+
+			vim.api.nvim_create_user_command("GStashList", function()
+				local cmd = { "git", "stash", "list", "--pretty=format:%H %<(10)%gd %<(76,trunc)%s" }
+				local obj = vim.system(cmd, { text = true }):wait()
+				local lines = vim.split(obj.stdout, "\n")
+
+				local dir = vim.fn["FugitiveGitDir"]()
+				local qfitems = {}
+				for _, line in ipairs(lines) do
+					local hash, stash_id, message = line:match("^(%x+)%s+(%g+)%s+(.*)$")
+					table.insert(qfitems, {
+						module = hash,
+						filename = string.format("fugitive://%s//%s", dir, hash),
+						text = message,
+					})
+				end
+				if #qfitems > 0 then
+					vim.fn.setqflist(qfitems)
+					vim.cmd.copen()
+				end
+			end, { nargs = 0 })
 			--- }}}
 
 			api.nvim_create_autocmd("BufReadPost", {
