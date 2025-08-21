@@ -287,7 +287,7 @@ return { -- Git {{{2
 			vim.cmd([[
 				"autocmd User Flags call Hoist('buffer', 5, function('FugitiveStatusline'))
 				autocmd User Flags call Hoist('buffer', 6, '%{FugitiveStatusline()}')
-				autocmd User Flags call Hoist('buffer', 7, '%{flagship#surround(toupper(get(b:,"fugitive_type","")))}', {"hl":"ModeMsg"})
+				autocmd User Flags call Hoist('buffer', 7, '%{flagship#surround(toupper(get(b:,"fugitive_type","")))}', {"hl":"ErrorMsg"})
 			]])
 
 			set_hls({
