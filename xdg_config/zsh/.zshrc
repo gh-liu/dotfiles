@@ -495,6 +495,19 @@ export PATH=$PATH:$XDG_CONFIG_HOME/bin
 [ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
 # }}}
 
+# 9999. LLM {{{
+# #claude
+# export ANTHROPIC_API_KEY=""
+# export ANTHROPIC_BASE_URL=""
+# export ANTHROPIC_MODEL=
+# export ANTHROPIC_SMALL_FAST_MODEL=
+# #openai
+# export OPENAI_API_KEY=""
+# export OPENAI_BASE_URL=""
+# #deepseek
+# export DEEPSEEK_API_KEY=""
+# }}}
+
 # NOTE: uncomment below line for profile
 # zprof
 
