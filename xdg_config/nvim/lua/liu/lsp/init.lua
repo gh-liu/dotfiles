@@ -22,7 +22,11 @@ end, {
 	desc = "Set Lsp Log Level",
 	nargs = 1,
 	complete = function()
-		return { "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "OFF" }
+		return vim.iter(vim.log.levels)
+			:map(function(k, v)
+				return k
+			end)
+			:totable()
 	end,
 })
 -- }}}
