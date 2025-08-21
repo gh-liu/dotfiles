@@ -184,6 +184,7 @@ return {
 			vim.cmd([[
 			"autocmd User Flags call Hoist("buffer", "fugitive#statusline")
 			autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
+			autocmd User Flags call Hoist("window", "%-13a")
 			"autocmd User Flags call Hoist("window", "%{&previewwindow?'[PVW]':''}")
 			"autocmd User Flags call Hoist("global", "%{&ignorecase ? '[IC]' : ''}", {'hl': 'ModeMsg'})
 

@@ -162,6 +162,8 @@ noremap z? <cmd> setlocal foldenable?
 \ <bar> setlocal foldtext? 
 \ <cr>
 
+noremap yA <cmd>argedit % <bar> argdedupe <bar> args  <cr>
+noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
 
 noremap [1 <cmd>lprev<cr>
 noremap ]1 <cmd>lnext<cr>
