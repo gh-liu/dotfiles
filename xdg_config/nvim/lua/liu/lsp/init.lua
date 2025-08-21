@@ -36,7 +36,7 @@ local function on_list(items)
 		local item = items.items[1]
 		local loc = item.user_data ---@type lsp.Location
 		-- if vim.uri_from_bufnr(bufnr) == loc.uri then
-		vim.cmd("vsplit")
+		-- vim.cmd("vsplit")
 		vim.lsp.util.show_document(loc, clients[1].offset_encoding, { focus = true })
 		return
 		-- end
