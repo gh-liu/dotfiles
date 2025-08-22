@@ -5,7 +5,20 @@ return {
 		event = "VeryLazy",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
-			"ravitemer/mcphub.nvim",
+			{
+				-- @need-install: bun install -g mcp-hub@latest
+				"ravitemer/mcphub.nvim",
+				opts = {
+					workspace = {
+						look_for = {
+							-- https://code.visualstudio.com/docs/copilot/chat/mcp-servers#_configuration-format
+							".git/mcp.json",
+							".vscode/mcp.json",
+							".cursor/mcp.json",
+						},
+					},
+				},
+			},
 		},
 		opts = {
 			adapters = {
