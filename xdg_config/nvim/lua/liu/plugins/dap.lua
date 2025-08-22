@@ -16,7 +16,7 @@ return {
 			{ "dcc", [[:lua require("dap").continue()<CR>]] },
 			{ "dcb", [[:lua require("dap").toggle_breakpoint()<CR>]] },
 			{
-				"dcB",
+				"dcC",
 				function()
 					local ok, condition = pcall(vim.fn.input, { prompt = "Breakpoint Condition: " })
 					if ok then

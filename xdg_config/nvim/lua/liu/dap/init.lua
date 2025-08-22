@@ -72,6 +72,7 @@ api.nvim_create_autocmd("User", {
 		-- 	dap.repl.toggle({ height = 12, winfixheight = true })
 		-- end)
 		map_dap("q", [[:lua require("dap").terminate()<CR>]], "Terminates the debug session")
+		map_dap("x", [[:lua require("dap").clear_breakpoints()<CR>]], "Removes all breakpoints")
 
 		-- map_dap("L", function()
 		-- 	local logpoint = vim.fn.input({ prompt = "Log point message: " })
