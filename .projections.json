@@ -17,6 +17,9 @@
   "xdg_config/nvim/init.lua": {
     "type": "nvim"
   },
+  "xdg_config/dlv/config.yml": {
+    "type": "dlv"
+  },
   "xdg_config/ghostty/config": {
     "type": "ghostty"
   },
