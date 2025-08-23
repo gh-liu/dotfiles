@@ -86,6 +86,9 @@ return {
 				},
 			},
 		},
+		keys = {
+			{ "yoc", "<cmd>CodeCompanionChat toggle<cr>" },
+		},
 	},
 	{
 		"tpope/vim-dadbod",
