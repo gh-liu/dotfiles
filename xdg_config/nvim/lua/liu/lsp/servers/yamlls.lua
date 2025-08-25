@@ -12,6 +12,10 @@ end
 M.schemas = {
 	["https://raw.githubusercontent.com/ast-grep/ast-grep/main/schemas/project.json"] = {
 		"sgconfig.yml",
+		"sgconfig.yaml",
+	},
+	["https://raw.githubusercontent.com/ast-grep/ast-grep/refs/heads/main/schemas/rule.json"] = {
+		"sg-rules/*.{yml,yaml}",
 	},
 	--TODO https://raw.githubusercontent.com/ast-grep/ast-grep/refs/heads/main/schemas/rule.json
 	-- NOTE: github workflow/action
