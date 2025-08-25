@@ -603,7 +603,8 @@ return {
 		end,
 	},
 	{
-		"will133/vim-dirdiff",
+		-- "will133/vim-dirdiff",
+		"deathbeam/difftool.nvim",
 	},
 	{
 		"ibhagwan/fzf-lua",
