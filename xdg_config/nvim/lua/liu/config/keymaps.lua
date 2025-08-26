@@ -91,6 +91,9 @@ nnoremap <leader>3 3gt
 nnoremap <leader>4 4gt
 nnoremap <leader>5 5gt
 nnoremap <leader>6 6gt
+
+nnoremap [<tab> <cmd>tabprev<cr>
+nnoremap ]<tab> <cmd>tabnext<cr>
 ]])
 
 -- path
