@@ -129,6 +129,7 @@ return {
 					vim.keymap.set("n", "<localleader>r", require("kulala").run, { buffer = buffer })
 					vim.keymap.set("n", "<localleader>R", require("kulala").replay, { buffer = buffer })
 					vim.keymap.set("n", "<localleader>c", require("kulala").copy, { buffer = buffer })
+					vim.keymap.set("n", "<localleader>C", require("kulala").set_selected_env, { buffer = buffer })
 
 					vim.b.dispatch = [[:lua require("kulala").run()]]
 
