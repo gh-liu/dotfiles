@@ -702,6 +702,8 @@ return {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
 			---@type liu.grug-far.engine
 			engine = "ripgrep",
+			-- https://github.com/MagicDuck/grug-far.nvim/blob/385d1949dc21d0c39e7a74b4f4a25da18817bc86/doc/grug-far-opts.txt#L301
+			keymaps = {},
 		},
 		cmd = { "GrugFar", "GrugFarWithin" },
 	},
