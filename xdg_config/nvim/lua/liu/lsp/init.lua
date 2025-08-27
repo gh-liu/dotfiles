@@ -181,6 +181,12 @@ api.nvim_create_autocmd("LspAttach", {
 		end
 		-- }}}
 
+		if lsp.completion then
+			if client:supports_method(lsp_methods.textDocument_completion) then
+				-- lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+			end
+		end
+
 		if lsp.inline_completion then
 			if client:supports_method(lsp_methods.textDocument_inlineCompletion) then
 				lsp.inline_completion.enable(true, { bufnr = bufnr, client_id = client.id })
