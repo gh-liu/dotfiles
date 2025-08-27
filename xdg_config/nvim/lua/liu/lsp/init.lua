@@ -16,7 +16,7 @@ end
 -- Log Levels {{{1
 api.nvim_create_user_command("LspSetLogLevel", function(opts)
 	local level = unpack(opts.fargs)
-	lsp.set_log_level(level)
+	vim.lsp.log.set_level(level)
 	vim.notify("Set: " .. level, vim.log.levels.INFO)
 end, {
 	desc = "Set Lsp Log Level",
