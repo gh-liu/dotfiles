@@ -3,7 +3,7 @@ local linters_by_ft = {
 	go = { "golangcilint" },
 	proto = { "buf_lint" },
 	bash = { "shellcheck" }, -- sudo apt install shellcheck
-	python = { "pylint" }, -- @need-install: uv tool install --force pylint
+	-- python = { "pylint" }, -- @need-install: uv tool install --force pylint
 	-- sql = { "sqlfluff" },
 
 	-- Use the "*" filetype to run linters on all filetypes.
