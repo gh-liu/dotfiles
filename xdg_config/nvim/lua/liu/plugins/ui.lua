@@ -154,7 +154,7 @@ return {
 					return ""
 				end
 				local get_counts = function(buf, severity)
-					local count = vim.diagnostic.count(buf, { severity = severity })
+					local count = vim.diagnostic.count(buf, { severity = severity, enabled = true })
 					return count[severity]
 				end
 
@@ -194,15 +194,18 @@ return {
 
 			"autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
 			]])
-			if vim.diagnostic.status then
-				vim.cmd(
-					[[ autocmd User Flags call Hoist("buffer", 9, "%{flagship#surround(v:lua.vim.diagnostic.status())}") ]]
-				)
-			else
-				vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
-			end
+			vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
+			-- if vim.diagnostic.status then
+			-- 	vim.cmd(
+			-- 		[[ autocmd User Flags call Hoist("buffer", 9, "%{flagship#surround(v:lua.vim.diagnostic.status())}") ]]
+			-- 	)
+			-- else
+			-- 	vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
+			-- end
 			if vim.fn.exists("&busy") then
-				vim.cmd([[ autocmd User Flags call Hoist("buffer", 1, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]])
+				vim.cmd(
+					[[ autocmd User Flags call Hoist("buffer", 1, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]]
+				)
 			end
 		end,
 	},
