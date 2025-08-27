@@ -117,6 +117,7 @@ api.nvim_create_autocmd("LspAttach", {
 })
 -- }}}
 
+local lsp_methods = vim.lsp.protocol.Methods ---@type vim.lsp.protocol.Methods
 api.nvim_create_autocmd("LspAttach", {
 	group = api.nvim_create_augroup("liu/lsp_feat", { clear = true }),
 	callback = function(args)
@@ -180,6 +181,12 @@ api.nvim_create_autocmd("LspAttach", {
 			end
 		end
 		-- }}}
+
+		if lsp.inline_completion then
+			if client:supports_method(lsp_methods.textDocument_inlineCompletion) then
+				lsp.inline_completion.enable(true, { bufnr = bufnr, client_id = client.id })
+			end
+		end
 	end,
 })
 -- semantic tokens
