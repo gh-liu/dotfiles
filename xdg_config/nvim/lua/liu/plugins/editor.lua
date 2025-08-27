@@ -703,7 +703,29 @@ return {
 			---@type liu.grug-far.engine
 			engine = "ripgrep",
 			-- https://github.com/MagicDuck/grug-far.nvim/blob/385d1949dc21d0c39e7a74b4f4a25da18817bc86/doc/grug-far-opts.txt#L301
-			keymaps = {},
+			keymaps = {
+				historyOpen = { n = "<localleader>ho" },
+				historyAdd = { n = "<localleader>ha" },
+
+				refresh = { n = "<localleader>R" },
+				abort = { n = "<localleader>Q" },
+
+				toggleShowCommand = { n = "gd" },
+
+				qflist = { n = "<localleader>q" },
+
+				-- location
+				previewLocation = { n = "<localleader>p" },
+				openLocation = { n = "<localleader>o" },
+				openNextLocation = { n = "<c-n>" },
+				openPrevLocation = { n = "<c-p>" },
+				-- sync
+				syncLocations = { n = "<localleader>sa" }, -- sync all
+				syncFile = { n = "<localleader>sf" },
+				syncLine = { n = "<localleader>sl" },
+				syncNext = { n = "<localleader>sn" },
+				syncPrev = { n = "<localleader>sp" },
+			},
 		},
 		cmd = { "GrugFar", "GrugFarWithin" },
 	},
