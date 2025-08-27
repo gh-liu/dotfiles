@@ -5,7 +5,12 @@
   },
   "lua/liu/lsp/servers/*.lua": {
     "type": "lsp_ex",
-    "alternate": "after/lsp/{}.lua"
+    "alternate": "after/lsp/{}.lua",
+    "template": [
+      "---@type vim.lsp.Config",
+      "local Config = {}",
+      "return Config"
+    ]
   },
   "lua/liu/lsp/init.lua": {
     "type": "lsp_init"
