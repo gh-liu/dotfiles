@@ -155,8 +155,7 @@ noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 
 " `bdelete` but keep window
 "nnoremap d<leader> <cmd>buf#<bar>bd#<cr>
-"nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
-nnoremap d<bs> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
+nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
 
 noremap z? <cmd> setlocal foldenable? 
 \ <bar> setlocal foldlevel? 
