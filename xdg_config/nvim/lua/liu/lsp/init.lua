@@ -267,35 +267,6 @@ handlers[ms.textDocument_rename] = function(...)
 end
 -- }}}
 
-local client_process_id = {}
-
-vim.api.nvim_create_autocmd("LspProgress", {
-	callback = function(ev)
-		local opts = {}
-		local client_id = ev.data.client_id
-		local id = client_process_id[client_id]
-		if id then
-			opts.id = id
-		end
-		local value = ev.data.params.value ---@type vim.lsp.ProgressParams
-		local kind = value.kind ---@type "begin"|"report"|"end"
-		opts.kind = "progress"
-		opts.status = value.kind == "end" and "success" or "running"
-		opts.percent = value.percentage or 0
-		-- opts.title = value.title
-
-		local chunks = { { value.title, "Title" } }
-		if value.message then
-			table.insert(chunks, { ": " .. value.message, "Normal" })
-		end
-
-		local msg_id = vim.api.nvim_echo(chunks, true, opts)
-		if not id then
-			client_process_id[client_id] = msg_id
-		end
-	end,
-})
-
 api.nvim_create_autocmd("LspAttach", {
 	group = api.nvim_create_augroup("liu/lsp_tools", { clear = true }),
 	callback = function(args)
