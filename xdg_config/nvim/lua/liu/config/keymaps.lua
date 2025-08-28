@@ -171,6 +171,8 @@ noremap yqa <cmd> call setqflist(map(argv(),'{"bufnr":bufnr(v:val),"filename":v:
 noremap yA <cmd>argedit % <bar> argdedupe <bar> args  <cr>
 noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
 
+noremap <leader>m <cmd>message<cr>
+
 noremap [1 <cmd>lprev<cr>
 noremap ]1 <cmd>lnext<cr>
 
