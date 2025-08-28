@@ -20,6 +20,13 @@ return {
 				},
 			},
 		},
+		init = function()
+			vim.cmd([[
+				cab cc  CodeCompanion
+				cab ccc CodeCompanionChat
+				cab cca CodeCompanionActions
+			]])
+		end,
 		opts = {
 			adapters = {
 				http = {
@@ -57,7 +64,7 @@ return {
 						},
 						close = {
 							modes = {
-								n = "<plug>(codecompanion.close)",
+								n = "<localleader>c",
 								i = "<plug>(codecompanion.close)",
 							},
 						},
