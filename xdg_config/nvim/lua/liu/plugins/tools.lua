@@ -109,7 +109,11 @@ return {
 			"nvim-lua/plenary.nvim",
 		},
 		opts = {
+			---@alias Provider "claude" | "openai" | "gemini" | "copilot" | "deepseek" | string
+			---@type Provider
 			provider = "deepseek",
+			---@type Provider
+			auto_suggestions_provider = "deepseek",
 			providers = {
 				deepseek = {
 					__inherited_from = "openai",
@@ -117,6 +121,9 @@ return {
 					endpoint = "https://api.deepseek.com",
 					model = "deepseek-coder",
 				},
+			},
+			behaviour = {
+				auto_suggestions = true,
 			},
 		},
 	},
