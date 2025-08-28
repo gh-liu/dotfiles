@@ -831,15 +831,25 @@ return {
 					end
 				end,
 			})
-			vim.cmd([[
-			autocmd BufReadPost docker-compose.*.y*ml let b:dispatch='docker compose -f % up -d'
-			]])
 
 			vim.cmd([[
 			autocmd BufReadPost *
 			\ if getline(1) =~# '^#!' |
 			\   let b:dispatch =
 			\       matchstr(getline(1), '#!\%(/usr/bin/env \+\)\=\zs.*') . ' %:S' |
+			\   let b:start = '-wait=always ' . b:dispatch |
+			\ endif
+
+
+			autocmd BufReadPost docker-compose.*.y*ml
+			\ if getline(1) =~# '^#!' |
+			\   let b:dispatch = 'docker compose -f % up -d' |
+			\   let b:start = '-wait=always ' . b:dispatch |
+			\ endif
+
+			autocmd FileType python
+			\ if getline(1) =~# '^# /// script' |
+			\   let b:dispatch = 'uv run --script %' |
 			\   let b:start = '-wait=always ' . b:dispatch |
 			\ endif
 			]])
