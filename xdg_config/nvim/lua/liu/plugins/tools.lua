@@ -94,6 +94,16 @@ return {
 		},
 	},
 	{
+		"yetone/avante.nvim",
+		build = "make",
+		event = "VeryLazy",
+		dependencies = {
+			"MunifTanjim/nui.nvim",
+			"nvim-lua/plenary.nvim",
+		},
+		opts = {},
+	},
+	{
 		"tpope/vim-dadbod",
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
