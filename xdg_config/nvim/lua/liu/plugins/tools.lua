@@ -22,20 +22,23 @@ return {
 		},
 		opts = {
 			adapters = {
-				openai = function()
-					return require("codecompanion.adapters").extend("openai_compatible", {
-						env = {
-							url = "OPENAI_BASE_URL",
-							-- api_key = "OPENAI_API_KEY",
-						},
-					})
-				end,
-				anthropic = function()
-					local base_url = vim.env.ANTHROPIC_BASE_URL or "https://api.anthropic.com"
-					return require("codecompanion.adapters").extend("anthropic", {
-						url = string.format("%s/v1/messages", base_url),
-					})
-				end,
+				http = {
+					openai = function()
+						return require("codecompanion.adapters").extend("openai_compatible", {
+							env = {
+								url = "OPENAI_BASE_URL",
+								-- api_key = "OPENAI_API_KEY",
+							},
+						})
+					end,
+					anthropic = function()
+						local base_url = vim.env.ANTHROPIC_BASE_URL or "https://api.anthropic.com"
+						return require("codecompanion.adapters").extend("anthropic", {
+							url = string.format("%s/v1/messages", base_url),
+						})
+					end,
+				},
+				acp = {},
 			},
 			strategies = {
 				chat = {
