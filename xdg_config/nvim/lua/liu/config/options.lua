@@ -131,6 +131,8 @@ set jumpoptions+=stack
 -- string-like-this to be treated as word
 vim.opt.iskeyword:append("-")
 
+vim.o.messagesopt = "history:1000,wait:800"
+
 -- =============================================================================
 -- Nvim status persitent
 -- =============================================================================
