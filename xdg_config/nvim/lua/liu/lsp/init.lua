@@ -146,7 +146,7 @@ api.nvim_create_autocmd("LspAttach", {
 			local filter = { bufnr = bufnr }
 			inlay_hint.enable(true, filter)
 
-			vim.keymap.set("n", "yoI", function()
+			vim.keymap.set("n", "yui", function()
 				inlay_hint.enable(not inlay_hint.is_enabled(filter), filter)
 			end, { buffer = bufnr })
 

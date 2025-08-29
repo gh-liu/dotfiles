@@ -97,7 +97,7 @@ return {
 			},
 		},
 		keys = {
-			{ "yoc", "<cmd>CodeCompanionChat toggle<cr>" },
+			{ "yuc", "<cmd>CodeCompanionChat toggle<cr>" },
 		},
 	},
 	{
