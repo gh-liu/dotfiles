@@ -87,12 +87,6 @@ nnoremap <silent> <C-w>Q :tabclose<CR>
 nnoremap <silent> <C-w>z :wincmd z<Bar>cclose<Bar>lclose<CR>
 nnoremap <silent> <C-w><C-z> :wincmd z<Bar>cclose<Bar>lclose<CR>
 
-" window resize
-nnoremap _ <c-w>-
-nnoremap + <c-w>+
-nnoremap <M-_> <c-w><
-nnoremap <M-+> <c-w>>
-
 nnoremap <leader>t <cmd>tabnew <bar> tcd .<cr>
 nnoremap <leader>1 1gt
 nnoremap <leader>2 2gt
