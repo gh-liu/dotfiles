@@ -1,0 +1,10 @@
+# https://learn.microsoft.com/zh-cn/windows/wsl/wsl-config#wslconfig
+[wsl2]
+# memory=24G
+[experimental]
+autoMemoryReclaim=gradual  
+networkingMode=mirrored
+autoProxy=true
+
+# :set ft=dosini
+# vim: commentstring=#\ %s

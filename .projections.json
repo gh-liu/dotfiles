@@ -20,6 +20,9 @@
   "xdg_config/dlv/config.yml": {
     "type": "dlv"
   },
+  "xdg_config/wsl/.wslconfig": {
+    "type": "wsl"
+  },
   "xdg_config/ghostty/config": {
     "type": "ghostty"
   },
