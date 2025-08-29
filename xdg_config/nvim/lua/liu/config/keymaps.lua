@@ -235,14 +235,9 @@ tnoremap <C-f> <Right>
 tnoremap <C-b> <Left>
 tnoremap <C-a> <Home>
 tnoremap <C-e> <End>
-]])
 
-vim.api.nvim_create_autocmd({ "TermOpen" }, {
-	callback = function(args)
-		local buf = args.buf
-		vim.keymap.set("n", "dq", "<cmd>bd!<cr>", { buffer = buf, noremap = true })
-	end,
-})
+autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
+]])
 
 -- neovim
 vim.cmd([[
