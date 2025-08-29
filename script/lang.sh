@@ -199,6 +199,13 @@ function update_luarocks() {
 	install_end
 }
 
+function update_pnpm() {
+	if [[ ! -f "$(which pnpm)" ]]; then
+		curl -fsSL https://get.pnpm.io/install.sh | sh -
+	else
+	fi
+}
+
 function update_bun() {
 	if [[ ! -f "$(which bun)" ]]; then
 		curl -fsSL https://bun.sh/install | bash
