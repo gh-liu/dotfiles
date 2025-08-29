@@ -1,4 +1,4 @@
-vim.keymap.set("n", "yoq", function()
+vim.keymap.set("n", "yuq", function()
 	local get = function()
 		for _, win in pairs(vim.fn.getwininfo()) do
 			if win["quickfix"] == 1 then
