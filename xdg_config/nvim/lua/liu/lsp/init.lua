@@ -193,6 +193,17 @@ api.nvim_create_autocmd("LspAttach", {
 					bufnr = bufnr,
 					-- client_id = client.id,
 				})
+
+				vim.keymap.set("i", "<M-f>", function()
+					if not vim.lsp.inline_completion.get() then
+						return "<M-f>"
+					end
+				end, {
+					buffer = bufnr,
+					expr = true,
+					replace_keycodes = true,
+					desc = "Get the current inline completion",
+				})
 			end
 		end
 	end,
