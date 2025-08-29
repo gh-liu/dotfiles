@@ -5,7 +5,12 @@ local dap = require("dap")
 dap.listeners.before["initialize"]["user"] = function(session, error, resp, req_body, req_id)
 	-- cmd([[doautocmd User DAPInitialize]])
 	local pattern = "DAPInitialize"
-	api.nvim_exec_autocmds("User", { pattern = pattern })
+	local data = {
+		session = {
+			id = session.id,
+		},
+	}
+	api.nvim_exec_autocmds("User", { pattern = pattern, data = data })
 end
 
 -- https://microsoft.github.io/debug-adapter-protocol/specification#Events
@@ -30,5 +35,10 @@ end
 dap.listeners.after["event_terminated"]["user"] = function(session, _)
 	-- cmd([[doautocmd User DAPTerminated]])
 	local pattern = "DAPTerminated"
-	api.nvim_exec_autocmds("User", { pattern = pattern })
+	local data = {
+		session = {
+			id = session.id,
+		},
+	}
+	api.nvim_exec_autocmds("User", { pattern = pattern, data = data })
 end
