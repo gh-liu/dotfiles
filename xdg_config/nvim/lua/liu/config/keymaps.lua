@@ -46,6 +46,14 @@ nnoremap gV `[v`]
 
 " :h Y-default
 xnoremap Y <ESC>y$gv
+" copy entire file contents (to gui-clipboard if available)
+nnoremap <silent> yY :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:winview) <cr>
+
+nnoremap dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
+
+" `bdelete` but keep window
+"nnoremap d<leader> <cmd>buf#<bar>bd#<cr>
+nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
 
 " keep the old content
 "xnoremap p "_dp
@@ -145,20 +153,10 @@ nnoremap g<C-T> :echo strftime('%Y-%m-%d %H:%M:%S', len(expand('<cword>')) > 10 
 " insert formatted datetime (from @tpope vimrc).
 inoremap <silent> <C-G><C-T> <C-R>=repeat(complete(col('.'),map(["%Y-%m-%d %H:%M:%S","%a, %d %b %Y %H:%M:%S %z","%Y %b %d","%d-%b-%y","%a %b %d %T %Z %Y","%Y%m%d"],'strftime(v:val)')+[localtime()]),0)<CR>
 
-
-" copy entire file contents (to gui-clipboard if available)
-nnoremap <silent> yY :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:winview) <cr>
-
-nnoremap dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
-
 nnoremap g: :lua =
 
 " jump to context
 noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
-
-" `bdelete` but keep window
-"nnoremap d<leader> <cmd>buf#<bar>bd#<cr>
-nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
 
 noremap z? <cmd> setlocal foldenable? 
 \ <bar> setlocal foldlevel? 
