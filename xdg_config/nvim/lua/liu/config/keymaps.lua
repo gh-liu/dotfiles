@@ -10,6 +10,7 @@ setmap("n", "<leader>w", "<cmd>write<cr>")
 setmap("n", "<leader>W", "<cmd>wall<cr>")
 setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", { expr = true })
 setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", { expr = true })
+setmap("ca", "E", "((getcmdtype()  is# ':' && getcmdline() is# 'E')?('e'):('E'))", { expr = true })
 
 vim.cmd([[
 nnoremap gf gfzv
