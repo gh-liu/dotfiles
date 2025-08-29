@@ -123,7 +123,7 @@ return {
 				},
 			},
 			behaviour = {
-				auto_suggestions = true,
+				auto_suggestions = false,
 			},
 		},
 	},
