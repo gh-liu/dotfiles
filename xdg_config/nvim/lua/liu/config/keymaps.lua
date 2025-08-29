@@ -3,15 +3,21 @@ local setmap = function(mode, lhs, rhs, opts)
 	vim.keymap.set(mode, lhs, rhs, opts)
 end
 
-setmap("n", "<C-q>", "<cmd>quit<CR>")
-setmap("n", "<leader>q", "<cmd>quit<CR>")
-setmap("n", "<leader>Q", "<cmd>qall<CR>")
-setmap("n", "<leader>w", "<cmd>write<cr>")
-setmap("n", "<leader>W", "<cmd>wall<cr>")
 setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", { expr = true })
 setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", { expr = true })
 setmap("ca", "E", "((getcmdtype()  is# ':' && getcmdline() is# 'E')?('e'):('E'))", { expr = true })
 
+-- save/quit
+vim.cmd([[
+noremap <c-q> <cmd>quit<CR>
+noremap <leader>q <cmd>quit<CR>
+noremap <leader>Q <cmd>qall<CR>
+
+noremap <leader>w <cmd>write<cr>
+noremap <leader>W <cmd>wall<cr>
+]])
+
+-- jump
 vim.cmd([[
 nnoremap gf gfzv
 nnoremap gF gFzv
@@ -305,5 +311,3 @@ toggle("l", "list")
 toggle("p", "previewwindow")
 toggle("i", "ignorecase")
 toggle("f", "winfixbuf")
-
--- vim: foldmethod=marker
