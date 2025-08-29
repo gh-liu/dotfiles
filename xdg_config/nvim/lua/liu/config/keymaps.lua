@@ -40,12 +40,18 @@ nnoremap g; g;zvzz
 
 -- Coding
 vim.cmd([[
+inoremap <c-c> <esc>
+" select last inserted text.
+nnoremap gV `[v`]
+
 " :h Y-default
 xnoremap Y <ESC>y$gv
+
 " keep the old content
 "xnoremap p "_dp
 "xnoremap p "_c<esc>p
 xnoremap p P
+
 " delete the selection
 snoremap <bs>  <C-o>"_s
 
@@ -53,8 +59,6 @@ snoremap <bs>  <C-o>"_s
 nnoremap gs mr:let @/='\<'.expand('<cword>').'\>'<CR>cgn
 xnoremap gs mr"sy:let @/=@s<CR>cgn
 
-" select last inserted text.
-nnoremap gV `[v`]
 " nice block
 xnoremap <expr> I (mode()=~#'[vV]'?'<C-v>^o^I':'I')
 xnoremap <expr> A (mode()=~#'[vV]'?'<C-v>0o$A':'A')
@@ -63,8 +67,6 @@ xnoremap <expr> A (mode()=~#'[vV]'?'<C-v>0o$A':'A')
 "nnoremap gq= mzgggqG`z
 nnoremap <silent> gq<leader> :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:winview) <cr>
 nnoremap gq? <Cmd>set formatprg? formatexpr?<CR>
-
-inoremap <c-c> <esc>
 ]])
 
 -- Paste before/after linewise. See `:h put`
