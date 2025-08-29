@@ -155,25 +155,6 @@ return {
 					MiniFiles.set_bookmark("w", vim.fn.getcwd, { desc = "Working directory" })
 				end,
 			})
-
-			api.nvim_create_autocmd("User", {
-				pattern = "MiniFilesActionDelete",
-				group = g,
-				callback = function(args)
-					local fname = args.data.from
-					local bufnr = fn.bufnr(fname)
-					if bufnr > 0 then
-						-- delte buffer
-						-- require("mini.bufremove").delete(bufnr, false)
-						if vim.api.nvim_buf_is_valid(bufnr) then
-							vim.api.nvim_buf_call(bufnr, function()
-								vim.cmd([[buf#]])
-								vim.api.nvim_buf_delete(bufnr, { force = true })
-							end)
-						end
-					end
-				end,
-			})
 		end,
 		keys = {
 			{
@@ -600,6 +581,19 @@ return {
 					call v:lua.require("mini.bufremove").delete()
 				endfunction
 			]])
+
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "MiniFilesActionDelete",
+				group = g,
+				callback = function(args)
+					local fname = args.data.from
+					local bufnr = fn.bufnr(fname)
+					if bufnr > 0 then
+						-- delte buffer
+						require("mini.bufremove").delete(bufnr, false)
+					end
+				end,
+			})
 		end,
 	},
 	{
