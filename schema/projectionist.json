@@ -39,7 +39,13 @@
         "description": "Command to run to \"boot\" the project.  Examples include `lein run`, `rails server`, and `foreman start`.  It will be used as a default task for |:Start| in dispatch.vim.  This is useful to set from a \"*\" projection.  Expansions are shell escaped."
       },
       "template": {
-        "type": "string",
+        "type": [
+          "string",
+          "array"
+        ],
+        "items": {
+          "type": "string"
+        },
         "description": "Array of lines to use when creating a new file."
       },
       "type": {
