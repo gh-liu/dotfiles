@@ -169,16 +169,7 @@ vim.g.rst_fold_enabled = 1 -- treesitter not support rst fold
 vim.g.ftplugin_sql_omni_key = "<leader>S"
 
 if not vim.env.TMUX and not vim.g.clipboard then
-	vim.g.clipboard = {
-		name = "OSC 52",
-		copy = {
-			["+"] = require("vim.ui.clipboard.osc52").copy("+"),
-			["*"] = require("vim.ui.clipboard.osc52").copy("*"),
-		},
-		paste = {
-			["+"] = require("vim.ui.clipboard.osc52").paste("+"),
-			["*"] = require("vim.ui.clipboard.osc52").paste("*"),
-		},
-	}
+	-- :h clipboard-osc52
+	vim.g.clipboard = "osc52"
 end
 vim.o.modelineexpr = true
