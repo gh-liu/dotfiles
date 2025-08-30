@@ -1,12 +1,3 @@
-local setmap = function(mode, lhs, rhs, opts)
-	opts = opts or { silent = true, noremap = true }
-	vim.keymap.set(mode, lhs, rhs, opts)
-end
-
-setmap("ca", "W", "((getcmdtype()  is# ':' && getcmdline() is# 'W')?('w'):('W'))", { expr = true })
-setmap("ca", "Q", "((getcmdtype()  is# ':' && getcmdline() is# 'Q')?('q'):('Q'))", { expr = true })
-setmap("ca", "E", "((getcmdtype()  is# ':' && getcmdline() is# 'E')?('e'):('E'))", { expr = true })
-
 -- save/quit
 vim.cmd([[
 noremap <c-q> <cmd>quit<CR>
@@ -15,6 +6,9 @@ noremap <leader>Q <cmd>qall<CR>
 
 noremap <leader>w <cmd>write<cr>
 noremap <leader>W <cmd>wall<cr>
+
+cabbr <expr> W (getcmdtype() is# ':' && getcmdline() is# 'W') ? 'w' : 'W'
+cabbr <expr> Q (getcmdtype() is# ':' && getcmdline() is# 'Q') ? 'q' : 'Q'
 ]])
 
 -- jump
@@ -194,6 +188,8 @@ nnoremap \v :vsplit **/
 "nnoremap \E :e <C-R>=expand("%:p:h") . "/**" <CR>
 "nnoremap \S :split <C-R>=expand("%:p:h") . "/**" <CR>
 "nnoremap \V :vsplit <C-R>=expand("%:p:h") . "/**" <CR>
+
+cabbr <expr> E (getcmdtype() is# ':' && getcmdline() is# 'E') ? 'e' : 'E'
 ]])
 
 -- Search
