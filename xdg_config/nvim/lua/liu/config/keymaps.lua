@@ -133,7 +133,7 @@ noremap z? <cmd> setlocal foldenable?
 \ <cr>
 
 "TODO position no ok
-noremap yqa <cmd> call setqflist(map(argv(),'{"bufnr":bufnr(v:val),"filename":v:val}')) <bar> copen <cr>
+"noremap yqa <cmd> call setqflist(map(argv(),'{"bufnr":bufnr(v:val),"filename":v:val}')) <bar> copen <cr>
 noremap yA <cmd>argedit % <bar> argdedupe <bar> args  <cr>
 noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
 
