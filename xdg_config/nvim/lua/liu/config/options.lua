@@ -145,6 +145,15 @@ vim.o.shada = vim.iter({
 	vim.o.shada,
 }):join(",")
 
+vim.cmd([[
+autocmd FileType * setlocal formatoptions-=c formatoptions-=o
+
+autocmd InsertEnter * set nocursorline | set colorcolumn=80,120 
+autocmd InsertLeave * set cursorline   | set colorcolumn= 
+
+autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
+]])
+
 -- Disable providers we do not care a about
 vim.g.loaded_ruby_provider = 0 -- disable ruby support
 vim.g.loaded_perl_provider = 0 -- disable perl support

@@ -7,13 +7,7 @@ autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | s
 "-- Don't auto-wrap comments and don't insert comment leader after hitting 'o'
 "-- If don't do this on `FileType`, this keeps reappearing due to being set in
 "-- filetype plugins.
-autocmd FileType * setlocal formatoptions-=c formatoptions-=o
 autocmd TermOpen * startinsert
-
-autocmd InsertEnter * set nocursorline | set colorcolumn=80,120 
-autocmd InsertLeave * set cursorline   | set colorcolumn= 
-
-autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
 ]])
 
 local api = vim.api
