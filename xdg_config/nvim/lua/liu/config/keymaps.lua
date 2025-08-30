@@ -227,7 +227,7 @@ nnoremap dO :if &diff <bar> exec 'windo diffoff' <bar> else <bar> exec 'windo di
 -- term
 vim.cmd([[
 nnoremap `\ <cmd> vsplit <bar> term <cr>
-nnoremap `- <cmd> split  <bar> term <cr>
+nnoremap `- <cmd> bo split  <bar> term <cr>
 
 tnoremap jk <C-\><C-n>
 tnoremap <esc> <C-\><C-n>
@@ -240,6 +240,8 @@ tnoremap <C-f> <Right>
 tnoremap <C-b> <Left>
 tnoremap <C-a> <Home>
 tnoremap <C-e> <End>
+
+tnoremap <C-q> <C-\><C-n>:quit<cr>
 
 autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
 ]])
