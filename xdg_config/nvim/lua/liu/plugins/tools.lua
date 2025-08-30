@@ -221,6 +221,9 @@ return {
 		},
 		cmd = { "Cs" },
 	},
+	{
+		"brianhuster/unnest.nvim",
+	},
 	-- filetype plugins below
 	{
 		"direnv/direnv.vim",
@@ -244,8 +247,7 @@ return {
 			})
 		end,
 	},
-	{
-		"mmarchini/bpftrace.vim",
+	{ "mmarchini/bpftrace.vim",
 		ft = "bpftrace",
 		init = function()
 			vim.api.nvim_create_autocmd("FileType", {
@@ -256,9 +258,6 @@ return {
 				end,
 			})
 		end,
-	},
-	{
-		"brianhuster/unnest.nvim",
 	},
 	{
 		"DrKJeff16/wezterm-types",
