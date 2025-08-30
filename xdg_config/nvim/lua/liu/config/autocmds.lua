@@ -1,3 +1,21 @@
+vim.cmd([[
+autocmd VimResized * wincmd = 
+autocmd FocusGained *  if &buftype=='' | checktime | endif
+"automatically save all modified buffers without prompting for confirmation whenever focus is lost
+autocmd FocusLost * let s:confirm = &confirm | setglobal noconfirm | silent! wall | let &confirm = s:confirm
+autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
+"-- Don't auto-wrap comments and don't insert comment leader after hitting 'o'
+"-- If don't do this on `FileType`, this keeps reappearing due to being set in
+"-- filetype plugins.
+autocmd FileType * setlocal formatoptions-=c formatoptions-=o
+autocmd TermOpen * startinsert
+
+autocmd InsertEnter * set nocursorline | set colorcolumn=80,120 
+autocmd InsertLeave * set cursorline   | set colorcolumn= 
+
+autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
+]])
+
 local api = vim.api
 local autocmd = api.nvim_create_autocmd
 local augroup = api.nvim_create_augroup
@@ -41,23 +59,6 @@ autocmd("BufReadPost", {
 	end,
 })
 -- }}}
-
-autocmd("VimResized", {
-	desc = "Equalize Splits",
-	group = liu_augroup("resize_splits"),
-	command = "wincmd =",
-})
-
-autocmd({ "FocusGained" }, {
-	desc = "Update file when there are changes",
-	group = liu_augroup("checktime"),
-	callback = function()
-		-- normal buffer
-		if vim.o.bt == "" then
-			vim.cmd("checktime")
-		end
-	end,
-})
 
 autocmd({ "BufWritePre" }, {
 	group = liu_augroup("auto_create_dir"),
@@ -128,53 +129,6 @@ autocmd("BufEnter", {
 -- })
 
 -- options {{{1
-autocmd("CmdwinEnter", {
-	desc = "cmdwin option setup",
-	group = liu_augroup("cmdwin_enter"),
-	pattern = "*",
-	callback = function()
-		vim.wo.foldcolumn = "0"
-		vim.wo.number = false
-		vim.wo.relativenumber = false
-		vim.wo.signcolumn = "no"
-	end,
-})
-
-local toggle_cursorline = liu_augroup("toggle_cursorline")
-autocmd({ "InsertLeave" }, {
-	desc = "set cursorline",
-	group = toggle_cursorline,
-	command = "set cursorline",
-})
-autocmd({ "InsertEnter" }, {
-	desc = "set nocursorline",
-	group = toggle_cursorline,
-	command = "set nocursorline",
-})
-
-local toggle_colorcolumn = liu_augroup("toggle_colorcolumn")
-autocmd({ "InsertLeave" }, {
-	desc = "unset colorcolumn",
-	group = toggle_colorcolumn,
-	command = "set colorcolumn=",
-})
-autocmd({ "InsertEnter" }, {
-	desc = "set colorcolumn",
-	group = toggle_colorcolumn,
-	command = "set colorcolumn=80,120",
-})
-
-autocmd("FileType", {
-	group = liu_augroup("formatoptions"),
-	callback = function()
-		-- Don't auto-wrap comments and don't insert comment leader after hitting 'o'
-		-- If don't do this on `FileType`, this keeps reappearing due to being set in
-		-- filetype plugins.
-		vim.cmd("setlocal formatoptions-=c formatoptions-=o")
-	end,
-	desc = [[Ensure proper 'formatoptions']],
-})
-
 -- autocmd("ModeChanged", {
 -- 	desc = "Highlighting matched words when searching",
 -- 	group = liu_augroup("switch_highlight_when_searching"),
@@ -197,17 +151,6 @@ vim.cmd("packadd nohlsearch")
 -- 	end),
 -- })
 -- }}}
-
-local term_startinsert = liu_augroup("term_insert")
-api.nvim_create_autocmd({ "TermOpen" }, {
-	group = term_startinsert,
-	command = "startinsert",
-})
--- api.nvim_create_autocmd({ "BufEnter" }, {
--- 	pattern = "term://*",
--- 	group = term_startinsert,
--- 	command = "startinsert",
--- })
 
 api.nvim_create_autocmd({ "CursorHold" }, {
 	desc = "stop snippet when in active",
@@ -247,11 +190,4 @@ autocmd("OptionSet", {
 	end,
 })
 -- }}}
-vim.cmd([[  
-autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
-
-"automatically save all modified buffers without prompting for confirmation whenever focus is lost
-autocmd FocusLost * let s:confirm = &confirm | setglobal noconfirm | silent! wall | let &confirm = s:confirm
-]])
-
 -- vim: foldmethod=marker
