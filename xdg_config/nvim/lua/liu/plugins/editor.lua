@@ -613,6 +613,7 @@ return {
 					require("fzf-lua")[cmd](opts)
 				end)
 			end
+			map("a", "args")
 			map("b", "buffers")
 			map("d", "diagnostics_document")
 			map("f", "files")
