@@ -125,6 +125,9 @@ nnoremap g: :lua =
 
 " jump to context
 noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
+" diff toggle
+nnoremap dO :if &diff <bar> exec 'windo diffoff' <bar> else <bar> exec 'windo diffthis' <bar> endif<CR>
+
 
 noremap z? <cmd> setlocal foldenable? 
 \ <bar> setlocal foldlevel? 
@@ -187,11 +190,6 @@ cnoremap <expr> <A-Space> getcmdtype() =~ '[/?]' ? '\_s\+' : ' '
 "cnoremap <expr> <BS> (getcmdtype() =~ '[/?]' && getcmdline() == '') ? '\v^(()@!.)*$<Left><Left><Left><Left><Left><Left><Left>' : '<BS>'
 " //: "Search within visual selection".
 cnoremap <expr> / (getcmdtype() =~ '[/?]' && getcmdline() == '') ? "\<C-c>\<Esc>/\\%V" : '/'
-]])
-
--- diff
-vim.cmd([[
-nnoremap dO :if &diff <bar> exec 'windo diffoff' <bar> else <bar> exec 'windo diffthis' <bar> endif<CR>
 ]])
 
 -- term
