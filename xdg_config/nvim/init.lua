@@ -3,8 +3,6 @@ if vim.fn.has("nvim-0.11") == 0 then
 	return
 end
 
-require("liu.flatten")
-
 vim.cmd.colorscheme("nord")
 
 vim.g.mapleader = " "
