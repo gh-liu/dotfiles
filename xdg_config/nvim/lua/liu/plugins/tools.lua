@@ -221,13 +221,6 @@ return {
 		},
 		cmd = { "Cs" },
 	},
-	{
-		"gh-liu/nvim-stevedore",
-		dev = true,
-		init = function()
-			vim.g.stevedore_runtime = "stevedore.runtime.docker"
-		end,
-	},
 	-- filetype plugins below
 	{
 		"direnv/direnv.vim",
