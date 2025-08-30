@@ -178,6 +178,11 @@ noremap ]1 <cmd>lnext<cr>
 
 noremap [@ <cmd>colder<cr>
 noremap ]@ <cmd>cnewer<cr>
+
+if has("nvim")
+	noremap ZR <cmd>restart<cr>
+	noremap ZT <cmd>trust<cr>
+end
 ]])
 
 -- Split
@@ -237,10 +242,4 @@ tnoremap <C-a> <Home>
 tnoremap <C-e> <End>
 
 autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
-]])
-
--- neovim
-vim.cmd([[
-noremap ZR <cmd>restart<cr>
-noremap ZT <cmd>trust<cr>
 ]])
