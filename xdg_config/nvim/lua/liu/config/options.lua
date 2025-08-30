@@ -154,6 +154,14 @@ vim.g.loaded_python3_provider = 0 -- disable python3 support
 -- buildin plugins
 vim.g.loaded_netrwPlugin = 1 -- disable netrw
 vim.g.did_install_default_menus = 1 -- avoid stupid menu.vim (saves ~100ms)
+--:h terminal-debugger
+-- vim.g.termdebug_wide = 1
+vim.g.termdebug_config = {
+	wide = 1,
+	sign = "",
+	map_minus = 0,
+	map_plus = 0,
+}
 -- Language specified
 vim.g.rst_fold_enabled = 1 -- treesitter not support rst fold
 -- vim.g.markdown_folding = 1
