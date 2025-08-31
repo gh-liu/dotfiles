@@ -58,4 +58,9 @@ return {
 			-- require("dap.ext.vscode").load_launchjs()
 		end,
 	},
+	{
+		"igorlfs/nvim-dap-view",
+		opts = {},
+		cmd = "DapViewOpen",
+	},
 }
