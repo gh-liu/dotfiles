@@ -137,6 +137,9 @@ bins() {
 		uv tool install --force debugpy
 		uv tool install --force pytest
 
+		uv tool install --force jupyterlab
+		uv tool install --force notebook
+
 		uv tool install --force pre-commit
 		uv tool install --force git-filter-repo
 	fi
