@@ -49,7 +49,9 @@ return {
 			},
 			strategies = {
 				chat = {
-					adapter = "openai",
+					---@alias liu.Provider "claude" | "openai" | "gemini" | "copilot" | "deepseek" | string
+					---@type liu.Provider
+					adapter = "deepseek",
 					keymaps = {
 						options = {
 							modes = { n = "g?" },
@@ -71,10 +73,12 @@ return {
 					},
 				},
 				inline = {
-					adapter = "openai",
+					---@type liu.Provider
+					adapter = "deepseek",
 				},
 				cmd = {
-					adapter = "openai",
+					---@type liu.Provider
+					adapter = "deepseek",
 				},
 			},
 			extensions = {
