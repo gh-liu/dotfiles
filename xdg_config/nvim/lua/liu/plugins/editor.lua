@@ -765,6 +765,7 @@ return {
 			-- stylua: ignore end
 		end,
 		cmd = { "UndotreeToggle" },
+		keys = { { "yuu", "<cmd>UndotreeToggle<cr>" } },
 	},
 	{
 		"jpalardy/vim-slime",
