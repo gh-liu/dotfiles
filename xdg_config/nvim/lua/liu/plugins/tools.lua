@@ -251,7 +251,8 @@ return {
 			})
 		end,
 	},
-	{ "mmarchini/bpftrace.vim",
+	{
+		"mmarchini/bpftrace.vim",
 		ft = "bpftrace",
 		init = function()
 			vim.api.nvim_create_autocmd("FileType", {
