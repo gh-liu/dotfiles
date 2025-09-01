@@ -161,7 +161,20 @@ return {
 				},
 			},
 			provider = "openai_compatible",
+			n_completions = 1,
+			context_window = 512,
 			provider_options = {
+				-- https://ollama.readthedocs.io/en/openai/#endpoints
+				-- openai_compatible = {
+				-- 	api_key = "TERM",
+				-- 	name = "Ollama",
+				-- 	end_point = "http://localhost:11434/v1/chat/completions",
+				-- 	model = "qwen2.5-coder:7b",
+				-- 	optional = {
+				-- 		max_tokens = 56,
+				-- 		top_p = 0.9,
+				-- 	},
+				-- },
 				openai_compatible = {
 					end_point = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com") .. "/v1/chat/completions",
 					model = "gpt-4.1-mini",
