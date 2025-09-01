@@ -133,6 +133,56 @@ return {
 		},
 	},
 	{
+		"milanglacier/minuet-ai.nvim",
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+		},
+		opts = {
+			virtualtext = {
+				auto_trigger_ft = { "*" },
+				keymap = {
+					-- accept whole completion
+					accept = "<A-A>",
+					-- accept one line
+					accept_line = "<A-a>",
+					-- accept n lines (prompts for number)
+					-- e.g. "A-z 2 CR" will accept 2 lines
+					accept_n_lines = "<A-z>",
+					-- Cycle to prev completion item, or manually invoke completion
+					prev = "<A-[>",
+					-- Cycle to next completion item, or manually invoke completion
+					next = "<A-]>",
+					dismiss = "<A-e>",
+				},
+			},
+			provider = "openai_compatible",
+			provider_options = {
+				openai_compatible = {
+					end_point = (os.getenv("OPENAI_BASE_URL") or "https://api.openai.com") .. "/v1/chat/completions",
+					model = "gpt-4.1-mini",
+					api_key = "OPENAI_API_KEY",
+					optional = { max_tokens = 128, top_p = 0.9 },
+				},
+				-- openai_compatible = {
+				-- 	end_point = "https://api.deepseek.com/chat/completions",
+				-- 	api_key = "DEEPSEEK_API_KEY",
+				-- 	name = "deepseek",
+				-- 	model = "deepseek-chat",
+				-- 	optional = {
+				-- 		max_tokens = 256,
+				-- 		top_p = 0.9,
+				-- 	},
+				-- },
+			},
+			cmp = {
+				enable_auto_complete = false,
+			},
+			blink = {
+				enable_auto_complete = false,
+			},
+		},
+	},
+	{
 		"tpope/vim-dadbod",
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
