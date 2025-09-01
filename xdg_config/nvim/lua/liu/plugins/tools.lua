@@ -103,6 +103,11 @@ return {
 		keys = {
 			{ "yuc", "<cmd>CodeCompanionChat toggle<cr>" },
 		},
+		cmd = {
+			"CodeCompanion",
+			"CodeCompanionChat",
+			"CodeCompanionActions",
+		},
 	},
 	{
 		"yetone/avante.nvim",
