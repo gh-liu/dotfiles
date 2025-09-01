@@ -8,9 +8,6 @@ autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | s
 "-- If don't do this on `FileType`, this keeps reappearing due to being set in
 "-- filetype plugins.
 autocmd TermOpen * startinsert
-
-"Command line autocompletion
-autocmd CmdlineChanged [:/\?@] call wildtrigger()
 ]])
 
 local api = vim.api
