@@ -187,6 +187,12 @@ api.nvim_create_autocmd("LspAttach", {
 			end
 		end
 
+		if lsp.on_type_formatting then
+			if client:supports_method(lsp_methods.textDocument_onTypeFormatting) then
+				lsp.on_type_formatting.enable(true, { client_id = client.id })
+			end
+		end
+
 		if lsp.inline_completion then
 			if client:supports_method(lsp_methods.textDocument_inlineCompletion) then
 				lsp.inline_completion.enable(true, {
