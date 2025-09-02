@@ -144,6 +144,7 @@ return {
 		opts = {
 			virtualtext = {
 				auto_trigger_ft = { "*" },
+				auto_trigger_ignore_ft = { "codecompanion" },
 				keymap = {
 					-- accept whole completion
 					accept = "<A-A>",
