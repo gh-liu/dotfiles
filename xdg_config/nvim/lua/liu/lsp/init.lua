@@ -324,6 +324,7 @@ else
 	vim.lsp.enable("lua_ls")
 end
 vim.lsp.enable({ "ruff", "basedpyright" })
+-- vim.lsp.enable("pyright")
 vim.lsp.enable("rust_analyzer")
 vim.lsp.enable("zls")
 vim.lsp.enable("ts_ls")
