@@ -24,6 +24,8 @@ return {
 				cab cc  CodeCompanion
 				cab ccc CodeCompanionChat
 				cab cca CodeCompanionActions
+
+				autocmd BufWinEnter *CodeCompanion* setlocal stl=[]CodeCompanion
 			]])
 		end,
 		opts = {
