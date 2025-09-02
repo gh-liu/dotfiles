@@ -725,23 +725,6 @@ return {
 		cmd = { "GrugFar", "GrugFarWithin" },
 	},
 	{
-		"stefandtw/quickfix-reflector.vim",
-		init = function()
-			vim.api.nvim_create_autocmd("VimLeavePre", {
-				desc = "delete quickfix-(bufnr) buffers",
-				callback = function(args)
-					for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-						if vim.api.nvim_buf_get_name(buf):match("quickfix-%a") then
-							vim.api.nvim_buf_delete(buf, { force = true })
-						end
-					end
-				end,
-			})
-		end,
-		-- event = "VeryLazy",
-		ft = "qf",
-	},
-	{
 		"mbbill/undotree",
 		-- event = "VeryLazy",
 		init = function()

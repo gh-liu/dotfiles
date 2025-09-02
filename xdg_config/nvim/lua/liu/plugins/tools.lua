@@ -1,4 +1,3 @@
--- NOTE: add filetype plugins at bottom
 return {
 	{
 		"olimorris/codecompanion.nvim",
@@ -297,43 +296,4 @@ return {
 		"brianhuster/unnest.nvim",
 	},
 	-- filetype plugins below
-	{
-		"direnv/direnv.vim",
-		ft = "direnv",
-	},
-	{
-		"craigmac/vim-mermaid",
-		ft = "mermaid",
-		init = function()
-			-- @need-install: bun install -g @mermaid-js/mermaid-cli
-			vim.api.nvim_create_autocmd("FileType", {
-				pattern = "mermaid",
-				callback = function(args)
-					vim.b.dispatch = "mmdc -i % -o %:r:t.svg"
-
-					vim.api.nvim_create_autocmd("BufWritePost", {
-						buffer = args.buf,
-						command = "Dispatch!",
-					})
-				end,
-			})
-		end,
-	},
-	{
-		"mmarchini/bpftrace.vim",
-		ft = "bpftrace",
-		init = function()
-			vim.api.nvim_create_autocmd("FileType", {
-				pattern = "bpftrace",
-				callback = function()
-					vim.bo.omnifunc = "syntaxcomplete#Complete"
-					vim.b.blink_cmp_provider = { "buffer", "omni" }
-				end,
-			})
-		end,
-	},
-	{
-		"DrKJeff16/wezterm-types",
-		lazy = true,
-	},
 }
