@@ -13,6 +13,22 @@ vim.lsp.start = function(...)
 	old_lsp_start(...)
 end
 
+api.nvim_create_user_command("LspClientCapabilities", function(opts)
+	local client = vim.lsp.get_clients({ name = opts.fargs[1] })[1]
+	if not client then
+		return
+	end
+	vim.print(client.capabilities)
+end, {
+	nargs = 1,
+	complete = function()
+		return vim.iter(vim.lsp.get_clients({ bufnr = 0 }))
+			:map(function(client)
+				return client.name
+			end)
+			:totable()
+	end,
+})
 -- Log Levels {{{1
 api.nvim_create_user_command("LspSetLogLevel", function(opts)
 	local level = unpack(opts.fargs)
