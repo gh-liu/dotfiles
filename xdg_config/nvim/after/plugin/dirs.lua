@@ -1,3 +1,6 @@
+if true then -- use `cd` of `dirvish` instead
+	return
+end
 -- vim.keymap.set("n", "0cd", function()
 -- 	local ok, _ = pcall(vim.cmd, "lcd -")
 -- 	if not ok then
