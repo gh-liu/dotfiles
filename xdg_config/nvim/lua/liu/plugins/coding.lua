@@ -1,6 +1,13 @@
 local api = vim.api
 local fn = vim.fn
 
+---@param highlights table
+local set_hls = function(highlights)
+	for group, opts in pairs(highlights) do
+		vim.api.nvim_set_hl(0, group, opts)
+	end
+end
+
 ---@alias MiniSearchMethod 'cover'|'cover_or_next'|'cover_or_prev'|'cover_or_nearest'|'next'|'prev'|'nearest'
 
 return {
@@ -413,6 +420,22 @@ return {
 			})
 		end,
 		opts = {},
+	},
+	{
+		"justinmk/vim-sneak",
+		init = function()
+			-- NOTE: why z not work?
+			vim.cmd([[
+			let g:sneak#s_next = 1
+			]])
+			set_hls({
+				-- Sneak = { link = "Title" },
+				-- SneakLabel = { link = "Title" },
+				-- SneakScope = {},
+				-- SneakCurrent = {},
+				-- SneakLabelMask = {},
+			})
+		end,
 	},
 	{
 		"monaqa/dial.nvim",
