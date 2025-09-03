@@ -79,9 +79,14 @@ return {
 
 					vim.keymap.set("n", "cd", function()
 						local MiniFiles = require("mini.files")
-						local path = MiniFiles.get_fs_entry().path
-						MiniFiles.close()
-						vim.cmd.lcd(path)
+						local state = MiniFiles.get_explorer_state()
+						local window = vim.iter(state.windows):find(function(win)
+							return win.win_id == vim.api.nvim_get_current_win()
+						end)
+						if window and window.path then
+							MiniFiles.close()
+							vim.cmd.lcd(window.path)
+						end
 					end, { buffer = buf })
 
 					vim.keymap.set("n", "g.", function()
