@@ -602,8 +602,8 @@ return {
 		end,
 	},
 	{
-		-- "will133/vim-dirdiff",
 		"deathbeam/difftool.nvim",
+		-- "will133/vim-dirdiff",
 	},
 	{
 		"folke/flash.nvim",
