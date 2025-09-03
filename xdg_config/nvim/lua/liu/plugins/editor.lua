@@ -765,11 +765,11 @@ return {
 		end,
 		-- ft = { "python" },
 		config = function()
-			vim.keymap.set("n", "yz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
-			vim.keymap.set("n", "yzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
-			vim.keymap.set("x", "yz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
-			vim.keymap.set("n", "yzc", "<Plug>SlimeConfig", { remap = true, silent = false })
-			vim.keymap.set("n", "yz?", ":echo b:slime_config<cr>", { remap = true, silent = false })
+			vim.keymap.set("n", "gz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
+			vim.keymap.set("n", "gzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
+			vim.keymap.set("x", "gz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
+			vim.keymap.set("n", "gzc", "<Plug>SlimeConfig", { remap = true, silent = false })
+			vim.keymap.set("n", "gz?", ":echo b:slime_config<cr>", { remap = true, silent = false })
 		end,
 	},
 	{
