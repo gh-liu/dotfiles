@@ -606,6 +606,30 @@ return {
 		"deathbeam/difftool.nvim",
 	},
 	{
+		"folke/flash.nvim",
+		opts = {
+			modes = {
+				search = {
+					enabled = false,
+				},
+				char = {
+					enabled = false,
+				},
+			},
+			prompt = {
+				enabled = false,
+			},
+		},
+		keys = {
+			-- stylua: ignore start
+			{ "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
+			{ "s<cr>", mode = { "n" }, function() require("flash").jump({ continue = true }) end, desc = "Flash" },
+			{ "z", mode = { "o" }, function() require("flash").jump() end, desc = "Flash" },
+			{ "Z", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
+			-- stylua: ignore end
+		},
+	},
+	{
 		"ibhagwan/fzf-lua",
 		init = function()
 			vim.ui.select = function(...)
