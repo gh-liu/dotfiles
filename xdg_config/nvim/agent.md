@@ -79,3 +79,10 @@ TODO: 哈希判断文件是否修改；TreeSitterChunker分块？针对块生成
 nvim 处理 ui 部分
 与大模型交互，实现一个subagent，用lua实现？还是python？
 TODO: rag使用python实现，则全部用python吧
+
+
+
+
+
+nvim通过lsp启动subagent，交换配置；
+subagent再获取nvim的socket，通过acp协议通信？
