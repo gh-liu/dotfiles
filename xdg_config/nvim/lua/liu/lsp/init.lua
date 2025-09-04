@@ -300,6 +300,22 @@ handlers[ms.textDocument_rename] = function(...)
 end
 -- }}}
 
+-- lsp tools {{{1
+local on_attachs = {}
+local tool_dir = "liu/lsp/tools/"
+local require_prefix = tool_dir:gsub("/", ".")
+for _, file in ipairs(vim.fn.readdir(vim.fn.stdpath("config") .. "/lua/" .. tool_dir, [[v:val =~ '\.lua$']])) do
+	local m = require(require_prefix .. file:gsub("%.lua$", ""))
+	if m then
+		if m.setup then
+			m.setup()
+		end
+		if m.on_attach then
+			table.insert(on_attachs, m.on_attach)
+		end
+	end
+end
+
 api.nvim_create_autocmd("LspAttach", {
 	group = api.nvim_create_augroup("liu/lsp_tools", { clear = true }),
 	callback = function(args)
@@ -308,14 +324,12 @@ api.nvim_create_autocmd("LspAttach", {
 			return
 		end
 
-		local tool_dir = "liu/lsp/tools/"
-		local require_prefix = tool_dir:gsub("/", ".")
-
-		for _, file in ipairs(vim.fn.readdir(vim.fn.stdpath("config") .. "/lua/" .. tool_dir, [[v:val =~ '\.lua$']])) do
-			require(require_prefix .. file:gsub("%.lua$", "")).on_attach(client, args.buf)
-		end
+		vim.iter(on_attachs):map(function(on_attach)
+			on_attach(client, args.buf)
+		end)
 	end,
 })
+-- }}}
 
 vim.lsp.enable("gopls")
 if vim.fn.executable("emmylua_ls") == 1 then
