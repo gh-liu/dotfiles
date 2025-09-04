@@ -23,24 +23,3 @@ Requires Nvim `v0.11.0`
 5. Let's work together
 6. 文本是有结构的(Text is structured): pattern
 7. 快速更新(Sharpen the saw):
-
-## course
-
-### base
-
-1. 多模态编辑器：normal(main: view, edit...), insert, command
-2. find file, split; buffer, window, tab
-3. cursor-motions, navigation; mouseless: oneline: f/t and others
-4. edit: yank, paste, delete, replace
-5. text objects
-6. insert keys
-
-### advance
-
-7. maps
-8. user command
-9. autocmd
-10. options
-11. lsp
-12. treesitter
-11. plugins
