@@ -17,6 +17,19 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 	end,
 })
 
+vim.api.nvim_create_autocmd("BufWritePost", {
+	pattern = { ".nvim.lua" },
+	callback = function(args)
+		vim.secure.trust({
+			action = "allow",
+			-- path = args.match,
+			bufnr = args.buf,
+		})
+
+		-- vim.print("trust " .. args.match)
+	end,
+})
+
 vim.api.nvim_create_user_command("LazyPlugins", function()
 	local obj = vim.system({ "rg", '^\t{2}".*/.*",', vim.fn.stdpath("config") .. "/lua/liu/plugins", "--json" }):wait()
 	local lines = vim.split(obj.stdout, "\n", { trimempty = true })
