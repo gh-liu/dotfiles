@@ -912,11 +912,6 @@ return {
 		end,
 	},
 	{
-		"tpope/vim-tbone",
-		enabled = false,
-		-- event = "VeryLazy",
-	},
-	{
 
 		"tpope/vim-projectionist",
 		-- NOTE:

@@ -1,3 +1,4 @@
+-- NOTE: not editor features?
 return {
 	{
 		"olimorris/codecompanion.nvim",
@@ -225,6 +226,11 @@ return {
 			-- https://github.com/tpope/vim-dadbod/blob/e95afed23712f969f83b4857a24cf9d59114c2e6/autoload/db/adapter.vim#L14
 			-- call adapter methods by `db#adapter#call(arg1, adapter_method, ...)`
 		end,
+	},
+	{
+		"tpope/vim-tbone",
+		enabled = false,
+		-- event = "VeryLazy",
 	},
 	{
 		"mistweaverco/kulala.nvim",
