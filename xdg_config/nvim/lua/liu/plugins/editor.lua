@@ -1,4 +1,4 @@
-local config = require("liu.user_config")
+local user_border = require("liu.user_config").borders
 local api = vim.api
 local fn = vim.fn
 
@@ -40,7 +40,7 @@ return {
 					local win_id = args.data.win_id
 					-- Customize window-local settings
 					-- vim.wo[win_id].winblend = 50
-					api.nvim_win_set_config(win_id, { border = config.borders })
+					api.nvim_win_set_config(win_id, { border = user_border })
 				end,
 			})
 
@@ -695,9 +695,9 @@ return {
 			-- fzf_bin = "sk",
 			winopts = {
 				backdrop = 80,
-				border = config.borders,
+				border = user_border
 				preview = {
-					border = config.borders,
+					border = user_border
 				},
 				-- winopts = {},
 				on_create = function()
