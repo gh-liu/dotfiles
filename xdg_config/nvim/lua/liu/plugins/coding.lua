@@ -415,4 +415,26 @@ return {
 		"tpope/vim-repeat",
 		-- event = "VeryLazy",
 	},
+	{
+		"jpalardy/vim-slime",
+		init = function()
+			vim.g.slime_target = "neovim" ---@type 'neovim'|'tmux'
+			-- vim.g.slime_target = "tmux"
+			if vim.env.TMUX then
+				-- NOTE: pane name
+				-- https://github.com/jpalardy/vim-slime/blob/507107dd24c9b85721fa589462fd5068e0f70266/autoload/slime/targets/tmux.vim#L47
+				-- tmux list-panes -a -F '#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{window_name}#{?window_active, (active),}'
+				vim.g.slime_target = "tmux" ---@type 'neovim'|'tmux'
+			end
+			vim.g.slime_no_mappings = true
+		end,
+		-- ft = { "python" },
+		config = function()
+			vim.keymap.set("n", "gz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
+			vim.keymap.set("n", "gzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
+			vim.keymap.set("x", "gz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
+			vim.keymap.set("n", "gzc", "<Plug>SlimeConfig", { remap = true, silent = false })
+			vim.keymap.set("n", "gz?", ":echo b:slime_config<cr>", { remap = true, silent = false })
+		end,
+	},
 }

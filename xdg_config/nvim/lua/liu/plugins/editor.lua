@@ -1,3 +1,15 @@
+-- NOTE: build in feature enhance
+-- 1. file navigation
+-- 2. bufwipe, keymap, diff
+-- 3. find-replace
+-- fzf
+-- undotree
+-- compiler
+-- session
+-- readline mappings for insert and command line
+-- UNIX shell commands
+-- globs & file
+-- ...
 local user_border = require("liu.user_config").borders
 local api = vim.api
 local fn = vim.fn
@@ -487,6 +499,59 @@ return {
 		end,
 	},
 	{
+		"echasnovski/mini.bufremove",
+		lazy = true,
+		init = function()
+			vim.cmd([[
+				function! UserBufDelete() abort
+					call v:lua.require("mini.bufremove").delete()
+				endfunction
+			]])
+
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "MiniFilesActionDelete",
+				group = g,
+				callback = function(args)
+					local fname = args.data.from
+					local bufnr = fn.bufnr(fname)
+					if bufnr > 0 then
+						-- delte buffer
+						require("mini.bufremove").delete(bufnr, false)
+					end
+				end,
+			})
+		end,
+	},
+	{
+		"echasnovski/mini.keymap",
+		-- event = "VeryLazy",
+		init = function()
+			local map_combo = require("mini.keymap").map_combo
+			local mode = { "i", "x", "s" }
+			map_combo(mode, "jk", "<BS><BS><Esc>")
+
+			local map_multistep = require("mini.keymap").map_multistep
+			map_multistep({ "i", "s" }, "<Tab>", {
+				"vimsnippet_next",
+				"blink_next",
+				"pmenu_next",
+			})
+			map_multistep({ "i", "s" }, "<S-Tab>", {
+				"vimsnippet_prev",
+				"blink_prev",
+				"pmenu_prev",
+			})
+			-- snippet mappings
+			map_multistep({ "i", "s" }, "<C-l>", {
+				"vimsnippet_next",
+			})
+			map_multistep({ "i", "s" }, "<C-h>", {
+				"vimsnippet_prev",
+			})
+		end,
+		opts = {},
+	},
+	{
 		"echasnovski/mini.diff",
 		event = "VeryLazy",
 		init = function()
@@ -578,85 +643,41 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.bufremove",
-		lazy = true,
-		init = function()
-			vim.cmd([[
-				function! UserBufDelete() abort
-					call v:lua.require("mini.bufremove").delete()
-				endfunction
-			]])
-
-			vim.api.nvim_create_autocmd("User", {
-				pattern = "MiniFilesActionDelete",
-				group = g,
-				callback = function(args)
-					local fname = args.data.from
-					local bufnr = fn.bufnr(fname)
-					if bufnr > 0 then
-						-- delte buffer
-						require("mini.bufremove").delete(bufnr, false)
-					end
-				end,
-			})
-		end,
-	},
-	{
-		"echasnovski/mini.keymap",
-		-- event = "VeryLazy",
-		init = function()
-			local map_combo = require("mini.keymap").map_combo
-			local mode = { "i", "x", "s" }
-			map_combo(mode, "jk", "<BS><BS><Esc>")
-
-			local map_multistep = require("mini.keymap").map_multistep
-			map_multistep({ "i", "s" }, "<Tab>", {
-				"vimsnippet_next",
-				"blink_next",
-				"pmenu_next",
-			})
-			map_multistep({ "i", "s" }, "<S-Tab>", {
-				"vimsnippet_prev",
-				"blink_prev",
-				"pmenu_prev",
-			})
-			-- snippet mappings
-			map_multistep({ "i", "s" }, "<C-l>", {
-				"vimsnippet_next",
-			})
-			map_multistep({ "i", "s" }, "<C-h>", {
-				"vimsnippet_prev",
-			})
-		end,
-		opts = {},
-	},
-	{
 		"deathbeam/difftool.nvim",
 		-- "will133/vim-dirdiff",
 	},
 	{
-		"folke/flash.nvim",
+		"MagicDuck/grug-far.nvim",
 		opts = {
-			modes = {
-				search = {
-					enabled = false,
-				},
-				char = {
-					enabled = false,
-				},
-			},
-			prompt = {
-				enabled = false,
+			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
+			---@type liu.grug-far.engine
+			engine = "ripgrep",
+			-- https://github.com/MagicDuck/grug-far.nvim/blob/385d1949dc21d0c39e7a74b4f4a25da18817bc86/doc/grug-far-opts.txt#L301
+			keymaps = {
+				historyOpen = { n = "<localleader>ho" },
+				historyAdd = { n = "<localleader>ha" },
+
+				refresh = { n = "<localleader>R" },
+				abort = { n = "<localleader>Q" },
+
+				toggleShowCommand = { n = "gd" },
+
+				qflist = { n = "<localleader>q" },
+
+				-- location
+				previewLocation = { n = "<localleader>p" },
+				openLocation = { n = "<localleader>o" },
+				openNextLocation = { n = "<c-n>" },
+				openPrevLocation = { n = "<c-p>" },
+				-- sync
+				syncLocations = { n = "<localleader>sa" }, -- sync all
+				syncFile = { n = "<localleader>sf" },
+				syncLine = { n = "<localleader>sl" },
+				syncNext = { n = "<localleader>sn" },
+				syncPrev = { n = "<localleader>sp" },
 			},
 		},
-		keys = {
-			-- stylua: ignore start
-			{ "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
-			{ "s<cr>", mode = { "n" }, function() require("flash").jump({ continue = true }) end, desc = "Flash" },
-			{ "z", mode = { "o" }, function() require("flash").jump() end, desc = "Flash" },
-			{ "Z", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
-			-- stylua: ignore end
-		},
+		cmd = { "GrugFar", "GrugFarWithin" },
 	},
 	{
 		"ibhagwan/fzf-lua",
@@ -695,9 +716,9 @@ return {
 			-- fzf_bin = "sk",
 			winopts = {
 				backdrop = 80,
-				border = user_border
+				border = user_border,
 				preview = {
-					border = user_border
+					border = user_border,
 				},
 				-- winopts = {},
 				on_create = function()
@@ -750,37 +771,28 @@ return {
 		},
 	},
 	{
-		"MagicDuck/grug-far.nvim",
+		"folke/flash.nvim",
 		opts = {
-			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
-			---@type liu.grug-far.engine
-			engine = "ripgrep",
-			-- https://github.com/MagicDuck/grug-far.nvim/blob/385d1949dc21d0c39e7a74b4f4a25da18817bc86/doc/grug-far-opts.txt#L301
-			keymaps = {
-				historyOpen = { n = "<localleader>ho" },
-				historyAdd = { n = "<localleader>ha" },
-
-				refresh = { n = "<localleader>R" },
-				abort = { n = "<localleader>Q" },
-
-				toggleShowCommand = { n = "gd" },
-
-				qflist = { n = "<localleader>q" },
-
-				-- location
-				previewLocation = { n = "<localleader>p" },
-				openLocation = { n = "<localleader>o" },
-				openNextLocation = { n = "<c-n>" },
-				openPrevLocation = { n = "<c-p>" },
-				-- sync
-				syncLocations = { n = "<localleader>sa" }, -- sync all
-				syncFile = { n = "<localleader>sf" },
-				syncLine = { n = "<localleader>sl" },
-				syncNext = { n = "<localleader>sn" },
-				syncPrev = { n = "<localleader>sp" },
+			modes = {
+				search = {
+					enabled = false,
+				},
+				char = {
+					enabled = false,
+				},
+			},
+			prompt = {
+				enabled = false,
 			},
 		},
-		cmd = { "GrugFar", "GrugFarWithin" },
+		keys = {
+			-- stylua: ignore start
+			{ "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
+			{ "s<cr>", mode = { "n" }, function() require("flash").jump({ continue = true }) end, desc = "Flash" },
+			{ "z", mode = { "o" }, function() require("flash").jump() end, desc = "Flash" },
+			{ "Z", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
+			-- stylua: ignore end
+		},
 	},
 	{
 		"mbbill/undotree",
@@ -807,28 +819,6 @@ return {
 		end,
 		cmd = { "UndotreeToggle" },
 		keys = { { "yuu", "<cmd>UndotreeToggle<cr>" } },
-	},
-	{
-		"jpalardy/vim-slime",
-		init = function()
-			vim.g.slime_target = "neovim" ---@type 'neovim'|'tmux'
-			-- vim.g.slime_target = "tmux"
-			if vim.env.TMUX then
-				-- NOTE: pane name
-				-- https://github.com/jpalardy/vim-slime/blob/507107dd24c9b85721fa589462fd5068e0f70266/autoload/slime/targets/tmux.vim#L47
-				-- tmux list-panes -a -F '#{pane_id} #{session_name}:#{window_index}.#{pane_index} #{window_name}#{?window_active, (active),}'
-				vim.g.slime_target = "tmux" ---@type 'neovim'|'tmux'
-			end
-			vim.g.slime_no_mappings = true
-		end,
-		-- ft = { "python" },
-		config = function()
-			vim.keymap.set("n", "gz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
-			vim.keymap.set("n", "gzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
-			vim.keymap.set("x", "gz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
-			vim.keymap.set("n", "gzc", "<Plug>SlimeConfig", { remap = true, silent = false })
-			vim.keymap.set("n", "gz?", ":echo b:slime_config<cr>", { remap = true, silent = false })
-		end,
 	},
 	{
 		"tpope/vim-dispatch",
@@ -892,6 +882,27 @@ return {
 			]])
 		end,
 		-- cmd = { "Make", "Dispatch", "Start" },
+	},
+	{
+		"tpope/vim-obsession",
+		-- event = "VeryLazy",
+		init = function()
+			vim.cmd([[
+			setglobal sessionoptions-=buffers 
+			setglobal sessionoptions+=globals
+			"setglobal sessionoptions-=curdir 
+			"setglobal sessionoptions+=sesdir
+
+			autocmd VimEnter * nested
+				  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
+				  \   if filereadable('Session.vim') |
+				  \     source Session.vim |
+				  \   elseif filereadable('.git/Session.vim') |
+				  \     source .git/Session.vim |
+				  \   endif |
+				  \ endif
+			]])
+		end,
 	},
 	{
 		"tpope/vim-sleuth",
@@ -1121,26 +1132,5 @@ return {
 			{ "<leader>as", "<cmd>AS<cr>" },
 			{ "<leader>av", "<cmd>AV<cr>" },
 		},
-	},
-	{
-		"tpope/vim-obsession",
-		-- event = "VeryLazy",
-		init = function()
-			vim.cmd([[
-			setglobal sessionoptions-=buffers 
-			setglobal sessionoptions+=globals
-			"setglobal sessionoptions-=curdir 
-			"setglobal sessionoptions+=sesdir
-
-			autocmd VimEnter * nested
-				  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
-				  \   if filereadable('Session.vim') |
-				  \     source Session.vim |
-				  \   elseif filereadable('.git/Session.vim') |
-				  \     source .git/Session.vim |
-				  \   endif |
-				  \ endif
-			]])
-		end,
 	},
 }

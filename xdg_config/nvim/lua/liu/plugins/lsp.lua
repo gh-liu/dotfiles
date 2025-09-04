@@ -1,6 +1,5 @@
 local config = require("liu.user_config")
 local api = vim.api
--- local fn = vim.fn
 
 ---@param highlights table
 local set_hls = function(highlights)

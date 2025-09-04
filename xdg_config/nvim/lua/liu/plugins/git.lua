@@ -1,6 +1,4 @@
--- local config = require("liu.user_config")
 local api = vim.api
--- local fn = vim.fn
 
 ---@param cmds table
 local set_cmds = function(cmds, opts)
