@@ -225,21 +225,6 @@ return {
 			-- https://github.com/tpope/vim-dadbod/blob/e95afed23712f969f83b4857a24cf9d59114c2e6/autoload/db/adapter.vim#L14
 			-- call adapter methods by `db#adapter#call(arg1, adapter_method, ...)`
 		end,
-		dependencies = {
-			{
-				"kristijanhusak/vim-dadbod-completion",
-				config = function()
-					local ok, cmp = pcall(require, "blink.cmp")
-					if ok then
-						cmp.add_source_provider("dadbod", {
-							name = "Dadbod",
-							module = "vim_dadbod_completion.blink",
-							enabled = true,
-						})
-					end
-				end,
-			},
-		},
 	},
 	{
 		"mistweaverco/kulala.nvim",
