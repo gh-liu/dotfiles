@@ -602,6 +602,35 @@ return {
 		end,
 	},
 	{
+		"echasnovski/mini.keymap",
+		-- event = "VeryLazy",
+		init = function()
+			local map_combo = require("mini.keymap").map_combo
+			local mode = { "i", "x", "s" }
+			map_combo(mode, "jk", "<BS><BS><Esc>")
+
+			local map_multistep = require("mini.keymap").map_multistep
+			map_multistep({ "i", "s" }, "<Tab>", {
+				"vimsnippet_next",
+				"blink_next",
+				"pmenu_next",
+			})
+			map_multistep({ "i", "s" }, "<S-Tab>", {
+				"vimsnippet_prev",
+				"blink_prev",
+				"pmenu_prev",
+			})
+			-- snippet mappings
+			map_multistep({ "i", "s" }, "<C-l>", {
+				"vimsnippet_next",
+			})
+			map_multistep({ "i", "s" }, "<C-h>", {
+				"vimsnippet_prev",
+			})
+		end,
+		opts = {},
+	},
+	{
 		"deathbeam/difftool.nvim",
 		-- "will133/vim-dirdiff",
 	},
