@@ -1,7 +1,7 @@
 -- :help conform-formatters
 local formatters_by_ft = {
 	go = {
-		"goimports", -- @need-install: go install golang.org/x/tools/cmd/goimports@latest
+		-- "goimports", -- @need-install: go install golang.org/x/tools/cmd/goimports@latest
 		"gofmt",
 		-- "gofumpt",
 	},
