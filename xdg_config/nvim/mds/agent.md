@@ -86,3 +86,8 @@ TODO: rag使用python实现，则全部用python吧
 
 nvim通过lsp启动subagent，交换配置；
 subagent再获取nvim的socket，通过acp协议通信？
+
+
+## nvim mcp
+
+nvim -l lua 加socket地址，获取nvim
