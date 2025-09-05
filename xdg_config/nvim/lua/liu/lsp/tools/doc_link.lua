@@ -45,6 +45,6 @@ end
 
 return {
 	on_attach = function(client, buf)
-		vim.keymap.set("n", "grL", goto_link, { buffer = buf })
+		vim.keymap.set("n", "grl", goto_link, { buffer = buf })
 	end,
 }
