@@ -259,6 +259,9 @@ update_zsh_completions() {
 	[ -f "$(which rustup)" ] && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
 	[ -f "$(which starship)" ] && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
 
+	[ -f "$(which ollama)" ] && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
+		>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
+
 	compinit
 }
 
