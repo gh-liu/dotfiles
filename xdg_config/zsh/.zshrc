@@ -506,6 +506,9 @@ export PATH=$PATH:$XDG_CONFIG_HOME/bin
 # export OPENAI_BASE_URL=""
 # #deepseek
 # export DEEPSEEK_API_KEY=""
+# #gemini
+# export GOOGLE_GEMINI_BASE_URL=""
+# export GEMINI_API_KEY=""
 # }}}
 
 # NOTE: uncomment below line for profile
