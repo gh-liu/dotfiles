@@ -5,35 +5,41 @@ sudo apt update && sudo apt upgrade -y
 
 sudo apt install -y openssh-server
 
-sudo apt install -y build-essential
-sudo apt install -y linux-tools-common linux-tools-generic linux-tools-$(uname -r)
-
-sudo apt install -y sysstat net-tools bridge-utils
-sudo apt install -y binutils
-
-sudo apt install -y patchutils # grepdiff
-
+sudo apt install -y make cmake ninja-build
 sudo apt install -y git git-flow
-sudo apt install -y gh
-sudo apt install -y kitty
-
 sudo apt install -y curl wget nghttp2
+sudo apt install -y vim zsh tmux tmuxp
 sudo apt install -y zip unzip
 
-sudo apt install -y vim zsh tmux tmuxp
-sudo apt install -y tldr direnv podman btop cloc jq
-sudo apt install -y fzf ripgrep silversearcher-ag
+sudo apt install -y fzf ripgrep
+
+sudo apt install -y jq
+
+sudo apt install -y build-essential
+sudo apt install -y linux-tools-common linux-tools-generic linux-tools-$(uname -r)
+sudo apt install -y linux-headers-$(uname -r)
 
 sudo apt install -y gcc g++
 sudo apt install -y clangd
 sudo apt install -y gdb lldb-14
 
-sudo apt install -y bpfcc-tools linux-headers-$(uname -r)
+# ======= new born
+
+sudo apt install -y binutils
+sudo apt install -y sysstat net-tools bridge-utils
+
+sudo apt install -y patchutils # grepdiff
+
+sudo apt install -y gh
+sudo apt install -y kitty
+
+sudo apt install -y tldr direnv podman btop cloc jq
+
+sudo apt install -y bpfcc-tools
 # dtrace
 sudo apt-get install systemtap-sdt-dev
 
 # build
-sudo apt install -y make cmake ninja-build
 sudo apt install -y graphviz
 
 # databases
