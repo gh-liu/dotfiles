@@ -122,7 +122,7 @@ return {
 				for _, server in pairs(clients) do
 					table.insert(names, server.name)
 				end
-				return "[" .. table.concat(names, " ") .. "]"
+				return "[lsp: " .. table.concat(names, " ") .. "]"
 			end
 			_G.Flag_dap_staus = function()
 				if not package.loaded["dap"] or require("dap").status() == "" then
