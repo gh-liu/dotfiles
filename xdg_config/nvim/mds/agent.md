@@ -25,6 +25,9 @@ agent = reason+plan+implement
 多agent？一种tool的封装？参考软件开发流程图？claudecode的的subagent？ 和 copilot-instructions.md 的区别？
 https://docs.anthropic.com/zh-CN/docs/claude-code/sub-agents
 
+agent: 允许模型做决定，找上下文，执行命令
+	只读工具，全工具: perm
+
 修改的文件如何展示？qflist？怎么diff？inlinediff?参考minidiff？
 cfdo keep/undo 
 
