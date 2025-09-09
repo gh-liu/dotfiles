@@ -58,6 +58,20 @@ glogp() {
 		column -t -s '{' |
 		less -XRS --quit-if-one-screen
 }
+gproxy() {
+	# ~/.ssh/config
+	#
+	# Host github.com
+	#    Hostname ssh.github.com
+	#    Port 443
+	#    User git
+	git config http.proxy "${http_proxy:-http://127.0.0.1:1080}"
+	git config https.proxy "${https_proxy:-http://127.0.0.1:1080}"
+}
+gproxyunset() {
+	git config --global --unset http.proxy
+	git config --global --unset https.proxy
+}
 ## [f]uzzy check[o]ut
 fo() {
 	git branch --no-color --sort=-committerdate --format='%(refname:short)' | fzf --header 'git checkout' | xargs git checkout
