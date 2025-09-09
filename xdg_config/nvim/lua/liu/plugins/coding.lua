@@ -7,6 +7,7 @@ local fn = vim.fn
 return {
 	{
 		"echasnovski/mini.ai",
+		-- "wellle/targets.vim",
 		dependencies = {
 			{
 				-- "nvim-treesitter/nvim-treesitter-textobjects",
@@ -38,27 +39,6 @@ return {
 			})
 		end,
 		keys = function()
-			local move_cursor_to = function(ai_type, prev)
-				local side = "left"
-				local char = ai_type
-				local search_method = "cover_or_next"
-				if prev then
-					search_method = "cover_or_prev"
-				end
-				return function()
-					vim.cmd.normal({ "m'", bang = true })
-					local cmd = string.format(
-						[[lua MiniAi.move_cursor('%s', 'a', %s, { n_times = %d, search_method = '%s' })]],
-						side,
-						vim.inspect(char),
-						vim.v.count1,
-						search_method
-					)
-					vim.cmd(cmd)
-					vim.cmd.norm("zz")
-				end
-			end
-
 			local expr_motion = function(side)
 				local side_method = {
 					left = "cover_or_prev",
@@ -66,7 +46,7 @@ return {
 				}
 				return function()
 					local ok, char = pcall(vim.fn.getcharstr)
-					if not ok or char == "\27" then
+					if not ok or char == vim.keycode("<ESC>") then
 						return
 					end
 					return "<Cmd>lua "
@@ -86,8 +66,6 @@ return {
 				{ "a", mode = { "o", "x" } },
 				{ "g[", expr_motion("left"), mode = { "o", "x", "n" }, expr = true },
 				{ "g]", expr_motion("right"), mode = { "o", "x", "n" }, expr = true },
-				{ "[[", move_cursor_to("D", true) },
-				{ "]]", move_cursor_to("D", false) },
 			}
 		end,
 		config = function(self, opts)

@@ -32,3 +32,16 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 ```
 
+# mini.ai
+
+> textobj
+
+1. v:count
+2. Different search methods
+
+next obj: an/in
+last(prev) obj: al/il 也许是p表示段落，被占用了
+
+定义：
+1. 正则？
+2. treesitter query
