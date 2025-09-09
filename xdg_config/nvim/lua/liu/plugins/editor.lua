@@ -1096,6 +1096,18 @@ return {
 					["benchmarks/*.rs"] = { type = "bench" },
 				},
 				-- }}}
+				["package.json"] = {
+					["*.ts"] = {
+						alternate = "{}.test.ts",
+						type = "source",
+						dispatch = "bun run --hot %",
+					},
+					["*.test.ts"] = {
+						alternate = "{}.ts",
+						type = "test",
+						dispatch = "bun test %",
+					},
+				},
 			}
 
 			-- Extra transformers
