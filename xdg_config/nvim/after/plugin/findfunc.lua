@@ -1,3 +1,6 @@
+if true then
+	return
+end
 -- https://github.com/neovim/neovim/pull/34545
 
 -- `fdfind` on Ubuntu (https://github.com/sharkdp/fd#on-ubuntu)
