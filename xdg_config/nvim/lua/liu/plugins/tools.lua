@@ -269,6 +269,7 @@ return {
 					if vim.fn.winnr("$") < 2 then
 						vim.cmd.bdelete({ bang = true, mods = { silent = true } })
 					end
+					vim.cmd("setlocal stl=%y")
 				end,
 			})
 		end,
