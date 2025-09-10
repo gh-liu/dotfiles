@@ -476,16 +476,27 @@ return {
 			map_combo(mode, "jk", "<BS><BS><Esc>")
 
 			local map_multistep = require("mini.keymap").map_multistep
-			map_multistep({ "i", "s" }, "<Tab>", {
+			map_multistep({ "i" }, "<Tab>", {
 				"vimsnippet_next",
-				"blink_next",
 				"pmenu_next",
+				-- "blink_next",
 			})
-			map_multistep({ "i", "s" }, "<S-Tab>", {
+			map_multistep({ "i" }, "<S-Tab>", {
 				"vimsnippet_prev",
-				"blink_prev",
 				"pmenu_prev",
+				-- "blink_prev",
 			})
+			-- map_multistep({ "s" }, "<Tab>", {
+			-- 	"vimsnippet_next",
+			-- 	"pmenu_next",
+			-- 	"blink_next",
+			-- })
+			-- map_multistep({ "s" }, "<S-Tab>", {
+			-- 	"vimsnippet_prev",
+			-- 	"pmenu_prev",
+			-- 	"blink_prev",
+			-- })
+			--
 			-- snippet mappings
 			map_multistep({ "i", "s" }, "<C-l>", {
 				"vimsnippet_next",
