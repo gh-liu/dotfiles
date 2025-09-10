@@ -128,7 +128,6 @@ return {
 					map_split(buf, "g<c-s>", "belowright horizontal")
 					map_split(buf, "g<c-v>", "belowright vertical")
 
-
 					-- vim-flagship {{{
 					vim.cmd([[
 						function! MinifilesReal(...) abort
@@ -247,24 +246,6 @@ return {
 			local visit_cwd = function()
 				return vim.fn.getcwd(-1, 0)
 			end
-			-- vim-flagship
-			vim.api.nvim_create_autocmd("User", {
-				pattern = "Flags",
-				callback = function(args)
-					vim.fn["Hoist"]("buffer", 11, function()
-						local MiniVisits = require("mini.visits")
-						local bufname = vim.fn.bufname()
-						if #bufname == 0 then
-							return ""
-						end
-						local labels = MiniVisits.list_labels(bufname, visit_cwd())
-						if not labels or #labels == 0 then
-							return ""
-						end
-						return "::" .. vim.fn.join(labels, ",")
-					end)
-				end,
-			})
 
 			do
 				local label = "core"
@@ -282,33 +263,32 @@ return {
 						})
 					end)
 				end
-				local hi_entry_del = function(entry, buf, line)
+				local hi_entry_remove = function(entry, buf, line)
 					local ns = vim.api.nvim_create_namespace(entry.path)
 					vim.schedule(function()
 						local row = line - 1
 						vim.api.nvim_buf_clear_namespace(buf, ns, row, line)
 					end)
 				end
+
 				vim.api.nvim_create_autocmd("User", {
 					pattern = "MiniFilesBufferCreate",
 					callback = function(args)
 						local buf = args.data.buf_id
+						local MiniVisits = require("mini.files")
 						vim.keymap.set("n", "yA", function()
-							local minifiles = require("mini.files")
-							local entry = minifiles.get_fs_entry()
-							local MiniVisits = require("mini.visits")
+							local entry = MiniVisits.get_fs_entry()
 							MiniVisits.add_label(label, entry.path, visit_cwd())
 							hi_entry_add(entry, buf, vim.fn.line("."))
 						end, { buffer = buf })
 						vim.keymap.set("n", "yD", function()
-							local minifiles = require("mini.files")
-							local entry = minifiles.get_fs_entry()
-							local MiniVisits = require("mini.visits")
+							local entry = MiniVisits.get_fs_entry()
 							MiniVisits.remove_label(label, entry.path, visit_cwd())
-							hi_entry_del(entry, buf, vim.fn.line("."))
+							hi_entry_remove(entry, buf, vim.fn.line("."))
 						end, { buffer = buf })
 					end,
 				})
+
 				vim.api.nvim_create_autocmd("User", {
 					pattern = "MiniFilesBufferUpdate",
 					callback = function(args)
@@ -330,6 +310,26 @@ return {
 					end,
 				})
 			end
+
+			-- vim-flagship {{{
+			vim.api.nvim_create_autocmd("User", {
+				pattern = "Flags",
+				callback = function(args)
+					vim.fn["Hoist"]("buffer", 11, function()
+						local MiniVisits = require("mini.visits")
+						local bufname = vim.fn.bufname()
+						if #bufname == 0 then
+							return ""
+						end
+						local labels = MiniVisits.list_labels(bufname, visit_cwd())
+						if not labels or #labels == 0 then
+							return ""
+						end
+						return "::" .. vim.fn.join(labels, ",")
+					end)
+				end,
+			})
+			-- }}}
 		end,
 		keys = function()
 			local label = "core"
