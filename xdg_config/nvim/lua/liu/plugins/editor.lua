@@ -109,7 +109,7 @@ return {
 						vim.fn.feedkeys(vim.api.nvim_replace_termcodes("<HOME>", true, true, true))
 					end, { buffer = buf })
 
-					vim.keymap.set("n", "yY", function()
+					vim.keymap.set("n", "y<leader>", function()
 						local minifiles = require("mini.files")
 						local path = minifiles.get_fs_entry().path
 						local p
