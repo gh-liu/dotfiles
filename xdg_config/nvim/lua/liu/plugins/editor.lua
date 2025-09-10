@@ -95,7 +95,16 @@ return {
 						end)
 						if window and window.path then
 							MiniFiles.close()
-							vim.cmd.lcd(window.path)
+
+							if vim.v.count == 0 then
+								vim.cmd.lcd(window.path)
+							else
+								vim.cmd([[bo new]])
+								vim.fn.jobstart(vim.o.shell, {
+									term = true,
+									cwd = window.path,
+								})
+							end
 						end
 					end, { buffer = buf })
 
