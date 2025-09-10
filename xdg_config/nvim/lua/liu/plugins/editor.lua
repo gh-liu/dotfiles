@@ -19,6 +19,12 @@ return {
 		init = function(self)
 			vim.g.loaded_netrwPlugin = 1
 
+			vim.cmd([[
+				command! -nargs=? -complete=dir Explore Dirvish <args>
+			    command! -nargs=? -complete=dir Sexplore belowright split | silent Dirvish <args>
+			    command! -nargs=? -complete=dir Vexplore leftabove vsplit | silent Dirvish <args>
+			]])
+
 			vim.api.nvim_create_autocmd("FileType", {
 				pattern = { "dirvish" },
 				callback = function(ev)
@@ -29,13 +35,6 @@ return {
 					vim.keymap.set("v", "g<c-v>", "A", { remap = true, buffer = 0 })
 				end,
 			})
-		end,
-		config = function(self, opts)
-			vim.cmd([[
-			    command! -nargs=? -complete=dir Explore Dirvish <args>
-			    command! -nargs=? -complete=dir Sexplore belowright split | silent Dirvish <args>
-			    command! -nargs=? -complete=dir Vexplore leftabove vsplit | silent Dirvish <args>
-			]])
 		end,
 	},
 	{
