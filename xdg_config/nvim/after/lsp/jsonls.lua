@@ -13,6 +13,7 @@ return {
 			validate = { enable = true },
 		},
 	},
+	filetypes = { "json", "jsonc" },
 	on_attach = function(client, bufnr)
 		-- require("liu.lsp.servers.jsonls").on_attach(client, bufnr)
 	end,
