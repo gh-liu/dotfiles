@@ -336,9 +336,6 @@ return {
 			local visit_cwd = function()
 				return vim.fn.getcwd(-1, 0)
 			end
-			local visit_redrawstatusline = function()
-				vim.cmd.redrawstatus()
-			end
 			local has_label_core = function(path_data)
 				return path_data.labels and path_data.labels[label]
 			end
@@ -394,7 +391,7 @@ return {
 							op = MiniVisits.remove_label
 						end
 						op(label, nil, visit_cwd())
-						visit_redrawstatusline()
+						vim.cmd.redrawstatus()
 					end,
 				},
 				{
