@@ -1,12 +1,10 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#rust_analyzer
 -- rustup component add rust-analyzer
 return {
-	-- https://rust-analyzer.github.io/manual.html#configuration
+	-- https://rust-analyzer.github.io/book/configuration.html
 	settings = {
 		["rust-analyzer"] = {
-			checkOnSave = {
-				command = "clippy",
-			},
+			checkOnSave = true,
 			lens = {
 				enable = false,
 				debug = { enable = false },
