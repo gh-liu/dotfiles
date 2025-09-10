@@ -11,7 +11,6 @@
 -- globs & file
 -- ...
 local user_border = require("liu.user_config").borders
-local api = vim.api
 
 return {
 	{
@@ -44,18 +43,18 @@ return {
 		lazy = true,
 		init = function()
 			local g = vim.api.nvim_create_augroup("liu/mini.files/win_setup", { clear = true })
-			api.nvim_create_autocmd("User", {
+			vim.api.nvim_create_autocmd("User", {
 				pattern = "MiniFilesWindowOpen",
 				group = g,
 				callback = function(args)
 					local win_id = args.data.win_id
 					-- Customize window-local settings
 					-- vim.wo[win_id].winblend = 50
-					api.nvim_win_set_config(win_id, { border = user_border })
+					vim.api.nvim_win_set_config(win_id, { border = user_border })
 				end,
 			})
 
-			api.nvim_create_autocmd("User", {
+			vim.api.nvim_create_autocmd("User", {
 				pattern = "MiniFilesBufferCreate",
 				group = g,
 				callback = function(args)
@@ -69,7 +68,7 @@ return {
 					do
 						-- https://github.com/echasnovski/mini.nvim/issues/391
 						-- set up ability to confirm changes with :w
-						api.nvim_set_option_value("buftype", "nowrite", { buf = buf })
+						vim.api.nvim_set_option_value("buftype", "nowrite", { buf = buf })
 						-- vim.b[buf].minivisits_disable = true
 
 						-- api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
@@ -162,7 +161,7 @@ return {
 				end,
 			})
 
-			api.nvim_create_autocmd("User", {
+			vim.api.nvim_create_autocmd("User", {
 				group = g,
 				pattern = "MiniFilesExplorerOpen",
 				callback = function()
@@ -181,7 +180,7 @@ return {
 				function()
 					local MiniFiles = require("mini.files")
 					if not MiniFiles.close() then
-						local bufname = api.nvim_buf_get_name(0)
+						local bufname = vim.api.nvim_buf_get_name(0)
 						local is_dir = vim.fn.isdirectory(bufname) == 1
 						local dirs = {}
 						if is_dir then
