@@ -1,6 +1,10 @@
 -- NOTE: not editor features?
 return {
 	{
+		"gh-liu/gideon.nvim",
+		dev = true,
+	},
+	{
 		"olimorris/codecompanion.nvim",
 		-- event = "VeryLazy",
 		dependencies = {
