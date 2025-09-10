@@ -12,7 +12,6 @@
 -- ...
 local user_border = require("liu.user_config").borders
 local api = vim.api
-local fn = vim.fn
 
 return {
 	{
@@ -114,11 +113,11 @@ return {
 						local path = minifiles.get_fs_entry().path
 						local p
 						if vim.v.count > 0 then
-							p = fn.fnamemodify(path, ":p")
+							p = vim.fn.fnamemodify(path, ":p")
 						else
-							p = fn.fnamemodify(path, ":.")
+							p = vim.fn.fnamemodify(path, ":.")
 						end
-						fn.setreg(vim.v.register, p)
+						vim.fn.setreg(vim.v.register, p)
 						print(string.format([[copy "%s"]], p))
 					end, { buffer = buf })
 
@@ -516,7 +515,7 @@ return {
 				group = g,
 				callback = function(args)
 					local fname = args.data.from
-					local bufnr = fn.bufnr(fname)
+					local bufnr = vim.fn.bufnr(fname)
 					if bufnr > 0 then
 						-- delte buffer
 						require("mini.bufremove").delete(bufnr, false)
