@@ -382,49 +382,6 @@ return {
 				}
 				require("fzf-lua").fzf_exec(contents, opts)
 			end
-			local SnacksWithPaths = function(title, path_gen_fn)
-				Snacks.picker({
-					title = title,
-					finder = function()
-						local paths = path_gen_fn()
-						local items = {} ---@type snacks.picker.finder.Item[]
-						for i, path in ipairs(paths) do
-							local bufnr = vim.fn.bufnr(path, true)
-							table.insert(items, {
-								buf = bufnr,
-								idx = i,
-								score = i,
-								file = path,
-								text = path,
-							})
-						end
-						return items
-					end,
-					format = "file",
-					actions = {
-						minivisitdelete = function(picker)
-							local MiniVisits = require("mini.visits")
-
-							picker.preview:reset()
-							for _, item in ipairs(picker:selected({ fallback = true })) do
-								if item.file then
-									MiniVisits.remove_path(item.file, visit_cwd())
-								end
-							end
-							picker.list:set_selected()
-							picker.list:set_target()
-							picker:find()
-						end,
-					},
-					win = {
-						input = {
-							keys = {
-								["<c-x>"] = { "minivisitdelete", mode = { "n", "i" } },
-							},
-						},
-					},
-				})
-			end
 
 			local maps = {
 				{
