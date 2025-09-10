@@ -41,40 +41,25 @@ return {
 		"echasnovski/mini.files",
 		lazy = true,
 		init = function()
-			local g = vim.api.nvim_create_augroup("liu/mini.files/win_setup", { clear = true })
-			vim.api.nvim_create_autocmd("User", {
-				pattern = "MiniFilesWindowOpen",
-				group = g,
-				callback = function(args)
-					local win_id = args.data.win_id
-					-- Customize window-local settings
-					-- vim.wo[win_id].winblend = 50
-					vim.api.nvim_win_set_config(win_id, { border = user_border })
-				end,
-			})
-
+			local aug = vim.api.nvim_create_augroup("liu/mini.files", { clear = true })
 			vim.api.nvim_create_autocmd("User", {
 				pattern = "MiniFilesBufferCreate",
-				group = g,
+				group = aug,
 				callback = function(args)
 					local buf = args.data.buf_id
 
+					vim.b[buf].completion = false -- disable blink.cmp
+					-- vim.b[buf].minivisits_disable = true
+
 					local MiniFiles = require("mini.files")
-
-					-- disable blink.cmp
-					vim.b[buf].completion = false
-
 					do
 						-- https://github.com/echasnovski/mini.nvim/issues/391
 						-- set up ability to confirm changes with :w
-						vim.api.nvim_set_option_value("buftype", "nowrite", { buf = buf })
-						-- vim.b[buf].minivisits_disable = true
-
-						-- api.nvim_buf_set_name(buf, string.format("mini.files-%s", vim.uv.hrtime()))
 						-- api.nvim_create_autocmd("BufWriteCmd", {
 						-- 	callback = MiniFiles.synchronize,
 						-- 	buffer = buf,
 						-- })
+						vim.api.nvim_set_option_value("buftype", "nowrite", { buf = buf })
 					end
 
 					vim.keymap.set("n", "gx", function()
@@ -86,38 +71,34 @@ return {
 					end, { buffer = buf })
 					vim.keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
 
-					vim.keymap.set("n", "cd", function()
-						local MiniFiles = require("mini.files")
+					vim.keymap.set("n", "g.", function()
+						local path = MiniFiles.get_fs_entry().path
+						MiniFiles.close()
+						vim.fn.feedkeys(": " .. path)
+						vim.fn.feedkeys(vim.keycode("<HOME>"))
+					end, { buffer = buf })
+
+					local get_win_path = function()
 						local state = MiniFiles.get_explorer_state()
 						local window = vim.iter(state.windows):find(function(win)
 							return win.win_id == vim.api.nvim_get_current_win()
 						end)
-						if window and window.path then
-							MiniFiles.close()
-
-							if vim.v.count == 0 then
-								vim.cmd.lcd(window.path)
-							else
-								vim.cmd([[bo new]])
-								vim.fn.jobstart(vim.o.shell, {
-									term = true,
-									cwd = window.path,
-								})
-							end
-						end
-					end, { buffer = buf })
-
-					vim.keymap.set("n", "g.", function()
-						local MiniFiles = require("mini.files")
-						local path = MiniFiles.get_fs_entry().path
+						return window and window.path or vim.fn.getcwd()
+					end
+					vim.keymap.set("n", "cd", function()
+						local path = get_win_path()
 						MiniFiles.close()
-						vim.fn.feedkeys(": " .. path)
-						vim.fn.feedkeys(vim.api.nvim_replace_termcodes("<HOME>", true, true, true))
+						vim.cmd.lcd(path)
+					end, { buffer = buf })
+					vim.keymap.set("n", "cD", function()
+						local path = get_win_path()
+						MiniFiles.close()
+						vim.cmd([[bo new]])
+						vim.fn.jobstart(vim.o.shell, { term = true, cwd = path })
 					end, { buffer = buf })
 
 					vim.keymap.set("n", "y<leader>", function()
-						local minifiles = require("mini.files")
-						local path = minifiles.get_fs_entry().path
+						local path = MiniFiles.get_fs_entry().path
 						local p
 						if vim.v.count > 0 then
 							p = vim.fn.fnamemodify(path, ":p")
@@ -147,6 +128,7 @@ return {
 					map_split(buf, "g<c-s>", "belowright horizontal")
 					map_split(buf, "g<c-v>", "belowright vertical")
 
+
 					-- vim-flagship {{{
 					vim.cmd([[
 						function! MinifilesReal(...) abort
@@ -170,7 +152,7 @@ return {
 			})
 
 			vim.api.nvim_create_autocmd("User", {
-				group = g,
+				group = aug,
 				pattern = "MiniFilesExplorerOpen",
 				callback = function()
 					local MiniFiles = require("mini.files")
