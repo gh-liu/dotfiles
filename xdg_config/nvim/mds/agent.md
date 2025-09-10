@@ -13,6 +13,8 @@ Ask!  * -> 新建会话
 <>Ask * -> 选中，开启新会话
 0Ask -> 当前行
 * -> question?
+--session= 会话名称补全？初始化会话名称：session+时间戳?
+可以使用tools嘛？默认配置false?
 
 <>Edit * -> 修改代码，给用户选择
 <>Edit! * -> 直接修改
