@@ -222,6 +222,7 @@ return {
 				nmap dq  <Plug>(DBExe)
 				omap dq  <Plug>(DBExe)
 				nmap dqq <Plug>(DBExeLine)
+				nmap dQ	 dq$
 
 				nmap dq? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
 			]])
