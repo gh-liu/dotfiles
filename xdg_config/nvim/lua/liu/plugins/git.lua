@@ -232,6 +232,7 @@ return { -- Git {{{2
 			})
 
 			set_cmds({
+				GLog = "Gclog!",
 				GFiles = "G<bang> difftool --name-only",
 				GFiles0 = "G<bang> difftool --name-only --cached",
 				-- 3 way diff
