@@ -46,6 +46,9 @@ alias gbd='git branch -D '
 alias gbD='git push origin -d'
 alias glog='git log --oneline --decorate --graph --pretty=format:"%C(auto)%h%d (%ci) %cn %s"'
 alias gccs='git config credential.helper store'
+alias gwta='git worktree add'
+alias gwtr='git worktree remove'
+alias gwtl='git worktree list'
 ## pretty git log
 glogp() {
 	HASH="%C(always,yellow)%h%C(always,reset)"
