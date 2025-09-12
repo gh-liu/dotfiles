@@ -299,7 +299,6 @@ return { -- Git {{{2
 	},
 	{
 		"rbong/vim-flog",
-		enabled = false,
 		init = function(self)
 			vim.g.flog_use_internal_lua = 1
 			vim.g.flog_default_opts = { max_count = 2000 }
