@@ -59,4 +59,8 @@ return {
 		"LuaCATS/busted",
 		lazy = true,
 	},
+	{
+		"LuaCATS/luassert",
+		lazy = true,
+	},
 }
