@@ -15,6 +15,7 @@ return {
 		keys = {
 			{ "dcc", [[:lua require("dap").continue()<CR>]] },
 			{ "dcb", [[:lua require("dap").toggle_breakpoint()<CR>]] },
+			{ "dcB", [[:lua require("dap").clear_breakpoints()<CR>]] },
 			{
 				"dcC",
 				function()
