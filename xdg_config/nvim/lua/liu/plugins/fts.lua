@@ -55,4 +55,8 @@ return {
 		"DrKJeff16/wezterm-types",
 		lazy = true,
 	},
+	{
+		"LuaCATS/busted",
+		lazy = true,
+	},
 }

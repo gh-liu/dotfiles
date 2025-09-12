@@ -8,6 +8,7 @@ return {
 				library = {
 					"$VIMRUNTIME/lua",
 					"$XDG_CONFIG_HOME/nvim/lua",
+					"$XDG_DATA_HOME/nvim/lazy/busted/library",
 				},
 			},
 		},
