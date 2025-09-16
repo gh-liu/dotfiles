@@ -17,10 +17,6 @@ return {
 		ft = "qf",
 	},
 	{
-		"direnv/direnv.vim",
-		ft = "direnv",
-	},
-	{
 		"craigmac/vim-mermaid",
 		ft = "mermaid",
 		init = function()
