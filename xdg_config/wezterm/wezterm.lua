@@ -125,6 +125,9 @@ local config = {
 		{ key = "7", mods = "LEADER", action = act({ ActivateTab = 6 }) },
 		{ key = "8", mods = "LEADER", action = act({ ActivateTab = 7 }) },
 		{ key = "9", mods = "LEADER", action = act({ ActivateTab = 8 }) },
+		-- 发送转义序列 \x1B[13;2u（\x1B 是 ESC，对应 <Esc>）
+		-- -> <S-CR>
+		{ key = "Enter", mods = "SHIFT", action = wezterm.action.SendString("\x1B[13;2u") },
 		-- scroll bar
 		-- { key = "j", mods = "ALT", action = act.ScrollByLine(1) },
 		-- { key = "k", mods = "ALT", action = act.ScrollByLine(-1) },
