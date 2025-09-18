@@ -128,7 +128,8 @@ return {
 				if not package.loaded["dap"] or require("dap").status() == "" then
 					return ""
 				end
-				return "[" .. icons.bug .. " " .. require("dap").status() .. "]"
+				-- return "[" .. icons.bug .. " " .. require("dap").status() .. "]"
+				return "[" .. icons.bug .. " Debuging" .. "]"
 			end
 			_G.Flag_diagnostic = {
 				Get = function(severity)
