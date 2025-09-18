@@ -218,13 +218,11 @@ return {
 				nnoremap <expr> <Plug>(DBExe)     db#op_exec()
 				nnoremap <expr> <Plug>(DBExeLine) db#op_exec() . '_'
 				
-				xmap dq  <Plug>(DBExe)
-				nmap dq  <Plug>(DBExe)
-				omap dq  <Plug>(DBExe)
-				nmap dqq <Plug>(DBExeLine)
-				nmap dQ	 dq$
-
-				nmap dq? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
+				xmap gQ  <Plug>(DBExe)
+				nmap gQ  <Plug>(DBExe)
+				omap gQ  <Plug>(DBExe)
+				nmap gQQ <Plug>(DBExeLine)
+				nmap gQ? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
 			]])
 
 			-- NOTE: define your adapters:
