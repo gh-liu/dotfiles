@@ -9,8 +9,11 @@ local ns = api.nvim_create_namespace("liu/marksigns")
 --- @param mark vim.fn.getmarklist.ret.item
 local function decor_mark(bufnr, mark)
 	local row = mark.pos[2] - 1
+	local nr = vim.fn.str2nr(mark.mark)
+	local priority = vim.hl.priorities.user + (mark.mark:match("%l") and nr - 32 or nr) -- a->77; A->65
 	pcall(api.nvim_buf_set_extmark, bufnr, ns, row, 0, {
 		sign_text = "'" .. mark.mark:sub(2),
+		priority = priority,
 		sign_hl_group = "MarkSign",
 	})
 
