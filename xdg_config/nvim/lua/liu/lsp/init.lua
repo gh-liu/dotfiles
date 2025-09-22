@@ -144,7 +144,7 @@ api.nvim_create_autocmd("LspAttach", {
 
 		local bufnr = args.buf
 		-- codelens {{{1
-		if client and client:supports_method("textDocument/codeLens") then
+		if client and client:supports_method(lsp_methods.textDocument_codeLens) then
 			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
 				callback = function(ev)
 					lsp.codelens.refresh({ bufnr = ev.buf })
@@ -155,7 +155,7 @@ api.nvim_create_autocmd("LspAttach", {
 		-- }}}
 
 		-- inlayhint {{{1
-		if client:supports_method("textDocument/inlayHint") then
+		if client:supports_method(lsp_methods.textDocument_inlayHint) then
 			local bufnr = args.buf
 			local inlay_hint = lsp.inlay_hint
 
@@ -179,7 +179,7 @@ api.nvim_create_autocmd("LspAttach", {
 
 		-- folding {{{1
 		if lsp.foldexpr then
-			if client:supports_method("textDocument/foldingRange") then
+			if client:supports_method(lsp_methods.textDocument_foldingRange) then
 				if vim.wo[0][0].foldmethod ~= "expr" then
 					vim.wo[0][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
 					-- set_local_default("foldexpr", "v:lua.vim.lsp.foldexpr()")
@@ -191,7 +191,7 @@ api.nvim_create_autocmd("LspAttach", {
 
 		-- document_color {{{1
 		if lsp.document_color then
-			if client:supports_method("textDocument/documentColor") then
+			if client:supports_method(lsp_methods.textDocument_documentColor) then
 				lsp.document_color.enable(true, bufnr, { style = "virtual" })
 			end
 		end
