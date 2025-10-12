@@ -599,10 +599,6 @@ return {
 		end,
 	},
 	{
-		"deathbeam/difftool.nvim",
-		-- "will133/vim-dirdiff",
-	},
-	{
 		"MagicDuck/grug-far.nvim",
 		opts = {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
@@ -749,32 +745,6 @@ return {
 			{ "Z", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
 			-- stylua: ignore end
 		},
-	},
-	{
-		"mbbill/undotree",
-		-- event = "VeryLazy",
-		init = function()
-			vim.g.undotree_WindowLayout = 2
-			vim.g.undotree_DiffAutoOpen = 1
-			vim.g.undotree_ShortIndicators = 1
-			vim.g.undotree_SetFocusWhenToggle = 1
-			vim.g.undotree_HelpLine = 0
-
-			-- Highlight changed text using signs in the gutter
-			vim.g.undotree_HighlightChangedWithSign = 1
-
-			-- vim.g.undotree_DiffCommand = "git diff -p"
-			vim.g.undotree_DiffCommand = "diff --unified=2 --minimal --label earlier --label later"
-
-			-- stylua: ignore start
-			-- vim.g.undotree_TreeNodeShape = "*"
-			vim.g.undotree_TreeReturnShape = "─╮"
-			vim.g.undotree_TreeVertShape   =  "│"
-			vim.g.undotree_TreeSplitShape  = "─╯"
-			-- stylua: ignore end
-		end,
-		cmd = { "UndotreeToggle" },
-		keys = { { "yuu", "<cmd>UndotreeToggle<cr>" } },
 	},
 	{
 		"tpope/vim-dispatch",
