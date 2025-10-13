@@ -278,10 +278,12 @@ return {
 		end,
 		ft = { "http" },
 		opts = {
+			-- :h kulala.configuration-options-configuration-options
 			global_keymaps = false,
 			-- https://neovim.getkulala.net/docs/getting-started/configuration-options#certificates
 			certificates = {},
 			custom_dynamic_variables = {}, ---@type { [string]: fun():string }[]
+			additional_curl_options = { "--noproxy", "*" },
 		},
 	},
 	{
