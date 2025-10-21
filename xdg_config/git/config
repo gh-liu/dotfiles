@@ -1,6 +1,6 @@
-[user]
-	name = gh-liu
-	email = liugh.cs@gmail.com
+# [user]
+# 	name = gh-liu
+# 	email = liugh.cs@gmail.com
 [alias]
 	ai = add -i
 	b = branch
