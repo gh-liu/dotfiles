@@ -1,5 +1,5 @@
-if vim.fn.has("nvim-0.11") == 0 then
-	vim.notify("Need nvim 0.11 or bigger", vim.log.levels.ERROR)
+if vim.fn.has("nvim-0.12") == 0 then
+	vim.notify("Need nvim 0.12 or bigger", vim.log.levels.ERROR)
 	return
 end
 
