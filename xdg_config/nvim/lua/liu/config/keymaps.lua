@@ -1,4 +1,4 @@
--- save/quit
+-- save/quit {{{
 vim.cmd([[
 noremap <c-q> <cmd>quit<CR>
 noremap <leader>q <cmd>quit<CR>
@@ -10,8 +10,8 @@ noremap <leader>W <cmd>wall<cr>
 cabbr <expr> W (getcmdtype() is# ':' && getcmdline() is# 'W') ? 'w' : 'W'
 cabbr <expr> Q (getcmdtype() is# ':' && getcmdline() is# 'Q') ? 'q' : 'Q'
 ]])
-
--- jump
+-- }}}
+-- navigation {{{
 vim.cmd([[
 nnoremap gf gfzv
 nnoremap gF gFzv
@@ -31,8 +31,8 @@ nnoremap g; g;zvzz
 "nmap g<C-o> g;
 "nmap g<C-i> g,
 ]])
-
--- Coding
+-- }}}
+-- coding {{{
 vim.cmd([[
 inoremap <c-c> <esc>
 " select last inserted text.
@@ -44,15 +44,9 @@ xnoremap Y <ESC>y$gv
 nnoremap <silent> yY :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:winview) <cr>
 
 nnoremap dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
-
 " `bdelete` but keep window
 "nnoremap d<leader> <cmd>buf#<bar>bd#<cr>
 nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
-
-" keep the old content
-"xnoremap p "_dp
-"xnoremap p "_c<esc>p
-xnoremap p P
 
 " delete the selection
 snoremap <bs>  <C-o>"_s
@@ -70,8 +64,8 @@ xnoremap <expr> A (mode()=~#'[vV]'?'<C-v>0o$A':'A')
 nnoremap <silent> gq<leader> :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:winview) <cr>
 nnoremap gq? <Cmd>set formatprg? formatexpr?<CR>
 ]])
-
--- Tab/Win/Buffer
+--}}}
+-- tab/win/buffer {{{
 vim.cmd([[
 " switch to alternate buffer
 "nnoremap <bs> <c-^>
@@ -95,8 +89,8 @@ nnoremap <leader>6 6gt
 nnoremap [<tab> <cmd>tabprev<cr>
 nnoremap ]<tab> <cmd>tabnext<cr>
 ]])
-
--- path
+-- }}}
+-- path {{{
 vim.cmd([[
 " copy full path
 "noremap y<cr> :execute 'let @+ = expand("%:p")' <Bar> echo 'copy:' @+ <CR>
@@ -105,8 +99,8 @@ nnoremap y<leader> :execute 'let @+ = substitute(expand("%:p"), getcwd()."/","",
 " go to parent dir
 "noremap - :<C-U>cd .. <CR>
 ]])
-
--- Tools
+-- }}}
+-- tools {{{
 vim.cmd([[
 " print unix time at cursor as human-readable datetime. 1677604904 => '2023-02-28 09:21:45'
 "nnoremap <C-G><C-T> :echo strftime('%Y-%m-%d %H:%M:%S', '<c-r><c-w>')<cr>
@@ -139,9 +133,6 @@ noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
 
 noremap <leader>m <cmd>message<cr>
 
-noremap [1 <cmd>lprev<cr>
-noremap ]1 <cmd>lnext<cr>
-
 noremap [@ <cmd>colder<cr>
 noremap ]@ <cmd>cnewer<cr>
 
@@ -150,8 +141,8 @@ if has("nvim")
 	noremap ZT <cmd>trust<cr>
 end
 ]])
-
--- Split
+-- }}}
+-- split {{{
 vim.cmd([[
 " _opt-in_ to sloppy-search https://github.com/neovim/neovim/issues/3209#issuecomment-133183790
 nnoremap \e :edit **/
@@ -163,8 +154,8 @@ nnoremap \v :vsplit **/
 
 cabbr <expr> E (getcmdtype() is# ':' && getcmdline() is# 'E') ? 'e' : 'E'
 ]])
-
--- Search
+-- }}}
+-- search {{{
 vim.cmd([[
 " Mark position before search
 nnoremap / ms/
@@ -186,8 +177,8 @@ cnoremap <expr> <A-Space> getcmdtype() =~ '[/?]' ? '\_s\+' : ' '
 " //: "Search within visual selection".
 cnoremap <expr> / (getcmdtype() =~ '[/?]' && getcmdline() == '') ? "\<C-c>\<Esc>/\\%V" : '/'
 ]])
-
--- term
+-- }}}
+-- term {{{
 vim.cmd([[
 nnoremap `\ <cmd> vsplit <bar> term <cr>
 nnoremap `- <cmd> bo split  <bar> term <cr>
@@ -208,8 +199,17 @@ tnoremap <C-q> <C-\><C-n>:quit<cr>
 
 autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
 ]])
+-- }}}
 
+vim.cmd([[
+" keep the old content
+"xnoremap p "_dp
+"xnoremap p "_c<esc>p
+xnoremap p P
+]])
 -- Paste before/after linewise. See `:h put`
 local cmd = vim.fn.has("nvim-0.12") == 1 and "iput" or "put"
 vim.keymap.set({ "n", "x" }, "[p", '<Cmd>exe "' .. cmd .. '! " . v:register<CR>', { desc = "Paste Above" })
 vim.keymap.set({ "n", "x" }, "]p", '<Cmd>exe "' .. cmd .. ' "  . v:register<CR>', { desc = "Paste Below" })
+
+-- vim: set foldmethod=marker:
