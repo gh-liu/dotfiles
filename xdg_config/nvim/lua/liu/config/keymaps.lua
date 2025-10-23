@@ -212,4 +212,33 @@ local cmd = vim.fn.has("nvim-0.12") == 1 and "iput" or "put"
 vim.keymap.set({ "n", "x" }, "[p", '<Cmd>exe "' .. cmd .. '! " . v:register<CR>', { desc = "Paste Above" })
 vim.keymap.set({ "n", "x" }, "]p", '<Cmd>exe "' .. cmd .. ' "  . v:register<CR>', { desc = "Paste Below" })
 
+-- wrap {{{
+local wrap_maps = vim.api.nvim_create_augroup("maps/wrap", { clear = true })
+vim.api.nvim_create_autocmd("WinEnter", {
+	group = wrap_maps,
+	callback = function(ev)
+		if vim.wo[0].wrap then
+			local buffer = ev.buf
+			vim.keymap.set("n", "j", "gj", { buffer = buffer })
+			vim.keymap.set("n", "k", "gk", { buffer = buffer })
+		end
+	end,
+})
+vim.api.nvim_create_autocmd("OptionSet", {
+	desc = "OptionSetWrap",
+	group = wrap_maps,
+	pattern = "wrap",
+	callback = function(ev)
+		local buffer = ev.buf
+		if vim.v.option_new then
+			vim.keymap.set("n", "j", "gj", { buffer = buffer })
+			vim.keymap.set("n", "k", "gk", { buffer = buffer })
+		else
+			pcall(vim.keymap.del, "n", "j", { buffer = buffer })
+			pcall(vim.keymap.del, "n", "k", { buffer = buffer })
+		end
+	end,
+})
+-- }}}
+
 -- vim: set foldmethod=marker:

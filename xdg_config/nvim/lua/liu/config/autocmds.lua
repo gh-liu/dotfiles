@@ -131,33 +131,4 @@ api.nvim_create_autocmd({ "CursorHold" }, {
 	end,
 })
 
--- maps {{{
-local wrap_maps = liu_augroup("wrap_maps")
-autocmd("WinEnter", {
-	group = wrap_maps,
-	callback = function(ev)
-		if vim.wo[0].wrap then
-			local buffer = ev.buf
-			vim.keymap.set("n", "j", "gj", { buffer = buffer })
-			vim.keymap.set("n", "k", "gk", { buffer = buffer })
-		else
-		end
-	end,
-})
-autocmd("OptionSet", {
-	desc = "OptionSetWrap",
-	group = wrap_maps,
-	pattern = "wrap",
-	callback = function(ev)
-		local buffer = ev.buf
-		if vim.v.option_new then
-			vim.keymap.set("n", "j", "gj", { buffer = buffer })
-			vim.keymap.set("n", "k", "gk", { buffer = buffer })
-		else
-			pcall(vim.keymap.del, "n", "j", { buffer = buffer })
-			pcall(vim.keymap.del, "n", "k", { buffer = buffer })
-		end
-	end,
-})
--- }}}
 -- vim: foldmethod=marker
