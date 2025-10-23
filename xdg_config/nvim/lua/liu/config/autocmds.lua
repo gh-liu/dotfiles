@@ -122,30 +122,6 @@ autocmd("BufEnter", {
 -- 	end,
 -- })
 
--- options {{{1
--- autocmd("ModeChanged", {
--- 	desc = "Highlighting matched words when searching",
--- 	group = liu_augroup("switch_highlight_when_searching"),
--- 	pattern = { "*:c", "c:*" },
--- 	callback = function(ev)
--- 		local cmdtype = vim.fn.getcmdtype()
--- 		if cmdtype == "/" or cmdtype == "?" then
--- 			vim.o.hlsearch = true
--- 		else
--- 			vim.o.hlsearch = false
--- 		end
--- 	end,
--- })
-
-vim.cmd("packadd nohlsearch")
-
--- api.nvim_create_autocmd("InsertEnter", {
--- 	callback = vim.schedule_wrap(function()
--- 		vim.cmd.nohlsearch()
--- 	end),
--- })
--- }}}
-
 api.nvim_create_autocmd({ "CursorHold" }, {
 	desc = "stop snippet when in active",
 	callback = function()
