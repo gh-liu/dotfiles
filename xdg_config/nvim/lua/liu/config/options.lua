@@ -1,15 +1,11 @@
 vim.o.mouse = ""
-vim.o.clipboard = "unnamedplus"
 
--- execute .nvim.lua, .nvimrc, and .exrc files
--- in the current directory.
 vim.o.exrc = true
+vim.o.modelineexpr = true
 
--- =============================================================================
--- UI
+-- UI {{{
 -- =============================================================================
 vim.o.termguicolors = true
-
 vim.o.title = true
 vim.o.titlestring = vim.iter({
 	[[%{exists('$SSH_TTY')?' <'.hostname().'>':''}]],
@@ -17,21 +13,13 @@ vim.o.titlestring = vim.iter({
 	-- [[%{tolower(empty(v:servername)?'':'--servername '.v:servername.' ')}]],
 	[[%{fnamemodify(getcwd(),':~')}]],
 }):join(" ")
-
 vim.o.number = true
 vim.o.relativenumber = true
 vim.o.signcolumn = "yes"
-
 vim.o.laststatus = 3
-
-vim.o.cursorline = true
-
-vim.o.pumheight = 12
-
 vim.o.winborder = "single"
--- NOTE: in other place, which should split into a table
 -- vim.o.winborder = vim.fn.join({ "┌", "─", "┐", "│", "┘", "─", "└", "│" }, ",")
-
+vim.o.pumheight = 12
 vim.o.guicursor = vim.iter({
 	-- "a:block",
 	"n-v:block",
@@ -43,52 +31,79 @@ vim.o.guicursor = vim.iter({
 	"a:blinkwait700-blinkoff400-blinkon250-Cursor",
 }):join(",")
 
+vim.o.cursorline = true
+vim.cmd([[
+autocmd InsertEnter * set nocursorline | set colorcolumn=80,120 
+autocmd InsertLeave * set cursorline   | set colorcolumn= 
+autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
+]])
 -- =============================================================================
--- Folding
+-- }}}
+
+-- Folding {{{
 -- =============================================================================
 vim.o.foldcolumn = "1"
-vim.o.foldlevel = 99
+-- vim.o.foldlevel = 99
 vim.o.foldlevelstart = 99
 vim.o.foldtext = ""
--- treesitter foldexpr as default
-vim.o.foldmethod = "expr"
-vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-
+-- vim.o.foldmethod = "expr"
+-- vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 -- =============================================================================
--- Search and Replace
+-- }}}
+
+-- Wrap {{{
+-- =============================================================================
+vim.o.wrap = false
+vim.o.whichwrap = "b,s,<,>,h,l"
+-- =============================================================================
+-- }}}
+
+-- Tabbing {{{
+-- =============================================================================
+vim.o.expandtab = true
+vim.o.tabstop = 4
+-- =============================================================================
+-- }}}
+
+-- Bracket match {{{
+-- =============================================================================
+vim.o.showmatch = true
+vim.o.matchtime = 3
+vim.o.matchpairs = vim.iter({
+	vim.o.matchpairs,
+	"<:>",
+}):join(",")
+-- =============================================================================
+-- }}}
+
+-- Search and Replace {{{
 -- =============================================================================
 vim.o.ignorecase = true -- search case insensitive
 vim.o.smartcase = true -- search matters if capital letter
 -- vim.o.inccommand = "split"
-
 -- =============================================================================
--- Time
+-- }}}
+
+-- Time {{{
 -- =============================================================================
 -- vim.o.timeout = true
 vim.o.timeoutlen = 300
 vim.o.updatetime = 3000
+-- =============================================================================
+-- }}}
 
+-- Tab, Window, Buffer {{{
 -- =============================================================================
--- tab, window, buffer
--- =============================================================================
-vim.o.tabclose = "uselast"
---
 vim.o.splitright = true
--- vim.o.splitbelow = false
---
+vim.o.splitbelow = true
 -- SEE: https://github.com/neovim/neovim/pull/19243
 vim.o.splitkeep = "screen"
--- Controls the behavior when switching between buffers
+vim.o.tabclose = "uselast"
 vim.o.switchbuf = "useopen,uselast"
+-- =============================================================================
+-- }}}
 
--- =============================================================================
--- Wrap
--- =============================================================================
-vim.o.wrap = false
-vim.o.whichwrap = "b,s,<,>,h,l"
-
--- =============================================================================
--- complete stuff
+-- Completion {{{
 -- =============================================================================
 vim.cmd([[
 set completeopt=menuone,noselect,fuzzy
@@ -97,42 +112,28 @@ set wildmode=longest:full,full
 set wildignore+=.git,*.o
 set wildoptions+=fuzzy
 ]])
+-- =============================================================================
+-- }}}
 
--- =============================================================================
--- Tabbing
--- =============================================================================
-vim.o.expandtab = true
-vim.o.tabstop = 4
-
--- =============================================================================
--- Bracket match
--- =============================================================================
-vim.o.showmatch = true
-vim.o.matchtime = 3
-vim.o.matchpairs = vim.iter({
-	vim.o.matchpairs,
-	"<:>",
-}):join(",")
-
--- =============================================================================
--- Path stuff
+-- Path stuff {{{
 -- =============================================================================
 vim.cmd([[
 " DWIM 'includeexpr': make gf work on filenames like "a/…" (in diffs, etc.).
 set includeexpr=substitute(v:fname,'^[^\/]*/','','')
 ]])
+-- =============================================================================
+-- }}}
 
--- jumplist
+-- Jumplist {{{
+-- =============================================================================
 -- vim.o.jumpoptions = "stack" -- stack or view
 vim.cmd([[
 set jumpoptions+=stack
 ]])
-
--- string-like-this to be treated as word
-vim.opt.iskeyword:append("-")
-
 -- =============================================================================
--- Nvim status persitent
+-- }}}
+
+-- Status Persitent {{{
 -- =============================================================================
 vim.o.swapfile = false
 vim.o.undofile = true
@@ -144,15 +145,23 @@ vim.o.shada = vim.iter({
 	"rhealth:",
 	vim.o.shada,
 }):join(",")
+-- =============================================================================
+-- }}}
 
+-- Format {{{
+-- =============================================================================
 vim.cmd([[
 autocmd FileType * setlocal formatoptions-=c formatoptions-=o
-
-autocmd InsertEnter * set nocursorline | set colorcolumn=80,120 
-autocmd InsertLeave * set cursorline   | set colorcolumn= 
-
-autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
 ]])
+-- =============================================================================
+--}}}
+
+vim.o.clipboard = "unnamedplus"
+if not vim.env.TMUX and not vim.g.clipboard then
+	-- :h clipboard-osc52
+	vim.g.clipboard = "osc52"
+end
+
 
 -- Disable providers we do not care a about
 vim.g.loaded_ruby_provider = 0 -- disable ruby support
@@ -163,6 +172,7 @@ vim.g.loaded_python3_provider = 0 -- disable python3 support
 -- buildin plugins
 vim.g.loaded_netrwPlugin = 1 -- disable netrw
 vim.g.did_install_default_menus = 1 -- avoid stupid menu.vim (saves ~100ms)
+
 --:h terminal-debugger
 -- vim.g.termdebug_wide = 1
 vim.g.termdebug_config = {
@@ -171,14 +181,11 @@ vim.g.termdebug_config = {
 	map_minus = 0,
 	map_plus = 0,
 }
+
 -- Language specified
 vim.g.rst_fold_enabled = 1 -- treesitter not support rst fold
 -- vim.g.markdown_folding = 1
 -- $VIMRUNTIME/ftplugin/sql.vim
 vim.g.ftplugin_sql_omni_key = "<leader>S"
 
-if not vim.env.TMUX and not vim.g.clipboard then
-	-- :h clipboard-osc52
-	vim.g.clipboard = "osc52"
-end
-vim.o.modelineexpr = true
+-- vim: set foldmethod=marker:
