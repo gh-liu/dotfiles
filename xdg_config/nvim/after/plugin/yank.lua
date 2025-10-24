@@ -2,35 +2,34 @@ if false then
 	return
 end
 
-local api = vim.api
-local autocmd = api.nvim_create_autocmd
-local augroup = api.nvim_create_augroup
+local augroups = {}
 
-autocmd("TextYankPost", {
-	desc = "Highlight when yanking",
-	group = augroup("liu/highlight_yank", { clear = true }),
-	pattern = "*",
-	callback = function()
-		vim.hl.on_yank({
-			timeout = vim.o.timeoutlen,
-			priority = vim.hl.priorities.user + 1,
-		})
-	end,
-})
+-- :h vim.hl.on_yank
+augroups.highlighting_yank = {
+	highlighting_yank = {
+		event = { "TextYankPost" },
+		callback = function()
+			vim.hl.on_yank({
+				timeout = vim.o.timeoutlen,
+				priority = vim.hl.priorities.user + 111,
+			})
+		end,
+	},
+}
 
 -- :h yankring
-vim.api.nvim_create_autocmd("TextYankPost", {
-	desc = "Yank-ring: store yanked text in registers 1-9.",
-	callback = function()
-		if vim.v.event.operator == "y" then
-			for i = 9, 1, -1 do -- Shift all numbered registers.
-				vim.fn.setreg(tostring(i), vim.fn.getreg(tostring(i - 1)))
+augroups.yankring = {
+	yankring = {
+		event = { "TextYankPost" },
+		callback = function()
+			if vim.v.event.operator == "y" then
+				for i = 9, 1, -1 do -- Shift all numbered registers.
+					vim.fn.setreg(tostring(i), vim.fn.getreg(tostring(i - 1)))
+				end
 			end
-		end
-	end,
-})
-
-local augroups = {}
+		end,
+	},
+}
 
 augroups.keep_pos_yankpost = {
 	save_cursor_position = {
