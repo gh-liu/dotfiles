@@ -118,6 +118,17 @@ api.nvim_create_autocmd({ "FileType" }, {
 	end,
 })
 
+api.nvim_create_autocmd({ "BufWinEnter" }, {
+	pattern = "dap-*",
+	callback = function(ev)
+		local win = vim.api.nvim_get_current_win()
+		vim.wo[win][0].signcolumn = "no"
+		vim.wo[win][0].foldcolumn = "0"
+		vim.wo[win][0].number = false
+		vim.wo[win][0].relativenumber = false
+	end,
+})
+
 -- dap-repl {{{3
 api.nvim_create_autocmd("FileType", {
 	pattern = "dap-repl",
@@ -129,18 +140,6 @@ api.nvim_create_autocmd("FileType", {
 
 		local win = vim.api.nvim_get_current_win()
 		-- vim.wo[win].winfixbuf = true
-
-		api.nvim_create_autocmd("BufWinEnter", {
-			desc = "dap-repl-buffer",
-			buffer = ev.buf,
-			callback = function()
-				local win = vim.api.nvim_get_current_win()
-				vim.wo[win][0].signcolumn = "no"
-				vim.wo[win][0].foldcolumn = "0"
-				vim.wo[win][0].number = false
-				vim.wo[win][0].relativenumber = false
-			end,
-		})
 
 		api.nvim_create_autocmd({ "BufEnter" }, {
 			callback = function(ev)
