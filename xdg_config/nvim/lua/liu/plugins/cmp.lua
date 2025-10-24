@@ -1,6 +1,4 @@
 -- NOTE: completion, pairs, doc gen
-local user_borders = require("liu.user_config").borders
-
 return {
 	{
 		"saghen/blink.cmp",
@@ -54,7 +52,7 @@ return {
 					},
 				},
 				menu = {
-					border = user_borders,
+					border = vim.o.winborder,
 					winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
 					draw = {
 						-- Use treesitter to highlight the label text
@@ -95,7 +93,7 @@ return {
 					auto_show = true,
 					auto_show_delay_ms = 200,
 					window = {
-						border = user_borders,
+						border = vim.o.winborder,
 						winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
 					},
 				},
@@ -104,7 +102,7 @@ return {
 			signature = { -- NOTE: !experimental
 				enabled = true,
 				window = {
-					border = user_borders,
+					border = vim.o.winborder,
 					winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
 				},
 			},

@@ -10,7 +10,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
 			jump = {},
 			float = {
 				source = true,
-				border = config.borders,
+				border = vim.o.winborder,
 				show_header = true,
 				prefix = function(diag)
 					local level = vim.diagnostic.severity[diag.severity]

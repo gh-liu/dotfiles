@@ -21,8 +21,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 -- }}}
 
-local config = require("liu.user_config")
-
 -- lazy.nvim setup {{{1
 require("lazy").setup(
 	{ import = "liu.plugins" },
@@ -65,7 +63,7 @@ require("lazy").setup(
 		},
 		ui = {
 			backdrop = 99, -- 0-100
-			border = config.borders or "none",
+			border = vim.o.winborder or "none",
 			custom_keys = {
 				["<localleader>l"] = false,
 				["<localleader>t"] = false,

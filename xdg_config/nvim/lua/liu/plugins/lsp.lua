@@ -1,4 +1,3 @@
-local config = require("liu.user_config")
 local api = vim.api
 
 ---@param highlights table
@@ -14,7 +13,7 @@ return {
 		-- event = "VeryLazy",
 		event = { "BufReadPre", "BufNewFile" },
 		config = function(self, opts)
-			require("lspconfig.ui.windows").default_options.border = config.borders
+			require("lspconfig.ui.windows").default_options.border = vim.o.winborder
 
 			set_hls({
 				LspInfoList = { link = "Function" },

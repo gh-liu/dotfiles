@@ -10,7 +10,6 @@
 -- UNIX shell commands
 -- globs & file
 -- ...
-local user_border = require("liu.user_config").borders
 
 return {
 	{
@@ -668,9 +667,9 @@ return {
 			-- fzf_bin = "sk",
 			winopts = {
 				backdrop = 80,
-				border = user_border,
+				border = vim.o.winborder,
 				preview = {
-					border = user_border,
+					border = vim.o.winborder,
 				},
 				-- winopts = {},
 				on_create = function()

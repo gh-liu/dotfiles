@@ -1,5 +1,4 @@
 return {
-	borders = vim.o.winborder or { "┌", "─", "┐", "│", "┘", "─", "└", "│" },
 	icons = {
 		diagnostics = {
 			-- ERROR = "E",
