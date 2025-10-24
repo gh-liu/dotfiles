@@ -57,5 +57,5 @@ end
 -- NOTE: yq: toggle qflist
 -- stylua: ignore start
 -- vim.keymap.set({ 'n' }, 'yqD', function() vim.diagnostic.setqflist(make_severity_params()) end, { desc = 'Show workspace diagnostics' })
-vim.keymap.set({ 'n' }, 'yqd', function() vim.diagnostic.setloclist(make_severity_params()) end, { desc = 'Show document diagnostics' })
+-- vim.keymap.set({ 'n' }, 'yqd', function() vim.diagnostic.setloclist(make_severity_params()) end, { desc = 'Show document diagnostics' })
 -- stylua: ignore end
