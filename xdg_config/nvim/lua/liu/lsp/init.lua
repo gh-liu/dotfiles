@@ -1,19 +1,9 @@
 local api = vim.api
 local lsp = vim.lsp
+local lsp_methods = vim.lsp.protocol.Methods ---@type vim.lsp.protocol.Methods
 
-local old_lsp_start = vim.lsp.start
-
-vim.lsp.start = function(...)
-	local _, opt = unpack({ ... })
-	if opt and opt.bufnr then
-		if vim.api.nvim_buf_is_valid(opt.bufnr) and vim.b[opt.bufnr].fugitive_type then
-			return
-		end
-	end
-	old_lsp_start(...)
-end
-
-api.nvim_create_user_command("LspClientCapabilities", function(opts)
+-- commands {{{
+vim.api.nvim_create_user_command("LspClientCapabilities", function(opts)
 	local client = vim.lsp.get_clients({ name = opts.fargs[1] })[1]
 	if not client then
 		return
@@ -29,8 +19,8 @@ end, {
 			:totable()
 	end,
 })
--- Log Levels {{{1
-api.nvim_create_user_command("LspSetLogLevel", function(opts)
+
+vim.api.nvim_create_user_command("LspSetLogLevel", function(opts)
 	local level = unpack(opts.fargs)
 	vim.lsp.log.set_level(level)
 	vim.notify("Set: " .. level, vim.log.levels.INFO)
@@ -45,7 +35,63 @@ end, {
 			:totable()
 	end,
 })
--- }}}
+--}}}
+
+-- feats {{{1
+api.nvim_create_autocmd("LspAttach", {
+	group = api.nvim_create_augroup("liu/lsp_feat", { clear = true }),
+	callback = function(args)
+		local client = lsp.get_client_by_id(args.data.client_id)
+		if not client then
+			return
+		end
+
+		local bufnr = args.buf
+
+		if client:supports_method(lsp_methods.textDocument_codeLens) then
+			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
+				callback = function(ev)
+					lsp.codelens.refresh({ bufnr = bufnr })
+				end,
+				buffer = bufnr,
+			})
+		end
+
+		if client:supports_method(lsp_methods.textDocument_inlayHint) then
+			local filter = { bufnr = bufnr }
+			lsp.inlay_hint.enable(true, filter)
+		end
+
+		if lsp.foldexpr and client:supports_method(lsp_methods.textDocument_foldingRange) then
+			if vim.wo[0][0].foldmethod ~= "expr" then
+				vim.wo[0][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
+				vim.wo[0][0].foldmethod = "expr"
+				-- vim.wo[0][0].foldtext = "v:lua.vim.lsp.foldtext()"
+			end
+		end
+
+		if lsp.document_color and client:supports_method(lsp_methods.textDocument_documentColor) then
+			lsp.document_color.enable(true, bufnr, { style = "virtual" })
+		end
+
+		if lsp.on_type_formatting and client:supports_method(lsp_methods.textDocument_onTypeFormatting) then
+			lsp.on_type_formatting.enable(true, { client_id = client.id })
+		end
+
+		if lsp.linked_editing_range and client:supports_method(lsp_methods.textDocument_linkedEditingRange) then
+			lsp.linked_editing_range.enable(true, { client_id = client.id })
+		end
+
+		if lsp.completion and client:supports_method(lsp_methods.textDocument_completion) then
+			-- lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
+		end
+
+		if lsp.inline_completion and client:supports_method(lsp_methods.textDocument_inlineCompletion) then
+			-- lsp.inline_completion.enable(true, { bufnr = bufnr, client_id = client.id })
+		end
+	end,
+})
+--}}}
 
 -- on list {{{1
 local function on_list(items)
@@ -133,126 +179,7 @@ api.nvim_create_autocmd("LspAttach", {
 })
 -- }}}
 
-local lsp_methods = vim.lsp.protocol.Methods ---@type vim.lsp.protocol.Methods
-api.nvim_create_autocmd("LspAttach", {
-	group = api.nvim_create_augroup("liu/lsp_feat", { clear = true }),
-	callback = function(args)
-		local client = lsp.get_client_by_id(args.data.client_id)
-		if not client then
-			return
-		end
-
-		local bufnr = args.buf
-		-- codelens {{{1
-		if client and client:supports_method(lsp_methods.textDocument_codeLens) then
-			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
-				callback = function(ev)
-					lsp.codelens.refresh({ bufnr = ev.buf })
-				end,
-				buffer = bufnr,
-			})
-		end
-		-- }}}
-
-		-- inlayhint {{{1
-		if client:supports_method(lsp_methods.textDocument_inlayHint) then
-			local bufnr = args.buf
-			local inlay_hint = lsp.inlay_hint
-
-			local filter = { bufnr = bufnr }
-			inlay_hint.enable(true, filter)
-
-			vim.keymap.set("n", "yui", function()
-				inlay_hint.enable(not inlay_hint.is_enabled(filter), filter)
-			end, { buffer = bufnr })
-
-			-- api.nvim_buf_create_user_command(bufnr, "InlayHintToggle", function(opts)
-			-- 	inlay_hint.enable(not inlay_hint.is_enabled(filter), filter)
-			-- end, { nargs = 0 })
-
-			api.nvim_buf_create_user_command(bufnr, "InlayHintRefresh", function(opts)
-				inlay_hint.enable(false, filter)
-				inlay_hint.enable(true, filter)
-			end, { nargs = 0 })
-		end
-		-- }}}
-
-		-- folding {{{1
-		if lsp.foldexpr then
-			if client:supports_method(lsp_methods.textDocument_foldingRange) then
-				if vim.wo[0][0].foldmethod ~= "expr" then
-					vim.wo[0][0].foldexpr = "v:lua.vim.lsp.foldexpr()"
-					vim.wo[0][0].foldmethod = "expr"
-					-- set_local_default("foldexpr", "v:lua.vim.lsp.foldexpr()")
-					-- vim.wo[0][0].foldtext = "v:lua.vim.lsp.foldtext()"
-				end
-			end
-		end
-		-- }}}
-
-		-- document_color {{{1
-		if lsp.document_color then
-			if client:supports_method(lsp_methods.textDocument_documentColor) then
-				lsp.document_color.enable(true, bufnr, { style = "virtual" })
-			end
-		end
-		-- }}}
-
-		if lsp.completion then
-			if client:supports_method(lsp_methods.textDocument_completion) then
-				-- lsp.completion.enable(true, client.id, bufnr, { autotrigger = true })
-			end
-		end
-
-		if lsp.on_type_formatting then
-			if client:supports_method(lsp_methods.textDocument_onTypeFormatting) then
-				lsp.on_type_formatting.enable(true, { client_id = client.id })
-			end
-		end
-
-		if lsp.inline_completion then
-			if client:supports_method(lsp_methods.textDocument_inlineCompletion) then
-				lsp.inline_completion.enable(true, {
-					bufnr = bufnr,
-					-- client_id = client.id,
-				})
-
-				vim.keymap.set("i", "<M-f>", function()
-					if not vim.lsp.inline_completion.get() then
-						return "<M-f>"
-					end
-				end, {
-					buffer = bufnr,
-					expr = true,
-					replace_keycodes = true,
-					desc = "Get the current inline completion",
-				})
-			end
-		end
-	end,
-})
--- semantic tokens
-vim.api.nvim_create_autocmd("FileType", {
-	pattern = { "gotmpl" },
-	callback = function()
-		vim.lsp.semantic_tokens.enable(false, { bufnr = 0 })
-	end,
-})
-
---- set the local value only when the global value is not set
----@param name string
----@param value any
-local function set_local_default(name, value)
-	if
-		vim.api.nvim_get_option_value(name, { scope = "global" })
-		== vim.api.nvim_get_option_info2(name, { scope = "global" }).default
-	then
-		vim.api.nvim_set_option_value(name, value, { scope = "local" })
-	end
-end
-
-local ms = lsp.protocol.Methods
--- Handlers {{{1
+-- handlers {{{1
 local function with(f, config)
 	return function(c)
 		return f(vim.tbl_deep_extend("force", config, c or {}))
@@ -270,8 +197,8 @@ vim.lsp.buf.implementation = with(vim.lsp.buf.implementation, { on_list = on_lis
 local handlers = lsp.handlers
 
 -- rename with notify
-local old_rename = handlers[ms.textDocument_rename]
-handlers[ms.textDocument_rename] = function(...)
+local old_rename = handlers[lsp_methods.textDocument_rename]
+handlers[lsp_methods.textDocument_rename] = function(...)
 	local function rename_notify(err, result, _, _)
 		if err or not result then
 			return
@@ -301,20 +228,7 @@ handlers[ms.textDocument_rename] = function(...)
 end
 -- }}}
 
-vim.api.nvim_create_autocmd("LspProgress", {
-	callback = function(ev)
-		local value = ev.data.params.value
-		if value.kind == "begin" then
-			vim.api.nvim_ui_send("\027]9;4;1;0\027\\")
-		elseif value.kind == "end" then
-			vim.api.nvim_ui_send("\027]9;4;0\027\\")
-		elseif value.kind == "report" then
-			vim.api.nvim_ui_send(string.format("\027]9;4;1;%d\027\\", value.percentage or 0))
-		end
-	end,
-})
-
--- lsp tools {{{1
+-- tools setup/on_attach {{{1
 local on_attachs = {}
 local tool_dir = "liu/lsp/tools/"
 local require_prefix = tool_dir:gsub("/", ".")
@@ -345,6 +259,32 @@ api.nvim_create_autocmd("LspAttach", {
 })
 -- }}}
 
+vim.lsp.start = (function()
+	local old_lsp_start = vim.lsp.start
+	return function(...)
+		local _, opt = unpack({ ... })
+		if opt and opt.bufnr then
+			if vim.api.nvim_buf_is_valid(opt.bufnr) and vim.b[opt.bufnr].fugitive_type then
+				return
+			end
+		end
+		old_lsp_start(...)
+	end
+end)()
+
+vim.api.nvim_create_autocmd("LspProgress", {
+	callback = function(ev)
+		local value = ev.data.params.value
+		if value.kind == "begin" then
+			vim.api.nvim_ui_send("\027]9;4;1;0\027\\")
+		elseif value.kind == "end" then
+			vim.api.nvim_ui_send("\027]9;4;0\027\\")
+		elseif value.kind == "report" then
+			vim.api.nvim_ui_send(string.format("\027]9;4;1;%d\027\\", value.percentage or 0))
+		end
+	end,
+})
+
 vim.lsp.enable("gopls")
 if vim.fn.executable("emmylua_ls") == 1 then
 	vim.lsp.enable({ "emmylua_ls" })
@@ -366,4 +306,5 @@ vim.lsp.enable("buf_ls")
 vim.lsp.enable("docker_language_server")
 vim.lsp.enable("terraformls")
 vim.lsp.enable("nushell")
+
 -- vim: foldmethod=marker
