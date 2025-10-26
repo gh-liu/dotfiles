@@ -1,4 +1,4 @@
-#! /usr/bin/bash
+#! /bin/bash
 
 function git_clone_or_update() {
 	git clone "$1" "$2" 2>/dev/null && echo 'Update status: Success' || (
