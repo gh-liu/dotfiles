@@ -216,7 +216,7 @@ bins() {
 
 _llm_clis() {
 	# https://qwenlm.github.io/zh/blog/qwen3-coder
-	bun i -g @qwen-code/qwen-code
+	# bun i -g @qwen-code/qwen-code
 
 	# https://www.anthropic.com/claude-code
 	bun i -g @anthropic-ai/claude-code
@@ -228,7 +228,7 @@ _llm_clis() {
 	# https://github.com/google-gemini/gemini-cli
 	bun i -g @google/gemini-cli
 
-	go install github.com/charmbracelet/crush@latest
+	# go install github.com/charmbracelet/crush@latest
 }
 
 case $1 in
@@ -241,6 +241,9 @@ case $1 in
 	;;
 "fzf")
 	update_fzf
+	;;
+"llm_cli")
+	_llm_clis
 	;;
 *)
 	bins
