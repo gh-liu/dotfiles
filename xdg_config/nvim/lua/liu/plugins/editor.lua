@@ -343,40 +343,48 @@ return {
 				return MiniVisits.gen_sort.default({ recency_weight = 1 })
 			end
 
-			local FzfLuaWithPaths = function(title, path_gen_fn)
-				local make_entry = require("fzf-lua.make_entry")
-				local make_opts = {
-					_type = "file",
-					strip_cwd_prefix = true,
-					path_shorten = false,
-					cwd = visit_cwd(),
-				}
-				local contents = function(cb)
-					local items = path_gen_fn()
-					for _, item in ipairs(items) do
-						cb(make_entry.file(item, make_opts))
-					end
-					cb(nil)
-				end
-
-				local remove_path = function(selected)
-					for _, file in ipairs(selected) do
-						local MiniVisits = require("mini.visits")
-						MiniVisits.remove_path(file, visit_cwd())
-					end
-				end
-
-				local opts = {
-					prompt = title,
-					cwd = visit_cwd(),
-					previewer = "builtin",
-					fzf_opts = { ["--tiebreak"] = "index", ["--multi"] = true },
+			local SnacksWithPaths = function(title, path_gen_fn)
+				Snacks.picker({
+					title = title,
+					finder = function()
+						local paths = path_gen_fn()
+						local items = {} ---@type snacks.picker.finder.Item[]
+						for i, path in ipairs(paths) do
+							local bufnr = vim.fn.bufnr(path, true)
+							table.insert(items, {
+								buf = bufnr,
+								idx = i,
+								score = i,
+								file = path,
+								text = path,
+							})
+						end
+						return items
+					end,
+					format = "file",
 					actions = {
-						default = require("fzf-lua.actions").file_edit,
-						["ctrl-x"] = { fn = remove_path, reload = true },
+						minivisitdelete = function(picker)
+							local MiniVisits = require("mini.visits")
+
+							picker.preview:reset()
+							for _, item in ipairs(picker:selected({ fallback = true })) do
+								if item.file then
+									MiniVisits.remove_path(item.file, visit_cwd())
+								end
+							end
+							picker.list:set_selected()
+							picker.list:set_target()
+							picker:find()
+						end,
 					},
-				}
-				require("fzf-lua").fzf_exec(contents, opts)
+					win = {
+						input = {
+							keys = {
+								["<c-x>"] = { "minivisitdelete", mode = { "n", "i" } },
+							},
+						},
+					},
+				})
 			end
 
 			local maps = {
@@ -411,7 +419,7 @@ return {
 					"<leader>sv",
 					function()
 						local MiniVisits = require("mini.visits")
-						FzfLuaWithPaths("Mini Visits(" .. label .. ")", function()
+						SnacksWithPaths("Mini Visits(" .. label .. ")", function()
 							local paths = MiniVisits.list_paths(visit_cwd(), {
 								sort = gen_sort(),
 								filter = has_label_core,
@@ -425,7 +433,7 @@ return {
 					function()
 						local cwd = visit_cwd()
 						local MiniVisits = require("mini.visits")
-						FzfLuaWithPaths(string.format("Mini Visits(%s)", vim.fn.pathshorten(cwd, 2)), function()
+						SnacksWithPaths(string.format("Mini Visits(%s)", vim.fn.pathshorten(cwd, 2)), function()
 							local paths = MiniVisits.list_paths(cwd, {
 								sort = gen_sort(),
 								filter = function(path_data)
