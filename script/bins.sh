@@ -107,6 +107,8 @@ bins() {
 		go install github.com/jesseduffield/lazygit@latest
 		go install github.com/jesseduffield/lazydocker@latest
 
+		go install github.com/charmbracelet/glow/v2@latest # markdown preview
+
 		# go install github.com/gohugoio/hugo@latest
 		CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
 		go install golang.org/x/tools/cmd/present@latest
