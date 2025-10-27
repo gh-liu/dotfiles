@@ -30,6 +30,10 @@ return {
 		words = { enabled = false },
 	},
 	init = function()
+		vim.ui.select = function(...)
+			require("snacks.picker.select").select(...)
+		end
+
 		local map = function(op, cmd, opts)
 			opts = opts or {}
 			vim.keymap.set("n", "<leader>s" .. op, function()
