@@ -36,6 +36,7 @@ return {
 						vim.treesitter.start()
 					end
 					if cache_fts[filetype].fold then
+						vim.wo[0][0].foldmethod = "expr"
 						vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
 					end
 					if cache_fts[filetype].indent then
