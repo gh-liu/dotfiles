@@ -1,6 +1,7 @@
 local input_keys = {
 	["<c-j>"] = { "history_forward", mode = { "i" } },
 	["<c-k>"] = { "history_back", mode = { "i" } },
+	["<c-a>"] = { "<c-o>I", mode = { "i" }, expr = true },
 }
 
 return {
