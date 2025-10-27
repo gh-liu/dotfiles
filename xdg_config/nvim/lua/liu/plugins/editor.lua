@@ -637,30 +637,21 @@ return {
 				require("fzf-lua.providers.ui_select").ui_select(...)
 			end
 
-			local map = function(op, cmd, opts)
-				opts = opts or {}
-				vim.keymap.set("n", "<leader>s" .. op, function()
-					require("fzf-lua")[cmd](opts)
-				end)
-			end
-			map("a", "args")
-			map("b", "buffers")
-			map("d", "diagnostics_document")
-			map("f", "files")
-			map("g", "live_grep")
-			map("h", "helptags")
-			map("m", "marks")
-			map("s", "lsp_document_symbols")
-			map("w", "grep_cword")
-			vim.keymap.set("n", "<leader>;", function()
-				require("fzf-lua").commands({
-					winopts = {
-						width = 0.5,
-						height = 0.6,
-						preview = { hidden = "hidden" },
-					},
-				})
-			end)
+			-- local map = function(op, cmd, opts)
+			-- 	opts = opts or {}
+			-- 	vim.keymap.set("n", "<leader>s" .. op, function()
+			-- 		require("fzf-lua")[cmd](opts)
+			-- 	end)
+			-- end
+			-- map("a", "args")
+			-- map("b", "buffers")
+			-- map("d", "diagnostics_document")
+			-- map("f", "files")
+			-- map("g", "live_grep")
+			-- map("h", "helptags")
+			-- map("m", "marks")
+			-- map("s", "lsp_document_symbols")
+			-- map("w", "grep_cword")
 		end,
 		event = "VeryLazy",
 		opts = {
