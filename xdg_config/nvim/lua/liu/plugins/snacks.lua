@@ -34,6 +34,7 @@ return {
 			opts = opts or {}
 			vim.keymap.set("n", "<leader>s" .. op, function()
 				require("snacks").picker(cmd, opts)
+				-- require("snacks.picker")[cmd](opts)
 			end)
 		end
 		map("b", "buffers")
