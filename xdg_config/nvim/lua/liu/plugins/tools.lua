@@ -5,34 +5,6 @@ return {
 		dev = true,
 	},
 	{
-		"yetone/avante.nvim",
-		enabled = false,
-		build = "make",
-		event = "VeryLazy",
-		dependencies = {
-			"MunifTanjim/nui.nvim",
-			"nvim-lua/plenary.nvim",
-		},
-		opts = {
-			---@alias Provider "claude" | "openai" | "gemini" | "copilot" | "deepseek" | string
-			---@type Provider
-			provider = "deepseek",
-			---@type Provider
-			auto_suggestions_provider = "deepseek",
-			providers = {
-				deepseek = {
-					__inherited_from = "openai",
-					api_key_name = "DEEPSEEK_API_KEY",
-					endpoint = "https://api.deepseek.com",
-					model = "deepseek-coder",
-				},
-			},
-			behaviour = {
-				auto_suggestions = false,
-			},
-		},
-	},
-	{
 		"milanglacier/minuet-ai.nvim",
 		enabled = false,
 		dependencies = {
