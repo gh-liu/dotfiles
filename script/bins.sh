@@ -144,6 +144,8 @@ bins() {
 
 		uv tool install --force pre-commit
 		uv tool install --force git-filter-repo
+
+		uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 	fi
 
 	if [ -f "$(which cargo)" ]; then
