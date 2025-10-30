@@ -232,6 +232,9 @@ _llm_clis() {
 	# https://github.com/google-gemini/gemini-cli
 	bun i -g @google/gemini-cli
 
+	# https://ampcode.com/manual#getting-started-command-line-interface
+	bun i -g @sourcegraph/amp@latest
+
 	# go install github.com/charmbracelet/crush@latest
 }
 
