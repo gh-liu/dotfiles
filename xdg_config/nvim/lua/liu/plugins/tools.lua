@@ -5,6 +5,13 @@ return {
 		dev = true,
 	},
 	{
+		"sourcegraph/amp.nvim",
+		-- lazy = false,
+		event = "VeryLazy",
+		branch = "main",
+		opts = { auto_start = true, log_level = "info" },
+	},
+	{
 		"tpope/vim-dadbod",
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
