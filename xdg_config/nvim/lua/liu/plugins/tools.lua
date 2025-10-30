@@ -35,11 +35,6 @@ return {
 		end,
 	},
 	{
-		"tpope/vim-tbone",
-		enabled = false,
-		-- event = "VeryLazy",
-	},
-	{
 		"mistweaverco/kulala.nvim",
 		-- @need-install: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 		-- @need-install: cargo install websocat
