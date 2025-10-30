@@ -7,17 +7,35 @@ local function foldclose(node_types)
 	local tree = parser:parse()[1]
 	local root = tree:root()
 
-	local function find_nodes(node, types)
-		local nodes = {}
-		if vim.tbl_contains(types, node:type()) then
-			table.insert(nodes, node)
-		end
-		for child in node:iter_children() do
-			vim.list_extend(nodes, find_nodes(child, types))
-		end
-		return nodes
+	local patterns = {}
+	for _, type in ipairs(node_types) do
+		table.insert(patterns, string.format("(%s) @target_node", type))
 	end
-	local nodes = find_nodes(root, node_types)
+	local query = table.concat(patterns, "\n")
+	local ts_query, err = vim.treesitter.query.parse(vim.bo[bufnr].filetype, query)
+	if not ts_query or err then
+		return
+	end
+	local nodes = {}
+	for _, match, _ in ts_query:iter_matches(root, bufnr, 0, -1, { all = false }) do
+		for _, node in pairs(match) do
+			if node then
+				table.insert(nodes, node)
+			end
+		end
+	end
+
+	-- local function find_nodes(node, types)
+	-- 	local nodes = {}
+	-- 	if vim.tbl_contains(types, node:type()) then
+	-- 		table.insert(nodes, node)
+	-- 	end
+	-- 	for child in node:iter_children() do
+	-- 		vim.list_extend(nodes, find_nodes(child, types))
+	-- 	end
+	-- 	return nodes
+	-- end
+	-- local nodes = find_nodes(root, node_types)
 	if #nodes == 0 then
 		return
 	end
