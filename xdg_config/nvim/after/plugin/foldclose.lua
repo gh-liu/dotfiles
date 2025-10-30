@@ -54,14 +54,24 @@ local function foldclose(node_types)
 	end
 end
 
+local ft_node_types = {
+	go = { "import_declaration", "const_declaration" },
+}
+
 vim.api.nvim_create_autocmd("BufReadPost", {
-	pattern = "*.go",
+	-- pattern = "*.go",
 	callback = function(args)
 		if vim.wo[0][0].foldmethod ~= "expr" or vim.wo[0][0].foldexpr ~= "v:lua.vim.treesitter.foldexpr()" then
 			return
 		end
+
+		local node_types = ft_node_types[vim.bo[args.buf].filetype]
+		if not node_types then
+			return
+		end
+
 		vim.schedule(function()
-			foldclose({ "import_declaration", "const_declaration" })
+			foldclose(node_types)
 		end)
 	end,
 })
