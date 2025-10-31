@@ -12,8 +12,8 @@ local function foldclose(node_types)
 		table.insert(patterns, string.format("(%s) @target_node", type))
 	end
 	local query = table.concat(patterns, "\n")
-	local ts_query, err = vim.treesitter.query.parse(vim.bo[bufnr].filetype, query)
-	if not ts_query or err then
+	local ts_query = vim.treesitter.query.parse(vim.bo[bufnr].filetype, query)
+	if not ts_query then
 		return
 	end
 	local nodes = {}
@@ -61,17 +61,15 @@ local ft_node_types = {
 vim.api.nvim_create_autocmd("BufReadPost", {
 	-- pattern = "*.go",
 	callback = function(args)
-		if vim.wo[0][0].foldmethod ~= "expr" or vim.wo[0][0].foldexpr ~= "v:lua.vim.treesitter.foldexpr()" then
-			return
-		end
+		if vim.wo[0][0].foldmethod == "expr" and vim.wo[0][0].foldexpr == "v:lua.vim.treesitter.foldexpr()" then
+			local node_types = ft_node_types[vim.bo[args.buf].filetype]
+			if not node_types then
+				return
+			end
 
-		local node_types = ft_node_types[vim.bo[args.buf].filetype]
-		if not node_types then
-			return
+			vim.schedule(function()
+				foldclose(node_types)
+			end)
 		end
-
-		vim.schedule(function()
-			foldclose(node_types)
-		end)
 	end,
 })
