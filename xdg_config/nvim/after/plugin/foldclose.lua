@@ -7,11 +7,17 @@ local function foldclose(node_types)
 	local tree = parser:parse()[1]
 	local root = tree:root()
 
-	local patterns = {}
-	for _, type in ipairs(node_types) do
-		table.insert(patterns, string.format("(%s) @target_node", type))
-	end
-	local query = table.concat(patterns, "\n")
+	local types_str = vim.iter(node_types)
+		:map(function(type_)
+			return string.format("(%s)", type_)
+		end)
+		:join(" ")
+	local query = string.format("[%s] @target_node",types_str)
+	-- local patterns = {}
+	-- for _, type in ipairs(node_types) do
+	-- 	table.insert(patterns, string.format("(%s) @target_node", type))
+	-- end
+	-- local query = table.concat(patterns, "\n")
 	local ts_query = vim.treesitter.query.parse(vim.bo[bufnr].filetype, query)
 	if not ts_query then
 		return
