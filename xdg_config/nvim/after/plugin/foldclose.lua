@@ -12,7 +12,7 @@ local function foldclose(node_types)
 			return string.format("(%s)", type_)
 		end)
 		:join(" ")
-	local query = string.format("[%s] @target_node",types_str)
+	local query = string.format("[%s] @target_node", types_str)
 	-- local patterns = {}
 	-- for _, type in ipairs(node_types) do
 	-- 	table.insert(patterns, string.format("(%s) @target_node", type))
@@ -73,9 +73,11 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 				return
 			end
 
-			vim.schedule(function()
+			-- vim.schedule(function()
+			vim._with({ buf = args.buf }, function()
 				foldclose(node_types)
 			end)
+			-- end)
 		end
 	end,
 })
