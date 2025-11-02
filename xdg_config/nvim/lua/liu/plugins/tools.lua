@@ -5,6 +5,15 @@ return {
 		dev = true,
 	},
 	{
+		"folke/sidekick.nvim",
+		event = "VeryLazy",
+		opts = {
+			nes = {
+				enabled = false,
+			},
+		},
+	},
+	{
 		"tpope/vim-dadbod",
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
