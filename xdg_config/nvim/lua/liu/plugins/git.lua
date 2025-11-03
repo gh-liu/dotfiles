@@ -20,7 +20,17 @@ return { -- Git {{{2
 		dependencies = {
 			"tpope/vim-rhubarb",
 			-- { "shumphrey/fugitive-gitlab.vim" },
-			"justinmk/vim-ug",
+			{
+				"justinmk/vim-ug",
+				config = function()
+					vim.cmd([[
+						" gitsigns
+						nunmap Un
+						nunmap <c-n>
+						nunmap <c-p>
+					]])
+				end,
+			},
 		},
 		config = function()
 			-- https://github.com/tpope/vim-fugitive/issues/1080#issuecomment-521100430
