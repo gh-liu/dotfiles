@@ -3,6 +3,8 @@ if vim.fn.has("nvim-0.12") == 0 then
 	return
 end
 
+require("liu.snacks_profiler")
+
 vim.cmd.colorscheme("nord")
 
 vim.g.mapleader = " "
