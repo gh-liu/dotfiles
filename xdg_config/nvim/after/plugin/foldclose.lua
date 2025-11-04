@@ -81,3 +81,11 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 		end
 	end,
 })
+
+vim.api.nvim_create_autocmd("LspNotify", {
+	callback = function(args)
+		if args.data.method == "textDocument/didOpen" then
+			vim.lsp.foldclose("imports", vim.fn.bufwinid(args.buf))
+		end
+	end,
+})
