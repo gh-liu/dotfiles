@@ -87,6 +87,17 @@ return {
 			certificates = {},
 			custom_dynamic_variables = {}, ---@type { [string]: fun():string }[]
 			additional_curl_options = { "--noproxy", "*" },
+			ui = {
+				pickers = {
+					snacks = {
+						layout = function()
+							local has_snacks, snacks_picker = pcall(require, "snacks.picker")
+							return not has_snacks and {}
+								or vim.tbl_deep_extend("force", snacks_picker.config.layout("default"), {})
+						end,
+					},
+				},
+			},
 		},
 	},
 	{
