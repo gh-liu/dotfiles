@@ -7,6 +7,9 @@ return {
 	{
 		"folke/sidekick.nvim",
 		event = "VeryLazy",
+		init = function()
+			vim.keymap.set("n", "yoA", "<cmd>Sidekick cli toggle<cr>")
+		end,
 		opts = {
 			nes = {
 				enabled = false,
