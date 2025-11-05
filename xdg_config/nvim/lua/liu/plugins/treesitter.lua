@@ -77,4 +77,32 @@ return {
 			separator = nil,
 		},
 	},
+	{
+		"HiPhish/rainbow-delimiters.nvim",
+		init = function()
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterRed", { link = "DiagnosticError" })
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterYellow", { link = "DiagnosticWarn" })
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterBlue", { link = "DiagnosticInfo" })
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterOrange", { link = "DiagnosticHint" })
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterGreen", { link = "DiagnosticOk" })
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterViolet" ,{link = ""})
+			-- vim.api.nvim_set_hl(0, "RainbowDelimiterCyan"   ,{link = ""})
+
+			vim.g.rainbow_delimiters = {
+				strategy = {
+					[""] = "rainbow-delimiters.strategy.global",
+					-- [""] = "rainbow-delimiters.strategy.local",
+				},
+				-- query = {},
+				highlight = {
+					"@punctuation.bracket",
+					"DiagnosticError",
+					"DiagnosticWarn",
+					"DiagnosticInfo",
+					"DiagnosticHint",
+					"DiagnosticOk",
+				},
+			}
+		end,
+	},
 }
