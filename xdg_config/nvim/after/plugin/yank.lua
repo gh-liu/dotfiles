@@ -10,6 +10,7 @@ augroups.highlighting_yank = {
 		event = { "TextYankPost" },
 		callback = function()
 			vim.hl.on_yank({
+				-- higroup = "Search",
 				timeout = vim.o.timeoutlen,
 				priority = vim.hl.priorities.user + 111,
 			})
