@@ -14,8 +14,8 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
-local function foldclose()
-	local bufnr = vim.api.nvim_get_current_buf()
+local function foldclose(bufnr)
+	bufnr = bufnr or vim.api.nvim_get_current_buf()
 	local parser = vim.treesitter.get_parser(bufnr, vim.bo[bufnr].filetype)
 	if not parser then
 		return
@@ -60,7 +60,7 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 			return
 		end
 		vim._with({ buf = args.buf }, function()
-			foldclose()
+			foldclose(args.buf)
 		end)
 	end,
 })
