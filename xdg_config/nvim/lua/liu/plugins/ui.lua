@@ -63,6 +63,52 @@ return {
 		},
 	},
 	{
+		"rachartier/tiny-glimmer.nvim",
+		event = "VeryLazy",
+		init = function()
+			vim.api.nvim_set_hl(0, "TinyGlimmerPaste", { bg = "#5E81AC" })
+			vim.api.nvim_set_hl(0, "TinyGlimmerUndo", { bg = "#A3BE8C" })
+			vim.api.nvim_set_hl(0, "TinyGlimmerRedo", { bg = "#BF616A" })
+		end,
+		opts = {
+			overwrite = {
+				yank = {
+					enabled = false,
+				},
+				search = {
+					enabled = false,
+				},
+				paste = {
+					enabled = true,
+					default_animation = {
+						name = "reverse_fade",
+						settings = {
+							from_color = "TinyGlimmerPaste",
+						},
+					},
+				},
+				undo = {
+					enabled = true,
+					default_animation = {
+						name = "fade",
+						settings = {
+							from_color = "TinyGlimmerUndo",
+						},
+					},
+				},
+				redo = {
+					enabled = true,
+					default_animation = {
+						name = "fade",
+						settings = {
+							from_color = "TinyGlimmerRedo",
+						},
+					},
+				},
+			},
+		},
+	},
+	{
 		"tpope/vim-flagship",
 		init = function()
 			vim.o.showtabline = 2
