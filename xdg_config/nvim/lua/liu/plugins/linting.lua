@@ -23,6 +23,10 @@ local linters_opt = {
 		---@param ctx LinterCondCtx
 		---@return boolean
 		condition = function(ctx)
+			if not vim.startswith(ctx.dirname, ctx.cwd) then
+				return
+			end
+
 			return #vim.fs.find(
 				{ ".golangci.yml", ".golangci.yaml", ".golangci.toml", ".golangci.json" },
 				{ path = ctx.dirname, upward = true }
@@ -66,6 +70,7 @@ function M.lint()
 		-- Filter out linters that don't exist or don't match the condition.
 		local ctx = { filename = vim.api.nvim_buf_get_name(0) }
 		ctx.dirname = vim.fn.fnamemodify(ctx.filename, ":h")
+		ctx.cwd = vim.fn.getcwd()
 		linters = vim.iter(linters)
 			:filter(function(name)
 				local linter_opt = linters_opt[name]
