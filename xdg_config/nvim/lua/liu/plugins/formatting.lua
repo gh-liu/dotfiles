@@ -52,21 +52,17 @@ return {
 	lazy = true,
 	init = function(self)
 		vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
-
-		if vim.g.DisableAutoFormat == nil then
-			vim.g.DisableAutoFormat = 1
-		end
 	end,
 	keys = {
 		{
 			"yoF",
 			function()
-				if vim.g.DisableAutoFormat == 0 then
-					vim.g.DisableAutoFormat = 1
-					vim.notify("Disabled autoformat", vim.log.levels.WARN)
+				if (not vim.g.EnableAutoFormat) or vim.g.EnableAutoFormat == 0 then
+					vim.g.EnableAutoFormat = 1
+					vim.notify("Enble autoformat", vim.log.levels.WARN)
 				else
-					vim.g.DisableAutoFormat = 0
-					vim.notify("Enabled autoformat", vim.log.levels.WARN)
+					vim.g.EnableAutoFormat = 0
+					vim.notify("Disable autoformat", vim.log.levels.WARN)
 				end
 			end,
 			desc = "Toggle autoformat",
@@ -81,17 +77,16 @@ return {
 		default_format_opts = {
 			lsp_format = "fallback",
 		},
+		format_on_save = function(bufnr)
+			if vim.g.EnableAutoFormat == 1 or vim.b[bufnr].EnableAutoFormat == 1 then
+				return {
+					timeout_ms = 500,
+					lsp_format = "fallback",
+				}
+			end
+		end,
 	},
 	config = function(self, opts)
-		opts.format_on_save = function(bufnr)
-			if vim.g.DisableAutoFormat == 1 or vim.b[bufnr].DisableAutoFormat == 1 then
-				return
-			end
-			return {
-				timeout_ms = 500,
-				lsp_format = "fallback",
-			}
-		end
 		require("conform").setup(opts)
 
 		require("conform").formatters.sqlfluff = function(bufnr)
