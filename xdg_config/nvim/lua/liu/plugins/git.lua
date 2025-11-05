@@ -66,6 +66,7 @@ return { -- Git {{{2
 				callback = function(args)
 					vim.cmd([[
 					nnoremap <buffer> rt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
+					nnoremap <buffer> rT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
 					]])
 				end,
 			})
