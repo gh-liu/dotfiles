@@ -93,6 +93,9 @@ return {
 					[""] = "rainbow-delimiters.strategy.global",
 					-- [""] = "rainbow-delimiters.strategy.local",
 				},
+				priority = {
+					[""] = vim.hl.priorities.user + 1,
+				},
 				-- query = {},
 				highlight = {
 					"@punctuation.bracket",
