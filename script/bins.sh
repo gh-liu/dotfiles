@@ -235,6 +235,9 @@ _llm_clis() {
 	# https://ampcode.com/manual#getting-started-command-line-interface
 	bun i -g @sourcegraph/amp@latest
 
+	# https://cursor.com/docs/cli/overview
+	curl https://cursor.com/install -fsS | bash
+
 	# go install github.com/charmbracelet/crush@latest
 }
 
