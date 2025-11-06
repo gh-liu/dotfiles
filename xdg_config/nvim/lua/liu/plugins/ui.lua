@@ -64,7 +64,7 @@ return {
 	},
 	{
 		"rachartier/tiny-glimmer.nvim",
-		event = "VeryLazy",
+		-- event = "VeryLazy",
 		init = function()
 			vim.api.nvim_set_hl(0, "TinyGlimmerPaste", { bg = "#5E81AC" })
 			vim.api.nvim_set_hl(0, "TinyGlimmerRedo", { bg = "#A3BE8C" })
