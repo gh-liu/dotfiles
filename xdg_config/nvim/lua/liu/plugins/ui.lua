@@ -67,8 +67,8 @@ return {
 		event = "VeryLazy",
 		init = function()
 			vim.api.nvim_set_hl(0, "TinyGlimmerPaste", { bg = "#5E81AC" })
-			vim.api.nvim_set_hl(0, "TinyGlimmerUndo", { bg = "#A3BE8C" })
-			vim.api.nvim_set_hl(0, "TinyGlimmerRedo", { bg = "#BF616A" })
+			vim.api.nvim_set_hl(0, "TinyGlimmerRedo", { bg = "#A3BE8C" })
+			vim.api.nvim_set_hl(0, "TinyGlimmerUndo", { bg = "#BF616A" })
 		end,
 		opts = {
 			overwrite = {
