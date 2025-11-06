@@ -87,7 +87,10 @@ api.nvim_create_autocmd("LspAttach", {
 		end
 
 		if lsp.inline_completion and client:supports_method(lsp_methods.textDocument_inlineCompletion) then
-			-- lsp.inline_completion.enable(true, { bufnr = bufnr, client_id = client.id })
+			local filter = { client_id = client.id }
+			if not lsp.inline_completion.is_enabled(filter) then
+				lsp.inline_completion.enable(true, filter)
+			end
 		end
 	end,
 })
