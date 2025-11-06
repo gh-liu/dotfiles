@@ -11,6 +11,7 @@ local Config = {
 				diagnosticSeverityOverrides = {
 					reportAny = false,
 				},
+				useLibraryCodeForTypes = false,
 			},
 		},
 	},
