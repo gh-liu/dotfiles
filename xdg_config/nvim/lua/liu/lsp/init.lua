@@ -318,8 +318,8 @@ vim.lsp.enable("docker_language_server")
 vim.lsp.enable("terraformls")
 vim.lsp.enable("nushell")
 
-if vim.fn.executable("gideon") == 1 then
-	vim.lsp.enable({ "gideon" })
-end
+-- if vim.fn.executable("gideon") == 1 then
+-- 	vim.lsp.enable({ "gideon" })
+-- end
 
 -- vim: foldmethod=marker
