@@ -482,11 +482,21 @@ return {
 			local mode = { "i", "x", "s" }
 			map_combo(mode, "jk", "<BS><BS><Esc>")
 
+			local inline_completion = {
+				condition = function()
+					return true
+				end,
+				action = function()
+					return vim.lsp.inline_completion.get()
+				end,
+			}
+
 			local map_multistep = require("mini.keymap").map_multistep
 			map_multistep({ "i" }, "<Tab>", {
 				"vimsnippet_next",
 				"pmenu_next",
 				-- "blink_next",
+				inline_completion,
 			})
 			map_multistep({ "i" }, "<S-Tab>", {
 				"vimsnippet_prev",
