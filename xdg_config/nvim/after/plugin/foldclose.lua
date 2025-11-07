@@ -40,12 +40,12 @@ local function foldclose(bufnr)
 	end
 
 	for _, node in ipairs(nodes) do
-		local start_row, _, end_row = node:range()
+		local start_row, _, end_row, _ = node:range()
 		local start = start_row + 1
-		-- local end_ = end_row + 1
+		local end_ = end_row + 1
 		vim._with({ win = 0 }, function()
 			if vim.fn.foldclosed(start) == -1 then
-				pcall(vim.cmd, start + 1 .. "foldclose")
+				pcall(vim.cmd, start .. "," .. end_ .. "foldclose")
 			end
 		end)
 	end
