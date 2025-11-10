@@ -1,10 +1,6 @@
 -- NOTE: not editor features?
 return {
 	{
-		"gh-liu/gideon.nvim",
-		dev = true,
-	},
-	{
 		"folke/sidekick.nvim",
 		event = "VeryLazy",
 		init = function()
