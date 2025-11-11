@@ -5,7 +5,7 @@ return {
 	settings = {
 		gopls = {
 			buildFlags = { "-tags", "debug" },
-			gofumpt = false,
+			gofumpt = true,
 			-- https://github.com/golang/tools/blob/master/gopls/doc/settings.md#code-lenses
 			codelenses = {
 				test = false,
