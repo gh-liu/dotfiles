@@ -231,11 +231,11 @@ return {
 			vim.cmd([[
 			"autocmd User Flags call Hoist("buffer", "fugitive#statusline")
 			autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
-			autocmd User Flags call Hoist("window", "%-13a")
+			"autocmd User Flags call Hoist("window", "%-13a") " argument
 			"autocmd User Flags call Hoist("window", "%{&previewwindow?'[PVW]':''}")
 			"autocmd User Flags call Hoist("global", "%{&ignorecase ? '[IC]' : ''}", {'hl': 'ModeMsg'})
 
-			autocmd User Flags call Hoist("buffer", 12, "%{&channel?flagship#surround('channel:'.&channel):''}")
+			"autocmd User Flags call Hoist("buffer", 12, "%{&channel?flagship#surround('channel:'.&channel):''}")
 			autocmd User Flags call Hoist("buffer", 11, "%{v:lua.Flag_lsp_clients()}")
 			autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
 
@@ -249,11 +249,10 @@ return {
 			-- else
 			-- 	vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
 			-- end
-			if vim.fn.exists("&busy") then
-				vim.cmd(
-					[[ autocmd User Flags call Hoist("buffer", 1, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]]
-				)
-			end
+
+			-- if vim.fn.exists("&busy") then
+			-- vim.cmd([[ autocmd User Flags call Hoist("buffer", 1, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]])
+			-- end
 		end,
 	},
 	{
