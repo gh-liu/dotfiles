@@ -652,30 +652,6 @@ return {
 		cmd = { "GrugFar", "GrugFarWithin" },
 	},
 	{
-		"folke/flash.nvim",
-		opts = {
-			modes = {
-				search = {
-					enabled = false,
-				},
-				char = {
-					enabled = false,
-				},
-			},
-			prompt = {
-				enabled = false,
-			},
-		},
-		keys = {
-			-- stylua: ignore start
-			{ "s", mode = { "n", "x" }, function() require("flash").jump() end, desc = "Flash" },
-			{ "s<cr>", mode = { "n" }, function() require("flash").jump({ continue = true }) end, desc = "Flash" },
-			{ "z", mode = { "o" }, function() require("flash").jump() end, desc = "Flash" },
-			{ "Z", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
-			-- stylua: ignore end
-		},
-	},
-	{
 		"tpope/vim-dispatch",
 		-- event = "VeryLazy",
 		init = function()
