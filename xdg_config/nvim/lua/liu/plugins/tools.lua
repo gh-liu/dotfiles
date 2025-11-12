@@ -22,11 +22,11 @@ return {
 				nnoremap <expr> <Plug>(DBExe)     db#op_exec()
 				nnoremap <expr> <Plug>(DBExeLine) db#op_exec() . '_'
 				
-				xmap gq  <Plug>(DBExe)
-				nmap gq  <Plug>(DBExe)
-				omap gq  <Plug>(DBExe)
-				nmap gqq <Plug>(DBExeLine)
-				nmap gq? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
+				xmap gQ  <Plug>(DBExe)
+				nmap gQ  <Plug>(DBExe)
+				omap gQ  <Plug>(DBExe)
+				nmap gQQ <Plug>(DBExeLine)
+				nmap gQ? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
 
 				autocmd User Flags call Hoist('buffer', 99, '%{flagship#surround(toupper(matchstr(get(b:, "db", ""), "^[^:]*")))}')
 			]])
