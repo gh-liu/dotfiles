@@ -12,6 +12,8 @@ local Config = {
 					reportAny = false,
 				},
 				useLibraryCodeForTypes = false,
+				diagnosticMode = "workspace", ---@type 'openFilesOnly'|'workspace'
+				typeCheckingMode = "standard", ---@type 'off'|'basic'|'standard'|'strict'|'recommended'|'all'
 			},
 		},
 	},
