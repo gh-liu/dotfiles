@@ -32,7 +32,7 @@ local outputMode = "remote"
 ---@field asRoot boolean|nil
 ---@field backend 'default'|'native'|'lldb'|'rr'|nil
 ---@field buildFlags string[]|string|nil
----@field console liu.dap.console
+---@field console? liu.dap.console
 ---@field host string|nil
 ---@field port number|nil
 ---@field processId number|nil
