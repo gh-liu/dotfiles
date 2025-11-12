@@ -55,10 +55,11 @@ return { -- Git {{{2
 			}
 
 			-- vim.keymap.set("n", "\\g", ":Git ")
-			vim.keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
-			vim.keymap.set("n", "<leader>gw", "<cmd> try | Gwrite | catch /.*/ | update | endtry <cr>")
-			vim.keymap.set("n", "<leader>gb", "<cmd>G blame<cr>")
-			vim.keymap.set("n", "<leader>gl", "<cmd>Gclog! %<cr>")
+			-- NOTE: use ug-mappings
+			-- vim.keymap.set("n", "<leader>ge", "<cmd>Gedit<cr>")
+			-- vim.keymap.set("n", "<leader>gw", "<cmd> try | Gwrite | catch /.*/ | update | endtry <cr>")
+			-- vim.keymap.set("n", "<leader>gb", "<cmd>G blame<cr>")
+			-- vim.keymap.set("n", "<leader>gl", "<cmd>Gclog! %<cr>")
 			local g = vim.api.nvim_create_augroup("liu/fugitive/setup", { clear = true })
 			vim.api.nvim_create_autocmd("FileType", {
 				group = g,
