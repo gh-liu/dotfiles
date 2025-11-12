@@ -3,7 +3,7 @@ local formatters_by_ft = {
 	go = {
 		-- "goimports", -- @need-install: go install golang.org/x/tools/cmd/goimports@latest
 		"gofmt",
-		"gofumpt",
+		-- "gofumpt", -- @need-install: go install mvdan.cc/gofumpt@latest
 	},
 	lua = {
 		"stylua", -- @need-install: cargo install stylua
