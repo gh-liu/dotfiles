@@ -27,6 +27,8 @@ return {
 				omap gq  <Plug>(DBExe)
 				nmap gqq <Plug>(DBExeLine)
 				nmap gq? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
+
+				autocmd User Flags call Hoist('buffer', 99, '%{flagship#surround(toupper(matchstr(get(b:, "db", ""), "^[^:]*")))}')
 			]])
 
 			-- NOTE: define your adapters:
