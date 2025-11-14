@@ -83,10 +83,15 @@ return {
 					}),
 					f = ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
 					c = ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
-					D = ts_gen({ -- Declaration
-						a = { "@function.outer", "@class.outer" },
-						i = { "@function.inner", "@class.inner" },
-					}),
+					P = ts_gen({ a = "@parameter.outer", i = "@parameter.inner" }, {}),
+					k = ts_gen({ a = "@assignment.inner", i = "@assignment.lhs" }, {}),
+					v = ts_gen({ a = "@assignment.outer", i = "@assignment.rhs" }, {}),
+					-- D = ts_gen({ -- D for "Declaration"
+					-- 	a = { "@function.outer", "@class.outer" },
+					-- 	i = { "@function.inner", "@class.inner" },
+					-- }),
+					u = ai.gen_spec.function_call(), -- u for "Usage"
+					U = ai.gen_spec.function_call({ name_pattern = "[%w_]" }), -- without dot in function name
 				},
 				mappings = {
 					-- -- Main textobject prefixes
