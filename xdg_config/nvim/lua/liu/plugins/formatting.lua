@@ -14,14 +14,12 @@ local formatters_by_ft = {
 	-- zig = {
 	-- 	"zigfmt",
 	-- },
-	-- python = {
-	-- 	-- pip3 install isort
-	-- 	-- @need-install: uv tool install --force isort
-	-- 	"isort",
-	-- 	-- pip install black
-	-- 	-- @need-install: uv tool install --force black
-	-- 	"black",
-	-- },
+	python = {
+		"ruff_format",
+		"ruff_organize_imports",
+		-- "isort", -- @need-install: uv tool install --force isort
+		-- "black", -- @need-install: uv tool install --force black
+	},
 	json = {
 		"jq",
 	},
