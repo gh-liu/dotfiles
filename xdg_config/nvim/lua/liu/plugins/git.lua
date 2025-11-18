@@ -73,10 +73,13 @@ return { -- Git {{{2
 			})
 			api.nvim_create_autocmd("User", {
 				group = g,
-				pattern = { "FugitiveObject", "FugitiveIndex" },
+				pattern = { "FugitiveObject", "FugitiveStageBlob", "FugitiveIndex" },
 				callback = function(data)
 					local buf = data.buf
-					vim.keymap.set("n", "q", "<cmd>bw!<cr>", { buffer = buf })
+					-- vim-ug do this map
+					-- vim.keymap.set("n", "q", "<cmd>bw!<cr>", { buffer = buf })
+
+					vim.wo[0][0].winhighlight = "StatusLine:PmenuShadow"
 				end,
 			})
 
@@ -302,13 +305,13 @@ return { -- Git {{{2
 				end,
 			})
 
-			-- skip and do it by myself
-			vim.g.flagship_skip = "^FugitiveStatusline$"
-			vim.cmd([[
-				"autocmd User Flags call Hoist('buffer', 5, function('FugitiveStatusline'))
-				autocmd User Flags call Hoist('buffer', 6, '%{FugitiveStatusline()}')
-				autocmd User Flags call Hoist('buffer', 7, '%{flagship#surround(toupper(get(b:,"fugitive_type","")))}', {"hl":"ErrorMsg"})
-			]])
+			-- -- skip and do it by myself
+			-- vim.g.flagship_skip = "^FugitiveStatusline$"
+			-- vim.cmd([[
+			-- 	"autocmd User Flags call Hoist('buffer', 5, function('FugitiveStatusline'))
+			-- 	autocmd User Flags call Hoist('buffer', 6, '%{FugitiveStatusline()}')
+			-- 	autocmd User Flags call Hoist('buffer', 7, '%{flagship#surround(toupper(get(b:,"fugitive_type","")))}', {"hl":"ErrorMsg"})
+			-- ]])
 
 			set_hls({
 				diffAdded = { link = "DiffAdd" },
