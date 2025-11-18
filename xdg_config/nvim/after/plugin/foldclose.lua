@@ -43,6 +43,14 @@ local function foldclose(bufnr)
 		local start_row, _, end_row, _ = node:range()
 		local start = start_row + 1
 		local end_ = end_row + 1
+
+		-- check if cursor in the fold node
+		local cursor = vim.api.nvim_win_get_cursor(0)
+		local cursor_row = cursor[1] - 1
+		if cursor_row >= start_row and cursor_row <= end_row then
+			return
+		end
+
 		vim._with({ win = 0 }, function()
 			if vim.fn.foldclosed(start) == -1 then
 				pcall(vim.cmd, start .. "," .. end_ .. "foldclose")
