@@ -98,6 +98,8 @@ M.set_highlights = function()
 		-- statusline
 		StatusLine = { fg = c.fg, bg = c.brightergray },
 		StatusLineNC = { fg = c.fg, bg = c.gray },
+		-- StatusLineTerm = { link = "PmenuShadow" },
+		StatusLineTerm = { fg = c.fg, bg = c.blue },
 		-- tabline
 		TabLine = { fg = c.brightergray, bg = c.gray },
 		TabLineSel = { fg = c.gray, bg = c.lightgreen },
