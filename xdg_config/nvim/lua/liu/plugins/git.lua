@@ -79,7 +79,7 @@ return { -- Git {{{2
 					-- vim-ug do this map
 					-- vim.keymap.set("n", "q", "<cmd>bw!<cr>", { buffer = buf })
 
-					vim.wo[0][0].winhighlight = "StatusLine:PmenuShadow"
+					vim.wo[0][0].winhighlight = "StatusLine:StatusLineFugitive"
 				end,
 			})
 
@@ -316,6 +316,7 @@ return { -- Git {{{2
 			set_hls({
 				diffAdded = { link = "DiffAdd" },
 				diffRemoved = { link = "DiffDelete" },
+				StatusLineFugitive = { link = "PmenuShadow" },
 			})
 		end,
 	},
