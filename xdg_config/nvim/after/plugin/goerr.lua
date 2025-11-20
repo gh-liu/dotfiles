@@ -21,6 +21,18 @@ end
 local function conceal_iferr_node(bufnr, iferr_node, err_node)
 	local start_row, start_col, end_row, _ = iferr_node:range()
 
+	-- auto fold if block
+	local cur_line = vim.fn.line(".")
+	local start_line = start_row + 1
+	local end_line = end_row + 1
+	if
+		vim.fn.mode() == "n" -- node range seems wrong in insert mode
+		and vim.fn.foldclosed(start_line) == -1
+		and (cur_line < start_line or cur_line > end_line)
+	then
+		pcall(vim.cmd, start_line .. "," .. end_line .. "foldclose")
+	end
+
 	-- check if cursor in the iferr node
 	local cursor = vim.api.nvim_win_get_cursor(0)
 	local cursor_row = cursor[1] - 1
