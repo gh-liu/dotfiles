@@ -52,7 +52,10 @@ local function foldclose(bufnr)
 		end
 
 		vim._with({ win = 0 }, function()
-			if vim.fn.foldclosed(start) == -1 then
+			if
+				vim.fn.mode() == "n" -- node range seems wrong in insert mode
+				and vim.fn.foldclosed(start) == -1
+			then
 				pcall(vim.cmd, start .. "," .. end_ .. "foldclose")
 			end
 		end)
