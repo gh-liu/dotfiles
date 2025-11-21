@@ -1,7 +1,7 @@
 -- inspired by https://github.com/TheNoeTrevino/no-go.nvim
 local ns = vim.api.nvim_create_namespace("conceal_goerr")
 
-local err_pattern = "^(err|error)$"
+local err_identifier_pattern = "^(err|error)"
 local virtual_text = " {{ERR}} 󱞿 "
 local highlight = "NonText"
 
@@ -10,11 +10,11 @@ local function get_query_string(pattern)
   (
     (if_statement
       condition: (binary_expression
-        left: (identifier) @err
+        left: (identifier) @err_identifier
         right: (nil))
       consequence: (block
         (return_statement)))
-    (#match? @err "]] .. pattern .. [[")
+    (#match? @err_identifier "]] .. pattern .. [[")
   )]]
 end
 
@@ -93,12 +93,12 @@ local function on_win(_, win, buf, top, bottom)
 		return false
 	end
 
-	local query_str = get_query_string(err_pattern)
+	local query_str = get_query_string(err_identifier_pattern)
 	local query = vim.treesitter.query.parse(filetype, query_str)
 	for _, match, _ in query:iter_matches(tree:root(), buf, top, bottom + 1) do
 		for id, nodes in pairs(match) do
 			local capture_name = query.captures[id]
-			if capture_name == "err" then
+			if capture_name == "err_identifier" then
 				local err_node = nodes[1]
 				local if_node = err_node:parent()
 				while if_node and if_node:type() ~= "if_statement" do
