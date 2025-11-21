@@ -51,17 +51,18 @@ local function conceal_iferr_node(bufnr, iferr_node, err_node)
 		return
 	end
 
-	-- conceal lines
-	vim.api.nvim_buf_set_extmark(bufnr, ns, start_row, brace_col, {
-		end_row = start_row,
-		end_col = #line,
-		conceal = "",
-	})
-	vim.api.nvim_buf_set_extmark(bufnr, ns, start_row + 1, 0, {
-		end_row = end_row,
-		end_col = 0,
-		conceal_lines = "",
-	})
+	-- NOTE: use fold instead of conceal lines
+	-- -- conceal lines
+	-- vim.api.nvim_buf_set_extmark(bufnr, ns, start_row, brace_col, {
+	-- 	end_row = start_row,
+	-- 	end_col = #line,
+	-- 	conceal = "",
+	-- })
+	-- vim.api.nvim_buf_set_extmark(bufnr, ns, start_row + 1, 0, {
+	-- 	end_row = end_row,
+	-- 	end_col = 0,
+	-- 	conceal_lines = "",
+	-- })
 
 	-- virtual text
 	local err_text = vim.treesitter.get_node_text(err_node, bufnr)
