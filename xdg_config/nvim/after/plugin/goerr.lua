@@ -114,4 +114,4 @@ local function on_win(_, win, buf, top, bottom)
 	return true
 end
 
-vim.api.nvim_set_decoration_provider(ns, { on_win = on_win })
+-- vim.api.nvim_set_decoration_provider(ns, { on_win = on_win })
