@@ -14,6 +14,7 @@ local Config = {
 				useLibraryCodeForTypes = false,
 				diagnosticMode = "workspace", ---@type 'openFilesOnly'|'workspace'
 				typeCheckingMode = "standard", ---@type 'off'|'basic'|'standard'|'strict'|'recommended'|'all'
+				stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs/stubs",
 			},
 		},
 	},
