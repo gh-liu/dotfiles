@@ -6,6 +6,7 @@ local input_keys = {
 
 return {
 	"folke/snacks.nvim",
+	priority = 1000,
 	opts = {
 		-- :h snacks.nvim-picker-config
 		picker = {
