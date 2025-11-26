@@ -62,6 +62,7 @@ return {
 	{
 		"igorlfs/nvim-dap-view",
 		opts = {},
-		cmd = "DapViewOpen",
+		cmd = "DapViewToggle",
+		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>" } },
 	},
 }
