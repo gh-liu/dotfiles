@@ -14,5 +14,6 @@ local Config = {
 		collName = "testColl",
 	},
 	root_dir = vim.fs.root(0, { ".git" }),
+	filetypes = { "go" },
 }
 return Config
