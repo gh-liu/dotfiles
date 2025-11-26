@@ -12,5 +12,5 @@ local unmap = function(modes, lhs)
 end
 -- disable `an/in` for lsp selectionRange
 -- https://github.com/neovim/neovim/pull/34011#issue-3061662405
-unmap("x", "in")
-unmap({ "x" }, "an")
+unmap({ "x", "o" }, "in")
+unmap({ "x", "o" }, "an")
