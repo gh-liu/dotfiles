@@ -7,6 +7,13 @@ command! -nargs=+ -bang -complete=command R if !<bang>0 | wincmd n | endif
 
 " execute last command and insert output into current buffer
 inoremap <c-r>R <c-o>:<up><home>R! <cr>
+
+
+command! -nargs=0 EscapeSpecial call s:EscapeSpecial()
+function! s:EscapeSpecial()
+    execute printf('%%substitute/%s/%s/ge', "\\\\n", "\\r")
+    execute printf('%%substitute/%s/%s/ge', "\\\\t", "\\t")
+endfunction
 ]])
 
 -- :h modeline
