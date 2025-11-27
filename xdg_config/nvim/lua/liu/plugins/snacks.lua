@@ -12,9 +12,9 @@ return {
 		picker = {
 			enabled = true,
 			win = {
-				input = { keys = input_keys, wo = { stl = "%y" } },
-				list = { wo = { stl = "%y" } },
-				preview = { wo = { stl = "%y" } },
+				input = { keys = input_keys, wo = {} },
+				list = { wo = {} },
+				preview = { wo = {} },
 			},
 		},
 		-- ===========================
