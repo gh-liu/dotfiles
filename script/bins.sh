@@ -183,6 +183,8 @@ bins() {
 		cargo install shpool
 
 		cargo install --locked --bin jj jj-cli
+
+		cargo install --git https://github.com/ribru17/ts_query_ls.git ts_query_ls
 	fi
 
 	if [ -f "$(which gh)" ]; then
