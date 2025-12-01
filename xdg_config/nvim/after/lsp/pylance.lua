@@ -1,5 +1,7 @@
 -- @need-install: bun install -g @delance/runtime
+---@type vim.lsp.Config
 return {
+	on_init = require("liu.lsp.servers.pyright").on_init,
 	cmd = { "delance-langserver", "--stdio" },
 	filetypes = { "python" },
 	settings = {

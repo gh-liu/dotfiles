@@ -2,6 +2,7 @@
 -- @need-install: uv tool install --force basedpyright
 ---@type vim.lsp.Config
 local Config = {
+	on_init = require("liu.lsp.servers.pyright").on_init,
 	settings = {
 		basedpyright = {
 			analysis = {
