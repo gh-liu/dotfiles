@@ -20,19 +20,28 @@ end
 M.settings = {
 	python = {
 		analysis = {
-			typeCheckingMode = "standard", ---@type 'off'|'basic'|'standard'|'strict'|'recommended'|'all'
-			diagnosticMode = "workspace",
-			useLibraryCodeForTypes = true,
+			typeCheckingMode = "standard", ---@type 'off'|'basic'|'standard'|'strict'
+			diagnosticMode = "workspace", ---@type 'workspace'|'openFilesOnly'
 			stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs/stubs",
-			-- diagnosticSeverityOverrides = {
-			-- 	deprecateTypingAliases = false,
-			-- },
-			-- inlayHints = {
-			-- 	callArgumentNames = "partial",
-			-- 	functionReturnTypes = true,
-			-- 	pytestParameters = true,
-			-- 	variableTypes = true,
-			-- },
+			autoImportCompletions = true,
+			diagnosticSeverityOverrides = {
+				-- https://github.com/microsoft/pyright/blob/main/docs/configuration.md#type-check-diagnostics-settings
+				-- deprecateTypingAliases = false,
+			},
+			typeEvaluation = {
+				-- https://github.com/microsoft/pyright/blob/main/docs/configuration.md#type-evaluation-settings
+			},
+			useLibraryCodeForTypes = true,
+			inlayHints = {
+				variableTypes = true,
+				functionReturnTypes = true,
+				callArgumentNames = "partial", ---@type 'off'|'partial'|'all'
+				pytestParameters = true,
+			},
+			fixAll = {
+				"source.unusedImports",
+				"source.convertImportFormat",
+			},
 		},
 	},
 }
