@@ -1,18 +1,20 @@
 local M = {}
 
+local py_organizeimports = function(client, bufnr)
+	if not client then
+		return
+	end
+	local params = {
+		command = "pyright.organizeimports",
+		arguments = { vim.uri_from_bufnr(bufnr) },
+	}
+	client:exec_cmd(params, { bufnr = bufnr })
+	-- client:request("workspace/executeCommand", params, nil, bufnr)
+	-- client:request_sync("workspace/executeCommand", params, 1000, bufnr)
+end
+
 local servers = {
-	basedpyright = function(client, bufnr)
-		if not client then
-			return
-		end
-		local params = {
-			command = "basedpyright.organizeimports",
-			arguments = { vim.uri_from_bufnr(bufnr) },
-		}
-		client:exec_cmd(params, { bufnr = bufnr })
-		-- client:request("workspace/executeCommand", params, nil, bufnr)
-		-- client:request_sync("workspace/executeCommand", params, 1000, bufnr)
-	end,
+	delance = py_organizeimports,
 	gopls = function(client, bufnr)
 		if not client then
 			return
