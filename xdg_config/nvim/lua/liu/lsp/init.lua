@@ -153,15 +153,12 @@ api.nvim_create_autocmd("LspAttach", {
 		end
 
 		nmap("gD", function()
-			vim.cmd("normal mJ")
 			lsp.buf.declaration({ on_list = on_list })
 		end, "[G]oto [D]eclaration")
 		nmap("gd", function()
-			vim.cmd("normal mJ")
 			lsp.buf.definition({ on_list = on_list })
 		end, "[G]oto [D]efinition")
 		nmap("gy", function()
-			vim.cmd("normal mJ")
 			lsp.buf.type_definition({ on_list = on_list })
 		end, "[G]oto T[y]pe Definition")
 
