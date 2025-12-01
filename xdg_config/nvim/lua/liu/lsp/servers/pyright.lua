@@ -17,4 +17,23 @@ M.on_init = function(client, ...)
 	end
 end
 
+M.settings = {
+	python = {
+		analysis = {
+			typeCheckingMode = "standard", ---@type 'off'|'basic'|'standard'|'strict'|'recommended'|'all'
+			diagnosticMode = "workspace",
+			useLibraryCodeForTypes = true,
+			stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs/stubs",
+			-- diagnosticSeverityOverrides = {
+			-- 	deprecateTypingAliases = false,
+			-- },
+			-- inlayHints = {
+			-- 	callArgumentNames = "partial",
+			-- 	functionReturnTypes = true,
+			-- 	pytestParameters = true,
+			-- 	variableTypes = true,
+			-- },
+		},
+	},
+}
 return M

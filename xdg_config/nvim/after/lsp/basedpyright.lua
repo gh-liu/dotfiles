@@ -1,23 +1,11 @@
+local common = require("liu.lsp.servers.pyright")
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#basedpyright
 -- @need-install: uv tool install --force basedpyright
 ---@type vim.lsp.Config
 local Config = {
-	on_init = require("liu.lsp.servers.pyright").on_init,
+	on_init = common.on_init,
 	settings = {
-		basedpyright = {
-			analysis = {
-				-- https://docs.basedpyright.com/latest/configuration/config-files/#type-check-diagnostics-settings
-				---@alias SeverityOverridesValue 'error'|'warning'|'information'|'true'|'false'|'none'
-				---@type table<string,SeverityOverridesValue>
-				diagnosticSeverityOverrides = {
-					reportAny = false,
-				},
-				useLibraryCodeForTypes = false,
-				diagnosticMode = "workspace", ---@type 'openFilesOnly'|'workspace'
-				typeCheckingMode = "standard", ---@type 'off'|'basic'|'standard'|'strict'|'recommended'|'all'
-				stubPath = vim.fn.stdpath("data") .. "/lazy/python-type-stubs/stubs",
-			},
-		},
+		basedpyright = common.settings.python,
 	},
 }
 return Config

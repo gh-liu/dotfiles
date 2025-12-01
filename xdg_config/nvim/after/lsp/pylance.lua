@@ -1,7 +1,9 @@
+local common = require("liu.lsp.servers.pyright")
 -- @need-install: bun install -g @delance/runtime
 ---@type vim.lsp.Config
 return {
-	on_init = require("liu.lsp.servers.pyright").on_init,
+	-- https://github.com/microsoft/pylance-release?tab=readme-ov-file#settings-and-customization
+	on_init = common.on_init,
 	cmd = { "delance-langserver", "--stdio" },
 	filetypes = { "python" },
 	settings = {
@@ -9,22 +11,6 @@ return {
 			-- disableOrganizeImports = true,
 			-- disableTaggedHints = false,
 		},
-		python = {
-			analysis = {
-				autoSearchPaths = true,
-				diagnosticMode = "workspace",
-				-- typeCheckingMode = "standard",
-				useLibraryCodeForTypes = true,
-				-- diagnosticSeverityOverrides = {
-				-- 	deprecateTypingAliases = false,
-				-- },
-				-- inlayHints = {
-				-- 	callArgumentNames = "partial",
-				-- 	functionReturnTypes = true,
-				-- 	pytestParameters = true,
-				-- 	variableTypes = true,
-				-- },
-			},
-		},
+		python = common.settings.python,
 	},
 }
