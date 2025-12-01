@@ -29,8 +29,6 @@ return { -- Git {{{2
 						nunmap UN
 						nunmap <c-n>
 						nunmap <c-p>
-						" linediff
-						vunmap D
 
 						nmap Ubb 1Ub
 						nmap UL 9Ul
