@@ -616,9 +616,6 @@ return {
 		end,
 	},
 	{
-		"AndrewRadev/linediff.vim",
-	},
-	{
 		"MagicDuck/grug-far.nvim",
 		opts = {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
