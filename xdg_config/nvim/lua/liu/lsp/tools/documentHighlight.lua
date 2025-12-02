@@ -90,23 +90,28 @@ function M.jump(count, cycle)
 	end
 end
 
-local group = vim.api.nvim_create_augroup("liu/lsp_doc_hi", { clear = true })
-vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "ModeChanged" }, {
-	group = group,
-	callback = function()
-		if not M.is_enabled() then
-			M.clear()
-			return
-		end
-		if not ({ M.get() })[2] then
-			M.update()
-		end
-	end,
-})
+return {
+	on_attach = function(client, buf)
+		local group = vim.api.nvim_create_augroup("liu/lsp_doc_hi" .. buf, { clear = true })
+		vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "ModeChanged" }, {
+			group = group,
+			callback = function()
+				if not M.is_enabled() then
+					M.clear()
+					return
+				end
+				if not ({ M.get() })[2] then
+					M.update()
+				end
+			end,
+			buffer = buf,
+		})
 
-vim.keymap.set({ "n" }, "]w", function()
-	M.jump(vim.v.count1, true)
-end, {})
-vim.keymap.set({ "n" }, "[w", function()
-	M.jump(-vim.v.count1, true)
-end, {})
+		vim.keymap.set({ "n" }, "]w", function()
+			M.jump(vim.v.count1, true)
+		end, { buffer = buf })
+		vim.keymap.set({ "n" }, "[w", function()
+			M.jump(-vim.v.count1, true)
+		end, { buffer = buf })
+	end,
+}
