@@ -293,6 +293,20 @@ vim.api.nvim_create_autocmd("LspProgress", {
 	end,
 })
 
+vim.api.nvim_create_autocmd("LspRequest", {
+	callback = function(args)
+		local bufnr = args.buf
+		local request = args.data.request
+		if request.type == "pending" then
+			vim.bo[bufnr].busy = 1
+		elseif request.type == "cancel" then
+			vim.bo[bufnr].busy = 0
+		elseif request.type == "complete" then
+			vim.bo[bufnr].busy = 0
+		end
+	end,
+})
+
 vim.lsp.enable("gopls")
 vim.lsp.enable({
 	-- "ruff",
