@@ -616,6 +616,24 @@ return {
 		end,
 	},
 	{
+		"nvim-mini/mini.cmdline",
+		event = "VeryLazy",
+		opts = {
+			autocomplete = {
+				enable = true,
+				delay = 200,
+			},
+			-- Autocorrection: adjust non-existing words (commands, options, etc.)
+			autocorrect = {
+				enable = true,
+			},
+			-- Autopeek: show command's target range in a floating window
+			autopeek = {
+				enable = true,
+			},
+		},
+	},
+	{
 		"MagicDuck/grug-far.nvim",
 		opts = {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
