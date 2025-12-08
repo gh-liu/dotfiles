@@ -37,7 +37,7 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.files",
+		"nvim-mini/mini.files",
 		lazy = true,
 		init = function()
 			local aug = vim.api.nvim_create_augroup("liu/mini.files", { clear = true })
@@ -52,7 +52,7 @@ return {
 
 					local MiniFiles = require("mini.files")
 					do
-						-- https://github.com/echasnovski/mini.nvim/issues/391
+						-- https://github.com/nvim-mini/mini.nvim/issues/391
 						-- set up ability to confirm changes with :w
 						-- api.nvim_create_autocmd("BufWriteCmd", {
 						-- 	callback = MiniFiles.synchronize,
@@ -228,7 +228,7 @@ return {
 		},
 	},
 	{
-		"echasnovski/mini.visits",
+		"nvim-mini/mini.visits",
 		event = "VeryLazy",
 		opts = {},
 		init = function()
@@ -451,7 +451,7 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.bufremove",
+		"nvim-mini/mini.bufremove",
 		lazy = true,
 		init = function()
 			vim.cmd([[
@@ -475,7 +475,7 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.keymap",
+		"nvim-mini/mini.keymap",
 		-- event = "VeryLazy",
 		init = function()
 			local map_combo = require("mini.keymap").map_combo
@@ -525,7 +525,7 @@ return {
 		opts = {},
 	},
 	{
-		"echasnovski/mini.diff",
+		"nvim-mini/mini.diff",
 		event = "VeryLazy",
 		init = function()
 			_G.Flag_diff_summary = function()

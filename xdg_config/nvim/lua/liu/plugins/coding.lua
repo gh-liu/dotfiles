@@ -6,7 +6,7 @@ local fn = vim.fn
 
 return {
 	{
-		"echasnovski/mini.ai",
+		"nvim-mini/mini.ai",
 		-- "wellle/targets.vim",
 		dependencies = {
 			{
@@ -120,7 +120,7 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.surround",
+		"nvim-mini/mini.surround",
 		keys = {
 			-- TODO: y will be used in x mode
 			{ "ys", mode = { "x", "n" } },
@@ -204,7 +204,7 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.operators",
+		"nvim-mini/mini.operators",
 		keys = {
 			-- NOTE: also change keys below
 			{ "dr", mode = { "n", "x" } },
@@ -228,7 +228,7 @@ return {
 		},
 	},
 	{
-		"echasnovski/mini.move",
+		"nvim-mini/mini.move",
 		keys = {
 			{ "<M-h>", mode = { "n", "x" } },
 			{ "<M-j>", mode = { "n", "x" } },
@@ -258,7 +258,7 @@ return {
 		end,
 	},
 	{
-		"echasnovski/mini.align",
+		"nvim-mini/mini.align",
 		keys = {
 			{ "gl", mode = { "n", "x" } },
 			{ "gL", mode = { "n", "x" } },

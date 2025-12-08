@@ -7,7 +7,7 @@ return {
 		event = "VeryLazy",
 		version = "*", -- download pre-built binaries
 		dependencies = {
-			"echasnovski/mini.icons",
+			"nvim-mini/mini.icons",
 			"rafamadriz/friendly-snippets",
 		},
 		opts = {
@@ -169,7 +169,7 @@ return {
 		},
 	},
 	{
-		"echasnovski/mini.pairs",
+		"nvim-mini/mini.pairs",
 		enabled = true,
 		event = "InsertEnter",
 		keys = {
