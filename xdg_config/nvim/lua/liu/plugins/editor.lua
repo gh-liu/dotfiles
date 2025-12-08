@@ -706,6 +706,8 @@ return {
 			})
 
 			vim.cmd([[
+			nmap `<bs> <cmd>AbortDispatch<cr>
+
 			autocmd BufReadPost *
 			\ if getline(1) =~# '^#!' |
 			\   let b:dispatch =
