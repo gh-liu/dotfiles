@@ -19,6 +19,7 @@ vim.o.signcolumn = "yes"
 vim.o.laststatus = 3
 vim.o.winborder = "single"
 -- vim.o.winborder = vim.fn.join({ "┌", "─", "┐", "│", "┘", "─", "└", "│" }, ",")
+vim.o.pumborder = "single"
 vim.o.pumheight = 12
 vim.o.guicursor = vim.iter({
 	-- "a:block",
@@ -161,7 +162,6 @@ if not vim.env.TMUX and not vim.g.clipboard then
 	-- :h clipboard-osc52
 	vim.g.clipboard = "osc52"
 end
-
 
 -- Disable providers we do not care a about
 vim.g.loaded_ruby_provider = 0 -- disable ruby support
