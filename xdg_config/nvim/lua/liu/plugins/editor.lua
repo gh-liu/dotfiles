@@ -625,7 +625,7 @@ return {
 			},
 			-- Autocorrection: adjust non-existing words (commands, options, etc.)
 			autocorrect = {
-				enable = true,
+				enable = false, -- not comptiable with abbrev
 			},
 			-- Autopeek: show command's target range in a floating window
 			autopeek = {
