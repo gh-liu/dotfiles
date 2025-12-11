@@ -130,6 +130,7 @@ set includeexpr=substitute(v:fname,'^[^\/]*/','','')
 -- vim.o.jumpoptions = "stack" -- stack or view
 vim.cmd([[
 set jumpoptions+=stack
+set jumpoptions+=view
 ]])
 -- =============================================================================
 -- }}}
