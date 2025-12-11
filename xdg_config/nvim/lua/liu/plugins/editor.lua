@@ -622,6 +622,15 @@ return {
 			autocomplete = {
 				enable = true,
 				delay = 200,
+				predicate = function(data)
+					-- data = {line, line_prev, pos, pos_prev}
+					local chars = string.sub(data.line, data.pos_prev - 1, data.pos - 1)
+					-- vim.print(">>: ", chars)
+					if chars == " -" then
+						return false
+					end
+					return true
+				end,
 			},
 			-- Autocorrection: adjust non-existing words (commands, options, etc.)
 			autocorrect = {
