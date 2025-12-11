@@ -1,4 +1,5 @@
 vim.cmd([[
+setlocal signcolumn=no
 let &l:statusline = '%q %{exists("w:quickfix_title") ? w:quickfix_title : ""} %= %l/%L'
 ]])
 
