@@ -624,6 +624,9 @@ return {
 				delay = 200,
 				predicate = function(data)
 					-- data = {line, line_prev, pos, pos_prev}
+					if not data.line:find("%a") then
+						return false
+					end
 					local chars = string.sub(data.line, data.pos_prev - 1, data.pos - 1)
 					-- vim.print(">>: ", chars)
 					if chars == " -" then
