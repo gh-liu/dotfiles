@@ -309,10 +309,10 @@ vim.api.nvim_create_autocmd("LspRequest", {
 
 vim.lsp.enable("gopls")
 vim.lsp.enable({
-	-- "ruff",
 	-- "pyright"
 	-- "basedpyright",
 	-- "pylance",
+	"ruff", -- formating/linting
 	"ty",
 })
 if vim.fn.executable("emmylua_ls") == 1 then
