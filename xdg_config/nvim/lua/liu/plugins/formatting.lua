@@ -6,7 +6,7 @@ local formatters_by_ft = {
 		-- "gofumpt", -- @need-install: go install mvdan.cc/gofumpt@latest
 	},
 	lua = {
-		"stylua", -- @need-install: cargo install stylua
+		"stylua", -- @need-install: uv tool install git+https://github.com/johnnymorganz/stylua
 	},
 	rust = {
 		"rustfmt",
@@ -27,7 +27,7 @@ local formatters_by_ft = {
 		"yamlfmt", -- @need-install: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
 	},
 	toml = {
-		"taplo", -- @need-install: cargo install taplo-cli
+		"taplo",
 	},
 	sh = {
 		"shfmt", -- @need-install: go install mvdan.cc/sh/v3/cmd/shfmt@latest
