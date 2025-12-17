@@ -312,7 +312,8 @@ vim.lsp.enable({
 	-- "ruff",
 	-- "pyright"
 	-- "basedpyright",
-	"pylance",
+	-- "pylance",
+	"ty",
 })
 if vim.fn.executable("emmylua_ls") == 1 then
 	vim.lsp.enable({ "emmylua_ls" })
