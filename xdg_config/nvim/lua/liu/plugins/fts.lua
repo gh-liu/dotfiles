@@ -48,10 +48,6 @@ return {
 		end,
 	},
 	{
-		"microsoft/python-type-stubs",
-		ft = { "python" },
-	},
-	{
 		"LuaCATS/busted",
 		lazy = true,
 	},
