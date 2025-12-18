@@ -6,15 +6,18 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 function update_go() {
 	install_start go
 
-	GOVERSION=$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0]."files" | .[0].version')
-	GOARCH=$(if [[ $(uname -m) == "x86_64" ]]; then echo amd64; else echo $(uname -m); fi)
-	echo "updating to go-$GOVERSION($GOARCH) ..."
+	need_cmd jq
+	GOVERSION="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
+	GOARCH="$(normalize_arch "$(uname -m)")"
+	echo "updating to $GOVERSION (linux-$GOARCH) ..."
 
 	mkdir_env_dir golang
 	backup go
 
-	wget "https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz" -q --show-progress
-	test $? -eq 1 && echo "fial to download go" && return
+	download "https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz" "$GOVERSION.linux-$GOARCH.tar.gz" || {
+		echo "fail to download go" >&2
+		return 1
+	}
 
 	tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz
 
@@ -38,64 +41,84 @@ function update_gopls_dlv() {
 function update_golangci-lint() {
 	install_start golangci-lint
 
-	url="https://api.github.com/repos/golangci/golangci-lint/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	echo "vesrion $version..."
+	version="$(github_latest_release_tag golangci golangci-lint)"
+	[[ -z "$version" ]] && echo "fail to resolve golangci-lint version" >&2 && return 1
+	echo "version $version..."
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin $version
 
 	install_end
 }
 
 function update_zig() {
-	if [[ -f "$(which zvm)" ]]; then
-		zvm i master
-	else
-		install_start zig
+	install_start zig
 
-		VERSION=$(curl -s https://ziglang.org/download/index.json | jq -r '.master."version"')
-		echo "updating to $VERSION ..."
+	need_cmd jq
 
-		mkdir_env_dir zig
-		backup zig
+	# Zig download keys use "x86_64-linux" / "aarch64-linux" naming.
+	local machine arch_key
+	machine="$(uname -m)"
+	case "$machine" in
+	x86_64) arch_key="x86_64-linux" ;;
+	aarch64 | arm64) arch_key="aarch64-linux" ;;
+	*) arch_key="${machine}-linux" ;;
+	esac
 
-		wget $(curl -s https://ziglang.org/download/index.json | jq -r '.master."x86_64-linux".tarball') -q --show-progress
-		test $? -eq 1 && echo "fial to download zig" && return
+	VERSION="$(curl -s https://ziglang.org/download/index.json | jq -r '.master."version"')"
+	echo "updating to $VERSION ($arch_key) ..."
 
-		tar xvJf zig-linux-x86_64-$VERSION.tar.xz
-		rm zig-linux-x86_64-$VERSION.tar.xz
-		mv zig-linux-x86_64-$VERSION zig
+	mkdir_env_dir zig
+	backup zig
 
-		link_bin $(pwd)/zig/zig zig
+	local zig_url pkg
+	zig_url="$(curl -s https://ziglang.org/download/index.json | jq -r ".master.\"$arch_key\".tarball")"
+	pkg="$(basename "$zig_url")"
 
-		install_end
+	if [[ -z "$zig_url" || "$zig_url" == "null" ]]; then
+		echo "fail to resolve zig tarball for arch key: $arch_key" >&2
+		return 1
 	fi
+
+	download "$zig_url" "$pkg" || {
+		echo "fail to download zig" >&2
+		return 1
+	}
+
+	tar xvJf "$pkg"
+	rm "$pkg"
+	mv "zig-${arch_key}-$VERSION" zig
+
+	link_bin "$(pwd)/zig/zig" zig
+
+	install_end
 }
 
 function update_zls() {
-	if [[ -f "$(which zvm)" ]]; then
-		zvm i --zls master
-	else
-		install_start zls
+	install_start zls
 
-		mkdir_env_dir zls
-
-		git_clone_or_update https://github.com/zigtools/zls $LIU_ENV/zls
-
-		zig build -Doptimize=ReleaseSafe
-		test $? -eq 1 && echo "fial to build zls" && return
-
-		chmod +x $(pwd)/zig-out/bin/zls
-
-		link_bin $(pwd)/zig-out/bin/zls zls
-
-		install_end
+	# Ensure zig exists (installed by update_zig and linked into ~/.local/bin).
+	if ! command -v zig >/dev/null 2>&1; then
+		echo "zig not found; installing zig first..." >&2
+		update_zig || return 1
 	fi
+
+	mkdir_env_dir zls
+
+	git_clone_or_update https://github.com/zigtools/zls "$LIU_ENV/zls"
+
+	zig build -Doptimize=ReleaseSafe
+	[[ $? -ne 0 ]] && echo "fail to build zls" >&2 && return 1
+
+	chmod +x "$(pwd)/zig-out/bin/zls"
+
+	link_bin "$(pwd)/zig-out/bin/zls" zls
+
+	install_end
 }
 
 function update_rust() {
 	install_start rust
 
-	if [[ -f "$(which rustup)" ]]; then
+	if command -v rustup >/dev/null 2>&1; then
 		rustup update
 	else
 		curl https://sh.rustup.rs -sSf | sh
@@ -110,16 +133,24 @@ function update_rust() {
 function update_codelldb() {
 	install_start codelldb
 
-	url="https://api.github.com/repos/vadimcn/codelldb/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	echo "vesrion codelldb-$version..."
+	version="$(github_latest_release_tag vadimcn codelldb)"
+	[[ -z "$version" ]] && echo "fail to resolve codelldb version" >&2 && return 1
+	echo "version codelldb-$version..."
 
 	# LET NVIM DAP KNOW THE PATH
 	mkdir_env_dir codelldb
 
-	pkg="codelldb-x86_64-linux.vsix"
-	github_download vadimcn codelldb $version $pkg
-	test $? -eq 1 && echo "fial to download codelldb" && return
+	local machine pkg
+	machine="$(uname -m)"
+	case "$machine" in
+	x86_64) pkg="codelldb-linux-x64.vsix" ;;
+	aarch64 | arm64) pkg="codelldb-linux-arm64.vsix" ;;
+	*) pkg="codelldb-linux-x64.vsix" ;;
+	esac
+	github_download vadimcn codelldb "$version" "$pkg" "$pkg" || {
+		echo "fail to download codelldb" >&2
+		return 1
+	}
 
 	unzip $pkg
 	link_bin $(pwd)/extension/adapter/codelldb codelldb
@@ -130,6 +161,7 @@ function update_codelldb() {
 function update_lua() {
 	install_start lua
 
+	need_cmd jq
 	LUAVERSION=$(curl -s https://api.github.com/repos/lua/lua/tags | jq -r '.[0].name')
 	LUAVERSION="${LUAVERSION:1}"
 	echo "version lua-$LUAVERSION ..."
@@ -137,8 +169,10 @@ function update_lua() {
 	mkdir_env_dir lua
 	LUAINSTALLHOME=$LIU_ENV/lua
 
-	wget https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz -q --show-progress
-	test $? -eq 1 && echo "fial to download" && return
+	download "https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz" "lua-$LUAVERSION.tar.gz" || {
+		echo "fail to download lua" >&2
+		return 1
+	}
 
 	tar -zxvf lua-$LUAVERSION.tar.gz
 	mv lua-$LUAVERSION lua
@@ -156,16 +190,18 @@ function update_lua() {
 function update_luals() {
 	install_start luals
 
-	url="https://api.github.com/repos/LuaLS/lua-language-server/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
+	version="$(github_latest_release_tag LuaLS lua-language-server)"
+	[[ -z "$version" ]] && echo "fail to resolve luals version" >&2 && return 1
 	echo "version luals-$version..."
 
 	mkdir_env_dir luals
 
 	pkg="lua-language-server-$version-linux-x64.tar.gz"
 
-	github_download LuaLS lua-language-server $version $pkg
-	test $? -eq 1 && echo "fial to download" && return
+	github_download LuaLS lua-language-server "$version" "$pkg" "$pkg" || {
+		echo "fail to download luals" >&2
+		return 1
+	}
 
 	tar -zxvf ./$pkg
 	link_bin $(pwd)/bin/lua-language-server lua-language-server
@@ -176,14 +212,17 @@ function update_luals() {
 function update_luarocks() {
 	install_start luarocks
 
-	LUAROCKSVERSION=$(curl -s https://api.github.com/repos/luarocks/luarocks/tags | jq -r '.[0].name')
-	LUAROCKSVERSION="${LUAROCKSVERSION:1}"
+	LUAROCKSVERSION="$(github_latest_release_tag luarocks luarocks)"
+	[[ -z "$LUAROCKSVERSION" ]] && echo "fail to resolve luarocks version" >&2 && return 1
+	LUAROCKSVERSION="${LUAROCKSVERSION#v}"
 	echo "updating to $LUAROCKSVERSION ..."
 
 	mkdir_env_dir luarocks
 
-	wget https://luarocks.org/releases/luarocks-$LUAROCKSVERSION.tar.gz -q --show-progres
-	test $? -eq 1 && echo "fial to download" && return
+	download "https://luarocks.org/releases/luarocks-$LUAROCKSVERSION.tar.gz" "luarocks-$LUAROCKSVERSION.tar.gz" || {
+		echo "fail to download luarocks" >&2
+		return 1
+	}
 
 	tar zxpf luarocks-$LUAROCKSVERSION.tar.gz
 	rm luarocks-$LUAROCKSVERSION.tar.gz
@@ -200,14 +239,13 @@ function update_luarocks() {
 }
 
 function update_pnpm() {
-	if [[ ! -f "$(which pnpm)" ]]; then
+	if ! command -v pnpm >/dev/null 2>&1; then
 		curl -fsSL https://get.pnpm.io/install.sh | sh -
-	else
 	fi
 }
 
 function update_bun() {
-	if [[ ! -f "$(which bun)" ]]; then
+	if ! command -v bun >/dev/null 2>&1; then
 		curl -fsSL https://bun.sh/install | bash
 	else
 		bun upgrade
@@ -225,7 +263,7 @@ function update_nodejs() {
 	NODEJSINSTALLHOME=$LIU_ENV/nodejs
 
 	wget https://nodejs.org/dist/$NODEJSVERSION/node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz -q --show-progress -P $NODEJSINSTALLHOME
-	test $? -eq 1 && echo "fial to download" && return
+	[[ $? -ne 0 ]] && echo "fail to download nodejs" >&2 && return 1
 
 	xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
 	tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar
@@ -247,7 +285,7 @@ function install_uv() {
 
 	# https://docs.astral.sh/uv
 
-	if [[ ! -f "$(which uv)" ]]; then
+	if ! command -v uv >/dev/null 2>&1; then
 		curl -LsSf https://astral.sh/uv/install.sh | sh
 		uv python install 3.12
 	else

@@ -30,7 +30,7 @@ function update_tmux() {
 
 	local file=tmux-$version.tar.gz
 	github_download $tool $tool $version $file
-	test $? -eq 1 && echo "fial to download $tool" && return
+	[[ $? -ne 0 ]] && echo "fail to download $tool" >&2 && return 1
 
 	tar -zxvf $file
 	cd ./tmux-$version
