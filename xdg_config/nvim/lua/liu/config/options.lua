@@ -34,8 +34,8 @@ vim.o.guicursor = vim.iter({
 
 vim.o.cursorline = true
 vim.cmd([[
-autocmd InsertEnter * set nocursorline | set colorcolumn=80,120 
-autocmd InsertLeave * set cursorline   | set colorcolumn= 
+autocmd InsertEnter * if &buftype == '' | set nocursorline | set colorcolumn=80,120 | endif
+autocmd InsertLeave * if &buftype == '' | set cursorline   | set colorcolumn=      | endif
 autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
 ]])
 -- =============================================================================
