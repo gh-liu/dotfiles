@@ -311,7 +311,6 @@ vim.lsp.enable("gopls")
 vim.lsp.enable({
 	-- "pyright"
 	-- "basedpyright",
-	-- "pylance",
 	"ruff", -- formating/linting
 	"ty",
 })
