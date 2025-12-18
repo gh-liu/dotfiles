@@ -4,6 +4,8 @@
 ---@field indent boolean
 
 local cache_fts = {} ---@type table<string,TSCapabilities>
+local available = nil
+local installed = nil
 
 return {
 	{
@@ -18,8 +20,17 @@ return {
 							return
 						end
 
-						if not vim.tbl_contains(require("nvim-treesitter").get_installed(), lang) then
-							require("nvim-treesitter").install(lang, {})
+						if not available then
+							available = require("nvim-treesitter").get_available()
+						end
+						if not installed then
+							installed = require("nvim-treesitter").get_installed()
+						end
+
+						if not vim.tbl_contains(installed, lang) then
+							if vim.tbl_contains(available, lang) then
+								require("nvim-treesitter").install(lang, {})
+							end
 							return
 						end
 
