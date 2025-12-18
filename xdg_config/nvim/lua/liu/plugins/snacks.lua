@@ -4,6 +4,8 @@ local input_keys = {
 	["<c-a>"] = { "<c-o>I", mode = { "i" }, expr = true },
 }
 
+-- @need-install: cargo install fd-find
+-- @need-install: cargo install ripgrep
 return {
 	"folke/snacks.nvim",
 	priority = 1000,

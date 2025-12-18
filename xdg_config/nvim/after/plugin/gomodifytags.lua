@@ -1,3 +1,4 @@
+-- @need-install: go install github.com/fatih/gomodifytags@latest
 -- https://github.com/fatih/gomodifytags
 vim.api.nvim_create_user_command("Gomodifytags", function(args)
 	if not (vim.bo.ft == "go") then

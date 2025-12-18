@@ -1,7 +1,7 @@
+-- @need-install: go install github.com/go-delve/delve/cmd/dlv@latest
 local dap = require("dap")
 
 local utils = require("liu.dap.utils")
-
 dap.adapters.go = {
 	type = "server",
 	port = "${port}",

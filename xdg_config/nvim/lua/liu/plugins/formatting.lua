@@ -21,7 +21,7 @@ local formatters_by_ft = {
 		-- "black", -- @need-install: uv tool install --force black
 	},
 	json = {
-		"jq",
+		"jq", -- @need-install: command -v jq >/dev/null 2>&1 || printf "\033[31m[need-install] missing jq\033[0m\n"
 	},
 	yaml = {
 		"yamlfmt", -- @need-install: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
@@ -35,13 +35,13 @@ local formatters_by_ft = {
 	zsh = {
 		"shfmt",
 	},
-	just = { "just" },
+	just = { "just" }, -- @need-install: cargo install just
 	proto = { "buf" },
 	query = { "format-queries" },
 	javascript = { "prettier" }, -- @need-install: bun i -g prettier
 	typescript = { "prettier" },
 	markdown = { "injected" },
-	sql = { "sqlfluff" },
+	sql = { "sqlfluff" }, -- @need-install: uv tool install --force sqlfluff
 	terraform = { "terraform_fmt" },
 }
 

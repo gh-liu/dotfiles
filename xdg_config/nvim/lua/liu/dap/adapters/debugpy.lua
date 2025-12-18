@@ -1,7 +1,8 @@
+-- @need-install: uv tool install --force debugpy
+-- @need-install: uv tool install --force pytest
 local dap = require("dap")
 
 local utils = require("liu.dap.utils")
-
 local function get_python()
 	local venv = vim.fs.find({ "venv", ".venv" }, {
 		path = vim.fn.expand("%:p:h"),

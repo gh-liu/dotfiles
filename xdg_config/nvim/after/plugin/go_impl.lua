@@ -1,5 +1,5 @@
+-- @need-install: go install github.com/josharian/impl@latest
 local Impl = {}
-
 -- append text after node
 Impl.append_text = function(node, text)
 	local _, _, pos, _ = node:range()

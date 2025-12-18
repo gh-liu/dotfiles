@@ -85,33 +85,24 @@ bins() {
 			go install github.com/go-delve/delve/cmd/dlv@latest
 		fi
 
-		go install mvdan.cc/gofumpt@latest
-		go install golang.org/x/tools/cmd/goimports@latest
-
-		go install github.com/josharian/impl@latest
-		go install github.com/fatih/gomodifytags@latest
 		# go install honnef.co/go/gotraceui/cmd/gotraceui@latest
-
-		go install github.com/google/yamlfmt/cmd/yamlfmt@latest
-		go install mvdan.cc/sh/v3/cmd/shfmt@latest
 
 		go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-		go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
-		go install github.com/bufbuild/buf/cmd/buf@latest
 
 		go install rsc.io/grepdiff@latest
 		go install github.com/rakyll/hey@latest
 		go install github.com/boyter/scc/v3@latest
-		go install github.com/abhinav/tmux-fastcopy@latest
+
 		go install github.com/jesseduffield/lazygit@latest
 		go install github.com/jesseduffield/lazydocker@latest
 
+		go install golang.org/x/tools/cmd/present@latest
+		go install github.com/abhinav/tmux-fastcopy@latest
 		go install github.com/charmbracelet/glow/v2@latest # markdown preview
 
 		# go install github.com/gohugoio/hugo@latest
 		CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
-		go install golang.org/x/tools/cmd/present@latest
 
 		go install -ldflags "-s -w" github.com/tristanisham/zvm@latest
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
@@ -120,27 +111,15 @@ bins() {
 	fi
 
 	if [ -f "$(which bun)" ]; then
-		bun i -g vim-language-server
-		bun i -g bash-language-server
-		# bun i -g vscode-langservers-extracted # jsonls
-		bun i -g vscode-json-languageserver
-		bun i -g yaml-language-server
-		bun i -g typescript typescript-language-server
-		# bun i -g prettier
 		bun i -g @biomejs/biome
 
 		bun i -g @bufbuild/buf
 		bun i -g sql-formatter
-		bun i -g @anthropic-ai/claude-code
 
 		# bun i -g tree-sitter-cli
 	fi
 
 	if [ -f "$(which uv)" ]; then
-		uv tool install --force pyright
-		uv tool install --force debugpy
-		uv tool install --force pytest
-
 		uv tool install --force jupyterlab
 		uv tool install --force notebook
 
@@ -158,29 +137,19 @@ bins() {
 
 		cargo install bat
 		cargo install eza
-		cargo install just
-		cargo install stylua
 		cargo install zoxide
-		cargo install ripgrep
-		cargo install fd-find
 		cargo install tealdeer
 		cargo install git-delta
 		cargo install starship --locked
 		cargo install inferno # flamegraph
-		cargo install --features lsp --locked taplo-cli
-		cargo install ast-grep
 		cargo install asm-lsp
 		cargo install skim
 		cargo install --locked zellij
-
-		cargo install git-absorb # git absorb
 
 		cargo install cargo-nextest
 		cargo install cargo-binutils
 
 		cargo install hyperfine # command-line benchmarking
-
-		cargo install nu
 
 		cargo install tree-sitter-cli
 
@@ -188,7 +157,6 @@ bins() {
 
 		cargo install --locked --bin jj jj-cli
 
-		cargo install --git https://github.com/ribru17/ts_query_ls.git ts_query_ls
 	fi
 
 	if [ -f "$(which gh)" ]; then
