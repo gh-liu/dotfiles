@@ -274,14 +274,15 @@ return {
 					pattern = "MiniFilesBufferCreate",
 					callback = function(args)
 						local buf = args.data.buf_id
-						local MiniVisits = require("mini.files")
+						local MiniFiles = require("mini.files")
+						local MiniVisits = require("mini.visits")
 						vim.keymap.set("n", "yA", function()
-							local entry = MiniVisits.get_fs_entry()
+							local entry = MiniFiles.get_fs_entry()
 							MiniVisits.add_label(label, entry.path, visit_cwd())
 							hi_entry_add(entry, buf, vim.fn.line("."))
 						end, { buffer = buf })
 						vim.keymap.set("n", "yD", function()
-							local entry = MiniVisits.get_fs_entry()
+							local entry = MiniFiles.get_fs_entry()
 							MiniVisits.remove_label(label, entry.path, visit_cwd())
 							hi_entry_remove(entry, buf, vim.fn.line("."))
 						end, { buffer = buf })
@@ -462,7 +463,6 @@ return {
 
 			vim.api.nvim_create_autocmd("User", {
 				pattern = "MiniFilesActionDelete",
-				group = g,
 				callback = function(args)
 					local fname = args.data.from
 					local bufnr = vim.fn.bufnr(fname)
