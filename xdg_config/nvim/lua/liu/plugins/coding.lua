@@ -277,8 +277,8 @@ return {
 		keys = {
 			{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "v" } },
 			{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "v" } },
-			{ "g<C-a>", "g<Plug>(dial-increment)", mode = { "n", "v" }, remap = true },
-			{ "g<C-x>", "g<Plug>(dial-decrement)", mode = { "n", "v" }, remap = true },
+			{ "g<C-a>", "<Plug>(dial-g-increment)", mode = { "n", "v" }, remap = true },
+			{ "g<C-x>", "<Plug>(dial-g-decrement)", mode = { "n", "v" }, remap = true },
 		},
 		config = function()
 			local config = require("dial.config")
