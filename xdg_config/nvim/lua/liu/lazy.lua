@@ -166,6 +166,9 @@ vim.api.nvim_create_autocmd("User", {
 		end
 
 		local patches_path = vim.fs.joinpath(config_path, "patches")
+		if not vim.uv.fs_stat(patches_path) then
+			return
+		end
 		for patch in vim.fs.dir(patches_path) do
 			local patch_path = vim.fs.joinpath(patches_path, patch)
 			local plugin_path = vim.fs.joinpath(package_path, (patch:gsub("%.patch$", "")))
