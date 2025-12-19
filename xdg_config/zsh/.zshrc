@@ -147,6 +147,15 @@ alias now='date +%s'
 alias grep="grep --color"
 alias ll='ls -F -a -l -h'
 ## function
+alias cdf='cdfiledir '
+function cdfiledir {
+	[ $# -eq 0 ] && {
+		echo "Usage: cdf <file-or-dir>" >&2
+		return 1
+	}
+	cd "$(dirname -- "$1")"
+}
+
 alias extr='extract '
 function extract {
 	if [ -z "$1" ]; then
