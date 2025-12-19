@@ -2,12 +2,12 @@
 local Impl = {}
 -- append text after node
 Impl.append_text = function(node, text)
-	local _, _, pos, _ = node:range()
-	pos = pos + 1
-	-- insert an empty line
-	vim.api.nvim_buf_set_lines(0, pos, pos, false, {})
-	pos = pos + 1
-	vim.api.nvim_buf_set_lines(0, pos, pos, false, vim.split(text, "\n"))
+	local _, _, end_row, _ = node:range()
+	local insert_line = end_row + 1
+	-- insert an empty line first
+	vim.api.nvim_buf_set_lines(0, insert_line, insert_line, false, {})
+	-- then insert the text
+	vim.api.nvim_buf_set_lines(0, insert_line + 1, insert_line + 1, false, vim.split(text, "\n"))
 end
 
 -- impl interface of package for struct(generate text)
@@ -22,14 +22,14 @@ Impl.gen_text = function(struct, package, interface)
 		string.format("%s *%s", receiver, struct),
 		string.format("%s.%s", package, interface),
 	}
-	local obj = vim.system(cmd, { text = true }):wait(1000)
+	local obj = vim.system(cmd, { text = true }):wait(5000)
 	if
 		obj.code == 1
 		and (string.find(obj.stderr, "unrecognized interface:") or string.find(obj.stderr, "couldn't find"))
 	then
 		-- if not find the 'packageName.interfaceName', then try just `interfaceName`
 		cmd[#cmd] = interface
-		obj = vim.system(cmd, { text = true }):wait(1000)
+		obj = vim.system(cmd, { text = true }):wait(5000)
 	end
 
 	if obj.code == 1 then

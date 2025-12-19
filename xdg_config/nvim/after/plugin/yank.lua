@@ -42,7 +42,7 @@ augroups.keep_pos_yankpost = {
 	yank_restore_cursor = {
 		event = "TextYankPost",
 		callback = function()
-			if vim.v.event.operator == "y" then
+			if vim.v.event.operator == "y" and vim.b.cursor_pos then
 				vim.fn.setpos(".", vim.b.cursor_pos)
 			end
 		end,

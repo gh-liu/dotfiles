@@ -37,7 +37,13 @@ for lang, lib_pattern_fn in pairs(ft_lib_pattern_fns) do
 					pattern = pattern,
 					command = "setlocal readonly | setlocal nomodifiable",
 				})
-				vim.api.nvim_exec_autocmds("BufRead", { buffer = env.buf, modeline = false })
+				-- vim.api.nvim_exec_autocmds("BufRead", { buffer = env.buf, modeline = false })
+				-- Check if current buffer matches pattern and apply immediately
+				local bufname = vim.api.nvim_buf_get_name(env.buf)
+				if bufname ~= "" and vim.fn.match(bufname, pattern) >= 0 then
+					vim.bo[env.buf].readonly = true
+					vim.bo[env.buf].modifiable = false
+				end
 			end
 		end,
 		once = true,

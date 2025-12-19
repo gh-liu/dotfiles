@@ -34,7 +34,8 @@ api.nvim_set_decoration_provider(ns, {
 		local skip_marks = { "s" }
 		-- Global marks
 		for _, mark in ipairs(vim.fn.getmarklist()) do
-			if mark.mark:match("%u") and not vim.tbl_contains(skip_marks, mark.mark:match("%u"), {}) then
+			local mark_char = mark.mark:match("%u")
+			if mark_char and not vim.tbl_contains(skip_marks, mark_char) then
 				local mark_file = vim.fn.fnamemodify(mark.file, ":p:a")
 				if current_file == mark_file then
 					decor_mark(bufnr, mark)
@@ -44,7 +45,8 @@ api.nvim_set_decoration_provider(ns, {
 
 		-- Local marks
 		for _, mark in ipairs(vim.fn.getmarklist(bufnr)) do
-			if mark.mark:match("%l") and not vim.tbl_contains(skip_marks, mark.mark:match("%l"), {}) then
+			local mark_char = mark.mark:match("%l")
+			if mark_char and not vim.tbl_contains(skip_marks, mark_char) then
 				decor_mark(bufnr, mark)
 			end
 		end
