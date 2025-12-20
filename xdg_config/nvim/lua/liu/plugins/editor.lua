@@ -229,6 +229,7 @@ return {
 	},
 	{
 		"nvim-mini/mini.visits",
+		enabled = false,
 		event = "VeryLazy",
 		opts = {},
 		init = function()

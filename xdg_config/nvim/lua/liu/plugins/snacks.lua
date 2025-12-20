@@ -52,6 +52,7 @@ return {
 		map("m", "marks")
 		map("s", "lsp_symbols")
 		map("w", "grep_word")
+		map("o", "recent", { filter = { cwd = true } })
 
 		vim.keymap.set("n", "<leader>;", function()
 			require("snacks").picker("commands", { layout = "select" })
