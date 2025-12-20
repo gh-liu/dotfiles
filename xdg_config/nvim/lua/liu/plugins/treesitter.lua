@@ -6,6 +6,7 @@
 local cache_fts = {} ---@type table<string,TSCapabilities>
 local available = nil
 local installed = nil
+local installing = {}
 
 return {
 	{
@@ -17,7 +18,7 @@ return {
 					if not cache_fts[filetype] then
 						local lang = vim.treesitter.language.get_lang(filetype)
 						if not lang then
-							return
+							return true
 						end
 
 						if not available then
@@ -27,14 +28,20 @@ return {
 							installed = require("nvim-treesitter").get_installed()
 						end
 
-						if not vim.tbl_contains(installed, lang) then
-							if vim.tbl_contains(available, lang) then
-								require("nvim-treesitter").install(lang, {})
-							end
-							return
+						if not vim.tbl_contains(available, lang) then
+							return true
 						end
 
-						cache_fts[filetype] = { highlight = true }
+						if not vim.tbl_contains(installed, lang) then
+							if not installing[lang] then
+								require("nvim-treesitter").install(lang, {})
+							else
+								installing[lang] = true
+							end
+							return true
+						end
+
+						cache_fts[filetype] = { highlight = true, fold = false, indent = false }
 						if vim.treesitter.query.get(lang, "folds") then
 							cache_fts[filetype].fold = true
 						end
