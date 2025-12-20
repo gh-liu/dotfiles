@@ -1,6 +1,6 @@
 -- https://github.com/mfussenegger/nvim-lint?tab=readme-ov-file#available-linters
 local linters_by_ft = {
-	go = { "golangcilint" }, -- @need-install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go = { "golangcilint" }, -- @need-install: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	proto = { "buf_lint" },
 	bash = { "shellcheck" }, -- @need-install: command -v shellcheck >/dev/null 2>&1 || printf "\033[31m[need-install] missing shellcheck\033[0m\n"
 	-- python = { "pylint" }, -- @need-install: uv tool install --force pylint

@@ -4,54 +4,30 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 . $SCRIPT_DIR/helper.sh --source-only
 
 function update_go() {
-	install_start go
-
 	need_cmd jq
+
 	GOVERSION="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
 	GOARCH="$(normalize_arch "$(uname -m)")"
 	echo "updating to $GOVERSION (linux-$GOARCH) ..."
 
 	mkdir_env_dir golang
-	backup go
-
 	download "https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz" "$GOVERSION.linux-$GOARCH.tar.gz" || {
 		echo "fail to download go" >&2
 		return 1
 	}
-
+	backup go
 	tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz
-
-	install_end
 }
 
 function update_gopls_dlv() {
 	export GOPROXY=https://goproxy.io
 
-	install_start gopls
 	# local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
 	# go install golang.org/x/tools/gopls@$GOPLSVERSION
 	go install golang.org/x/tools/gopls@latest
-	install_end
-
-	install_start dlv
 	go install github.com/go-delve/delve/cmd/dlv@latest
-	install_end
 }
-
-function update_golangci-lint() {
-	install_start golangci-lint
-
-	version="$(github_latest_release_tag golangci golangci-lint)"
-	[[ -z "$version" ]] && echo "fail to resolve golangci-lint version" >&2 && return 1
-	echo "version $version..."
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin $version
-
-	install_end
-}
-
 function update_zig() {
-	install_start zig
-
 	need_cmd jq
 
 	# Zig download keys use "x86_64-linux" / "aarch64-linux" naming.
@@ -63,38 +39,36 @@ function update_zig() {
 	*) arch_key="${machine}-linux" ;;
 	esac
 
-	VERSION="$(curl -s https://ziglang.org/download/index.json | jq -r '.master."version"')"
-	echo "updating to $VERSION ($arch_key) ..."
+	# tmpfile="/tmp/zig-index-$$"
+	# curl -s -o "$tmpfile" https://ziglang.org/download/index.json
+	# zig_url="$(jq -r ".master.\"$arch_key\".tarball" "$tmpfile")"
+	# VERSION="$(jq -r 'to_entries[1].value.version' "$tmpfile")"
 
 	mkdir_env_dir zig
-	backup zig
 
-	local zig_url pkg
-	zig_url="$(curl -s https://ziglang.org/download/index.json | jq -r ".master.\"$arch_key\".tarball")"
-	pkg="$(basename "$zig_url")"
+	tmpfile="$LIU_ENV/zig/info.json"
+	curl -s https://ziglang.org/download/index.json |
+		# jq '.master' \
+		jq 'to_entries[1].value' \
+			>"$tmpfile"
 
-	if [[ -z "$zig_url" || "$zig_url" == "null" ]]; then
-		echo "fail to resolve zig tarball for arch key: $arch_key" >&2
-		return 1
-	fi
+	VERSION="$(jq -r '.version' "$tmpfile")"
+	ZIGURL="$(jq -r ".\"$arch_key\".tarball" "$tmpfile")"
+	echo "updating to $VERSION ($arch_key) ..."
 
-	download "$zig_url" "$pkg" || {
+	local pkg
+	pkg="$(basename "$ZIGURL")"
+	download "$ZIGURL" "$pkg" || {
 		echo "fail to download zig" >&2
 		return 1
 	}
-
+	backup zig
 	tar xvJf "$pkg"
 	rm "$pkg"
 	mv "zig-${arch_key}-$VERSION" zig
-
-	link_bin "$(pwd)/zig/zig" zig
-
-	install_end
 }
 
 function update_zls() {
-	install_start zls
-
 	# Ensure zig exists (installed by update_zig and linked into ~/.local/bin).
 	if ! command -v zig >/dev/null 2>&1; then
 		echo "zig not found; installing zig first..." >&2
@@ -103,139 +77,28 @@ function update_zls() {
 
 	mkdir_env_dir zls
 
-	git_clone_or_update https://github.com/zigtools/zls "$LIU_ENV/zls"
+	git_clone_or_update https://github.com/zigtools/zls "$LIU_ENV/zig/zls"
 
 	zig build -Doptimize=ReleaseSafe
 	[[ $? -ne 0 ]] && echo "fail to build zls" >&2 && return 1
 
 	chmod +x "$(pwd)/zig-out/bin/zls"
-
 	link_bin "$(pwd)/zig-out/bin/zls" zls
-
-	install_end
 }
 
 function update_rust() {
-	install_start rust
+	mkdir_env_dir rust
+	export RUSTUP_HOME=$LIU_ENV/rust/rustup
+	export CARGO_HOME=$LIU_ENV/rust/cargo
 
 	if command -v rustup >/dev/null 2>&1; then
 		rustup update
 	else
 		curl https://sh.rustup.rs -sSf | sh
 		rustup component add rust-analyzer rust-src
-		rustup component add llvm-tools-preview
+		# rustup component add llvm-tools-preview
 	fi
 	# ln -svf $(rustup which --toolchain stable rust-analyzer) $CARGO_HOME/bin/rust-analyzer
-
-	install_end
-}
-
-function update_codelldb() {
-	install_start codelldb
-
-	version="$(github_latest_release_tag vadimcn codelldb)"
-	[[ -z "$version" ]] && echo "fail to resolve codelldb version" >&2 && return 1
-	echo "version codelldb-$version..."
-
-	# LET NVIM DAP KNOW THE PATH
-	mkdir_env_dir codelldb
-
-	local machine pkg
-	machine="$(uname -m)"
-	case "$machine" in
-	x86_64) pkg="codelldb-linux-x64.vsix" ;;
-	aarch64 | arm64) pkg="codelldb-linux-arm64.vsix" ;;
-	*) pkg="codelldb-linux-x64.vsix" ;;
-	esac
-	github_download vadimcn codelldb "$version" "$pkg" "$pkg" || {
-		echo "fail to download codelldb" >&2
-		return 1
-	}
-
-	unzip $pkg
-	link_bin $(pwd)/extension/adapter/codelldb codelldb
-
-	install_end
-}
-
-function update_lua() {
-	install_start lua
-
-	need_cmd jq
-	LUAVERSION=$(curl -s https://api.github.com/repos/lua/lua/tags | jq -r '.[0].name')
-	LUAVERSION="${LUAVERSION:1}"
-	echo "version lua-$LUAVERSION ..."
-
-	mkdir_env_dir lua
-	LUAINSTALLHOME=$LIU_ENV/lua
-
-	download "https://www.lua.org/ftp/lua-$LUAVERSION.tar.gz" "lua-$LUAVERSION.tar.gz" || {
-		echo "fail to download lua" >&2
-		return 1
-	}
-
-	tar -zxvf lua-$LUAVERSION.tar.gz
-	mv lua-$LUAVERSION lua
-	rm -rf lua-$LUAVERSION.tar.gz
-
-	cd lua
-	make all test
-
-	link_bin $LUAINSTALLHOME/lua/src/lua lua
-	link_bin $LUAINSTALLHOME/lua/src/luac luac
-
-	install_end
-}
-
-function update_luals() {
-	install_start luals
-
-	version="$(github_latest_release_tag LuaLS lua-language-server)"
-	[[ -z "$version" ]] && echo "fail to resolve luals version" >&2 && return 1
-	echo "version luals-$version..."
-
-	mkdir_env_dir luals
-
-	pkg="lua-language-server-$version-linux-x64.tar.gz"
-
-	github_download LuaLS lua-language-server "$version" "$pkg" "$pkg" || {
-		echo "fail to download luals" >&2
-		return 1
-	}
-
-	tar -zxvf ./$pkg
-	link_bin $(pwd)/bin/lua-language-server lua-language-server
-
-	install_end
-}
-
-function update_luarocks() {
-	install_start luarocks
-
-	LUAROCKSVERSION="$(github_latest_release_tag luarocks luarocks)"
-	[[ -z "$LUAROCKSVERSION" ]] && echo "fail to resolve luarocks version" >&2 && return 1
-	LUAROCKSVERSION="${LUAROCKSVERSION#v}"
-	echo "updating to $LUAROCKSVERSION ..."
-
-	mkdir_env_dir luarocks
-
-	download "https://luarocks.org/releases/luarocks-$LUAROCKSVERSION.tar.gz" "luarocks-$LUAROCKSVERSION.tar.gz" || {
-		echo "fail to download luarocks" >&2
-		return 1
-	}
-
-	tar zxpf luarocks-$LUAROCKSVERSION.tar.gz
-	rm luarocks-$LUAROCKSVERSION.tar.gz
-	mv luarocks-$LUAROCKSVERSION luarocks
-
-	cd luarocks
-	./configure --with-lua-include=$LIU_ENV/lua/lua/src
-	make && sudo make install
-
-	sudo luarocks install luasocket
-	sudo luarocks install busted # test
-
-	install_end
 }
 
 function update_pnpm() {
@@ -245,6 +108,9 @@ function update_pnpm() {
 }
 
 function update_bun() {
+	mkdir_env_dir nodejs
+	export BUN_INSTALL="$LIU_ENV/nodejs/bun"
+
 	if ! command -v bun >/dev/null 2>&1; then
 		curl -fsSL https://bun.sh/install | bash
 	else
@@ -253,7 +119,7 @@ function update_bun() {
 }
 
 function update_nodejs() {
-	install_start nodejs
+	_install_start nodejs
 
 	NODEJSVERSION=$(curl -s https://api.github.com/repos/nodejs/node/tags | jq -r '.[0].name')
 	NODEJSARCH=x64
@@ -274,7 +140,7 @@ function update_nodejs() {
 	echo "updating npm..."
 	npm install npm@latest -g
 
-	install_end
+	_install_end
 }
 
 function install_uv() {
@@ -285,6 +151,8 @@ function install_uv() {
 
 	# https://docs.astral.sh/uv
 
+	mkdir_env_dir python
+	export UV_INSTALL_DIR=$LIU_ENV/python/uv
 	if ! command -v uv >/dev/null 2>&1; then
 		curl -LsSf https://astral.sh/uv/install.sh | sh
 		uv python install 3.12
@@ -298,31 +166,40 @@ function install_uv() {
 	# 3. source myenv/bin/activate
 }
 
+function install_uv_tools() {
+	uv tool install ruff
+	uv tool install ty
+}
+
 case $1 in
 "go")
+	_install_start go
 	update_go
 	update_gopls_dlv
-	update_golangci-lint
+	_install_end
+	;;
+"python")
+	_install_start uv
+	install_uv
+	install_uv_tools
+	_install_end
 	;;
 "zig")
+	_install_start zig
 	update_zig
 	update_zls
+	_install_end
 	;;
 "rust")
+	_install_start rust
 	update_rust
-	update_codelldb
-	;;
-"lua")
-	update_lua
-	update_luals
-	update_luarocks
+	_install_end
 	;;
 "nodejs")
 	# update_nodejs
+	_install_start bun
 	update_bun
-	;;
-"python")
-	install_uv
+	_install_end
 	;;
 *)
 	echo "select one language"

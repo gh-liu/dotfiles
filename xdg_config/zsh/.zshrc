@@ -412,12 +412,13 @@ _gopresent() {
 # }}}
 # 7. lang: python{{{
 ## uv: curl -LsSf https://astral.sh/uv/install.sh | sh
-# export UV_TOOL_BIN_DIR=$LIU_ENV/uvpython/bin
-# export PATH=$PATH:$UV_TOOL_BIN_DIR
+export UV_TOOL_BIN_DIR=$LIU_ENV/python/bin
+export PATH=$PATH:$UV_TOOL_BIN_DIR
 if [[ -f "$(which uv)" ]]; then
 	eval "$(uv generate-shell-completion zsh)"
 	eval "$(uvx --generate-shell-completion zsh)"
 fi
+export UV_PYTHON_INSTALL_DIR=$LIU_ENV/python
 ## venv activate
 alias va=_venv
 function _venv() {
@@ -432,20 +433,19 @@ function _venv() {
 # }}}
 # 7. lang: rust{{{
 ## rustup: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-export RUSTUP_HOME=$LIU_ENV/rust/rustup
+# export RUSTUP_HOME=$LIU_ENV/rust/rustup
 ## cargo
-export CARGO_HOME=$LIU_ENV/rust/cargo
-export CARGO_BIN=$CARGO_HOME/bin
+# export CARGO_HOME=$LIU_ENV/rust/cargo
+export CARGO_BIN=$LIU_ENV/rust/bin
 export PATH=$PATH:$CARGO_BIN
 # }}}
 # 7. lang: zig{{{
-## zvm: go install -ldflags "-s -w" github.com/tristanisham/zvm@latest
-export PATH=$PATH:$HOME/.zvm/bin
+export PATH=$PATH:$LIU_ENV/zig/zig
 # }}}
 # 7. lang: js{{{
 ## bun: curl -fsSL https://bun.sh/install | bash
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+# export BUN_INSTALL="$LIU_ENV/nodejs/bun"
+export PATH="$LIU_ENV/nodejs/bun/bin:$PATH"
 # }}}
 
 # 9. tools: AS many tools install by lang, so let it at BOTTOM{{{

@@ -91,12 +91,12 @@ git_clone_or_update() {
 	fi
 }
 
-install_start() {
+_install_start() {
 	echo "========================================"
 	echo "Installing $1..."
 }
 
-install_end() {
+_install_end() {
 	echo "========================================"
 }
 
