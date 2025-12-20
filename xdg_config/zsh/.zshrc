@@ -446,6 +446,8 @@ export PATH=$PATH:$LIU_ENV/zig/zig
 ## bun: curl -fsSL https://bun.sh/install | bash
 # export BUN_INSTALL="$LIU_ENV/nodejs/bun"
 export PATH="$LIU_ENV/nodejs/bun/bin:$PATH"
+# bun completions
+# https://github.com/oven-sh/bun/issues/11179#issuecomment-2151457758
 # }}}
 
 # 9. tools: AS many tools install by lang, so let it at BOTTOM{{{
