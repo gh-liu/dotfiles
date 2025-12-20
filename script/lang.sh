@@ -109,8 +109,8 @@ function update_pnpm() {
 
 function update_bun() {
 	mkdir_env_dir nodejs
-	export BUN_INSTALL="$LIU_ENV/nodejs/bun"
 
+	# export BUN_INSTALL="$LIU_ENV/nodejs/bun"
 	if ! command -v bun >/dev/null 2>&1; then
 		curl -fsSL https://bun.sh/install | bash
 	else
