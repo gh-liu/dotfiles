@@ -51,7 +51,12 @@ return {
 					end
 
 					if cache_fts[filetype].highlight then
-						vim.treesitter.start()
+						-- vim.treesitter.start()
+						local ok, err = pcall(vim.treesitter.start)
+						if not ok then
+							-- print(err)
+							vim.api.nvim_echo({ { err } }, true, { err = true })
+						end
 					end
 					if cache_fts[filetype].fold then
 						vim.wo[0][0].foldmethod = "expr"
