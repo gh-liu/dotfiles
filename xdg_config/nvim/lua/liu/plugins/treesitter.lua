@@ -11,6 +11,8 @@ local installing = {}
 return {
 	{
 		"nvim-treesitter/nvim-treesitter",
+		-- @need-install: cargo install --locked tree-sitter-cli
+		-- bun install tree-sitter-cli
 		init = function()
 			vim.api.nvim_create_autocmd("FileType", {
 				callback = function(event)
