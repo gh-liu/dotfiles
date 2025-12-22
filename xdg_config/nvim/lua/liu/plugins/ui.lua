@@ -251,8 +251,8 @@ return {
 			-- end
 
 			if vim.fn.exists("&busy") then
-			-- vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]])
-			vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('…'):''}") ]])
+				-- vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]])
+				vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('…'):''}") ]])
 			end
 		end,
 	},
