@@ -60,6 +60,9 @@ return {
 				typeParameter = { hl = "@lsp.type.typeParameter" },
 				variable = { hl = "@lsp.type.variable" },
 			},
+			file = {
+				["speckit.plan.md"] = { glyph = "", hl = "MiniIconsYellow" },
+			},
 		},
 	},
 	{
