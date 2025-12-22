@@ -65,4 +65,12 @@ return {
 		cmd = "DapViewToggle",
 		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>" } },
 	},
+
+	{
+		"Jorenar/nvim-dap-disasm",
+		opts = {
+			winbar = false,
+		},
+		cmd = "DapDisasm",
+	},
 }
