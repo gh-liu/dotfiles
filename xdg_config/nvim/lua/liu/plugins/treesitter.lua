@@ -35,7 +35,6 @@ return {
 						if not vim.tbl_contains(installed, lang) then
 							if not installing[lang] then
 								require("nvim-treesitter").install(lang, {})
-							else
 								installing[lang] = true
 							end
 							return true
