@@ -1,21 +1,6 @@
 -- NOTE: not editor features?
 return {
 	{
-		"folke/sidekick.nvim",
-		event = "VeryLazy",
-		init = function()
-			vim.keymap.set("n", "yoA", "<cmd>Sidekick cli toggle<cr>")
-
-			vim.keymap.set("n", "gzj", "<cmd>Sidekick nes jump<cr>")
-			vim.keymap.set("n", "gzl", "<cmd>Sidekick nes apply<cr>")
-		end,
-		opts = {
-			nes = {
-				enabled = true,
-			},
-		},
-	},
-	{
 		"tpope/vim-dadbod",
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
