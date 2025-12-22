@@ -433,10 +433,10 @@ function _venv() {
 # }}}
 # 7. lang: rust{{{
 ## rustup: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-# export RUSTUP_HOME=$LIU_ENV/rust/rustup
+export RUSTUP_HOME=$LIU_ENV/rust/rustup
 ## cargo
-# export CARGO_HOME=$LIU_ENV/rust/cargo
-export CARGO_BIN=$LIU_ENV/rust/bin
+export CARGO_HOME=$LIU_ENV/rust/cargo
+export CARGO_BIN=$CARGO_HOME/bin
 export PATH=$PATH:$CARGO_BIN
 # }}}
 # 7. lang: zig{{{
