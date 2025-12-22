@@ -77,7 +77,7 @@ function update_fzf() {
 
 bins() {
 	if [ -f "$(which go)" ]; then
-		# export GOPROXY=https://goproxy.io
+		export GOPROXY=https://goproxy.io
 		if [[ $OS == linux ]]; then
 			local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
 			go install golang.org/x/tools/gopls@$GOPLSVERSION

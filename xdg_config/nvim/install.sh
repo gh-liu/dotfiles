@@ -8,6 +8,8 @@ echo "========"
 
 read -rp "install? (y/n): " confirm
 if [[ "$confirm" == "y" || "$confirm" == "Y" ]]; then
+        export GOPROXY=https://goproxy.io
+
         echo "$commands" | while IFS= read -r cmd; do
                 echo "exec: $cmd"
                 eval "$cmd"
