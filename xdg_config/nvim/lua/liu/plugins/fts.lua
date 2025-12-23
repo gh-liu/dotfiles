@@ -35,19 +35,6 @@ return {
 		end,
 	},
 	{
-		"mmarchini/bpftrace.vim",
-		ft = "bpftrace",
-		init = function()
-			vim.api.nvim_create_autocmd("FileType", {
-				pattern = "bpftrace",
-				callback = function()
-					vim.bo.omnifunc = "syntaxcomplete#Complete"
-					vim.b.blink_cmp_provider = { "buffer", "omni" }
-				end,
-			})
-		end,
-	},
-	{
 		"LuaCATS/busted",
 		lazy = true,
 	},
