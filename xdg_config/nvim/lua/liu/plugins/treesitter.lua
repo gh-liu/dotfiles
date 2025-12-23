@@ -31,7 +31,7 @@ return {
 						end
 
 						if not vim.tbl_contains(available, lang) then
-							return true
+							return
 						end
 
 						if not vim.tbl_contains(installed, lang) then
@@ -39,7 +39,7 @@ return {
 								require("nvim-treesitter").install(lang, {})
 								installing[lang] = true
 							end
-							return true
+							return
 						end
 
 						cache_fts[filetype] = { highlight = true, fold = false, indent = false }
