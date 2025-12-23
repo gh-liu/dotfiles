@@ -215,6 +215,13 @@ _llm_clis() {
 	# go install github.com/charmbracelet/crush@latest
 }
 
+_claudecode_mcp() {
+	claude mcp add --transport http context7 https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY"
+	claude mcp add --transport sse deepwiki https://mcp.deepwiki.com/sse
+	# uv tool install mcp-server-fetch
+	claude mcp add --transport stdio fetch uvx mcp-server-fetch
+}
+
 case $1 in
 "nvim_nightly")
 	nvim_nightly
