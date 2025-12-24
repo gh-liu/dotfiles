@@ -94,8 +94,8 @@ nnoremap ]<tab> <cmd>tabnext<cr>
 vim.cmd([[
 " copy full path
 "noremap y<cr> :execute 'let @+ = expand("%:p")' <Bar> echo 'copy:' @+ <CR>
-" copy path
-nnoremap y<leader> :execute 'let @+ = substitute(expand("%:p"), getcwd()."/","","")' <Bar> echo 'copy:' @+ <CR>
+" copy path:line
+nnoremap y<leader> :execute 'let @+ = substitute(expand("%:p"), getcwd()."/", "", "") . ":" . line(".")' <Bar> echo 'copy:' @+ <CR>
 " go to parent dir
 "noremap - :<C-U>cd .. <CR>
 ]])
