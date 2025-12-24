@@ -304,9 +304,12 @@ return { -- Git {{{2
 			-- ]])
 
 			set_hls({
-				diffAdded = { link = "DiffAdd" },
-				diffRemoved = { link = "DiffDelete" },
-				StatusLineFugitive = { link = "PmenuShadow" },
+				-- diffAdded = { link = "DiffAdd" },
+				diffAdded = { bg = "#4f5a58" },
+				-- diffRemoved = { link = "DiffDelete" },
+				diffRemoved = { bg = "#634652" },
+				-- StatusLineFugitive = { link = "PmenuShadow" },
+				StatusLineFugitive = { bg = "#546e91" },
 			})
 		end,
 	},

@@ -11,6 +11,13 @@
 -- globs & file
 -- ...
 
+---@param highlights table
+local set_hls = function(highlights)
+	for group, opts in pairs(highlights) do
+		vim.api.nvim_set_hl(0, group, opts)
+	end
+end
+
 return {
 	{
 		"justinmk/vim-dirvish",
@@ -315,6 +322,12 @@ return {
 			vim.cmd([[
 			autocmd User Flags call Hoist("buffer", 6, "%{v:lua.Flag_diff_summary()}")
 			]])
+
+			set_hls({
+				MiniDiffOverAdd = { bg = "#4f5a58" },
+				MiniDiffOverDelete = { bg = "#634652" },
+				MiniDiffOverChange = { bg = "#546e91" },
+			})
 		end,
 		opts = {
 			view = {
