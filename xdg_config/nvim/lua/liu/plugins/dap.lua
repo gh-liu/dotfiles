@@ -1,7 +1,8 @@
+vim.api.nvim_set_hl(0, "DebugLine", { bg = "#524d57" })
 local signs = {
 	DapStopped = { text = "", texthl = "ModeMsg", numhl = "ModeMsg", linehl = "ModeMsg" },
 	DapLogPoint = { text = "", texthl = "Tag", numhl = "Tag", linehl = "Tag" },
-	DapBreakpoint = { text = "", texthl = "Debug", numhl = "Debug", linehl = "Debug" },
+	DapBreakpoint = { text = "", texthl = "Debug", numhl = "Debug", linehl = "DebugLine" },
 	DapBreakpointCondition = { text = "", texthl = "Conditional", numhl = "Conditional", linehl = "Conditional" },
 	DapBreakpointRejected = { text = "", texthl = "ErrorMsg", numhl = "ErrorMsg", linehl = "" },
 }
