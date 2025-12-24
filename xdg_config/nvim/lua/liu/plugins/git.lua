@@ -221,14 +221,6 @@ return { -- Git {{{2
 			end, { nargs = 0 })
 			--- }}}
 
-			api.nvim_create_autocmd("BufReadPost", {
-				group = g,
-				pattern = { "fugitive://*", ".git/*" },
-				callback = function(data)
-					vim.b[data.buf].minivisits_disable = true
-				end,
-			})
-
 			api.nvim_create_autocmd("FileType", {
 				desc = "fold method for git buffer",
 				pattern = { "git", "fugitive" },
