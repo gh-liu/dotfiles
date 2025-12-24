@@ -393,6 +393,7 @@ return {
 	},
 	{
 		"MagicDuck/grug-far.nvim",
+		enabled = false,
 		opts = {
 			---@alias liu.grug-far.engine 'ripgrep'|'astgrep'|'astgrep-rules'
 			---@type liu.grug-far.engine
