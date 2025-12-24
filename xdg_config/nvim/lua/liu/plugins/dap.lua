@@ -61,7 +61,12 @@ return {
 	},
 	{
 		"igorlfs/nvim-dap-view",
-		opts = {},
+		opts = {
+			-- https://igorlfs.github.io/nvim-dap-view/configuration
+			winbar = {
+				default_section = "repl",
+			},
+		},
 		cmd = "DapViewToggle",
 		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>" } },
 	},
