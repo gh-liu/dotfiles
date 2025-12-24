@@ -128,8 +128,15 @@ noremap z? <cmd> setlocal foldenable?
 
 "TODO position no ok
 "noremap yqa <cmd> call setqflist(map(argv(),'{"bufnr":bufnr(v:val),"filename":v:val}')) <bar> copen <cr>
-noremap yA <cmd>argedit % <bar> argdedupe <bar> args  <cr>
-noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
+"noremap yA <cmd>argedit % <bar> argdedupe <bar> args  <cr>
+"noremap yD <cmd>argdelete <bar> argdedupe <bar> args  <cr>
+nnoremap <silent> yA
+  \ :execute index(argv(), bufname('%')) >= 0 ?
+  \ 'argdelete %' 
+  \ :
+  \ 'argadd % <Bar> argdedupe'
+  \ <Bar>redrawstatus
+  \ <CR>
 
 noremap <leader>m <cmd>message<cr>
 
