@@ -100,15 +100,6 @@ return {
 		end,
 	},
 	{
-		"dhananjaylatkar/cscope_maps.nvim",
-		enabled = false,
-		opts = {
-			disable_maps = true,
-			prefix = false,
-		},
-		cmd = { "Cs" },
-	},
-	{
 		"brianhuster/unnest.nvim",
 	},
 	-- filetype plugins below
