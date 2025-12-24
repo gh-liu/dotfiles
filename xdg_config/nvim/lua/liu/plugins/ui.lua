@@ -242,6 +242,9 @@ return {
 			autocmd User Flags call Hoist("buffer", 11, "%{v:lua.Flag_lsp_clients()}")
 			autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
 
+			"autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? 'A+' : '')}")
+			autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? printf('@%d/%d', index(argv(), bufname('%')) + 1, len(argv())) : '')}")
+
 			"autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
 			]])
 			vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
