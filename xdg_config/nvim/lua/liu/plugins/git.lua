@@ -35,6 +35,10 @@ return { -- Git {{{2
 					]])
 				end,
 			},
+			{
+				"gh-liu/vim-qfugitive",
+				dev = true,
+			},
 		},
 		config = function()
 			-- https://github.com/tpope/vim-fugitive/issues/1080#issuecomment-521100430
