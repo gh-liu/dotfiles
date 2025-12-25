@@ -106,6 +106,7 @@ bins() {
 
 		go install -ldflags "-s -w" github.com/tristanisham/zvm@latest
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+		go install github.com/kopecmaciej/vi-mongo@latest
 
 		go install github.com/sinclairtarget/git-who@latest
 	fi
