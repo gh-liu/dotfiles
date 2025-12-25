@@ -128,6 +128,7 @@ bins() {
 
 		uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
+		uv tool install sqlit-tui # tui for sql databases
 		uv tool install mitmproxy
 	fi
 
