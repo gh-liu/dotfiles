@@ -323,11 +323,11 @@ return {
 			autocmd User Flags call Hoist("buffer", 6, "%{v:lua.Flag_diff_summary()}")
 			]])
 
-			set_hls({
-				MiniDiffOverAdd = { bg = "#4f5a58" },
-				MiniDiffOverDelete = { bg = "#634652" },
-				MiniDiffOverChange = { bg = "#546e91" },
-			})
+			-- set_hls({
+				-- MiniDiffOverAdd = { bg = "#4f5a58" },
+				-- MiniDiffOverDelete = { bg = "#634652" },
+				-- MiniDiffOverChange = { bg = "#546e91" },
+			-- })
 		end,
 		opts = {
 			view = {
