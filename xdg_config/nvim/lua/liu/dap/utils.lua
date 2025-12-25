@@ -81,6 +81,7 @@ end
 ---@field request 'attach'|'launch'
 
 M.enrich_config = function(config, on_config)
+	config.options = { timeout = 10000 }
 	vim.g.dap_last_config = config
 	on_config(config)
 end
