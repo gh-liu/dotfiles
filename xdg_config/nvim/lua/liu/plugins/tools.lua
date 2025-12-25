@@ -102,5 +102,8 @@ return {
 	{
 		"brianhuster/unnest.nvim",
 	},
-	-- filetype plugins below
+	{
+		"gh-liu/nvim-tester",
+		dev = true,
+	},
 }
