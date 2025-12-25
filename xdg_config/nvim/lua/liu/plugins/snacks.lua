@@ -4,6 +4,44 @@ local input_keys = {
 	["<c-a>"] = { "<c-o>I", mode = { "i" }, expr = true },
 }
 
+local mypickers = {}
+mypickers.args = {
+	finder = function(opts, ctx)
+		local args = vim.fn.argv()
+		---@type snacks.picker.finder.Item[]
+		local items = vim.iter(args)
+			:map(function(arg)
+				local buf = vim.fn.bufnr(arg)
+				return {
+					buf = buf,
+					name = vim.api.nvim_buf_get_name(buf),
+					buftype = vim.bo[buf].buftype,
+					filetype = vim.bo[buf].filetype,
+					file = arg,
+					text = arg,
+					-- info = vim.fn.getbufinfo(buf)[1],
+				}
+			end)
+			:totable()
+		return function(cb)
+			for _, item in ipairs(items) do
+				cb(item)
+			end
+		end
+	end,
+	actions = {
+		argdelete = function(self, item, action)
+			self.preview:reset()
+
+			vim.cmd.argdelete(item.file)
+
+			self.list:set_selected()
+			self.list:set_target()
+			self:find()
+		end,
+	},
+}
+
 -- @need-install: cargo install fd-find
 -- @need-install: cargo install ripgrep
 return {
@@ -53,6 +91,22 @@ return {
 		map("s", "lsp_symbols")
 		map("w", "grep_word")
 		map("o", "recent", { filter = { cwd = true } })
+
+		vim.keymap.set("n", "<leader>sa", function()
+			require("snacks").picker({
+				title = "Args",
+				format = "file",
+				finder = mypickers.args.finder,
+				actions = mypickers.args.actions,
+				win = {
+					input = {
+						keys = {
+							["<c-x>"] = { "argdelete", mode = { "n", "i" } },
+						},
+					},
+				},
+			})
+		end)
 
 		vim.keymap.set("n", "<leader>;", function()
 			require("snacks").picker("commands", { layout = "select" })
