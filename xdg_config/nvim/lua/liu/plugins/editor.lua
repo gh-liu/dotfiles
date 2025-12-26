@@ -572,6 +572,7 @@ return {
 					["README.md"] = { type = "doc" },
 					[".projections.json"] = { type = "projections" },
 				},
+
 				-- c {{{
 				["*.c&*.h"] = {
 					["*.c"] = {
@@ -584,6 +585,7 @@ return {
 					},
 				},
 				-- }}}
+
 				-- go {{{
 				["go.mod"] = {
 					["go.mod"] = { type = "dep" },
@@ -632,6 +634,7 @@ return {
 					},
 				},
 				-- }}}
+
 				-- python {{{
 				["pyproject.toml|.venv/"] = {
 					["pyproject.toml"] = {
@@ -677,6 +680,7 @@ return {
 					},
 				},
 				-- }}}
+
 				-- zig {{{
 				["build.zig"] = {
 					["build.zig"] = {
@@ -697,6 +701,7 @@ return {
 					},
 				},
 				-- }}}
+
 				-- rust {{{
 				["Cargo.toml"] = {
 					["Cargo.toml"] = { type = "dep" },
@@ -733,20 +738,23 @@ return {
 			]])
 
 			-- autocmds {{{
-			-- autocmd("User", {
+			-- vim.api.nvim_create_autocmd("User", {
 			-- 	pattern = "ProjectionistDetect",
 			-- 	callback = function(ev)
-			-- 		vim.notify("[Projections] detect!", vim.log.levels.INFO)
+			-- 		vim.print("searching for projections.")
 			-- 		vim.print(vim.g.projectionist_file)
+			-- 		-- vim.notify("[Projections] detect! " .. vim.g.projectionist_file, vim.log.levels.INFO)
 			-- 	end,
 			-- })
 			--
-			-- autocmd("User", {
+			-- vim.api.nvim_create_autocmd("User", {
 			-- 	pattern = "ProjectionistActivate",
 			-- 	callback = function(ev)
+			-- 		vim.print("projections are found.")
 			-- 		-- property can be defined
 			-- 		-- [root, property_value]
-			-- 		vim.fn["projectionist#query"]("property")
+			-- 		local data = vim.fn["projectionist#query"]("type")
+			-- 		vim.print(data)
 			-- 	end,
 			-- })
 			-- }}}
