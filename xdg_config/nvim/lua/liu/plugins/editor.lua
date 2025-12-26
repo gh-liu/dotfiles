@@ -701,9 +701,13 @@ return {
 				["Cargo.toml"] = {
 					["Cargo.toml"] = { type = "dep" },
 					["build.rs"] = { type = "build" },
+					["src/main.rs"] = {
+						type = "main",
+					},
 					["src/*.rs"] = {
 						type = "source",
 						alternate = "tests/{}.rs",
+						dispatch = "cargo run {}",
 					},
 					["tests/*.rs"] = {
 						type = "test",
