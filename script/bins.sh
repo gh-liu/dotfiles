@@ -211,6 +211,9 @@ _llm_clis() {
 	# https://ampcode.com/manual#getting-started-command-line-interface
 	bun i -g @sourcegraph/amp@latest
 
+	# https://opencode.ai
+	bun i -g opencode-ai
+
 	# https://cursor.com/docs/cli/overview
 	curl https://cursor.com/install -fsS | bash
 
