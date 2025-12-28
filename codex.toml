@@ -1,0 +1,21 @@
+# https://developers.openai.com/codex/local-config
+model = "GLM-4.7"
+model_provider = "Z_AI"
+
+preferred_auth_method = "apikey"
+disable_response_storage = true
+
+[model_providers.Z_AI]
+name = "Z.AI"
+base_url = "https://api.z.ai/api/coding/paas/v4"
+env_key = "BIGMODEL_API_KEY"
+wire_api = "chat" # chat | responses
+
+[model_providers.mistral]
+name = "Mistral"
+base_url = "https://api.mistral.ai/v1"
+env_key = "MISTRAL_API_KEY"
+
+[mcp_servers.context7]
+command = "bunx"
+args = ["-y", "@upstash/context7-mcp"]
