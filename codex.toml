@@ -1,0 +1,10 @@
+model_provider = "Z_AI"
+model = "GLM-4.7"
+preferred_auth_method = "apikey"
+disable_response_storage = true
+
+[model_providers.Z_AI]
+name = "Z.AI"
+base_url = "https://api.z.ai/api/coding/paas/v4"
+# wire_api = "responses"
+env_key = "BIGMODEL_API_KEY"
