@@ -141,7 +141,7 @@ bins() {
 		cargo install eza
 		cargo install zoxide
 		cargo install tealdeer
-		cargo install git-delta
+		cargo install git-delta difftastic
 		cargo install starship --locked
 		cargo install inferno # flamegraph
 		cargo install asm-lsp
