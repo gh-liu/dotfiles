@@ -80,10 +80,13 @@ M.set_highlights = function()
 		Changed = { fg = c.yellow },
 		Removed = { fg = c.red },
 		-- diff
+		-- linewise diff
 		DiffAdd = { fg = c.green, bg = c.gray },
 		DiffChange = { fg = c.yellow, bg = c.gray },
 		DiffDelete = { fg = c.red, bg = c.gray },
+		-- inline(chawise) diff
 		DiffText = { fg = c.blue, bg = c.gray, underdotted = true },
+		DiffTextAdd = { fg = c.green, bg = c.gray, underdotted = true },
 
 		-- float window
 		FloatBorder = { fg = c.blue },
