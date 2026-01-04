@@ -4,21 +4,45 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 	if not (vim.bo.ft == "go") then
 		return
 	end
+
+	local config = vim.g.gomodifytags_config or {}
+	local default_tags = config.default_tags or vim.g.gomodifytags or { "json", "xml" }
+	local default_options = config.default_options or vim.g.gomodifytags_options or { "omitempty" }
+	local skip_unexported = config.skip_unexported ~= nil and config.skip_unexported or true
+	local transform = config.transform or "snakecase"
+
+	local has_target_option = false
+	for _, arg in ipairs(args.fargs) do
+		if arg == "-struct" or arg == "-offset" or arg == "-all" or arg:find("^-struct=") or arg:find("^-offset=") then
+			has_target_option = true
+			break
+		end
+	end
+
 	local cmd = { "gomodifytags", "-file", vim.api.nvim_buf_get_name(0), "-format", "json" }
-	table.insert(cmd, "-line")
-	table.insert(cmd, args.line1 .. "," .. args.line2)
+
+	if not has_target_option then
+		table.insert(cmd, "-line")
+		table.insert(cmd, args.line1 .. "," .. args.line2)
+	end
+
+	if skip_unexported then
+		table.insert(cmd, "--skip-unexported")
+	end
+
+	if transform ~= "snakecase" then
+		table.insert(cmd, "-transform")
+		table.insert(cmd, transform)
+	end
 
 	for _, arg in ipairs(args.fargs) do
 		table.insert(cmd, arg)
 	end
-	--TODO: -modified
-	-- https://github.com/fatih/gomodifytags?tab=readme-ov-file#unsaved-files
+
 	local is_add_tag = string.match(args.args, "%-add%-tags")
 	if is_add_tag and args.bang then
-		-- Override current tags when adding tags
 		table.insert(cmd, "-override")
 	end
-	-- vim.print(cmd)
 
 	local handle = function(result)
 		local start_line = result.start or 1
@@ -28,33 +52,62 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 			vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, lines)
 		end)
 	end
-	vim.system(cmd, { text = true }, function(out)
-		if out.code == 1 and out.stderr then
-			print(out.stderr)
+
+	local execute_command = function(stdin_content)
+		local final_cmd = vim.deepcopy(cmd)
+		if stdin_content then
+			table.insert(final_cmd, "-modified")
 		end
-		if out.code == 0 and out.stdout then
-			local result = vim.json.decode(out.stdout)
-			-- TODO: handle error
-			-- https://github.com/fatih/vim-go/blob/e6788d124a564b049f3d80bef984e8bd5281286d/autoload/go/tags.vim#L98
-			if result then
-				handle(result)
+
+		vim.system(final_cmd, { text = true, stdin = stdin_content }, function(out)
+			if out.code == 1 and out.stderr then
+				vim.schedule(function()
+					vim.notify("gomodifytags: " .. out.stderr, vim.log.levels.ERROR)
+				end)
+				return
 			end
-		end
-	end)
+			if out.code == 0 and out.stdout then
+				local success, result = pcall(vim.json.decode, out.stdout)
+				if not success then
+					vim.schedule(function()
+						vim.notify("gomodifytags: JSON parse error - " .. tostring(result), vim.log.levels.ERROR)
+					end)
+					return
+				end
+				if result and result.lines then
+					handle(result)
+				end
+			end
+		end)
+	end
+
+	if vim.bo.modified then
+		local filename = vim.api.nvim_buf_get_name(0)
+		local content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
+		local size = #content
+		local archive = string.format("%s\n%d\n%s\n", filename, size, content)
+		execute_command(archive)
+	else
+		execute_command(nil)
+	end
 end, {
 	range = true,
 	bang = true,
 	nargs = "*",
 	complete = function(argLead, cmdLine, cursorPos)
+		local config = vim.g.gomodifytags_config or {}
+		local default_tags = config.default_tags or vim.g.gomodifytags or { "json", "xml" }
+		local default_options = config.default_options or vim.g.gomodifytags_options or { "omitempty" }
+
 		local ops
 		local is_add_tag = string.match(cmdLine, "%-add%-tags=")
-		-- local is_remove_tag = string.match(cmdLine, "%-remove%-tags")
 
 		if is_add_tag then
 			ops = {
 				"-add-options=",
 				"-transform=",
 				"-template=",
+				"-skip-unexported",
 			}
 		end
 
@@ -82,9 +135,26 @@ end, {
 
 		local add_tags_op_str = "-add-tags="
 		if vim.startswith(argLead, add_tags_op_str) then
-			local tags = vim.fn.get(vim.b, "gomodifytags", vim.fn.get(vim.g, "gomodifytags", { "json", "xml" }))
-			return add_del_tags_comp(add_tags_op_str, tags)
+			return add_del_tags_comp(add_tags_op_str, default_tags)
 		end
+
+		local static_tags_with_values = {
+			"validate:required",
+			"validate:omitempty",
+			"validate:gt=0",
+			"validate:gte=0",
+			"validate:lt=0",
+			"validate:lte=0",
+			"validate:min=",
+			"validate:max=",
+			"validate:len=",
+			"validate:email",
+			"validate:uuid",
+			"validate:url",
+			"scope:read-only",
+			"scope:write",
+			"scope:admin",
+		}
 
 		local start_line = vim.fn.line(".")
 		local end_line = vim.fn.line(".")
@@ -159,13 +229,10 @@ end, {
 
 		local add_options_op_str = "-add-options="
 		if vim.startswith(argLead, add_options_op_str) then
-			-- NOTE: two sources: 1.cmdline, 2. added tags
 			local tags = get_added_tags_from_code()
 			vim.iter(get_added_tags_from_cmdline()):each(function(tag)
 				table.insert(tags, tag)
 			end)
-			local options =
-				vim.fn.get(vim.b, "gomodifytags_options", vim.fn.get(vim.g, "gomodifytags_options", { "omitempty" }))
 			local match_options_str = string.match(argLead, "%-add%-options=(.*),")
 			if match_options_str then
 				local match_tags = {}
@@ -181,7 +248,7 @@ end, {
 						return tag .. "="
 					end)
 					:map(function(item)
-						return vim.iter(options)
+						return vim.iter(default_options)
 							:map(function(option)
 								return argLead .. item .. option
 							end)
@@ -196,7 +263,7 @@ end, {
 					return add_options_op_str .. tag .. "="
 				end)
 				:map(function(item)
-					return vim.iter(options)
+					return vim.iter(default_options)
 						:map(function(option)
 							return item .. option
 						end)
@@ -215,6 +282,24 @@ end, {
 				:totable()
 		end
 
+		if vim.startswith(argLead, "-template=") then
+			local templates = {
+				"-template={field}",
+				"-template=field_name={field}",
+				"-template={field}={value}",
+				"-template={name}:{type}",
+			}
+			return vim.iter(templates)
+				:map(function(tmpl)
+					return argLead:sub(1, -#"-template=") .. tmpl:sub(11)
+				end)
+				:totable()
+		end
+
+		if vim.startswith(argLead, "-skip-unexported") then
+			return { "-skip-unexported" }
+		end
+
 		if not ops then
 			ops = {
 				add_tags_op_str,
@@ -223,6 +308,9 @@ end, {
 				add_options_op_str,
 				remove_options_op_str,
 				"-clear-options",
+				"-transform=",
+				"-template=",
+				"-skip-unexported",
 			}
 		end
 
