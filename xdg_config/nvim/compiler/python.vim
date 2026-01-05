@@ -1,15 +1,12 @@
 " Compiler:	python
-
-" see
-":h makeprg
-":h errorformat
+" Optimized error format for Python tracebacks
 
 if exists("current_compiler")
   finish
 endif
 let current_compiler = "python"
 
-if exists(":CompilerSet") != 2		" older Vim always used :setlocal
+if exists(":CompilerSet") != 2
   command -nargs=* CompilerSet setlocal <args>
 endif
 
@@ -18,36 +15,23 @@ set cpo-=C
 
 CompilerSet makeprg=python
 
-" Use each file and line of Tracebacks (to see and step through the code executing).
-CompilerSet errorformat=%A%\\s%#File\ \"%f\"\\,\ line\ %l\\,\ in%.%#
-" Include failed toplevel doctest example.
-CompilerSet errorformat+=%+CFailed\ example:%.%#
-" Ignore big star lines from doctests.
-CompilerSet errorformat+=%-G*%\\{70%\\}
-" Ignore most of doctest summary. x2
-CompilerSet errorformat+=%-G%*\\d\ items\ had\ failures:
-CompilerSet errorformat+=%-G%*\\s%*\\d\ of%*\\s%*\\d\ in%.%#
-
-" SyntaxErrors (%p is for the pointer to the error column).
-" Source: http://www.vim.org/scripts/script.php?script_id=477
-CompilerSet errorformat+=%E\ \ File\ \"%f\"\\\,\ line\ %l
-" %p must come before other lines that might match leading whitespace
-CompilerSet errorformat+=%-C%p^
-CompilerSet errorformat+=%+C\ \ %m
-CompilerSet errorformat+=%Z\ \ %m
-
-" I don't use \%-G%.%# to remove extra output because most of it is useful as
-" context for the actual error message. I also don't include %+G because
-" they're unnecessary if I'm not squelching most output.
-" If I was using %+G, I'd probably want something like these. There are so
-" many, that I don't bother.
-"      \%+GTraceback%.%#,
-"      \%+G%*\\wError%.%#,
-"      \%+G***Test\ Failed***%.%#
-"      \%+GExpected%.%#,
-"      \%+GGot:%.%#,
+"   File "xxx.py", line 123, in some_func (start of new error entry)
+" ****************************************************************************** (separator line - ignore)
+" 2 items had failures: (summary line - ignore)
+" 1 of 2 in xxx (summary line - ignore)
+"   File "xxx.py", line 123 (start of syntax error)
+"       ^ (error pointer line - ignore)
+"     error message (continuation line, include)
+"     error message (end of multi-line entry)
+CompilerSet errorformat=
+    \%A%\\s%#File\ \"%f\"\\,\ line\ %l\\,\ in%.%#,
+    \%-G*%\\{70%\\},
+    \%-G%*\\d\ items\ had\ failures:
+    \%-G%*\\d\ of\*\\d\ in%.%#,
+    \%E\ \ File\ \"%f\"\\\,\ line\ %l,
+    \%-C%p^,
+    \%+C\ \ %m,
+    \%Z\ \ %m
 
 let &cpo = s:cpo_save
 unlet s:cpo_save
-
-" vim:set sw=2 sts=2:

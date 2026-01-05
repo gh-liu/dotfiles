@@ -470,6 +470,7 @@ return {
 				["python -m pytest"] = "pytest",
 				["python3 -m pytest"] = "pytest",
 				-- golang
+				["go test"] = "gotest",
 				["golangci-lint run"] = "go",
 			}
 
