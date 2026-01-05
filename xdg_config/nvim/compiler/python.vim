@@ -28,10 +28,10 @@ CompilerSet errorformat=
     \%-G*%\\{70%\\},
     \%-G%*\\d\ items\ had\ failures:
     \%-G%*\\d\ of\*\\d\ in%.%#,
-    \%E\ \ File\ \"%f\"\\\,\ line\ %l,
+    \%E\ File\ \"%f\"\\\,\ line\ %l,
     \%-C%p^,
-    \%+C\ \ %m,
-    \%Z\ \ %m
+    \%+C\ \%m,
+    \%Z\ \%m
 
 let &cpo = s:cpo_save
 unlet s:cpo_save

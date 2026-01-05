@@ -23,7 +23,7 @@ CompilerSet errorformat+=
     " FAILED (start of new error entry)
     \%EFAILED%.%#,
     " file.py:123: error message (continuation line)
-    \%C%f:%l:\ %m,
+    \%C%f:%l:\%m,
     " any text (end of multi-line entry)
     \%Z%.%#
 
