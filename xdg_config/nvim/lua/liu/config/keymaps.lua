@@ -96,8 +96,11 @@ vim.cmd([[
 "noremap y<cr> :execute 'let @+ = expand("%:p")' <Bar> echo 'copy:' @+ <CR>
 " copy path:line
 nnoremap y<leader> :execute 'let @+ = substitute(expand("%:p"), getcwd()."/", "", "") . ":" . line(".")' <Bar> echo 'copy:' @+ <CR>
-" go to parent dir
-"noremap - :<C-U>cd .. <CR>
+" change directory
+nnoremap cdc :lcd %:h<CR>
+nnoremap cdu :lcd ..<CR>
+nnoremap cdr :lcd <C-R>=luaeval('vim.fs.root(vim.fn.expand("%"), ".git")')<CR>
+nnoremap cd- :lcd -<CR>
 ]])
 -- }}}
 -- tools {{{
