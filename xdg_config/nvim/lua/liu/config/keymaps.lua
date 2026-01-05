@@ -214,6 +214,7 @@ autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
 -- }}}
 
 vim.cmd([[
+xnoremap x "_d
 " keep the old content
 "xnoremap p "_dp
 "xnoremap p "_c<esc>p
