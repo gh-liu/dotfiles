@@ -355,6 +355,13 @@ return {
 	{
 		"danymat/neogen",
 		cmd = { "Neogen" },
+		keys = {
+			{ "ydd", "<cmd>Neogen<cr>", desc = "Generate annotation (auto-detect)" },
+			{ "ydf", "<cmd>Neogen func<cr>", desc = "Generate function doc" },
+			{ "ydc", "<cmd>Neogen class<cr>", desc = "Generate class doc" },
+			{ "ydt", "<cmd>Neogen type<cr>", desc = "Generate type doc" },
+			{ "ydF", "<cmd>Neogen file<cr>", desc = "Generate file doc" },
+		},
 		opts = {
 			snippet_engine = "nvim", ---@type "luasnip"|"nvim"|"mini"
 		},
