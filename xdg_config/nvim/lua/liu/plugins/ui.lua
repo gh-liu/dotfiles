@@ -33,7 +33,7 @@ return {
 				dbui             = { glyph = "󰆼", hl = "MiniIconsGrey" },
 				dbout            = { glyph = "󰆼", hl = "MiniIconsGrey" },
 				telescopeprompt  = { glyph = "", hl = "MiniIconsBlue" },
-				-- stylua: ignore start
+				-- stylua: ignore end
 			},
 			lsp = {
 				class = { hl = "@lsp.type.class" },
