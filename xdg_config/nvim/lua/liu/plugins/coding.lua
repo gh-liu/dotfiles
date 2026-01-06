@@ -425,7 +425,6 @@ return {
 		"jpalardy/vim-slime",
 		init = function()
 			vim.g.slime_target = "neovim" ---@type 'neovim'|'tmux'
-			-- vim.g.slime_target = "tmux"
 			if vim.env.TMUX then
 				-- NOTE: pane name
 				-- https://github.com/jpalardy/vim-slime/blob/507107dd24c9b85721fa589462fd5068e0f70266/autoload/slime/targets/tmux.vim#L47
@@ -434,13 +433,13 @@ return {
 			end
 			vim.g.slime_no_mappings = true
 		end,
-		-- ft = { "python" },
-		config = function()
-			vim.keymap.set("n", "gz", "<Plug>SlimeMotionSend", { remap = true, silent = false })
-			vim.keymap.set("n", "gzz", "<Plug>SlimeLineSend", { remap = true, silent = false })
-			vim.keymap.set("x", "gz", "<Plug>SlimeRegionSend", { remap = true, silent = false })
-			vim.keymap.set("n", "gzc", "<Plug>SlimeConfig", { remap = true, silent = false })
-			vim.keymap.set("n", "gz?", ":echo b:slime_config<cr>", { remap = true, silent = false })
-		end,
+		cmd = { "SlimeSend" },
+		keys = {
+			{ "gz", "<Plug>SlimeMotionSend", desc = "Send to REPL (motion)" },
+			{ "gzz", "<Plug>SlimeLineSend", desc = "Send line to REPL" },
+			{ "gz", "<Plug>SlimeRegionSend", mode = "x", desc = "Send selection to REPL" },
+			{ "gzc", "<Plug>SlimeConfig", desc = "Configure REPL target" },
+			{ "gz?", "<cmd>echo b:slime_config<cr>", desc = "Show REPL config" },
+		},
 	},
 }
