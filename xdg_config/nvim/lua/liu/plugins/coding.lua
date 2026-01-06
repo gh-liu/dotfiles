@@ -300,7 +300,7 @@ return {
 			}
 
 			local http_methods = augend.constant.new({
-				elements = { "GET", "POST", "PUT", "PATCH" },
+				elements = { "GET", "POST", "PUT", "PATCH", "DELETE" },
 				word = true,
 				cyclic = true,
 			})
@@ -323,9 +323,15 @@ return {
 					default
 				),
 				markdown = vim.list_extend({ augend.misc.alias.markdown_header }, default),
-				rust = vim.list_extend({}, default),
+				rust = vim.list_extend({
+					augend.constant.new({ elements = { "&&", "||" }, word = false, cyclic = true }),
+					augend.constant.new({ elements = { "Some", "None" }, word = true, cyclic = true }),
+					augend.constant.new({ elements = { "Ok", "Err" }, word = true, cyclic = true }),
+				}, default),
 				toml = vim.list_extend({ augend.semver.alias.semver }, default),
-				zig = vim.list_extend({}, default),
+				zig = vim.list_extend({
+					augend.constant.new({ elements = { "and", "or" }, word = true, cyclic = true }),
+				}, default),
 				http = vim.list_extend({ http_methods }, default),
 			})
 		end,
