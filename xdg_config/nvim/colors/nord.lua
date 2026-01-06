@@ -211,7 +211,6 @@ M.set_highlights = function()
 		Debug = { fg = c.orange }, -- debugging statements
 		Ignore = { fg = c.gray },
 		-- LspInlayHint = {link = "NonText"},
-		SnippetTabstop = { link = "Visual" },
 		-------------------------------------
 		Identifier = { fg = c.fg },
 		Function = { fg = c.cyan },
