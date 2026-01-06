@@ -57,7 +57,7 @@ return {
 			function()
 				if (not vim.g.EnableAutoFormat) or vim.g.EnableAutoFormat == 0 then
 					vim.g.EnableAutoFormat = 1
-					vim.notify("Enble autoformat", vim.log.levels.WARN)
+					vim.notify("Enable autoformat", vim.log.levels.WARN)
 				else
 					vim.g.EnableAutoFormat = 0
 					vim.notify("Disable autoformat", vim.log.levels.WARN)
