@@ -182,7 +182,6 @@ return {
 					else
 						vim.notify("Enabled auto pairs", vim.log.levels.WARN)
 					end
-
 					-- When a bracket is inserted, briefly jump to the matching one.
 					vim.o.showmatch = vim.g.minipairs_disable
 				end,
@@ -191,63 +190,153 @@ return {
 		},
 		opts = {
 			modes = { insert = true, command = true, terminal = false },
-			-- skip autopair when next character is one of these
-			skip_next = [=[[%w%%%'%[%"%.%`%$]]=],
-			-- skip autopair when the cursor is inside these treesitter nodes
-			skip_ts = { "string" },
-			-- skip autopair when next character is closing pair
-			-- and there are more closing pairs than opening pairs
-			skip_unbalanced = true,
-			-- better deal with markdown code blocks
-			markdown = true,
 		},
 		config = function(self, opts)
 			local pairs = require("mini.pairs")
 			pairs.setup(opts)
 
-			local open = pairs.open
-			pairs.open = function(pair, neigh_pattern)
-				if vim.fn.getcmdline() ~= "" then
-					return open(pair, neigh_pattern)
+			-- =====================================================================
+			-- Enhanced pairs.open with smart skip logic
+			-- Inspired by LazyVim's mini.pairs configuration
+			-- =====================================================================
+
+			---@class MiniPairsEnhanceConfig
+			---@field skip_next string? Pattern to skip autopair when next char matches
+			---@field skip_ts string[]? Treesitter nodes where autopair is skipped
+			---@field skip_unbalanced boolean? Skip when brackets are unbalanced
+			---@field markdown boolean? Enable markdown code block auto-completion
+			local enhance_config = {
+				-- Skip autopair when next character is one of these:
+				-- %w = word char, %% = %, %' = ', %[ = [, %" = ", %. = ., %` = `, %$ = $
+				skip_next = [=[[%w%%%'%[%"%.%`%$]]=],
+				-- Skip autopair when cursor is inside these treesitter capture nodes
+				skip_ts = { "string" },
+				-- Skip autopair when closing bracket count > opening bracket count
+				skip_unbalanced = true,
+				-- Auto-complete markdown fenced code block when typing third backtick
+				markdown = true,
+			}
+
+			--- Check if autopair should be skipped based on next character
+			---@param next_char string The character after cursor
+			---@return boolean
+			local function should_skip_next(next_char)
+				if not enhance_config.skip_next then
+					return false
 				end
-				-- open, close
-				local o, c = pair:sub(1, 1), pair:sub(2, 2)
-				local line = vim.api.nvim_get_current_line()
-				local cursor = vim.api.nvim_win_get_cursor(0)
-				local next = line:sub(cursor[2] + 1, cursor[2] + 1)
-				local before = line:sub(1, cursor[2])
-				if opts.markdown and o == "`" and vim.bo.filetype == "markdown" and before:match("^%s*``") then
-					return "`\n```" .. vim.api.nvim_replace_termcodes("<up>", true, true, true)
-				end
-				if opts.skip_next and next ~= "" and next:match(opts.skip_next) then
-					return o
-				end
-				if opts.skip_ts and #opts.skip_ts > 0 then
-					local ok, captures =
-						pcall(vim.treesitter.get_captures_at_pos, 0, cursor[1] - 1, math.max(cursor[2] - 1, 0))
-					for _, capture in ipairs(ok and captures or {}) do
-						if vim.tbl_contains(opts.skip_ts, capture.capture) then
-							return o
-						end
-					end
-				end
-				if opts.skip_unbalanced and next == c and c ~= o then
-					local _, count_open = line:gsub(vim.pesc(pair:sub(1, 1)), "")
-					local _, count_close = line:gsub(vim.pesc(pair:sub(2, 2)), "")
-					if count_close > count_open then
-						return o
-					end
-				end
-				return open(pair, neigh_pattern)
+				return next_char ~= "" and next_char:match(enhance_config.skip_next) ~= nil
 			end
 
-			-- for filetypes {{{3
+			--- Check if cursor is inside a treesitter node that should skip autopair
+			---@param cursor integer[] {row, col} 1-indexed cursor position
+			---@return boolean
+			local function should_skip_ts(cursor)
+				local skip_ts = enhance_config.skip_ts
+				if not skip_ts or #skip_ts == 0 then
+					return false
+				end
+				-- Get treesitter captures at cursor position (0-indexed row, col)
+				local ok, captures = pcall(
+					vim.treesitter.get_captures_at_pos,
+					0,
+					cursor[1] - 1,
+					math.max(cursor[2] - 1, 0)
+				)
+				if not ok then
+					return false
+				end
+				for _, capture in ipairs(captures) do
+					if vim.tbl_contains(skip_ts, capture.capture) then
+						return true
+					end
+				end
+				return false
+			end
+
+			--- Check if brackets are unbalanced and should skip autopair
+			--- Example: "foo)" has more ) than (, so typing ( should not add )
+			---@param line string Current line content
+			---@param open_char string Opening bracket character
+			---@param close_char string Closing bracket character
+			---@param next_char string Character after cursor
+			---@return boolean
+			local function should_skip_unbalanced(line, open_char, close_char, next_char)
+				if not enhance_config.skip_unbalanced then
+					return false
+				end
+				-- Only check when next char is closing bracket and pair is asymmetric
+				if next_char ~= close_char or close_char == open_char then
+					return false
+				end
+				local _, count_open = line:gsub(vim.pesc(open_char), "")
+				local _, count_close = line:gsub(vim.pesc(close_char), "")
+				return count_close > count_open
+			end
+
+			--- Handle markdown fenced code block auto-completion
+			--- When typing ``` at line start, auto-complete to a code block
+			---@param open_char string The character being typed
+			---@param before string Text before cursor on current line
+			---@return string? Returns key sequence if handled, nil otherwise
+			local function handle_markdown_codeblock(open_char, before)
+				if not enhance_config.markdown then
+					return nil
+				end
+				-- Check: typing `, in markdown, line starts with ``
+				if open_char == "`" and vim.bo.filetype == "markdown" and before:match("^%s*``") then
+					-- Complete to: ```\n```<up> (cursor ends up between the fences)
+					return "`\n```" .. vim.api.nvim_replace_termcodes("<up>", true, true, true)
+				end
+				return nil
+			end
+
+			-- Wrap original pairs.open with enhanced logic
+			local original_open = pairs.open
+			pairs.open = function(pair, neigh_pattern)
+				-- In command-line mode, use original behavior
+				if vim.fn.getcmdline() ~= "" then
+					return original_open(pair, neigh_pattern)
+				end
+
+				local open_char, close_char = pair:sub(1, 1), pair:sub(2, 2)
+				local line = vim.api.nvim_get_current_line()
+				local cursor = vim.api.nvim_win_get_cursor(0)
+				local next_char = line:sub(cursor[2] + 1, cursor[2] + 1)
+				local before = line:sub(1, cursor[2])
+
+				-- 1. Handle markdown code block special case
+				local md_result = handle_markdown_codeblock(open_char, before)
+				if md_result then
+					return md_result
+				end
+				-- 2. Skip if next character matches skip pattern (e.g., word char)
+				if should_skip_next(next_char) then
+					return open_char
+				end
+				-- 3. Skip if inside a treesitter node (e.g., string literal)
+				if should_skip_ts(cursor) then
+					return open_char
+				end
+				-- 4. Skip if brackets are unbalanced
+				if should_skip_unbalanced(line, open_char, close_char, next_char) then
+					return open_char
+				end
+
+				return original_open(pair, neigh_pattern)
+			end
+
+			-- =====================================================================
+			-- Filetype-specific pair mappings
+			-- =====================================================================
 			local pairs_by_fts = {
 				zig = function(buf)
+					-- Zig uses || for closure parameters
 					pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
 				end,
 				rust = function(buf)
+					-- Rust uses || for closure parameters
 					pairs.map_buf(buf, "i", "|", { action = "closeopen", pair = "||", register = { cr = false } })
+					-- Rust uses <> for generics
 					pairs.map_buf(buf, "i", "<", { action = "open", pair = "<>", register = { cr = false } })
 					pairs.map_buf(buf, "i", ">", { action = "close", pair = "<>", register = { cr = false } })
 				end,
@@ -257,12 +346,10 @@ return {
 				group = vim.api.nvim_create_augroup("liu/mini.pairs/for_fts", { clear = true }),
 				pattern = vim.tbl_keys(pairs_by_fts),
 				callback = function(ev)
-					local buf = ev.buf
-					pairs_by_fts[ev.match](buf)
+					pairs_by_fts[ev.match](ev.buf)
 				end,
-				desc = "set mini pairs for fts",
+				desc = "Setup filetype-specific mini.pairs mappings",
 			})
-			-- }}}
 		end,
 	},
 	{
