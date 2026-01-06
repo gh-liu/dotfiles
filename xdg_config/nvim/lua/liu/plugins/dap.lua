@@ -14,30 +14,28 @@ return {
 	{
 		"mfussenegger/nvim-dap",
 		keys = {
-			{ "dcc", [[:lua require("dap").continue()<CR>]] },
-			{ "dcb", [[:lua require("dap").toggle_breakpoint()<CR>]] },
-			{ "dcB", [[:lua require("dap").clear_breakpoints()<CR>]] },
+			{ "dcc", "<cmd>lua require('dap').continue()<cr>", desc = "Continue" },
+			{ "dcb", "<cmd>lua require('dap').toggle_breakpoint()<cr>", desc = "Toggle breakpoint" },
+			{ "dcB", "<cmd>lua require('dap').clear_breakpoints()<cr>", desc = "Clear breakpoints" },
 			{
 				"dcC",
 				function()
 					local ok, condition = pcall(vim.fn.input, { prompt = "Breakpoint Condition: " })
-					if ok then
-						if condition and condition ~= "" then
-							require("dap").toggle_breakpoint(condition, nil, nil, true)
-						end
+					if ok and condition and condition ~= "" then
+						require("dap").toggle_breakpoint(condition, nil, nil, true)
 					end
 				end,
+				desc = "Conditional breakpoint",
 			},
 			{
 				"dcL",
 				function()
 					local ok, logpoint = pcall(vim.fn.input, { prompt = "Log point message: " })
-					if ok then
-						if logpoint and logpoint ~= "" then
-							require("dap").toggle_breakpoint(nil, nil, logpoint, true)
-						end
+					if ok and logpoint and logpoint ~= "" then
+						require("dap").toggle_breakpoint(nil, nil, logpoint, true)
 					end
 				end,
+				desc = "Log point",
 			},
 			{ "dcr", [[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]] },
 		},
@@ -69,7 +67,7 @@ return {
 			},
 		},
 		cmd = "DapViewToggle",
-		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>" } },
+		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>", desc = "Toggle DAP view" } },
 	},
 
 	{
