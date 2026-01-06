@@ -77,21 +77,22 @@ return {
 				search_method = "cover",
 				n_lines = 300,
 				custom_textobjects = {
-					o = ts_gen({ -- code block
+					-- Code blocks (if/for/while/etc.)
+					o = ts_gen({
 						a = { "@block.outer", "@conditional.outer", "@loop.outer" },
 						i = { "@block.inner", "@conditional.inner", "@loop.inner" },
 					}),
+					-- Function
 					f = ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
+					-- Class
 					c = ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
-					P = ts_gen({ a = "@parameter.outer", i = "@parameter.inner" }, {}),
-					k = ts_gen({ a = "@assignment.inner", i = "@assignment.lhs" }, {}),
-					v = ts_gen({ a = "@assignment.outer", i = "@assignment.rhs" }, {}),
-					-- D = ts_gen({ -- D for "Declaration"
-					-- 	a = { "@function.outer", "@class.outer" },
-					-- 	i = { "@function.inner", "@class.inner" },
-					-- }),
-					u = ai.gen_spec.function_call(), -- u for "Usage"
-					U = ai.gen_spec.function_call({ name_pattern = "[%w_]" }), -- without dot in function name
+					-- NOTE: Use built-in `a` for argument/parameter instead of custom `P`
+					-- Assignment: = for whole, l for lhs, r for rhs
+					["="] = ts_gen({ a = "@assignment.outer", i = "@assignment.inner" }, {}),
+					l = ts_gen({ a = "@assignment.lhs", i = "@assignment.lhs" }, {}), -- lhs (left-hand side)
+					r = ts_gen({ a = "@assignment.rhs", i = "@assignment.rhs" }, {}), -- rhs (right-hand side)
+					-- Function call (usage)
+					u = ai.gen_spec.function_call(),
 				},
 				mappings = {
 					-- -- Main textobject prefixes
