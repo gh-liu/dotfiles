@@ -369,23 +369,33 @@ return {
 			-- https://github.com/tpope/vim-abolish/blob/dcbfe065297d31823561ba787f51056c147aa682/plugin/abolish.vim#L600
 			vim.g.Abolish = {
 				Coercions = {
+					-- `crl{char}` = coerce + LSP rename
+					-- Example: `crls` on `fooBar` → converts to `foo_bar` AND renames all references
 					l = function(word)
+						-- 1. Wait for user to input a coercion char (s, m, c, u, -, .)
 						local ok, char = pcall(vim.fn.getcharstr)
 						if not ok then
 							return word
 						end
-						vim.cmd("let b:tmp_undolevels = &l:undolevels | setlocal undolevels=-1")
-						vim.cmd("normal cr" .. char)
-						vim.cmd("let &l:undolevels = b:tmp_undolevels | unlet b:tmp_undolevels")
+						-- 2. Temporarily disable undo history
+						local saved_undolevels = vim.bo.undolevels
+						vim.bo.undolevels = -1
+						-- 3. Execute the coercion (e.g., crs for snake_case)
+						vim.cmd.normal({ "cr" .. char, bang = true })
+						-- 4. Restore undo history
+						vim.bo.undolevels = saved_undolevels
+						-- 5. Get the converted word
 						local word2 = vim.fn.expand("<cword>")
+						-- 6. If word changed, undo local change and do LSP rename instead
 						if word ~= word2 then
-							local pos = vim.fn.getpos(".")
-							vim.cmd("let b:tmp_undolevels = &l:undolevels | setlocal undolevels=-1")
-							vim.cmd(string.format([[s/%s/%s/eI]], word2, word))
-							vim.cmd("let &l:undolevels = b:tmp_undolevels | unlet b:tmp_undolevels")
-							vim.fn.setpos(".", pos)
-
-							vim.cmd(string.format('lua vim.lsp.buf.rename("%s")', word2))
+							local pos = vim.api.nvim_win_get_cursor(0)
+							-- Undo the local change (LSP rename will handle all occurrences)
+							vim.bo.undolevels = -1
+							vim.cmd(([[s/%s/%s/eI]]):format(word2, word))
+							vim.bo.undolevels = saved_undolevels
+							vim.api.nvim_win_set_cursor(0, pos)
+							-- Trigger LSP rename with the converted word
+							vim.lsp.buf.rename(word2)
 						end
 						return word
 					end,
