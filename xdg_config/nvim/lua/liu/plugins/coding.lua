@@ -129,6 +129,9 @@ return {
 			{ "cs", mode = { "n" } },
 			{ "yS", "ys$", remap = true },
 			{ "yss", "ys_", remap = true },
+			{ "sf" },
+			{ "sF" },
+			{ "sh" },
 		},
 		init = function()
 			local ft_custom_surrounding_fn = {
@@ -142,16 +145,19 @@ return {
 				end,
 				markdown = function()
 					return {
+						-- Bold: **text**
 						B = {
-							input = { "%[%[().-()%]%]" },
+							input = { "%*%*().-()%*%*" },
 							output = { left = "**", right = "**" },
 						},
+						-- Italic: *text*
 						I = {
-							input = { "%[%[().-()%]%]" },
+							input = { "%*().-()%*" },
 							output = { left = "*", right = "*" },
 						},
+						-- Link: [text](url)
 						U = {
-							input = { "%[%[().-()%]%]" },
+							input = { "%[().-()%]%b()" },
 							output = function()
 								local MiniSurround = require("mini.surround")
 								local link = MiniSurround.user_input("Link")
@@ -185,9 +191,9 @@ return {
 					delete = keys[2][1], -- Delete surrounding
 					replace = keys[3][1], -- Replace surrounding
 
-					find = "", -- Find surrounding (to the right)
-					find_left = "", -- Find surrounding (to the left)
-					highlight = "", -- Highlight surrounding
+					find = keys[6][1], -- Find surrounding (to the right) - surround next
+					find_left = keys[7][1], -- Find surrounding (to the left) - surround prev
+					highlight = keys[8][1], -- Highlight surrounding - surround highlight
 					update_n_lines = "", -- Update `n_lines`
 
 					suffix_last = "l", -- Suffix to search with "prev" method
