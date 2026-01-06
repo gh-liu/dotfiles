@@ -23,10 +23,11 @@ local linters_opt = {
 		---@param ctx LinterCondCtx
 		---@return boolean
 		condition = function(ctx)
+			-- Only lint files within current working directory
 			if not vim.startswith(ctx.dirname, ctx.cwd) then
-				return
+				return false
 			end
-
+			-- Only lint if golangci-lint config file exists
 			return #vim.fs.find(
 				{ ".golangci.yml", ".golangci.yaml", ".golangci.toml", ".golangci.json" },
 				{ path = ctx.dirname, upward = true }
