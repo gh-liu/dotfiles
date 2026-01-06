@@ -103,7 +103,7 @@ return {
 						vim.fn.jobstart(vim.o.shell, { term = true, cwd = path })
 					end, { buffer = buf })
 
-					vim.keymap.set("n", "y<leader>", function()
+					vim.keymap.set("n", "yp", function()
 						local path = MiniFiles.get_fs_entry().path
 						local p
 						if vim.v.count > 0 then
@@ -113,7 +113,7 @@ return {
 						end
 						vim.fn.setreg(vim.v.register, p)
 						print(string.format([[copy "%s"]], p))
-					end, { buffer = buf })
+					end, { buffer = buf, desc = "Yank path" })
 
 					local map_split = function(buf_id, lhs, direction)
 						local rhs = function()
