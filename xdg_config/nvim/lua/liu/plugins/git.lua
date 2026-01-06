@@ -84,10 +84,10 @@ return { -- Git {{{2
 					]])
 
 					-- Checkout -b
-					vim.keymap.set("n", "cob", ":Git checkout -b ", { buffer = buf })
+					vim.keymap.set("n", "cob", ":Git checkout -b ", { buffer = 0 })
 					-- Absorb (cargo install git-absorb)
-					vim.keymap.set("n", "gaa", ":Git absorb<space>", { buffer = buf })
-					vim.keymap.set("n", "gar", ":Git absorb --and-rebase<space>", { buffer = buf })
+					vim.keymap.set("n", "gaa", ":Git absorb<space>", { buffer = 0 })
+					vim.keymap.set("n", "gar", ":Git absorb --and-rebase<space>", { buffer = 0 })
 				end,
 			})
 
