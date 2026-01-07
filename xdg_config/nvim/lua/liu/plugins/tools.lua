@@ -2,6 +2,10 @@
 return {
 	{
 		"tpope/vim-dadbod",
+		dependencies = {
+			"gh-liu/vim-dbcp",
+			dev = true,
+		},
 		init = function()
 			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
 
