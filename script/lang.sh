@@ -118,6 +118,11 @@ function update_bun() {
 	fi
 }
 
+function update_nvm() {
+	## nvm: nodejs
+	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+}
+
 function update_nodejs() {
 	_install_start nodejs
 
@@ -200,6 +205,7 @@ case $1 in
 	_install_start bun
 	update_bun
 	_install_end
+	update_nvm
 	;;
 *)
 	echo "select one language"
