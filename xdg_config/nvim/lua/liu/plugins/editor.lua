@@ -406,6 +406,7 @@ return {
 	},
 	{
 		"serhez/bento.nvim",
+		enabled = false,
 		event = "VeryLazy",
 		opts = {
 			main_keymap = "\\",
@@ -413,6 +414,7 @@ return {
 			ui = {
 				mode = "floating", -- "floating" | "tabline"
 				floating = {
+					position = "top-right", -- "top-left" | "top-right" | "middle-left" | "middle-right" | "bottom-left" | "bottom-right"
 					minimal_menu = "dashed", -- "filename" | "dashed" | "full"
 				},
 			},
