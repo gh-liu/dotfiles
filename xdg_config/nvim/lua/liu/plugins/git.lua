@@ -61,7 +61,6 @@ return { -- Git {{{2
 				pattern = { "git", "fugitive" },
 				callback = function()
 					vim.wo[0][0].foldmethod = "syntax"
-					vim.wo[0][0].winhighlight = "StatusLine:StatusLineFugitive"
 
 					vim.bo.bufhidden = "wipe"
 					vim.bo.buflisted = false
@@ -70,6 +69,13 @@ return { -- Git {{{2
 						-- fold all files
 						vim.wo[0][0].foldlevel = 0
 					end
+				end,
+			})
+			api.nvim_create_autocmd("User", {
+				group = augroup,
+				pattern = { "FugitiveIndex", "FugitiveObject", "FugitiveStageBlob" },
+				callback = function()
+					vim.wo[0][0].winhighlight = "StatusLine:StatusLineFugitive"
 				end,
 			})
 
