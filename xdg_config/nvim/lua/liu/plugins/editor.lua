@@ -405,6 +405,20 @@ return {
 		end,
 	},
 	{
+		"serhez/bento.nvim",
+		event = "VeryLazy",
+		opts = {
+			main_keymap = "\\",
+			lock_char = "*",
+			ui = {
+				mode = "floating", -- "floating" | "tabline"
+				floating = {
+					minimal_menu = "dashed", -- "filename" | "dashed" | "full"
+				},
+			},
+		},
+	},
+	{
 		"MagicDuck/grug-far.nvim",
 		enabled = false,
 		opts = {
