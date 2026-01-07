@@ -63,8 +63,8 @@ map # findSelectedBackwards
 "===
 "map t createTab
 "map yt duplicateTab
-map [ nextTab
-map ] previousTab
+map [ previousTab
+map ] nextTab
 map { moveTabLeft
 map } moveTabRight
 ```
