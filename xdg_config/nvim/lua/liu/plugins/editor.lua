@@ -250,8 +250,8 @@ return {
 					local fname = args.data.from
 					local bufnr = vim.fn.bufnr(fname)
 					if bufnr > 0 then
-					-- delete buffer
-					require("mini.bufremove").delete(bufnr, false)
+						-- delete buffer
+						require("mini.bufremove").delete(bufnr, false)
 					end
 				end,
 			})
