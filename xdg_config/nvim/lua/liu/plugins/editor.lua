@@ -405,19 +405,6 @@ return {
 		end,
 	},
 	{
-		"mistweaverco/bafa.nvim",
-		keys = {
-			{ "gb", "<cmd>lua require('bafa.ui').toggle()<cr>" },
-		},
-		opts = {
-			ui = {
-				title = {
-					text = "bafa",
-				},
-			},
-		},
-	},
-	{
 		"MagicDuck/grug-far.nvim",
 		enabled = false,
 		opts = {
