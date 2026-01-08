@@ -162,6 +162,7 @@ return {
 				callback = function()
 					local MiniFiles = require("mini.files")
 					MiniFiles.set_bookmark("~", "~", { desc = "Home directory" })
+					MiniFiles.set_bookmark("C", vim.fn.stdpath("config"), { desc = "nvim Config directory" })
 					MiniFiles.set_bookmark("w", vim.fn.getcwd, { desc = "Working directory" })
 					MiniFiles.set_bookmark("r", function()
 						return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
