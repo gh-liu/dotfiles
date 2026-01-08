@@ -123,7 +123,7 @@ return {
 					-- 	return { "buffer" }
 					-- end
 
-					local default = { "lsp", "path", "snippets", "buffer" }
+					local default = { "lsp", "path", "snippets", "buffer", "omni" }
 					local buf_provider_inherit = vim.b.blink_cmp_provider_inherit
 					if buf_provider_inherit then
 						local providers = {}
