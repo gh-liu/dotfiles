@@ -236,12 +236,8 @@ return {
 					return false
 				end
 				-- Get treesitter captures at cursor position (0-indexed row, col)
-				local ok, captures = pcall(
-					vim.treesitter.get_captures_at_pos,
-					0,
-					cursor[1] - 1,
-					math.max(cursor[2] - 1, 0)
-				)
+				local ok, captures =
+					pcall(vim.treesitter.get_captures_at_pos, 0, cursor[1] - 1, math.max(cursor[2] - 1, 0))
 				if not ok then
 					return false
 				end
