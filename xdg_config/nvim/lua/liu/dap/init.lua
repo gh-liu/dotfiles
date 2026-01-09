@@ -136,7 +136,7 @@ api.nvim_create_autocmd("FileType", {
 	callback = function(ev)
 		vim.cmd([[syntax match Debug '^dap>']])
 
-		vim.b.blink_cmp_provider = { "buffer", "omni" }
+		vim.b.blink_cmp_sources = { "buffer", "omni" }
 
 		local win = vim.api.nvim_get_current_win()
 		-- vim.wo[win].winfixbuf = true

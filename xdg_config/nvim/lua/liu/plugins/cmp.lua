@@ -108,13 +108,13 @@ return {
 			},
 			sources = {
 				default = function(ctx)
-					local buf_providers = vim.b.blink_cmp_provider
-					if buf_providers then
-						if type(buf_providers) == "table" then
-							return buf_providers
+					local buf_sourcess = vim.b.blink_cmp_sources
+					if buf_sourcess then
+						if type(buf_sourcess) == "table" then
+							return buf_sourcess
 						end
-						if type(buf_providers) == "string" then
-							return vim.split(buf_providers, ",")
+						if type(buf_sourcess) == "string" then
+							return vim.split(buf_sourcess, ",")
 						end
 					end
 
@@ -123,20 +123,20 @@ return {
 					-- 	return { "buffer" }
 					-- end
 
-					local default = { "lsp", "path", "snippets", "buffer", "omni" }
-					local buf_provider_inherit = vim.b.blink_cmp_provider_inherit
-					if buf_provider_inherit then
-						local providers = {}
-						if type(buf_provider_inherit) == "table" then
-							providers = buf_provider_inherit
-						end
-						if type(buf_provider_inherit) == "string" then
-							providers = vim.split(buf_provider_inherit, ",")
-						end
-						for _, p in ipairs(providers) do
-							table.insert(default, p)
-						end
-					end
+					local default = { "lsp", "path", "snippets", "buffer" }
+					-- local buf_sources_inherit = vim.b.blink_cmp_sources_inherit
+					-- if buf_provider_inherit then
+					-- 	local providers = {}
+					-- 	if type(buf_provider_inherit) == "table" then
+					-- 		providers = buf_provider_inherit
+					-- 	end
+					-- 	if type(buf_provider_inherit) == "string" then
+					-- 		providers = vim.split(buf_provider_inherit, ",")
+					-- 	end
+					-- 	for _, p in ipairs(providers) do
+					-- 		table.insert(default, p)
+					-- 	end
+					-- end
 					return default
 				end,
 				-- per_filetype = { lua = { inherit_defaults = true, "lazydev" } },
