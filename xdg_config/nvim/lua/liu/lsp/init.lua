@@ -272,7 +272,11 @@ vim.lsp.start = (function()
 	return function(...)
 		local _, opt = unpack({ ... })
 		if opt and opt.bufnr then
-			if vim.api.nvim_buf_is_valid(opt.bufnr) and vim.b[opt.bufnr].fugitive_type then
+			if
+				not vim.api.nvim_buf_is_valid(opt.bufnr)
+				or vim.b[opt.bufnr].fugitive_type
+				or vim.startswith(vim.api.nvim_buf_get_name(opt.bufnr), "fugitive://")
+			then
 				return
 			end
 		end
