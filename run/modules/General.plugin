@@ -1,0 +1,15 @@
+#!name=General Settings Enhanced
+#!desc=1.增补跳过代理部分段内容 2.增补绕过TUN的指定IP范围内容 3.增补返回真实IP段内容
+#!author=Liu
+#!homepage=https://github.com/gh-liu/dotfiles/run
+#!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Bypass.png
+
+[General]
+# > 跳过代理：指定域名和IP强制使用TUN，不经过Proxy
+skip-proxy = 192.168.0.0/16,10.0.0.0/8,172.16.0.0/12,localhost,*.local,e.crashlytics.com
+
+# > TUN旁路路由：指定IP范围将绕过TUN
+bypass-tun = 10.0.0.0/8,100.64.0.0/10,127.0.0.0/8,169.254.0.0/16,172.16.0.0/12,192.0.0.0/24,192.0.2.0/24,192.88.99.0/24,192.168.0.0/16,198.51.100.0/24,203.0.113.0/24,224.0.0.0/4,255.255.255.255/32
+
+# > 真实IP：处理DNS时，返回真实IP
+real-ip = *.lan, cable.auth.com, captive.apple.com, e.crashlytics.com, localhost.ptlogin2.qq.com, localhost.sec.qq.com
