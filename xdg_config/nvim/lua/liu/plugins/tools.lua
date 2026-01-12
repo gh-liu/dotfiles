@@ -111,6 +111,30 @@ return {
 		dev = true,
 	},
 	{
+		"obsidian-nvim/obsidian.nvim",
+		version = "*",
+		cond = function()
+			return vim.fn.isdirectory(".obsidian") ~=0
+		end,
+		opts = {
+			legacy_commands = false,
+			workspaces = {
+				{
+					name = "current",
+					path = vim.fn.getcwd(),
+				},
+			},
+			templates = {
+				folder = ".obsidian/templates",
+				date_format = "%Y-%m-%d-%a",
+				time_format = "%H:%M",
+			},
+			footer = {
+				enabled = true,
+			},
+		},
+	},
+	{
 		"letieu/jira.nvim",
 		cond = function()
 			return vim.env.JIRA_BASE
