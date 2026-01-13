@@ -114,7 +114,15 @@ return {
 		"obsidian-nvim/obsidian.nvim",
 		version = "*",
 		cond = function()
-			return vim.fn.isdirectory(".obsidian") ~=0
+			return vim.fn.isdirectory(".obsidian") ~= 0
+		end,
+		init = function()
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = "markdown",
+				callback = function(args)
+					vim.wo[0][0].conceallevel = 1
+				end,
+			})
 		end,
 		opts = {
 			legacy_commands = false,
@@ -125,12 +133,19 @@ return {
 				},
 			},
 			templates = {
-				folder = ".obsidian/templates",
+				folder = ".templates",
 				date_format = "%Y-%m-%d-%a",
 				time_format = "%H:%M",
 			},
 			footer = {
 				enabled = true,
+			},
+			daily_notes = {
+				folder = "daily",
+				date_format = "%Y-%m-%d",
+				-- alias_format = nil,
+				default_tags = { "daily-notes" },
+				workdays_only = true,
 			},
 		},
 	},
