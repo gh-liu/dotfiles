@@ -1,1 +1,3 @@
-vim.wo.foldlevel = 1
+-- vim.wo.foldlevel = 1
+vim.wo.foldenable = false
+
