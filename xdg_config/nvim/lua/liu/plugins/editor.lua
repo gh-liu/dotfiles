@@ -35,10 +35,18 @@ return {
 				pattern = { "dirvish" },
 				callback = function(ev)
 					-- :h dirvish-mappings
-					vim.keymap.set("n", "g<c-s>", "o", { remap = true, buffer = 0 })
-					vim.keymap.set("n", "g<c-v>", "a", { remap = true, buffer = 0 })
-					vim.keymap.set("v", "g<c-s>", "O", { remap = true, buffer = 0 })
-					vim.keymap.set("v", "g<c-v>", "A", { remap = true, buffer = 0 })
+					-- Use <C-w>s and <C-w>v to match vim's built-in window split commands
+					-- dirvish commands:
+					--   o: open in horizontal split
+					--   a: open in vertical split
+					--   O/A: operate on selected files in visual mode
+					-- Use noremap=false (remap=true) to allow dirvish's internal mappings to work
+					-- But add silent to prevent triggering other behaviors
+					-- Buffer-local mappings should override built-in commands
+					vim.keymap.set("n", "<C-w>s", "o", { remap = true, buffer = ev.buf, desc = "Split horizontally", silent = true, nowait = true })
+					vim.keymap.set("n", "<C-w>v", "a", { remap = true, buffer = ev.buf, desc = "Split vertically", silent = true, nowait = true })
+					vim.keymap.set("v", "<C-w>s", "O", { remap = true, buffer = ev.buf, desc = "Split selected horizontally", silent = true, nowait = true })
+					vim.keymap.set("v", "<C-w>v", "A", { remap = true, buffer = ev.buf, desc = "Split selected vertically", silent = true, nowait = true })
 				end,
 			})
 		end,
@@ -74,15 +82,15 @@ return {
 
 					vim.keymap.set("n", "<CR>", function()
 						MiniFiles.go_in({ close_on_file = true })
-					end, { buffer = buf })
-					vim.keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf })
+					end, { buffer = buf, desc = "Go in (close on file)" })
+					vim.keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf, desc = "Synchronize changes" })
 
 					vim.keymap.set("n", "g.", function()
 						local path = MiniFiles.get_fs_entry().path
 						MiniFiles.close()
 						vim.fn.feedkeys(": " .. path)
 						vim.fn.feedkeys(vim.keycode("<HOME>"))
-					end, { buffer = buf })
+					end, { buffer = buf, desc = "Put path in command line" })
 
 					local get_win_path = function()
 						local state = MiniFiles.get_explorer_state()
@@ -95,27 +103,55 @@ return {
 						local path = get_win_path()
 						MiniFiles.close()
 						vim.cmd.lcd(path)
-					end, { buffer = buf })
+					end, { buffer = buf, desc = "Change directory to current path" })
 					vim.keymap.set("n", "cD", function()
 						local path = get_win_path()
 						MiniFiles.close()
 						vim.cmd([[bo new]])
 						vim.fn.jobstart(vim.o.shell, { term = true, cwd = path })
-					end, { buffer = buf })
+					end, { buffer = buf, desc = "Open terminal in current path" })
 
-					vim.keymap.set("n", "yp", function()
-						local path = MiniFiles.get_fs_entry().path
-						local p
-						if vim.v.count > 0 then
-							p = vim.fn.fnamemodify(path, ":p")
-						else
-							p = vim.fn.fnamemodify(path, ":.")
+					-- Helper function to yank path (relative by default, full path with count)
+					local yank_path = function(path, ensure_dir)
+						-- Ensure directory path if needed
+						if ensure_dir then
+							if vim.fn.isdirectory(path) == 0 then
+								path = vim.fn.fnamemodify(path, ":h")
+							end
+							-- Ensure trailing slash
+							if path:sub(-1) ~= "/" then
+								path = path .. "/"
+							end
 						end
-						vim.fn.setreg(vim.v.register, p)
-						print(string.format([[copy "%s"]], p))
+						local full_path = vim.fn.fnamemodify(path, ":p")
+						local cwd = vim.fn.getcwd()
+						-- Make relative to cwd (same as global y<leader> behavior)
+						local rel_path = vim.fn.substitute(full_path, "^" .. vim.fn.escape(cwd, "\\") .. "/", "", "")
+						-- If count > 0, use full path; otherwise use relative path
+						local p = vim.v.count > 0 and full_path or rel_path
+						vim.fn.setreg("+", p)
+						vim.fn.setreg("*", p)
+						vim.cmd('echo "copy: " . @+')
+					end
+
+					-- Unified with global y<leader> mapping for consistency
+					-- Same behavior: relative path by default, full path with count
+					vim.keymap.set("n", "y<leader>", function()
+						local path = MiniFiles.get_fs_entry().path
+						yank_path(path, false)
 					end, { buffer = buf, desc = "Yank path" })
 
+					-- Yank directory path (current window's directory)
+					-- Same behavior: relative path by default, full path with count
+					vim.keymap.set("n", "yd", function()
+						local dir_path = get_win_path()
+						yank_path(dir_path, true)
+					end, { buffer = buf, desc = "Yank directory path" })
+
 					local map_split = function(buf_id, lhs, direction)
+						-- First, try to delete any existing mapping to ensure clean override
+						pcall(vim.keymap.del, "n", lhs, { buffer = buf_id })
+						
 						local rhs = function()
 							local cur_target = MiniFiles.get_explorer_state().target_window
 							local new_target = vim.api.nvim_win_call(cur_target, function()
@@ -129,10 +165,12 @@ return {
 						end
 
 						local desc = "Split " .. direction
-						vim.keymap.set("n", lhs, rhs, { buffer = buf_id, desc = desc })
+						-- Use noremap, silent, and nowait to prevent recursion and ensure it overrides built-in commands
+						vim.keymap.set("n", lhs, rhs, { buffer = buf_id, desc = desc, noremap = true, silent = true, nowait = true })
 					end
-					map_split(buf, "g<c-s>", "belowright horizontal")
-					map_split(buf, "g<c-v>", "belowright vertical")
+					-- Use <C-w>s and <C-w>v to match vim's built-in window split commands
+					map_split(buf, "<C-w>s", "belowright horizontal")
+					map_split(buf, "<C-w>v", "belowright vertical")
 
 					-- vim-flagship {{{
 					vim.cmd([[
@@ -223,11 +261,11 @@ return {
 		},
 		opts = {
 			mappings = {
-				go_in = "<C-l>",
-				go_out = "<C-h>",
-				-- Use `''` (empty string) to not create one.
-				go_in_plus = "",
-				go_out_plus = "",
+				-- Use single-key mappings following vim conventions, no Ctrl needed
+				go_in = "l",        -- Enter directory or open file (default)
+				go_out = "h",       -- Go to parent directory (default)
+				go_in_plus = "L",   -- Enter and close file explorer
+				go_out_plus = "H",  -- Go out and trim right columns
 
 				mark_set = "m",
 				mark_goto = "`",
