@@ -1,3 +1,5 @@
+local utils = require("liu.utils")
+
 vim.api.nvim_set_hl(0, "DebugLine", { bg = "#524d57" })
 local signs = {
 	DapStopped = { text = "", texthl = "ModeMsg", numhl = "ModeMsg", linehl = "ModeMsg" },
@@ -13,8 +15,9 @@ end
 return {
 	{
 		"mfussenegger/nvim-dap",
+		-- integrates with: vim-flagship (status via DAPStopped autocmd in ui.lua)
 		keys = {
-			{ "dcc", "<cmd>lua require('dap').continue()<cr>", desc = "Continue" },
+			{ "dcc", "<cmd>lua require('dap').continue()<cr>", desc = "Continue debugging" },
 			{ "dcb", "<cmd>lua require('dap').toggle_breakpoint()<cr>", desc = "Toggle breakpoint" },
 			{ "dcB", "<cmd>lua require('dap').clear_breakpoints()<cr>", desc = "Clear breakpoints" },
 			{
@@ -37,7 +40,7 @@ return {
 				end,
 				desc = "Log point",
 			},
-			{ "dcr", [[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]] },
+			{ "dcr", [[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]], desc = "Toggle REPL" },
 		},
 		cmd = {
 			"DapContinue",
@@ -48,20 +51,15 @@ return {
 		config = function(self, opts)
 			require("liu.dap")
 
-			-- local dap = require("dap")
 			vim.api.nvim_create_user_command("DapBreakpoints", function(args)
 				require("dap").list_breakpoints(true)
 			end, {})
-
-			-- https://github.com/mfussenegger/nvim-dap/pull/1237
-			-- which always load `.vscode/launch.json`
-			-- require("dap.ext.vscode").load_launchjs()
 		end,
 	},
 	{
 		"igorlfs/nvim-dap-view",
+		-- depends on: nvim-dap
 		opts = {
-			-- https://igorlfs.github.io/nvim-dap-view/configuration
 			winbar = {
 				default_section = "repl",
 			},
@@ -69,9 +67,9 @@ return {
 		cmd = "DapViewToggle",
 		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>", desc = "Toggle DAP view" } },
 	},
-
 	{
 		"Jorenar/nvim-dap-disasm",
+		-- depends on: nvim-dap
 		opts = {
 			winbar = false,
 		},

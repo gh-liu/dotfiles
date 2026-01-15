@@ -1,4 +1,3 @@
--- NOTE: textobject, operator, change.txt
 local api = vim.api
 local fn = vim.fn
 
@@ -213,12 +212,11 @@ return {
 	{
 		"nvim-mini/mini.operators",
 		keys = {
-			-- NOTE: also change keys below
-			{ "dr", mode = { "n", "x" } },
-			{ "dR", "<cmd>normal dr$<cr>", silent = true },
-			{ "cx", mode = { "n", "x" } },
-			{ "cX", "<cmd>normal cx$<cr>", silent = true },
-			{ "g=", mode = { "n", "x" } },
+			{ "dr", mode = { "n", "x" }, desc = "Replace text" },
+			{ "dR", "<cmd>normal dr$<cr>", mode = { "n", "x" }, silent = true, desc = "Replace to end of line" },
+			{ "cx", mode = { "n", "x" }, desc = "Exchange text" },
+			{ "cX", "<cmd>normal cx$<cr>", mode = { "n", "x" }, silent = true, desc = "Exchange to end of line" },
+			{ "g=", mode = { "n", "x" }, desc = "Evaluate expression" },
 		},
 		opts = {
 			replace = {
@@ -237,10 +235,10 @@ return {
 	{
 		"nvim-mini/mini.move",
 		keys = {
-			{ "<M-h>", mode = { "n", "x" } },
-			{ "<M-j>", mode = { "n", "x" } },
-			{ "<M-k>", mode = { "n", "x" } },
-			{ "<M-l>", mode = { "n", "x" } },
+			{ "<M-h>", mode = { "n", "x" }, desc = "Move left" },
+			{ "<M-j>", mode = { "n", "x" }, desc = "Move down" },
+			{ "<M-k>", mode = { "n", "x" }, desc = "Move up" },
+			{ "<M-l>", mode = { "n", "x" }, desc = "Move right" },
 		},
 		config = function(self, opts)
 			local keys = self.keys
@@ -267,8 +265,8 @@ return {
 	{
 		"nvim-mini/mini.align",
 		keys = {
-			{ "gl", mode = { "n", "x" } },
-			{ "gL", mode = { "n", "x" } },
+			{ "gl", mode = { "n", "x" }, desc = "Align" },
+			{ "gL", mode = { "n", "x" }, desc = "Align with preview" },
 		},
 		config = function(self, opts)
 			require("mini.align").setup({
@@ -281,11 +279,12 @@ return {
 	},
 	{
 		"monaqa/dial.nvim",
+		-- overrides: default <C-a>/<C-x> behavior (increment/decrement)
 		keys = {
-			{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "v" } },
-			{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "v" } },
-			{ "g<C-a>", "<Plug>(dial-g-increment)", mode = { "n", "v" }, remap = true },
-			{ "g<C-x>", "<Plug>(dial-g-decrement)", mode = { "n", "v" }, remap = true },
+			{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "v" }, desc = "Increment" },
+			{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "v" }, desc = "Decrement" },
+			{ "g<C-a>", "<Plug>(dial-g-increment)", mode = { "n", "v" }, remap = true, desc = "Increment globally" },
+			{ "g<C-x>", "<Plug>(dial-g-decrement)", mode = { "n", "v" }, remap = true, desc = "Decrement globally" },
 		},
 		config = function()
 			local config = require("dial.config")

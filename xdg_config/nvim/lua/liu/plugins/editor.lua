@@ -11,12 +11,7 @@
 -- globs & file
 -- ...
 
----@param highlights table
-local set_hls = function(highlights)
-	for group, opts in pairs(highlights) do
-		vim.api.nvim_set_hl(0, group, opts)
-	end
-end
+local utils = require("liu.utils")
 
 return {
 	{

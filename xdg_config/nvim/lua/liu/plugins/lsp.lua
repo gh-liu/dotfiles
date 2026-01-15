@@ -1,11 +1,5 @@
 local api = vim.api
-
----@param highlights table
-local set_hls = function(highlights)
-	for group, opts in pairs(highlights) do
-		vim.api.nvim_set_hl(0, group, opts)
-	end
-end
+local utils = require("liu.utils")
 
 return {
 	{
@@ -15,7 +9,7 @@ return {
 		config = function(self, opts)
 			require("lspconfig.ui.windows").default_options.border = vim.o.winborder
 
-			set_hls({
+			utils.set_hls({
 				LspInfoList = { link = "Function" },
 				LspInfoTip = { link = "Comment" },
 				LspInfoTitle = { link = "Title" },

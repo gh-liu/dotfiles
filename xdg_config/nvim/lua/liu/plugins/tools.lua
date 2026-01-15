@@ -1,19 +1,19 @@
--- NOTE: not editor features?
+local utils = require("liu.utils")
+
 return {
 	{
 		"tpope/vim-dadbod",
+		-- integrates with: vim-dispatch (via b:dispatch), vim-flagship (status indicator)
 		dependencies = {
 			"gh-liu/vim-dbcp",
 			dev = true,
 		},
 		init = function()
-			-- vim.keymap.set("n", "dq", "db#op_exec()", { expr = true })
-
 			vim.cmd([[
 			    xnoremap <expr> <Plug>(DBExe)     db#op_exec()
 				nnoremap <expr> <Plug>(DBExe)     db#op_exec()
 				nnoremap <expr> <Plug>(DBExeLine) db#op_exec() . '_'
-				
+
 				xmap gQ  <Plug>(DBExe)
 				nmap gQ  <Plug>(DBExe)
 				omap gQ  <Plug>(DBExe)
@@ -31,26 +31,40 @@ return {
 	},
 	{
 		"mistweaverco/kulala.nvim",
+		-- depends on: snacks.picker (for UI pickers)
+		-- integrates with: vim-dispatch (via b:dispatch), vim-flagship (status indicator)
 		-- @need-install: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 		-- @need-install: cargo install websocat
 		init = function()
 			vim.api.nvim_create_autocmd({ "FileType" }, {
+				group = utils.augroup("kulala"),
 				pattern = "http",
 				callback = function(ev)
 					local buffer = ev.buf
-					vim.keymap.set("n", "[[", require("kulala").jump_prev, { buffer = buffer })
-					vim.keymap.set("n", "]]", require("kulala").jump_next, { buffer = buffer })
+					local kulala = require("kulala")
+					vim.keymap.set("n", "[[", kulala.jump_prev, { buffer = buffer, desc = "Jump to previous request" })
+					vim.keymap.set("n", "]]", kulala.jump_next, { buffer = buffer, desc = "Jump to next request" })
 
-					vim.keymap.set("n", "<localleader>r", require("kulala").run, { buffer = buffer })
-					vim.keymap.set("n", "<localleader>R", require("kulala").replay, { buffer = buffer })
-					vim.keymap.set("n", "<localleader>cc", require("kulala").copy, { buffer = buffer })
-					vim.keymap.set("n", "<localleader>se", require("kulala").set_selected_env, { buffer = buffer })
+					vim.keymap.set("n", "<localleader>r", kulala.run, { buffer = buffer, desc = "Run HTTP request" })
+					vim.keymap.set(
+						"n",
+						"<localleader>R",
+						kulala.replay,
+						{ buffer = buffer, desc = "Replay last request" }
+					)
+					vim.keymap.set("n", "<localleader>cc", kulala.copy, { buffer = buffer, desc = "Copy curl command" })
+					vim.keymap.set(
+						"n",
+						"<localleader>se",
+						kulala.set_selected_env,
+						{ buffer = buffer, desc = "Set environment" }
+					)
 
 					vim.b.dispatch = [[:lua require("kulala").run()]]
 
+					-- Integrates with vim-flagship for status display
 					vim.b.UserBufFlagship = function()
 						local CONFIG = require("kulala.config")
-						-- return "kulala:" .. (vim.g.kulala_selected_env or CONFIG.get().default_env)
 						local icon = CONFIG.get().icons.lualine
 						return icon .. (vim.g.kulala_selected_env or CONFIG.get().default_env)
 					end
@@ -60,22 +74,21 @@ return {
 			})
 
 			vim.api.nvim_create_autocmd("BufEnter", {
+				group = utils.augroup("kulala_ui"),
 				pattern = "kulala://ui",
 				callback = function(data)
 					if vim.fn.winnr("$") < 2 then
 						vim.cmd.bdelete({ bang = true, mods = { silent = true } })
 					end
-					vim.cmd("setlocal stl=%y")
+					vim.wo[0][0].statusline = "%y"
 				end,
 			})
 		end,
 		ft = { "http" },
 		opts = {
-			-- :h kulala.configuration-options-configuration-options
 			global_keymaps = false,
-			-- https://neovim.getkulala.net/docs/getting-started/configuration-options#certificates
 			certificates = {},
-			custom_dynamic_variables = {}, ---@type { [string]: fun():string }[]
+			custom_dynamic_variables = {},
 			additional_curl_options = { "--noproxy", "*" },
 			ui = {
 				pickers = {
@@ -118,6 +131,7 @@ return {
 		end,
 		init = function()
 			vim.api.nvim_create_autocmd("FileType", {
+				group = utils.augroup("obsidian"),
 				pattern = "markdown",
 				callback = function(args)
 					vim.wo[0][0].conceallevel = 1
@@ -143,7 +157,6 @@ return {
 			daily_notes = {
 				folder = "daily",
 				date_format = "%Y-%m-%d",
-				-- alias_format = nil,
 				default_tags = { "daily-notes" },
 				workdays_only = true,
 			},

@@ -1,9 +1,4 @@
----@param highlights table
-local set_hls = function(highlights)
-	for group, opts in pairs(highlights) do
-		vim.api.nvim_set_hl(0, group, opts)
-	end
-end
+local utils = require("liu.utils")
 
 return {
 	{
@@ -15,7 +10,7 @@ return {
 				return package.loaded["nvim-web-devicons"]
 			end
 
-			set_hls({
+			utils.set_hls({
 				MiniIconsAzure = { fg = "#88C0D0" },
 				MiniIconsBlue = { fg = "#5E81AC" },
 				MiniIconsCyan = { fg = "#8FBCBB" },
@@ -69,9 +64,11 @@ return {
 		"rachartier/tiny-glimmer.nvim",
 		-- event = "VeryLazy",
 		init = function()
-			vim.api.nvim_set_hl(0, "TinyGlimmerPaste", { bg = "#5E81AC" })
-			vim.api.nvim_set_hl(0, "TinyGlimmerRedo", { bg = "#A3BE8C" })
-			vim.api.nvim_set_hl(0, "TinyGlimmerUndo", { bg = "#BF616A" })
+			utils.set_hls({
+				TinyGlimmerPaste = { bg = "#5E81AC" },
+				TinyGlimmerRedo = { bg = "#A3BE8C" },
+				TinyGlimmerUndo = { bg = "#BF616A" },
+			})
 		end,
 		opts = {
 			overwrite = {
@@ -274,7 +271,7 @@ return {
 
 			-- vim.g.fold_line_current_fold_only = true
 
-			set_hls({ FoldLineCurrent = { link = "WinSeparator" } })
+			utils.set_hls({ FoldLineCurrent = { link = "WinSeparator" } })
 		end,
 	},
 }

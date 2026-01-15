@@ -1,9 +1,8 @@
--- NOTE: completion, pairs, doc gen
+local utils = require("liu.utils")
+
 return {
 	{
 		"saghen/blink.cmp",
-		-- lazy = false,
-		-- event = "InsertEnter",
 		event = "VeryLazy",
 		version = "*", -- download pre-built binaries
 		dependencies = {
@@ -51,9 +50,7 @@ return {
 						enabled = true,
 					},
 				},
-				menu = {
-					border = vim.o.winborder,
-					winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+				menu = vim.tbl_extend("force", utils.float_opts(), {
 					draw = {
 						-- Use treesitter to highlight the label text
 						-- for the given list of sources
@@ -88,23 +85,17 @@ return {
 							},
 						},
 					},
-				},
+				}),
 				documentation = {
 					auto_show = true,
 					auto_show_delay_ms = 200,
-					window = {
-						border = vim.o.winborder,
-						winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
-					},
+					window = utils.float_opts(),
 				},
 				-- ghost_text = {},
 			},
 			signature = { -- NOTE: !experimental
 				enabled = true,
-				window = {
-					border = vim.o.winborder,
-					winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
-				},
+				window = utils.float_opts(),
 			},
 			sources = {
 				default = function(ctx)
@@ -170,6 +161,7 @@ return {
 	},
 	{
 		"nvim-mini/mini.pairs",
+		-- auto bracket pairs, enhanced with smart skip logic
 		enabled = true,
 		event = "InsertEnter",
 		keys = {
@@ -350,6 +342,7 @@ return {
 	},
 	{
 		"danymat/neogen",
+		-- documentation generator (annotation for functions/classes/etc)
 		cmd = { "Neogen" },
 		keys = {
 			{ "ydd", "<cmd>Neogen<cr>", desc = "Generate annotation (auto-detect)" },

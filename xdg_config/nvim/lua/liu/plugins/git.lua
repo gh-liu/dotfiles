@@ -1,19 +1,6 @@
 local api = vim.api
+local utils = require("liu.utils")
 
----@param cmds table<string, string|function>
-local set_cmds = function(cmds, opts)
-	opts = opts or { bang = true, nargs = 0 }
-	for key, cmd in pairs(cmds) do
-		vim.api.nvim_create_user_command(key, cmd, opts)
-	end
-end
-
----@param highlights table
-local set_hls = function(highlights)
-	for group, opts in pairs(highlights) do
-		vim.api.nvim_set_hl(0, group, opts)
-	end
-end
 return { -- Git {{{2
 	{
 		"tpope/vim-fugitive",
@@ -44,7 +31,7 @@ return { -- Git {{{2
 			vim.g.nremap = { ["[m"] = "[f", ["]m"] = "]f", ["="] = "<TAB>" }
 
 			--[[ Highlights ]]
-			set_hls({
+			utils.set_hls({
 				diffAdded = { link = "DiffAdd" },
 				-- diffAdded = { fg = "#4f5a58" },
 				-- diffRemoved = { link = "DiffDelete" },
@@ -54,7 +41,7 @@ return { -- Git {{{2
 			})
 
 			--[[ Autocmds ]]
-			local augroup = vim.api.nvim_create_augroup("liu/fugitive", { clear = true })
+			local augroup = utils.augroup("fugitive")
 			-- FileType: git / fugitive common settings
 			api.nvim_create_autocmd("FileType", {
 				group = augroup,
@@ -90,10 +77,10 @@ return { -- Git {{{2
 					]])
 
 					-- Checkout -b
-					vim.keymap.set("n", "cob", ":Git checkout -b ", { buffer = 0 })
+					vim.keymap.set("n", "cob", ":Git checkout -b ", { buffer = 0, desc = "Git checkout new branch" })
 					-- Absorb (cargo install git-absorb)
-					vim.keymap.set("n", "gaa", ":Git absorb<space>", { buffer = 0 })
-					vim.keymap.set("n", "gar", ":Git absorb --and-rebase<space>", { buffer = 0 })
+					vim.keymap.set("n", "gaa", ":Git absorb<space>", { buffer = 0, desc = "Git absorb" })
+					vim.keymap.set("n", "gar", ":Git absorb --and-rebase<space>", { buffer = 0, desc = "Git absorb and rebase" })
 				end,
 			})
 
@@ -130,7 +117,7 @@ return { -- Git {{{2
 			vim.keymap.set("n", "g<space>", G_toggle, { silent = true, desc = "Toggle fugitive summary" })
 
 			--[[ Custom commands ]]
-			set_cmds({
+			utils.set_cmds({
 				GLog = "Gclog!",
 
 				GConflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
@@ -148,6 +135,8 @@ return { -- Git {{{2
 	},
 	{
 		"rbong/vim-flog",
+		-- integrates with: vim-fugitive (same Git commands)
+		-- note: absorb keymaps (gaa/gar) overlap with fugitive buffer keymaps
 		init = function(self)
 			vim.g.flog_use_internal_lua = 1
 			vim.g.flog_default_opts = { max_count = 2000 }
@@ -157,7 +146,7 @@ return { -- Git {{{2
 			vim.keymap.set("ca", "F", "Flogsplit", {})
 
 			api.nvim_create_autocmd("FileType", {
-				group = vim.api.nvim_create_augroup("liu/flog/setup", { clear = true }),
+				group = utils.augroup("flog/setup"),
 				pattern = "floggraph",
 				callback = function(ev)
 					local buf = ev.buf
@@ -166,21 +155,21 @@ return { -- Git {{{2
 						vim.keymap.set("n", lhs, rhs, opts)
 					end
 
-					nmap("o", "<Plug>(FlogVSplitCommitRight)")
-					nmap("q", "<Plug>(FlogQuit)")
+					nmap("o", "<Plug>(FlogVSplitCommitRight)", { desc = "Open commit" })
+					nmap("q", "<Plug>(FlogQuit)", { desc = "Quit flog" })
 
 					-- :h flog-%h
 					-- The hash of the commit under the cursor, if any.
 
 					-- git reset --mixed/hard
-					nmap("cRm", "<Cmd>exec flog#Format('Floggit reset %h')<CR>")
-					nmap("cRh", "<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>")
+					nmap("cRm", "<Cmd>exec flog#Format('Floggit reset %h')<CR>", { desc = "Git reset to commit" })
+					nmap("cRh", "<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>", { desc = "Git reset --hard to commit" })
 
-					-- git absorb
-					nmap("gaa", ":Floggit absorb<space>", { buffer = buf })
-					nmap("gar", ":Floggit absorb --and-rebase<space>", { buffer = buf })
-					nmap("gab", "<cmd><C-U>exec flog#Format('Floggit absorb --base %h')<CR>")
-					nmap("gabr", "<cmd><C-U>exec flog#Format('Floggit absorb --base %h --and-rebase')<CR>")
+					-- git absorb (note: overlaps with fugitive buffer keymaps)
+					nmap("gaa", ":Floggit absorb<space>", { buffer = buf, desc = "Flog git absorb" })
+					nmap("gar", ":Floggit absorb --and-rebase<space>", { buffer = buf, desc = "Flog git absorb and rebase" })
+					nmap("gab", "<cmd><C-U>exec flog#Format('Floggit absorb --base %h')<CR>", { desc = "Flog git absorb --base" })
+					nmap("gabr", "<cmd><C-U>exec flog#Format('Floggit absorb --base %h --and-rebase')<CR>", { desc = "Flog git absorb --base and rebase" })
 				end,
 			})
 		end,
