@@ -489,6 +489,11 @@ return {
 		cmd = { "GrugFar", "GrugFarWithin" },
 	},
 	{
+		"gh-liu/nvim-winterm",
+		dev = true,
+		opts = {},
+	},
+	{
 		"tpope/vim-dispatch",
 		-- event = "VeryLazy",
 		init = function()
