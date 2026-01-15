@@ -130,7 +130,7 @@ function _G.QuickfixTextFunc(info)
 			end
 
 			limit = limit or math.min(math.max(20, math.floor(cols * 0.3)), prefix_max_len)
-			local prefix = align_str(prefix_raw or "", prefix_max_len)
+			local prefix = align_str(prefix_raw or "", limit)
 
 			str = entry_fmt:format(prefix, lnum, col, qtype, vim.trim(item.text))
 		else
