@@ -207,11 +207,13 @@ end, {
 				for _, gotag in ipairs(gotags) do
 					local res = vim.split(gotag, ":")
 					local tag = res[1]
-					local options_str = string.match(res[2], [["(.*)"]])
-					local options = vim.split(options_str, ",")
-					vim.iter(options):skip(1):each(function(option)
-						options_map[tag .. "=" .. option] = true
-					end)
+					local options_str = res[2] and string.match(res[2], [["(.*)"]])
+					if options_str then
+						local options = vim.split(options_str, ",")
+						vim.iter(options):skip(1):each(function(option)
+							options_map[tag .. "=" .. option] = true
+						end)
+					end
 				end
 			end
 			return vim.tbl_keys(options_map)
