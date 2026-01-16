@@ -134,9 +134,9 @@ M.set_highlights = function()
 			-- StatusLineTerm = { link = "PmenuShadow" },
 			StatusLineTerm = { fg = c.fg, bg = c.blue },
 			-- tabline
-			TabLine = { fg = c.darkwhite, bg = c.gray },
-			TabLineSel = { fg = c.lightgreen, bg = c.brightgray },
-			TabLineFill = { fg = c.brightergray, bg = c.gray },
+			TabLine = { fg = c.brightergray, bg = c.gray },
+			TabLineSel = { fg = c.gray, bg = c.lightgreen },
+			TabLineFill = { fg = c.brightergray },
 		},
 		cursor = {
 			-- cursor
