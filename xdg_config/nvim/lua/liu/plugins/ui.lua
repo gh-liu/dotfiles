@@ -261,7 +261,7 @@ return {
 	},
 	{
 		"gh-liu/fold_line.nvim",
-		enabled = true,
+		enabled = false,
 		-- dev = true,
 		branch = "dev",
 		event = "VeryLazy",
