@@ -56,6 +56,26 @@ M.colors = {
 	brightergray = M.palette.nord3,
 }
 
+-- terminal colors
+M.set_terminal_colors = function()
+	vim.g.terminal_color_0 = M.palette.nord1 -- black
+	vim.g.terminal_color_1 = M.palette.nord11 -- red
+	vim.g.terminal_color_2 = M.palette.nord14 -- green
+	vim.g.terminal_color_3 = M.palette.nord13 -- yellow
+	vim.g.terminal_color_4 = M.palette.nord9 -- blue
+	vim.g.terminal_color_5 = M.palette.nord15 -- magenta
+	vim.g.terminal_color_6 = M.palette.nord8 -- cyan
+	vim.g.terminal_color_7 = M.palette.nord5 -- white
+	vim.g.terminal_color_8 = M.palette.nord3 -- bright black
+	vim.g.terminal_color_9 = M.palette.nord11 -- bright red
+	vim.g.terminal_color_10 = M.palette.nord14 -- bright green
+	vim.g.terminal_color_11 = M.palette.nord13 -- bright yellow
+	vim.g.terminal_color_12 = M.palette.nord9 -- bright blue
+	vim.g.terminal_color_13 = M.palette.nord15 -- bright magenta
+	vim.g.terminal_color_14 = M.palette.nord7 -- bright cyan
+	vim.g.terminal_color_15 = M.palette.nord6 -- bright white
+end
+
 local hl = vim.api.nvim_set_hl
 local c = M.colors
 
@@ -67,14 +87,14 @@ M.set_highlights = function()
 		-------------------------------------
 
 		Normal = { bg = c.bg, fg = c.fg },
-		-- NormalNC = {}, -- not current window
+		NormalNC = { fg = c.darkwhite, bg = c.bg }, -- not current window
 		NormalFloat = { link = "Normal" }, -- normal text in floating windows
 
 		-- // UI
-		NonText = { fg = c.brightgray, bold = true },
+		NonText = { fg = c.brightergray },
 		Conceal = { fg = c.gray },
-		-- Whitespace = { link = "NonText" },
-		-- EndOfBuffer = { link = "NonText" },
+		Whitespace = { link = "NonText" },
+		EndOfBuffer = { link = "NonText" },
 
 		Added = { fg = c.green },
 		Changed = { fg = c.yellow },
@@ -89,9 +109,9 @@ M.set_highlights = function()
 		DiffTextAdd = { fg = c.green, bg = c.gray, underdotted = true },
 
 		-- float window
-		FloatBorder = { fg = c.blue },
-		-- FloatTitle = { link = "Title" },
-		-- FloatFooter = { link = "Title" },
+		FloatBorder = { fg = c.gray },
+		FloatTitle = { link = "Title" },
+		FloatFooter = { link = "Title" },
 		FloatShadow = { fg = c.gray, blend = 80 },
 		FloatShadowThrough = { fg = c.gray, blend = 100 },
 
@@ -99,21 +119,21 @@ M.set_highlights = function()
 		WinBar = { bold = true },
 		WinBarNC = { link = "WinBar" },
 		-- statusline
-		StatusLine = { fg = c.fg, bg = c.brightergray },
-		StatusLineNC = { fg = c.fg, bg = c.gray },
+		StatusLine = { fg = c.darkwhite, bg = c.gray },
+		StatusLineNC = { fg = c.brightergray, bg = c.bg },
 		-- StatusLineTerm = { link = "PmenuShadow" },
 		StatusLineTerm = { fg = c.fg, bg = c.blue },
 		-- tabline
-		TabLine = { fg = c.brightergray, bg = c.gray },
-		TabLineSel = { fg = c.gray, bg = c.lightgreen },
-		TabLineFill = { fg = c.brightergray },
+		TabLine = { fg = c.darkwhite, bg = c.gray },
+		TabLineSel = { fg = c.fg, bg = c.lightgreen },
+		TabLineFill = { fg = c.brightergray, bg = c.gray },
 
 		-- cursor
 		Cursor = { fg = c.bg, bg = c.fg },
 		lCursor = { link = "Cursor" },
 		CursorLine = { bg = c.gray },
-		CursorLineNr = { fg = c.magenta },
-		-- CursorLineSign = { link = "SignColumn" },
+		CursorLineNr = { fg = c.lightblue },
+		CursorLineSign = { link = "SignColumn" },
 		CursorLineFold = { fg = c.brightgray, bold = true },
 		TermCursor = { fg = c.fg, bg = c.gray },
 		TermCursorNC = { fg = c.fg, bg = c.gray },
@@ -123,8 +143,8 @@ M.set_highlights = function()
 		WarningMsg = { fg = c.yellow },
 		MoreMsg = { fg = c.orange },
 		ModeMsg = { fg = c.green, bold = true },
-		-- MsgArea = {},
-		-- MsgSeparator = { link = "WinSeparator" },
+		MsgArea = { fg = c.fg },
+		MsgSeparator = { link = "WinSeparator" },
 
 		-- fold
 		Folded = { fg = c.brightgray },
@@ -136,25 +156,34 @@ M.set_highlights = function()
 		ColorColumn = { link = "CursorLine" },
 
 		-- line nr
-		LineNr = { fg = c.brightgray },
+		LineNr = { fg = c.gray },
 		-- LineNrAbove = { link = "LineNr" },
 		-- LineNrBelow = { link = "LineNr" },
 
 		-- search & substitute
-		Search = { fg = c.white, bg = c.blue },
+		Search = { fg = c.bg, bg = c.lightblue },
 		-- IncSearch = { link = "Search" },
 		CurSearch = { bg = c.yellow },
 		-- Substitute = { link = "Search" },
 
 		-- visual
-		Visual = { bg = c.brightgray },
-		VisualNOS = { bg = c.brightgray },
+		Visual = { bg = c.gray },
+		VisualNOS = { bg = c.gray },
 
 		-- pmenu
-		Pmenu = { fg = c.blue, bg = c.bg },
-		PmenuSel = { fg = c.fg, bg = c.blue },
+		Pmenu = { fg = c.fg, bg = c.gray },
+		PmenuSel = { fg = c.fg, bg = c.brightgray },
 		PmenuThumb = { fg = c.fg, bg = c.brightergray },
-		-- PmenuSbar = { fg = c.fg, bg = c.brightergray, bold = true },
+		PmenuSbar = { bg = c.brightergray },
+		PmenuBorder = { fg = c.gray, bg = c.gray },
+		PmenuShadow = { link = "FloatShadow" },
+		PmenuShadowThrough = { link = "FloatShadowThrough" },
+		PmenuKind = { link = "Pmenu" },
+		PmenuKindSel = { link = "PmenuSel" },
+		PmenuExtra = { link = "Pmenu" },
+		PmenuExtraSel = { link = "PmenuSel" },
+		PmenuMatch = { fg = c.yellow, bold = true },
+		PmenuMatchSel = { fg = c.yellow, bg = c.brightgray, bold = true },
 
 		-- spell
 		SpellBad = { fg = c.red, undercurl = true },
@@ -175,7 +204,8 @@ M.set_highlights = function()
 		qfLineNr = { link = "QuickFixLineNr" },
 
 		Title = { fg = c.magenta, bold = true },
-		WinSeparator = { fg = c.blue },
+		WinSeparator = { fg = c.gray },
+		VertSplit = { link = "WinSeparator" },
 		Todo = { fg = c.orange, bold = true, italic = true }, -- anything that needs extra attention; mostly the keywords TODO FIXME and XXX
 		SpecialKey = { fg = c.lightgreen },
 		MatchParen = { underline = true, italic = true, bold = true },
@@ -392,4 +422,5 @@ M.set_highlights = function()
 	end
 end
 
+M.set_terminal_colors()
 M.set_highlights()
