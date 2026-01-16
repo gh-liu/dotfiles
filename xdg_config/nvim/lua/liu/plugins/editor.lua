@@ -257,10 +257,10 @@ return {
 		opts = {
 			mappings = {
 				-- Use single-key mappings following vim conventions, no Ctrl needed
-				go_in = "l",        -- Enter directory or open file (default)
-				go_out = "h",       -- Go to parent directory (default)
-				go_in_plus = "L",   -- Enter and close file explorer
-				go_out_plus = "H",  -- Go out and trim right columns
+				go_in = "<c-l>",        -- Enter directory or open file (default)
+				go_out = "<c-h>",       -- Go to parent directory (default)
+				go_in_plus = "",   -- Enter and close file explorer
+				go_out_plus = "",  -- Go out and trim right columns
 
 				mark_set = "m",
 				mark_goto = "`",
