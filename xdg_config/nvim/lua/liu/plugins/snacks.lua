@@ -112,6 +112,6 @@ return {
 			require("snacks").picker("commands", { layout = "select" })
 		end)
 
-		vim.api.nvim_set_hl(0, "SnacksPickerDir", { link = "Directory" })
+		vim.api.nvim_set_hl(0, "SnacksPickerDir", { link = "Directory", default = true })
 	end,
 }

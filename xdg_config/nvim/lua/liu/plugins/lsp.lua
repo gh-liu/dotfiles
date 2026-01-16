@@ -9,13 +9,6 @@ return {
 		config = function(self, opts)
 			require("lspconfig.ui.windows").default_options.border = vim.o.winborder
 
-			utils.set_hls({
-				LspInfoList = { link = "Function" },
-				LspInfoTip = { link = "Comment" },
-				LspInfoTitle = { link = "Title" },
-				LspInfoFiletype = { link = "Type" },
-				LspInfoBorder = { link = "FloatBorder" },
-			})
 		end,
 	},
 	{

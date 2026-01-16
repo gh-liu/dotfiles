@@ -1,6 +1,6 @@
 local utils = require("liu.utils")
 
-vim.api.nvim_set_hl(0, "DebugLine", { bg = "#524d57" })
+vim.api.nvim_set_hl(0, "DebugLine", { link = "CursorLine", default = true })
 local signs = {
 	DapStopped = { text = "", texthl = "ModeMsg", numhl = "ModeMsg", linehl = "ModeMsg" },
 	DapLogPoint = { text = "", texthl = "Tag", numhl = "Tag", linehl = "Tag" },

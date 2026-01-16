@@ -1,5 +1,3 @@
-local utils = require("liu.utils")
-
 return {
 	{
 		"nvim-mini/mini.icons",
@@ -10,17 +8,6 @@ return {
 				return package.loaded["nvim-web-devicons"]
 			end
 
-			utils.set_hls({
-				MiniIconsAzure = { fg = "#88C0D0" },
-				MiniIconsBlue = { fg = "#5E81AC" },
-				MiniIconsCyan = { fg = "#8FBCBB" },
-				MiniIconsGreen = { fg = "#A3BE8C" },
-				MiniIconsGrey = { fg = "#4C566A" },
-				MiniIconsOrange = { fg = "#D08770" },
-				MiniIconsPurple = { fg = "#B48EAD" },
-				MiniIconsRed = { fg = "#BF616A" },
-				MiniIconsYellow = { fg = "#EBCB8B" },
-			})
 		end,
 		opts = {
 			filetype = {
@@ -63,13 +50,6 @@ return {
 	{
 		"rachartier/tiny-glimmer.nvim",
 		-- event = "VeryLazy",
-		init = function()
-			utils.set_hls({
-				TinyGlimmerPaste = { bg = "#5E81AC" },
-				TinyGlimmerRedo = { bg = "#A3BE8C" },
-				TinyGlimmerUndo = { bg = "#BF616A" },
-			})
-		end,
 		opts = {
 			overwrite = {
 				yank = {
@@ -271,7 +251,6 @@ return {
 
 			-- vim.g.fold_line_current_fold_only = true
 
-			utils.set_hls({ FoldLineCurrent = { link = "WinSeparator" } })
 		end,
 	},
 }

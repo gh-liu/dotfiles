@@ -30,16 +30,6 @@ return { -- Git {{{2
 			vim.g.xremap = { ["[m"] = "[f", ["]m"] = "]f" }
 			vim.g.nremap = { ["[m"] = "[f", ["]m"] = "]f", ["="] = "<TAB>" }
 
-			--[[ Highlights ]]
-			utils.set_hls({
-				diffAdded = { link = "DiffAdd" },
-				-- diffAdded = { fg = "#4f5a58" },
-				-- diffRemoved = { link = "DiffDelete" },
-				diffRemoved = { fg = "#634652" },
-				-- StatusLineFugitive = { link = "PmenuShadow" },
-				StatusLineFugitive = { bg = "#546e91" },
-			})
-
 			--[[ Autocmds ]]
 			local augroup = utils.augroup("fugitive")
 			-- FileType: git / fugitive common settings

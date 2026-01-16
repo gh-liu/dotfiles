@@ -89,7 +89,7 @@ return {
 			})
 
 			-- vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { link = "Tag" })
-			vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined" })
+			vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined", default = true })
 		end,
 		opts = {
 			multiwindow = true,
