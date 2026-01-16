@@ -220,7 +220,7 @@ M.set_highlights = function()
 		misc = {
 			-- misc
 			Question = { fg = c.green, bold = true },
-			QuickFixLine = { bg = c.brightergray },
+			QuickFixLine = { fg = c.cyan, bold = true },
 			QuickFixLineNr = { fg = c.darkwhite },
 			qfLineNr = { link = "QuickFixLineNr" },
 
