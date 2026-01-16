@@ -475,7 +475,7 @@ M.set_highlights = function()
 
 			-- vim-fugitive
 			diffAdded = { link = "DiffAdd" },
-            diffRemoved = { link = "DiffDelete" },
+			diffRemoved = { link = "DiffDelete" },
 			StatusLineFugitive = { fg = c.lightgreen, bg = c.brightgray },
 
 			-- mini.diff

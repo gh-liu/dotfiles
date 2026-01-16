@@ -7,7 +7,6 @@ return {
 				require("mini.icons").mock_nvim_web_devicons()
 				return package.loaded["nvim-web-devicons"]
 			end
-
 		end,
 		opts = {
 			filetype = {
@@ -250,7 +249,6 @@ return {
 			vim.g.fold_line_char_open_end = "╰"
 
 			-- vim.g.fold_line_current_fold_only = true
-
 		end,
 	},
 }

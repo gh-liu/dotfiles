@@ -40,7 +40,11 @@ return {
 				end,
 				desc = "Log point",
 			},
-			{ "dcr", [[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]], desc = "Toggle REPL" },
+			{
+				"dcr",
+				[[:lua require("dap").repl.toggle({ height = 12, winfixheight = true })<CR>]],
+				desc = "Toggle REPL",
+			},
 		},
 		cmd = {
 			"DapContinue",

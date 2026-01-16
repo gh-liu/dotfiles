@@ -8,7 +8,6 @@ return {
 		event = { "BufReadPre", "BufNewFile" },
 		config = function(self, opts)
 			require("lspconfig.ui.windows").default_options.border = vim.o.winborder
-
 		end,
 	},
 	{

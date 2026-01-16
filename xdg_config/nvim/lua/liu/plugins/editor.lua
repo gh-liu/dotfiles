@@ -38,10 +38,42 @@ return {
 					-- Use noremap=false (remap=true) to allow dirvish's internal mappings to work
 					-- But add silent to prevent triggering other behaviors
 					-- Buffer-local mappings should override built-in commands
-					vim.keymap.set("n", "<C-w>s", "o", { remap = true, buffer = ev.buf, desc = "Split horizontally", silent = true, nowait = true })
-					vim.keymap.set("n", "<C-w>v", "a", { remap = true, buffer = ev.buf, desc = "Split vertically", silent = true, nowait = true })
-					vim.keymap.set("v", "<C-w>s", "O", { remap = true, buffer = ev.buf, desc = "Split selected horizontally", silent = true, nowait = true })
-					vim.keymap.set("v", "<C-w>v", "A", { remap = true, buffer = ev.buf, desc = "Split selected vertically", silent = true, nowait = true })
+					vim.keymap.set(
+						"n",
+						"<C-w>s",
+						"o",
+						{ remap = true, buffer = ev.buf, desc = "Split horizontally", silent = true, nowait = true }
+					)
+					vim.keymap.set(
+						"n",
+						"<C-w>v",
+						"a",
+						{ remap = true, buffer = ev.buf, desc = "Split vertically", silent = true, nowait = true }
+					)
+					vim.keymap.set(
+						"v",
+						"<C-w>s",
+						"O",
+						{
+							remap = true,
+							buffer = ev.buf,
+							desc = "Split selected horizontally",
+							silent = true,
+							nowait = true,
+						}
+					)
+					vim.keymap.set(
+						"v",
+						"<C-w>v",
+						"A",
+						{
+							remap = true,
+							buffer = ev.buf,
+							desc = "Split selected vertically",
+							silent = true,
+							nowait = true,
+						}
+					)
 				end,
 			})
 		end,
@@ -78,7 +110,12 @@ return {
 					vim.keymap.set("n", "<CR>", function()
 						MiniFiles.go_in({ close_on_file = true })
 					end, { buffer = buf, desc = "Go in (close on file)" })
-					vim.keymap.set("n", "<leader><CR>", MiniFiles.synchronize, { buffer = buf, desc = "Synchronize changes" })
+					vim.keymap.set(
+						"n",
+						"<leader><CR>",
+						MiniFiles.synchronize,
+						{ buffer = buf, desc = "Synchronize changes" }
+					)
 
 					vim.keymap.set("n", "g.", function()
 						local path = MiniFiles.get_fs_entry().path
@@ -146,7 +183,7 @@ return {
 					local map_split = function(buf_id, lhs, direction)
 						-- First, try to delete any existing mapping to ensure clean override
 						pcall(vim.keymap.del, "n", lhs, { buffer = buf_id })
-						
+
 						local rhs = function()
 							local cur_target = MiniFiles.get_explorer_state().target_window
 							local new_target = vim.api.nvim_win_call(cur_target, function()
@@ -161,7 +198,12 @@ return {
 
 						local desc = "Split " .. direction
 						-- Use noremap, silent, and nowait to prevent recursion and ensure it overrides built-in commands
-						vim.keymap.set("n", lhs, rhs, { buffer = buf_id, desc = desc, noremap = true, silent = true, nowait = true })
+						vim.keymap.set(
+							"n",
+							lhs,
+							rhs,
+							{ buffer = buf_id, desc = desc, noremap = true, silent = true, nowait = true }
+						)
 					end
 					-- Use <C-w>s and <C-w>v to match vim's built-in window split commands
 					map_split(buf, "<C-w>s", "belowright horizontal")
@@ -257,10 +299,10 @@ return {
 		opts = {
 			mappings = {
 				-- Use single-key mappings following vim conventions, no Ctrl needed
-				go_in = "<c-l>",        -- Enter directory or open file (default)
-				go_out = "<c-h>",       -- Go to parent directory (default)
-				go_in_plus = "",   -- Enter and close file explorer
-				go_out_plus = "",  -- Go out and trim right columns
+				go_in = "<c-l>", -- Enter directory or open file (default)
+				go_out = "<c-h>", -- Go to parent directory (default)
+				go_in_plus = "", -- Enter and close file explorer
+				go_out_plus = "", -- Go out and trim right columns
 
 				mark_set = "m",
 				mark_goto = "`",

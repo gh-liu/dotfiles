@@ -74,7 +74,11 @@ api.nvim_create_autocmd("User", {
 		map_dap("q", [[:lua require("dap").terminate()<CR>]], "Terminates the debug session")
 		map_dap("x", [[:lua require("dap").clear_breakpoints()<CR>]], "Removes all breakpoints")
 		-- map_dap("?", [[:lua=require("dap").status()<CR>]], "debug status")
-		map_dap("?", [[:lua vim.api.nvim_echo({ { require("dap").status(), "Debug" } }, false, {})<CR>]], "debug status")
+		map_dap(
+			"?",
+			[[:lua vim.api.nvim_echo({ { require("dap").status(), "Debug" } }, false, {})<CR>]],
+			"debug status"
+		)
 
 		-- map_dap("L", function()
 		-- 	local logpoint = vim.fn.input({ prompt = "Log point message: " })
