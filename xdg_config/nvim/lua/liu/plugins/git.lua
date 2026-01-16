@@ -140,41 +140,33 @@ return { -- Git {{{2
 				pattern = "floggraph",
 				callback = function(ev)
 					local buf = ev.buf
-					local nmap = function(lhs, rhs, opts)
-						opts = opts or { buffer = buf, silent = true }
-						vim.keymap.set("n", lhs, rhs, opts)
+					local function nmap(lhs, rhs, desc)
+						vim.keymap.set("n", lhs, rhs, { buffer = buf, silent = true, desc = desc })
 					end
 
-					nmap("o", "<Plug>(FlogVSplitCommitRight)", { desc = "Open commit" })
-					nmap("q", "<Plug>(FlogQuit)", { desc = "Quit flog" })
+					-- :h flog-%h (hash under cursor)
+					local maps = {
+						{ "o", "<Plug>(FlogVSplitCommitRight)", "Open commit" },
+						{ "q", "<Plug>(FlogQuit)", "Quit flog" },
+						{ "rt", "<Cmd>exec flog#Format('Floggit reset %h')<CR>", "Git reset to commit" },
+						{ "rT", "<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>", "Git reset --hard to commit" },
+						{ "gaa", ":Floggit absorb<space>", "Flog git absorb" },
+						{ "gar", ":Floggit absorb --and-rebase<space>", "Flog git absorb and rebase" },
+						{
+							"gab",
+							"<Cmd><C-U>exec flog#Format('Floggit absorb --base %h')<CR>",
+							"Flog git absorb --base",
+						},
+						{
+							"gabr",
+							"<Cmd><C-U>exec flog#Format('Floggit absorb --base %h --and-rebase')<CR>",
+							"Flog git absorb --base and rebase",
+						},
+					}
 
-					-- :h flog-%h
-					-- The hash of the commit under the cursor, if any.
-					-- git reset --mixed/hard
-					nmap("rt", "<Cmd>exec flog#Format('Floggit reset %h')<CR>", { desc = "Git reset to commit" })
-					nmap(
-						"rT",
-						"<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>",
-						{ desc = "Git reset --hard to commit" }
-					)
-
-					-- git absorb (note: overlaps with fugitive buffer keymaps)
-					nmap("gaa", ":Floggit absorb<space>", { buffer = buf, desc = "Flog git absorb" })
-					nmap(
-						"gar",
-						":Floggit absorb --and-rebase<space>",
-						{ buffer = buf, desc = "Flog git absorb and rebase" }
-					)
-					nmap(
-						"gab",
-						"<cmd><C-U>exec flog#Format('Floggit absorb --base %h')<CR>",
-						{ desc = "Flog git absorb --base" }
-					)
-					nmap(
-						"gabr",
-						"<cmd><C-U>exec flog#Format('Floggit absorb --base %h --and-rebase')<CR>",
-						{ desc = "Flog git absorb --base and rebase" }
-					)
+					for _, m in ipairs(maps) do
+						nmap(m[1], m[2], m[3])
+					end
 				end,
 			})
 		end,
