@@ -116,6 +116,7 @@ bins() {
 
 		bun i -g @bufbuild/buf
 		bun i -g sql-formatter
+		bun i -g add-skill vercel-labs/agent-skills
 
 		# bun i -g tree-sitter-cli
 	fi

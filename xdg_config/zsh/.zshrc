@@ -185,6 +185,25 @@ function extract {
 		fi
 	fi
 }
+skilla() {
+	case $# in
+	1) add-skill "$1" --list ;;
+	2)
+		repo=$1
+		skills=$2
+		set -- "$repo" # reset positional args
+		IFS=','
+		for s in $skills; do
+			set -- "$@" --skill "$s"
+		done
+		add-skill "$@"
+		;;
+	*)
+		echo "Usage: skilla <repo> | skilla <repo> skill1,skill2,..." >&2
+		return 1
+		;;
+	esac
+}
 # }}}
 
 # 5. plugins{{{
