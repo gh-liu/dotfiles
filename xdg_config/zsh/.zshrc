@@ -509,6 +509,8 @@ which nvim &>/dev/null && alias e=nvim
 which fd &>/dev/null && alias find="fd"
 which eza &>/dev/null && alias ls="eza"
 which bat &>/dev/null && alias cat="bat --theme=\"Nord\" --style=\"changes\""
+# wt config shell install zsh
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 # }}}
 
 # 999. misc{{{

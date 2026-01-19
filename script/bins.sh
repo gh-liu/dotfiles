@@ -159,6 +159,7 @@ bins() {
 		cargo install shpool
 
 		cargo install --locked --bin jj jj-cli
+		cargo install worktrunk
 
 	fi
 
