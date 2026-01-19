@@ -33,8 +33,8 @@
     (parameter_declaration
       name: (identifier)
       type: [
-        (type_identifier) @method_recviver
+        (type_identifier) @method_receiver
         (pointer_type
-          (type_identifier) @method_recviver)
+          (type_identifier) @method_receiver)
       ]))
   name: (field_identifier) @method)
