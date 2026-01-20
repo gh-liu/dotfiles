@@ -9,13 +9,44 @@ description: Neovim Lua 插件作者工作流与规约（repo-only）。当需�
 
 这个 skill 帮助你以“贴近 Neovim 官方最佳实践”的方式开发 Lua 插件：在不牺牲启动性能的前提下，提供清晰的对外接口（命令/`<Plug>`/Lua API）、可维护的目录结构、可诊断的健康检查、可阅读的 vimdoc，以及使用 `mini.test` 的自动化测试。
 
-## Workflow decision tree（先推理，再写代码）
+## 快速开始（最小结构 + 最小入口）
 
-1. **先识别需求类型**（决定入口与加载时机）
+最小目录结构：
+
+```
+plugin/<name>.lua
+lua/<name>/init.lua
+lua/<name>/config.lua
+doc/<name>.txt
+```
+
+最小入口（`plugin/<name>.lua`）：
+
+```
+vim.api.nvim_create_user_command("<Name>Do", function(opts)
+  require("<name>").do_action(opts)
+end, { nargs = "*" })
+```
+
+最小实现（`lua/<name>/init.lua`）：
+
+```
+local M = {}
+
+function M.do_action(opts)
+  -- ... 实际逻辑
+end
+
+return M
+```
+
+## 关键决策（先推理，再写代码）
+
+1. **识别需求类型**（决定入口与加载时机）
    - 需要用户显式调用的功能（命令/映射）？
    - 需要跟随事件触发（autocmd）？
    - 只对特定 filetype 生效？
-   - 是否有“插件自有 UI buffer/窗口”？
+   - 是否有插件自有 UI buffer/窗口？
    - 启动性能是否敏感？（通常敏感）
 
 2. **先查权威来源**（避免网上文章过时）
@@ -39,7 +70,7 @@ description: Neovim Lua 插件作者工作流与规约（repo-only）。当需�
    - 推荐：`setup(opts)` 只 merge 默认配置；初始化逻辑放在 `plugin/`/`ftplugin/`。
    - 例外：需要显式 opt-in 或初始化高度可定制时，才考虑合并到 `setup()`（`:h lua-plugin-init`）。
 
-## Workflow（详细步骤与检查点）
+## 实施步骤（详细步骤与检查点）
 
 ### Step 0：收集最小上下文（避免盲写）
 
@@ -87,6 +118,21 @@ doc/<name>.txt               vimdoc
 - 轻量校验用 `vim.validate()`（`:h vim.validate()`）。
 - “未知字段/拼写错误”这类深度校验可放到 health check，减少运行期开销（`:h health-dev`）。
 
+对比示例（不推荐 vs 推荐）：
+
+```
+-- 不推荐：setup 里注册大量 autocmd/keymap
+function M.setup(opts)
+  M.config = vim.tbl_deep_extend("force", defaults, opts or {})
+  vim.api.nvim_create_autocmd("BufEnter", { callback = M.on_buf_enter })
+end
+
+-- 推荐：setup 只合并配置，注册放在 plugin/ 或 ftplugin/
+function M.setup(opts)
+  M.config = vim.tbl_deep_extend("force", defaults, opts or {})
+end
+```
+
 ### Step 4：可观测性与错误处理
 
 - 用 `vim.notify()`/`vim.notify_once()` 给用户明确且可操作的提示（`:h vim.notify()`）。
@@ -125,10 +171,9 @@ doc/<name>.txt               vimdoc
 为插件添加自动化测试可以大幅提升可维护性。推荐使用 `mini.test`（见 `references/testing-mini-test.md`）：
 
 **为什么选 mini.test**：
-- 与 Neovim 深度集成，支持 child Neovim 进程做隔离测试
-- 支持层级用例组织（test set）、hooks、参数化、过滤
+- 与 Neovim 深度集成，支持 child Neovim 进程隔离测试
+- 支持 test set、hooks、参数化与过滤
 - 内置 screenshot/reference 测试，适合 UI 插件
-- 同时支持交互式 buffer reporter 和 headless stdout reporter（CI 友好）
 
 **推荐目录结构**：
 ```
@@ -146,10 +191,13 @@ scripts/
 3. 在 child 里加载插件、执行操作、用 `MiniTest.expect.*` 断言
 4. 本地 `:lua MiniTest.run()` 或 CI `nvim --headless ...`
 
-**常用断言**（`:h MiniTest.expect`）：
-- `MiniTest.expect.equality(a, b)` / `MiniTest.expect.no_equality(a, b)`
-- `MiniTest.expect.error(f, pattern)` / `MiniTest.expect.no_error(f)`
-- `MiniTest.expect.reference_screenshot(screenshot, path)`（UI 回归）
+**最小运行示例**（与 `scripts/minimal_init.lua` 配合）：
+
+```
+nvim --headless -u scripts/minimal_init.lua -c "lua MiniTest.run()" -c "qa"
+```
+
+**常用断言**见 `:h MiniTest.expect`。
 
 ## 规约（30%：必须/禁止/建议）
 
@@ -173,7 +221,7 @@ scripts/
 - 采用 LuaLS 注解（LuaCATS/EmmyLua）提高类型安全（`:h lua-plugin-type-safety`）。
 - 为核心功能写自动化测试（推荐 `mini.test`，见 Step 8）。
 
-## Bundled resources（按需阅读/复制）
+## 资源索引（按需阅读/复制）
 
 ### references/
 
