@@ -43,4 +43,17 @@ local ctags_exclude_str = vim.iter(ctags_exclude)
 	:join(" ")
 create_command("Tags", string.format("!ctags %s --tag-relative=yes -R *", ctags_exclude_str), { nargs = 0 })
 
+create_command("Swap", function(opts)
+	local w1 = vim.fn.getreg("1")
+	local w2 = vim.fn.getreg("2")
+	if w1 == "" or w2 == "" then
+		vim.notify("Need @1 and @2", vim.log.levels.WARN)
+		return
+	end
+	local w1_esc = vim.fn.escape(w1, [[\/&]])
+	local w2_esc = vim.fn.escape(w2, [[\/&]])
+	local cmd = string.format("%d,%ds/%s/%s/g", opts.line1, opts.line2, w2_esc, w1_esc)
+	vim.cmd(cmd)
+end, { nargs = 0, range = true })
+
 -- vim: foldmethod=marker
