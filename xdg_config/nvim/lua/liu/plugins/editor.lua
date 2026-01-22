@@ -611,6 +611,8 @@ return {
 				  \     source Session.vim |
 				  \   elseif filereadable('.git/Session.vim') |
 				  \     source .git/Session.vim |
+				  \   elseif filereadable('.config/Session.vim') |
+				  \     source .config/Session.vim |
 				  \   endif |
 				  \ endif
 			]])
