@@ -83,9 +83,13 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 
 	if vim.bo.modified then
 		local filename = vim.api.nvim_buf_get_name(0)
-		local content = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
+		local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+		local content = table.concat(lines, "\n")
+		if #lines > 0 and lines[#lines] ~= "" then
+			content = content .. "\n"
+		end
 		local size = #content
-		local archive = string.format("%s\n%d\n%s\n", filename, size, content)
+		local archive = string.format("%s\n%d\n%s", filename, size, content)
 		execute_command(archive)
 	else
 		execute_command(nil)
