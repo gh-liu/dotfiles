@@ -88,6 +88,22 @@ return {
 				end,
 			})
 
+			vim.api.nvim_create_autocmd("WinClosed", {
+				group = vim.api.nvim_create_augroup("treesitter_context_only", { clear = true }),
+				callback = function(args)
+					if vim.fn.winnr("$") ~= 1 then
+						return
+					end
+					local winid = tonumber(args.match)
+					-- check if a treesitter context float window
+					if winid and vim.w[winid].treesitter_context_line_number then
+						vim.schedule(function()
+							require("treesitter-context").enable()
+						end)
+					end
+				end,
+			})
+
 			-- vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { link = "Tag" })
 			vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined", default = true })
 		end,
