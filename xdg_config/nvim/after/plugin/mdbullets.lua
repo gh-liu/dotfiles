@@ -73,7 +73,9 @@ end
 ---@param line string
 ---@return boolean
 local function is_empty_list_item(line)
-	return line:match("^%s*[-*+]%s*$") ~= nil or line:match("^%s*%d+%.%s*$") ~= nil
+	return line:match("^%s*[-*+]%s*$") ~= nil
+		or line:match("^%s*[-*+]%s+%[[ xX]%]%s*$") ~= nil
+		or line:match("^%s*%d+[%.%),]%s*$") ~= nil
 end
 
 ---@param line string
@@ -139,9 +141,8 @@ end
 ---@param prev_bullet string
 ---@return string bullet
 local function compute_unordered_bullet(stack, prev_len, cur_len, prev_bullet)
-	if #stack == 0 then
-		Stack.set_level(stack, prev_len, prev_bullet)
-	end
+	-- Always sync the previous level so new lists don't inherit stale bullets.
+	Stack.set_level(stack, prev_len, prev_bullet)
 
 	local use
 	if cur_len > prev_len then
@@ -465,7 +466,8 @@ local function try_handle_normal_insert(buf, row)
 			-- Only renumber if there's a gap, not if just slightly off
 			if actual > expected then
 				-- Use undojoin to merge with the delete operation
-				vim.fn.undojoin()
+				-- undojoin is an Ex command, not a VimL function
+				pcall(vim.cmd, "undojoin")
 				renumber_ordered(buf, row, cur_indent, cur_delim, expected)
 			end
 		end
