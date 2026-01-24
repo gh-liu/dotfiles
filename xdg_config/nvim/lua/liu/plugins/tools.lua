@@ -20,7 +20,10 @@ return {
 				nmap gQQ <Plug>(DBExeLine)
 				nmap gQ? <cmd> echo get(g:,"db",get(b:,"db","no db")) <cr>
 
-				autocmd User Flags call Hoist('buffer', 99, '%{flagship#surround(toupper(matchstr(get(b:, "db", ""), "^[^:]*")))}')
+				augroup liu_dadbod
+				  autocmd!
+				  autocmd User Flags call Hoist('buffer', 99, '%{flagship#surround(toupper(matchstr(get(b:, "db", ""), "^[^:]*")))}')
+				augroup END
 			]])
 
 			-- NOTE: define your adapters:
