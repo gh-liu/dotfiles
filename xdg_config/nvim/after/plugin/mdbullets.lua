@@ -3,10 +3,13 @@
 --
 -- Scenarios:
 -- 1) Insert-mode newline on unordered list => auto-insert "-/*/+" with indent-aware rotation
--- 2) Insert-mode newline on ordered list   => auto-insert next number and renumber siblings
--- 3) After newline, Tab/Shift-Tab          => adjust bullet on the empty line
--- 4) Edit/delete ordered list numbers      => renumber forward when next sibling exists
--- 5) Normal-mode "o/O"                     => handled on InsertEnter/TextChanged
+-- 2) Insert-mode newline on task list      => auto-insert "- [ ]" with indent-aware bullet rotation
+-- 3) Insert-mode newline on ordered list   => auto-insert next number and renumber siblings
+-- 4) After newline, Tab/Shift-Tab          => adjust unordered bullet on the empty generated line
+-- 5) Edit ordered list numbers             => renumber forward when next sibling exists
+-- 6) Delete ordered list rows (gap)        => renumber from the first surviving row when a gap is detected
+-- 7) Normal-mode "o/O"                     => handled on InsertEnter/TextChanged
+-- 8) Second newline on an empty list item  => cancel the just-generated marker (exit list)
 --
 -- Safeguards:
 -- - Only active for markdown buffers
@@ -95,6 +98,35 @@ end
 ---@return boolean
 local function either_blocked(a, b)
 	return is_blocked(a) or is_blocked(b)
+end
+
+---@param buf integer
+---@param row integer -- current row (0-based), already a newly-created blank line
+---@param prev string -- previous line content
+---@param state table
+---@return boolean handled
+local function cancel_empty_list_item_on_second_newline(buf, row, prev, state)
+	if row <= 0 then
+		return false
+	end
+	if not is_empty_list_item(prev) then
+		return false
+	end
+
+	-- Typical UX: Enter on an empty list item exits the list without leaving a dangling marker.
+	-- Our autocmd sees the state *after* the newline, so we:
+	-- - remove the empty list marker line (row-1)
+	-- - remove the extra newly-created blank line (row)
+	-- and keep exactly one blank line with the same indent as the marker line.
+	local indent = prev:match("^(%s*)") or ""
+	api.nvim_buf_set_lines(buf, row - 1, row + 1, false, { indent })
+	api.nvim_win_set_cursor(0, { row, #indent }) -- row (1-based) points to old (row-1)
+
+	-- Reset list state so subsequent typing doesn't inherit previous list context.
+	state._md_list_last_generated_row = nil
+	state._md_list_indent_stack = nil
+	state._md_list_last_row = row - 1
+	return true
 end
 
 -- ====================================================================
@@ -382,7 +414,13 @@ local function md_bullets(buf)
 	end
 
 	local prev = get_line(buf, row - 1)
-	if either_blocked(line, prev) or is_empty_list_item(prev) then
+	if either_blocked(line, prev) then
+		state._md_list_guard = false
+		return
+	end
+
+	-- Second newline on an empty list item: cancel the marker (exit list)
+	if cancel_empty_list_item_on_second_newline(buf, row, prev, state) then
 		state._md_list_guard = false
 		return
 	end
