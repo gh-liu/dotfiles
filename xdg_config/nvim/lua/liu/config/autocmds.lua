@@ -98,6 +98,7 @@ autocmd("BufHidden", {
 
 api.nvim_create_autocmd({ "CursorHold" }, {
 	desc = "stop snippet when in active",
+	group = liu_augroup("snippet_stop"),
 	callback = function()
 		if vim.snippet.active() then
 			vim.snippet.stop()
@@ -106,6 +107,7 @@ api.nvim_create_autocmd({ "CursorHold" }, {
 })
 
 vim.api.nvim_create_autocmd("BufWritePost", {
+	group = liu_augroup("trust_nvim_lua"),
 	pattern = { ".nvim.lua" },
 	callback = function(args)
 		vim.secure.trust({
