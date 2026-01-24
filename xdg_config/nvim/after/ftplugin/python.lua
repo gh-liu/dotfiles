@@ -12,7 +12,11 @@ if not vim.b.is_python_project then
 end
 
 vim.api.nvim_buf_create_user_command(0, "UvAdd", function(args)
-	local parts = { "Dispatch", "uv", "add" }
+	if vim.fn.exists(":Dispatch") ~= 2 then
+		vim.notify("Dispatch command not found", vim.log.levels.ERROR)
+		return
+	end
+	local parts = { "uv", "add" }
 
 	if not vim.b.is_python_project then
 		parts[#parts + 1] = "--script"
@@ -23,5 +27,5 @@ vim.api.nvim_buf_create_user_command(0, "UvAdd", function(args)
 		parts[#parts + 1] = arg
 	end
 
-	vim.cmd(table.concat(parts, " "))
+	vim.api.nvim_cmd({ cmd = "Dispatch", args = parts }, {})
 end, { nargs = "+", desc = "uv add (uses --script % outside projects)" })
