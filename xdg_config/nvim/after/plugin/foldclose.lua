@@ -70,8 +70,13 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 		if not (vim.wo[0][0].foldmethod == "expr" or vim.wo[0][0].foldexpr == "v:lua.vim.treesitter.foldexpr()") then
 			return
 		end
-		vim._with({ buf = args.buf }, function()
-			foldclose(args.buf)
+		if vim.tbl_isempty(vim.fn.win_findbuf(args.buf)) then
+			return
+		end
+		vim.schedule(function()
+			vim._with({ buf = args.buf }, function()
+				foldclose(args.buf)
+			end)
 		end)
 	end,
 })
