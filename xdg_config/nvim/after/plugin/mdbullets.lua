@@ -2,15 +2,19 @@
 -- Provides intelligent list continuation for ordered and unordered lists.
 --
 -- Scenarios:
--- 1) Insert-mode newline on unordered list => auto-insert "-/*/+" with indent-aware rotation
--- 2) Insert-mode newline on task list      => auto-insert "- [ ]" with indent-aware bullet rotation
--- 3) Insert-mode newline on ordered list   => auto-insert next number and renumber siblings
--- 4) After newline, Tab/Shift-Tab          => adjust unordered bullet on the empty generated line
--- 5) Edit ordered list numbers             => renumber forward when next sibling exists
--- 6) Delete ordered list rows (gap)        => renumber from the first surviving row when a gap is detected
--- 7) Normal-mode "o/O"                     => handled on InsertEnter/TextChanged
--- 8) Second newline on an empty list item  => cancel the just-generated marker (exit list)
--- 9) Normal-mode "dd" delete on ordered list => renumber without re-inserting the deleted item; undo works (joined)
+-- Insert-mode (newline-driven):
+-- 1) Unordered list newline        => auto-insert "-/*/+" (indent-aware rotation)
+-- 2) Task list newline             => auto-insert "- [ ]" (indent-aware bullet rotation)
+-- 3) Ordered list newline          => auto-insert next number; renumber following siblings
+-- 4) Second newline on empty item  => cancel the just-generated marker (exit list)
+--
+-- Insert-mode (post-newline adjustment):
+-- 5) Tab/Shift-Tab on empty bullet => adjust unordered bullet to match indent level
+-- 6) Edit ordered list number      => renumber forward when next sibling exists
+--
+-- Normal-mode:
+-- 7) "o/O" on an empty line after a list item => generate a new list item on InsertEnter
+-- 8) Ordered list row deletion (gap, e.g. "dd") => renumber from first surviving row; undo stays coherent (undojoin)
 --
 -- Safeguards:
 -- - Only active for markdown buffers
