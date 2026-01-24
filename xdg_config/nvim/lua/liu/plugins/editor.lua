@@ -552,45 +552,26 @@ return {
 				["golangci-lint run"] = "go",
 			}
 
-			local fts = {
-				dockerfile = {
-					dispatch = "podman build -t %:p:h:t .",
-					start = 'podman run --name test_%:p:h:t --rm --security-opt="apparmor=unconfined" --cap-add=SYS_PTRACE %:p:h:t',
-				},
-			}
-			vim.api.nvim_create_autocmd("FileType", {
-				desc = "b:dispatch or b:start for FileType",
-				pattern = vim.tbl_keys(fts),
-				callback = function(args)
-					local ft = args.match
-					for key, value in pairs(fts[ft]) do
-						vim.b[key] = value
-					end
-				end,
-			})
+			-- filetype-local dispatch settings are defined in liu_dispatch augroup below
 
 			vim.cmd([[
 			nmap `<bs> <cmd>AbortDispatch<cr>
 
-			autocmd BufReadPost *
-			\ if getline(1) =~# '^#!' |
-			\   let b:dispatch =
-			\       matchstr(getline(1), '#!\%(/usr/bin/env \+\)\=\zs.*') . ' %:S' |
-			\   let b:start = '-wait=always ' . b:dispatch |
-			\ endif
+			augroup liu_dispatch
+			  autocmd!
+			  autocmd BufReadPost *
+			  \ if getline(1) =~# '^#!' |
+			  \   let b:dispatch =
+			  \       matchstr(getline(1), '#!\%(/usr/bin/env \+\)\=\zs.*') . ' %:S' |
+			  \   let b:start = '-wait=always ' . b:dispatch |
+			  \ endif
 
-
-			autocmd BufReadPost docker-compose.*.y*ml
-			\ if getline(1) =~# '^#!' |
-			\   let b:dispatch = 'docker compose -f % up -d' |
-			\   let b:start = '-wait=always ' . b:dispatch |
-			\ endif
-
-			autocmd FileType python
-			\ if getline(1) =~# '^# /// script' |
-			\   let b:dispatch = 'uv run --script %' |
-			\   let b:start = '-wait=always ' . b:dispatch |
-			\ endif
+			  autocmd FileType python
+			  \ if getline(1) =~# '^# /// script' |
+			  \   let b:dispatch = 'uv run --script %' |
+			  \   let b:start = '-wait=always ' . b:dispatch |
+			  \ endif
+			augroup END
 			]])
 		end,
 		-- cmd = { "Make", "Dispatch", "Start" },
@@ -605,16 +586,19 @@ return {
 			"setglobal sessionoptions-=curdir 
 			"setglobal sessionoptions+=sesdir
 
-			autocmd VimEnter * nested
-				  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
-				  \   if filereadable('Session.vim') |
-				  \     source Session.vim |
-				  \   elseif filereadable('.git/Session.vim') |
-				  \     source .git/Session.vim |
-				  \   elseif filereadable('.config/Session.vim') |
-				  \     source .config/Session.vim |
-				  \   endif |
-				  \ endif
+			augroup liu_obsession
+			  autocmd!
+			  autocmd VimEnter * nested
+					  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
+					  \   let s:session_paths = ['Session.vim', '.git/Session.vim', '.config/Session.vim'] |
+					  \   for s:path in s:session_paths |
+					  \     if filereadable(s:path) |
+					  \       execute 'source' fnameescape(s:path) |
+					  \       break |
+					  \     endif |
+					  \   endfor |
+					  \ endif
+			augroup END
 			]])
 		end,
 	},
@@ -666,6 +650,26 @@ return {
 					["README.md"] = { type = "doc" },
 					[".projections.json"] = { type = "projections" },
 				},
+
+				-- dockerfile {{{
+				["Dockerfile"] = {
+					["Dockerfile"] = {
+						type = "container",
+						dispatch = "podman build -t %:p:h:t .",
+						start = 'podman run --name test_%:p:h:t --rm --security-opt="apparmor=unconfined" --cap-add=SYS_PTRACE %:p:h:t',
+					},
+				},
+				-- }}}
+
+				-- docker-compose {{{
+				["docker-compose*.yml"] = {
+					["docker-compose*.yml"] = {
+						type = "compose",
+						dispatch = "docker compose -f % up -d",
+						start = "-wait=always docker compose -f % up -d",
+					},
+				},
+				-- }}}
 
 				-- c {{{
 				["*.c&*.h"] = {
