@@ -105,14 +105,15 @@ function ACKMAP.setup()
 		vim.keymap.set("n", lhs, rhs, { desc = desc, buffer = 0 })
 	end
 
-	---@type QFItem[]
-	local items = {}
-	if vim.b.qf_is_loclist == 1 then
-		items = vim.fn.getloclist(0)
-	else
-		items = vim.fn.getqflist()
+	---@return QFItem[]
+	local function get_items()
+		if vim.b.qf_is_loclist == 1 then
+			return vim.fn.getloclist(0)
+		end
+		return vim.fn.getqflist()
 	end
 	map("g<c-s>", function()
+		local items = get_items()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		vim.schedule(function()
@@ -122,6 +123,7 @@ function ACKMAP.setup()
 		end)
 	end, "open entry in a new horizontal window")
 	map("g<c-v>", function()
+		local items = get_items()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		vim.schedule(function()
@@ -131,11 +133,13 @@ function ACKMAP.setup()
 		end)
 	end, "open entry in a new vertical window")
 	map("g<c-t>", function()
+		local items = get_items()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		tabedit_go_to(item.bufnr, item.lnum, item.col)
 	end, "open entry in a new tab")
 	map("gK", function()
+		local items = get_items()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		vim.schedule(function()
@@ -145,6 +149,7 @@ function ACKMAP.setup()
 		end)
 	end, "open entry in a preview window ")
 	map("o", function()
+		local items = get_items()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		vim.schedule(function()
@@ -154,6 +159,7 @@ function ACKMAP.setup()
 		end)
 	end, "open entry and come back")
 	map("O", function()
+		local items = get_items()
 		local line = vim.fn.line(".")
 		local item = items[line]
 		vim.schedule(function()
