@@ -262,9 +262,9 @@ api.nvim_create_autocmd("LspAttach", {
 			return
 		end
 
-		vim.iter(on_attachs):map(function(on_attach)
+		for _, on_attach in ipairs(on_attachs) do
 			on_attach(client, args.buf)
-		end)
+		end
 	end,
 })
 -- }}}
