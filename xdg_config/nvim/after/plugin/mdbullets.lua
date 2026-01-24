@@ -10,6 +10,7 @@
 -- 6) Delete ordered list rows (gap)        => renumber from the first surviving row when a gap is detected
 -- 7) Normal-mode "o/O"                     => handled on InsertEnter/TextChanged
 -- 8) Second newline on an empty list item  => cancel the just-generated marker (exit list)
+-- 9) Normal-mode "dd" delete on ordered list => renumber without re-inserting the deleted item; undo works (joined)
 --
 -- Safeguards:
 -- - Only active for markdown buffers
@@ -458,7 +459,7 @@ end
 
 ---@param buf integer
 ---@param row integer
-local function try_handle_normal_insert(buf, row)
+local function handle_insert_enter(buf, row)
 	local line = get_line(buf, row)
 	if row < 0 then
 		return
@@ -470,6 +471,9 @@ local function try_handle_normal_insert(buf, row)
 		if not is_list_item(prev) then
 			return
 		end
+
+		-- Join the implicit change from "o/O" with our auto-insert, so undo works as expected.
+		pcall(vim.cmd, "undojoin")
 
 		-- Force newline detection
 		vim.b[buf]._md_list_last_row = row - 1
@@ -489,8 +493,16 @@ local function try_handle_normal_insert(buf, row)
 		end)
 		return
 	end
+end
 
-	-- Handle ordered list renumbering after deletion
+---@param buf integer
+---@param row integer
+local function renumber_ordered_after_deletion(buf, row)
+	local line = get_line(buf, row)
+	if row < 0 then
+		return
+	end
+
 	-- Trigger when numbering jumps (current > prev + 1), indicating rows were deleted
 	local cur_indent, cur_num, cur_delim = parse_ordered(line)
 	if cur_num then
@@ -503,8 +515,7 @@ local function try_handle_normal_insert(buf, row)
 
 			-- Only renumber if there's a gap, not if just slightly off
 			if actual > expected then
-				-- Use undojoin to merge with the delete operation
-				-- undojoin is an Ex command, not a VimL function
+				-- Use undojoin to merge with the delete operation (must be immediate; don't debounce).
 				pcall(vim.cmd, "undojoin")
 				renumber_ordered(buf, row, cur_indent, cur_delim, expected)
 			end
@@ -543,7 +554,7 @@ local function setup_buf(buf)
 			if api.nvim_get_current_buf() == opts.buf then
 				local row = api.nvim_win_get_cursor(0)[1] - 1
 				vim.b[buf]._md_list_last_row = row
-				try_handle_normal_insert(buf, row)
+				handle_insert_enter(buf, row)
 			end
 		end,
 	})
@@ -562,10 +573,10 @@ local function setup_buf(buf)
 		group = augroup,
 		buffer = buf,
 		callback = function(opts)
+			-- Important: do NOT debounce here, otherwise "undojoin" can't merge with the delete
+			-- and undo will feel broken (autocmds will re-apply numbering after undo).
 			local row = api.nvim_win_get_cursor(0)[1] - 1
-			debounce(opts.buf, function()
-				try_handle_normal_insert(opts.buf, row)
-			end)
+			renumber_ordered_after_deletion(opts.buf, row)
 		end,
 	})
 end
