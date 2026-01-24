@@ -272,7 +272,7 @@ api.nvim_create_autocmd("LspAttach", {
 vim.lsp.start = (function()
 	local old_lsp_start = vim.lsp.start
 	return function(...)
-		local _, opt = unpack({ ... })
+		local opt = select(2, ...)
 		if opt and opt.bufnr then
 			if
 				not vim.api.nvim_buf_is_valid(opt.bufnr)
