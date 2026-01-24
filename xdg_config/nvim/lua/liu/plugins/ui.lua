@@ -108,7 +108,18 @@ return {
 			-- .. "%#ModeMsg#"
 			-- .. "%{v:lua.Flag_lsp_clients()}"
 
-			vim.cmd([[ autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline ]])
+			vim.cmd([[
+			augroup liu_flagship
+			  autocmd!
+			  autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline
+			  autocmd LspProgress * redrawtabline
+			  autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
+			  autocmd User Flags call Hoist("buffer", 11, "%{v:lua.Flag_lsp_clients()}")
+			  autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
+			  autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? printf('@%d/%d', index(argv(), bufname('%')) + 1, len(argv())) : '')}")
+			  autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}")
+			augroup END
+			]])
 			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_staus()}"
 
 			-- vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
@@ -122,7 +133,6 @@ return {
 			-- 	.. "%#DiagnosticHint#"
 			-- 	.. "%{v:lua.Flag_diagnostic.Get(4)}"
 
-			vim.cmd([[ autocmd LspProgress * redrawtabline ]])
 			vim.g.tabsuffix = "%(%{v:lua.vim.lsp.status()}%<%)" .. vim.g.tabsuffix
 
 			local icons = require("liu.user_config").icons
@@ -207,23 +217,13 @@ return {
 				end
 				return ""
 			end
-			vim.cmd([[
-			"autocmd User Flags call Hoist("buffer", "fugitive#statusline")
-			autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
-			"autocmd User Flags call Hoist("window", "%-13a") " argument
-			"autocmd User Flags call Hoist("window", "%{&previewwindow?'[PVW]':''}")
-			"autocmd User Flags call Hoist("global", "%{&ignorecase ? '[IC]' : ''}", {'hl': 'ModeMsg'})
-
-			"autocmd User Flags call Hoist("buffer", 12, "%{&channel?flagship#surround('channel:'.&channel):''}")
-			autocmd User Flags call Hoist("buffer", 11, "%{v:lua.Flag_lsp_clients()}")
-			autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
-
-			"autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? 'A+' : '')}")
-			autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? printf('@%d/%d', index(argv(), bufname('%')) + 1, len(argv())) : '')}")
-
-			"autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
-			]])
-			vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
+			-- "autocmd User Flags call Hoist("buffer", "fugitive#statusline")
+			-- "autocmd User Flags call Hoist("window", "%-13a") " argument
+			-- "autocmd User Flags call Hoist("window", "%{&previewwindow?'[PVW]':''}")
+			-- "autocmd User Flags call Hoist("global", "%{&ignorecase ? '[IC]' : ''}", {'hl': 'ModeMsg'})
+			-- "autocmd User Flags call Hoist("buffer", 12, "%{&channel?flagship#surround('channel:'.&channel):''}")
+			-- "autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? 'A+' : '')}")
+			-- "autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
 			-- if vim.diagnostic.status then
 			-- 	vim.cmd(
 			-- 		[[ autocmd User Flags call Hoist("buffer", 9, "%{flagship#surround(v:lua.vim.diagnostic.status())}") ]]
@@ -233,7 +233,6 @@ return {
 			-- end
 
 			if vim.fn.exists("&busy") then
-				-- vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('Busy:'.&busy):''}") ]])
 				vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('…'):''}") ]])
 			end
 		end,
