@@ -39,6 +39,7 @@ augroup liu_options_ui
   autocmd InsertEnter * if &buftype == '' | set nocursorline | set colorcolumn=80,120 | endif
   autocmd InsertLeave * if &buftype == '' | set cursorline   | set colorcolumn=      | endif
   autocmd CmdwinEnter * setlocal foldcolumn=0 nonumber norelativenumber signcolumn=no
+  autocmd FileType * setlocal formatoptions-=c formatoptions-=o
 augroup END
 ]])
 -- =============================================================================
@@ -155,9 +156,7 @@ vim.o.shada = vim.iter({
 
 -- Format {{{
 -- =============================================================================
-vim.cmd([[
-autocmd FileType * setlocal formatoptions-=c formatoptions-=o
-]])
+-- Format options are set in augroup liu_options_ui (above)
 -- =============================================================================
 --}}}
 
