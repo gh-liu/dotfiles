@@ -207,7 +207,10 @@ tnoremap <C-e> <End>
 
 tnoremap <C-q> <C-\><C-n>:quit<cr>
 
-autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
+augroup liu_term_maps
+  autocmd!
+  autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
+augroup END
 ]])
 -- }}}
 
