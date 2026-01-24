@@ -286,7 +286,10 @@ vim.lsp.start = (function()
 	end
 end)()
 
+local lsp_events_group = api.nvim_create_augroup("liu/lsp_events", { clear = true })
+
 vim.api.nvim_create_autocmd("LspProgress", {
+	group = lsp_events_group,
 	callback = function(ev)
 		local value = ev.data.params.value
 		if value.kind == "begin" then
@@ -300,6 +303,7 @@ vim.api.nvim_create_autocmd("LspProgress", {
 })
 
 vim.api.nvim_create_autocmd("LspRequest", {
+	group = lsp_events_group,
 	callback = function(args)
 		local bufnr = args.buf
 		local request = args.data.request
