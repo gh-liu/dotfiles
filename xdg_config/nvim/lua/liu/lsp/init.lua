@@ -49,7 +49,9 @@ api.nvim_create_autocmd("LspAttach", {
 		local bufnr = args.buf
 
 		if client:supports_method(lsp_methods.textDocument_codeLens) then
+			local codelens_group = api.nvim_create_augroup("liu/lsp_codelens/" .. bufnr, { clear = true })
 			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
+				group = codelens_group,
 				callback = function(ev)
 					lsp.codelens.refresh({ bufnr = bufnr })
 				end,
