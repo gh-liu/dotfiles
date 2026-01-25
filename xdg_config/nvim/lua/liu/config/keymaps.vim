@@ -118,7 +118,7 @@ inoremap <silent> <C-G><C-T> <C-R>=repeat(complete(col('.'),map(["%Y-%m-%d %H:%M
 " }}}
 " fold {{{
 " zN: If count is given, set foldlevel to count; otherwise restore previous fold state
-nnoremap <expr> zN v:count > 0 ? printf('<Cmd>setlocal foldenable foldlevel=%d<CR>', v:count) : '<Cmd>setlocal foldenable<CR>'
+nnoremap <expr> zN v:count > 0 ? printf('<Cmd>setlocal foldenable foldlevel=%d<CR>', v:count-1) : '<Cmd>setlocal foldenable<CR>'
 noremap z? <cmd> setlocal foldenable? 
 \ <bar> setlocal foldlevel? 
 \ <bar> setlocal foldmethod? 
