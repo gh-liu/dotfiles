@@ -136,13 +136,22 @@ return {
 			vim.api.nvim_create_autocmd("FileType", {
 				group = utils.augroup("obsidian"),
 				pattern = "markdown",
-				callback = function(args)
+				callback = function(_)
 					vim.wo[0][0].conceallevel = 1
 				end,
 			})
 		end,
 		opts = {
 			legacy_commands = false,
+			-- !for new
+			-- note_id_func = function(title)
+			-- 	local date = os.date("%Y-%m-%d_%H:%M")
+			-- 	if title and title ~= "" then
+			-- 		return date .. "_" .. title
+			-- 	else
+			-- 		return date
+			-- 	end
+			-- end,
 			workspaces = {
 				{
 					name = "current",
@@ -151,17 +160,16 @@ return {
 			},
 			templates = {
 				folder = ".templates",
-				date_format = "%Y-%m-%d-%a",
+				date_format = "%Y-%m-%d",
 				time_format = "%H:%M",
-			},
-			footer = {
-				enabled = true,
 			},
 			daily_notes = {
 				folder = "daily",
-				date_format = "%Y-%m-%d",
+				date_format = "%Y-%m-%d_%H:%M",
 				default_tags = { "daily-notes" },
-				workdays_only = true,
+			},
+			footer = {
+				enabled = true,
 			},
 		},
 	},
