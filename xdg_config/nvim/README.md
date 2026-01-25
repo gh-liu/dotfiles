@@ -36,3 +36,25 @@ Requires Nvim `v0.12.0`
 - **纯声明、短且稳定**（`:set`/`:hi`/简单 `:autocmd`）：用 Vimscript/`vim.cmd`
 - **插件文档只给 Vimscript/只认 `g:` 变量**：优先 Vimscript（先跑通再 Lua 化）
 - **追求最短可读**且无需复用：用 Vimscript
+
+### How I Use Fold
+
+**默认配置（Opt-in）：**
+- 默认禁用（`foldenable = false`），全部展开（`foldlevelstart = 99`）
+- 显示折叠列（`foldcolumn = "1"`）
+
+**折叠方法自动选择：**
+1. Treesitter（优先）— 若语言支持 `folds` 查询则自动启用（Lua、Python、Rust等）
+2. LSP（备选）— 服务器支持 `textDocument_foldingRange` 时启用
+3. Syntax（特殊场景）— Fugitive等特殊buffer用syntax方法
+   - Fugitive的commit信息默认全折（`foldlevel = 0`）
+
+**快捷键：** ~ 表示有一定客制化调整
+- `zN` ~ 智能折叠深度：`zN` 开启所有，`3zN` 展开到第2层（大于2的foldlevel全关闭）
+- `z?` ~ 查看当前折叠配置
+- `zi` — 切换是否启用折叠
+- `zr` — 添加 count1 到 foldlevel
+- `zm` ~ 减去 count1 到 foldlevel；若 foldenable 关闭，先执行 `zR` 打开所有折叠（会设置foldlevel）再执行 `zm`
+
+**使用哲学：**
+折叠是工具而非默认。自动启用Treesitter/LSP的精确折叠，但默认禁用保持清爽，需要时手动启用。
