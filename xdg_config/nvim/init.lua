@@ -17,8 +17,9 @@ vim.g.maplocalleader = " "
 -- =============================================================================
 -- Core Neovim Config (immediate execution)
 -- =============================================================================
+local config_dir = vim.fn.stdpath("config")
+vim.cmd("source " .. config_dir .. "/lua/liu/config/keymaps.vim")
 require("liu.config.options")
-require("liu.config.keymaps")
 require("liu.config.commands")
 require("liu.config.autocmds")
 
