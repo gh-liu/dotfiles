@@ -118,7 +118,10 @@ nnoremap g: :lua =
 " jump to context
 noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 
-
+" zN: If count is given, set foldlevel to count; otherwise restore previous fold state
+" zn: reset 'foldenable', all folds will be open
+" zi: invert 'foldenable'
+nnoremap <expr> zN v:count > 0 ? printf('<Cmd>setlocal foldenable foldlevel=%d<CR>', v:count) : '<Cmd>setlocal foldenable<CR>'
 noremap z? <cmd> setlocal foldenable? 
 \ <bar> setlocal foldlevel? 
 \ <bar> setlocal foldmethod? 
