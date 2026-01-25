@@ -19,8 +19,8 @@ vim.g.maplocalleader = " "
 -- =============================================================================
 local config_dir = vim.fn.stdpath("config")
 vim.cmd("source " .. config_dir .. "/lua/liu/config/keymaps.vim")
+vim.cmd("source " .. config_dir .. "/lua/liu/config/commands.vim")
 require("liu.config.options")
-require("liu.config.commands")
 require("liu.config.autocmds")
 
 -- =============================================================================
