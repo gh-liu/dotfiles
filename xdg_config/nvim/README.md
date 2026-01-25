@@ -24,7 +24,9 @@ Requires Nvim `v0.12.0`
 6. 文本是有结构的(Text is structured): pattern
 7. 快速更新(Sharpen the saw):
 
-## vimscript or lua
+## How I Use NVim
+
+### vimscript or lua
 
 总方针：**默认用 Lua**；遇到"更像命令语言的纯声明片段"，允许保留 Vimscript（或 `vim.cmd[[...]]`）。
 
