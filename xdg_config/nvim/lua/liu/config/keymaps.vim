@@ -209,14 +209,15 @@ augroup END
 " wrap {{{
 augroup maps_wrap
   autocmd!
-  autocmd WinEnter * if &wrap | nnoremap <buffer> j gj | nnoremap <buffer> k gk | endif
-  autocmd OptionSet wrap if v:option_new
-    \ | nnoremap <buffer> j gj
-    \ | nnoremap <buffer> k gk
-    \ | else
-    \ | silent! nunmap <buffer> j
-    \ | silent! nunmap <buffer> k
-    \ | endif
+  autocmd OptionSet wrap
+        \ if v:option_new |
+        \   nnoremap <buffer> j gj |
+        \   nnoremap <buffer> k gk |
+        \ else |
+        \   silent! nunmap <buffer> j |
+        \   silent! nunmap <buffer> k |
+        \ endif
+  autocmd BufWinEnter * if &wrap | nnoremap <buffer> j gj | nnoremap <buffer> k gk | endif
 augroup END
 " }}}
 
