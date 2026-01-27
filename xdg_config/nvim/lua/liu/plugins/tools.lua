@@ -128,9 +128,10 @@ return {
 	},
 	{
 		"obsidian-nvim/obsidian.nvim",
+		lazy = false,
 		version = "*",
 		cond = function()
-			return vim.fn.isdirectory(".obsidian") ~= 0
+			return vim.fn.isdirectory(".templates") ~= 0
 		end,
 		init = function()
 			vim.api.nvim_create_autocmd("FileType", {
@@ -141,6 +142,18 @@ return {
 				end,
 			})
 		end,
+		keys = {
+			{ "gye", ":'<,'>Obsidian extract_note<cr>", mode = "v" },
+			{ "gyl", ":'<,'>Obsidian link<cr>", mode = "v" },
+			{ "gyn", ":'<,'>Obsidian link_new<cr>", mode = "v" },
+			{ "gyn", ":Obsidian new_from_template<cr>", mode = "n" },
+			{ "gyN", ":Obsidian new<cr>", mode = "n" },
+			{ "gyl", ":Obsidian links<cr>", mode = "n" },
+			{ "gyL", ":Obsidian backlinks<cr>", mode = "n" },
+			-- { "gyr", ":Obsidian rename<cr>", mode = "n" },
+
+		},
+		-- cmd = { "Obsidian" },
 		opts = {
 			legacy_commands = false,
 			-- !for new
@@ -164,7 +177,7 @@ return {
 				time_format = "%H:%M",
 			},
 			daily_notes = {
-				folder = "daily",
+				folder = "dailies",
 				date_format = "%Y-%m-%d_%H:%M",
 				default_tags = { "daily-notes" },
 			},
