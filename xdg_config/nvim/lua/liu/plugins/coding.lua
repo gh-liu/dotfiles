@@ -154,13 +154,24 @@ return {
 							input = { "%*().-()%*" },
 							output = { left = "*", right = "*" },
 						},
-						-- Link: [text](url)
+						-- Link: [text][ref] with reference at EOF
 						U = {
 							input = { "%[().-()%]%b()" },
 							output = function()
 								local MiniSurround = require("mini.surround")
 								local link = MiniSurround.user_input("Link")
-								return { left = "[", right = "](" .. link .. ")" }
+								-- 1. Generate 3-char random ID
+								local ref_id = ""
+								for _ = 1, 3 do
+									local r = math.random(36)
+									ref_id = ref_id .. string.char(r <= 26 and 64 + r or 22 + r)
+								end
+								-- 2. Append reference to EOF
+								local last_line = vim.api.nvim_buf_get_lines(0, -2, -1, false)[1] or ""
+								local lines = last_line ~= "" and { "", "[" .. ref_id .. "]: " .. link }
+									or { "[" .. ref_id .. "]: " .. link }
+								vim.api.nvim_buf_set_lines(0, -1, -1, false, lines)
+								return { left = "[", right = "][" .. ref_id .. "]" }
 							end,
 						},
 					}
