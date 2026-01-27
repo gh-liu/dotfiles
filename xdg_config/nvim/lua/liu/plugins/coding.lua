@@ -420,4 +420,9 @@ return {
 		"tpope/vim-repeat",
 		-- event = "VeryLazy",
 	},
+	{
+		"gh-liu/nvim-bullseye",
+		dev = true,
+		event = "VeryLazy",
+	},
 }
