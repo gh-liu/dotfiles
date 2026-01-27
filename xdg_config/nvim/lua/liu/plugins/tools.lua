@@ -142,6 +142,7 @@ return {
 				end,
 			})
 		end,
+		ft = "markdown",
 		keys = {
 			{ "gye", ":'<,'>Obsidian extract_note<cr>", mode = "v" },
 			{ "gyl", ":'<,'>Obsidian link<cr>", mode = "v" },
@@ -151,11 +152,14 @@ return {
 			{ "gyl", ":Obsidian links<cr>", mode = "n" },
 			{ "gyL", ":Obsidian backlinks<cr>", mode = "n" },
 			-- { "gyr", ":Obsidian rename<cr>", mode = "n" },
-
 		},
 		-- cmd = { "Obsidian" },
 		opts = {
 			legacy_commands = false,
+			callbacks = {
+				enter_note = function(note) end,
+				leave_note = function(note) end,
+			},
 			-- !for new
 			-- note_id_func = function(title)
 			-- 	local date = os.date("%Y-%m-%d_%H:%M")
@@ -183,6 +187,29 @@ return {
 			},
 			footer = {
 				enabled = true,
+			},
+			frontmatter = {
+				enabled = true,
+				sort = { "id", "title", "aliases", "tags", "created" },
+				func = function(note)
+					local path_name = note.path["__name"]
+					if note.id == vim.fn.fnamemodify(path_name, ":t:r") then
+						---@diagnostic disable-next-line: undefined-global
+						note.id = Obsidian.opts.note_id_func(nil, note.title)
+					end
+					if not note.title then
+						note.title = path_name:match("%+%+([^%.]+)%.")
+					end
+					-- note:add_alias(note.title)
+					return {
+						id = note.id,
+						title = note.title,
+						aliases = note.aliases,
+						tags = note.tags,
+						createdAt = string.format("[[%s]]", os.date("%Y-%m-%d")),
+						updatedAt = os.date("%Y-%m-%d, %H:%M:%S"),
+					}
+				end,
 			},
 		},
 	},
