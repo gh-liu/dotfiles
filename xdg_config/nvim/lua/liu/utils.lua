@@ -32,8 +32,7 @@ end
 ---@return function|(function, function)  Debounced function, or (debounced function, cleanup function) if opts.cleanup is true
 local debounce = function(ms, fn, opts)
 	opts = opts or {}
-	local uv = vim.uv or vim.loop
-	local timer = uv.new_timer()
+	local timer = vim.uv.new_timer()
 	local is_pending = false
 
 	local debounced = function(...)
