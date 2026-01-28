@@ -24,8 +24,45 @@ local float_opts = function()
 	}
 end
 
+--- Creates a debounced function that delays execution until after `ms` milliseconds
+--- have elapsed since the last invocation.
+---@param ms number  Debounce delay in milliseconds
+---@param fn function  Function to debounce
+---@param opts? { cleanup?: boolean }  Options: if cleanup is true, returns a cleanup function
+---@return function|(function, function)  Debounced function, or (debounced function, cleanup function) if opts.cleanup is true
+local debounce = function(ms, fn, opts)
+	opts = opts or {}
+	local uv = vim.uv or vim.loop
+	local timer = uv.new_timer()
+	local is_pending = false
+
+	local debounced = function(...)
+		local argv = { ... }
+		timer:stop()
+		is_pending = true
+		timer:start(ms, 0, function()
+			timer:stop()
+			is_pending = false
+			vim.schedule_wrap(fn)(unpack(argv))
+		end)
+	end
+
+	if opts.cleanup then
+		local cleanup = function()
+			if is_pending then
+				timer:stop()
+			end
+			timer:close()
+		end
+		return debounced, cleanup
+	end
+
+	return debounced
+end
+
 return {
 	set_cmds = set_cmds,
 	augroup = augroup,
 	float_opts = float_opts,
+	debounce = debounce,
 }

@@ -6,6 +6,7 @@ local config = {
 }
 
 local M = {}
+local utils = require("liu.utils")
 
 M.is_enabled = function(buf)
 	buf = buf or vim.api.nvim_get_current_buf()
@@ -20,22 +21,22 @@ M.clear = function()
 	vim.lsp.buf.clear_references()
 end
 
-local timer = (vim.uv or vim.loop).new_timer()
-M.update = function()
+local debounced_update = utils.debounce(config.debounce, function()
 	local buf = vim.api.nvim_get_current_buf()
-	timer:start(config.debounce, 0, function()
-		vim.schedule(function()
-			if vim.api.nvim_buf_is_valid(buf) then
-				vim.api.nvim_buf_call(buf, function()
-					if not M.is_enabled() then
-						return
-					end
-					vim.lsp.buf.document_highlight()
-					M.clear()
-				end)
-			end
-		end)
+	if not vim.api.nvim_buf_is_valid(buf) then
+		return
+	end
+	vim.api.nvim_buf_call(buf, function()
+		if not M.is_enabled() then
+			return
+		end
+		vim.lsp.buf.document_highlight()
+		M.clear()
 	end)
+end)
+
+M.update = function()
+	debounced_update()
 end
 
 ---@alias LspWord {from:{[1]:number, [2]:number}, to:{[1]:number, [2]:number}} 1-0 indexed
@@ -93,9 +94,15 @@ end
 return {
 	on_attach = function(client, buf)
 		local group = vim.api.nvim_create_augroup("liu/lsp_doc_hi" .. buf, { clear = true })
-		vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "ModeChanged" }, {
+			vim.api.nvim_create_autocmd({ "CursorMoved", "ModeChanged" }, {
 			group = group,
 			callback = function()
+					local mode = vim.api.nvim_get_mode().mode
+					if mode:sub(1, 1) == "i" or mode:sub(1, 1) == "R" then
+						M.clear()
+						return
+					end
+
 				if not M.is_enabled() then
 					M.clear()
 					return

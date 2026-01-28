@@ -5,6 +5,7 @@ local M = {}
 
 local api = vim.api
 local lsp = vim.lsp
+local utils = require("liu.utils")
 
 local lb_icon = "💡"
 local lb_icon_priority = 20
@@ -13,7 +14,7 @@ local lb_name = "liu/lsp_lightbulb"
 local lb_namespace = api.nvim_create_namespace(lb_name)
 local code_action_method = lsp.protocol.Methods.textDocument_codeAction
 
-local debounce = 200
+local debounce_ms = 350
 
 local latest_updated_bufnr = nil
 
@@ -100,20 +101,16 @@ local function render(bufnr)
 end
 
 local update = (function()
-	local timer = vim.uv.new_timer()
-
 	---@param bufnr integer
+	local debounced_render = utils.debounce(debounce_ms, function(bufnr)
+		if api.nvim_buf_is_valid(bufnr) and api.nvim_get_current_buf() == bufnr then
+			render(bufnr)
+		end
+	end)
+
 	return function(bufnr)
 		update_extmark(latest_updated_bufnr)
-
-		timer:start(debounce, 0, function()
-			timer:stop()
-			vim.schedule(function()
-				if api.nvim_buf_is_valid(bufnr) and api.nvim_get_current_buf() == bufnr then
-					render(bufnr)
-				end
-			end)
-		end)
+		debounced_render(bufnr)
 	end
 end)()
 

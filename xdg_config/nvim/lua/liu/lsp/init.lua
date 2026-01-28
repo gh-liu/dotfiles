@@ -1,6 +1,7 @@
 local api = vim.api
 local lsp = vim.lsp
 local lsp_methods = vim.lsp.protocol.Methods ---@type vim.lsp.protocol.Methods
+local utils = require("liu.utils")
 
 -- commands {{{
 vim.api.nvim_create_user_command("LspClientCapabilities", function(opts)
@@ -50,12 +51,24 @@ api.nvim_create_autocmd("LspAttach", {
 
 		if client:supports_method(lsp_methods.textDocument_codeLens) then
 			local codelens_group = api.nvim_create_augroup("liu/lsp_codelens/" .. bufnr, { clear = true })
+
+			local debounced_refresh, cleanup = utils.debounce(500, function()
+				if not api.nvim_buf_is_valid(bufnr) then
+					return
+				end
+				lsp.codelens.refresh({ bufnr = bufnr })
+			end, { cleanup = true })
+
 			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
 				group = codelens_group,
-				callback = function(ev)
-					lsp.codelens.refresh({ bufnr = bufnr })
-				end,
 				buffer = bufnr,
+				callback = debounced_refresh,
+			})
+
+			api.nvim_create_autocmd("BufWipeout", {
+				group = codelens_group,
+				buffer = bufnr,
+				callback = cleanup,
 			})
 		end
 
