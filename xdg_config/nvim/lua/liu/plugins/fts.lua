@@ -20,11 +20,11 @@ return {
 		"craigmac/vim-mermaid",
 		ft = "mermaid",
 		init = function()
-			-- bun install -g @mermaid-js/mermaid-cli
+			-- @need-install: cargo install --git https://github.com/1jehuang/mermaid-rs-renderer
 			vim.api.nvim_create_autocmd("FileType", {
 				pattern = "mermaid",
 				callback = function(args)
-					vim.b.dispatch = "mmdc -i % -o %:r:t.svg"
+					vim.b.dispatch = "mmdr -i % -o %:r:t.svg"
 
 					vim.api.nvim_create_autocmd("BufWritePost", {
 						buffer = args.buf,
