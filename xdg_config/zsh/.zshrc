@@ -204,6 +204,9 @@ skilla() {
 		;;
 	esac
 }
+# alias agentmd="cp $XDG_CONFIG_HOME/AGENTS.md ."
+alias agentmd="ln -svf $XDG_CONFIG_HOME/AGENTS.md ."
+
 # }}}
 
 # 5. plugins{{{
