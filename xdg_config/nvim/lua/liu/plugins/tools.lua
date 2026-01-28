@@ -151,7 +151,7 @@ return {
 			{ "gyN", ":Obsidian new<cr>", mode = "n" },
 			{ "gyl", ":Obsidian links<cr>", mode = "n" },
 			{ "gyL", ":Obsidian backlinks<cr>", mode = "n" },
-			-- { "gyr", ":Obsidian rename<cr>", mode = "n" },
+			{ "gyr", ":Obsidian rename<cr>", mode = "n" },
 		},
 		-- cmd = { "Obsidian" },
 		opts = {
@@ -214,13 +214,11 @@ return {
 					end
 					note.tags = vim.list.unique(note.tags)
 
-					-- Build frontmatter (explicit fields override metadata)
-					local frontmatter = vim.tbl_extend("force", {
-						id = note.id,
-						title = note.title,
-						aliases = note.aliases,
-						tags = note.tags,
-					}, note.metadata)
+					local frontmatter = note.metadata
+					frontmatter.id = note.id
+					frontmatter.title = note.title
+					frontmatter.aliases = note.aliases
+					frontmatter.tags = note.tags
 					frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
 					if not frontmatter.createdAt then
 						frontmatter.createdAt = string.format("[[%s]]", os.date("%Y-%m-%d"))
