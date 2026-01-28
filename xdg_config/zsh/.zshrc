@@ -206,6 +206,7 @@ skilla() {
 }
 # alias agentmd="cp $XDG_CONFIG_HOME/AGENTS.md ."
 alias agentmd="ln -svf $XDG_CONFIG_HOME/AGENTS.md ."
+alias claudemd="ln -svf $XDG_CONFIG_HOME/AGENTS.md CLAUDE.md"
 
 # }}}
 
