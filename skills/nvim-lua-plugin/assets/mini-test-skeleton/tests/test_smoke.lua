@@ -15,7 +15,6 @@ T = MiniTest.new_set({
   hooks = {
     pre_case = function()
       child.restart({ '-u', 'scripts/minimal_init.lua' })
-      -- Wait for child to be ready
       child.bo.readonly = false
     end,
     post_once = function()
@@ -26,7 +25,6 @@ T = MiniTest.new_set({
 
 -- Test: plugin loads without error
 T['plugin loads'] = function()
-  -- This should not throw
   child.lua([[require('myplugin')]])
 end
 
@@ -37,17 +35,53 @@ end
 
 -- Test: setup() merges user config
 T['setup merges config'] = function()
-  child.lua([[require('myplugin').setup({ some_option = true })]])
-  local config = child.lua_get([[require('myplugin.config').options]])
-  expect.equality(config.some_option, true)
+  child.lua([[require('myplugin').setup({ enabled = false, notify_level = vim.log.levels.ERROR })]])
+  local config = child.lua_get([[require('myplugin.config').get()]])
+  expect.equality(config.enabled, false)
+  expect.equality(config.notify_level, vim.log.levels.ERROR)
+end
+
+-- Test: setup() preserves defaults for unspecified options
+T['setup preserves defaults'] = function()
+  child.lua([[require('myplugin').setup({ enabled = false })]])
+  local config = child.lua_get([[require('myplugin.config').get()]])
+  expect.equality(config.enabled, false)
+  -- notify_level should still be default
+  expect.equality(config.notify_level, vim.log.levels.INFO)
 end
 
 -- Test: user command exists after loading
 T['command exists'] = function()
   child.lua([[require('myplugin')]])
   local cmds = child.api.nvim_get_commands({})
-  -- Replace 'MyPluginCmd' with your actual command name
-  expect.equality(cmds['MyPluginCmd'] ~= nil, true)
+  expect.equality(cmds['MyPluginDoThing'] ~= nil, true)
+end
+
+-- Test: <Plug> mapping exists
+T['Plug mapping exists'] = function()
+  child.lua([[require('myplugin')]])
+  local mappings = child.api.nvim_get_keymap('n')
+  local found = false
+  for _, m in ipairs(mappings) do
+    if m.lhs == '<Plug>(MyPluginDoThing)' then
+      found = true
+      break
+    end
+  end
+  expect.equality(found, true)
+end
+
+-- Test: health check runs without error
+T['health check runs'] = function()
+  -- Health check should not throw
+  child.lua([[pcall(function() vim.cmd('checkhealth myplugin') end)]])
+end
+
+-- Test: module exports expected functions
+T['module exports'] = function()
+  local exports = child.lua_get([[vim.tbl_keys(require('myplugin'))]])
+  expect.table_contains(exports, 'setup')
+  expect.table_contains(exports, 'do_thing')
 end
 
 return T

@@ -1,13 +1,24 @@
 ---
 name: nvim-lua-plugin
-description: Neovim Lua 插件作者工作流与规约（repo-only）。当需要设计/实现/重构 Neovim Lua 插件时使用，涉及 plugin/ 与 lua/ 的加载结构、隐式 lazy-loading（延迟 require）、用户命令与 autocmd、Plug 映射与 keymap 策略、配置与初始化拆分（setup 仅覆盖默认值）、vimdoc（doc/*.txt + :helptags）、health checks（lua/name/health.lua + :checkhealth）以及使用 mini.test 的自动化测试。适用于修改或生成 plugin/*.lua、lua/**、doc/*.txt、tests/*.lua 等文件结构与代码。
+description: Neovim Lua 插件开发最佳实践。涵盖 plugin/lua 加载结构、lazy-loading、命令/autocmd/映射、配置拆分、vimdoc、health checks 和 mini.test 测试。
+scope: repo-only
 ---
 
 # Nvim Lua Plugin
 
+## When to Use This Skill
+
+使用此技能当用户需要：
+- 创建新的 Neovim Lua 插件
+- 设计或重构 plugin/ 和 lua/ 目录结构
+- 实现命令、autocmd、`<Plug>` 映射或 Lua API
+- 添加 vimdoc 文档或 health checks
+- 为现有插件编写自动化测试
+- 优化插件启动性能（lazy-loading）
+
 ## Overview
 
-这个 skill 帮助你以“贴近 Neovim 官方最佳实践”的方式开发 Lua 插件：在不牺牲启动性能的前提下，提供清晰的对外接口（命令/`<Plug>`/Lua API）、可维护的目录结构、可诊断的健康检查、可阅读的 vimdoc，以及使用 `mini.test` 的自动化测试。
+这个 skill 帮助你以"贴近 Neovim 官方最佳实践"的方式开发 Lua 插件：在不牺牲启动性能的前提下，提供清晰的对外接口（命令/`<Plug>`/Lua API）、可维护的目录结构、可诊断的健康检查、可阅读的 vimdoc，以及使用 `mini.test` 的自动化测试。
 
 ## 快速开始（最小结构 + 最小入口）
 
@@ -228,6 +239,7 @@ nvim --headless -u scripts/minimal_init.lua -c "lua MiniTest.run()" -c "qa"
 - `references/nvim-lua-plugin-guidelines.md`：快速索引
 - `references/api_reference.md`：完整指南（按 help tags 组织）
 - `references/nvim-lua-api-cheatsheet.md`：按任务组织的 API 速查
+- `references/common-patterns.md`：常见代码模式与最佳实践（可直接复制）
 - `references/vimdoc-template.md`：vimdoc 最小模板
 - `references/testing-mini-test.md`：mini.test 测试框架速用指南
 
@@ -236,3 +248,79 @@ nvim --headless -u scripts/minimal_init.lua -c "lua MiniTest.run()" -c "qa"
 - `assets/plugin-skeleton/`：可复制的插件骨架（目录树 + 文件模板）
 - `assets/minimal-repro-config/`：最小复现用的 `init.lua` 模板（可配合 `nvim --clean -u <file>`）
 - `assets/mini-test-skeleton/`：mini.test 测试骨架（`tests/` + `scripts/minimal_init.lua`）
+
+## 故障排查（常见问题）
+
+### 插件加载失败
+```vim
+" 查看启动期错误消息
+:messages
+
+" 用最小配置复现
+nvim --clean -u minimal_init.lua
+
+" 查看启动时间分析
+nvim --startuptime startup.log
+```
+
+### 命令或映射不工作
+```vim
+" 检查命令是否存在
+:command MyPluginCommand
+
+" 检查映射定义
+:map <Plug>(MyPluginAction)
+
+" 查看 plugin/ 文件是否加载
+:scriptnames
+```
+
+### Health check 失败
+```vim
+" 运行 health check
+:checkhealth myplugin
+
+" 调试 health.lua
+:lua vim.notify(vim.inspect(require('myplugin.health').check()))
+```
+
+### 测试失败
+```vim
+" 运行所有测试
+:lua MiniTest.run()
+
+" 运行特定文件
+:lua MiniTest.run_file('tests/test_smoke.lua')
+
+" 运行特定测试
+:lua MiniTest.run('test_name')
+
+" headless 模式（CI）
+nvim --headless -u scripts/minimal_init.lua -c "lua MiniTest.run()" -c "qa"
+```
+
+## 示例场景
+
+### 场景 1：创建新插件骨架
+```bash
+# 复制骨架
+cp -r assets/plugin-skeleton/* your_plugin/
+
+# 重命名文件和模块
+# plugin/myplugin.lua → plugin/yourplugin.lua
+# lua/myplugin/* → lua/yourplugin/*
+```
+
+### 场景 2：为现有插件添加测试
+```bash
+# 复制测试骨架
+cp -r assets/mini-test-skeleton/* your_plugin/
+
+# 修改 scripts/minimal_init.lua 添加你的插件路径
+```
+
+### 场景 3：修复启动性能问题
+1. 用 `nvim --startuptime` 分析热点
+2. 检查 `plugin/*.lua` 是否有顶层 `require()`
+3. 将重模块加载移到回调内
+4. 参考 `:h lua-plugin-lazy`
