@@ -1,3 +1,5 @@
+;; extends
+
 ((call
   function: (attribute) @func_call
   arguments: (argument_list

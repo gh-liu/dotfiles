@@ -1,3 +1,5 @@
+;; extends
+
 ; Inject Lua code in child.lua("...") calls (mini.test child Neovim methods)
 ((function_call
   name: (_
