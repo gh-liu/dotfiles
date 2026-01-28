@@ -116,8 +116,6 @@ bins() {
 
 		bun i -g @bufbuild/buf
 		bun i -g sql-formatter
-		bun i -g add-skill vercel-labs/agent-skills
-		bun i -g ctx7 # ctx7 skills install
 
 		# bun i -g tree-sitter-cli
 	fi
@@ -221,9 +219,14 @@ _llm_clis() {
 	curl https://cursor.com/install -fsS | bash
 
 	# go install github.com/charmbracelet/crush@latest
-}
 
-_claudecode_mcp() {
+	########################
+	## skills
+	bun i -g skills vercel-labs/agent-skills
+	bun i -g ctx7 # ctx7 skills install
+
+	########################
+	## mcps
 	claude mcp add --transport http context7 https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY"
 	claude mcp add --transport sse deepwiki https://mcp.deepwiki.com/sse
 	# uv tool install mcp-server-fetch
