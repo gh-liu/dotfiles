@@ -190,25 +190,43 @@ return {
 			},
 			frontmatter = {
 				enabled = true,
-				sort = { "id", "title", "aliases", "tags", "created" },
+				sort = { "id", "title", "aliases", "tags", "createdAt", "updatedAt" },
 				func = function(note)
 					local path_name = note.path["__name"]
-					if note.id == vim.fn.fnamemodify(path_name, ":t:r") then
+					local fname = vim.fn.fnamemodify(path_name, ":t:r")
+
+					-- Parse tags and title from filename: tag1_tag2++title
+					local parts = vim.split(fname, "++", { plain = true, trimempty = true })
+					if not note.title and parts[2] and parts[2] ~= "" then
+						note.title = parts[2]
+					end
+
+					-- Generate id if needed
+					if note.id == fname then
 						---@diagnostic disable-next-line: undefined-global
 						note.id = Obsidian.opts.note_id_func(nil, note.title)
 					end
-					if not note.title then
-						note.title = path_name:match("%+%+([^%.]+)%.")
+
+					-- Add tags from filename and deduplicate
+					local tags_from_fname = vim.split(parts[1] or "", "_", { plain = true, trimempty = true })
+					for _, tag in ipairs(tags_from_fname) do
+						table.insert(note.tags, tag)
 					end
-					-- note:add_alias(note.title)
-					return {
+					note.tags = vim.list.unique(note.tags)
+
+					-- Build frontmatter (explicit fields override metadata)
+					local frontmatter = vim.tbl_extend("force", {
 						id = note.id,
 						title = note.title,
 						aliases = note.aliases,
 						tags = note.tags,
-						createdAt = string.format("[[%s]]", os.date("%Y-%m-%d")),
-						updatedAt = os.date("%Y-%m-%d, %H:%M:%S"),
-					}
+					}, note.metadata)
+					frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
+					if not frontmatter.createdAt then
+						frontmatter.createdAt = string.format("[[%s]]", os.date("%Y-%m-%d"))
+					end
+
+					return frontmatter
 				end,
 			},
 		},
