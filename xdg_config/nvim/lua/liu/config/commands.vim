@@ -7,7 +7,7 @@ inoremap <c-r>R <c-o>:<up><home>R! <cr>
 
 command! -nargs=0 EscapeSpecial call s:EscapeSpecial()
 function! s:EscapeSpecial()
-    execute printf('%%substitute/%s/%s/ge', "\\\\n", "\\n")
+    execute printf('%%substitute/%s/%s/ge', "\\\\n", "\\r")
     execute printf('%%substitute/%s/%s/ge', "\\\\r", "\\r")
     execute printf('%%substitute/%s/%s/ge', "\\\\t", "\\t")
 endfunction
