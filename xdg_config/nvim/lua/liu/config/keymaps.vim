@@ -27,6 +27,9 @@ nnoremap g, g,zvzz
 nnoremap g; g;zvzz
 "nmap g<C-o> g;
 "nmap g<C-i> g,
+
+nmap j gj
+nmap k gk
 " }}}
 " yank/delete {{{
 " :h Y-default
@@ -204,20 +207,6 @@ tnoremap <C-q> <C-\><C-n>:quit<cr>
 augroup liu_term_maps
   autocmd!
   autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
-augroup END
-" }}}
-" wrap {{{
-augroup maps_wrap
-  autocmd!
-  autocmd OptionSet wrap
-        \ if v:option_new |
-        \   nnoremap <buffer> j gj |
-        \   nnoremap <buffer> k gk |
-        \ else |
-        \   silent! nunmap <buffer> j |
-        \   silent! nunmap <buffer> k |
-        \ endif
-  autocmd BufWinEnter * if &wrap | nnoremap <buffer> j gj | nnoremap <buffer> k gk | endif
 augroup END
 " }}}
 
