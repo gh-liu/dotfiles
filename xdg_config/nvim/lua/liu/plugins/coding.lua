@@ -289,8 +289,39 @@ return {
 		end,
 	},
 	{
+		"gh-liu/nvim-mobius",
+		dev = true,
+		keys = {
+			{ "<C-a>", "<Plug>(MobiusIncrement)", mode = { "n", "v" }, desc = "Increment" },
+			{ "<C-x>", "<Plug>(MobiusDecrement)", mode = { "n", "v" }, desc = "Decrement" },
+			{ "g<C-a>", "<Plug>(MobiusIncrementSeq)", mode = { "n", "v" }, remap = true, desc = "Increment globally" },
+			{ "g<C-x>", "<Plug>(MobiusDecrementSeq)", mode = { "n", "v" }, remap = true, desc = "Decrement globally" },
+		},
+		init = function()
+			local ft_rules = {
+				go = {
+					true,
+					require("mobius.rules.lsp_enum")({
+						symbol_kinds = {
+							-- vim.lsp.protocol.CompletionItemKind.EnumMember,
+							vim.lsp.protocol.CompletionItemKind.Constant,
+						},
+						exclude_labels = { "false", "true" },
+					}),
+				},
+			}
+			vim.api.nvim_create_autocmd("FileType", {
+				pattern = vim.tbl_keys(ft_rules),
+				callback = function(args)
+					vim.b.mobius_rules = ft_rules[args.match]
+				end,
+			})
+		end,
+	},
+	{
 		"monaqa/dial.nvim",
 		-- overrides: default <C-a>/<C-x> behavior (increment/decrement)
+		enabled = false,
 		keys = {
 			{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "v" }, desc = "Increment" },
 			{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "v" }, desc = "Decrement" },
