@@ -21,6 +21,10 @@ return {
 		ft = "mermaid",
 		init = function()
 			-- @need-install: cargo install --git https://github.com/1jehuang/mermaid-rs-renderer
+			-- @need-install: go install github.com/AlexanderGrooff/mermaid-ascii@latest
+			-- how:
+			-- 1. :%!mermaid-ascii -f %
+			-- 2. :'<,'>%!mermaid-ascii
 			vim.api.nvim_create_autocmd("FileType", {
 				pattern = "mermaid",
 				callback = function(args)
