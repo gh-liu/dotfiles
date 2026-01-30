@@ -301,13 +301,15 @@ return {
 			local ft_rules = {
 				go = {
 					true,
-					require("mobius.rules.lsp_enum")({
-						symbol_kinds = {
-							-- vim.lsp.protocol.CompletionItemKind.EnumMember,
-							vim.lsp.protocol.CompletionItemKind.Constant,
-						},
-						exclude_labels = { "false", "true" },
-					}),
+					function()
+						return require("mobius.rules.lsp_enum")({
+							symbol_kinds = {
+								-- vim.lsp.protocol.CompletionItemKind.EnumMember,
+								vim.lsp.protocol.CompletionItemKind.Constant,
+							},
+							exclude_labels = { "false", "true" },
+						})
+					end,
 				},
 			}
 			vim.api.nvim_create_autocmd("FileType", {
