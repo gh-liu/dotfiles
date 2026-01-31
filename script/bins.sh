@@ -224,13 +224,6 @@ _llm_clis() {
 	## skills
 	bun i -g skills vercel-labs/agent-skills
 	bun i -g ctx7 # ctx7 skills install
-
-	########################
-	## mcps
-	claude mcp add --transport http context7 https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: $CONTEXT7_API_KEY"
-	claude mcp add --transport sse deepwiki https://mcp.deepwiki.com/sse
-	# uv tool install mcp-server-fetch
-	claude mcp add --transport stdio fetch uvx mcp-server-fetch
 }
 
 case $1 in
