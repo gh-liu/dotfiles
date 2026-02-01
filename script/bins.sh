@@ -109,6 +109,7 @@ bins() {
 		go install github.com/kopecmaciej/vi-mongo@latest
 
 		go install github.com/sinclairtarget/git-who@latest
+		go install github.com/superfly/flyctl@latest
 	fi
 
 	if [ -f "$(which bun)" ]; then
