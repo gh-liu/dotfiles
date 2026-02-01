@@ -227,6 +227,9 @@ return {
 					return frontmatter
 				end,
 			},
+			attachments = {
+				folder = "assets",
+			},
 		},
 	},
 	{
