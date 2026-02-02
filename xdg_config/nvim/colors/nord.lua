@@ -9,20 +9,26 @@ vim.g.colors_name = "nord"
 local M = {}
 
 M.palette = {
+	-- Polar Night (dark backgrounds)
 	nord0 = "#2E3440",
-	nord1 = "#3B4252",
-	nord2 = "#434C5E",
-	nord3 = "#4C566A",
+	nord0_5 = "#343A48", -- subtle but noticeable
+	nord1 = "#353C48",
+	nord2 = "#3F4656",
+	nord3 = "#485061",
+	nord3_5 = "#525A6C", -- additional gray layer
 
+	-- Snow Storm (light text)
 	nord4 = "#D8DEE9",
 	nord5 = "#E5E9F0",
 	nord6 = "#ECEFF4",
 
+	-- Frost (accent colors)
 	nord7 = "#8FBCBB",
 	nord8 = "#88C0D0",
 	nord9 = "#81A1C1",
 	nord10 = "#5E81AC",
 
+	-- Aurora (syntax highlights)
 	nord11 = "#BF616A",
 	nord12 = "#D08770",
 	nord13 = "#EBCB8B",
@@ -51,9 +57,13 @@ M.colors = {
 	darkerwhite = M.palette.nord4,
 
 	black = M.palette.nord0,
+
+	-- Enhanced gray hierarchy with clear visual separation
 	gray = M.palette.nord1,
 	brightgray = M.palette.nord2,
 	brightergray = M.palette.nord3,
+	dimgray = M.palette.nord3_5, -- for subtle UI elements
+	cursorline = M.palette.nord0_5, -- distinct darker background for cursor line
 }
 
 -- terminal colors
@@ -98,8 +108,8 @@ M.set_highlights = function()
 		},
 		ui = {
 			-- // UI
-			NonText = { fg = c.brightergray },
-			Conceal = { fg = c.gray },
+			NonText = { fg = c.dimgray },
+			Conceal = { fg = c.brightergray },
 			Whitespace = { link = "NonText" },
 			EndOfBuffer = { link = "NonText" },
 		},
@@ -109,20 +119,20 @@ M.set_highlights = function()
 			Removed = { fg = c.red },
 			-- diff
 			-- linewise diff
-			DiffAdd = { fg = c.green, bg = c.brightgray },
-			DiffChange = { fg = c.yellow, bg = c.brightgray },
-			DiffDelete = { fg = c.red, bg = c.brightgray },
+			DiffAdd = { fg = c.green, bg = c.dimgray },
+			DiffChange = { fg = c.yellow, bg = c.dimgray },
+			DiffDelete = { fg = c.red, bg = c.dimgray },
 			-- inline(chawise) diff
-			DiffText = { fg = c.blue, bg = c.brightergray, bold = true },
-			DiffTextAdd = { fg = c.green, bg = c.brightergray, bold = true },
+			DiffText = { fg = c.blue, bg = c.brightgray, bold = true },
+			DiffTextAdd = { fg = c.green, bg = c.brightgray, bold = true },
 		},
 		float = {
 			-- float window
-			FloatBorder = { fg = c.gray },
+			FloatBorder = { fg = c.dimgray },
 			FloatTitle = { link = "Title" },
 			FloatFooter = { link = "Title" },
-			FloatShadow = { fg = c.gray, blend = 80 },
-			FloatShadowThrough = { fg = c.gray, blend = 100 },
+			FloatShadow = { fg = c.dimgray, blend = 80 },
+			FloatShadowThrough = { fg = c.dimgray, blend = 100 },
 		},
 		bars = {
 			-- window bar
@@ -142,12 +152,12 @@ M.set_highlights = function()
 			-- cursor
 			Cursor = { fg = c.bg, bg = c.fg },
 			lCursor = { link = "Cursor" },
-			CursorLine = { bg = c.gray },
+			CursorLine = { bg = c.cursorline }, -- extremely subtle, transparent-like
 			CursorLineNr = { fg = c.lightblue },
 			CursorLineSign = { link = "SignColumn" },
-			CursorLineFold = { fg = c.brightgray, bold = true },
-			TermCursor = { fg = c.fg, bg = c.gray },
-			TermCursorNC = { fg = c.fg, bg = c.gray },
+			CursorLineFold = { fg = c.dimgray, bold = true },
+			TermCursor = { fg = c.fg, bg = c.brightgray },
+			TermCursorNC = { fg = c.fg, bg = c.brightgray },
 		},
 		msg = {
 			-- msg
@@ -160,7 +170,7 @@ M.set_highlights = function()
 		},
 		fold = {
 			-- fold
-			Folded = { fg = c.brightgray },
+			Folded = { fg = c.dimgray },
 			FoldColumn = { link = "Folded" },
 		},
 		column = {
@@ -189,11 +199,11 @@ M.set_highlights = function()
 		},
 		pmenu = {
 			-- pmenu
-			Pmenu = { fg = c.fg, bg = c.gray },
-			PmenuSel = { fg = c.fg, bg = c.brightgray },
-			PmenuThumb = { fg = c.fg, bg = c.brightergray },
-			PmenuSbar = { bg = c.brightergray },
-			PmenuBorder = { fg = c.gray, bg = c.gray },
+			Pmenu = { fg = c.fg, bg = c.brightgray },
+			PmenuSel = { fg = c.fg, bg = c.brightergray },
+			PmenuThumb = { fg = c.fg, bg = c.dimgray },
+			PmenuSbar = { bg = c.dimgray },
+			PmenuBorder = { fg = c.brightergray, bg = c.brightergray },
 			PmenuShadow = { link = "FloatShadow" },
 			PmenuShadowThrough = { link = "FloatShadowThrough" },
 			PmenuKind = { link = "Pmenu" },
@@ -201,7 +211,7 @@ M.set_highlights = function()
 			PmenuExtra = { link = "Pmenu" },
 			PmenuExtraSel = { link = "PmenuSel" },
 			PmenuMatch = { fg = c.yellow, bold = true },
-			PmenuMatchSel = { fg = c.yellow, bg = c.brightgray, bold = true },
+			PmenuMatchSel = { fg = c.yellow, bg = c.brightergray, bold = true },
 		},
 		spell = {
 			-- spell
@@ -225,7 +235,7 @@ M.set_highlights = function()
 			qfLineNr = { link = "QuickFixLineNr" },
 
 			Title = { fg = c.magenta, bold = true },
-			WinSeparator = { fg = c.gray },
+			WinSeparator = { fg = c.dimgray },
 			VertSplit = { link = "WinSeparator" },
 			Todo = { fg = c.orange, bold = true, italic = true }, -- anything that needs extra attention; mostly the keywords TODO FIXME and XXX
 			SpecialKey = { fg = c.lightgreen },
@@ -259,7 +269,7 @@ M.set_highlights = function()
 			-- SpecialChar = { link = "Special" }, -- special character in a constant
 			-- SpecialComment = { link = "Special" }, -- special character in a constant
 			Debug = { fg = c.orange }, -- debugging statements
-			Ignore = { fg = c.gray },
+			Ignore = { fg = c.dimgray },
 			-- LspInlayHint = {link = "NonText"},
 			-------------------------------------
 			Identifier = { fg = c.fg },
@@ -267,7 +277,7 @@ M.set_highlights = function()
 			-- Statement = { bold = true },
 			Special = { fg = c.yellow },
 			Error = { underline = true, sp = c.red },
-			Comment = { fg = c.brightergray, italic = true }, -- italic comments
+			Comment = { fg = c.dimgray, italic = true }, -- italic comments with better contrast
 			String = { fg = c.green },
 			-- }}}
 		},
@@ -353,10 +363,10 @@ M.set_highlights = function()
 
 			-- inlayhint
 			-- LspInlayHint = {link = "NonText"},
-			LspInlayHint = { fg = c.brightgray },
+			LspInlayHint = { fg = c.dimgray },
 
 			-- codelens
-			LspCodeLens = { fg = c.brightergray, bold = true, italic = true },
+			LspCodeLens = { fg = c.dimgray, bold = true, italic = true },
 			LspCodeLensSeparator = { link = "WinSeparator" },
 
 			-- signature active parameter
@@ -448,7 +458,7 @@ M.set_highlights = function()
 			MiniIconsBlue = { fg = c.blue },
 			MiniIconsCyan = { fg = c.lightgreen },
 			MiniIconsGreen = { fg = c.green },
-			MiniIconsGrey = { fg = c.brightergray },
+			MiniIconsGrey = { fg = c.dimgray },
 			MiniIconsOrange = { fg = c.orange },
 			MiniIconsPurple = { fg = c.magenta },
 			MiniIconsRed = { fg = c.red },
@@ -479,12 +489,12 @@ M.set_highlights = function()
 			StatusLineFugitive = { link = "fugitiveHeader" },
 
 			-- mini.diff
-			MiniDiffOverAdd = { fg = c.green, bg = c.brightergray },
-			MiniDiffOverChange = { fg = c.yellow, bg = c.brightergray },
-			MiniDiffOverChangeBuf = { fg = c.yellow, bg = c.brightergray },
+			MiniDiffOverAdd = { fg = c.green, bg = c.dimgray },
+			MiniDiffOverChange = { fg = c.yellow, bg = c.dimgray },
+			MiniDiffOverChangeBuf = { fg = c.yellow, bg = c.dimgray },
 			MiniDiffOverContext = { fg = c.darkwhite },
 			MiniDiffOverContextBuf = { fg = c.darkwhite },
-			MiniDiffOverDelete = { fg = c.red, bg = c.brightergray },
+			MiniDiffOverDelete = { fg = c.red, bg = c.dimgray },
 
 			-- vim-flog
 			flogBranch1 = { fg = c.blue },
@@ -497,7 +507,7 @@ M.set_highlights = function()
 			flogBranch8 = { fg = c.lightblue },
 			flogHash = { fg = c.lightblue },
 			flogAuthor = { fg = c.green },
-			flogDate = { fg = c.brightgray },
+			flogDate = { fg = c.dimgray },
 			flogRef = { fg = c.cyan },
 			flogRefTag = { fg = c.orange },
 			flogRefRemote = { fg = c.blue },
@@ -510,7 +520,7 @@ M.set_highlights = function()
 			DapBreakpointCondition = { fg = c.yellow },
 			DapLogPoint = { fg = c.blue },
 			DapStopped = { fg = c.green },
-			DapBreakpointRejected = { fg = c.brightergray },
+			DapBreakpointRejected = { fg = c.dimgray },
 
 			-- rainbow-delimiters.nvim
 			RainbowDelimiterRed = { fg = c.red },
@@ -534,7 +544,7 @@ M.set_highlights = function()
 			SnacksGhBorder = { link = "FloatBorder" },
 			SnacksGhTitle = { link = "Title" },
 			SnacksGhFooter = { link = "Title" },
-			SnacksIndent = { fg = c.brightergray },
+			SnacksIndent = { fg = c.dimgray },
 			SnacksIndent1 = { fg = c.blue },
 			SnacksIndent2 = { fg = c.cyan },
 			SnacksIndent3 = { fg = c.green },
