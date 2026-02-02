@@ -192,13 +192,13 @@ return {
 				enabled = true,
 				sort = { "id", "title", "aliases", "tags", "createdAt", "updatedAt" },
 				func = function(note)
-					local path_name = note.path["__name"]
+					local path_name = tostring(note.path)
 					local fname = vim.fn.fnamemodify(path_name, ":t:r")
 
 					-- Parse tags and title from filename: tag1_tag2++title
 					local parts = vim.split(fname, "++", { plain = true, trimempty = true })
-					if not note.title and parts[2] and parts[2] ~= "" then
-						note.title = parts[2]
+					if not note.metadata.title and parts[2] and parts[2] ~= "" then
+						note.metadata.title = parts[2]
 					end
 
 					-- Generate id if needed
@@ -214,9 +214,9 @@ return {
 					end
 					note.tags = vim.list.unique(note.tags)
 
-					local frontmatter = note.metadata
+					local frontmatter = vim.deepcopy(note.metadata)
 					frontmatter.id = note.id
-					frontmatter.title = note.title
+					frontmatter.title = note.metadata.title
 					frontmatter.aliases = note.aliases
 					frontmatter.tags = note.tags
 					frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
