@@ -26,6 +26,14 @@ Requires Nvim `v0.12.0`
 
 ## How I Use NVim
 
+### Philosophy
+
+- **Command > Map**: 优先用命令而非映射（可发现、可脚本化、可组合）
+- **Trust > Prompt**: 信任用户而非防御性提问（Vim只在不可逆时提示）
+- **Minimal Intervention > Maximum Power**: 工具克制，用户掌控
+
+本质：显式优于隐式，可发现优于隐藏。
+
 ### vimscript or lua
 
 总方针：**默认用 Lua**；遇到"更像命令语言的纯声明片段"，允许保留 Vimscript（或 `vim.cmd[[...]]`）。
