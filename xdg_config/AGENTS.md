@@ -148,9 +148,21 @@
 ## 6.1 Git 工作流与最佳实践
 
 **提交与历史**：
-* **明确的提交消息**：第一行 50 字以内，描述"做了什么"；空行后详写"为什么"与关键决策。可审阅的历史是长期资产。
-* **原子性提交**：每个 commit 对应一个完整的逻辑单元（一个 fix、一个特性、一个重构），便于 `git bisect` 和局部 revert。
-* **避免重写公共历史**：不在共享分支上用 `git rebase` 或 `git reset --hard`。使用 `git revert` 撤销，保留完整链路。本地开发分支可正常 rebase。
+* **Conventional Commits 格式**：采用结构化的提交消息。第一行格式为 `type(scope): subject`，50 字以内。空行后详写改动内容与为什么（body），必要时在末尾添加 `Closes #123` 等关联信息。
+  - 类型（type）：`feat`（新特性）、`fix`（bug 修复）、`docs`（文档）、`style`（格式调整，无代码逻辑变化）、`refactor`（代码重构）、`test`（测试）、`chore`（维护任务）。
+  - 示例：
+    ```
+    feat(auth): add JWT token refresh mechanism
+    
+    Implement automatic refresh token rotation to improve security.
+    - Add refresh token validation middleware
+    - Update user session management
+    - Add unit tests for token rotation
+    
+    Closes #234
+    ```
+* **原子性提交**：每个 commit 对应一个完整的逻辑单元（一个 fix、一个特性、一个重构），便于 `git bisect`、局部 revert 和人类 review。尽可能拆成逻辑清晰的小提交，让 reviewer 易于理解改动的原因和影响范围。
+* **避免重写公共历史**：不在共享分支上用 `git rebase` 或 `git reset --hard`。使用 `git revert` 撤销，保留完整链路。本地开发分支可正常 rebase；必要时可使用 `git rebase -i HEAD~N` 调整本地提交结构。
 
 **分支策略**：
 * **明确的分支隔离**：feature/bugfix/hotfix 等分支名要反映意图，便于识别与清理。
