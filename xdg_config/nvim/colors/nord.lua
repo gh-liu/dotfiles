@@ -199,11 +199,11 @@ M.set_highlights = function()
 		},
 		pmenu = {
 			-- pmenu
-			Pmenu = { fg = c.fg, bg = c.brightgray },
+			Pmenu = { fg = c.fg },
 			PmenuSel = { fg = c.fg, bg = c.brightergray },
 			PmenuThumb = { fg = c.fg, bg = c.dimgray },
 			PmenuSbar = { bg = c.dimgray },
-			PmenuBorder = { fg = c.brightergray, bg = c.brightergray },
+			PmenuBorder = { fg = c.brightergray },
 			PmenuShadow = { link = "FloatShadow" },
 			PmenuShadowThrough = { link = "FloatShadowThrough" },
 			PmenuKind = { link = "Pmenu" },
