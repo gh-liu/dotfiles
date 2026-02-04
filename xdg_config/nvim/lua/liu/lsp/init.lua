@@ -50,26 +50,8 @@ api.nvim_create_autocmd("LspAttach", {
 		local bufnr = args.buf
 
 		if client:supports_method(lsp_methods.textDocument_codeLens) then
-			local codelens_group = api.nvim_create_augroup("liu/lsp_codelens/" .. bufnr, { clear = true })
-
-			local debounced_refresh, cleanup = utils.debounce(500, function()
-				if not api.nvim_buf_is_valid(bufnr) then
-					return
-				end
-				lsp.codelens.refresh({ bufnr = bufnr })
-			end, { cleanup = true })
-
-			api.nvim_create_autocmd({ "CursorHold", "InsertLeave" }, {
-				group = codelens_group,
-				buffer = bufnr,
-				callback = debounced_refresh,
-			})
-
-			api.nvim_create_autocmd("BufWipeout", {
-				group = codelens_group,
-				buffer = bufnr,
-				callback = cleanup,
-			})
+			local filter = { bufnr = bufnr }
+			lsp.codelens.enable(true, filter)
 		end
 
 		if client:supports_method(lsp_methods.textDocument_inlayHint) then
