@@ -41,7 +41,6 @@ nnoremap dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
 " delete the selection
 snoremap <bs>  <C-o>"_s
 
-xnoremap x "_d
 " keep the old content
 xnoremap p P
 
