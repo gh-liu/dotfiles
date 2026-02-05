@@ -154,83 +154,86 @@ return {
 			{ "gyr", ":Obsidian rename<cr>", mode = "n" },
 		},
 		-- cmd = { "Obsidian" },
-		opts = {
-			legacy_commands = false,
-			callbacks = {
-				enter_note = function(note) end,
-				leave_note = function(note) end,
-			},
-			-- !for new
-			-- note_id_func = function(title)
-			-- 	local date = os.date("%Y-%m-%d_%H:%M")
-			-- 	if title and title ~= "" then
-			-- 		return date .. "_" .. title
-			-- 	else
-			-- 		return date
-			-- 	end
-			-- end,
-			workspaces = {
-				{
-					name = "current",
-					path = vim.fn.getcwd(),
+		opts = function()
+			local is_zettel_id = function(str)
+				return str and str:match("^%d%d%d%d%d%d%d%d%d%d%-[A-Z][A-Z][A-Z][A-Z]$")
+			end
+			return {
+				legacy_commands = false,
+				callbacks = {
+					enter_note = function(note) end,
+					leave_note = function(note) end,
 				},
-			},
-			templates = {
-				folder = ".templates",
-				date_format = "%Y-%m-%d",
-				time_format = "%H:%M",
-			},
-			daily_notes = {
-				folder = "dailies",
-				date_format = "%Y-%m-%d_%H:%M",
-				default_tags = { "daily-notes" },
-			},
-			footer = {
-				enabled = true,
-			},
-			frontmatter = {
-				enabled = true,
-				sort = { "id", "title", "aliases", "tags", "createdAt", "updatedAt" },
-				func = function(note)
-					local path_name = tostring(note.path)
-					local fname = vim.fn.fnamemodify(path_name, ":t:r")
-
-					-- Parse tags and title from filename: tag1_tag2++title
-					local parts = vim.split(fname, "++", { plain = true, trimempty = true })
-					if not note.metadata.title and parts[2] and parts[2] ~= "" then
-						note.metadata.title = parts[2]
+				-- !for link new
+				note_id_func = function(title)
+					if is_zettel_id(title) then
+						return title
 					end
-
-					-- Generate id if needed
-					if note.id == fname then
-						---@diagnostic disable-next-line: undefined-global
-						note.id = Obsidian.opts.note_id_func(nil, note.title)
-					end
-
-					-- Add tags from filename and deduplicate
-					local tags_from_fname = vim.split(parts[1] or "", "_", { plain = true, trimempty = true })
-					for _, tag in ipairs(tags_from_fname) do
-						table.insert(note.tags, tag)
-					end
-					note.tags = vim.list.unique(note.tags)
-
-					local frontmatter = vim.deepcopy(note.metadata)
-					frontmatter.id = note.id
-					frontmatter.title = note.metadata.title
-					frontmatter.aliases = note.aliases
-					frontmatter.tags = note.tags
-					frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
-					if not frontmatter.createdAt then
-						frontmatter.createdAt = os.date("%Y-%m-%d")
-					end
-
-					return frontmatter
+					return require("obsidian.builtin").zettel_id()
 				end,
-			},
-			attachments = {
-				folder = "assets",
-			},
-		},
+				workspaces = {
+					{
+						name = "current",
+						path = vim.fn.getcwd(),
+					},
+				},
+				templates = {
+					folder = ".templates",
+					date_format = "%Y-%m-%d",
+					time_format = "%H:%M",
+				},
+				daily_notes = {
+					folder = "dailies",
+					date_format = "%Y-%m-%d_%H:%M",
+					default_tags = { "daily-notes" },
+				},
+				footer = {
+					enabled = true,
+				},
+				frontmatter = {
+					enabled = true,
+					sort = { "id", "title", "aliases", "tags", "createdAt", "updatedAt" },
+					func = function(note)
+						local path_name = tostring(note.path)
+						local fname = vim.fn.fnamemodify(path_name, ":t:r")
+
+						-- Parse tags and title from filename: tag1_tag2++title
+						local parts = vim.split(fname, "++", { plain = true, trimempty = true })
+						if not note.metadata.title and parts[2] and parts[2] ~= "" then
+							note.metadata.title = parts[2]
+						end
+
+						if not is_zettel_id(note.id) then
+							note.id = require("obsidian.builtin").zettel_id()
+						end
+
+						-- Add tags from filename and deduplicate
+						local tags_from_fname = vim.split(parts[1] or "", "_", { plain = true, trimempty = true })
+						if #tags_from_fname > 1 then
+							for _, tag in ipairs(tags_from_fname) do
+								table.insert(note.tags, tag)
+							end
+						end
+						note.tags = vim.list.unique(note.tags)
+
+						local frontmatter = vim.deepcopy(note.metadata)
+						frontmatter.id = note.id
+						frontmatter.title = note.metadata.title
+						frontmatter.aliases = note.aliases
+						frontmatter.tags = note.tags
+						frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
+						if not frontmatter.createdAt then
+							frontmatter.createdAt = os.date("%Y-%m-%d")
+						end
+
+						return frontmatter
+					end,
+				},
+				attachments = {
+					folder = "assets",
+				},
+			}
+		end,
 	},
 	{
 		"letieu/jira.nvim",
