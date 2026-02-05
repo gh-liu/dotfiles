@@ -221,7 +221,7 @@ return {
 					frontmatter.tags = note.tags
 					frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
 					if not frontmatter.createdAt then
-						frontmatter.createdAt = string.format("[[%s]]", os.date("%Y-%m-%d"))
+						frontmatter.createdAt = os.date("%Y-%m-%d")
 					end
 
 					return frontmatter
