@@ -256,6 +256,9 @@ function zvm_config() {
 	zvm_bindkey viins '^[f' vi-forward-word
 	zvm_bindkey viins '^[b' vi-backward-word
 }
+zvm_after_init() {
+	[ -f "$(which fzf)" ] && source <(fzf --zsh)
+}
 ## disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
 	source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
