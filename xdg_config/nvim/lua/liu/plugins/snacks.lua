@@ -108,9 +108,9 @@ return {
 			})
 		end)
 
-		vim.keymap.set("n", "<leader>;", function()
-			require("snacks").picker("commands", { layout = "select" })
-		end)
+		-- vim.keymap.set("n", "<leader>;", function()
+		-- 	require("snacks").picker("commands", { layout = "select" })
+		-- end)
 
 		vim.api.nvim_set_hl(0, "SnacksPickerDir", { link = "Directory", default = true })
 	end,
