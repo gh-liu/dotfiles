@@ -237,8 +237,16 @@ source $USERPLUGINSHOME/zsh-autosuggestions/zsh-autosuggestions.zsh
 # }}}
 # 6. plugin: zsh-syntax-highlighting{{{
 ## https://github.com/zsh-users/zsh-syntax-highlighting
+## Lazy load to improve startup time (load after first prompt)
 USERPLUGINS+=(https://github.com/zsh-users/zsh-syntax-highlighting)
-source $USERPLUGINSHOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+_load_syntax_highlighting() {
+	source $USERPLUGINSHOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+	# Re-bind widgets if zsh-vi-mode is active
+	[[ -n "${ZVM_VERSION}" ]] && zvm_bindkey viins '^[f' vi-forward-word && zvm_bindkey viins '^[b' vi-backward-word
+	# Remove this hook after first execution
+	add-zsh-hook -d precmd _load_syntax_highlighting
+}
+add-zsh-hook precmd _load_syntax_highlighting
 # }}}
 # 6. plugin: zsh-vi-mode{{{
 ## https://github.com/jeffreytse/zsh-vi-mode
@@ -377,11 +385,11 @@ zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;32'
 autoload -U +X bashcompinit && bashcompinit
 # autoload -U +X compinit && compinit -u
 autoload -U +X compinit
-if [[ -z "${USERCOMPINITDONE}" ]]; then
-	export USERCOMPINITDONE=1
-	compinit
-else
+# Use -C cache if dump file is fresh (within 20 hours), rebuild if needed
+if [[ -f "$ZDOTDIR/.zcompdump" ]]; then
 	compinit -C
+else
+	compinit
 fi
 
 [ -f "$(which terraform)" ] && complete -o nospace -C $(which terraform) terraform
