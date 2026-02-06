@@ -517,6 +517,11 @@ if [ -f "$(which fd)" ]; then
 	}
 fi
 [ -f "$(which fzf)" ] && source <(fzf --zsh)
+## load fzf custom completions
+for _fzf_completion in $ZDOTDIR/fzf-completions/*.zsh; do
+	[ -f "$_fzf_completion" ] && source "$_fzf_completion"
+done
+unset _fzf_completion
 ## zoxide
 [ -f "$(which zoxide)" ] && eval "$(zoxide init zsh)" # must be added after compinit is called.
 
