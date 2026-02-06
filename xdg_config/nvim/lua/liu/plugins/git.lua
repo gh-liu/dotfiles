@@ -76,12 +76,14 @@ return { -- Git {{{2
 
 			--[[ Toggle summary window ]]
 			local function make_fugitive_toggler(augroup)
-				local buf = -1
 				local function toggle()
-					if buf > 0 then
+					local buf = vim.t.fugitive_buf or -1
+
+					if buf > 0 and api.nvim_buf_is_valid(buf) then
 						api.nvim_buf_call(buf, function()
 							vim.cmd("bw!")
 						end)
+						vim.t.fugitive_buf = -1
 					else
 						vim.cmd.G({ mods = { keepalt = true } })
 					end
@@ -91,12 +93,12 @@ return { -- Git {{{2
 					group = augroup,
 					pattern = "FugitiveIndex",
 					callback = function(data)
-						buf = data.buf
+						vim.t.fugitive_buf = data.buf
 						api.nvim_create_autocmd("BufWipeout", {
 							callback = function()
-								buf = -1
+								vim.t.fugitive_buf = -1
 							end,
-							buffer = buf,
+							buffer = data.buf,
 						})
 					end,
 				})
