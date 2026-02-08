@@ -88,6 +88,44 @@ return {
 		},
 	},
 	{
+		"xieyonn/spinner.nvim",
+		config = function()
+			require("spinner").config("lsp_progress", {
+				kind = "statusline",
+				pattern = "circleHalves",
+				attach = {
+					lsp = {
+						request = vim.tbl_values(vim.lsp.protocol.Methods),
+					},
+				},
+			})
+
+			function _G.spinner_lsp()
+				local client_names = {}
+				local seen = {}
+				for _, client in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
+					local name = client and client.name or ""
+					if name ~= "" and not seen[name] then
+						table.insert(client_names, name)
+						seen[name] = true
+					end
+				end
+				if #client_names == 0 then
+					return ""
+				end
+				local strs = vim.iter(client_names):join(" ")
+				local spinner = require("spinner").render("lsp_progress")
+				if spinner and #spinner > 0 then
+					strs = strs .. " " .. spinner
+				end
+				return vim.fn["flagship#surround"](strs)
+			end
+			vim.cmd([[
+			  autocmd User Flags call Hoist("buffer", 99, "%{v:lua.spinner_lsp()}")
+			]])
+		end,
+	},
+	{
 		"tpope/vim-flagship",
 		init = function()
 			vim.o.showtabline = 2
