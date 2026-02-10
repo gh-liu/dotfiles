@@ -187,15 +187,15 @@ M.set_highlights = function()
 		},
 		search = {
 			-- search & substitute
-			Search = { fg = c.bg, bg = c.lightblue },
+			Search = { fg = c.white, bg = c.yellow, bold = true },
 			-- IncSearch = { link = "Search" },
-			CurSearch = { bg = c.yellow },
+			CurSearch = { fg = c.white, bg = c.orange, bold = true },
 			-- Substitute = { link = "Search" },
 		},
 		visual = {
 			-- visual
-			Visual = { bg = c.gray },
-			VisualNOS = { bg = c.gray },
+			Visual = { bg = c.brightgray },
+			VisualNOS = { bg = c.brightgray },
 		},
 		pmenu = {
 			-- pmenu
