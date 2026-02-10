@@ -64,3 +64,4 @@ bind -n S-M-Down {
     send -X stop-selection
   }
 }
+# vim: set filetype=tmux
