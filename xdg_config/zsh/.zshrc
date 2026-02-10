@@ -188,8 +188,8 @@ skilla() {
 	esac
 }
 # alias mdagent="cp $XDG_CONFIG_HOME/AGENTS.md ."
-alias mdagent="ln -svf $XDG_CONFIG_HOME/AGENTS.md ."
-alias mdclaude="ln -svf $XDG_CONFIG_HOME/AGENTS.md CLAUDE.md"
+alias mdagent="ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md ."
+alias mdclaude="ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md CLAUDE.md"
 
 # }}}
 
