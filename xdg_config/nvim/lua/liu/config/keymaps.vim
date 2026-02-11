@@ -104,7 +104,7 @@ nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDele
 " copy full path
 "noremap y<cr> :execute 'let @+ = expand("%:p")' <Bar> echo 'copy:' @+ <CR>
 " copy path:line
-nnoremap y<leader> :<C-u>let path = substitute(expand("%:p"), getcwd()."/", "", "") <Bar> let @+ = v:count > 0 ? path . ":" . line(".") : path  <Bar> echo 'copy:' @+ <CR>
+nnoremap <silent> y<leader> :<C-u>let path = substitute(expand("%:p"), getcwd()."/", "", "") <Bar> let @+ = v:count > 0 ? path . ":" . line(".") : path  <Bar> echo 'copy:' @+ <CR>
 " change directory
 nnoremap cdc :lcd %:h<CR>
 nnoremap cdu :lcd ..<CR>
