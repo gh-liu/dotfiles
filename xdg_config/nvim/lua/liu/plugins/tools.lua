@@ -127,6 +127,12 @@ return {
 		dev = true,
 	},
 	{
+		"numEricL/table.vim",
+		init = function()
+			vim.g.table_disable_mappings = 1
+		end,
+	},
+	{
 		"obsidian-nvim/obsidian.nvim",
 		lazy = false,
 		version = "*",
