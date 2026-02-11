@@ -1,10 +1,23 @@
-model_provider = "Z_AI"
-model = "GLM-4.7"
-preferred_auth_method = "apikey"
-disable_response_storage = true
+# https://developers.openai.com/codex/config-basic
+# cp $XDG_CONFIG_HOME/agents/codex.toml ~/.codex/config.toml
 
-[model_providers.Z_AI]
-name = "Z.AI"
-base_url = "https://api.z.ai/api/coding/paas/v4"
-# wire_api = "responses"
-env_key = "BIGMODEL_API_KEY"
+### z.ai
+###
+# model_provider = "Z_AI"
+# model = "GLM-4.7"
+# preferred_auth_method = "apikey"
+# disable_response_storage = true
+# [model_providers.Z_AI]
+# name = "Z.AI"
+# base_url = "https://api.z.ai/api/coding/paas/v4"
+# # wire_api = "responses"
+# env_key = "BIGMODEL_API_KEY"
+
+### openrouter
+###
+model_provider = "openrouter"
+model = "openrouter/pony-alpha"
+[model_providers.openrouter]
+name = "openrouter"
+base_url = "https://openrouter.ai/api/v1"
+env_key = "OPENROUTER_API_KEY"
