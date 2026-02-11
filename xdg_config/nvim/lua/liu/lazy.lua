@@ -115,7 +115,7 @@ end
 ---@param path string
 ---@param cmd string[] git command to execute
 ---@param error_lev number? log level to use for errors, hide errors if nil or false
----@reurn { success: boolean, output: string }
+---@return { success: boolean, output: string }
 local function dir_execute_git_cmd(path, cmd, error_lev)
 	local shell_args = { "git", "-C", path, unpack(cmd) }
 	local shell_out = vim.fn.system(shell_args)

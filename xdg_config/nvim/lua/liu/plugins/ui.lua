@@ -159,7 +159,7 @@ return {
 			  autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}")
 			augroup END
 			]])
-			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_staus()}"
+			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_status()}"
 
 			-- vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
 			-- vim.g.tabsuffix = vim.g.tabsuffix
@@ -198,7 +198,7 @@ return {
 				end
 				return "[lsp: " .. table.concat(names, " ") .. "]"
 			end
-			_G.Flag_dap_staus = function()
+			_G.Flag_dap_status = function()
 				if not package.loaded["dap"] or require("dap").status() == "" then
 					return ""
 				end
