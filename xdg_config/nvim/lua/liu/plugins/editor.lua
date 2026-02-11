@@ -486,6 +486,37 @@ return {
 			},
 		},
 	},
+	{
+		"nvim-mini/mini.cmdline",
+		enabled = true,
+		event = "VeryLazy",
+		opts = {
+			autocomplete = {
+				enable = true,
+				delay = 200,
+				predicate = function(data)
+					-- data = {line, line_prev, pos, pos_prev}
+					if not data.line:find("%a") then
+						return false
+					end
+					local chars = string.sub(data.line, data.pos_prev - 1, data.pos - 1)
+					-- vim.print(">>: ", chars)
+					if chars == " -" then
+						return false
+					end
+					return true
+				end,
+			},
+			-- Autocorrection: adjust non-existing words (commands, options, etc.)
+			autocorrect = {
+				enable = true,
+			},
+			-- Autopeek: show command's target range in a floating window
+			autopeek = {
+				enable = true,
+			},
+		},
+	},
 	-- Find and replace with ripgrep/astgrep, preview, and batch operations
 	{
 		"MagicDuck/grug-far.nvim",
