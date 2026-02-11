@@ -90,6 +90,7 @@ function M.lint()
 end
 
 return {
+	-- Async linter running external tools and displaying results via vim.diagnostics
 	"mfussenegger/nvim-lint",
 	lazy = true,
 	init = function(self)

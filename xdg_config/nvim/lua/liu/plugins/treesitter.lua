@@ -9,6 +9,7 @@ local installed = nil
 local installing = {}
 
 return {
+	-- Tree-sitter parser installer for syntax highlighting, folding, and indentation
 	{
 		"nvim-treesitter/nvim-treesitter",
 		-- @need-install: cargo install --locked tree-sitter-cli
@@ -75,6 +76,7 @@ return {
 		build = ":TSUpdate",
 		opts = {},
 	},
+	-- Display current function/context at top of window as a floating anchor line
 	{
 		"nvim-treesitter/nvim-treesitter-context",
 		event = "VeryLazy",
@@ -117,6 +119,7 @@ return {
 			separator = nil,
 		},
 	},
+	-- Colorize nested parentheses/brackets/braces with rainbow colors
 	{
 		"HiPhish/rainbow-delimiters.nvim",
 		init = function()

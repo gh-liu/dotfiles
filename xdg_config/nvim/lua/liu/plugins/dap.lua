@@ -13,6 +13,7 @@ for name, opt in pairs(signs) do
 end
 
 return {
+	-- Debug Adapter Protocol client for breakpoints, stepping, and REPL debugging
 	{
 		"mfussenegger/nvim-dap",
 		-- integrates with: vim-flagship (status via DAPStopped autocmd in ui.lua)
@@ -60,6 +61,7 @@ return {
 			end, {})
 		end,
 	},
+	-- Simple UI for nvim-dap showing variables, watches, and REPL in a split window
 	{
 		"igorlfs/nvim-dap-view",
 		-- depends on: nvim-dap
@@ -71,6 +73,7 @@ return {
 		cmd = "DapViewToggle",
 		keys = { { "dc<cr>", "<cmd>DapViewToggle<cr>", desc = "Toggle DAP view" } },
 	},
+	-- Display disassembled code view for debugging sessions
 	{
 		"Jorenar/nvim-dap-disasm",
 		-- depends on: nvim-dap

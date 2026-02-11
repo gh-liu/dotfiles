@@ -1,4 +1,5 @@
 return {
+	-- Icon provider for filetypes, LSP kinds, and UI elements (replaces nvim-web-devicons)
 	{
 		"nvim-mini/mini.icons",
 		lazy = true,
@@ -46,6 +47,7 @@ return {
 			},
 		},
 	},
+	-- Visual flash animations for yank/paste/undo/redo operations
 	{
 		"rachartier/tiny-glimmer.nvim",
 		-- event = "VeryLazy",
@@ -87,6 +89,7 @@ return {
 			},
 		},
 	},
+	-- Statusline spinners showing LSP progress and async operation status
 	{
 		"xieyonn/spinner.nvim",
 		config = function()
@@ -122,6 +125,7 @@ return {
 			vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{v:lua.spinner_lsp()}") ]])
 		end,
 	},
+	-- Lightweight statusline/tabline with smart flag placement and minimal config
 	{
 		"tpope/vim-flagship",
 		init = function()
@@ -272,6 +276,7 @@ return {
 			-- end
 		end,
 	},
+	-- Custom foldtext with Unicode characters for fold indicators
 	{
 		"gh-liu/fold_line.nvim",
 		enabled = false,

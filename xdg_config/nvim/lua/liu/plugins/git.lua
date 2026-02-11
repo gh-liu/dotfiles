@@ -2,11 +2,14 @@ local api = vim.api
 local utils = require("liu.utils")
 
 return { -- Git {{{2
+	-- Git wrapper providing :G commands for commit/diff/blame/log operations
 	{
 		"tpope/vim-fugitive",
 		dependencies = {
+			-- GitHub integration for vim-fugitive (gbrowse command)
 			"tpope/vim-rhubarb",
 			-- { "shumphrey/fugitive-gitlab.vim" },
+			-- Fugitive undo graph visualization plugin
 			{
 				"justinmk/vim-ug",
 				config = function()
@@ -21,6 +24,7 @@ return { -- Git {{{2
 					]])
 				end,
 			},
+			-- Quickfix integration for fugitive git operations
 			{ "gh-liu/vim-qfugitive", dev = true },
 		},
 		config = function()
@@ -125,6 +129,7 @@ return { -- Git {{{2
 			]])
 		end,
 	},
+	-- Git log graph viewer with branch visualization and commit operations
 	{
 		"rbong/vim-flog",
 		-- integrates with: vim-fugitive (same Git commands)

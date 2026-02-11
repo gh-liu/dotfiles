@@ -1,10 +1,12 @@
 local utils = require("liu.utils")
 
 return {
+	-- Database interface for SQL queries with async execution and result display
 	{
 		"tpope/vim-dadbod",
 		-- integrates with: vim-dispatch (via b:dispatch), vim-flagship (status indicator)
 		dependencies = {
+			-- Dadbod connection picker/manager
 			"gh-liu/vim-dbcp",
 			dev = true,
 		},
@@ -32,6 +34,7 @@ return {
 			-- call adapter methods by `db#adapter#call(arg1, adapter_method, ...)`
 		end,
 	},
+	-- HTTP/REST client for testing APIs with .http files and environment support
 	{
 		"mistweaverco/kulala.nvim",
 		-- depends on: snacks.picker (for UI pickers)
@@ -106,6 +109,7 @@ return {
 			},
 		},
 	},
+	-- Color picker/editor with highlighter for color codes in buffers
 	{
 		"uga-rosa/ccc.nvim",
 		cmd = { "CccPick", "CccHighlighterToggle" },
@@ -119,19 +123,23 @@ return {
 			})
 		end,
 	},
+	-- Exit nested insert/command mode with single ESC regardless of nesting depth
 	{
 		"brianhuster/unnest.nvim",
 	},
+	-- Custom test runner wrapper for various testing frameworks
 	{
 		"gh-liu/nvim-tester",
 		dev = true,
 	},
+	-- Table formatter for markdown and text tables with alignment support
 	{
 		"numEricL/table.vim",
 		init = function()
 			vim.g.table_disable_mappings = 1
 		end,
 	},
+	-- Obsidian/zettelkasten note-taking with links, templates, and daily notes
 	{
 		"obsidian-nvim/obsidian.nvim",
 		lazy = false,
@@ -241,6 +249,7 @@ return {
 			}
 		end,
 	},
+	-- Jira integration for searching and displaying issues inside Neovim
 	{
 		"letieu/jira.nvim",
 		cond = function()

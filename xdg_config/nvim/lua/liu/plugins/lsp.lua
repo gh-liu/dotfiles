@@ -2,6 +2,7 @@ local api = vim.api
 local utils = require("liu.utils")
 
 return {
+	-- Community configs for LSP clients providing quick setup for various language servers
 	{
 		"neovim/nvim-lspconfig",
 		-- event = "VeryLazy",
@@ -10,6 +11,7 @@ return {
 			require("lspconfig.ui.windows").default_options.border = vim.o.winborder
 		end,
 	},
+	-- Lightweight code action picker with UI for selecting and applying LSP code actions
 	{
 		"rachartier/tiny-code-action.nvim",
 		lazy = true,

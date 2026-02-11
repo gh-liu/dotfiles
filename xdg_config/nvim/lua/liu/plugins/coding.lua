@@ -4,11 +4,13 @@ local fn = vim.fn
 ---@alias MiniSearchMethod 'cover'|'cover_or_next'|'cover_or_prev'|'cover_or_nearest'|'next'|'prev'|'nearest'
 
 return {
+	-- Enhanced textobjects (a/i) for brackets, functions, classes, arguments, etc.
 	{
 		"nvim-mini/mini.ai",
 		-- "wellle/targets.vim",
 		dependencies = {
 			{
+				-- Textobjects based on Tree-sitter queries (acf/gc/etc)
 				-- "nvim-treesitter/nvim-treesitter-textobjects",
 				"gh-liu/nvim-treesitter-textobjects", -- NOTE: pull from main branch of upstream
 				event = "VeryLazy",
@@ -119,6 +121,7 @@ return {
 			})
 		end,
 	},
+	-- Add/delete/change surrounding characters (ys/cs/ds with quotes/brackets/tags)
 	{
 		"nvim-mini/mini.surround",
 		keys = {
@@ -220,6 +223,7 @@ return {
 			require("mini.surround").setup(opts)
 		end,
 	},
+	-- Text operators: replace (dr), exchange (cx), evaluate (g=), multiply, sort
 	{
 		"nvim-mini/mini.operators",
 		keys = {
@@ -243,6 +247,7 @@ return {
 			sort = { prefix = "" },
 		},
 	},
+	-- Move line/selection in any direction with Alt+hjkl keys
 	{
 		"nvim-mini/mini.move",
 		keys = {
@@ -273,6 +278,7 @@ return {
 			})
 		end,
 	},
+	-- Align text on delimiter with interactive split/join operations
 	{
 		"nvim-mini/mini.align",
 		keys = {
@@ -288,6 +294,7 @@ return {
 			})
 		end,
 	},
+	-- Smart increment/decrement with LSP-aware enum sequences and date patterns
 	{
 		"gh-liu/nvim-mobius",
 		dev = true,
@@ -379,6 +386,7 @@ return {
 			})
 		end,
 	},
+	-- Toggle between single-line and multi-line code blocks (arrays/objects/etc)
 	{
 		"Wansmer/treesj",
 		enabled = true,
@@ -402,6 +410,7 @@ return {
 			max_join_length = 300,
 		},
 	},
+	-- Coercion (cr) for case conversion and Subvert for smart search/replace
 	{
 		"tpope/vim-abolish",
 		-- event = "VeryLazy",
@@ -460,10 +469,12 @@ return {
 			"S",
 		},
 	},
+	-- Enable repeating of plugin mappings with dot command (.)
 	{
 		"tpope/vim-repeat",
 		-- event = "VeryLazy",
 	},
+	-- Quick textobject selection via visual hints and single-key targets
 	{
 		"gh-liu/nvim-bullseye",
 		dev = true,

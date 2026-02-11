@@ -1,4 +1,5 @@
 return {
+	-- Edit quickfix list items directly and apply changes back to source files
 	{
 		"stefandtw/quickfix-reflector.vim",
 		init = function()
@@ -16,6 +17,7 @@ return {
 		-- event = "VeryLazy",
 		ft = "qf",
 	},
+	-- Syntax highlighting and preview for Mermaid diagram files
 	{
 		"craigmac/vim-mermaid",
 		ft = "mermaid",
@@ -38,10 +40,12 @@ return {
 			})
 		end,
 	},
+	-- Busted testing framework type definitions for Lua development
 	{
 		"LuaCATS/busted",
 		lazy = true,
 	},
+	-- Luassert assertion library type definitions for Lua testing
 	{
 		"LuaCATS/luassert",
 		lazy = true,

@@ -46,6 +46,7 @@ local formatters_by_ft = {
 }
 
 return {
+	-- Lightweight formatter with 100+ formatters, preserving extmarks and folds
 	"stevearc/conform.nvim",
 	lazy = true,
 	init = function(self)

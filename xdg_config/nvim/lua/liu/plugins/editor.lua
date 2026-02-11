@@ -14,6 +14,7 @@
 local utils = require("liu.utils")
 
 return {
+	-- Lightweight file explorer replacing netrw with Vim-friendly buffer interface
 	{
 		"justinmk/vim-dirvish",
 		enabled = true,
@@ -50,34 +51,25 @@ return {
 						"a",
 						{ remap = true, buffer = ev.buf, desc = "Split vertically", silent = true, nowait = true }
 					)
-					vim.keymap.set(
-						"v",
-						"<C-w>s",
-						"O",
-						{
-							remap = true,
-							buffer = ev.buf,
-							desc = "Split selected horizontally",
-							silent = true,
-							nowait = true,
-						}
-					)
-					vim.keymap.set(
-						"v",
-						"<C-w>v",
-						"A",
-						{
-							remap = true,
-							buffer = ev.buf,
-							desc = "Split selected vertically",
-							silent = true,
-							nowait = true,
-						}
-					)
+					vim.keymap.set("v", "<C-w>s", "O", {
+						remap = true,
+						buffer = ev.buf,
+						desc = "Split selected horizontally",
+						silent = true,
+						nowait = true,
+					})
+					vim.keymap.set("v", "<C-w>v", "A", {
+						remap = true,
+						buffer = ev.buf,
+						desc = "Split selected vertically",
+						silent = true,
+						nowait = true,
+					})
 				end,
 			})
 		end,
 	},
+	-- File explorer with tree view, bookmarks, and file operations
 	{
 		"nvim-mini/mini.files",
 		lazy = true,
@@ -310,6 +302,7 @@ return {
 			options = { use_as_default_explorer = false },
 		},
 	},
+	-- Delete buffers without closing windows, handling alternate files correctly
 	{
 		"nvim-mini/mini.bufremove",
 		lazy = true,
@@ -333,6 +326,7 @@ return {
 			})
 		end,
 	},
+	-- Enhanced keymapping including combo shortcuts and multistep mappings
 	{
 		"nvim-mini/mini.keymap",
 		-- event = "VeryLazy",
@@ -383,6 +377,7 @@ return {
 		end,
 		opts = {},
 	},
+	-- Visualize diffs (Git index or saved file) with signs and hunk navigation
 	{
 		"nvim-mini/mini.diff",
 		event = "VeryLazy",
@@ -474,6 +469,7 @@ return {
 			})
 		end,
 	},
+	-- Modern dashboard with floating UI for file/terminal/buffer management
 	{
 		"serhez/bento.nvim",
 		enabled = false,
@@ -490,6 +486,7 @@ return {
 			},
 		},
 	},
+	-- Find and replace with ripgrep/astgrep, preview, and batch operations
 	{
 		"MagicDuck/grug-far.nvim",
 		enabled = false,
@@ -525,10 +522,12 @@ return {
 		cmd = { "GrugFar", "GrugFarWithin" },
 	},
 	{
+		-- Custom terminal wrapper with enhanced features
 		"gh-liu/nvim-winterm",
 		dev = true,
 		opts = {},
 	},
+	-- Async job runner for Make/Dispatch/Start commands with compiler integration
 	{
 		"tpope/vim-dispatch",
 		-- event = "VeryLazy",
@@ -576,6 +575,7 @@ return {
 		end,
 		-- cmd = { "Make", "Dispatch", "Start" },
 	},
+	-- Automatic session management with persistent session saving/loading
 	{
 		"tpope/vim-obsession",
 		-- event = "VeryLazy",
@@ -602,10 +602,12 @@ return {
 			]])
 		end,
 	},
+	-- Automatically detect and set tabwidth/shiftwidth based on file content
 	{
 		"tpope/vim-sleuth",
 		-- event = "VeryLazy",
 	},
+	-- Readline-style keybindings (Ctrl-A/E/K/W etc.) for insert/command mode
 	{
 		"tpope/vim-rsi",
 		-- event = "VeryLazy",
@@ -614,14 +616,15 @@ return {
 		end,
 		-- event = { "InsertEnter", "CmdlineEnter" },
 	},
+	-- UNIX shell commands: :Remove, :Move, :Rename, :Mkdir, :Chmod, etc.
 	{
 		"tpope/vim-eunuch",
 		init = function()
 			vim.g.eunuch_no_maps = 1
 		end,
 	},
+	-- Project structure with alternate/related file navigation and templates
 	{
-
 		"tpope/vim-projectionist",
 		-- NOTE:
 		-- 1. diff between `alternate` and `related`

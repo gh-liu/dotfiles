@@ -1,12 +1,15 @@
 local utils = require("liu.utils")
 
 return {
+	-- High-performance completion plugin with LSP/path/snippet sources using fuzzy matching
 	{
 		"saghen/blink.cmp",
 		event = "VeryLazy",
 		version = "*", -- download pre-built binaries
 		dependencies = {
+			-- Icon provider for completion items
 			"nvim-mini/mini.icons",
+			-- Community-driven snippet collection supporting multiple languages and frameworks
 			"rafamadriz/friendly-snippets",
 		},
 		opts = {
@@ -159,6 +162,7 @@ return {
 			},
 		},
 	},
+	-- Auto-insert paired brackets/quotes with smart skip and jump logic
 	{
 		"nvim-mini/mini.pairs",
 		-- auto bracket pairs, enhanced with smart skip logic
@@ -340,6 +344,7 @@ return {
 			})
 		end,
 	},
+	-- Generate code annotations (docstrings) for functions, classes, types, and files
 	{
 		"danymat/neogen",
 		-- documentation generator (annotation for functions/classes/etc)
