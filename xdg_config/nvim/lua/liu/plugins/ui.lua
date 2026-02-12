@@ -236,33 +236,6 @@ return {
 					-- NOTE: alway here
 					return vim.fn["flagship#surround"](ret.str)
 				end
-
-				local get_counts = function(buf, severity)
-					local count = vim.diagnostic.count(buf, { severity = severity, enabled = true })
-					return count[severity]
-				end
-
-				local summary_strs = {}
-				local diag = {
-					E = vim.diagnostic.severity.ERROR,
-					W = vim.diagnostic.severity.WARN,
-					I = vim.diagnostic.severity.INFO,
-					H = vim.diagnostic.severity.HINT,
-				}
-				for key, serverity in pairs(diag) do
-					local count = get_counts(0, serverity)
-					if count and count > 0 then
-						table.insert(summary_strs, key .. ":" .. tostring(count))
-					end
-				end
-				if #summary_strs > 0 then
-					table.sort(summary_strs, function(str1, str2)
-						local l1 = string.sub(str1, 1, 1)
-						local l2 = string.sub(str2, 1, 1)
-						return diag[l1] > diag[l2]
-					end)
-					return vim.fn["flagship#surround"](vim.iter(summary_strs):join(" "))
-				end
 				return ""
 			end
 			-- "autocmd User Flags call Hoist("buffer", "fugitive#statusline")
@@ -272,13 +245,6 @@ return {
 			-- "autocmd User Flags call Hoist("buffer", 12, "%{&channel?flagship#surround('channel:'.&channel):''}")
 			-- "autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? 'A+' : '')}")
 			-- "autocmd User Flags call Hoist("tabpage", "%{v:lua.Flag_sp_tab_title()}")
-			-- if vim.diagnostic.status then
-			-- 	vim.cmd(
-			-- 		[[ autocmd User Flags call Hoist("buffer", 9, "%{flagship#surround(v:lua.vim.diagnostic.status())}") ]]
-			-- 	)
-			-- else
-			-- 	vim.cmd([[ autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}") ]])
-			-- end
 
 			-- if vim.fn.exists("&busy") then
 			-- 	vim.cmd([[ autocmd User Flags call Hoist("buffer", 99, "%{&busy>0?flagship#surround('…'):''}") ]])
