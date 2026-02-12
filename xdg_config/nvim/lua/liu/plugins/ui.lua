@@ -117,6 +117,8 @@ return {
 				end
 				local strs = vim.iter(clients):join(" ")
 				local spinner = require("spinner").render(SPINNER_LSP)
+				local ret = vim.api.nvim_eval_statusline(spinner, {})
+				spinner = ret.str or spinner
 				if spinner and #spinner > 0 then
 					strs = strs .. ":" .. spinner
 				end
