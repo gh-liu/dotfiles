@@ -312,7 +312,7 @@ update_zsh_completions() {
 ## https://zsh.sourceforge.io/Doc/Release/Completion-System.html
 ## man zshcompsys
 ## additional src: https://github.com/zsh-users/zsh-completions
-USERPLUGINS+=(https://github.com/zsh-users/zsh-completions.git)
+USERPLUGINS+=(https://github.com/zsh-users/zsh-completions)
 fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
 fpath=($XDG_CONFIG_HOME/zsh/zsh-completions $fpath)
 if [[ $OS == darwin ]]; then
