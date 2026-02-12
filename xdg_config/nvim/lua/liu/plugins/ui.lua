@@ -230,6 +230,13 @@ return {
 				if #vim.bo.buftype > 0 then
 					return ""
 				end
+
+				local ret = vim.api.nvim_eval_statusline(vim.diagnostic.status(0), {})
+                if ret.str then
+					-- NOTE: alway here
+					return vim.fn["flagship#surround"](ret.str)
+				end
+
 				local get_counts = function(buf, severity)
 					local count = vim.diagnostic.count(buf, { severity = severity, enabled = true })
 					return count[severity]
