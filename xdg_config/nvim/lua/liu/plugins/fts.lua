@@ -1,4 +1,15 @@
 return {
+	{
+		"MeanderingProgrammer/render-markdown.nvim",
+		opts = {
+			code = {
+				sign = false,
+				border = "none",
+			},
+			pipe_table = { enabled = false },
+		},
+		ft = "markdown",
+	},
 	-- Edit quickfix list items directly and apply changes back to source files
 	{
 		"stefandtw/quickfix-reflector.vim",
