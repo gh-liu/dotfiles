@@ -66,8 +66,8 @@ return { -- Git {{{2
 				pattern = "fugitive",
 				callback = function()
 					vim.cmd([[
-						nnoremap <buffer> rt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
-						nnoremap <buffer> rT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
+						nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
+						nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
 
 						nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 						nnoremap <buffer> cbu :<C-U>Git branch -u origin/<C-R>=FugitiveHead()<CR><CR>
