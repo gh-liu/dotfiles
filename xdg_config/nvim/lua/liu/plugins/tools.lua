@@ -148,13 +148,13 @@ return {
 			return vim.fn.isdirectory(".templates") ~= 0
 		end,
 		init = function()
-			vim.api.nvim_create_autocmd("FileType", {
-				group = utils.augroup("obsidian"),
-				pattern = "markdown",
-				callback = function(_)
-					vim.wo[0][0].conceallevel = 1
-				end,
-			})
+			-- vim.api.nvim_create_autocmd("FileType", {
+			-- 	group = utils.augroup("obsidian"),
+			-- 	pattern = "markdown",
+			-- 	callback = function(_)
+			-- 		vim.wo[0][0].conceallevel = 1
+			-- 	end,
+			-- })
 		end,
 		ft = "markdown",
 		keys = {
@@ -173,6 +173,7 @@ return {
 				return str and str:match("^%d%d%d%d%d%d%d%d%d%d%-[A-Z][A-Z][A-Z][A-Z]$")
 			end
 			return {
+				ui = { enable = false },
 				legacy_commands = false,
 				callbacks = {
 					enter_note = function(note) end,
