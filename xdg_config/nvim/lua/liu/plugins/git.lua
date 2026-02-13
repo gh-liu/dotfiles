@@ -70,6 +70,7 @@ return { -- Git {{{2
 						nnoremap <buffer> rT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
 
 						nnoremap <buffer> cob :<C-U>Git checkout -b<space>
+						nnoremap <buffer> cbu :<C-U>Git branch -u origin/<C-R>=FugitiveHead()<CR><CR>
 
 						"cargo install git-absorb
 						nnoremap <buffer> gaa :<C-U>Git absorb<space>
