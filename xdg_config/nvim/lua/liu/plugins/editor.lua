@@ -488,7 +488,7 @@ return {
 	},
 	{
 		"nvim-mini/mini.cmdline",
-		enabled = true,
+		enabled = false,
 		event = "VeryLazy",
 		opts = {
 			autocomplete = {
