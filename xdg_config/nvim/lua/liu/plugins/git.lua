@@ -72,6 +72,8 @@ return { -- Git {{{2
 						nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 						nnoremap <buffer> cbu :<C-U>Git branch -u origin/<C-R>=FugitiveHead()<CR><CR>
 
+						nnoremap <buffer> cpu :Git push --set-upstream origin <C-R>=FugitiveHead()<CR><CR>
+
 						"cargo install git-absorb
 						nnoremap <buffer> gaa :<C-U>Git absorb<space>
 						nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
