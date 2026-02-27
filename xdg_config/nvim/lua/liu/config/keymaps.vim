@@ -98,7 +98,11 @@ nnoremap [<tab> <cmd>tabprev<cr>
 nnoremap ]<tab> <cmd>tabnext<cr>
 
 " `bdelete` but keep window
-nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
+"nnoremap d<leader> <cmd> if exists("*UserBufDelete") == 1 <bar> call UserBufDelete() <bar> else <bar> exec 'buf#<bar>bd#' <bar> endif <cr>
+nnoremap d<leader> <cmd>if exists('*UserBufDelete') <bar> call UserBufDelete()
+\<bar> elseif buflisted(bufnr('#')) <bar> bp \| bd #
+\<bar> else <bar> enew \| bd #
+\<bar> endif <cr>
 " }}}
 " path {{{
 " copy full path
