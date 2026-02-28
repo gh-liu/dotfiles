@@ -236,7 +236,7 @@ return {
 						frontmatter.title = note.metadata.title
 						frontmatter.aliases = note.aliases
 						frontmatter.tags = note.tags
-						frontmatter.updatedAt = os.date("%Y-%m-%d, %H:%M:%S")
+						frontmatter.updatedAt = os.date("%Y-%m-%d %H:%M:%S")
 						if not frontmatter.createdAt then
 							frontmatter.createdAt = os.date("%Y-%m-%d")
 						end
