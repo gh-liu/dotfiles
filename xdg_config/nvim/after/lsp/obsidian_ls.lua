@@ -1,11 +1,14 @@
 ---@type vim.lsp.Config
 local Config = {
-	cmd = { "/Users/liu/dev/golang/obsidian.go/obsidian-lsp" },
+	cmd = { "obsidian_ls" },
 	filetypes = { "markdown" },
 	root_markers = { ".templates" },
 	settings = {
 		["obsidian"] = {
-			ignores = { "^blog/", "^.templates/" },
+			ignores = {
+				"^.templates/",
+				"^blog/",
+			},
 		},
 	},
 }
