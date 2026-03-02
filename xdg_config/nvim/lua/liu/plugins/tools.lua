@@ -142,6 +142,7 @@ return {
 	-- Obsidian/zettelkasten note-taking with links, templates, and daily notes
 	{
 		"obsidian-nvim/obsidian.nvim",
+		enabled = false,
 		lazy = false,
 		version = "*",
 		cond = function()
