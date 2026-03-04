@@ -282,8 +282,10 @@ M.set_highlights = function()
 			-- }}}
 		},
 		snippet = {
-			SnippetTabstop = { link = "Visual" },
-			SnippetTabstopActive = { link = "Search" },
+			-- Inactive tabstop: subtle background, low prominence
+			SnippetTabstop = { fg = c.fg, bg = c.gray },
+			-- Active tabstop: cyan highlight to clearly mark the editable position
+			SnippetTabstopActive = { fg = c.bg, bg = c.cyan, bold = true },
 		},
 		termdebug = {
 			-- termdebug
