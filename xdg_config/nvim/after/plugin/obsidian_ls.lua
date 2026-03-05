@@ -1,3 +1,4 @@
+local formatting = require("liu.plugins.formatting")
 local CMD = {
 	new = "obsidian.new",
 	new_from_template = "obsidian.newFromTemplate",
@@ -73,5 +74,23 @@ end, {
 				:totable()
 		end
 		return {}
+	end,
+})
+
+-- auto formatting
+vim.api.nvim_create_autocmd("LspAttach", {
+	callback = function(ev)
+		local buf = ev.buf
+		local clients = vim.lsp.get_clients({ name = "obsidian_ls" })
+		---@type vim.lsp.Client|nil
+		local client = #clients > 0 and clients[1] or nil
+		if client then
+			vim.api.nvim_create_autocmd("BufWritePre", {
+				buffer = buf,
+				callback = function()
+					vim.lsp.buf.format({ bufnr = buf, id = client.id })
+				end,
+			})
+		end
 	end,
 })
