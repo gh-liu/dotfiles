@@ -312,6 +312,7 @@ vim.api.nvim_create_autocmd("LspRequest", {
 	end,
 })
 
+-- LSP server enable {{{1
 vim.lsp.enable("gopls")
 vim.lsp.enable({
 	-- "pyright"
@@ -319,27 +320,29 @@ vim.lsp.enable({
 	"ruff", -- formating/linting
 	"ty",
 })
+vim.lsp.enable("rust_analyzer")
+vim.lsp.enable("ts_ls")
+-- vim.lsp.enable("zls")
+
+vim.lsp.enable("bashls")
+vim.lsp.enable("vimls")
+vim.lsp.enable("buf_ls")
+vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
+vim.lsp.enable("docker_language_server")
+
 if vim.fn.executable("emmylua_ls") == 1 then
 	vim.lsp.enable({ "emmylua_ls" })
 else
 	vim.lsp.enable("lua_ls")
 end
-vim.lsp.enable("rust_analyzer")
-vim.lsp.enable("zls")
-vim.lsp.enable("ts_ls")
-vim.lsp.enable("bashls")
-vim.lsp.enable("vimls")
-vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
-vim.lsp.enable("clangd")
--- vim.lsp.enable("ast_grep")
-vim.lsp.enable("buf_ls")
--- vim.lsp.enable("dockerls")
-vim.lsp.enable("docker_language_server")
-vim.lsp.enable("terraformls")
-vim.lsp.enable("nushell")
+
+-- vim.lsp.enable("clangd")
+-- vim.lsp.enable("terraformls")
+-- vim.lsp.enable("nushell")
 
 -- vim.lsp.enable({ "copilot" })
 
 vim.lsp.enable("obsidian_ls")
+-- }}}
 
 -- vim: foldmethod=marker
