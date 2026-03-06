@@ -2,11 +2,7 @@ local M = {}
 
 ---@param client vim.lsp.Client
 ---@param bufnr integer
-M.on_attach = function(client, bufnr)
-	if settings then
-		client.notify(vim.lsp.protocol.Methods.workspace_didChangeConfiguration, { settings = settings })
-	end
-end
+M.on_attach = function(client, bufnr) end
 
 -- https://github.com/redhat-developer/yaml-language-server?tab=readme-ov-file#using-yamlschemas-settings
 M.schemas = {
