@@ -14,7 +14,7 @@ local lb_name = "liu/lsp_lightbulb"
 local lb_namespace = api.nvim_create_namespace(lb_name)
 local code_action_method = lsp.protocol.Methods.textDocument_codeAction
 
-local debounce_ms = 350
+local debounce_ms = 500
 
 local latest_updated_bufnr = nil
 
