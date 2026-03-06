@@ -3,20 +3,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 . $SCRIPT_DIR/helper.sh --source-only
 
-function update_protobuf() {
-	local tool=protobuf
-	install_start $tool
-	url="https://api.github.com/repos/protocolbuffers/protobuf/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	vv=$(echo $version | sed "s/^v//")
-	pkg=protoc-$vv-linux-x86_64.zip
-	mkdir_tool_dir $tool
-	curl -LO https://github.com/protocolbuffers/protobuf/releases/download/$version/$pkg
-	unzip $pkg
-	link_bin $LIU_TOOLS/$tool/bin/protoc $tool
-	install_end
-}
-
 function update_tmux() {
 	local tool=tmux
 	install_start $tool
@@ -87,8 +73,11 @@ bins() {
 
 		# go install honnef.co/go/gotraceui/cmd/gotraceui@latest
 
-		go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-		go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+		# no protoc, just buf cli
+		go install github.com/bufbuild/buf/cmd/buf@latest
+		# use BSR(Buf Schema Registry)'s remote plugins
+		# go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+		# go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 		go install rsc.io/grepdiff@latest
 		go install github.com/rakyll/hey@latest
