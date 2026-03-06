@@ -1,4 +1,4 @@
-function goto_link()
+local function goto_link()
 	local params = { textDocument = { uri = vim.uri_from_bufnr(0) } }
 	vim.lsp.buf_request(0, "textDocument/documentLink", params, function(err, result)
 		if err then
@@ -16,14 +16,14 @@ function goto_link()
 	end)
 end
 
-function get_cursor_pos()
+local function get_cursor_pos()
 	local cursor = vim.api.nvim_win_get_cursor(0)
 	cursor[1] = cursor[1] - 1 -- Adjust line number for 0-indexing
 	cursor[2] = vim.lsp.util.character_offset(0, cursor[1], cursor[2], "utf-8")
 	return { line = cursor[1], character = cursor[2] }
 end
 
-function in_range(pos, range)
+local function in_range(pos, range)
 	if pos.line > range.start.line and pos.line < range["end"].line then
 		return true
 	elseif pos.line == range.start.line and pos.line == range["end"].line then
@@ -37,7 +37,7 @@ function in_range(pos, range)
 	end
 end
 
-function jump_to_link_target(target)
+local function jump_to_link_target(target)
 	local file_uri, line_no, col_no = target:match("(.-)#(%d+),(%d+)")
 	vim.cmd.edit(vim.fn.fnameescape(vim.uri_to_fname(file_uri)))
 	vim.api.nvim_win_set_cursor(0, { tonumber(line_no), tonumber(col_no) - 1 })

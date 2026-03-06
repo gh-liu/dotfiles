@@ -201,9 +201,14 @@ vim.api.nvim_create_user_command("LazyPatch", function(args)
 	local obj = vim.system(cmd, {}):wait()
 	if obj.code == 0 then
 		local patches_dir = vim.fn.stdpath("config") .. "/patches"
-		local f = io.open(patches_dir .. "/" .. plugin_name .. ".patch", "w")
+		vim.fn.mkdir(patches_dir, "p")
+		local f, err = io.open(patches_dir .. "/" .. plugin_name .. ".patch", "w")
+		if not f then
+			vim.notify("Failed to open patch file: " .. err, vim.log.levels.ERROR)
+			return
+		end
 		f:write(obj.stdout)
-		io.close(f)
+		f:close()
 	else
 		vim.api.nvim_echo({ { obj.stderr } }, true, { err = true })
 	end

@@ -7,8 +7,7 @@ return {
 		-- integrates with: vim-dispatch (via b:dispatch), vim-flagship (status indicator)
 		dependencies = {
 			-- Dadbod connection picker/manager
-			"gh-liu/vim-dbcp",
-			dev = true,
+			{ "gh-liu/vim-dbcp", dev = true },
 		},
 		init = function()
 			vim.cmd([[

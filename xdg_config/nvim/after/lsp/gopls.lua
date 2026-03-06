@@ -17,7 +17,7 @@ return {
 				nilness = true,
 				shadow = true,
 				unusedparams = true,
-				unusewrites = true,
+				unusedwrites = true,
 			},
 			-- https://staticcheck.dev/docs/checks
 			staticcheck = true,

@@ -36,18 +36,9 @@ local linters_opt = {
 	},
 }
 
-local M = {}
+local utils = require("liu.utils")
 
-function M.debounce(ms, fn)
-	local timer = vim.uv.new_timer()
-	return function(...)
-		local argv = { ... }
-		timer:start(ms, 0, function()
-			timer:stop()
-			vim.schedule_wrap(fn)(unpack(argv))
-		end)
-	end
-end
+local M = {}
 function M.lint()
 	local lint = require("lint")
 
@@ -101,7 +92,7 @@ return {
 			-- "TextChanged",
 		}, {
 			group = vim.api.nvim_create_augroup("liu/nvim-lint", { clear = true }),
-			callback = M.debounce(100, M.lint),
+			callback = utils.debounce(100, M.lint),
 		})
 	end,
 	opts = {

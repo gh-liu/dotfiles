@@ -15,5 +15,5 @@ end
 vim.keymap.set("n", "gzp", function()
 	local profiler = require("snacks.profiler")
 	profiler.toggle()
-	print("snacks profiler " .. (profiler.running() and "is running." or "stoped."))
+	print("snacks profiler " .. (profiler.running() and "is running." or "stopped."))
 end)

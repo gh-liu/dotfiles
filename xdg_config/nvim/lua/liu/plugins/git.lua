@@ -140,7 +140,7 @@ return { -- Git {{{2
 		init = function(self)
 			vim.g.flog_use_internal_lua = 1
 			vim.g.flog_default_opts = { max_count = 2000 }
-			vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%m" }
+			vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%M" }
 
 			-- keymap.set("ca", "F", "Flog", {})
 			vim.keymap.set("ca", "F", "Flogsplit", {})
