@@ -342,8 +342,4 @@ vim.lsp.enable("nushell")
 
 vim.lsp.enable("obsidian_ls")
 
--- if vim.fn.executable("gideon") == 1 then
--- 	vim.lsp.enable({ "gideon" })
--- end
-
 -- vim: foldmethod=marker
