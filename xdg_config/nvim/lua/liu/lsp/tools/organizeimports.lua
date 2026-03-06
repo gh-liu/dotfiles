@@ -22,11 +22,16 @@ local servers = {
 
 		local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
 		params.context = { only = { "source.organizeImports" } }
-		local result = client:request_sync("textDocument/codeAction", params, 1000, bufnr)
-		if result and result[1] then
-			for _, r in pairs(result[1]) do
-				if r.edit then
-					vim.lsp.util.apply_workspace_edit(r.edit, client.offset_encoding)
+		local response = client:request_sync("textDocument/codeAction", params, 3000, bufnr)
+		local actions = response and response.result
+		if actions then
+			for _, action in ipairs(actions) do
+				if action.edit then
+					vim.lsp.util.apply_workspace_edit(action.edit, client.offset_encoding)
+				end
+
+				if action.command then
+					client:exec_cmd(action.command, { bufnr = bufnr })
 				end
 			end
 		end
