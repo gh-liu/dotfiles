@@ -651,7 +651,7 @@ return {
 	{
 		"tpope/vim-eunuch",
 		init = function()
-			vim.g.eunuch_no_maps = 1
+			-- vim.g.eunuch_no_maps = 0
 		end,
 	},
 	-- Project structure with alternate/related file navigation and templates
