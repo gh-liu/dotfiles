@@ -277,7 +277,7 @@ vim.lsp.start = (function()
 				return
 			end
 		end
-		old_lsp_start(...)
+		return old_lsp_start(...)
 	end
 end)()
 
