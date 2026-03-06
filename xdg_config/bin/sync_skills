@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+source_root=$(readlink -f "$LIU_TOOLS/dotfiles/skills")
+target="$HOME/.config/agents/skills"
+target_real=$(readlink -f "$target" 2>/dev/null || true)
+
+# If target already resolves to source_root (e.g. a symlink), syncing would
+# create nested entries like skills/foo/foo.
+if [ -n "$target_real" ] && [ "$target_real" = "$source_root" ]; then
+	exit 0
+fi
+
+mkdir -p "$target"
+for dir in "$source_root"/*/; do
+	[ -d "$dir" ] || continue
+	name=$(basename "$dir")
+	dest="$target/$name"
+
+	if [ -d "$dest" ] && [ ! -L "$dest" ]; then
+		rm -rf "$dest"
+	fi
+
+	ln -sfn "$source_root/$name" "$dest"
+done
+
+# vim: set filetype=sh
