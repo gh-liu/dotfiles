@@ -66,6 +66,29 @@ local function is_blocked(line)
 	return line:match("^%s*```") ~= nil or line:match("^%s*>") ~= nil
 end
 
+---@param buf integer
+---@param row integer
+---@return boolean
+local function in_fenced_code(buf, row)
+	local fenced = false
+	local fence
+	for i = 0, row do
+		local line = get_line(buf, i)
+		local marker = line:match("^%s*([`~][`~][`~]+)")
+		if marker then
+			local cur_fence = marker:sub(1, 1)
+			if not fenced then
+				fenced = true
+				fence = cur_fence
+			elseif fence == cur_fence then
+				fenced = false
+				fence = nil
+			end
+		end
+	end
+	return fenced
+end
+
 ---@param line string
 ---@return boolean
 local function is_list_item(line)
@@ -373,6 +396,9 @@ end
 
 ---@param buf integer
 local function md_bullets(buf)
+	if not api.nvim_buf_is_valid(buf) then
+		return
+	end
 	local state = vim.b[buf]
 	if state._md_list_guard then
 		return
@@ -387,6 +413,10 @@ local function md_bullets(buf)
 
 	local row = api.nvim_win_get_cursor(0)[1] - 1
 	local line = get_line(buf, row)
+	if in_fenced_code(buf, row) then
+		state._md_list_guard = false
+		return
+	end
 
 	-- Detect newline: row increased since last call
 	local last_row = state._md_list_last_row
@@ -464,6 +494,21 @@ end
 ---@param buf integer
 ---@param row integer
 local function handle_insert_enter(buf, row)
+	local state = vim.b[buf]
+	local last_row = state._md_last_normal_row
+	local last_tick = state._md_last_normal_changedtick
+	local last_line_count = state._md_last_normal_line_count
+	local line_count = api.nvim_buf_line_count(buf)
+	local changedtick = vim.b[buf].changedtick
+	local is_open_line = last_row ~= nil
+		and last_tick ~= nil
+		and last_line_count ~= nil
+		and changedtick ~= last_tick
+		and line_count == last_line_count + 1
+		and (row == last_row or row == last_row + 1)
+	if not is_open_line then
+		return
+	end
 	local line = get_line(buf, row)
 	if row < 0 then
 		return
@@ -472,7 +517,7 @@ local function handle_insert_enter(buf, row)
 	-- Handle empty line: insert new list item
 	if is_empty(line) then
 		local prev = get_line(buf, row - 1)
-		if not is_list_item(prev) then
+		if not is_list_item(prev) or in_fenced_code(buf, row) then
 			return
 		end
 
@@ -493,7 +538,9 @@ local function handle_insert_enter(buf, row)
 				return
 			end
 			local new_line = get_line(buf, row)
-			api.nvim_win_set_cursor(0, { row + 1, #new_line })
+			if api.nvim_get_current_buf() == buf then
+				api.nvim_win_set_cursor(0, { row + 1, #new_line })
+			end
 		end)
 		return
 	end
@@ -523,6 +570,9 @@ local function renumber_ordered_after_deletion(buf, row)
 				pcall(vim.cmd, "undojoin")
 				renumber_ordered(buf, row, cur_indent, cur_delim, expected)
 			end
+		elseif row == 0 and tonumber(cur_num) > 1 then
+			pcall(vim.cmd, "undojoin")
+			renumber_ordered(buf, row, cur_indent, cur_delim, 1)
 		end
 	end
 end
@@ -539,8 +589,21 @@ local function debounce(buf, fn)
 	end
 	debounce_timers[buf] = vim.defer_fn(function()
 		debounce_timers[buf] = nil
-		fn()
+		if api.nvim_buf_is_valid(buf) then
+			fn()
+		end
 	end, DEBOUNCE_MS)
+end
+
+---@param buf integer
+local function remember_normal_state(buf)
+	if not api.nvim_buf_is_valid(buf) then
+		return
+	end
+	local state = vim.b[buf]
+	state._md_last_normal_row = api.nvim_win_get_cursor(0)[1] - 1
+	state._md_last_normal_changedtick = vim.b[buf].changedtick
+	state._md_last_normal_line_count = api.nvim_buf_line_count(buf)
 end
 
 ---@param buf integer
@@ -583,6 +646,33 @@ local function setup_buf(buf)
 			renumber_ordered_after_deletion(opts.buf, row)
 		end,
 	})
+
+	api.nvim_create_autocmd({ "BufEnter", "CursorMoved", "InsertLeave" }, {
+		group = augroup,
+		buffer = buf,
+		callback = function(opts)
+			if api.nvim_get_current_buf() == opts.buf then
+				remember_normal_state(opts.buf)
+			end
+		end,
+	})
+
+	api.nvim_create_autocmd("BufWipeout", {
+		group = augroup,
+		buffer = buf,
+		callback = function(opts)
+			local timer = debounce_timers[opts.buf]
+			if timer then
+				timer:stop()
+				timer:close()
+				debounce_timers[opts.buf] = nil
+			end
+		end,
+	})
+
+	if api.nvim_get_current_buf() == buf then
+		remember_normal_state(buf)
+	end
 end
 
 -- ====================================================================
