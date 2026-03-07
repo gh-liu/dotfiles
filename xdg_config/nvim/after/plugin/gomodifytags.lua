@@ -57,14 +57,22 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 		return
 	end
 
+	local bufnr = vim.api.nvim_get_current_buf()
+	local changedtick = vim.b[bufnr].changedtick
 	local cfg = get_config()
-	local cmd = { "gomodifytags", "-file", vim.api.nvim_buf_get_name(0), "-format", "json" }
+	local cmd = { "gomodifytags", "-file", vim.api.nvim_buf_get_name(bufnr), "-format", "json" }
 
 	-- Check if user provided target selector (-struct, -offset, -field, -all)
 	local has_target = false
+	local target_prefixes = { "-struct", "-offset", "-field", "-all" }
 	for _, arg in ipairs(args.fargs) do
-		if arg:match("^%-%(struct|offset|field|all%)") then
-			has_target = true
+		for _, prefix in ipairs(target_prefixes) do
+			if vim.startswith(arg, prefix) then
+				has_target = true
+				break
+			end
+		end
+		if has_target then
 			break
 		end
 	end
@@ -126,9 +134,9 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 
 	-- Prepare stdin if buffer is modified
 	local stdin_data = nil
-	if vim.bo.modified then
-		local filename = vim.api.nvim_buf_get_name(0)
-		local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+	if vim.bo[bufnr].modified then
+		local filename = vim.api.nvim_buf_get_name(bufnr)
+		local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 		local content = table.concat(lines, "\n")
 		if #lines > 0 and lines[#lines] ~= "" then
 			content = content .. "\n"
@@ -161,9 +169,16 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 
 		if result and result.lines then
 			vim.schedule(function()
+				if not vim.api.nvim_buf_is_valid(bufnr) then
+					return
+				end
+				if vim.b[bufnr].changedtick ~= changedtick then
+					vim.notify("Gomodifytags: buffer changed during command, skip applying result", vim.log.levels.WARN)
+					return
+				end
 				local start = result.start or 1
 				local finish = result["end"] or start
-				vim.api.nvim_buf_set_lines(0, start - 1, finish, false, result.lines)
+				vim.api.nvim_buf_set_lines(bufnr, start - 1, finish, false, result.lines)
 			end)
 		end
 	end)
@@ -225,12 +240,12 @@ end, {
 		end
 
 		-- Completion for -add-tags=
-		if argLead:match("^%-add%-tags=") then
-			local tags_in_code = get_tags_in_selection()
-			local existing_str = argLead:match("%-add%-tags=(.*)$")
-			local existing_tags = existing_str:gsub(",$", ""):split(",")
+			if argLead:match("^%-add%-tags=") then
+				local tags_in_code = get_tags_in_selection()
+				local existing_str = argLead:match("%-add%-tags=(.*)$")
+				local existing_tags = vim.split(existing_str:gsub(",$", ""), ",", { plain = true, trimempty = true })
 
-			local candidates = {}
+				local candidates = {}
 			for _, tag in ipairs(cfg.default_tags) do
 				if not vim.tbl_contains(existing_tags, tag) then
 					table.insert(candidates, "-add-tags=" .. tag)
