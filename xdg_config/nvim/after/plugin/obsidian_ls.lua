@@ -6,13 +6,30 @@ local CMD = {
 
 local TemplatePrefix = ":"
 
-local function obsidian_exec(cmd, args, callback)
-	local clients = vim.lsp.get_clients({ name = "obsidian_ls" })
+local function get_obsidian_client(bufnr, client_id)
+	if client_id then
+		local client = vim.lsp.get_client_by_id(client_id)
+		if client and client.name == "obsidian_ls" then
+			return client
+		end
+	end
+
+	local clients = vim.lsp.get_clients({ name = "obsidian_ls", bufnr = bufnr })
 	if #clients == 0 then
+		clients = vim.lsp.get_clients({ name = "obsidian_ls" })
+	end
+	if #clients == 0 then
+		return nil
+	end
+	return clients[1]
+end
+
+local function obsidian_exec(bufnr, cmd, args, callback)
+	local client = get_obsidian_client(bufnr)
+	if not client then
 		vim.notify("obsidian-lsp not attached", vim.log.levels.WARN)
 		return
 	end
-	local client = clients[1]
 	local command = { command = cmd, arguments = args or {} }
 	client:exec_cmd(command, nil, function(err, result)
 		if err then
@@ -25,13 +42,18 @@ local function obsidian_exec(cmd, args, callback)
 	end)
 end
 
-local function list_templates()
+local function list_templates(bufnr)
 	local command = { command = CMD.list_templates, arguments = {} }
-	local result = vim.lsp.buf_request_sync(0, "workspace/executeCommand", command)
-	if not result or not result[1] or not result[1].result or not result[1].result.templates then
+	local result = vim.lsp.buf_request_sync(bufnr, "workspace/executeCommand", command, 1000)
+	if not result then
 		return {}
 	end
-	return result[1].result.templates
+	for _, item in pairs(result) do
+		if item.result and item.result.templates then
+			return item.result.templates
+		end
+	end
+	return {}
 end
 
 local edit_uri = function(uri)
@@ -40,11 +62,12 @@ local edit_uri = function(uri)
 end
 
 vim.api.nvim_create_user_command("ObsidianNew", function(opts)
+	local bufnr = vim.api.nvim_get_current_buf()
 	local args = opts.fargs
 	if #args > 0 and args[1]:match("^" .. TemplatePrefix) then
-		local template_name = args[1]:sub(3)
+		local template_name = args[1]:sub(#TemplatePrefix + 1)
 		local path = args[2] or ""
-		obsidian_exec(CMD.new_from_template, { template_name, path }, function(result)
+		obsidian_exec(bufnr, CMD.new_from_template, { template_name, path }, function(result)
 			if result and result.uri then
 				edit_uri(result.uri)
 			end
@@ -52,7 +75,7 @@ vim.api.nvim_create_user_command("ObsidianNew", function(opts)
 		return
 	end
 
-	obsidian_exec(CMD.new, { opts.args }, function(result)
+	obsidian_exec(bufnr, CMD.new, { opts.args }, function(result)
 		if result and result.uri then
 			edit_uri(result.uri)
 		end
@@ -62,11 +85,15 @@ end, {
 	desc = "Create new note (default template) or from template",
 	complete = function(_, cmdline, _)
 		local arg = vim.fn.matchstr(cmdline, [[\v\S+$]])
-		if not arg or arg == "" then
-			return {}
+		if not arg or arg == "" or arg == "ObsidianNew" then
+			return vim.iter(list_templates(vim.api.nvim_get_current_buf()))
+				:map(function(t)
+					return TemplatePrefix .. t
+				end)
+				:totable()
 		end
 		if arg:match("^" .. TemplatePrefix) then
-			return vim.iter(list_templates())
+			return vim.iter(list_templates(vim.api.nvim_get_current_buf()))
 				:map(function(t)
 					return TemplatePrefix .. t
 				end)
@@ -204,6 +231,16 @@ function FRONTMATTER.dump_frontmatter_yaml(meta)
 	end
 
 	local lines = {}
+	local function yaml_scalar(v)
+		local ty = type(v)
+		if ty == "string" then
+			return vim.json.encode(v)
+		end
+		if ty == "number" or ty == "boolean" then
+			return tostring(v)
+		end
+		return vim.json.encode(tostring(v))
+	end
 	for _, key in ipairs(key_order) do
 		local v = meta[key]
 		if v == nil then
@@ -214,9 +251,9 @@ function FRONTMATTER.dump_frontmatter_yaml(meta)
 		end
 		local line
 		if type(v) == "table" then
-			line = key .. ": [" .. table.concat(v, ", ") .. "]"
+			line = key .. ": [" .. table.concat(vim.tbl_map(yaml_scalar, v), ", ") .. "]"
 		else
-			line = key .. ": " .. tostring(v)
+			line = key .. ": " .. yaml_scalar(v)
 		end
 		lines[#lines + 1] = line
 		::next::
@@ -294,26 +331,31 @@ function FRONTMATTER.sync(bufnr, transform)
 end
 
 -- auto formatting
+local format_group = vim.api.nvim_create_augroup("liu/obsidian_ls/format", { clear = true })
+
 vim.api.nvim_create_autocmd("LspAttach", {
 	callback = function(ev)
 		local buf = ev.buf
+		local client = vim.lsp.get_client_by_id(ev.data.client_id)
+		if not client or client.name ~= "obsidian_ls" then
+			return
+		end
 
 		local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
 		if filename == "README.md" then
 			return
 		end
 
-		local clients = vim.lsp.get_clients({ name = "obsidian_ls" })
-		---@type vim.lsp.Client|nil
-		local client = #clients > 0 and clients[1] or nil
-		if client then
-			vim.api.nvim_create_autocmd("BufWritePre", {
-				buffer = buf,
-				callback = function()
-					FRONTMATTER.sync(buf)
-					vim.lsp.buf.format({ bufnr = buf, id = client.id })
-				end,
-			})
-		end
+		vim.api.nvim_create_autocmd("BufWritePre", {
+			group = format_group,
+			buffer = buf,
+			callback = function()
+				if not vim.api.nvim_buf_is_valid(buf) then
+					return
+				end
+				FRONTMATTER.sync(buf)
+				vim.lsp.buf.format({ bufnr = buf, id = client.id })
+			end,
+		})
 	end,
 })
