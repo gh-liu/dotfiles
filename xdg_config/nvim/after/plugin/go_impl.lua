@@ -1,42 +1,58 @@
 -- @need-install: go install github.com/josharian/impl@latest
 local Impl = {}
 -- append text after node
-Impl.append_text = function(node, text)
+Impl.append_text = function(bufnr, node, text)
+	if not text or text == "" or not vim.api.nvim_buf_is_valid(bufnr) then
+		return
+	end
 	local _, _, end_row, _ = node:range()
 	local insert_line = end_row + 1
-	-- insert an empty line first
-	vim.api.nvim_buf_set_lines(0, insert_line, insert_line, false, {})
-	-- then insert the text
-	vim.api.nvim_buf_set_lines(0, insert_line + 1, insert_line + 1, false, vim.split(text, "\n"))
+	vim.api.nvim_buf_set_lines(bufnr, insert_line, insert_line, false, { "" })
+	vim.api.nvim_buf_set_lines(bufnr, insert_line + 1, insert_line + 1, false, vim.split(text, "\n"))
 end
 
 -- impl interface of package for struct(generate text)
-Impl.gen_text = function(struct, package, interface)
+Impl.gen_text = function(bufnr, struct, package, interface, callback)
 	local receiver = string.lower(string.sub(struct, 1, 2))
-	local dirname = vim.fn.fnameescape(vim.fn.expand("%:p:h"))
+	local dirname = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
 
-	local cmd = {
-		"impl",
-		"-dir",
-		dirname,
-		string.format("%s *%s", receiver, struct),
-		string.format("%s.%s", package, interface),
-	}
-	local obj = vim.system(cmd, { text = true }):wait(5000)
-	if
-		obj.code == 1
-		and (string.find(obj.stderr, "unrecognized interface:") or string.find(obj.stderr, "couldn't find"))
-	then
-		-- if not find the 'packageName.interfaceName', then try just `interfaceName`
-		cmd[#cmd] = interface
-		obj = vim.system(cmd, { text = true }):wait(5000)
+	local run_cmd
+	run_cmd = function(symbol)
+		local cmd = {
+			"impl",
+			"-dir",
+			dirname,
+			string.format("%s *%s", receiver, struct),
+			symbol,
+		}
+		vim.system(cmd, { text = true }, function(obj)
+			if
+				obj.code == 1
+				and symbol ~= interface
+				and (string.find(obj.stderr or "", "unrecognized interface:") or string.find(obj.stderr or "", "couldn't find"))
+			then
+				run_cmd(interface)
+				return
+			end
+			if obj.code ~= 0 then
+				vim.schedule(function()
+					vim.notify(obj.stderr, vim.log.levels.ERROR)
+				end)
+				return
+			end
+			if callback then
+				vim.schedule(function()
+					callback(obj.stdout)
+				end)
+			end
+		end)
 	end
 
-	if obj.code == 1 then
-		vim.notify(obj.stderr, vim.log.levels.ERROR)
+	if not dirname or dirname == "" then
+		vim.notify("Go impl: unable to resolve buffer directory", vim.log.levels.ERROR)
 		return
 	end
-	return obj.stdout
+	run_cmd(string.format("%s.%s", package, interface))
 end
 
 Impl.get_struct_node = function()
@@ -152,19 +168,22 @@ Impl.impl = function()
 		live = true,
 		format = "lsp_symbol",
 		actions = {
-			go_impl = function(self, item, action)
-				local symbol_name = item.item.name
-				local symbol_names = vim.split(symbol_name, "%.")
-				local interface_name = symbol_names[#symbol_names]
-				local package_name = item.item.containerName
-				self:close()
-				-- vim.print(symbol_name, package_name)
-				vim.schedule(function()
-					local lines = Impl.gen_text(struct_name, package_name, interface_name)
-					Impl.append_text(tsnode:parent():parent(), lines)
-				end)
-			end,
-		},
+				go_impl = function(self, item, action)
+					local symbol_name = item.item.name
+					local symbol_names = vim.split(symbol_name, "%.")
+					local interface_name = symbol_names[#symbol_names]
+					local package_name = item.item.containerName
+					local target_buf = bufnr
+					local target_node = tsnode:parent():parent()
+					self:close()
+					Impl.gen_text(target_buf, struct_name, package_name, interface_name, function(lines)
+						if not vim.api.nvim_buf_is_valid(target_buf) then
+							return
+						end
+						Impl.append_text(target_buf, target_node, lines)
+					end)
+				end,
+			},
 		win = {
 			input = {
 				keys = {
