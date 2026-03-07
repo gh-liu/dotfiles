@@ -125,11 +125,6 @@ function FRONTMATTER.parse_title_pattern(title)
 	return tags, doc_title
 end
 
-function FRONTMATTER.yaml_pair_lines(node)
-	local sr, _, er, ec = node:range()
-	return sr + 1, (ec == 0) and er or (er + 1)
-end
-
 function FRONTMATTER.collect_scalar_values(node, source, out)
 	if node:type() == "string_scalar" then
 		local text = vim.trim(FRONTMATTER.unquote(vim.treesitter.get_node_text(node, source) or ""))
@@ -145,6 +140,8 @@ function FRONTMATTER.collect_scalar_values(node, source, out)
 	end
 end
 
+---@param yaml_text string
+---@return table meta Parsed field table; key = field name, value = string or string[]
 function FRONTMATTER.parse_frontmatter_yaml(yaml_text)
 	local tree = vim.treesitter.get_string_parser(yaml_text, "yaml"):parse()[1]
 	if not tree then
@@ -157,80 +154,94 @@ function FRONTMATTER.parse_frontmatter_yaml(yaml_text)
 	)
 
 	local out = {}
+	local key_order = {}
 	for _, match, _ in query:iter_matches(tree:root(), yaml_text, 0, -1) do
-		local key_node, value_node, pair_node
+		local key_node, value_node
 		for id, nodes in pairs(match) do
 			local cap = query.captures[id]
 			if cap == "key" then
 				key_node = nodes[1]
 			elseif cap == "value" then
 				value_node = nodes[1]
-			elseif cap == "pair" then
-				pair_node = nodes[1]
 			end
 		end
-		if key_node and value_node and pair_node then
+		if key_node and value_node then
 			local key_text = vim.trim(FRONTMATTER.unquote(vim.treesitter.get_node_text(key_node, yaml_text) or ""))
-			local line_start, line_end = FRONTMATTER.yaml_pair_lines(pair_node)
-			if key_text == "title" then
-				local title_values = {}
-				FRONTMATTER.collect_scalar_values(value_node, yaml_text, title_values)
-				out.title = {
-					line_start = line_start,
-					value = title_values[1]
-						or vim.trim(FRONTMATTER.unquote(vim.treesitter.get_node_text(value_node, yaml_text) or "")),
-				}
-			elseif key_text == "tags" then
-				local tags = {}
-				FRONTMATTER.collect_scalar_values(value_node, yaml_text, tags)
-				out.tags = {
-					line_start = line_start,
-					line_end = line_end,
-					values = tags,
-				}
+			if key_text == "" then
+				goto continue
 			end
+			local values = {}
+			FRONTMATTER.collect_scalar_values(value_node, yaml_text, values)
+			local vt = value_node:type()
+			local is_array = vt == "flow_sequence" or vt == "block_sequence"
+			if is_array or #values > 1 then
+				out[key_text] = values
+			else
+				out[key_text] = values[1]
+					or vim.trim(FRONTMATTER.unquote(vim.treesitter.get_node_text(value_node, yaml_text) or ""))
+			end
+			key_order[#key_order + 1] = key_text
+			::continue::
 		end
 	end
-
+	out._key_order = key_order
 	return out
 end
 
-function FRONTMATTER.sync(bufnr)
-	local fm_start, fm_end, yaml_text = FRONTMATTER.get_frontmatter(bufnr)
-	if not fm_start or not fm_end then
-		return
-	end
-
-	local lines = vim.api.nvim_buf_get_lines(bufnr, fm_start - 1, fm_end, false)
-	if #lines < 3 then
-		return
-	end
-
-	if yaml_text == "" then
-		return
-	end
-
-	local meta = FRONTMATTER.parse_frontmatter_yaml(yaml_text)
-	local title_meta = meta.title
-	local title_line_idx = title_meta and (title_meta.line_start + 1) or nil
-	local title_value = title_meta and title_meta.value or nil
-
-	if not title_line_idx or not title_value or title_value == "" then
-		return
-	end
-
-	local parsed_tags, doc_title = FRONTMATTER.parse_title_pattern(title_value)
-	if not parsed_tags then
-		return
-	end
-
-	local tags_meta = meta.tags
-	local tags_start_idx = tags_meta and (tags_meta.line_start + 1) or nil
-	local tags_end_idx = tags_meta and (tags_meta.line_end + 1) or nil
-	local existing_tags = tags_meta and tags_meta.values or {}
-
+---@param meta table Field table; value = string or string[]
+---@return string yaml_text
+function FRONTMATTER.dump_frontmatter_yaml(meta)
+	local key_order = meta._key_order or {}
+	meta._key_order = nil
 	local seen = {}
-	local merged_tags = vim.iter(vim.list_extend(existing_tags, parsed_tags))
+	for _, k in ipairs(key_order) do
+		seen[k] = true
+	end
+	for k in pairs(meta) do
+		if not seen[k] and k ~= "_key_order" then
+			key_order[#key_order + 1] = k
+		end
+	end
+
+	local lines = {}
+	for _, key in ipairs(key_order) do
+		local v = meta[key]
+		if v == nil then
+			goto next
+		end
+		if type(v) == "table" and not vim.tbl_islist(v) then
+			goto next
+		end
+		local line
+		if type(v) == "table" then
+			line = key .. ": [" .. table.concat(v, ", ") .. "]"
+		else
+			line = key .. ": " .. tostring(v)
+		end
+		lines[#lines + 1] = line
+		::next::
+	end
+	meta._key_order = nil
+	return table.concat(lines, "\n")
+end
+
+---@param bufnr number
+---@param meta table
+---@return table ctx { bufnr, meta, parsed_tags, doc_title }
+function FRONTMATTER.build_context(bufnr, meta)
+	local title_value = type(meta.title) == "string" and meta.title or ""
+	local parsed_tags, doc_title = FRONTMATTER.parse_title_pattern(title_value)
+	return {
+		bufnr = bufnr,
+		meta = meta,
+		parsed_tags = parsed_tags or {},
+		doc_title = doc_title,
+	}
+end
+
+local function merge_tags(existing, parsed)
+	local seen = {}
+	return vim.iter(vim.list_extend(existing or {}, parsed or {}))
 		:map(function(tag)
 			return vim.trim(tag)
 		end)
@@ -242,35 +253,44 @@ function FRONTMATTER.sync(bufnr)
 			return true
 		end)
 		:totable()
-	local new_tags_line = "tags: [" .. table.concat(merged_tags, ", ") .. "]"
-	local changed = false
+end
 
-	if lines[title_line_idx] ~= ("title: " .. doc_title) then
-		lines[title_line_idx] = "title: " .. doc_title
-		changed = true
+---@param meta table Current frontmatter parse result
+---@param ctx table Return value of build_context
+---@return table|nil New meta, or nil to skip modification
+function FRONTMATTER.default_transform(meta, ctx)
+	if not ctx.doc_title then
+		return nil
+	end
+	local next_meta = vim.deepcopy(meta)
+	next_meta.title = ctx.doc_title
+	next_meta.tags = merge_tags(meta.tags, ctx.parsed_tags)
+	return next_meta
+end
+
+---@param bufnr number
+---@param transform? fun(meta: table, ctx: table): table|nil Receives meta and ctx, returns new meta or nil to skip modification
+function FRONTMATTER.sync(bufnr, transform)
+	local fm_start, fm_end, yaml_text = FRONTMATTER.get_frontmatter(bufnr)
+	if not fm_start or not fm_end or yaml_text == "" then
+		return
 	end
 
-	if tags_start_idx then
-		if tags_start_idx == tags_end_idx then
-			if lines[tags_start_idx] ~= new_tags_line then
-				lines[tags_start_idx] = new_tags_line
-				changed = true
-			end
-		else
-			for _ = tags_start_idx, tags_end_idx do
-				table.remove(lines, tags_start_idx)
-			end
-			table.insert(lines, tags_start_idx, new_tags_line)
-			changed = true
-		end
-	else
-		table.insert(lines, title_line_idx + 1, new_tags_line)
-		changed = true
+	local meta = FRONTMATTER.parse_frontmatter_yaml(yaml_text)
+	local ctx = FRONTMATTER.build_context(bufnr, meta)
+	local fn = transform or FRONTMATTER.default_transform
+	local next_meta = fn(meta, ctx)
+	if not next_meta then
+		return
 	end
 
-	if changed then
-		vim.api.nvim_buf_set_lines(bufnr, fm_start - 1, fm_end, false, lines)
+	local new_yaml_text = FRONTMATTER.dump_frontmatter_yaml(next_meta)
+	if new_yaml_text == yaml_text then
+		return
 	end
+
+	local new_lines = vim.split("---\n" .. new_yaml_text .. "\n---", "\n", { plain = true })
+	vim.api.nvim_buf_set_lines(bufnr, fm_start - 1, fm_end, false, new_lines)
 end
 
 -- auto formatting
