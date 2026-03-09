@@ -51,6 +51,189 @@ local function extract_tags_from_lines(start_line, end_line)
 	return vim.tbl_keys(tags_set)
 end
 
+local function split_csv(value)
+	return vim.split(value, ",", { plain = true, trimempty = true })
+end
+
+local function transform_embedded_name(field_expr, transform)
+	local name = field_expr:gsub("^%s+", ""):gsub("%s+$", "")
+	name = name:gsub("^%*", "")
+	name = name:gsub("%b[]", "")
+	name = name:match("([%w_]+)$")
+	if not name then
+		return nil
+	end
+	if transform == "keep" then
+		return name
+	end
+
+	local words = {}
+	local current = ""
+	local source = name
+	for i = 1, #source do
+		local ch = source:sub(i, i)
+		local next_ch = i < #source and source:sub(i + 1, i + 1) or nil
+		if ch:match("[%l%d]") then
+			current = current .. ch
+		elseif ch:match("%u") then
+			if current ~= "" and (current:match("%l$") or (next_ch and next_ch:match("%l"))) then
+				table.insert(words, current:lower())
+				current = ch:lower()
+			else
+				current = current .. ch:lower()
+			end
+		else
+			if current ~= "" then
+				table.insert(words, current:lower())
+				current = ""
+			end
+		end
+	end
+	if current ~= "" then
+		table.insert(words, current:lower())
+	end
+	if transform == "snakecase" then
+		return table.concat(words, "_")
+	end
+	if transform == "lispcase" then
+		return table.concat(words, "-")
+	end
+	if transform == "camelcase" then
+		local out = { words[1] or "" }
+		for i = 2, #words do
+			table.insert(out, words[i]:sub(1, 1):upper() .. words[i]:sub(2))
+		end
+		return table.concat(out)
+	end
+	if transform == "pascalcase" then
+		local out = {}
+		for _, word in ipairs(words) do
+			table.insert(out, word:sub(1, 1):upper() .. word:sub(2))
+		end
+		return table.concat(out)
+	end
+	if transform == "titlecase" then
+		local out = {}
+		for _, word in ipairs(words) do
+			table.insert(out, word:sub(1, 1):upper() .. word:sub(2))
+		end
+		return table.concat(out, " ")
+	end
+	return table.concat(words, "_")
+end
+
+local function parse_embedded_add_tags(fargs, cfg, bang)
+	local transform = cfg.transform
+	local sort = cfg.sort
+	local add_tags = nil
+
+	for _, arg in ipairs(fargs) do
+		local value = arg:match("^%-transform=(.+)$")
+		if value then
+			transform = value
+		end
+
+		value = arg:match("^%-add%-tags=(.+)$")
+		if value then
+			add_tags = split_csv(value)
+		end
+
+		if arg == "-sort" then
+			sort = true
+		end
+	end
+
+	if not add_tags or #add_tags == 0 then
+		return nil
+	end
+
+	return {
+		transform = transform,
+		sort = sort,
+		override = bang,
+		add_tags = add_tags,
+	}
+end
+
+local function apply_embedded_add_tags(line, actions)
+	local indent, body = line:match("^(%s*)(.*)$")
+	if not body or body == "" or body:match("^//") then
+		return line
+	end
+
+	local prefix, tag_string, suffix = body:match("^(.-)%s*`([^`]*)`(.*)$")
+	if not prefix then
+		prefix, suffix = body:match("^(.-)(%s*//.*)$")
+		prefix = prefix or body
+		suffix = suffix or ""
+		tag_string = nil
+	else
+		suffix = suffix or ""
+	end
+
+	local field_expr = prefix:gsub("^%s+", ""):gsub("%s+$", "")
+	if field_expr == "" or field_expr == "}" or field_expr:find("%s") then
+		return line
+	end
+
+	local transformed_name = transform_embedded_name(field_expr, actions.transform)
+	if not transformed_name then
+		return line
+	end
+
+	local order, tags = {}, {}
+	for item in (tag_string or ""):gmatch("%S+") do
+		local key, value = item:match('^([^:]+):"(.*)"$')
+		if key then
+			table.insert(order, key)
+			tags[key] = value
+		end
+	end
+	local seen = {}
+	for _, key in ipairs(order) do
+		seen[key] = true
+	end
+
+	for _, key in ipairs(actions.add_tags) do
+		if tags[key] == nil then
+			table.insert(order, key)
+			seen[key] = true
+		end
+		if actions.override or tags[key] == nil then
+			tags[key] = transformed_name
+		end
+	end
+
+	local keys = {}
+	for _, key in ipairs(order) do
+		if tags[key] ~= nil then
+			table.insert(keys, key)
+		end
+	end
+	if actions.sort then
+		table.sort(keys)
+	end
+	local parts = {}
+	for _, key in ipairs(keys) do
+		table.insert(parts, string.format('%s:"%s"', key, tags[key]))
+	end
+	local formatted = table.concat(parts, " ")
+	if formatted == "" then
+		return indent .. field_expr .. suffix
+	end
+	return indent .. field_expr .. " `" .. formatted .. "`" .. suffix
+end
+
+local function apply_embedded_field_fallback(lines, fargs, cfg, bang)
+	local actions = parse_embedded_add_tags(fargs, cfg, bang)
+	if not actions then
+		return lines
+	end
+	return vim.iter(lines):map(function(line)
+		return apply_embedded_add_tags(line, actions)
+	end):totable()
+end
+
 vim.api.nvim_create_user_command("Gomodifytags", function(args)
 	if vim.bo.ft ~= "go" then
 		vim.notify("Gomodifytags: requires Go filetype", vim.log.levels.WARN)
@@ -178,7 +361,8 @@ vim.api.nvim_create_user_command("Gomodifytags", function(args)
 				end
 				local start = result.start or 1
 				local finish = result["end"] or start
-				vim.api.nvim_buf_set_lines(bufnr, start - 1, finish, false, result.lines)
+				local lines = apply_embedded_field_fallback(result.lines, args.fargs, cfg, args.bang)
+				vim.api.nvim_buf_set_lines(bufnr, start - 1, finish, false, lines)
 			end)
 		end
 	end)
