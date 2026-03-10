@@ -54,6 +54,7 @@ vim.o.foldenable = false
 vim.o.foldtext = ""
 -- vim.o.foldmethod = "expr"
 -- vim.o.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+vim.o.foldopen = "block,hor,insert,mark,percent,quickfix,search,tag,undo"
 -- =============================================================================
 -- }}}
 
