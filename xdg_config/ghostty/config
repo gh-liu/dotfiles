@@ -19,6 +19,10 @@ confirm-close-surface = false
 clipboard-read = allow
 clipboard-write = allow
 
+notify-on-command-finish = unfocused
+notify-on-command-finish-action = no-bell,notify
+notify-on-command-finish-after = 30s
+
 macos-option-as-alt = true
 
 # keybindings
