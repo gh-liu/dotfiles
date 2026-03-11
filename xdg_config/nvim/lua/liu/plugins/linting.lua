@@ -39,25 +39,32 @@ local linters_opt = {
 local utils = require("liu.utils")
 
 local M = {}
+local function get_buffer_linters(lint)
+	local linters = vim.b.linters_cache
+	if linters then
+		return vim.deepcopy(linters)
+	end
+
+	local ft = vim.bo.filetype
+	linters = linters_by_ft[ft] or {}
+	linters = vim.list_extend({}, linters)
+
+	-- Add fallback linters.
+	if #linters == 0 then
+		vim.list_extend(linters, lint.linters_by_ft["_"] or {})
+	end
+	-- Add global linter
+	if lint.linters_by_ft["*"] then
+		vim.list_extend(linters, lint.linters_by_ft["*"])
+	end
+
+	vim.b.linters_cache = vim.deepcopy(linters)
+	return linters
+end
+
 function M.lint()
 	local lint = require("lint")
-
-	local linters = vim.b.linters
-	if not linters then
-		local ft = vim.bo.filetype
-		linters = linters_by_ft[ft] or {}
-		linters = vim.list_extend({}, linters)
-
-		-- Add fallback linters.
-		if #linters == 0 then
-			vim.list_extend(linters, lint.linters_by_ft["_"] or {})
-		end
-		-- Add global linter
-		if lint.linters_by_ft["*"] then
-			vim.list_extend(linters, lint.linters_by_ft["*"])
-		end
-		vim.b.linters = linters
-	end
+	local linters = get_buffer_linters(lint)
 	if #linters > 0 then
 		-- Filter out linters that don't exist or don't match the condition.
 		local ctx = { filename = vim.api.nvim_buf_get_name(0) }
@@ -72,7 +79,6 @@ function M.lint()
 				return true
 			end)
 			:totable()
-		vim.b.linters = linters
 	end
 	-- Run linters.
 	if #linters > 0 then
