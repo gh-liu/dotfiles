@@ -138,19 +138,4 @@ return {
 			vim.g.table_disable_mappings = 1
 		end,
 	},
-	-- Jira integration for searching and displaying issues inside Neovim
-	{
-		"letieu/jira.nvim",
-		cond = function()
-			return vim.env.JIRA_BASE
-		end,
-		opts = {
-			jira = {
-				base = vim.env.JIRA_BASE,
-				email = vim.env.JIRA_EMAIL,
-				token = vim.env.JIRA_TOKEN,
-				limit = 50,
-			},
-		},
-	},
 }
