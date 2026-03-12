@@ -106,18 +106,17 @@ api.nvim_create_autocmd({ "CursorHold" }, {
 	end,
 })
 
-vim.api.nvim_create_autocmd("BufWritePost", {
-	group = liu_augroup("trust_nvim_lua"),
-	pattern = { ".nvim.lua" },
-	callback = function(args)
-		vim.secure.trust({
-			action = "allow",
-			-- path = args.match,
-			bufnr = args.buf,
-		})
-		vim.api.nvim_echo({ { "trust ", "WarningMsg" }, { args.match } }, false, {})
-	end,
-})
---
+-- vim.api.nvim_create_autocmd("BufWritePost", {
+-- 	group = liu_augroup("trust_nvim_lua"),
+-- 	pattern = { ".nvim.lua" },
+-- 	callback = function(args)
+-- 		vim.secure.trust({
+-- 			action = "allow",
+-- 			-- path = args.match,
+-- 			bufnr = args.buf,
+-- 		})
+-- 		vim.api.nvim_echo({ { "trust ", "WarningMsg" }, { args.match } }, false, {})
+-- 	end,
+-- })
 
 -- vim: foldmethod=marker
