@@ -147,7 +147,6 @@ vim.o.swapfile = false
 vim.o.undofile = true
 vim.o.undodir = vim.fn.stdpath("data") .. "/undo"
 vim.o.shada = vim.iter({
-	"r/tmp/",
 	"rfugitive:",
 	"rterm:",
 	"rhealth:",
