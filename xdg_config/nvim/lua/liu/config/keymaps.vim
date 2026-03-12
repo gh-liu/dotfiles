@@ -45,17 +45,10 @@ snoremap <bs>  <C-o>"_s
 xnoremap p P
 
 " Paste before/after linewise. See `:h put`
-if has('nvim-0.12')
-  nnoremap [p <Cmd>exe "iput! " . v:register<CR>
-  xnoremap [p <Cmd>exe "iput! " . v:register<CR>
-  nnoremap ]p <Cmd>exe "iput "  . v:register<CR>
-  xnoremap ]p <Cmd>exe "iput "  . v:register<CR>
-else
-  nnoremap [p <Cmd>exe "put! " . v:register<CR>
-  xnoremap [p <Cmd>exe "put! " . v:register<CR>
-  nnoremap ]p <Cmd>exe "put "  . v:register<CR>
-  xnoremap ]p <Cmd>exe "put "  . v:register<CR>
-endif
+nnoremap [p <Cmd>exe "iput! " . v:register<CR>
+xnoremap [p <Cmd>exe "iput! " . v:register<CR>
+nnoremap ]p <Cmd>exe "iput "  . v:register<CR>
+xnoremap ]p <Cmd>exe "iput "  . v:register<CR>
 " }}}
 " editing {{{
 inoremap <c-c> <esc>
