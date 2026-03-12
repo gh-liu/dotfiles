@@ -155,9 +155,11 @@ api.nvim_create_autocmd("LspAttach", {
 		nmap("gd", function()
 			lsp.buf.definition({ on_list = on_list })
 		end, "[G]oto [D]efinition")
-		nmap("gy", function()
-			lsp.buf.type_definition({ on_list = on_list })
-		end, "[G]oto T[y]pe Definition")
+
+		-- NOTE: default mapping for references: grt
+		-- nmap("gy", function()
+		-- 	lsp.buf.type_definition({ on_list = on_list })
+		-- end, "[G]oto T[y]pe Definition")
 
 		-- NOTE: default mapping for references: gri
 		-- nmap("gi", function()
