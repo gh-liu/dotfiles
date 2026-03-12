@@ -469,23 +469,6 @@ return {
 			})
 		end,
 	},
-	-- Modern dashboard with floating UI for file/terminal/buffer management
-	{
-		"serhez/bento.nvim",
-		enabled = false,
-		event = "VeryLazy",
-		opts = {
-			main_keymap = "\\",
-			lock_char = "*",
-			ui = {
-				mode = "floating", -- "floating" | "tabline"
-				floating = {
-					position = "top-right", -- "top-left" | "top-right" | "middle-left" | "middle-right" | "bottom-left" | "bottom-right"
-					minimal_menu = "dashed", -- "filename" | "dashed" | "full"
-				},
-			},
-		},
-	},
 	{
 		"nvim-mini/mini.cmdline",
 		enabled = false,
