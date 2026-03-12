@@ -163,10 +163,6 @@ vim.o.shada = vim.iter({
 --}}}
 
 vim.o.clipboard = "unnamedplus"
-if not vim.env.TMUX and not vim.g.clipboard then
-	-- :h clipboard-osc52
-	vim.g.clipboard = "osc52"
-end
 
 -- Disable providers we do not care a about
 vim.g.loaded_ruby_provider = 0 -- disable ruby support
