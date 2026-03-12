@@ -23,6 +23,8 @@ local auto_root_dirs = {
 }
 
 vim.o.autochdir = false
+
+-- TODO: auto setup root from lsp, use LspAttach event
 vim.api.nvim_create_autocmd({
 	-- "SessionLoadPost",
 	"VimEnter",
