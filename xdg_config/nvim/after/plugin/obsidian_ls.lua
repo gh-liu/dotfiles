@@ -307,10 +307,11 @@ end
 
 ---@param bufnr number
 ---@param transform? fun(meta: table, ctx: table): table|nil Receives meta and ctx, returns new meta or nil to skip modification
+---@return boolean changed
 function FRONTMATTER.sync(bufnr, transform)
 	local fm_start, fm_end, yaml_text = FRONTMATTER.get_frontmatter(bufnr)
 	if not fm_start or not fm_end or yaml_text == "" then
-		return
+		return false
 	end
 
 	local meta = FRONTMATTER.parse_frontmatter_yaml(yaml_text)
@@ -318,16 +319,17 @@ function FRONTMATTER.sync(bufnr, transform)
 	local fn = transform or FRONTMATTER.default_transform
 	local next_meta = fn(meta, ctx)
 	if not next_meta then
-		return
+		return false
 	end
 
 	local new_yaml_text = FRONTMATTER.dump_frontmatter_yaml(next_meta)
 	if new_yaml_text == yaml_text then
-		return
+		return false
 	end
 
 	local new_lines = vim.split("---\n" .. new_yaml_text .. "\n---", "\n", { plain = true })
 	vim.api.nvim_buf_set_lines(bufnr, fm_start - 1, fm_end, false, new_lines)
+	return true
 end
 
 -- auto formatting
@@ -353,7 +355,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 				if not vim.api.nvim_buf_is_valid(buf) then
 					return
 				end
-				FRONTMATTER.sync(buf)
+				pcall(vim.cmd, "undojoin")
+				local frontmatter_changed = FRONTMATTER.sync(buf)
+				if frontmatter_changed then
+					pcall(vim.cmd, "undojoin")
+				end
 				vim.lsp.buf.format({ bufnr = buf, id = client.id })
 			end,
 		})
