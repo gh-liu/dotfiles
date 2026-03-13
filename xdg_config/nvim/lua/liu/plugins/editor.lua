@@ -639,7 +639,8 @@ return {
 	},
 	-- Project structure with alternate/related file navigation and templates
 	{
-		"tpope/vim-projectionist",
+		-- "tpope/vim-projectionist",
+		"gh-liu/vim-projectionist", -- fix #199
 		-- NOTE:
 		-- 1. diff between `alternate` and `related`
 		-- A* commands use the `alternate`;
