@@ -232,6 +232,7 @@ _load_syntax_highlighting() {
 add-zsh-hook precmd _load_syntax_highlighting
 # }}}
 # 6. plugin: zsh-vi-mode{{{
+WORDCHARS=${WORDCHARS//./} # ignore dot
 ## https://github.com/jeffreytse/zsh-vi-mode
 USERPLUGINS+=(https://github.com/jeffreytse/zsh-vi-mode)
 function zvm_config() {
