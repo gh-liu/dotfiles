@@ -2,14 +2,16 @@
 # NOTE: uncomment below line for profile
 # zmodload zsh/zprof
 
-typeset -U path # keep path unique
+# `typeset -U` keeps array entries unique, useful for PATH/FPATH.
+typeset -U path fpath # keep path/fpath unique
+autoload -Uz add-zsh-hook
 
 # 1. env vars{{{
 if [[ -z "${OS}" ]]; then
-	export OS=$(echo $(uname -s) | tr '[:upper:]' '[:lower:]')
+	export OS="${$(uname -s):l}"
 fi
 if [[ -z "${ARCH}" ]]; then
-	export ARCH=$(echo $(uname -m) | tr '[:upper:]' '[:lower:]')
+	export ARCH="${$(uname -m):l}"
 fi
 if [[ -z "${HOSTIP}" ]]; then
 	if [[ $OS == darwin ]]; then
@@ -23,14 +25,14 @@ export LIU_ENV=$HOME/env
 export LIU_DEV=$HOME/dev
 export LIU_TOOLS=$HOME/tools
 ## sys
-export SHELL=$(which zsh)
+export SHELL="${commands[zsh]:-${SHELL:-/bin/zsh}}"
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export EDITOR=nvim
 export MANPAGER='nvim +Man!'
 # https://github.com/neovim/neovim/wiki/FAQ#colors-arent-displayed-correctly
 # export TERM=xterm-256color
-export PATH=$PATH:$HOME/bin:$HOME/.local/bin
+path+=("$HOME/bin" "$HOME/.local/bin")
 # }}}
 
 # 2. git{{{
@@ -249,7 +251,7 @@ function zvm_config() {
 	zvm_bindkey viins '^[b' vi-backward-word
 }
 zvm_after_init() {
-	[ -f "$(which fzf)" ] && source <(fzf --zsh)
+	source "$ZDOTDIR/fzf.zsh"
 }
 ## disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
@@ -289,21 +291,21 @@ unsetopt HIST_VERIFY          # Execute commands using history (e.g.: using !$) 
 update_zsh_completions() {
 	mkdir -p "$XDG_CONFIG_HOME"/zsh/zsh-completions
 
-	[ -f "$(which atuin)" ] && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
-	[ -f "$(which bun)" ] && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
-	[ -f "$(which docker)" ] && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
-	[ -f "$(which gh)" ] && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
-	[ -f "$(which git-absorb)" ] && git-absorb --gen-completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_git-absorb
-	[ -f "$(which helm)" ] && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
-	[ -f "$(which just)" ] && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
-	[ -f "$(which kubectl)" ] && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
-	[ -f "$(which minikube)" ] && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
-	[ -f "$(which podman)" ] && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
-	[ -f "$(which rustc)" ] && cp "$(rustc --print sysroot)"/share/zsh/site-functions/_cargo "$XDG_CONFIG_HOME"/zsh/zsh-completions/_cargo
-	[ -f "$(which rustup)" ] && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
-	[ -f "$(which starship)" ] && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
+	(( $+commands[atuin] )) && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
+	(( $+commands[bun] )) && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
+	(( $+commands[docker] )) && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
+	(( $+commands[gh] )) && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
+	(( $+commands[git-absorb] )) && git-absorb --gen-completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_git-absorb
+	(( $+commands[helm] )) && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
+	(( $+commands[just] )) && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
+	(( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
+	(( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
+	(( $+commands[podman] )) && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
+	(( $+commands[rustc] )) && cp "$(rustc --print sysroot)"/share/zsh/site-functions/_cargo "$XDG_CONFIG_HOME"/zsh/zsh-completions/_cargo
+	(( $+commands[rustup] )) && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
+	(( $+commands[starship] )) && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
 
-	[ -f "$(which ollama)" ] && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
+	(( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
 		>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
 
 	compinit
@@ -314,14 +316,15 @@ update_zsh_completions() {
 ## man zshcompsys
 ## additional src: https://github.com/zsh-users/zsh-completions
 USERPLUGINS+=(https://github.com/zsh-users/zsh-completions)
-fpath=($HOME/.zsh-plugins/zsh-completions/src $fpath)
-fpath=($XDG_CONFIG_HOME/zsh/zsh-completions $fpath)
-if [[ $OS == darwin ]]; then
-	# See: https://docs.brew.sh/Shell-Completion
-	if type brew &>/dev/null; then
-		FPATH="$(brew --prefix)/share/zsh/site-functions:${FPATH}"
-	fi
-fi
+fpath=(
+	"$HOME/.zsh-plugins/zsh-completions/src"
+	"$XDG_CONFIG_HOME/zsh/zsh-completions"
+	$fpath
+)
+# See: https://docs.brew.sh/Shell-Completion
+HOMEBREW_SOURCE_MODE=fpath
+source "$ZDOTDIR/brew.zsh"
+unset HOMEBREW_SOURCE_MODE
 
 ## automatically highlight first element of completion menu
 setopt MENU_COMPLETE
@@ -366,17 +369,19 @@ zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;32'
 # compinit
 # https://github.com/zsh-users/zsh/blob/f5abf18f2c0cb1ad5fae67d12e218148b9541d66/Completion/compinit#L67
 # -C  bypasses both the check for rebuilding the dump file and the usual call to compaudit
-autoload -U +X bashcompinit && bashcompinit
-# autoload -U +X compinit && compinit -u
 autoload -U +X compinit
 # Use -C cache if dump file is fresh (within 20 hours), rebuild if needed
 if [[ -f "$ZDOTDIR/.zcompdump" ]]; then
-	compinit -C
+	compinit -C -d "$ZDOTDIR/.zcompdump"
 else
-	compinit
+	compinit -d "$ZDOTDIR/.zcompdump"
 fi
 
-[ -f "$(which terraform)" ] && complete -o nospace -C $(which terraform) terraform
+if (( $+commands[terraform] )); then
+	# `$+commands[name]` is a zsh-native PATH existence check for a command.
+	autoload -U +X bashcompinit && bashcompinit
+	complete -o nospace -C "${commands[terraform]}" terraform
+fi
 # }}}
 # 8. functions{{{
 ## https://github.com/zsh-users/zsh/blob/master/Functions/Misc/zmv
@@ -387,8 +392,7 @@ autoload -Uz zmv
 export GO111MODULE=on
 export GOPATH=$LIU_ENV/golang/gopath
 export GOBIN=$GOPATH/bin
-export PATH=$PATH:$GOBIN
-export PATH=$PATH:$LIU_ENV/golang/go/bin
+path+=("$GOBIN" "$LIU_ENV/golang/go/bin")
 ## pprof
 function gopprof() {
 	go tool pprof -http=$HOSTIP:7788 -no_browser $@
@@ -431,8 +435,8 @@ _gopresent() {
 # 7. lang: python{{{
 ## uv: curl -LsSf https://astral.sh/uv/install.sh | sh
 export UV_TOOL_BIN_DIR=$LIU_ENV/python/bin
-export PATH=$PATH:$UV_TOOL_BIN_DIR
-if [[ -f "$(which uv)" ]]; then
+path+=("$UV_TOOL_BIN_DIR")
+if (( $+commands[uv] )); then
 	eval "$(uv generate-shell-completion zsh)"
 	eval "$(uvx --generate-shell-completion zsh)"
 fi
@@ -455,66 +459,41 @@ export RUSTUP_HOME=$LIU_ENV/rust/rustup
 ## cargo
 export CARGO_HOME=$LIU_ENV/rust/cargo
 export CARGO_BIN=$CARGO_HOME/bin
-export PATH=$PATH:$CARGO_BIN
+path+=("$CARGO_BIN")
 # }}}
 # 7. lang: zig{{{
-export PATH=$PATH:$LIU_ENV/zig/zig
+path+=("$LIU_ENV/zig/zig")
 # }}}
 # 7. lang: js{{{
 ## bun: curl -fsSL https://bun.sh/install | bash
 export BUN_INSTALL="$LIU_ENV/nodejs/bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+path=("$BUN_INSTALL/bin" $path)
 # bun completions
 # https://github.com/oven-sh/bun/issues/11179#issuecomment-2151457758
 # }}}
 
 # 9. tools: AS many tools install by lang, so let it at BOTTOM{{{
 ## brew: all the bins installed by brew should put after
-if [[ $OS == darwin ]]; then
-	export PATH=$PATH:/opt/homebrew/bin
-	export HOMEBREW_BUNDLE_FILE=$XDG_CONFIG_HOME/Brewfile
-fi
+HOMEBREW_SOURCE_MODE=path
+source "$ZDOTDIR/brew.zsh"
+unset HOMEBREW_SOURCE_MODE
 ## starship
 # curl -sS https://starship.rs/install.sh | sh
 export STARSHIP_CONFIG=$ZDOTDIR/starship/starship.toml
-[ -f "$(which starship)" ] && eval "$(starship init zsh)"
+(( $+commands[starship] )) && eval "$(starship init zsh)"
 ## direnv
 # curl -sfL https://direnv.net/install.sh | bash
-[ -f "$(which direnv)" ] && eval "$(direnv hook zsh)"
-## fzf
-export FZF_COMPLETION_TRIGGER=',,'
-# NOTE: https://github.com/junegunn/fzf?tab=readme-ov-file#search-syntax
-# NOTE: https://github.com/junegunn/fzf?tab=readme-ov-file#key-bindings-for-command-line
-export FZF_DEFAULT_OPTS='--height 50% --border --reverse'
-### https://github.com/junegunn/fzf/blob/master/ADVANCED.md#color-themes
-export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS'
---color=fg:#e5e9f0,bg:#2E3440,hl:#81a1c1
---color=fg+:#e5e9f0,bg+:#2E3440,hl+:#81a1c1
---color=info:#eacb8a,prompt:#bf6069,pointer:#b48dac
---color=marker:#a3be8b,spinner:#b48dac,header:#a3be8b'
-if [ -f "$(which fd)" ]; then
-	_fzf_compgen_path() {
-		fd --color never --hidden --follow --exclude ".git" . "$1"
-	}
-	_fzf_compgen_dir() {
-		fd --type d --color never --hidden --follow --exclude ".git" . "$1"
-	}
-fi
-[ -f "$(which fzf)" ] && source <(fzf --zsh)
-## load fzf custom completions
-for _fzf_completion in $ZDOTDIR/fzf-completions/*.zsh; do
-	[ -f "$_fzf_completion" ] && source "$_fzf_completion"
-done
-unset _fzf_completion
+(( $+commands[direnv] )) && eval "$(direnv hook zsh)"
+source "$ZDOTDIR/fzf.zsh"
 ## zoxide
-[ -f "$(which zoxide)" ] && eval "$(zoxide init zsh)" # must be added after compinit is called.
+(( $+commands[zoxide] )) && eval "$(zoxide init zsh)" # must be added after compinit is called.
 
-which nvim &>/dev/null && alias e=nvim
-which fd &>/dev/null && alias find="fd"
-which eza &>/dev/null && alias ls="eza"
-which bat &>/dev/null && alias cat="bat --theme=\"Nord\" --style=\"changes\""
+(( $+commands[nvim] )) && alias e=nvim
+(( $+commands[fd] )) && alias find="fd"
+(( $+commands[eza] )) && alias ls="eza"
+(( $+commands[bat] )) && alias cat="bat --theme=\"Nord\" --style=\"changes\""
 # wt config shell install zsh
-if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+(( $+commands[wt] )) && eval "$(wt config shell init zsh)"
 # }}}
 
 # 999. misc{{{
