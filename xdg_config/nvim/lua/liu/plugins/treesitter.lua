@@ -27,12 +27,16 @@ return {
 						if not available then
 							local list = require("nvim-treesitter").get_available()
 							available = {}
-							for _, l in ipairs(list) do available[l] = true end
+							for _, l in ipairs(list) do
+								available[l] = true
+							end
 						end
 						if not installed then
 							local list = require("nvim-treesitter").get_installed()
 							installed = {}
-							for _, l in ipairs(list) do installed[l] = true end
+							for _, l in ipairs(list) do
+								installed[l] = true
+							end
 						end
 
 						if not available[lang] then
@@ -126,6 +130,7 @@ return {
 	-- Colorize nested parentheses/brackets/braces with rainbow colors
 	{
 		"HiPhish/rainbow-delimiters.nvim",
+		enabled = false,
 		init = function()
 			-- vim.api.nvim_set_hl(0, "RainbowDelimiterRed", { link = "DiagnosticError" })
 			-- vim.api.nvim_set_hl(0, "RainbowDelimiterYellow", { link = "DiagnosticWarn" })
