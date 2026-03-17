@@ -279,6 +279,7 @@ function M.build_rename_basename(meta)
 	if doc_name == "" then
 		return nil, "请填写 frontmatter 中的 aliases"
 	end
+	doc_name = doc_name:gsub("%s+", "-")
 
 	local name = table.concat(tags, "_") .. "++" .. doc_name
 	return (name:gsub('[\\/%*%?%:"<>|]', "_"))
