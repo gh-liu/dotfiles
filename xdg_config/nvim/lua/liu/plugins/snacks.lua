@@ -83,7 +83,7 @@ return {
 				-- require("snacks.picker")[cmd](opts)
 			end)
 		end
-		map("b", "buffers")
+		-- map("b", "buffers")
 		map("d", "diagnostics_buffer")
 		map("f", "files")
 		map("g", "live_grep")
