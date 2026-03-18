@@ -67,7 +67,7 @@ vim.api.nvim_create_user_command("ObsidianNew", function(opts)
 	local args = opts.fargs
 	if #args > 0 and args[1]:match("^" .. TemplatePrefix) then
 		local template_name = args[1]:sub(#TemplatePrefix + 1)
-		local path = args[2] or ""
+		local path = table.concat(args, " ", 2)
 		obsidian_exec(bufnr, CMD.new_from_template, { template_name, path }, function(result)
 			if result and result.uri then
 				edit_uri(result.uri)
