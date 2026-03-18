@@ -138,6 +138,7 @@ return { -- Git {{{2
 		-- integrates with: vim-fugitive (same Git commands)
 		-- note: absorb keymaps (gaa/gar) overlap with fugitive buffer keymaps
 		init = function(self)
+			vim.g.flog_enable_dynamic_branch_hl = 0
 			vim.g.flog_use_internal_lua = 1
 			vim.g.flog_default_opts = { max_count = 2000 }
 			vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%M" }
