@@ -5,7 +5,7 @@ return {
 	{
 		"saghen/blink.cmp",
 		event = "VeryLazy",
-		version = "*", -- download pre-built binaries
+		version = "1.*", -- download pre-built binaries
 		dependencies = {
 			-- Icon provider for completion items
 			"nvim-mini/mini.icons",
