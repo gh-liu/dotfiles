@@ -390,9 +390,10 @@ autoload -Uz zmv
 
 # 7. lang: go{{{
 export GO111MODULE=on
+export GOROOT=$LIU_ENV/golang/go
 export GOPATH=$LIU_ENV/golang/gopath
 export GOBIN=$GOPATH/bin
-path+=("$GOBIN" "$LIU_ENV/golang/go/bin")
+path+=("$GOBIN" "$GOROOT/bin")
 ## pprof
 function gopprof() {
 	go tool pprof -http=$HOSTIP:7788 -no_browser $@
@@ -434,8 +435,9 @@ _gopresent() {
 # }}}
 # 7. lang: python{{{
 ## uv: curl -LsSf https://astral.sh/uv/install.sh | sh
+export UV_INSTALL_DIR=$LIU_ENV/python/uv
 export UV_TOOL_BIN_DIR=$LIU_ENV/python/bin
-path+=("$UV_TOOL_BIN_DIR")
+path+=("$UV_INSTALL_DIR" "$UV_TOOL_BIN_DIR")
 if (( $+commands[uv] )); then
 	eval "$(uv generate-shell-completion zsh)"
 	eval "$(uvx --generate-shell-completion zsh)"

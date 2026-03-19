@@ -1,213 +1,175 @@
 #! /bin/bash
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-. $SCRIPT_DIR/helper.sh --source-only
+# ======= helper
+: "${OS:=$(uname -s | tr '[:upper:]' '[:lower:]')}"
+: "${ARCH:=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')}"
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+backup_existing() {
+	local target="$1" backup="${2:-$1.bak}"
+	[[ -e "$target" ]] || return 0
+	rm -rf "$backup"
+	mv "$target" "$backup"
+}
+cdenv() {
+	local d="${LIU_ENV:-$HOME/env}/$1"
+	mkdir -p "$d" && cd "$d" && pwd
+}
+link_bin() { mkdir -p "$HOME/.local/bin" && ln -svf "$1" "$HOME/.local/bin/$2"; }
+download() {
+	local url="$1" out="${2:-}"
+	[[ -n "$out" ]] && mkdir -p "$(dirname "$out")"
+	curl -fL --retry 3 --connect-timeout 10 ${out:+-o "$out"} ${out:-"-O"} "$url"
+}
+gh_latest_tag() {
+	gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R "$1"
+}
+gh_download() {
+	gh release download "$2" -R "$1" -p "$3"
+}
+# ======= helper
 
-function update_go() {
-	need_cmd jq
-
-	GOVERSION="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
-	GOARCH="$(normalize_arch "$(uname -m)")"
-	echo "updating to $GOVERSION (linux-$GOARCH) ..."
-
-	mkdir_env_dir golang
-	download "https://dl.google.com/go/$GOVERSION.linux-$GOARCH.tar.gz" "$GOVERSION.linux-$GOARCH.tar.gz" || {
+install_go() {
+	# 1. version
+	local version
+	version="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
+	# 2. info
+	echo "updating to $version (${OS}-${ARCH}) ..."
+	# 3. env dir
+	cdenv golang
+	# 4. package
+	local pkg="$version.${OS}-${ARCH}.tar.gz"
+	# 5. download
+	download "https://dl.google.com/go/$pkg" "$pkg" || {
 		echo "fail to download go" >&2
 		return 1
 	}
-	backup go
-	tar -zxvf $GOVERSION.linux-$GOARCH.tar.gz
-}
-
-function update_gopls_dlv() {
+	# 6. extract
+	backup_existing go
+	tar -zxvf "$pkg"
+	# 7. finalize
 	export GOPROXY=https://goproxy.io
-
-	# local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
-	# go install golang.org/x/tools/gopls@$GOPLSVERSION
 	go install golang.org/x/tools/gopls@latest
 	go install github.com/go-delve/delve/cmd/dlv@latest
 }
-function update_zig() {
-	need_cmd jq
 
-	# Zig download keys use "x86_64-linux" / "aarch64-linux" naming.
-	local machine arch_key
-	machine="$(uname -m)"
-	case "$machine" in
-	x86_64) arch_key="x86_64-linux" ;;
-	aarch64 | arm64) arch_key="aarch64-linux" ;;
-	*) arch_key="${machine}-linux" ;;
+install_zls() {
+	local zls_os
+	case "$OS" in
+	darwin) zls_os="macos" ;;
+	*) zls_os="$OS" ;;
+	esac
+	local zls_arch
+	case "$(uname -m)" in
+	x86_64) zls_arch="x86_64" ;;
+	aarch64 | arm64) zls_arch="aarch64" ;;
+	*) zls_arch="$(uname -m)" ;;
 	esac
 
-	# tmpfile="/tmp/zig-index-$$"
-	# curl -s -o "$tmpfile" https://ziglang.org/download/index.json
-	# zig_url="$(jq -r ".master.\"$arch_key\".tarball" "$tmpfile")"
-	# VERSION="$(jq -r 'to_entries[1].value.version' "$tmpfile")"
+	# 1. version
+	local version
+	version="$(gh_latest_tag zigtools/zls)"
+	# 2. info
+	echo "updating to $version (${zls_arch}-${zls_os}) ..."
+	# 3. env dir
+	cdenv zig
+	# 4. package
+	local pkg="zls-${zls_arch}-${zls_os}.tar.xz"
+	# 5. download
+	gh_download zigtools/zls "$version" "$pkg" || {
+		echo "fail to download zls" >&2
+		return 1
+	}
+	# 6. extract
+	tar xvJf "$pkg"
+	# 7. finalize
+	rm "$pkg"
+	chmod +x zls
+	link_bin "$(pwd)/zls" zls
+}
 
-	mkdir_env_dir zig
+install_zig() {
+	local arch_key
+	case "$(uname -m)" in
+	x86_64) arch_key="x86_64-${OS}" ;;
+	aarch64 | arm64) arch_key="aarch64-${OS}" ;;
+	*) arch_key="$(uname -m)-${OS}" ;;
+	esac
 
-	tmpfile="$LIU_ENV/zig/info.json"
-	curl -s https://ziglang.org/download/index.json |
-		# jq '.master' \
-		jq 'to_entries[1].value' \
-			>"$tmpfile"
-
-	VERSION="$(jq -r '.version' "$tmpfile")"
-	ZIGURL="$(jq -r ".\"$arch_key\".tarball" "$tmpfile")"
-	echo "updating to $VERSION ($arch_key) ..."
-
-	local pkg
-	pkg="$(basename "$ZIGURL")"
-	download "$ZIGURL" "$pkg" || {
+	# 1. version
+	local tmpfile="/tmp/zig-index-$$"
+	curl -s https://ziglang.org/download/index.json | jq 'to_entries[1].value' >"$tmpfile"
+	local version url
+	version="$(jq -r '.version' "$tmpfile")"
+	url="$(jq -r ".\"$arch_key\".tarball" "$tmpfile")"
+	rm -f "$tmpfile"
+	# 2. info
+	echo "updating to $version ($arch_key) ..."
+	# 3. env dir
+	cdenv zig
+	# 4. package
+	local pkg="$(basename "$url")"
+	# 5. download
+	download "$url" "$pkg" || {
 		echo "fail to download zig" >&2
 		return 1
 	}
-	backup zig
+	# 6. extract
 	tar xvJf "$pkg"
+	# 7. finalize
 	rm "$pkg"
-	mv "zig-${arch_key}-$VERSION" zig
+	backup_existing zig
+	mv "zig-${arch_key}-$version" zig
+
+	install_zls
 }
 
-function update_zls() {
-	# Ensure zig exists (installed by update_zig and linked into ~/.local/bin).
-	if ! command -v zig >/dev/null 2>&1; then
-		echo "zig not found; installing zig first..." >&2
-		update_zig || return 1
-	fi
+install_rust() {
+	local dir=$(cdenv rust)
+	export RUSTUP_HOME=$dir/rustup
+	export CARGO_HOME=$dir/cargo
 
-	mkdir_env_dir zls
-
-	git_clone_or_update https://github.com/zigtools/zls "$LIU_ENV/zig/zls"
-
-	zig build -Doptimize=ReleaseSafe
-	[[ $? -ne 0 ]] && echo "fail to build zls" >&2 && return 1
-
-	chmod +x "$(pwd)/zig-out/bin/zls"
-	link_bin "$(pwd)/zig-out/bin/zls" zls
-}
-
-function update_rust() {
-	mkdir_env_dir rust
-	export RUSTUP_HOME=$LIU_ENV/rust/rustup
-	export CARGO_HOME=$LIU_ENV/rust/cargo
-
-	if command -v rustup >/dev/null 2>&1; then
+	if have_cmd rustup; then
 		rustup update
 	else
 		curl https://sh.rustup.rs -sSf | sh
 		rustup component add rust-analyzer rust-src
-		# rustup component add llvm-tools-preview
-	fi
-	# ln -svf $(rustup which --toolchain stable rust-analyzer) $CARGO_HOME/bin/rust-analyzer
-}
-
-function update_pnpm() {
-	if ! command -v pnpm >/dev/null 2>&1; then
-		curl -fsSL https://get.pnpm.io/install.sh | sh -
 	fi
 }
 
-function update_bun() {
-	mkdir_env_dir nodejs
+install_bun() {
+	local dir
+	dir="$(cdenv nodejs)"
+	export BUN_INSTALL="$dir/bun"
 
-	# export BUN_INSTALL="$LIU_ENV/nodejs/bun"
-	if ! command -v bun >/dev/null 2>&1; then
-		curl -fsSL https://bun.sh/install | bash
-	else
+	if have_cmd bun; then
 		bun upgrade
+	else
+		curl -fsSL https://bun.sh/install | bash
 	fi
 }
 
-function update_nvm() {
-	## nvm: nodejs
-	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-}
+install_uv() {
+	local dir
+	dir="$(cdenv python)"
+	export UV_INSTALL_DIR=$dir/uv
 
-function update_nodejs() {
-	_install_start nodejs
-
-	NODEJSVERSION=$(curl -s https://api.github.com/repos/nodejs/node/tags | jq -r '.[0].name')
-	NODEJSARCH=x64
-	echo "updating to $NODEJSVERSION($NODEJSARCH) ..."
-
-	mkdir_env_dir nodejs
-	NODEJSINSTALLHOME=$LIU_ENV/nodejs
-
-	wget https://nodejs.org/dist/$NODEJSVERSION/node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz -q --show-progress -P $NODEJSINSTALLHOME
-	[[ $? -ne 0 ]] && echo "fail to download nodejs" >&2 && return 1
-
-	xz -d node-$NODEJSVERSION-linux-$NODEJSARCH.tar.xz
-	tar -xvf node-$NODEJSVERSION-linux-$NODEJSARCH.tar
-	rm -rf node
-	mv node-$NODEJSVERSION-linux-$NODEJSARCH node
-	rm node-$NODEJSVERSION-linux-$NODEJSARCH.tar
-
-	echo "updating npm..."
-	npm install npm@latest -g
-
-	_install_end
-}
-
-function install_uv() {
-	# or https://www.build-python-from-source.com
-
-	# or  https://github.com/pyenv/pyenv
-	# curl https://pyenv.run | bash
-
-	# https://docs.astral.sh/uv
-
-	mkdir_env_dir python
-	export UV_INSTALL_DIR=$LIU_ENV/python/uv
-	if ! command -v uv >/dev/null 2>&1; then
+	if have_cmd uv; then
+		uv self update
+	else
 		curl -LsSf https://astral.sh/uv/install.sh | sh
 		uv python install 3.12
-	else
-		uv self update
 	fi
 
-	# NOTE: Use venv in python2
-	# 1. pip install virtualenv
-	# 2. virtualenv -p $(which python2) myenv
-	# 3. source myenv/bin/activate
-}
-
-function install_uv_tools() {
 	uv tool install ruff
 	uv tool install ty
 }
 
-case $1 in
-"go")
-	_install_start go
-	update_go
-	update_gopls_dlv
-	_install_end
-	;;
-"python")
-	_install_start uv
-	install_uv
-	install_uv_tools
-	_install_end
-	;;
-"zig")
-	_install_start zig
-	update_zig
-	update_zls
-	_install_end
-	;;
-"rust")
-	_install_start rust
-	update_rust
-	_install_end
-	;;
-"nodejs")
-	# update_nodejs
-	_install_start bun
-	update_bun
-	_install_end
-	update_nvm
-	;;
-*)
-	echo "select one language"
-	;;
-esac
+if [[ -z "$1" ]]; then
+	echo "select one language: go | uv | zig | rust | bun"
+elif declare -f "install_$1" >/dev/null; then
+	echo "======== installing $1 ========"
+	install_"$1"
+else
+	echo "unknown language: $1" >&2
+	exit 1
+fi

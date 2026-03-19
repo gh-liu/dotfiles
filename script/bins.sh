@@ -1,9 +1,39 @@
 #! /bin/bash
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
-. $SCRIPT_DIR/helper.sh --source-only
+# ======= helper
+: "${OS:=$(uname -s | tr '[:upper:]' '[:lower:]')}"
+: "${ARCH:=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')}"
+gh_latest_tag() {
+	gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R "$1"
+}
+# ======= helper
 
-bins() {
+install_kubectl() {
+	local version=$(gh_latest_tag kubernetes/kubernetes)
+	curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$version/bin/${OS}/${ARCH}/kubectl"
+	chmod +x ~/.local/bin/kubectl
+}
+
+install_helm() {
+	local version=$(gh_latest_tag helm/helm)
+	local PKG=helm-${version}-${OS}-${ARCH}.tar.gz
+	local DIR=${OS}-${ARCH}
+	curl -O -L "https://get.helm.sh/$PKG"
+	tar -zxvf $PKG
+	mv $DIR/helm ~/.local/bin/helm
+	rm -r $DIR
+}
+
+install_terraform() {
+	local version=$(gh_latest_tag hashicorp/terraform)
+	version=${version#v}
+	local PKG=terraform_${version}_${OS}_${ARCH}.zip
+	curl -O -L "https://releases.hashicorp.com/terraform/$version/$PKG"
+	unzip $PKG -x "LICENSE.txt"
+	mv terraform ~/.local/bin/terraform
+}
+
+install_bins() {
 	if [ -f "$(which go)" ]; then
 		export GOPROXY=https://goproxy.io
 
@@ -38,18 +68,18 @@ bins() {
 		go install github.com/superfly/flyctl@latest
 	fi
 
-	if [ -f "$(which bun)" ]; then
-		# bun i -g tree-sitter-cli
-	fi
+	# if [ -f "$(which bun)" ]; then
+	# 	bun i -g tree-sitter-cli
+	# fi
 
-	if [ -f "$(which uv)" ]; then
-		# uv tool install --force jupyterlab
-		# uv tool install --force notebook
-
-		# uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
-
-		# uv tool install mitmproxy
-	fi
+	# if [ -f "$(which uv)" ]; then
+	# 	uv tool install --force jupyterlab
+	# 	uv tool install --force notebook
+	#
+	# 	uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+	#
+	# 	uv tool install mitmproxy
+	# fi
 
 	if [ -f "$(which cargo)" ]; then
 		# NOTE: use `cargo binstall` to install bins
@@ -79,47 +109,29 @@ bins() {
 
 	fi
 
-	if [ -f "$(which gh)" ]; then
-		# gh extension install yusukebe/gh-markdown-preview
+	# if [ -f "$(which gh)" ]; then
+	# 	gh extension install yusukebe/gh-markdown-preview
+	# fi
+
+	if [ -f "$(which kubectl)" ]; then
+		install_kubectl
 	fi
 
-	if [[ $OS == linux ]]; then
-		# if [ -f "$(which kubectl)" ]; then
-		# 	curl -o ~/.local/bin/minikube -L https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-		#
-		# 	# NOTE: kubeadm
-		# 	# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm
-		#
-		# 	# https://v1-32.docs.kubernetes.io/docs/tasks/tools/install-kubectl-linux/
-		# 	kubectlVersion=v1.33.1
-		# 	# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
-		# 	curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
-		# fi
+	if [ -f "$(which helm)" ]; then
+		install_helm
+	fi
 
-		if [ -f "$(which helm)" ]; then
-			helmVersion=$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R helm/helm)
-			PKG=helm-${helmVersion}-${OS}-${ARCH}.tar.gz
-			curl -O -L "https://get.helm.sh/$PKG"
-			DIR=${OS}-${ARCH}
-			tar -zxvf $PKG
-			mv $DIR/helm ~/.local/bin/helm
-			rm -r $DIR
-		fi
-
-		if [ -f "$(which terraform)" ]; then
-			terrVersion=$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R hashicorp/terraform)
-			terrVersion=${terrVersion#v}
-			PKG=terraform_${terrVersion}_${OS}_${ARCH}.zip
-			curl -O -L "https://releases.hashicorp.com/terraform/$terrVersion/$PKG"
-			unzip $PKG -x "LICENSE.txt"
-			mv terraform ~/.local/bin/terraform
-		fi
+	if [ -f "$(which terraform)" ]; then
+		install_terraform
 	fi
 
 }
 
-case $1 in
-*)
-	bins
-	;;
-esac
+if [[ -z "$1" ]]; then
+	install_bins
+elif declare -f "install_$1" >/dev/null; then
+	install_"$1"
+else
+	echo "unknown component: $1" >&2
+	exit 1
+fi
