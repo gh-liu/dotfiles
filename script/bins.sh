@@ -3,41 +3,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 . $SCRIPT_DIR/helper.sh --source-only
 
-function update_tmux() {
-	local tool=tmux
-	install_start $tool
-
-	PWD=$(pwd)
-	url="https://api.github.com/repos/tmux/tmux/tags"
-	version=$(curl -s $url | jq -r '.[0].name')
-	echo "Version $version"
-
-	mkdir_tool_dir $tool
-
-	local file=tmux-$version.tar.gz
-	github_download $tool $tool $version $file
-	[[ $? -ne 0 ]] && echo "fail to download $tool" >&2 && return 1
-
-	tar -zxvf $file
-	cd ./tmux-$version
-	./configure
-	make && sudo make install
-
-	link_bin $(pwd)/tmux tmux
-
-	cd $PWD
-	install_end
-}
-
-function update_tpm() {
-	install_start tpm
-
-	mkdir -p $XDG_CONFIG_HOME/tmux/plugins/tpm
-	git_clone_or_update https://github.com/tmux-plugins/tpm $XDG_CONFIG_HOME/tmux/plugins/tpm
-
-	install_end
-}
-
 function nvim_nightly() {
 	# NOTE: ubuntu
 	sudo apt-get install ninja-build gettext cmake unzip curl
@@ -221,10 +186,6 @@ _llm_clis() {
 case $1 in
 "nvim_nightly")
 	nvim_nightly
-	;;
-"tmux")
-	update_tmux
-	update_tpm
 	;;
 "fzf")
 	update_fzf
