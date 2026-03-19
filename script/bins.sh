@@ -39,11 +39,6 @@ bins() {
 	fi
 
 	if [ -f "$(which bun)" ]; then
-		bun i -g @biomejs/biome
-
-		bun i -g @bufbuild/buf
-		bun i -g sql-formatter
-
 		# bun i -g tree-sitter-cli
 	fi
 
