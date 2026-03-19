@@ -58,22 +58,21 @@ bins() {
 		cargo install bat
 		cargo install eza
 		cargo install zoxide
-		cargo install tealdeer
+		# cargo install tealdeer
 		cargo install git-delta difftastic
 		cargo install starship --locked
-		cargo install inferno # flamegraph
-		cargo install asm-lsp
-		cargo install skim
-		cargo install --locked zellij
+		# cargo install inferno # flamegraph
+		# cargo install skim
+		# cargo install --locked zellij
 
 		cargo install cargo-nextest
 		cargo install cargo-binutils
 
 		cargo install hyperfine # command-line benchmarking
 
-		cargo install tree-sitter-cli
+		# cargo install tree-sitter-cli
 
-		cargo install shpool
+		# cargo install shpool
 
 		cargo install --locked --bin jj jj-cli
 		cargo install worktrunk
