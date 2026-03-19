@@ -99,6 +99,8 @@ bins() {
 
 		go install github.com/sinclairtarget/git-who@latest
 		go install github.com/superfly/flyctl@latest
+
+		go install github.com/mikefarah/yq/v4@latest
 	fi
 
 	if [ -f "$(which bun)" ]; then
