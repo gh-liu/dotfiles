@@ -135,6 +135,11 @@ vim.api.nvim_create_autocmd("LspAttach", {
 			return
 		end
 
+		vim.keymap.set("n", "grN", "<Cmd>ObsidianRename<CR>", {
+			buffer = buf,
+			desc = "Rename note from frontmatter",
+		})
+
 		local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
 		if filename == "README.md" then
 			return
