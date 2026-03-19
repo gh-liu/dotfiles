@@ -6,13 +6,11 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 bins() {
 	if [ -f "$(which go)" ]; then
 		export GOPROXY=https://goproxy.io
-		if [[ $OS == linux ]]; then
-			local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
-			go install golang.org/x/tools/gopls@$GOPLSVERSION
-			# go install golang.org/x/tools/gopls@latest
-			go install github.com/go-delve/delve/cmd/dlv@latest
-		fi
 
+		# local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
+		# go install golang.org/x/tools/gopls@$GOPLSVERSION
+		go install golang.org/x/tools/gopls@latest
+		go install github.com/go-delve/delve/cmd/dlv@latest
 		# go install honnef.co/go/gotraceui/cmd/gotraceui@latest
 
 		# no protoc, just buf cli
@@ -21,29 +19,23 @@ bins() {
 		# go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 		# go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-		go install rsc.io/grepdiff@latest
-		go install github.com/rakyll/hey@latest
 		go install github.com/boyter/scc/v3@latest
 
 		go install github.com/jesseduffield/lazygit@latest
 		go install github.com/jesseduffield/lazydocker@latest
 
-		go install golang.org/x/tools/cmd/present@latest
+		# go install golang.org/x/tools/cmd/present@latest
 		go install github.com/abhinav/tmux-fastcopy@latest
-		go install github.com/charmbracelet/glow/v2@latest # markdown preview
 
 		# go install github.com/gohugoio/hugo@latest
-		CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
+		# CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
 
-		go install -ldflags "-s -w" github.com/tristanisham/zvm@latest
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
-		go install github.com/kopecmaciej/vi-mongo@latest
 
-		go install github.com/sinclairtarget/git-who@latest
-		go install github.com/superfly/flyctl@latest
-
-		go install github.com/mikefarah/yq/v4@latest
 		go install github.com/junegunn/fzf@latest
+		go install github.com/mikefarah/yq/v4@latest
+
+		go install github.com/superfly/flyctl@latest
 	fi
 
 	if [ -f "$(which bun)" ]; then
