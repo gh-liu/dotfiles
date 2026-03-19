@@ -531,6 +531,13 @@ export PATH=$PATH:$XDG_CONFIG_HOME/bin
 # }}}
 
 # 9999. LLM {{{
+function update_llm_clis() {
+	bun i -g @anthropic-ai/claude-code
+	bun i -g @openai/codex
+	bun i -g @sourcegraph/amp@latest
+	# bun i -g opencode-ai
+	bun i -g skills vercel-labs/agent-skills
+}
 # #claude
 # export ANTHROPIC_API_KEY=""
 # export ANTHROPIC_BASE_URL=""

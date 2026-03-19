@@ -130,41 +130,7 @@ bins() {
 
 }
 
-_llm_clis() {
-	# https://qwenlm.github.io/zh/blog/qwen3-coder
-	# bun i -g @qwen-code/qwen-code
-
-	# https://www.anthropic.com/claude-code
-	bun i -g @anthropic-ai/claude-code
-
-	# https://openai.com/codex
-	# https://github.com/openai/codex
-	bun i -g @openai/codex
-
-	# https://github.com/google-gemini/gemini-cli
-	bun i -g @google/gemini-cli
-
-	# https://ampcode.com/manual#getting-started-command-line-interface
-	bun i -g @sourcegraph/amp@latest
-
-	# https://opencode.ai
-	bun i -g opencode-ai
-
-	# https://cursor.com/docs/cli/overview
-	curl https://cursor.com/install -fsS | bash
-
-	# go install github.com/charmbracelet/crush@latest
-
-	########################
-	## skills
-	bun i -g skills vercel-labs/agent-skills
-	bun i -g ctx7 # ctx7 skills install
-}
-
 case $1 in
-"llm_cli")
-	_llm_clis
-	;;
 *)
 	bins
 	;;
