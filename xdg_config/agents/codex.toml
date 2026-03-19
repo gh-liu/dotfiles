@@ -1,5 +1,13 @@
 # https://developers.openai.com/codex/config-basic
-# cp $XDG_CONFIG_HOME/agents/codex.toml ~/.codex/config.toml
+# ln -sf $XDG_CONFIG_HOME/agents/codex.toml ~/.codex/config.toml
+
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+service_tier = "fast"
+# approval_policy = "on-request"
+# sandbox_mode = "workspace-write"
+
+
 
 ### z.ai
 ###
@@ -15,9 +23,9 @@
 
 ### openrouter
 ###
-model_provider = "openrouter"
-model = "openrouter/pony-alpha"
-[model_providers.openrouter]
-name = "openrouter"
-base_url = "https://openrouter.ai/api/v1"
-env_key = "OPENROUTER_API_KEY"
+# model_provider = "openrouter"
+# model = "openrouter/pony-alpha"
+# [model_providers.openrouter]
+# name = "openrouter"
+# base_url = "https://openrouter.ai/api/v1"
+# env_key = "OPENROUTER_API_KEY"
