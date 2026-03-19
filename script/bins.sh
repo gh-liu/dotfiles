@@ -43,16 +43,12 @@ bins() {
 	fi
 
 	if [ -f "$(which uv)" ]; then
-		uv tool install --force jupyterlab
-		uv tool install --force notebook
+		# uv tool install --force jupyterlab
+		# uv tool install --force notebook
 
-		uv tool install --force pre-commit
-		uv tool install --force git-filter-repo
+		# uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
 
-		uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
-
-		uv tool install sqlit-tui # tui for sql databases
-		uv tool install mitmproxy
+		# uv tool install mitmproxy
 	fi
 
 	if [ -f "$(which cargo)" ]; then
