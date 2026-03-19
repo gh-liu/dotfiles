@@ -95,17 +95,23 @@ bins() {
 		# 	# kubectlVersion=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 		# 	curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$kubectlVersion/bin/linux/amd64/kubectl"
 		# fi
+
 		if [ -f "$(which helm)" ]; then
-			helmVersion=v3.18.4
-			curl -O -L "https://get.helm.sh/helm-$helmVersion-linux-amd64.tar.gz"
-			tar -zxvf helm-$helmVersion-linux-amd64.tar.gz
-			mv linux-amd64/helm ~/.local/bin/helm
-			rm -r linux-amd64
+			helmVersion=$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R helm/helm)
+			PKG=helm-${helmVersion}-${OS}-${ARCH}.tar.gz
+			curl -O -L "https://get.helm.sh/$PKG"
+			DIR=${OS}-${ARCH}
+			tar -zxvf $PKG
+			mv $DIR/helm ~/.local/bin/helm
+			rm -r $DIR
 		fi
+
 		if [ -f "$(which terraform)" ]; then
-			terrVersion=1.12.2
-			curl -O -L "https://releases.hashicorp.com/terraform/$terrVersion/terraform_"$terrVersion"_linux_amd64.zip"
-			unzip terraform_"$terrVersion"_linux_amd64.zip -x "LICENSE.txt"
+			terrVersion=$(gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R hashicorp/terraform)
+			terrVersion=${terrVersion#v}
+			PKG=terraform_${terrVersion}_${OS}_${ARCH}.zip
+			curl -O -L "https://releases.hashicorp.com/terraform/$terrVersion/$PKG"
+			unzip $PKG -x "LICENSE.txt"
 			mv terraform ~/.local/bin/terraform
 		fi
 	fi
