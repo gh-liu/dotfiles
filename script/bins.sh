@@ -3,19 +3,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 . $SCRIPT_DIR/helper.sh --source-only
 
-function nvim_nightly() {
-	# NOTE: ubuntu
-	sudo apt-get install ninja-build gettext cmake unzip curl
-
-	install_start nvim_nightly
-	mkdir_tool_dir nvim
-	git_clone_or_update https://github.com/neovim/neovim $LIU_TOOLS/nvim
-	make CMAKE_BUILD_TYPE=Release
-	sudo make install
-
-	install_end
-}
-
 function update_fzf() {
 	install_start fzf
 	mkdir_tool_dir fzf
@@ -184,9 +171,6 @@ _llm_clis() {
 }
 
 case $1 in
-"nvim_nightly")
-	nvim_nightly
-	;;
 "fzf")
 	update_fzf
 	;;
