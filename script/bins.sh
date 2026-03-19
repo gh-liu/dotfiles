@@ -80,7 +80,7 @@ bins() {
 	fi
 
 	if [ -f "$(which gh)" ]; then
-		gh extension install yusukebe/gh-markdown-preview
+		# gh extension install yusukebe/gh-markdown-preview
 	fi
 
 	if [[ $OS == linux ]]; then
