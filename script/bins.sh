@@ -3,16 +3,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 
 . $SCRIPT_DIR/helper.sh --source-only
 
-function update_fzf() {
-	install_start fzf
-	mkdir_tool_dir fzf
-	git_clone_or_update https://github.com/junegunn/fzf $LIU_TOOLS/fzf
-	$LIU_TOOLS/fzf/install
-
-	link_bin $LIU_TOOLS/fzf/bin/fzf fzf
-	install_end
-}
-
 bins() {
 	if [ -f "$(which go)" ]; then
 		export GOPROXY=https://goproxy.io
@@ -53,6 +43,7 @@ bins() {
 		go install github.com/superfly/flyctl@latest
 
 		go install github.com/mikefarah/yq/v4@latest
+		go install github.com/junegunn/fzf@latest
 	fi
 
 	if [ -f "$(which bun)" ]; then
@@ -171,9 +162,6 @@ _llm_clis() {
 }
 
 case $1 in
-"fzf")
-	update_fzf
-	;;
 "llm_cli")
 	_llm_clis
 	;;
