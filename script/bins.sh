@@ -68,9 +68,10 @@ install_bins() {
 		go install github.com/superfly/flyctl@latest
 	fi
 
-	# if [ -f "$(which bun)" ]; then
-	# 	bun i -g tree-sitter-cli
-	# fi
+	if [ -f "$(which bun)" ]; then
+		# 	bun i -g tree-sitter-cli
+		bun i -g @slidev/cli
+	fi
 
 	# if [ -f "$(which uv)" ]; then
 	# 	uv tool install --force jupyterlab
