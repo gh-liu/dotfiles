@@ -1,0 +1,27 @@
+# Skills
+
+- 安装 skill
+
+```bash
+# https://skills.sh
+skills add
+skills update
+
+# https://context7.com/skills
+# ctx7 skills install
+```
+
+- 收藏的 skill
+
+```bash
+# find-skills: 
+skills add https://github.com/vercel-labs/skills --skill find-skills
+# find-docs: 
+skills add https://github.com/upstash/context7 --skill find-docs
+# brainstorming: 
+skills add https://github.com/obra/superpowers --skill brainstorming
+# test-driven-development: 
+skills add https://github.com/obra/superpowers --skill test-driven-development
+# use-modern-go: 
+skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go
+```
