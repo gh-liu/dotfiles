@@ -42,6 +42,7 @@ install_bins() {
 		go install golang.org/x/tools/gopls@latest
 		go install github.com/go-delve/delve/cmd/dlv@latest
 		# go install honnef.co/go/gotraceui/cmd/gotraceui@latest
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 
 		go install github.com/junegunn/fzf@latest
 		go install github.com/mikefarah/yq/v4@latest
