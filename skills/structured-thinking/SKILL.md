@@ -1,49 +1,101 @@
 ---
 name: structured-thinking
-description: Structure thinking and communication with SCQA, the Minto Pyramid, and MECE. Use when Codex needs to turn messy notes into a clear argument, analyze a problem, write or rewrite a proposal, memo, report, email, presentation, executive summary, recommendation, or decision document, or explain ideas in Chinese, English, or bilingual form with conclusion-first logic.
+description: Use when the user wants clearer structure, stronger logic, or conclusion-first communication: organizing messy notes, clarifying a recommendation, diagnosing a problem, or rewriting content into a proposal, memo, report, email, presentation, executive summary, or decision document in Chinese, English, or bilingual form. Best for requests like "make this more structured", "more logical", "more executive", "summarize the key points", or "rewrite this with clear reasoning".
 ---
 
 # Structured Thinking
 
-Use this skill to turn fuzzy input into clear, conclusion-first output.
+Use this skill when the job is not just to write, but to make the logic clear, defensible, and easy to act on.
 
-## Workflow
+## When To Use
 
-1. Identify the job.
-   - Decide whether the user needs analysis, recommendation, explanation, persuasion, or rewrite.
-   - Infer audience and language. Ask one short question only if missing context changes the structure.
+Trigger this skill when:
 
-2. Draft SCQA.
-   - `Situation`: stable facts the audience accepts.
-   - `Complication`: change, tension, gap, or risk.
-   - `Question`: the governing question created by the complication.
-   - `Answer`: the answer in one sentence.
+- The user gives scattered notes, partial context, or a weak draft.
+- The output must persuade, recommend, explain, or support a decision.
+- The user asks for "more structured", "more logical", "more executive", "more concise", or "conclusion first".
+- The same argument must work in Chinese, English, or bilingual form.
 
-3. Build the pyramid.
-   - Lead with the answer.
-   - Group support into 2-5 parallel buckets.
-   - Use one ordering rule per level: priority, chronology, cause-effect, problem-solution, or strategic-to-tactical.
-   - Push evidence and examples below the right bucket.
+Do not force this skill for:
 
-4. Check MECE.
-   - `Mutually Exclusive`: sibling points do not overlap.
-   - `Collectively Exhaustive`: the set covers the scope that matters.
+- literal transcription
+- freeform brainstorming without convergence
+- stream-of-consciousness writing
+- verbatim rewrites that must preserve the original order
 
-5. Adapt the surface form.
-   - Memo/report/email: keep conclusion first.
-   - Deck/talking points: turn top-level buckets into section or slide titles.
-   - Bilingual output: keep the same structure across languages unless asked to localize.
+## Core Job
+
+The job is to:
+
+1. find the real question
+2. answer it in one sentence
+3. group support into parallel buckets
+4. place evidence under the right bucket
+5. remove anything that does not help the answer land
+
+If you cannot state the answer in one sentence yet, the structure is not ready.
+
+## Execution Protocol
+
+Follow this default protocol unless the user asks for another format:
+
+1. Identify the job type: `recommendation`, `analysis`, `plan`, `explanation`, or `rewrite`.
+2. Infer audience, language, and decision horizon.
+3. Ask at most one short clarifying question only if missing context would materially change the structure or answer.
+4. Distill the material into one governing question.
+5. Write the answer in one sentence.
+6. Choose one organizing logic:
+   - `Why`: reasons, diagnosis, drivers, rationale
+   - `How`: plan, workstreams, actions, implementation
+   - `Which`: options, evaluation, recommendation
+   - `What`: explanation, synthesis, summary
+7. Build 2-5 sibling buckets using the same logical type.
+8. Put examples, data, caveats, and implementation detail under the right bucket.
+9. Rewrite headings until they read as claims.
+10. Adapt the surface format to the user's requested form.
+
+If the input is chaotic, do the structure work silently first. Only expose SCQA or pyramid labels when they help the user.
+
+## MUST
+
+- Lead with the answer, recommendation, or diagnosis.
+- Find the governing question before polishing wording.
+- Keep sibling points at the same level of abstraction.
+- Use one visible ordering rule per level.
+- Make headings carry meaning on their own.
+- Keep evidence below the argument, not beside it.
+- Mirror the user's language unless asked otherwise.
+- Preserve the same argument structure across both languages for bilingual output.
+
+## SHOULD
+
+- Default the audience to a smart business or technical reader when unspecified.
+- Rename vague headings like `Background`, `Overview`, `Considerations`, or `Misc` into claim-style headings.
+- Compress background aggressively.
+- Keep `Situation` factual and short.
+- Use 2-5 buckets; fewer is often stronger than more.
+- End with a next step, implication, or trade-off when useful.
+
+## AVOID
+
+- Burying the answer after setup.
+- Listing topics instead of making claims.
+- Mixing causes, actions, risks, and facts at one level.
+- Forcing exactly three points when the logic needs two or four.
+- Treating MECE as a requirement to invent artificial categories.
+- Over-structuring a short answer that only needs one paragraph.
+- Hiding weak reasoning behind polished wording.
 
 ## SCQA
 
-Use SCQA when the user gives scattered context, weak narrative, or no clear point.
+Use SCQA when the input has context but no clear narrative.
 
-Prompts:
+Definitions:
 
-- `Situation`: What is already true, known, or agreed?
-- `Complication`: What changed, and why is the old state no longer enough?
-- `Question`: What must now be decided, solved, or explained?
-- `Answer`: What is the direct answer?
+- `Situation`: what is already true or accepted
+- `Complication`: what changed, what creates tension, or what no longer works
+- `Question`: what must now be decided, solved, or explained
+- `Answer`: the direct answer in one sentence
 
 Rules:
 
@@ -51,20 +103,22 @@ Rules:
 - Make `Complication` concrete.
 - Keep `Question` singular when possible.
 - Make `Answer` specific enough to serve as the top line.
+- If `Situation` gets long, move detail into support.
+- If `Question` sounds generic, rewrite it until it points to a real decision or explanation target.
 
 Chinese template:
 
 ```text
-情境（Situation）：
+情境：
 目前……，并且……。
 
-冲突（Complication）：
+冲突：
 但现在……，导致……。
 
-问题（Question）：
+问题：
 因此，关键问题是：我们应该如何……？
 
-回答（Answer）：
+回答：
 建议……，因为……
 ```
 
@@ -88,82 +142,99 @@ We should ..., because ...
 
 Use the Minto Pyramid to present:
 
-- top: answer, recommendation, or message
-- middle: grouped reasons, options, workstreams, or pillars
-- bottom: evidence, examples, data, or implementation detail
+- top: answer, recommendation, message
+- middle: reasons, options, workstreams, pillars
+- bottom: evidence, examples, data, implementation detail
 
 Sibling points must:
 
 - answer the same parent question
 - use the same type of logic
 - stay at the same level of abstraction
-- follow one visible ordering principle
+- follow one ordering principle
+- read like parallel claims, not a bag of topics
 
-Build it this way:
+Useful ordering rules:
 
-1. Write the answer in one sentence.
-2. Ask: `Why is this true?` or `How should this be done?`
-3. Draft 2-5 supporting buckets.
-4. Rename buckets into parallel claims.
-5. Add detail only after the structure is stable.
+- `Priority`: most important -> least important
+- `Chronology`: before -> during -> after
+- `Cause-effect`: drivers -> impact -> implication
+- `Problem-solution`: issue -> fix -> result
+- `Decision`: options -> criteria -> recommendation
+- `Strategic-to-tactical`: direction -> plan -> execution
 
-Chinese output skeleton:
+## Output Modes
 
-```text
-结论：
-我建议/判断……
+Pick the smallest structure that fits the job.
 
-核心依据：
-1. ……
-2. ……
-3. ……
+### Recommendation
 
-支撑细节：
-- 依据 1：……
-- 依据 2：……
-- 依据 3：……
-```
+Use for proposals and decisions.
 
-English output skeleton:
+Default shape:
 
-```text
-Recommendation:
-We should ...
+1. recommendation
+2. why this matters
+3. 2-4 reasons
+4. next steps or trade-offs
 
-Why:
-1. ...
-2. ...
-3. ...
+### Analysis
 
-Support:
-- For point 1: ...
-- For point 2: ...
-- For point 3: ...
-```
+Use for diagnosis and explanation.
 
-## Output Order
+Default shape:
 
-Prefer this order unless the user wants another format:
+1. answer or diagnosis
+2. key drivers or causes
+3. evidence
+4. implication
 
-1. `Answer / Recommendation`
-2. `Why this matters`
-3. `Key point 1..n`
-4. `Evidence / examples / next steps`
+### Plan
 
-## Checks
+Use for action and execution.
+
+Default shape:
+
+1. objective
+2. workstreams or phases
+3. sequencing
+4. risks or dependencies
+
+### Rewrite
+
+Use when the content exists but the logic is weak.
+
+Default behavior:
+
+- preserve meaning unless the user asks for reframing
+- improve order before polishing sentences
+- compress repetition
+- move background below the point it supports
+
+## Quality Gate
 
 Before finalizing, verify:
 
 - The first sentence can stand alone as the answer.
 - All sibling points answer the same parent question.
-- Sibling points do not overlap.
-- No important category is missing.
-- Headings read as claims, not vague topics.
-- Evidence sits below the argument, not beside it.
+- Sibling points do not materially overlap.
+- No important category is missing for the decision at hand.
+- The structure matches the real ask: `why`, `how`, `which`, or `what`.
+- The draft still works if the reader only scans the headings and first sentence.
 
-## Avoid
+## Lightweight Pattern
 
-- Burying the answer after setup.
-- Mixing facts, causes, actions, and recommendations at one level.
-- Forcing exactly three points when the logic needs two or four.
-- Building a clean structure around the wrong question.
+For short chat replies, this is usually enough:
+
+```text
+结论 / Answer:
+一句话先说清楚。
+
+核心理由 / Why:
+1. ...
+2. ...
+3. ...
+
+下一步 / Next step:
+如有必要，补一句行动建议或 caveat。
+```
