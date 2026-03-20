@@ -68,7 +68,7 @@ api.nvim_create_autocmd("LspAttach", {
 		end
 
 		if lsp.document_color and client:supports_method(lsp_methods.textDocument_documentColor) then
-			lsp.document_color.enable(true, bufnr, { style = "virtual" })
+			lsp.document_color.enable(true, { bufnr = bufnr }, { style = "virtual" })
 		end
 
 		if lsp.on_type_formatting and client:supports_method(lsp_methods.textDocument_onTypeFormatting) then
