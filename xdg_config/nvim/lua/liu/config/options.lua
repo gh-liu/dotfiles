@@ -32,6 +32,8 @@ vim.o.guicursor = vim.iter({
 	"a:blinkwait700-blinkoff400-blinkon250-Cursor",
 }):join(",")
 
+vim.o.messagesopt = "hit-enter,history:500,progress:"
+
 vim.o.cursorline = true
 vim.cmd([[
 augroup liu_options_ui

@@ -153,7 +153,7 @@ return {
 			augroup liu_flagship
 			  autocmd!
 			  autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline
-			  autocmd LspProgress * redrawtabline
+
 			  autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
 			  "autocmd User Flags call Hoist("buffer", 11, "%{v:lua.Flag_lsp_clients()}")
 			  autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
@@ -162,19 +162,13 @@ return {
 			augroup END
 			]])
 			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_status()}"
-
-			-- vim.cmd([[ autocmd DiagnosticChanged * redrawtabline ]])
-			-- vim.g.tabsuffix = vim.g.tabsuffix
-			-- 	.. "%#DiagnosticError#"
-			-- 	.. "%{v:lua.Flag_diagnostic.Get(1)}"
-			-- 	.. "%#DiagnosticWarn#"
-			-- 	.. "%{v:lua.Flag_diagnostic.Get(2)}"
-			-- 	.. "%#DiagnosticInfo#"
-			-- 	.. "%{v:lua.Flag_diagnostic.Get(3)}"
-			-- 	.. "%#DiagnosticHint#"
-			-- 	.. "%{v:lua.Flag_diagnostic.Get(4)}"
-
-			vim.g.tabsuffix = "%(%{v:lua.vim.lsp.status()}%<%)" .. vim.g.tabsuffix
+			vim.g.tabsuffix = "%(%{v:lua.vim.ui.progress_status()}%<%)" .. vim.g.tabsuffix
+			vim.cmd([[
+			augroup liu_flagship_tab
+			  autocmd!
+			  autocmd Progress * redrawtabline
+			augroup END
+			]])
 
 			local icons = require("liu.user_config").icons
 
@@ -232,7 +226,7 @@ return {
 				end
 
 				local ret = vim.api.nvim_eval_statusline(vim.diagnostic.status(0), {})
-                if ret.str then
+				if ret.str then
 					-- NOTE: alway here
 					return vim.fn["flagship#surround"](ret.str)
 				end
