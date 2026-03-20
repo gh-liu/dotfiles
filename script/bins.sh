@@ -43,6 +43,11 @@ install_bins() {
 		go install github.com/go-delve/delve/cmd/dlv@latest
 		# go install honnef.co/go/gotraceui/cmd/gotraceui@latest
 
+		go install github.com/junegunn/fzf@latest
+		go install github.com/mikefarah/yq/v4@latest
+
+		go install github.com/cli/cli/v2/cmd/gh@latest
+
 		# no protoc, just buf cli
 		go install github.com/bufbuild/buf/cmd/buf@latest
 		# use BSR(Buf Schema Registry)'s remote plugins
@@ -51,8 +56,8 @@ install_bins() {
 
 		go install github.com/boyter/scc/v3@latest
 
-		go install github.com/jesseduffield/lazygit@latest
-		go install github.com/jesseduffield/lazydocker@latest
+		# go install github.com/jesseduffield/lazygit@latest
+		# go install github.com/jesseduffield/lazydocker@latest
 
 		# go install golang.org/x/tools/cmd/present@latest
 		go install github.com/abhinav/tmux-fastcopy@latest
@@ -62,10 +67,8 @@ install_bins() {
 
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
-		go install github.com/junegunn/fzf@latest
-		go install github.com/mikefarah/yq/v4@latest
 
-		go install github.com/superfly/flyctl@latest
+		# go install github.com/superfly/flyctl@latest
 	fi
 
 	if [ -f "$(which bun)" ]; then
