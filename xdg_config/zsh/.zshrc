@@ -464,12 +464,13 @@ export CARGO_BIN=$CARGO_HOME/bin
 path+=("$CARGO_BIN")
 # }}}
 # 7. lang: zig{{{
-path+=("$LIU_ENV/zig/zig")
+path+=("$LIU_ENV/ziglang/zig")
 # }}}
 # 7. lang: js{{{
 ## bun: curl -fsSL https://bun.sh/install | bash
 export BUN_INSTALL="$LIU_ENV/nodejs/bun"
-path=("$BUN_INSTALL/bin" $path)
+export NODE_INSTALL="$LIU_ENV/nodejs/node"
+path=("$BUN_INSTALL/bin" "$NODE_INSTALL/bin" $path)
 # bun completions
 # https://github.com/oven-sh/bun/issues/11179#issuecomment-2151457758
 # }}}
