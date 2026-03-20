@@ -15,15 +15,15 @@ if [[ -z "${ARCH}" ]]; then
 fi
 if [[ -z "${HOSTIP}" ]]; then
 	if [[ $OS == darwin ]]; then
-		export HOSTIP=$(ipconfig getifaddr en0)
+		export HOSTIP="$(ipconfig getifaddr en0)"
 	fi
 	if [[ $OS == linux ]]; then
-		export HOSTIP=$(hostname -I | awk '{print $1}')
+		export HOSTIP="$(hostname -I | awk '{print $1}')"
 	fi
 fi
-export LIU_ENV=$HOME/env
-export LIU_DEV=$HOME/dev
-export LIU_TOOLS=$HOME/tools
+export LIU_ENV="$HOME/env"
+export LIU_DEV="$HOME/dev"
+export LIU_TOOLS="$HOME/tools"
 ## sys
 export SHELL="${commands[zsh]:-${SHELL:-/bin/zsh}}"
 export LANG=en_US.UTF-8
@@ -197,7 +197,7 @@ alias mdclaude="ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md CLAUDE.md"
 
 # 5. plugins{{{
 declare -a USERPLUGINS
-export USERPLUGINSHOME=$HOME/.zsh-plugins
+export USERPLUGINSHOME="$HOME/.zsh-plugins"
 function update_zsh_plugins() {
 	mkdir -p $USERPLUGINSHOME
 	for plugin in "${USERPLUGINS[@]}"; do
@@ -217,7 +217,7 @@ function update_zsh_plugins() {
 USERPLUGINS+=(https://github.com/zsh-users/zsh-autosuggestions)
 ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=12
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-source $USERPLUGINSHOME/zsh-autosuggestions/zsh-autosuggestions.zsh
+source "$USERPLUGINSHOME/zsh-autosuggestions/zsh-autosuggestions.zsh"
 # bindkey '^l' forward-word
 # }}}
 # 6. plugin: zsh-syntax-highlighting{{{
@@ -225,7 +225,7 @@ source $USERPLUGINSHOME/zsh-autosuggestions/zsh-autosuggestions.zsh
 ## Lazy load to improve startup time (load after first prompt)
 USERPLUGINS+=(https://github.com/zsh-users/zsh-syntax-highlighting)
 _load_syntax_highlighting() {
-	source $USERPLUGINSHOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+	source "$USERPLUGINSHOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 	# Re-bind widgets if zsh-vi-mode is active
 	[[ -n "${ZVM_VERSION}" ]] && zvm_bindkey viins '^[f' vi-forward-word && zvm_bindkey viins '^[b' vi-backward-word
 	# Remove this hook after first execution
@@ -255,7 +255,7 @@ zvm_after_init() {
 }
 ## disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
-	source $HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh
+	source "$HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 fi
 # }}}
 
@@ -291,22 +291,29 @@ unsetopt HIST_VERIFY          # Execute commands using history (e.g.: using !$) 
 update_zsh_completions() {
 	mkdir -p "$XDG_CONFIG_HOME"/zsh/zsh-completions
 
-	(( $+commands[atuin] )) && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
-	(( $+commands[bun] )) && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
-	(( $+commands[docker] )) && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 	(( $+commands[gh] )) && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
 	(( $+commands[git-absorb] )) && git-absorb --gen-completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_git-absorb
-	(( $+commands[helm] )) && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
+
 	(( $+commands[just] )) && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
-	(( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
-	(( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
-	(( $+commands[podman] )) && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
-	(( $+commands[rustc] )) && cp "$(rustc --print sysroot)"/share/zsh/site-functions/_cargo "$XDG_CONFIG_HOME"/zsh/zsh-completions/_cargo
-	(( $+commands[rustup] )) && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
 	(( $+commands[starship] )) && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
 
-	(( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
-		>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
+	# (( $+commands[atuin] )) && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
+
+	# (( $+commands[podman] )) && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
+	# (( $+commands[docker] )) && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
+	# (( $+commands[helm] )) && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
+	# (( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
+	# (( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
+
+	(( $+commands[rustc] )) && cp "$(rustc --print sysroot)"/share/zsh/site-functions/_cargo "$XDG_CONFIG_HOME"/zsh/zsh-completions/_cargo
+	(( $+commands[rustup] )) && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
+	(( $+commands[uv] )) && uv generate-shell-completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_uv
+	(( $+commands[uvx] )) && uvx --generate-shell-completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_uvx
+	(( $+commands[bun] )) && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
+
+
+	# (( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
+	# 	>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
 
 	compinit
 }
@@ -390,42 +397,42 @@ autoload -Uz zmv
 
 # 7. lang: go{{{
 export GO111MODULE=on
-export GOROOT=$LIU_ENV/golang/go
-export GOPATH=$LIU_ENV/golang/gopath
-export GOBIN=$GOPATH/bin
+export GOROOT="$LIU_ENV/golang/go"
+export GOPATH="$LIU_ENV/golang/gopath"
+export GOBIN="$GOPATH/bin"
 path+=("$GOBIN" "$GOROOT/bin")
 ## pprof
 function gopprof() {
-	go tool pprof -http=$HOSTIP:7788 -no_browser $@
+	go tool pprof -http="$HOSTIP:7788" -no_browser "$@"
 }
 function gopprof2() {
 	local ip="${1:-$HOSTIP}"
 	local port="${2:-6060}"
 	local typ="${3:-profile}"
-	go tool pprof -http=$HOSTIP:7788 -no_browser "http://$ip:$port/debug/pprof/$typ"
+	go tool pprof -http="$HOSTIP:7788" -no_browser "http://$ip:$port/debug/pprof/$typ"
 }
 ## trace
 function gotrace() {
-	go tool trace -http=$HOSTIP:7777 $@
+	go tool trace -http="$HOSTIP:7777" "$@"
 }
 function gotrace2() {
-	local t=$(mktemp -t)
-	local ip=$1
-	local port=$2
-	wget "http://$ip:$port/debug/pprof/trace" --output-document $t
-	go tool trace -http=$HOSTIP:7777 $t
-	unlink $t
+	local t; t=$(mktemp -t)
+	local ip="$1"
+	local port="$2"
+	wget "http://$ip:$port/debug/pprof/trace" --output-document "$t"
+	go tool trace -http="$HOSTIP:7777" "$t"
+	unlink "$t"
 }
 ## asm, compile
 alias gotc='go tool compile -S -N -l'
 alias gobs='go build -gcflags -S'
 function goasm() {
-	go build -gcflags=-S $@ 2>&1 | grep -v PCDATA | grep -v FUNCDATA | less
+	go build -gcflags=-S "$@" 2>&1 | grep -v PCDATA | grep -v FUNCDATA | less
 }
 ## test cover
 function gocover() {
-	local t=$(mktemp -t)
-	go test $COVERFLAGS -coverprofile=$t $@ && go tool cover -func=$t && unlink $t
+	local t; t=$(mktemp -t)
+	go test "${(@z)COVERFLAGS}" -coverprofile="$t" "$@" && go tool cover -func="$t" && unlink "$t"
 }
 ## present: https://pkg.go.dev/golang.org/x/tools/present
 alias gopresent=_gopresent
@@ -435,14 +442,10 @@ _gopresent() {
 # }}}
 # 7. lang: python{{{
 ## uv: curl -LsSf https://astral.sh/uv/install.sh | sh
-export UV_INSTALL_DIR=$LIU_ENV/python/uv
-export UV_TOOL_BIN_DIR=$LIU_ENV/python/bin
+export UV_INSTALL_DIR="$LIU_ENV/python/uv"
+export UV_TOOL_BIN_DIR="$LIU_ENV/python/bin"
 path+=("$UV_INSTALL_DIR" "$UV_TOOL_BIN_DIR")
-if (( $+commands[uv] )); then
-	eval "$(uv generate-shell-completion zsh)"
-	eval "$(uvx --generate-shell-completion zsh)"
-fi
-export UV_PYTHON_INSTALL_DIR=$LIU_ENV/python
+export UV_PYTHON_INSTALL_DIR="$LIU_ENV/python"
 ## venv activate
 alias va=_venv
 function _venv() {
@@ -457,10 +460,10 @@ function _venv() {
 # }}}
 # 7. lang: rust{{{
 ## rustup: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-export RUSTUP_HOME=$LIU_ENV/rust/rustup
+export RUSTUP_HOME="$LIU_ENV/rust/rustup"
 ## cargo
-export CARGO_HOME=$LIU_ENV/rust/cargo
-export CARGO_BIN=$CARGO_HOME/bin
+export CARGO_HOME="$LIU_ENV/rust/cargo"
+export CARGO_BIN="$CARGO_HOME/bin"
 path+=("$CARGO_BIN")
 # }}}
 # 7. lang: zig{{{
@@ -482,7 +485,7 @@ source "$ZDOTDIR/brew.zsh"
 unset HOMEBREW_SOURCE_MODE
 ## starship
 # curl -sS https://starship.rs/install.sh | sh
-export STARSHIP_CONFIG=$ZDOTDIR/starship/starship.toml
+export STARSHIP_CONFIG="$ZDOTDIR/starship/starship.toml"
 (( $+commands[starship] )) && eval "$(starship init zsh)"
 ## direnv
 # curl -sfL https://direnv.net/install.sh | bash
@@ -529,8 +532,8 @@ _set_title() {
 	print -Pn " [%l]\a"
 }
 
-export PATH=$PATH:$XDG_CONFIG_HOME/bin
-[ -f $ZDOTDIR/zsh-conf/custom.zsh ] && source $ZDOTDIR/zsh-conf/custom.zsh
+path+=("$XDG_CONFIG_HOME/bin")
+[ -f "$ZDOTDIR/zsh-conf/custom.zsh" ] && source "$ZDOTDIR/zsh-conf/custom.zsh"
 # }}}
 
 # 9999. LLM {{{
