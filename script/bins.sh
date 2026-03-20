@@ -67,7 +67,6 @@ install_bins() {
 
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
-
 		# go install github.com/superfly/flyctl@latest
 	fi
 
@@ -87,29 +86,30 @@ install_bins() {
 
 	if [ -f "$(which cargo)" ]; then
 		# NOTE: use `cargo binstall` to install bins
-		cargo install cargo-binstall
+		# cargo install cargo-binstall
+
+		cargo install --locked cargo-nextest
+
+		cargo install --locked --bin jj jj-cli
+		cargo install --locked worktrunk
 
 		cargo install bat
 		cargo install eza
 		cargo install zoxide
 		# cargo install tealdeer
-		cargo install git-delta difftastic
+		# cargo install git-delta difftastic
 		cargo install starship --locked
-		# cargo install inferno # flamegraph
 		# cargo install skim
 		# cargo install --locked zellij
 
-		cargo install cargo-nextest
-		cargo install cargo-binutils
+		# cargo install cargo-binutils
 
-		cargo install hyperfine # command-line benchmarking
+		# cargo install hyperfine # command-line benchmarking
+		# cargo install inferno # flamegraph
 
 		# cargo install tree-sitter-cli
 
 		# cargo install shpool
-
-		cargo install --locked --bin jj jj-cli
-		cargo install worktrunk
 
 	fi
 
