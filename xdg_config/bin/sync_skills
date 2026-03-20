@@ -8,12 +8,19 @@ skills add $LIU_TOOLS/dotfiles/skills
 
 # find-skills:
 skills add https://github.com/vercel-labs/skills --skill find-skills
+
 # find-docs:
 skills add https://github.com/upstash/context7 --skill find-docs
+
 # brainstorming:
 skills add https://github.com/obra/superpowers --skill brainstorming
+
 # test-driven-development:
-skills add https://github.com/obra/superpowers --skill test-driven-development
+# skills add https://github.com/obra/superpowers --skill test-driven-development
+
+# tdd
+skills add mattpocock/skills/tdd
+
 # use-modern-go:
 skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go
 
