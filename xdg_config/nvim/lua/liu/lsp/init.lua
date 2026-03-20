@@ -178,8 +178,8 @@ api.nvim_create_autocmd("LspAttach", {
 		-- 	nmap("crn", lsp.buf.rename, "[R]e[n]ame")
 		-- end
 
-		-- NOTE: default lsp mapping prefix with `gr`
-		nmap("grl", lsp.codelens.run, "Code [L]en")
+		-- NOTE: default mapping for rename: grx
+		-- nmap("grl", lsp.codelens.run, "Code [L]en")
 
 		-- vim.keymap.set("i", "<C-]>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
 	end,
