@@ -1,0 +1,63 @@
+#!/usr/bin/env zsh
+
+if [[ $# -eq 0 ]]; then
+	echo "Usage: gomoddoc [-all|-c|-cmd|-short|-src|-u] <import-path>[@version] [symbol]" >&2
+	exit 1
+fi
+
+typeset -a doc_flags extra_args
+typeset arg pkg_spec="" symbol=""
+for arg in "$@"; do
+	if [[ -z "$pkg_spec" && "$arg" == -* ]]; then
+		doc_flags+=("$arg")
+	elif [[ -z "$pkg_spec" ]]; then
+		pkg_spec="$arg"
+	elif [[ -z "$symbol" ]]; then
+		symbol="$arg"
+	else
+		extra_args+=("$arg")
+	fi
+done
+
+if [[ -z "$pkg_spec" || ${#extra_args[@]} -gt 0 ]]; then
+	echo "Usage: gomoddoc [-all|-c|-cmd|-short|-src|-u] <import-path>[@version] [symbol]" >&2
+	exit 1
+fi
+
+pkg_path="${pkg_spec%@*}"
+version="latest"
+if [[ "$pkg_spec" == *@* ]]; then
+	version="${pkg_spec##*@}"
+fi
+
+pkg_host="${pkg_path%%/*}"
+tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/gomoddoc.XXXXXX")" || exit 1
+trap 'command rm -rf "$tmpdir"' EXIT INT TERM HUP
+
+cd "$tmpdir" || exit 1
+command go mod init tempdoc >/dev/null 2>&1 || exit 1
+
+if [[ "$pkg_host" == *.* ]]; then
+	if ! command go get "${pkg_path}@${version}" >/dev/null 2>&1; then
+		if [[ -z "$symbol" && "${pkg_path##*/}" == *.* ]]; then
+			fallback_pkg="${pkg_path%.*}"
+			fallback_symbol="${pkg_path##*.}"
+			if command go get "${fallback_pkg}@${version}" >/dev/null 2>&1; then
+				pkg_path="$fallback_pkg"
+				symbol="$fallback_symbol"
+			else
+				echo "gomoddoc: failed to resolve package ${pkg_spec}" >&2
+				exit 1
+			fi
+		else
+			echo "gomoddoc: failed to resolve package ${pkg_spec}" >&2
+			exit 1
+		fi
+	fi
+fi
+
+if [[ -n "$symbol" ]]; then
+	exec command go doc "${doc_flags[@]}" "$pkg_path" "$symbol"
+else
+	exec command go doc "${doc_flags[@]}" "$pkg_path"
+fi
