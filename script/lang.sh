@@ -175,6 +175,33 @@ install_nodejs() {
 	mv "node-${version}-${os}-${arch}" node
 }
 
+install_emmylua_ls() {
+	local os
+	os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+	local arch
+	arch="$(uname -m | sed 's/aarch64/arm64/;s/x86_64/x64/')"
+
+	# 1. version
+	local version; version="$(gh_latest_tag EmmyLuaLs/emmylua-analyzer-rust)"
+	# 2. info
+	local pkg="emmylua_ls-${os}-${arch}.tar.gz"
+	local url="https://github.com/EmmyLuaLs/emmylua-analyzer-rust/releases/download/${version}/${pkg}"
+	echo "updating to $version (${os}-${arch}) from $url..."
+	# 3. env dir
+	cdenv lua
+	# 4. download
+	gh_download EmmyLuaLs/emmylua-analyzer-rust "$version" "$pkg" || {
+		echo "fail to download emmylua_ls" >&2
+		return 1
+	}
+	# 5. extract
+	tar xvzf "$pkg"
+	# 6. finalize
+	rm "$pkg"
+	chmod +x emmylua_ls
+	link_bin "$(pwd)/emmylua_ls" emmylua_ls
+}
+
 install_uv() {
 	local dir
 	dir="$(cdenv python)"
@@ -192,7 +219,7 @@ install_uv() {
 }
 
 if [[ -z "$1" ]]; then
-	echo "select one language: go | uv | zig | rust | bunjs"
+	echo "select one language: go | uv | zig | rust | bunjs | emmylua_ls"
 elif declare -f "install_$1" >/dev/null; then
 	echo "======== installing $1 ========"
 	install_"$1"

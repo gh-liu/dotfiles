@@ -345,11 +345,7 @@ vim.lsp.enable("buf_ls")
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
 vim.lsp.enable("docker_language_server")
 
-if vim.fn.executable("emmylua_ls") == 1 then
-	vim.lsp.enable({ "emmylua_ls" })
-else
-	vim.lsp.enable("lua_ls")
-end
+vim.lsp.enable({ "emmylua_ls" })
 
 -- vim.lsp.enable("clangd")
 -- vim.lsp.enable("terraformls")
