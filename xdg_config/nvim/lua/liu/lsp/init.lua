@@ -328,29 +328,30 @@ vim.api.nvim_create_autocmd("LspRequest", {
 })
 
 -- LSP server enable {{{1
-vim.lsp.enable("gopls")
-vim.lsp.enable({
-	-- "pyright"
-	-- "basedpyright",
-	"ruff", -- formating/linting
-	"ty",
-})
-vim.lsp.enable("rust_analyzer")
-vim.lsp.enable("ts_ls")
+vim.lsp.enable({ "gopls" })
+
+vim.lsp.enable({ "ruff", "ty" })
+
+vim.lsp.enable({ "rust_analyzer" })
+
 -- vim.lsp.enable("zls")
 
-vim.lsp.enable("bashls")
-vim.lsp.enable("vimls")
-vim.lsp.enable("buf_ls")
-vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
-vim.lsp.enable("docker_language_server")
+vim.lsp.enable({ "ts_ls" })
+-- vim.lsp.enable({ "oxlint", "oxfmt" })
 
 vim.lsp.enable({ "emmylua_ls" })
 
--- vim.lsp.enable({ "oxlint", "oxfmt" })
-
 -- vim.lsp.enable("clangd")
+
+vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
+vim.lsp.enable("buf_ls")
+
+vim.lsp.enable("vimls")
+vim.lsp.enable("bashls")
+vim.lsp.enable("docker_language_server")
+
 -- vim.lsp.enable("terraformls")
+
 -- vim.lsp.enable("nushell")
 
 -- vim.lsp.enable({ "copilot" })
