@@ -304,39 +304,14 @@ path+=("$GOBIN" "$GOROOT/bin")
 function gopprof() {
 	go tool pprof -http="$HOSTIP:7788" -no_browser "$@"
 }
-function gopprof2() {
-	local ip="${1:-$HOSTIP}"
-	local port="${2:-6060}"
-	local typ="${3:-profile}"
-	go tool pprof -http="$HOSTIP:7788" -no_browser "http://$ip:$port/debug/pprof/$typ"
-}
 ## trace
 function gotrace() {
-	go tool trace -http="$HOSTIP:7777" "$@"
-}
-function gotrace2() {
-	local t; t=$(mktemp -t)
-	local ip="$1"
-	local port="$2"
-	wget "http://$ip:$port/debug/pprof/trace" --output-document "$t"
-	go tool trace -http="$HOSTIP:7777" "$t"
-	unlink "$t"
-}
-## asm, compile
-alias gotc='go tool compile -S -N -l'
-alias gobs='go build -gcflags -S'
-function goasm() {
-	go build -gcflags=-S "$@" 2>&1 | grep -v PCDATA | grep -v FUNCDATA | less
+	go tool trace -http="$HOSTIP:7799" "$@"
 }
 ## test cover
 function gocover() {
 	local t; t=$(mktemp -t)
 	go test "${(@z)COVERFLAGS}" -coverprofile="$t" "$@" && go tool cover -func="$t" && unlink "$t"
-}
-## present: https://pkg.go.dev/golang.org/x/tools/present
-alias gopresent=_gopresent
-_gopresent() {
-	present -http "$(hostname -I | awk '{print $1}'):3999"
 }
 # }}}
 # 7. lang: python{{{
