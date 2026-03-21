@@ -5,6 +5,8 @@ local linters_by_ft = {
 	bash = { "shellcheck" }, -- @need-install: command -v shellcheck >/dev/null 2>&1 || printf "\033[31m[need-install] missing shellcheck\033[0m\n"
 	-- python = { "pylint" }, -- @need-install: uv tool install --force pylint
 	-- sql = { "sqlfluff" }, -- @need-install: uv tool install --force sqlfluff
+	javascript = { "oxlint" }, -- @need-install: bun install -g oxlint
+	typescript = { "oxlint" },
 
 	-- Use the "*" filetype to run linters on all filetypes.
 	-- ['*'] = { 'global linter' },

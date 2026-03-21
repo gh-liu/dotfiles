@@ -38,8 +38,9 @@ local formatters_by_ft = {
 	just = { "just" }, -- @need-install: cargo install just
 	proto = { "buf" },
 	query = { "format-queries" },
-	javascript = { "prettier" }, -- @need-install: bun i -g prettier
-	typescript = { "prettier" },
+	-- @need-install: bun install -g oxfmt
+	javascript = { "oxfmt" },
+	typescript = { "oxfmt" },
 	markdown = { "injected" },
 	sql = { "sqlfluff" }, -- @need-install: uv tool install --force sqlfluff
 	terraform = { "terraform_fmt" },

@@ -74,6 +74,9 @@ install_bins() {
 	if [ -f "$(which bun)" ]; then
 		# 	bun i -g tree-sitter-cli
 		bun i -g @slidev/cli
+
+		bun i -g oxlint
+		bun i -g oxfmt
 	fi
 
 	# if [ -f "$(which uv)" ]; then

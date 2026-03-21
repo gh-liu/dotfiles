@@ -347,6 +347,8 @@ vim.lsp.enable("docker_language_server")
 
 vim.lsp.enable({ "emmylua_ls" })
 
+-- vim.lsp.enable({ "oxlint", "oxfmt" })
+
 -- vim.lsp.enable("clangd")
 -- vim.lsp.enable("terraformls")
 -- vim.lsp.enable("nushell")
