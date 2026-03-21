@@ -1,0 +1,71 @@
+#!/bin/sh
+
+remove_amp() {
+    amp mcp list 2>/dev/null | awk 'NF>=3 && !/^Global|^Local|^$/ {print $1}' | while read -r name; do
+        amp mcp remove "$name"
+    done
+}
+
+remove_codex() {
+    codex mcp list 2>/dev/null | awk 'NF>=2 && !/^Name|^$|^-/ {print $1}' | while read -r name; do
+        codex mcp remove "$name"
+    done
+}
+
+sync_amp() {
+    # amp mcp add context7 https://mcp.context7.com/mcp
+    amp mcp add context7 --header "CONTEXT7_API_KEY=$CONTEXT7_API_KEY" https://mcp.context7.com/mcp
+    # amp mcp add exa https://mcp.exa.ai/mcp
+    amp mcp add exa "https://mcp.exa.ai/mcp?exaApiKey=$EXA_API_KEY"
+    amp mcp add deepwiki https://mcp.deepwiki.com/mcp
+    # ---
+    amp mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
+}
+
+sync_codex() {
+    # codex mcp add context7 --url https://mcp.context7.com/mcp
+    codex mcp add context7 -- npx -y @upstash/context7-mcp --api-key "$CONTEXT7_API_KEY"
+    # codex mcp add exa --url https://mcp.exa.ai/mcp
+    codex mcp add exa --url "https://mcp.exa.ai/mcp?exaApiKey=$EXA_API_KEY"
+    codex mcp add deepwiki --url https://mcp.deepwiki.com/mcp
+    # ---
+    codex mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
+}
+
+AGENT=""
+ACTION="sync"
+while getopts "a:r" opt; do
+    case $opt in
+    a) AGENT="$OPTARG" ;;
+    r) ACTION="remove" ;;
+    *)
+        echo "Usage: sync_mcps [-a amp|codex] [-r]" >&2
+        exit 1
+        ;;
+    esac
+done
+
+case "$ACTION" in
+remove)
+    case "$AGENT" in
+    amp) remove_amp ;;
+    codex) remove_codex ;;
+    *)
+        remove_amp
+        remove_codex
+        ;;
+    esac
+    ;;
+sync)
+    case "$AGENT" in
+    amp) sync_amp ;;
+    codex) sync_codex ;;
+    *)
+        sync_amp
+        sync_codex
+        ;;
+    esac
+    ;;
+esac
+
+# vim: set filetype=sh
