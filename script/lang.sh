@@ -59,10 +59,9 @@ install_go() {
 
 install_zls() {
 	local os
-	os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+	os="$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')"
 	local arch
 	arch="$(uname -m | sed 's/arm64/aarch64/')"
-	[[ "$os" == darwin ]] && os=macos
 
 	# 1. version
 	local version; version="$(gh_latest_tag zigtools/zls)"
@@ -87,7 +86,7 @@ install_zls() {
 
 install_zig() {
 	local os
-	os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+	os="$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')"
 	local arch
 	arch="$(uname -m | sed 's/arm64/aarch64/')"
 	local arch_key="${arch}-${os}"
