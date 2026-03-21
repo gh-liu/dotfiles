@@ -36,7 +36,8 @@ install_go() {
 	local arch
 	arch="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
 	# 1. version
-	local version; version="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
+	local version
+	version="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
 	# 2. info
 	local pkg="$version.${os}-${arch}.tar.gz"
 	local url="https://go.dev/dl/$pkg"
@@ -64,7 +65,8 @@ install_zls() {
 	arch="$(uname -m | sed 's/arm64/aarch64/')"
 
 	# 1. version
-	local version; version="$(gh_latest_tag zigtools/zls)"
+	local version
+	version="$(gh_latest_tag zigtools/zls)"
 	# 2. info
 	local pkg="zls-${arch}-${os}.tar.xz"
 	local url="https://github.com/zigtools/zls/releases/download/${version}/${pkg}"
@@ -92,15 +94,19 @@ install_zig() {
 	local arch_key="${arch}-${os}"
 
 	# 1. version
-	local index; index="$(curl -s https://ziglang.org/download/index.json | jq 'to_entries[1].value')"
-	local version; version="$(jq -r '.version' <<<"$index")"
-	local url; url="$(jq -r ".\"$arch_key\".tarball" <<<"$index")"
+	local index
+	index="$(curl -s https://ziglang.org/download/index.json | jq 'to_entries[1].value')"
+	local version
+	version="$(jq -r '.version' <<<"$index")"
+	local url
+	url="$(jq -r ".\"$arch_key\".tarball" <<<"$index")"
 	# 2. info
 	echo "updating to $version ($arch_key) from $url..."
 	# 3. env dir
 	cdenv ziglang
 	# 4. download
-	local pkg; pkg="$(basename "$url")"
+	local pkg
+	pkg="$(basename "$url")"
 	download "$url" "$pkg" || {
 		echo "fail to download zig" >&2
 		return 1
@@ -150,7 +156,8 @@ install_nodejs() {
 	[[ "$os" == linux ]] && ext="tar.xz" || ext="tar.gz"
 
 	# 1. version
-	local version; version="$(gh_latest_tag nodejs/node)"
+	local version
+	version="$(gh_latest_tag nodejs/node)"
 	# 2. info
 	local pkg="node-${version}-${os}-${arch}.${ext}"
 	local url="https://nodejs.org/dist/${version}/${pkg}"
@@ -181,7 +188,8 @@ install_emmylua_ls() {
 	arch="$(uname -m | sed 's/aarch64/arm64/;s/x86_64/x64/')"
 
 	# 1. version
-	local version; version="$(gh_latest_tag EmmyLuaLs/emmylua-analyzer-rust)"
+	local version
+	version="$(gh_latest_tag EmmyLuaLs/emmylua-analyzer-rust)"
 	# 2. info
 	local pkg="emmylua_ls-${os}-${arch}.tar.gz"
 	local url="https://github.com/EmmyLuaLs/emmylua-analyzer-rust/releases/download/${version}/${pkg}"
@@ -204,17 +212,25 @@ install_emmylua_ls() {
 install_uv() {
 	local dir
 	dir="$(cdenv python)"
-	export UV_INSTALL_DIR=$dir/uv
+	export UV_INSTALL_DIR="$dir/uv"
 
 	if have_cmd uv; then
 		uv self update
 	else
-		curl -LsSf https://astral.sh/uv/install.sh | sh
-		uv python install 3.12
+		if ! (
+			set -o pipefail
+			curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="$UV_INSTALL_DIR" sh
+		); then
+			echo "skip uv install" >&2
+			return 0
+		fi
 	fi
 
-	uv tool install ruff
-	uv tool install ty
+	if have_cmd uv; then
+		uv python install 3.12
+		uv tool install ruff
+		uv tool install ty
+	fi
 }
 
 if [[ -z "$1" ]]; then
