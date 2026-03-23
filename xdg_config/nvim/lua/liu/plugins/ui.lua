@@ -133,6 +133,16 @@ return {
 		init = function()
 			vim.o.showtabline = 2
 
+			vim.ui.progress_status_raw = function(...)
+				local ret = vim.api.nvim_eval_statusline(vim.ui.progress_status(...), {})
+				return ret.str or ""
+			end
+
+			vim.diagnostic.status_raw = function(...)
+				local ret = vim.api.nvim_eval_statusline(vim.diagnostic.status(...), {})
+				return ret.str or ""
+			end
+
 			-- default statusline is not empty anymore
 			-- https://github.com/neovim/neovim/pull/33036
 			if #vim.o.statusline > 0 then
@@ -155,7 +165,8 @@ return {
 
 			vim.g.tabsuffix = ""
 			vim.g.tabsuffix = vim.g.tabsuffix .. tabitem("%{v:lua.Flag_dap_status()}", { hl = "Debug" })
-			vim.g.tabsuffix = tabitem("%{v:lua.vim.ui.progress_status()}%<") .. vim.g.tabsuffix
+			vim.g.tabsuffix = tabitem("%{v:lua.vim.ui.progress_status_raw()}%<", { hl = "@markup.heading" })
+				.. vim.g.tabsuffix
 			vim.cmd([[
 			augroup liu_flagship_tab
 			  autocmd!
@@ -174,29 +185,16 @@ return {
 			-- ////////////////////////////////////////////////////////////
 
 			vim.cmd([[
-			augroup liu_flagship
-			  autocmd!
-			  " window flags
-			  autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
-			  " buffer flags (by priority)
-			  autocmd User Flags call Hoist("buffer", 9, "%{v:lua.Flag_diagnostic_summary()}")
-			  autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
-			  autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? printf('@%d/%d', index(argv(), bufname('%')) + 1, len(argv())) : '')}")
-			augroup END
+				augroup liu_flagship
+				  autocmd!
+				  " window flags
+				  autocmd User Flags call Hoist("window", "%{&diff?'[Diff]':''}")
+				  " buffer flags (by priority)
+				  autocmd User Flags call Hoist("buffer", 9, "%{empty(&buftype) ? flagship#surround(v:lua.vim.diagnostic.status_raw(0)) : ''}")
+				  autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
+				  autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? printf('@%d/%d', index(argv(), bufname('%')) + 1, len(argv())) : '')}")
+				augroup END
 			]])
-
-			_G.Flag_diagnostic_summary = function()
-				if #vim.bo.buftype > 0 then
-					return ""
-				end
-
-				local ret = vim.api.nvim_eval_statusline(vim.diagnostic.status(0), {})
-				if ret.str then
-					-- NOTE: alway here
-					return vim.fn["flagship#surround"](ret.str)
-				end
-				return ""
-			end
 		end,
 	},
 	-- Custom foldtext with Unicode characters for fold indicators
