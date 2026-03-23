@@ -147,7 +147,7 @@ return {
 			vim.g.tabprefix = ""
 			-- vim.g.tablabel = "%N%{flagship#tabmodified()} %{flagship#tabcwds('shorten',',')}"
 			vim.g.tabsuffix = ""
-			vim.g.tabsuffix = vim.g.tabsuffix .. "%#Debug#" .. "%{v:lua.Flag_dap_status()}"
+			vim.g.tabsuffix = vim.g.tabsuffix .. "%(%#Debug#" .. "%{v:lua.Flag_dap_status()}%)"
 			vim.g.tabsuffix = "%(%{v:lua.vim.ui.progress_status()}%<%)" .. vim.g.tabsuffix
 			vim.cmd([[
 			augroup liu_flagship_tab
