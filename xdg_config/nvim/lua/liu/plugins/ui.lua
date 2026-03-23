@@ -146,14 +146,22 @@ return {
 
 			vim.g.tabprefix = ""
 			-- vim.g.tablabel = "%N%{flagship#tabmodified()} %{flagship#tabcwds('shorten',',')}"
+			local function tabitem(content, opts)
+				if opts and opts.hl then
+					content = "%#" .. opts.hl .. "#" .. content
+				end
+				return "%(" .. content .. "%)"
+			end
+
 			vim.g.tabsuffix = ""
-			vim.g.tabsuffix = vim.g.tabsuffix .. "%(%#Debug#" .. "%{v:lua.Flag_dap_status()}%)"
-			vim.g.tabsuffix = "%(%{v:lua.vim.ui.progress_status()}%<%)" .. vim.g.tabsuffix
+			vim.g.tabsuffix = vim.g.tabsuffix .. tabitem("%{v:lua.Flag_dap_status()}", { hl = "Debug" })
+			vim.g.tabsuffix = tabitem("%{v:lua.vim.ui.progress_status()}%<") .. vim.g.tabsuffix
 			vim.cmd([[
 			augroup liu_flagship_tab
 			  autocmd!
 			  autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline
 			  autocmd Progress * redrawtabline
+			  "autocmd Progress * echo v:lua.vim.ui.progress_status()
 			augroup END
 			]])
 			_G.Flag_dap_status = function()
