@@ -21,6 +21,9 @@ skills add https://github.com/obra/superpowers --skill brainstorming
 # tdd
 skills add mattpocock/skills/tdd
 
+# fullstack-dev
+skills add https://github.com/MiniMax-AI/skills --skill fullstack-dev
+
 # use-modern-go:
 skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go
 
