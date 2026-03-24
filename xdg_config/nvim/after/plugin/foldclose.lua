@@ -29,9 +29,11 @@ local function foldclose(bufnr)
 	end
 
 	local nodes = {}
-	for _, match, _ in ts_query:iter_matches(root, bufnr, 0, -1, { all = false }) do
-		for _, node in pairs(match) do
-			table.insert(nodes, node)
+	for _, match, _ in ts_query:iter_matches(root, bufnr, 0, -1, {}) do
+		for id, match_nodes in pairs(match) do
+			for _, match_node in ipairs(match_nodes) do
+				table.insert(nodes, match_node)
+			end
 		end
 	end
 
