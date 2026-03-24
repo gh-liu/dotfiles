@@ -3,21 +3,31 @@
 # PACKAGES
 sudo apt update && sudo apt upgrade -y
 
-# shell and editors
+# remote access
 sudo apt install -y \
-        vim zsh tmux tmuxp \
         openssh-server
 
-# archives and transfer
+# shell environment
 sudo apt install -y \
-        zip unzip \
+        zsh \
+        tmux tmuxp
+
+# editors and text search
+sudo apt install -y \
+        vim \
+        fzf ripgrep
+
+# archives
+sudo apt install -y \
+        zip unzip
+
+# download and transfer
+sudo apt install -y \
         curl wget nghttp2
 
-# search and cli utils
+# general cli utils
 sudo apt install -y \
-        fzf ripgrep \
         jq \
-        bubblewrap \
         tldr direnv btop cloc
 
 # version control
@@ -32,9 +42,12 @@ sudo apt install -y \
         patchutils \
         graphviz
 
-# c and cpp toolchain
+# c and cpp compilers
 sudo apt install -y \
-        gcc g++ \
+        gcc g++
+
+# c and cpp debugging and indexing
+sudo apt install -y \
         clangd \
         gdb lldb-14
 
@@ -42,42 +55,46 @@ sudo apt install -y \
 sudo apt install -y \
         libncurses5-dev libevent-dev
 
-# kernel headers and perf tools
+# kernel headers
 sudo apt install -y \
-        linux-tools-common linux-tools-generic linux-tools-$(uname -r) \
         linux-headers-$(uname -r)
 
-# system network and metrics
+# performance tools
 sudo apt install -y \
-        sysstat net-tools bridge-utils \
+        linux-tools-common linux-tools-generic linux-tools-$(uname -r) \
+        sysstat \
         bpfcc-tools
+
+# network tools
+sudo apt install -y \
+        net-tools bridge-utils
 
 # tracing
 sudo apt install -y \
         systemtap-sdt-dev
 
+# containers
+sudo apt install -y podman \
+        bubblewrap
+
 # sudo apt install -y gh
 # sudo apt install -y kitty
 
-# databases
+# database clients
 sudo apt install -y \
         sqlite3 \
         redis-tools \
         mysql-client
-
 # mongodb: https://www.mongodb.com/try/download/shell
 wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.6_amd64.deb | sudo apt install ./mongodb-mongosh_2.5.6_amd64.deb
 
 # lang
 # sudo apt install -y python3-pip
 
-# nodejs
+# nodejs runtime
 # https://deb.nodesource.com/
 # curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
 sudo apt install -y nodejs
-
-# containers
-sudo apt install -y podman
 
 # # For full system emulation
 # sudo apt install -y qemu-system
