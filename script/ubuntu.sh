@@ -3,49 +3,68 @@
 # PACKAGES
 sudo apt update && sudo apt upgrade -y
 
-sudo apt install -y openssh-server
+# shell and editors
+sudo apt install -y \
+        vim zsh tmux tmuxp \
+        openssh-server
 
-sudo apt install -y make cmake ninja-build
-sudo apt install -y git git-flow
-sudo apt install -y curl wget nghttp2
-sudo apt install -y vim zsh tmux tmuxp
-sudo apt install -y zip unzip
+# archives and transfer
+sudo apt install -y \
+        zip unzip \
+        curl wget nghttp2
 
-sudo apt install -y fzf ripgrep
+# search and cli utils
+sudo apt install -y \
+        fzf ripgrep \
+        jq \
+        bubblewrap \
+        tldr direnv btop cloc
 
-sudo apt install -y jq
+# version control
+sudo apt install -y \
+        git git-flow
 
-sudo apt install -y build-essential
-sudo apt install -y linux-tools-common linux-tools-generic linux-tools-$(uname -r)
-sudo apt install -y linux-headers-$(uname -r)
+# build essentials
+sudo apt install -y \
+        build-essential \
+        make cmake ninja-build \
+        binutils \
+        patchutils \
+        graphviz
 
-sudo apt install -y gcc g++
-sudo apt install -y clangd
-sudo apt install -y gdb lldb-14
+# c and cpp toolchain
+sudo apt install -y \
+        gcc g++ \
+        clangd \
+        gdb lldb-14
 
-# ======= new born
+# development libraries
+sudo apt install -y \
+        libncurses5-dev libevent-dev
 
-sudo apt install -y binutils
-sudo apt install -y sysstat net-tools bridge-utils
+# kernel headers and perf tools
+sudo apt install -y \
+        linux-tools-common linux-tools-generic linux-tools-$(uname -r) \
+        linux-headers-$(uname -r)
 
-sudo apt install -y patchutils # grepdiff
+# system network and metrics
+sudo apt install -y \
+        sysstat net-tools bridge-utils \
+        bpfcc-tools
 
-sudo apt install -y gh
-sudo apt install -y kitty
+# tracing
+sudo apt install -y \
+        systemtap-sdt-dev
 
-sudo apt install -y tldr direnv podman btop cloc jq
-
-sudo apt install -y bpfcc-tools
-# dtrace
-sudo apt-get install systemtap-sdt-dev
-
-# build
-sudo apt install -y graphviz
+# sudo apt install -y gh
+# sudo apt install -y kitty
 
 # databases
-sudo apt install -y sqlite3
-sudo apt install -y redis-tools
-sudo apt install -y mysql-client
+sudo apt install -y \
+        sqlite3 \
+        redis-tools \
+        mysql-client
+
 # mongodb: https://www.mongodb.com/try/download/shell
 wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.6_amd64.deb | sudo apt install ./mongodb-mongosh_2.5.6_amd64.deb
 
@@ -57,8 +76,8 @@ wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.6_amd64.deb | sud
 # curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
 sudo apt install -y nodejs
 
-# libs
-sudo apt install -y libncurses5-dev libevent-dev
+# containers
+sudo apt install -y podman
 
 # # For full system emulation
 # sudo apt install -y qemu-system
