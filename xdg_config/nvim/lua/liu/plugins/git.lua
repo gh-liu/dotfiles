@@ -25,7 +25,7 @@ return { -- Git {{{2
 				end,
 			},
 			-- Quickfix integration for fugitive git operations
-			{ "gh-liu/vim-qfugitive", dev = true },
+			-- { "gh-liu/vim-qfugitive", dev = true },
 		},
 		config = function()
 			--[[ Mappings remap ]]
