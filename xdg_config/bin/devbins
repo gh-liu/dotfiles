@@ -260,22 +260,25 @@ install_nvim_clis() {
 		uv tool install git+https://github.com/johnnymorganz/stylua
 		uv tool install --force isort
 		uv tool install --force black
-		uv tool install --force sqlfluff
 		uv tool install --force pylint
+		uv tool install --force sqlfluff
 	fi
 
 	if have_cmd cargo; then
 		cargo install --git https://github.com/1jehuang/mermaid-rs-renderer
+
 		cargo install --locked tree-sitter-cli
-		cargo install websocat
+
 		cargo install fd-find
 		cargo install ripgrep
 		cargo install just
+
+		cargo install websocat
 	fi
 
-	if ! have_cmd jq; then
-		install_jq
-	fi
+	# if ! have_cmd jq; then
+	# 	install_jq
+	# fi
 
 	if ! have_cmd shellcheck; then
 		install_shellcheck
