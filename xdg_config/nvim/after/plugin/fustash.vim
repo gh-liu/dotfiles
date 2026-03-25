@@ -16,6 +16,10 @@ function! s:GetStashIndex() abort
   return matchstr(line, 'stash@{\d\+}')
 endfunction
 
+function! s:IsStashPager() abort
+  return getline(1) =~# '^\x\+\s\+\d\{4\}-\d\{2\}-\d\{2\}\s\+stash@{\d\+}'
+endfunction
+
 function! s:RefreshStashPager() abort
   execute '0G ' . s:stash_list_cmd
 endfunction
@@ -25,7 +29,16 @@ function! s:OpStash(cmd) abort
   if empty(idx)
     return
   endif
-  execute 'Git stash ' . a:cmd . ' --quiet ' . idx
+
+  let dir = FugitiveGitDir()
+  let argv = [dir, 'stash'] + split(a:cmd) + ['--quiet', idx]
+  let result = call('fugitive#Execute', argv)
+  if result.exit_status != 0
+    let msg = empty(result.stderr) ? 'stash ' . a:cmd . ' failed' : join(result.stderr, "\n")
+    echohl ErrorMsg | echom '[fustash] ' . msg | echohl None
+    return
+  endif
+
   call s:RefreshStashPager()
 endfunction
 
@@ -37,6 +50,9 @@ endfunction
 
 function! s:SetupFugitivePager() abort
   " czd: drop, czO: pop, czo: pop --index (in FugitivePager)
+  if !s:IsStashPager()
+    return
+  endif
   setlocal bufhidden=delete
   nnoremap <silent><buffer> czd :<C-U>call <SID>OpStash('drop')<CR>
   nnoremap <silent><buffer> czO :<C-U>call <SID>OpStash('pop')<CR>
