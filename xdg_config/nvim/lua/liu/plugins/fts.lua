@@ -1,6 +1,7 @@
 return {
 	{
 		"MeanderingProgrammer/render-markdown.nvim",
+		enabled = false,
 		opts = {
 			code = {
 				sign = false,
