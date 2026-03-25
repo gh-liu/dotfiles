@@ -1,5 +1,4 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#rust_analyzer
--- rustup component add rust-analyzer
 return {
 	-- https://rust-analyzer.github.io/book/configuration.html
 	settings = {

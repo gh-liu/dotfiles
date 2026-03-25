@@ -3,6 +3,9 @@
 # ======= helper
 : "${OS:=$(uname -s | tr '[:upper:]' '[:lower:]')}"
 : "${ARCH:=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')}"
+have_cmd() {
+	command -v "$1" >/dev/null 2>&1
+}
 gh_latest_tag() {
 	gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R "$1"
 }
@@ -34,7 +37,7 @@ install_terraform() {
 }
 
 install_bins() {
-	if [ -f "$(which go)" ]; then
+	if have_cmd go; then
 		# export GOPROXY=https://goproxy.io
 
 		# local GOPLSVERSION=$(curl -s https://api.github.com/repos/golang/tools/releases | jq -r ".[0].tag_name" | cut -d/ -f2)
@@ -71,7 +74,7 @@ install_bins() {
 		# go install github.com/superfly/flyctl@latest
 	fi
 
-	if [ -f "$(which bun)" ]; then
+	if have_cmd bun; then
 		# 	bun i -g tree-sitter-cli
 		bun i -g @slidev/cli
 
@@ -81,7 +84,7 @@ install_bins() {
 		bun i -g @typescript/native-preview
 	fi
 
-	# if [ -f "$(which uv)" ]; then
+	# if have_cmd uv; then
 	# 	uv tool install --force jupyterlab
 	# 	uv tool install --force notebook
 	#
@@ -90,7 +93,7 @@ install_bins() {
 	# 	uv tool install mitmproxy
 	# fi
 
-	if [ -f "$(which cargo)" ]; then
+	if have_cmd cargo; then
 		# NOTE: use `cargo binstall` to install bins
 		# cargo install cargo-binstall
 
@@ -119,22 +122,71 @@ install_bins() {
 
 	fi
 
-	# if [ -f "$(which gh)" ]; then
+	# if have_cmd gh; then
 	# 	gh extension install yusukebe/gh-markdown-preview
 	# fi
 
-	if [ -f "$(which kubectl)" ]; then
+	if have_cmd kubectl; then
 		install_kubectl
 	fi
 
-	if [ -f "$(which helm)" ]; then
+	if have_cmd helm; then
 		install_helm
 	fi
 
-	if [ -f "$(which terraform)" ]; then
+	if have_cmd terraform; then
 		install_terraform
 	fi
 
+}
+
+install_lsp() {
+	if have_cmd go; then
+		go install golang.org/x/tools/gopls@latest
+		go install github.com/bufbuild/buf/cmd/buf@latest
+		go install github.com/docker/docker-language-server/cmd/docker-language-server@latest
+		# go install github.com/hashicorp/terraform-ls@latest
+	fi
+
+	if have_cmd bun; then
+		bun i -g vscode-json-languageserver
+		bun i -g yaml-language-server
+		bun i -g bash-language-server
+		bun i -g vim-language-server
+
+		bun i -g typescript
+		bun i -g typescript-language-server
+
+		# bun i -g @github/copilot-language-server
+
+		# bun i -g @astrojs/language-server
+
+		# bun i -g nushell
+	fi
+
+	if have_cmd uv; then
+		uv tool install --force ast-grep-cli
+		uv tool install --force basedpyright
+		uv tool install --force pyright
+		uv tool install --force ruff
+		uv tool install --force ty
+
+		# Alternative kept from the LSP config notes:
+	fi
+
+	if have_cmd cargo; then
+		# rustup component add rust-analyzer
+		cargo install emmylua_ls
+		# cargo install jinja-lsp
+		cargo install --features lsp --locked taplo-cli
+		# cargo install --git https://github.com/ribru17/ts_query_ls.git ts_query_ls
+
+		# cargo install ast-grep
+		# cargo install nu
+	fi
+
+	# Download from https://github.com/zigtools/zls/releases
+	devlangs zls
 }
 
 if [[ -z "$1" ]]; then

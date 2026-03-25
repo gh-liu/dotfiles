@@ -1,5 +1,4 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#gopls
--- @need-install: go install golang.org/x/tools/gopls@latest
 return {
 	-- https://github.com/golang/tools/blob/master/gopls/doc/settings.md
 	settings = {

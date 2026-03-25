@@ -1,5 +1,4 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#yamlls
--- @need-install: bun i -g yaml-language-server
 return {
 	-- https://github.com/redhat-developer/yaml-language-server#language-server-settings
 	settings = {

@@ -1,5 +1,4 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#zls
--- Download from https://github.com/zigtools/zls/releases
 return {
 	-- https://github.com/zigtools/zls#configuration-options
 	settings = {

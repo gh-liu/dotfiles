@@ -1,5 +1,4 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#taplo
--- @need-install: cargo install --features lsp --locked taplo-cli
 return {
 	settings = {
 		-- Use the defaults that the VSCode extension uses:
