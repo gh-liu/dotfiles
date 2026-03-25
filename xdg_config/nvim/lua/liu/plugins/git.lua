@@ -95,9 +95,7 @@ return { -- Git {{{2
 					local buf = vim.t.fugitive_buf or -1
 
 					if buf > 0 and api.nvim_buf_is_valid(buf) then
-						api.nvim_buf_call(buf, function()
-							vim.cmd("bw!")
-						end)
+						api.nvim_buf_delete(buf, { force = true })
 						vim.t.fugitive_buf = -1
 					else
 						vim.cmd.G({ mods = { keepalt = true } })
