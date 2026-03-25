@@ -8,7 +8,7 @@
 "
 " Workflow B: By file
 "   :GRFiles [target]          - Show changed files (default: merge-base..target)
-"   :Gvdiffsplit! REFUGE_BASE<CR>  - Diff: saved base vs target (file changes)
+"   :Gvdiffsplit! refs/refuge/base<CR>  - Diff: saved base vs target (file changes)
 "
 "
 
@@ -41,7 +41,7 @@ endfunction
 
 function! s:SetReviewBaseRef(base) abort
     let dir = FugitiveGitDir()
-    return fugitive#Execute(dir, 'update-ref', 'REFUGE_BASE', a:base)
+    return fugitive#Execute(dir, 'update-ref', 'refs/refuge/base', a:base)
 endfunction
 
 " Complete refs (branches, HEAD references)
@@ -121,7 +121,7 @@ endfunction
 
 augroup Refuge
     autocmd!
-    autocmd User FugitiveBlob nnoremap <buffer> dr :<C-U>Gvdiffsplit! REFUGE_BASE <CR>
+    autocmd User FugitiveBlob nnoremap <buffer> dr :<C-U>Gvdiffsplit! refs/refuge/base <CR>
 augroup END
 
 " GRCommit: show commits between base and target
