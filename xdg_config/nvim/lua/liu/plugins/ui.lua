@@ -171,7 +171,7 @@ return {
 			augroup liu_flagship_tab
 			  autocmd!
 			  autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline
-			  autocmd Progress * redrawtabline
+			  "autocmd Progress * redrawtabline
 			  "autocmd Progress * echo v:lua.vim.ui.progress_status()
 			augroup END
 			]])
