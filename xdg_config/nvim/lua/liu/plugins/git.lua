@@ -43,8 +43,8 @@ return { -- Git {{{2
 				callback = function()
 					vim.wo[0][0].foldmethod = "syntax"
 
-					vim.bo.bufhidden = "wipe"
-					vim.bo.buflisted = false
+					-- vim.bo.bufhidden = "wipe"
+					-- vim.bo.buflisted = false
 
 					if vim.b.fugitive_type == "commit" then
 						-- fold all files
