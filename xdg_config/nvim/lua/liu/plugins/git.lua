@@ -117,7 +117,7 @@ return { -- Git {{{2
 
 			--[[ Custom commands ]]
 			utils.set_cmds({
-				GLog = "Gclog!",
+				-- GLog = "Gclog!",
 
 				GConflict = "tabnew % | Gvdiffsplit! | Gvdiffsplit! :1 | wincmd J",
 			})
