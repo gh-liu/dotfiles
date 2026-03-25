@@ -77,6 +77,8 @@ install_bins() {
 
 		bun i -g oxlint
 		bun i -g oxfmt
+
+		bun i -g @typescript/native-preview
 	fi
 
 	# if [ -f "$(which uv)" ]; then
