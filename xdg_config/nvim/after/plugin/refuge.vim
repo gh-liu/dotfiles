@@ -119,6 +119,11 @@ function! s:GRFiles(args, bang) abort
     execute 'G' . a:bang . ' difftool --name-status ' . base . ' ' . range[1]
 endfunction
 
+augroup Refuge
+    autocmd!
+    autocmd User FugitiveBlob nnoremap <buffer> dr :<C-U>Gvdiffsplit! REFUGE_BASE <CR>
+augroup END
+
 " GRCommit: show commits between base and target
 command! -bang -nargs=* -complete=customlist,s:CompleteRefs GRCommit
     \ call s:GRCommit(<q-args>, '<bang>')
