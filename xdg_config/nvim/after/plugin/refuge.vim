@@ -8,7 +8,7 @@
 "
 " Workflow B: By file
 "   :GRFiles [target]          - Show changed files (default: merge-base..target)
-"   :Gvdiffsplit! @            - Diff: @ vs target (file changes)
+"   :Gvdiffsplit! REFUGE_BASE<CR>  - Diff: saved base vs target (file changes)
 "
 "
 
@@ -39,6 +39,11 @@ function! s:GetMergeBase(target) abort
     return result.exit_status == 0 ? trim(join(result.stdout, '')) : '@'
 endfunction
 
+function! s:SetReviewBaseRef(base) abort
+    let dir = FugitiveGitDir()
+    return fugitive#Execute(dir, 'update-ref', 'REFUGE_BASE', a:base)
+endfunction
+
 " Complete refs (branches, HEAD references)
 function! s:CompleteRefs(ArgLead, CmdLine, CursorPos) abort
     let dir = FugitiveGitDir()
@@ -49,6 +54,8 @@ function! s:CompleteRefs(ArgLead, CmdLine, CursorPos) abort
     if result.exit_status == 0
         let heads += filter(result.stdout, 'len(v:val) > 0')
     endif
+    
+
     return filter(uniq(sort(heads)), 'stridx(v:val, a:ArgLead) == 0')
 endfunction
 
@@ -106,6 +113,9 @@ function! s:GRFiles(args, bang) abort
 
     let range = s:ParseArgs(a:args)
     let base = s:GetMergeBase(range[1])
+    
+    call s:SetReviewBaseRef(base)
+    
     execute 'G' . a:bang . ' difftool --name-status ' . base . ' ' . range[1]
 endfunction
 
@@ -118,5 +128,3 @@ command! -bang -nargs=* -complete=customlist,s:CompleteRefs GRCommit
 " - Otherwise: show files between merge-base and target
 command! -bang -nargs=* -complete=customlist,s:CompleteRefs GRFiles
     \ call s:GRFiles(<q-args>, '<bang>')
-
-
