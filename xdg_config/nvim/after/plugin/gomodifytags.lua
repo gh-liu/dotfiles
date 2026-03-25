@@ -1,4 +1,3 @@
--- @need-install: go install github.com/fatih/gomodifytags@latest
 -- https://github.com/fatih/gomodifytags
 --
 -- :Gomodifytags [ARGS]  - Modify struct tags for Go struct fields

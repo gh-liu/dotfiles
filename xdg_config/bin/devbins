@@ -9,6 +9,13 @@ have_cmd() {
 gh_latest_tag() {
 	gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R "$1"
 }
+
+gh_download_release() {
+	local repo=$1
+	local pattern=$2
+	local dir=$3
+	gh release download -R "$repo" --pattern "$pattern" --dir "$dir" --clobber
+}
 # ======= helper
 
 install_kubectl() {
@@ -34,6 +41,37 @@ install_terraform() {
 	curl -O -L "https://releases.hashicorp.com/terraform/$version/$PKG"
 	unzip $PKG -x "LICENSE.txt"
 	mv terraform ~/.local/bin/terraform
+}
+
+install_jq() {
+	local jq_os
+	jq_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		jqlang/jq \
+		"jq-${jq_os}-${ARCH}" \
+		"$tmpdir"
+	mv "$tmpdir"/jq-${jq_os}-${ARCH} ~/.local/bin/jq
+	chmod +x ~/.local/bin/jq
+	rm -rf "$tmpdir"
+}
+
+install_shellcheck() {
+	local shellcheck_arch
+	shellcheck_arch=$(printf '%s' "$ARCH" | sed 's/^amd64$/x86_64/; s/^arm64$/aarch64/')
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		koalaman/shellcheck \
+		"shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz" \
+		"$tmpdir"
+	tar -xJf "$tmpdir"/shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz -C "$tmpdir"
+	mv "$tmpdir"/shellcheck-v*/shellcheck ~/.local/bin/shellcheck
+	chmod +x ~/.local/bin/shellcheck
+	rm -rf "$tmpdir"
 }
 
 install_bins() {
@@ -187,6 +225,61 @@ install_lsp() {
 
 	# Download from https://github.com/zigtools/zls/releases
 	devlangs zls
+}
+
+install_dap() {
+	if have_cmd uv; then
+		uv tool install --force debugpy
+		uv tool install --force pytest
+	fi
+
+	if have_cmd go; then
+		go install github.com/go-delve/delve/cmd/dlv@latest
+	fi
+}
+
+install_nvim_clis() {
+	if have_cmd go; then
+		go install golang.org/x/tools/cmd/goimports@latest
+		go install mvdan.cc/gofumpt@latest
+		go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+		go install mvdan.cc/sh/v3/cmd/shfmt@latest
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+		go install github.com/fatih/gomodifytags@latest
+		go install github.com/josharian/impl@latest
+		go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+		go install github.com/AlexanderGrooff/mermaid-ascii@latest
+	fi
+
+	if have_cmd bun; then
+		bun i -g oxlint
+		bun i -g oxfmt
+	fi
+
+	if have_cmd uv; then
+		uv tool install git+https://github.com/johnnymorganz/stylua
+		uv tool install --force isort
+		uv tool install --force black
+		uv tool install --force sqlfluff
+		uv tool install --force pylint
+	fi
+
+	if have_cmd cargo; then
+		cargo install --git https://github.com/1jehuang/mermaid-rs-renderer
+		cargo install --locked tree-sitter-cli
+		cargo install websocat
+		cargo install fd-find
+		cargo install ripgrep
+		cargo install just
+	fi
+
+	if ! have_cmd jq; then
+		install_jq
+	fi
+
+	if ! have_cmd shellcheck; then
+		install_shellcheck
+	fi
 }
 
 if [[ -z "$1" ]]; then

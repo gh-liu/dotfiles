@@ -38,8 +38,6 @@ return {
 		"mistweaverco/kulala.nvim",
 		-- depends on: snacks.picker (for UI pickers)
 		-- integrates with: vim-dispatch (via b:dispatch), vim-flagship (status indicator)
-		-- @need-install: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
-		-- @need-install: cargo install websocat
 		init = function()
 			vim.api.nvim_create_autocmd({ "FileType" }, {
 				group = utils.augroup("kulala"),

@@ -1,4 +1,3 @@
--- @need-install: go install github.com/josharian/impl@latest
 local Impl = {}
 -- append text after node
 Impl.append_text = function(bufnr, node, text)

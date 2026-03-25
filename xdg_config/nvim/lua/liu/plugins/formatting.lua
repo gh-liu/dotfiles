@@ -1,12 +1,12 @@
 -- :help conform-formatters
 local formatters_by_ft = {
 	go = {
-		-- "goimports", -- @need-install: go install golang.org/x/tools/cmd/goimports@latest
+		-- "goimports",
 		"gofmt",
-		-- "gofumpt", -- @need-install: go install mvdan.cc/gofumpt@latest
+		-- "gofumpt",
 	},
 	lua = {
-		"stylua", -- @need-install: uv tool install git+https://github.com/johnnymorganz/stylua
+		"stylua",
 	},
 	rust = {
 		"rustfmt",
@@ -17,32 +17,31 @@ local formatters_by_ft = {
 	python = {
 		"ruff_format",
 		"ruff_organize_imports",
-		-- "isort", -- @need-install: uv tool install --force isort
-		-- "black", -- @need-install: uv tool install --force black
+		-- "isort",
+		-- "black",
 	},
 	json = {
-		"jq", -- @need-install: command -v jq >/dev/null 2>&1 || printf "\033[31m[need-install] missing jq\033[0m\n"
+		"jq",
 	},
 	yaml = {
-		"yamlfmt", -- @need-install: go install github.com/google/yamlfmt/cmd/yamlfmt@latest
+		"yamlfmt",
 	},
 	toml = {
 		"taplo",
 	},
 	sh = {
-		"shfmt", -- @need-install: go install mvdan.cc/sh/v3/cmd/shfmt@latest
+		"shfmt",
 	},
 	zsh = {
 		"shfmt",
 	},
-	just = { "just" }, -- @need-install: cargo install just
+	just = { "just" },
 	proto = { "buf" },
 	query = { "format-queries" },
-	-- @need-install: bun install -g oxfmt
 	javascript = { "oxfmt" },
 	typescript = { "oxfmt" },
 	markdown = { "injected" },
-	sql = { "sqlfluff" }, -- @need-install: uv tool install --force sqlfluff
+	sql = { "sqlfluff" },
 	terraform = { "terraform_fmt" },
 }
 

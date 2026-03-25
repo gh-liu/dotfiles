@@ -42,8 +42,6 @@ mypickers.args = {
 	},
 }
 
--- @need-install: cargo install fd-find
--- @need-install: cargo install ripgrep
 return {
 	-- Collection of 25+ plugins: picker/dashboard/scroll/terminal/git/explorer/etc
 	"folke/snacks.nvim",

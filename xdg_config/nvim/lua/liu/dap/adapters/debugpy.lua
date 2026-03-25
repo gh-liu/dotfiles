@@ -1,5 +1,3 @@
--- @need-install: uv tool install --force debugpy
--- @need-install: uv tool install --force pytest
 local dap = require("dap")
 
 local utils = require("liu.dap.utils")
