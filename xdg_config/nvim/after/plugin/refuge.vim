@@ -10,8 +10,7 @@
 "   :GRFiles [target]          - Show changed files (default: merge-base..target)
 "   :Gvdiffsplit! @            - Diff: @ vs target (file changes)
 "
-" Additional:
-"   :GRWorktree                - Show uncommitted changes (HEAD)"
+"
 
 if exists('g:loaded_refuge') || !exists('*FugitiveGitDir')
     finish
@@ -120,5 +119,4 @@ command! -bang -nargs=* -complete=customlist,s:CompleteRefs GRCommit
 command! -bang -nargs=* -complete=customlist,s:CompleteRefs GRFiles
     \ call s:GRFiles(<q-args>, '<bang>')
 
-" GRWorktree: show uncommitted changes (staged + unstaged)
-command! -bang GRWorktree G<bang> difftool --name-status HEAD
+
