@@ -59,19 +59,40 @@ function! s:CompleteRefs(ArgLead, CmdLine, CursorPos) abort
     return filter(uniq(sort(heads)), 'stridx(v:val, a:ArgLead) == 0')
 endfunction
 
-" Parse args: support 0, 1, or 2 arguments
-" 0 args: [@, cached_target]
-" 1 arg:  [@, target]
-" 2 args: [base, target]
+" Parse args: smart range parsing
+" - Branch name → @ .. branch
+" - A..B, A...B → as-is
+" - A.., A... → A .. @, A ... @
+" - ..B, ...B → @ .. B, @ ... B
+" - No args → @ .. FETCH_HEAD (or smart default)
 function! s:ParseArgs(args) abort
-    let parts = split(a:args)
-    if len(parts) == 0
-        return ['@', s:GetDiffTarget('')]
-    elseif len(parts) == 1
-        return ['@', s:GetDiffTarget(parts[0])]
-    else
-        return [parts[0], parts[1]]
+    let input = trim(a:args)
+    
+    if empty(input)
+        " No args: use cached target or default
+        return { 'left': '@', 'right': s:GetDiffTarget(''), 'sep': '..' }
     endif
+    
+    if input =~# '\.\.\.'
+        let parts = split(input, '\.\.\.', 1)
+        return {
+            \ 'left': empty(get(parts, 0, '')) ? '@' : parts[0],
+            \ 'right': empty(get(parts, 1, '')) ? '@' : parts[1],
+            \ 'sep': '...',
+            \ }
+    endif
+
+    if input =~# '\.\.'
+        let parts = split(input, '\.\.', 1)
+        return {
+            \ 'left': empty(get(parts, 0, '')) ? '@' : parts[0],
+            \ 'right': empty(get(parts, 1, '')) ? '@' : parts[1],
+            \ 'sep': '..',
+            \ }
+    endif
+
+    " Simple branch/ref name: @ .. branch
+    return { 'left': '@', 'right': input, 'sep': '..' }
 endfunction
 
 " Get files for current commit if in commit buffer
@@ -103,7 +124,7 @@ endfunction
 
 function! s:GRCommit(args, bang) abort
     let range = s:ParseArgs(a:args)
-    execute 'Gclog' . a:bang . ' ' . range[0] . '..' . range[1]
+    execute 'Gclog' . a:bang . ' ' . range.left . range.sep . range.right
 endfunction
 
 function! s:GRFiles(args, bang) abort
@@ -112,11 +133,11 @@ function! s:GRFiles(args, bang) abort
     endif
 
     let range = s:ParseArgs(a:args)
-    let base = s:GetMergeBase(range[1])
+    let base = s:GetMergeBase(range.right)
     
     call s:SetReviewBaseRef(base)
     
-    execute 'G' . a:bang . ' difftool --name-status ' . base . ' ' . range[1]
+    execute 'G' . a:bang . ' difftool --name-status ' . base . ' ' . range.right
 endfunction
 
 augroup Refuge
