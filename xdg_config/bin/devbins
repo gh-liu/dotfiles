@@ -218,6 +218,7 @@ install_lsp() {
 		# cargo install jinja-lsp
 		cargo install --features lsp --locked taplo-cli
 		# cargo install --git https://github.com/ribru17/ts_query_ls.git ts_query_ls
+		cargo install vimdoc-language-server
 
 		# cargo install ast-grep
 		# cargo install nu

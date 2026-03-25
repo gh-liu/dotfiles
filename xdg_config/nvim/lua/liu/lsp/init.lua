@@ -343,6 +343,8 @@ vim.lsp.enable({ "emmylua_ls" })
 
 -- vim.lsp.enable("clangd")
 
+vim.lsp.enable("vimdoc_ls")
+
 vim.lsp.enable({ "jsonls", "yamlls", "taplo" })
 vim.lsp.enable("buf_ls")
 
