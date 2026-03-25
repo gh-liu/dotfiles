@@ -60,6 +60,14 @@ return { -- Git {{{2
 				end,
 			})
 
+			api.nvim_create_autocmd("User", {
+				group = augroup,
+				pattern = { "FugitiveObject" },
+				callback = function(ev)
+					vim.keymap.set("n", "d.", ":<c-u>Gvdiffsplit! ", { buf = ev.buf })
+				end,
+			})
+
 			-- FileType: fugitive (reset mappings)
 			api.nvim_create_autocmd("FileType", {
 				group = augroup,
