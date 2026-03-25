@@ -1,10 +1,17 @@
 " refuge.vim - Review workflow for vim-fugitive (review + fugitive)
-" Works with vim-qfugitive for auto diff view
+" Pure Fugitive-based code review without qfugitive dependency
 "
-" Usage:
-"   :GRCommit [base] [target]  - Show commits (default: @..FETCH_HEAD)
-"   :GRFiles [base] [target]   - Show changed files (in commit buffer: current commit)
-"   :GRWorktree                - Show uncommitted changes (e.g. AI changes)
+" Workflow A: By commit
+"   :GRCommit [target]         - Show commits (default: @..FETCH_HEAD)
+"   GFiles !                   - List files in current commit
+"   dd / :Gvdiffsplit! !^      - Diff: !^ vs ! (this commit's changes)
+"
+" Workflow B: By file
+"   :GRFiles [target]          - Show changed files (default: merge-base..target)
+"   :Gvdiffsplit! @            - Diff: @ vs target (file changes)
+"
+" Additional:
+"   :GRWorktree                - Show uncommitted changes (HEAD)"
 
 if exists('g:loaded_refuge') || !exists('*FugitiveGitDir')
     finish
