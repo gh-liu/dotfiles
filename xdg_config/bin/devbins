@@ -89,9 +89,30 @@ install_shellcheck() {
 		koalaman/shellcheck \
 		"shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz" \
 		"$tmpdir"
-	tar -xJf "$tmpdir"/shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz -C "$tmpdir"
+	extract_archive "$tmpdir"/shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz "$tmpdir"
 	mv "$tmpdir"/shellcheck-v*/shellcheck ~/.local/bin/shellcheck
 	chmod +x ~/.local/bin/shellcheck
+	rm -rf "$tmpdir"
+}
+
+install_stylua() {
+	local stylua_os
+	stylua_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+
+	local stylua_arch
+	stylua_arch=$(printf '%s' "$ARCH" | sed 's/^amd64$/x86_64/; s/^arm64$/aarch64/')
+
+	local archive=stylua-${stylua_os}-${stylua_arch}.zip
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		JohnnyMorganz/StyLua \
+		"$archive" \
+		"$tmpdir"
+	extract_archive "$tmpdir/$archive" "$tmpdir"
+	mv "$tmpdir"/stylua ~/.local/bin/stylua
+	chmod +x ~/.local/bin/stylua
 	rm -rf "$tmpdir"
 }
 
@@ -279,12 +300,13 @@ install_nvimdep() {
 	fi
 
 	if have_cmd uv; then
-		uv tool install git+https://github.com/johnnymorganz/stylua
 		uv tool install --force isort
 		uv tool install --force black
 		uv tool install --force pylint
 		uv tool install --force sqlfluff
 	fi
+
+	install_stylua
 
 	if have_cmd cargo; then
 		cargo install --git https://github.com/1jehuang/mermaid-rs-renderer
