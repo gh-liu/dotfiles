@@ -250,9 +250,6 @@ function zvm_config() {
 	zvm_bindkey viins '^[f' vi-forward-word
 	zvm_bindkey viins '^[b' vi-backward-word
 }
-zvm_after_init() {
-	source "$ZDOTDIR/fzf.zsh"
-}
 ## disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
 	source "$HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
@@ -374,10 +371,8 @@ export STARSHIP_CONFIG="$ZDOTDIR/starship/starship.toml"
 ## direnv
 # curl -sfL https://direnv.net/install.sh | bash
 (( $+commands[direnv] )) && eval "$(direnv hook zsh)"
-source "$ZDOTDIR/fzf.zsh"
 ## zoxide
 (( $+commands[zoxide] )) && eval "$(zoxide init zsh)" # must be added after compinit is called.
-source "$ZDOTDIR/completion.zsh"
 
 (( $+commands[nvim] )) && alias e=nvim
 (( $+commands[fd] )) && alias find="fd"
@@ -419,6 +414,9 @@ _set_title() {
 
 path+=("$XDG_CONFIG_HOME/bin")
 [ -f "$ZDOTDIR/zsh-conf/custom.zsh" ] && source "$ZDOTDIR/zsh-conf/custom.zsh"
+
+source "$ZDOTDIR/completion.zsh"
+source "$ZDOTDIR/fzf.zsh" # !make sure fzf after completion, cause use <tab> for ,, completion
 # }}}
 
 # 9999. LLM {{{
