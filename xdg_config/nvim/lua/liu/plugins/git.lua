@@ -65,9 +65,22 @@ return { -- Git {{{2
 
 			api.nvim_create_autocmd("User", {
 				group = augroup,
-				pattern = { "FugitiveObject" },
+				pattern = { "FugitiveBlob" },
 				callback = function(ev)
 					vim.keymap.set("n", "d.", ":<c-u>Gvdiffsplit! ", { buf = ev.buf })
+				end,
+			})
+
+			api.nvim_create_autocmd("User", {
+				group = augroup,
+				pattern = { "FugitiveCommit" },
+				callback = function(ev)
+					vim.keymap.set(
+						"n",
+						"df",
+						[[:<c-u>G difftool --name-only <c-r>=FugitiveParse()[0].'~..'.FugitiveParse()[0]<cr><cr>]],
+						{ buf = ev.buf, nowait = true }
+					)
 				end,
 			})
 
