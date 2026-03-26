@@ -103,8 +103,8 @@ vim.o.updatetime = 3000
 
 -- Tab, Window, Buffer {{{
 -- =============================================================================
-vim.o.splitright = true
-vim.o.splitbelow = true
+-- vim.o.splitright = true
+-- vim.o.splitbelow = true
 -- SEE: https://github.com/neovim/neovim/pull/19243
 vim.o.splitkeep = "screen"
 vim.o.tabclose = "uselast"
