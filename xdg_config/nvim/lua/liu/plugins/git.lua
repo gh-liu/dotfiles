@@ -6,7 +6,8 @@ return { -- Git {{{2
 	{
 		-- ## NOTE
 		-- 1. >REV = current file within version REV
-		-- 2. :Gvdiffsplit! always split leftabove
+		-- 2. `:Gvdiffsplit!` always split leftabove
+		-- 3. `:Git blame %` and `~` could use `CTRL-o``CTRL-i` jump back
 		"tpope/vim-fugitive",
 		dependencies = {
 			-- GitHub integration for vim-fugitive (gbrowse command)
