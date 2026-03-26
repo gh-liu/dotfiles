@@ -239,7 +239,7 @@ install_dap() {
 	fi
 }
 
-install_nvim_clis() {
+install_nvimdep() {
 	if have_cmd go; then
 		go install golang.org/x/tools/cmd/goimports@latest
 		go install mvdan.cc/gofumpt@latest
