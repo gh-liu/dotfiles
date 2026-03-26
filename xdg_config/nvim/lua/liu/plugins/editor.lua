@@ -455,6 +455,9 @@ return {
 				noremap = true,
 				silent = true,
 			})
+
+			-- TODO: disable MiniDiff when diff OptionSet
+
 			vim.keymap.set({ "n" }, "]c", function()
 				if vim.wo.diff then
 					vim.cmd.normal({ "]c", bang = true })
