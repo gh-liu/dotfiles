@@ -16,6 +16,27 @@ gh_download_release() {
 	local dir=$3
 	gh release download -R "$repo" --pattern "$pattern" --dir "$dir" --clobber
 }
+
+extract_archive() {
+	local archive=$1
+	local dir=${2:-.}
+
+	case "$archive" in
+	*.tar.gz | *.tgz)
+		tar -xzf "$archive" -C "$dir"
+		;;
+	*.tar.xz)
+		tar -xJf "$archive" -C "$dir"
+		;;
+	*.zip)
+		unzip -q "$archive" -d "$dir"
+		;;
+	*)
+		echo "unsupported archive: $archive" >&2
+		return 1
+		;;
+	esac
+}
 # ======= helper
 
 install_kubectl() {
@@ -29,9 +50,9 @@ install_helm() {
 	local PKG=helm-${version}-${OS}-${ARCH}.tar.gz
 	local DIR=${OS}-${ARCH}
 	curl -O -L "https://get.helm.sh/$PKG"
-	tar -zxvf $PKG
-	mv $DIR/helm ~/.local/bin/helm
-	rm -r $DIR
+	extract_archive "$PKG"
+	mv "$DIR/helm" ~/.local/bin/helm
+	rm -r "$DIR"
 }
 
 install_terraform() {
@@ -39,7 +60,7 @@ install_terraform() {
 	version=${version#v}
 	local PKG=terraform_${version}_${OS}_${ARCH}.zip
 	curl -O -L "https://releases.hashicorp.com/terraform/$version/$PKG"
-	unzip $PKG -x "LICENSE.txt"
+	extract_archive "$PKG"
 	mv terraform ~/.local/bin/terraform
 }
 
