@@ -4,6 +4,9 @@ local utils = require("liu.utils")
 return { -- Git {{{2
 	-- Git wrapper providing :G commands for commit/diff/blame/log operations
 	{
+		-- ## NOTE
+		-- 1. >REV = current file within version REV
+		-- 2. :Gvdiffsplit! always split leftabove
 		"tpope/vim-fugitive",
 		dependencies = {
 			-- GitHub integration for vim-fugitive (gbrowse command)
