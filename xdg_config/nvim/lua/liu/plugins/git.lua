@@ -110,6 +110,16 @@ return { -- Git {{{2
 				end,
 			})
 
+			api.nvim_create_autocmd("SessionLoadPost", {
+				group = augroup,
+				callback = function(ev)
+					local buf = ev.buf or api.nvim_get_current_buf()
+					if api.nvim_buf_is_valid(buf) and vim.b[buf].fugitive_type == "index" then
+						api.nvim_buf_delete(buf, { force = true })
+					end
+				end,
+			})
+
 			--[[ Toggle summary window ]]
 			local function make_fugitive_toggler(augroup)
 				local function toggle()
