@@ -164,14 +164,15 @@ install_bins() {
 		bun i -g @typescript/native-preview
 	fi
 
-	# if have_cmd uv; then
-	# 	uv tool install --force jupyterlab
-	# 	uv tool install --force notebook
-	#
-	# 	uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
-	#
-	# 	uv tool install mitmproxy
-	# fi
+	if have_cmd uv; then
+		# 	uv tool install --force jupyterlab
+		# 	uv tool install --force notebook
+		#
+		# 	uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+		#
+		# 	uv tool install mitmproxy
+		uv tool install awscli
+	fi
 
 	if have_cmd cargo; then
 		# NOTE: use `cargo binstall` to install bins
