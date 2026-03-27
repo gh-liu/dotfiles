@@ -196,17 +196,17 @@ return { -- Git {{{2
 					local maps = {
 						{ "o", "<Plug>(FlogVSplitCommitRight)", "Open commit" },
 						{ "q", "<Plug>(FlogQuit)", "Quit flog" },
-						{ "rt", "<Cmd>exec flog#Format('Floggit reset %h')<CR>", "Git reset to commit" },
-						{ "rT", "<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>", "Git reset --hard to commit" },
-						{ "gaa", ":Floggit absorb<space>", "Flog git absorb" },
-						{ "gar", ":Floggit absorb --and-rebase<space>", "Flog git absorb and rebase" },
+						{ "crt", "<Cmd>exec flog#Format('Floggit reset %h')<CR>", "Git reset to commit" },
+						{ "crT", "<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>", "Git reset --hard to commit" },
+						-- { "gaa", ":Floggit absorb<space>", "Flog git absorb" },
+						-- { "gar", ":Floggit absorb --and-rebase<space>", "Flog git absorb and rebase" },
 						{
 							"gab",
 							"<Cmd><C-U>exec flog#Format('Floggit absorb --base %h')<CR>",
 							"Flog git absorb --base",
 						},
 						{
-							"gabr",
+							"gaB",
 							"<Cmd><C-U>exec flog#Format('Floggit absorb --base %h --and-rebase')<CR>",
 							"Flog git absorb --base and rebase",
 						},
