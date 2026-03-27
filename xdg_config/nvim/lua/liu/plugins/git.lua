@@ -36,7 +36,11 @@ return { -- Git {{{2
 			-- https://github.com/tpope/vim-fugitive/issues/1080#issuecomment-521100430
 			vim.g.oremap = { ["[m"] = "[f", ["]m"] = "]f" }
 			vim.g.xremap = { ["[m"] = "[f", ["]m"] = "]f" }
-			vim.g.nremap = { ["[m"] = "[f", ["]m"] = "]f", ["="] = "<TAB>" }
+			vim.g.nremap = {
+				["[m"] = "[f",
+				["]m"] = "]f",
+				-- ["="] = "<TAB>",
+			}
 
 			--[[ Autocmds ]]
 			local augroup = utils.augroup("fugitive")
