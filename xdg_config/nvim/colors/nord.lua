@@ -64,6 +64,13 @@ M.colors = {
 	brightergray = M.palette.nord3,
 	dimgray = M.palette.nord3_5, -- for subtle UI elements
 	cursorline = M.palette.nord0_5, -- distinct darker background for cursor line
+
+	-- Diff tinted backgrounds (nord1-level lightness, hue-shifted toward aurora colors)
+	diff_add = "#354535", -- nord1 shifted toward nord14 (green)
+	diff_change = "#353B56", -- nord1 shifted toward nord10 (blue)
+	diff_delete = "#4A353C", -- nord1 shifted toward nord11 (red)
+	diff_text = "#3E507A", -- stronger nord10 tint (changed chars)
+	diff_text_add = "#3E6E42", -- stronger nord14 tint (added chars)
 }
 
 -- terminal colors
@@ -114,17 +121,17 @@ M.set_highlights = function()
 			EndOfBuffer = { link = "NonText" },
 		},
 		diff = {
-			Added = { fg = c.green },
-			Changed = { fg = c.yellow },
-			Removed = { fg = c.red },
+			Added = { fg = c.diff_add },
+			Changed = { fg = c.diff_change },
+			Removed = { fg = c.diff_delete },
 			-- diff
-			-- linewise diff
-			DiffAdd = { fg = c.green, bg = c.dimgray },
-			DiffChange = { fg = c.yellow, bg = c.dimgray },
-			DiffDelete = { fg = c.red, bg = c.dimgray },
-			-- inline(chawise) diff
-			DiffText = { fg = c.blue, bg = c.brightgray, bold = true },
-			DiffTextAdd = { fg = c.green, bg = c.brightgray, bold = true },
+			-- linewise diff (tinted backgrounds, no fg so syntax colors show through)
+			DiffAdd = { bg = c.diff_add },
+			DiffChange = { bg = c.diff_change },
+			DiffDelete = { bg = c.diff_delete },
+			-- inline(charwise) diff (stronger tint for the actual changed text)
+			DiffText = { bg = c.diff_text, bold = true },
+			DiffTextAdd = { bg = c.diff_text_add, bold = true },
 		},
 		float = {
 			-- float window
@@ -491,12 +498,24 @@ M.set_highlights = function()
 			StatusLineFugitive = { link = "fugitiveHeader" },
 
 			-- mini.diff
-			MiniDiffOverAdd = { fg = c.green, bg = c.dimgray },
-			MiniDiffOverChange = { fg = c.yellow, bg = c.dimgray },
-			MiniDiffOverChangeBuf = { fg = c.yellow, bg = c.dimgray },
+			-- MiniDiffSignAdd = {
+			-- 	-- fg = c.diff_add,
+			-- 	bg = c.diff_add,
+			-- },
+			-- MiniDiffSignChange = {
+			-- 	-- fg = c.diff_change,
+			-- 	bg = c.diff_change,
+			-- },
+			-- MiniDiffSignDelete = {
+			-- 	-- fg = c.diff_delete,
+			-- 	bg = c.diff_delete,
+			-- },
+			MiniDiffOverAdd = { fg = c.diff_add },
+			MiniDiffOverChange = { bg = c.diff_change },
+			MiniDiffOverChangeBuf = { bg = c.diff_change },
 			MiniDiffOverContext = { fg = c.darkwhite },
 			MiniDiffOverContextBuf = { fg = c.darkwhite },
-			MiniDiffOverDelete = { fg = c.red, bg = c.dimgray },
+			MiniDiffOverDelete = { bg = c.diff_delete },
 
 			-- vim-flog
 			flogBranch1 = { fg = c.blue },
