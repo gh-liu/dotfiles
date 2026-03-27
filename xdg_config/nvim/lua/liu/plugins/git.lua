@@ -215,6 +215,10 @@ return { -- Git {{{2
 					for _, m in ipairs(maps) do
 						nmap(m[1], m[2], m[3])
 					end
+
+					vim.cmd(
+						[[ cnoremap <buffer> <expr> <C-r><C-h> getcmdtype() is# ':' ? get(flog#floggraph#mark#Get(getcharstr()), 'hash', '') : "\<C-r>\<C-h>" ]]
+					)
 				end,
 			})
 		end,
