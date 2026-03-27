@@ -1,11 +1,16 @@
 update_zsh_completions() {
-	mkdir -p "$XDG_CONFIG_HOME"/zsh/zsh-completions
+	emulate -L zsh
 
-	(($ + commands[gh])) && gh completion -s zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_gh
-	(($ + commands[git - absorb])) && git-absorb --gen-completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_git-absorb
+	local completion_dir="$XDG_CONFIG_HOME/zsh/zsh-completions"
+	local cargo_completion
 
-	(($ + commands[just])) && just --completions=zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_just
-	(($ + commands[starship])) && starship completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_starship
+	mkdir -p "$completion_dir"
+
+	(( $+commands[gh] )) && gh completion -s zsh >"$completion_dir/_gh"
+	(( $+commands[git-absorb] )) && git-absorb --gen-completions zsh >"$completion_dir/_git-absorb"
+
+	(( $+commands[just] )) && just --completions=zsh >"$completion_dir/_just"
+	(( $+commands[starship] )) && starship completions zsh >"$completion_dir/_starship"
 
 	# (( $+commands[atuin] )) && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
 
@@ -15,14 +20,21 @@ update_zsh_completions() {
 	# (( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
 	# (( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
 
-	(($ + commands[rustc])) && cp "$(rustc --print sysroot)"/share/zsh/site-functions/_cargo "$XDG_CONFIG_HOME"/zsh/zsh-completions/_cargo
-	(($ + commands[rustup])) && rustup completions zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_rustup
-	(($ + commands[uv])) && uv generate-shell-completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_uv
-	(($ + commands[uvx])) && uvx --generate-shell-completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_uvx
-	(($ + commands[bun])) && SHELL=zsh bun completions >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_bun
+	if (( $+commands[rustc] )); then
+		cargo_completion="$(rustc --print sysroot)/share/zsh/site-functions/_cargo"
+		[[ -f "$cargo_completion" ]] && cp "$cargo_completion" "$completion_dir/_cargo"
+	fi
+	(( $+commands[rustup] )) && rustup completions zsh >"$completion_dir/_rustup"
+	(( $+commands[uv] )) && uv generate-shell-completion zsh >"$completion_dir/_uv"
+	(( $+commands[uvx] )) && uvx --generate-shell-completion zsh >"$completion_dir/_uvx"
+	(( $+commands[bun] )) && SHELL=zsh bun completions >"$completion_dir/_bun"
 
 	# (( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
 	# 	>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
+
+	if command -v aws_zsh_completer.sh >/dev/null 2>&1 && command -v aws_completer >/dev/null 2>&1; then
+		cp "$ZDOTDIR"/zsh-conf/_aws "$completion_dir/_aws"
+	fi
 
 	rm -f "$ZDOTDIR/.zcompdump" "$ZDOTDIR/.zcompdump.zwc"
 }
