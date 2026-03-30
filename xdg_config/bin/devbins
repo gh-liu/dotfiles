@@ -153,6 +153,7 @@ install_bins() {
 
 		# go install github.com/superfly/flyctl@latest
 		go install github.com/google/go-containerregistry/cmd/crane@latest
+		# go install github.com/containers/skopeo/cmd/skopeo@latest
 	fi
 
 	if have_cmd bun; then
