@@ -152,6 +152,7 @@ install_bins() {
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 		# go install github.com/superfly/flyctl@latest
+		go install github.com/google/go-containerregistry/cmd/crane@latest
 	fi
 
 	if have_cmd bun; then
