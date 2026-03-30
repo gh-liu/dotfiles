@@ -170,7 +170,8 @@ return {
 			vim.cmd([[
 			augroup liu_flagship_tab
 			  autocmd!
-			  autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline
+			  "autocmd User DAPInitialized,DAPStopped,DAPTerminated redrawtabline
+			  autocmd User DapProgressUpdate redrawtabline
 			  "autocmd Progress * redrawtabline
 			  "autocmd Progress * echo v:lua.vim.ui.progress_status()
 			augroup END
@@ -179,7 +180,9 @@ return {
 				if not package.loaded["dap"] or require("dap").status() == "" then
 					return ""
 				end
-				return "[" .. require("liu.user_config").icons.bug .. " Debuging" .. "]"
+				-- local msg = "Debuging"
+				local msg = require("dap").status()
+				return "[" .. require("liu.user_config").icons.bug .. " " .. msg .. "]"
 			end
 
 			-- ////////////////////////////////////////////////////////////
