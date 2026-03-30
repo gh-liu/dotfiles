@@ -77,10 +77,11 @@ local function render(bufnr)
 		local params = vim.lsp.util.make_range_params(win, client.offset_encoding)
 
 		local diagnostics = {}
-		local ns_push = lsp.diagnostic.get_namespace(client.id, false)
-		local ns_pull = lsp.diagnostic.get_namespace(client.id, true)
-		vim.list_extend(diagnostics, vim.diagnostic.get(buf, { namespace = ns_pull, lnum = line }))
-		vim.list_extend(diagnostics, vim.diagnostic.get(buf, { namespace = ns_push, lnum = line }))
+		for _, ns in pairs(vim.diagnostic.get_namespaces()) do
+			if ns.name and ns.name:find("nvim.lsp." .. client.name .. "." .. client.id, 1, true) then
+				vim.list_extend(diagnostics, vim.diagnostic.get(buf, { namespace = ns.id, lnum = line }))
+			end
+		end
 		diagnostics = filter_diagnostic_at_cursor(diagnostics, cursor)
 
 		local extra_param = {
