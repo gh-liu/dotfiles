@@ -124,10 +124,10 @@ return { -- Git {{{2
 			local function make_fugitive_toggler(augroup)
 				local function toggle()
 					local buf = vim.t.fugitive_buf or -1
+					local win = buf > 0 and vim.fn.bufwinid(buf) or -1
 
-					if buf > 0 and api.nvim_buf_is_valid(buf) then
+					if win > 0 then
 						api.nvim_buf_delete(buf, { force = true })
-						vim.t.fugitive_buf = -1
 					else
 						vim.cmd.G({ mods = { keepalt = true } })
 					end
