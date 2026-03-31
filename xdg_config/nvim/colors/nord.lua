@@ -67,7 +67,7 @@ M.colors = {
 
 	-- Diff tinted backgrounds (nord1-level lightness, hue-shifted toward aurora colors)
 	diff_add = "#354535", -- nord1 shifted toward nord14 (green)
-	diff_change = "#353B56", -- nord1 shifted toward nord10 (blue)
+	diff_change = "#383735", -- nord1 shifted toward nord13 (yellow)
 	diff_delete = "#4A353C", -- nord1 shifted toward nord11 (red)
 	diff_text = "#3E507A", -- stronger nord10 tint (changed chars)
 	diff_text_add = "#3E6E42", -- stronger nord14 tint (added chars)
