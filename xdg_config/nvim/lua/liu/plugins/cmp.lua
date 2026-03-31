@@ -347,7 +347,7 @@ return {
 	-- Generate code annotations (docstrings) for functions, classes, types, and files
 	{
 		"danymat/neogen",
-		-- documentation generator (annotation for functions/classes/etc)
+		enabled = false,
 		cmd = { "Neogen" },
 		keys = {
 			{ "ydd", "<cmd>Neogen<cr>", desc = "Generate annotation (auto-detect)" },
