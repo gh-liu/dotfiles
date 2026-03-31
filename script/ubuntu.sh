@@ -35,7 +35,8 @@ sudo apt install -y \
         make cmake ninja-build \
         binutils \
         patchutils \
-        graphviz
+        graphviz \
+        pkg-config # find libs and tell compiler how to link libs
 
 # dev: c and cpp compilers
 sudo apt install -y \
@@ -48,7 +49,7 @@ sudo apt install -y \
 
 # dev: development libraries
 sudo apt install -y \
-        libncurses5-dev libevent-dev
+        libncurses5-dev libevent-dev libssl-dev
 
 # lang
 # sudo apt install -y python3-pip
