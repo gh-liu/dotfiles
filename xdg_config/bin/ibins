@@ -116,6 +116,42 @@ install_stylua() {
 	rm -rf "$tmpdir"
 }
 
+install_nerdctl() {
+	local nerdctl_arch
+	nerdctl_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+
+	local archive_pattern=nerdctl-[0-9]*-${OS}-${nerdctl_arch}.tar.gz
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		containerd/nerdctl \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+	mv "$tmpdir"/nerdctl ~/.local/bin/nerdctl || return 1
+	chmod +x ~/.local/bin/nerdctl || return 1
+	rm -rf "$tmpdir"
+}
+
+install_containerd() {
+	local containerd_arch
+	containerd_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+
+	local archive_pattern=containerd-[0-9]*-${OS}-${containerd_arch}.tar.gz
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		containerd/containerd \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+	mv "$tmpdir"/bin/containerd ~/.local/bin/containerd || return 1
+	chmod +x ~/.local/bin/containerd || return 1
+	rm -rf "$tmpdir"
+}
+
 install_bins() {
 	if have_cmd go; then
 		# export GOPROXY=https://goproxy.io
