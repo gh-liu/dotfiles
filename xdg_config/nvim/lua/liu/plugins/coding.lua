@@ -477,6 +477,7 @@ return {
 	-- Quick textobject selection via visual hints and single-key targets
 	{
 		"gh-liu/nvim-bullseye",
+		enabled = false,
 		dev = true,
 		event = "VeryLazy",
 	},
