@@ -152,6 +152,31 @@ install_containerd() {
 	rm -rf "$tmpdir"
 }
 
+install_etcd() {
+	local etcd_arch
+	etcd_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+
+	local archive_pattern=etcd-*-${OS}-${etcd_arch}.tar.gz
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		etcd-io/etcd \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+
+	local extracted_dir
+	extracted_dir=$(find "$tmpdir" -maxdepth 1 -type d -name "etcd-*-${OS}-${etcd_arch}" | head -n 1)
+	[[ -n "$extracted_dir" ]] || return 1
+
+	mv "$extracted_dir"/etcd ~/.local/bin/etcd || return 1
+	mv "$extracted_dir"/etcdctl ~/.local/bin/etcdctl || return 1
+	mv "$extracted_dir"/etcdutl ~/.local/bin/etcdutl || return 1
+	chmod +x ~/.local/bin/etcd ~/.local/bin/etcdctl ~/.local/bin/etcdutl || return 1
+	rm -rf "$tmpdir"
+}
+
 install_bins() {
 	if have_cmd go; then
 		# export GOPROXY=https://goproxy.io
