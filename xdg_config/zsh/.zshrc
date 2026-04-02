@@ -252,10 +252,6 @@ function zvm_config() {
 }
 ## disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
-	## Re-bind fzf keybindings after zsh-vi-mode init (zvm overrides ^R, ^T, etc.)
-	function zvm_after_init() {
-		[ -n "${FZF_SHELL_INITIALIZED:-}" ] && source <(fzf --zsh)
-	}
 	source "$HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 fi
 # }}}
