@@ -3,28 +3,33 @@
 # skills add
 # skills update
 
+FLAGS="-a amp codex claude-code -y"
+
+if [[ "$1" == "--clean" ]]; then
+  skills remove --all -g -y
+fi
+
 # local skills
-skills add $LIU_TOOLS/dotfiles/skills
+skills add $LIU_TOOLS/dotfiles/skills $FLAGS
 
 # find-skills:
-skills add https://github.com/vercel-labs/skills --skill find-skills
+skills add https://github.com/vercel-labs/skills --skill find-skills $FLAGS
 
 # find-docs:
-skills add https://github.com/upstash/context7 --skill find-docs
+skills add https://github.com/upstash/context7 --skill find-docs $FLAGS
 
 # brainstorming:
-skills add https://github.com/obra/superpowers --skill brainstorming
+skills add https://github.com/obra/superpowers --skill brainstorming $FLAGS
 
 # test-driven-development:
-# skills add https://github.com/obra/superpowers --skill test-driven-development
-
+# skills add https://github.com/obra/superpowers --skill test-driven-development $FLAGS
 # tdd
-skills add mattpocock/skills/tdd
+skills add mattpocock/skills/tdd $FLAGS
 
 # fullstack-dev
-skills add https://github.com/MiniMax-AI/skills --skill fullstack-dev
+skills add https://github.com/MiniMax-AI/skills --skill fullstack-dev $FLAGS
 
 # use-modern-go:
-skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go
+skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go $FLAGS
 
 # vim: set filetype=sh
