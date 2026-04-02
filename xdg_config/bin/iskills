@@ -3,11 +3,15 @@
 # skills add
 # skills update
 
-FLAGS="-a amp codex claude-code -y"
+SCOPE="-g"
+for arg in "$@"; do
+  case "$arg" in
+    --local) SCOPE="" ;;
+    --clean) skills remove --all -g -y ;;
+  esac
+done
 
-if [[ "$1" == "--clean" ]]; then
-  skills remove --all -g -y
-fi
+FLAGS="-a amp codex claude-code -y $SCOPE"
 
 # local skills
 skills add $LIU_TOOLS/dotfiles/skills $FLAGS
