@@ -252,6 +252,10 @@ function zvm_config() {
 }
 ## disable in nvim terminal buffer
 if [[ -z "${NVIM}" ]]; then
+	function zvm_after_init() {
+		bindkey -M viins '^R' fzf-history-widget
+		bindkey -M vicmd '^R' fzf-history-widget
+	}
 	source "$HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 fi
 # }}}
