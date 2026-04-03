@@ -216,7 +216,8 @@ install_bins() {
 		go install github.com/google/go-containerregistry/cmd/crane@latest
 		# go install github.com/containers/skopeo/cmd/skopeo@latest
 
-		go install k8s.io/minikube/cmd/minikube@latest
+		# need `libvirt`
+		# go install k8s.io/minikube/cmd/minikube@latest
 		go install sigs.k8s.io/kind/cmd/kind@latest
 	fi
 

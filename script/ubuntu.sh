@@ -49,7 +49,7 @@ sudo apt install -y \
 
 # dev: development libraries
 sudo apt install -y \
-        libncurses5-dev libevent-dev libssl-dev
+        libncurses5-dev libevent-dev libssl-dev libvirt-dev
 
 # lang
 # sudo apt install -y python3-pip
