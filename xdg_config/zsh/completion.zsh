@@ -18,6 +18,7 @@ update_zsh_completions() {
 	# (( $+commands[docker] )) && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 	# (( $+commands[helm] )) && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
 	(( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
+	(( $+commands[kind] )) && kind completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kind
 	# (( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
 
 	if (( $+commands[rustc] )); then
