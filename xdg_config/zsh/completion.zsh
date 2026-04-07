@@ -17,7 +17,7 @@ update_zsh_completions() {
 	# (( $+commands[podman] )) && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
 	# (( $+commands[docker] )) && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 	# (( $+commands[helm] )) && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
-	# (( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
+	(( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
 	# (( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
 
 	if (( $+commands[rustc] )); then
