@@ -40,8 +40,14 @@ extract_archive() {
 # ======= helper
 
 install_kubectl() {
-	local version=$(gh_latest_tag kubernetes/kubernetes)
-	curl -o ~/.local/bin/kubectl -L "https://dl.k8s.io/release/$version/bin/${OS}/${ARCH}/kubectl"
+	# https://dl.k8s.io/
+	local version
+	version=$(curl -fsSL https://dl.k8s.io/release/stable.txt) || return 1
+	local kubectl_arch
+	kubectl_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+	local bin="https://dl.k8s.io/release/${version}/bin/${OS}/${kubectl_arch}/kubectl"
+	# echo "$bin"
+	curl -o ~/.local/bin/kubectl -L "$bin"
 	chmod +x ~/.local/bin/kubectl
 }
 
