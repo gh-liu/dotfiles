@@ -216,6 +216,8 @@ install_bins() {
 		# go install github.com/gohugoio/hugo@latest
 		# CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
 
+		go install github.com/sagernet/sing-box/cmd/sing-box@latest
+
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 		# go install github.com/superfly/flyctl@latest
