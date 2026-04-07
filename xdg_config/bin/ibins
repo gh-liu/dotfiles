@@ -225,6 +225,9 @@ install_bins() {
 		# need `libvirt`
 		# go install k8s.io/minikube/cmd/minikube@latest
 		go install sigs.k8s.io/kind/cmd/kind@latest
+		go install github.com/stern/stern@latest
+		go install github.com/derailed/k9s@latest
+
 	fi
 
 	if have_cmd bun; then
