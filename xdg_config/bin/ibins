@@ -77,6 +77,23 @@ install_terraform() {
 	mv terraform ~/.local/bin/terraform
 }
 
+install_terragrunt() {
+	local terragrunt_arch
+	terragrunt_arch=$(norm_arch)
+
+	local asset=terragrunt_${OS}_${terragrunt_arch}
+
+	local tmpdir
+	tmpdir=$(mktemp -d)
+	gh_download_release \
+		gruntwork-io/terragrunt \
+		"$asset" \
+		"$tmpdir" || return 1
+	mv "$tmpdir"/"$asset" ~/.local/bin/terragrunt || return 1
+	chmod +x ~/.local/bin/terragrunt || return 1
+	rm -rf "$tmpdir"
+}
+
 install_jq() {
 	local jq_os
 	jq_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
