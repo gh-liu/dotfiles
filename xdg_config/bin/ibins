@@ -2,9 +2,12 @@
 
 # ======= helper
 : "${OS:=$(uname -s | tr '[:upper:]' '[:lower:]')}"
-: "${ARCH:=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')}"
+: "${ARCH:=$(uname -m)}"
 have_cmd() {
 	command -v "$1" >/dev/null 2>&1
+}
+norm_arch() {
+	printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/'
 }
 gh_latest_tag() {
 	gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R "$1"
@@ -44,7 +47,7 @@ install_kubectl() {
 	local version
 	version=$(curl -fsSL https://dl.k8s.io/release/stable.txt) || return 1
 	local kubectl_arch
-	kubectl_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+	kubectl_arch=$(norm_arch)
 	local bin="https://dl.k8s.io/release/${version}/bin/${OS}/${kubectl_arch}/kubectl"
 	# echo "$bin"
 	curl -o ~/.local/bin/kubectl -L "$bin"
@@ -53,8 +56,10 @@ install_kubectl() {
 
 install_helm() {
 	local version=$(gh_latest_tag helm/helm)
-	local PKG=helm-${version}-${OS}-${ARCH}.tar.gz
-	local DIR=${OS}-${ARCH}
+	local helm_arch
+	helm_arch=$(norm_arch)
+	local PKG=helm-${version}-${OS}-${helm_arch}.tar.gz
+	local DIR=${OS}-${helm_arch}
 	curl -O -L "https://get.helm.sh/$PKG"
 	extract_archive "$PKG"
 	mv "$DIR/helm" ~/.local/bin/helm
@@ -64,7 +69,9 @@ install_helm() {
 install_terraform() {
 	local version=$(gh_latest_tag hashicorp/terraform)
 	version=${version#v}
-	local PKG=terraform_${version}_${OS}_${ARCH}.zip
+	local terraform_arch
+	terraform_arch=$(norm_arch)
+	local PKG=terraform_${version}_${OS}_${terraform_arch}.zip
 	curl -O -L "https://releases.hashicorp.com/terraform/$version/$PKG"
 	extract_archive "$PKG"
 	mv terraform ~/.local/bin/terraform
@@ -74,28 +81,28 @@ install_jq() {
 	local jq_os
 	jq_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
 
+	local jq_arch
+	jq_arch=$(norm_arch)
+
 	local tmpdir
 	tmpdir=$(mktemp -d)
 	gh_download_release \
 		jqlang/jq \
-		"jq-${jq_os}-${ARCH}" \
+		"jq-${jq_os}-${jq_arch}" \
 		"$tmpdir"
-	mv "$tmpdir"/jq-${jq_os}-${ARCH} ~/.local/bin/jq
+	mv "$tmpdir"/jq-${jq_os}-${jq_arch} ~/.local/bin/jq
 	chmod +x ~/.local/bin/jq
 	rm -rf "$tmpdir"
 }
 
 install_shellcheck() {
-	local shellcheck_arch
-	shellcheck_arch=$(printf '%s' "$ARCH" | sed 's/^amd64$/x86_64/; s/^arm64$/aarch64/')
-
 	local tmpdir
 	tmpdir=$(mktemp -d)
 	gh_download_release \
 		koalaman/shellcheck \
-		"shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz" \
+		"shellcheck-v*.${OS}.${ARCH}.tar.xz" \
 		"$tmpdir"
-	extract_archive "$tmpdir"/shellcheck-v*.${OS}.${shellcheck_arch}.tar.xz "$tmpdir"
+	extract_archive "$tmpdir"/shellcheck-v*.${OS}.${ARCH}.tar.xz "$tmpdir"
 	mv "$tmpdir"/shellcheck-v*/shellcheck ~/.local/bin/shellcheck
 	chmod +x ~/.local/bin/shellcheck
 	rm -rf "$tmpdir"
@@ -105,10 +112,7 @@ install_stylua() {
 	local stylua_os
 	stylua_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
 
-	local stylua_arch
-	stylua_arch=$(printf '%s' "$ARCH" | sed 's/^amd64$/x86_64/; s/^arm64$/aarch64/')
-
-	local archive=stylua-${stylua_os}-${stylua_arch}.zip
+	local archive=stylua-${stylua_os}-${ARCH}.zip
 
 	local tmpdir
 	tmpdir=$(mktemp -d)
@@ -124,7 +128,7 @@ install_stylua() {
 
 install_nerdctl() {
 	local nerdctl_arch
-	nerdctl_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+	nerdctl_arch=$(norm_arch)
 
 	local archive_pattern=nerdctl-[0-9]*-${OS}-${nerdctl_arch}.tar.gz
 
@@ -142,7 +146,7 @@ install_nerdctl() {
 
 install_containerd() {
 	local containerd_arch
-	containerd_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
+	containerd_arch=$(norm_arch)
 
 	local archive_pattern=containerd-[0-9]*-${OS}-${containerd_arch}.tar.gz
 
