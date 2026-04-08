@@ -353,7 +353,7 @@ vim.lsp.enable("vimls")
 vim.lsp.enable("bashls")
 vim.lsp.enable("docker_language_server")
 
--- vim.lsp.enable("terraformls")
+vim.lsp.enable("terraformls")
 
 -- vim.lsp.enable("nushell")
 

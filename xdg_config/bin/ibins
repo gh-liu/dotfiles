@@ -308,7 +308,7 @@ install_lsp() {
 		go install golang.org/x/tools/gopls@latest
 		go install github.com/bufbuild/buf/cmd/buf@latest
 		go install github.com/docker/docker-language-server/cmd/docker-language-server@latest
-		# go install github.com/hashicorp/terraform-ls@latest
+		go install github.com/hashicorp/terraform-ls@latest
 	fi
 
 	if have_cmd bun; then
