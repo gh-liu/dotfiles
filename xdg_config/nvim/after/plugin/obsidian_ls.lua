@@ -314,6 +314,18 @@ local function list_templates(bufnr)
 	return {}
 end
 
+local function complete_template_names(bufnr, arg)
+	local query = arg:sub(#TemplatePrefix + 1):lower()
+	return vim.iter(list_templates(bufnr))
+		:filter(function(template)
+			return query == "" or template:lower():find(query, 1, true) ~= nil
+		end)
+		:map(function(template)
+			return TemplatePrefix .. template
+		end)
+		:totable()
+end
+
 local edit_uri = function(uri)
 	local fname = vim.uri_to_fname(uri)
 	vim.cmd("edit " .. vim.fn.fnameescape(fname))
@@ -342,20 +354,13 @@ end, {
 	nargs = "*",
 	desc = "Create new note (default template) or from template",
 	complete = function(_, cmdline, _)
+		local bufnr = vim.api.nvim_get_current_buf()
 		local arg = vim.fn.matchstr(cmdline, [[\v\S+$]])
 		if not arg or arg == "" or arg == "ObsidianNew" then
-			return vim.iter(list_templates(vim.api.nvim_get_current_buf()))
-				:map(function(t)
-					return TemplatePrefix .. t
-				end)
-				:totable()
+			return complete_template_names(bufnr, TemplatePrefix)
 		end
 		if arg:match("^" .. TemplatePrefix) then
-			return vim.iter(list_templates(vim.api.nvim_get_current_buf()))
-				:map(function(t)
-					return TemplatePrefix .. t
-				end)
-				:totable()
+			return complete_template_names(bufnr, arg)
 		end
 		return {}
 	end,
