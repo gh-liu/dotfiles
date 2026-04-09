@@ -212,27 +212,6 @@ function update_zsh_plugins() {
 	done
 }
 # }}}
-# 6. plugin: zsh-autosuggestions{{{
-## https://github.com/zsh-users/zsh-autosuggestions
-USERPLUGINS+=(https://github.com/zsh-users/zsh-autosuggestions)
-ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=12
-ZSH_AUTOSUGGEST_STRATEGY=(history completion)
-source "$USERPLUGINSHOME/zsh-autosuggestions/zsh-autosuggestions.zsh"
-# bindkey '^l' forward-word
-# }}}
-# 6. plugin: zsh-syntax-highlighting{{{
-## https://github.com/zsh-users/zsh-syntax-highlighting
-## Lazy load to improve startup time (load after first prompt)
-USERPLUGINS+=(https://github.com/zsh-users/zsh-syntax-highlighting)
-_load_syntax_highlighting() {
-	source "$USERPLUGINSHOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-	# Re-bind widgets if zsh-vi-mode is active
-	[[ -n "${ZVM_VERSION}" ]] && zvm_bindkey viins '^[f' vi-forward-word && zvm_bindkey viins '^[b' vi-backward-word
-	# Remove this hook after first execution
-	add-zsh-hook -d precmd _load_syntax_highlighting
-}
-add-zsh-hook precmd _load_syntax_highlighting
-# }}}
 # 6. plugin: zsh-vi-mode{{{
 WORDCHARS=${WORDCHARS//./} # ignore dot
 ## https://github.com/jeffreytse/zsh-vi-mode
@@ -258,6 +237,27 @@ if [[ -z "${NVIM}" ]]; then
 	}
 	source "$HOME/.zsh-plugins/zsh-vi-mode/zsh-vi-mode.plugin.zsh"
 fi
+# }}}
+# 6. plugin: zsh-autosuggestions{{{
+## https://github.com/zsh-users/zsh-autosuggestions
+USERPLUGINS+=(https://github.com/zsh-users/zsh-autosuggestions)
+ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=12
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+source "$USERPLUGINSHOME/zsh-autosuggestions/zsh-autosuggestions.zsh"
+# bindkey '^l' forward-word
+# }}}
+# 6. plugin: zsh-syntax-highlighting{{{
+## https://github.com/zsh-users/zsh-syntax-highlighting
+## Lazy load to improve startup time (load after first prompt)
+USERPLUGINS+=(https://github.com/zsh-users/zsh-syntax-highlighting)
+_load_syntax_highlighting() {
+	source "$USERPLUGINSHOME/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+	# Re-bind widgets if zsh-vi-mode is active
+	[[ -n "${ZVM_VERSION}" ]] && zvm_bindkey viins '^[f' vi-forward-word && zvm_bindkey viins '^[b' vi-backward-word
+	# Remove this hook after first execution
+	add-zsh-hook -d precmd _load_syntax_highlighting
+}
+add-zsh-hook precmd _load_syntax_highlighting
 # }}}
 
 # 8. changing directories{{{
