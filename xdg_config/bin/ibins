@@ -42,49 +42,117 @@ extract_archive() {
 }
 # ======= helper
 
-install_kubectl() {
+# ======= kubernetes / container
+_install_kubectl() {
 	# https://dl.k8s.io/
 	local version
 	version=$(curl -fsSL https://dl.k8s.io/release/stable.txt) || return 1
-	local kubectl_arch
-	kubectl_arch=$(norm_arch)
-	local bin="https://dl.k8s.io/release/${version}/bin/${OS}/${kubectl_arch}/kubectl"
-	# echo "$bin"
+	local bin="https://dl.k8s.io/release/${version}/bin/${OS}/$(norm_arch)/kubectl"
 	curl -o ~/.local/bin/kubectl -L "$bin"
 	chmod +x ~/.local/bin/kubectl
 }
 
-install_helm() {
-	local version=$(gh_latest_tag helm/helm)
-	local helm_arch
-	helm_arch=$(norm_arch)
-	local PKG=helm-${version}-${OS}-${helm_arch}.tar.gz
-	local DIR=${OS}-${helm_arch}
-	curl -O -L "https://get.helm.sh/$PKG"
-	extract_archive "$PKG"
-	mv "$DIR/helm" ~/.local/bin/helm
-	rm -r "$DIR"
+_install_helm() {
+	local version arch pkg dir tmpdir
+	version=$(gh_latest_tag helm/helm) || return 1
+	arch=$(norm_arch)
+	pkg="helm-${version}-${OS}-${arch}.tar.gz"
+	dir="${OS}-${arch}"
+	tmpdir=$(mktemp -d)
+
+	curl -fsSL -o "$tmpdir/$pkg" "https://get.helm.sh/$pkg" || return 1
+	extract_archive "$tmpdir/$pkg" "$tmpdir" || return 1
+	mv "$tmpdir/$dir/helm" ~/.local/bin/helm || return 1
+	chmod +x ~/.local/bin/helm || return 1
+	rm -rf "$tmpdir"
 }
 
+_install_nerdctl() {
+	local arch tmpdir
+	arch=$(norm_arch)
+	tmpdir=$(mktemp -d)
+
+	local archive_pattern=nerdctl-[0-9]*-${OS}-${arch}.tar.gz
+	gh_download_release \
+		containerd/nerdctl \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+	mv "$tmpdir"/nerdctl ~/.local/bin/nerdctl || return 1
+	chmod +x ~/.local/bin/nerdctl || return 1
+	rm -rf "$tmpdir"
+}
+
+_install_containerd() {
+	local arch tmpdir
+	arch=$(norm_arch)
+	tmpdir=$(mktemp -d)
+
+	local archive_pattern=containerd-[0-9]*-${OS}-${arch}.tar.gz
+	gh_download_release \
+		containerd/containerd \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+	mv "$tmpdir"/bin/containerd ~/.local/bin/containerd || return 1
+	chmod +x ~/.local/bin/containerd || return 1
+	rm -rf "$tmpdir"
+}
+
+_install_etcd() {
+	local arch tmpdir
+	arch=$(norm_arch)
+	tmpdir=$(mktemp -d)
+
+	local archive_pattern=etcd-*-${OS}-${arch}.tar.gz
+	gh_download_release \
+		etcd-io/etcd \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+
+	local extracted_dir
+	extracted_dir=$(find "$tmpdir" -maxdepth 1 -type d -name "etcd-*-${OS}-${arch}" | head -n 1)
+	[[ -n "$extracted_dir" ]] || return 1
+
+	mv "$extracted_dir"/etcd ~/.local/bin/etcd || return 1
+	mv "$extracted_dir"/etcdctl ~/.local/bin/etcdctl || return 1
+	mv "$extracted_dir"/etcdutl ~/.local/bin/etcdutl || return 1
+	chmod +x ~/.local/bin/etcd ~/.local/bin/etcdctl ~/.local/bin/etcdutl || return 1
+	rm -rf "$tmpdir"
+}
+
+install_k8s() {
+	_install_kubectl
+	_install_helm
+	_install_nerdctl
+	_install_containerd
+	_install_etcd
+}
+
+# ======= infrastructure / IaC
 install_terraform() {
-	local version=$(gh_latest_tag hashicorp/terraform)
+	local version arch pkg tmpdir
+	version=$(gh_latest_tag hashicorp/terraform) || return 1
 	version=${version#v}
-	local terraform_arch
-	terraform_arch=$(norm_arch)
-	local PKG=terraform_${version}_${OS}_${terraform_arch}.zip
-	curl -O -L "https://releases.hashicorp.com/terraform/$version/$PKG"
-	extract_archive "$PKG"
-	mv terraform ~/.local/bin/terraform
+	arch=$(norm_arch)
+	pkg="terraform_${version}_${OS}_${arch}.zip"
+	tmpdir=$(mktemp -d)
+
+	curl -fsSL -o "$tmpdir/$pkg" \
+		"https://releases.hashicorp.com/terraform/$version/$pkg" || return 1
+	extract_archive "$tmpdir/$pkg" "$tmpdir" || return 1
+	mv "$tmpdir/terraform" ~/.local/bin/terraform || return 1
+	chmod +x ~/.local/bin/terraform || return 1
+	rm -rf "$tmpdir"
 }
 
 install_terragrunt() {
-	local terragrunt_arch
-	terragrunt_arch=$(norm_arch)
-
-	local asset=terragrunt_${OS}_${terragrunt_arch}
-
-	local tmpdir
+	local arch tmpdir
+	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
+
+	local asset=terragrunt_${OS}_${arch}
 	gh_download_release \
 		gruntwork-io/terragrunt \
 		"$asset" \
@@ -94,25 +162,23 @@ install_terragrunt() {
 	rm -rf "$tmpdir"
 }
 
-install_jq() {
-	local jq_os
+# ======= cli utilities
+_install_jq() {
+	local jq_os arch tmpdir
 	jq_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
-
-	local jq_arch
-	jq_arch=$(norm_arch)
-
-	local tmpdir
+	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
+
 	gh_download_release \
 		jqlang/jq \
-		"jq-${jq_os}-${jq_arch}" \
+		"jq-${jq_os}-${arch}" \
 		"$tmpdir"
-	mv "$tmpdir"/jq-${jq_os}-${jq_arch} ~/.local/bin/jq
+	mv "$tmpdir"/jq-${jq_os}-${arch} ~/.local/bin/jq
 	chmod +x ~/.local/bin/jq
 	rm -rf "$tmpdir"
 }
 
-install_shellcheck() {
+_install_shellcheck() {
 	local tmpdir
 	tmpdir=$(mktemp -d)
 	gh_download_release \
@@ -125,14 +191,30 @@ install_shellcheck() {
 	rm -rf "$tmpdir"
 }
 
-install_stylua() {
-	local stylua_os
+# ======= lsp
+_install_emmylua_ls() {
+	local emmylua_arch tmpdir
+	emmylua_arch=$(printf '%s' "$ARCH" | sed 's/^aarch64$/arm64/; s/^x86_64$/x64/')
+	tmpdir=$(mktemp -d)
+
+	local archive=emmylua_ls-${OS}-${emmylua_arch}.tar.gz
+	gh_download_release \
+		EmmyLuaLs/emmylua-analyzer-rust \
+		"$archive" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir/$archive" "$tmpdir" || return 1
+	mv "$tmpdir"/emmylua_ls ~/.local/bin/emmylua_ls || return 1
+	chmod +x ~/.local/bin/emmylua_ls || return 1
+	rm -rf "$tmpdir"
+}
+
+# ======= nvimdep
+_install_stylua() {
+	local stylua_os tmpdir
 	stylua_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+	tmpdir=$(mktemp -d)
 
 	local archive=stylua-${stylua_os}-${ARCH}.zip
-
-	local tmpdir
-	tmpdir=$(mktemp -d)
 	gh_download_release \
 		JohnnyMorganz/StyLua \
 		"$archive" \
@@ -143,68 +225,9 @@ install_stylua() {
 	rm -rf "$tmpdir"
 }
 
-install_nerdctl() {
-	local nerdctl_arch
-	nerdctl_arch=$(norm_arch)
-
-	local archive_pattern=nerdctl-[0-9]*-${OS}-${nerdctl_arch}.tar.gz
-
-	local tmpdir
-	tmpdir=$(mktemp -d)
-	gh_download_release \
-		containerd/nerdctl \
-		"$archive_pattern" \
-		"$tmpdir" || return 1
-	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
-	mv "$tmpdir"/nerdctl ~/.local/bin/nerdctl || return 1
-	chmod +x ~/.local/bin/nerdctl || return 1
-	rm -rf "$tmpdir"
-}
-
-install_containerd() {
-	local containerd_arch
-	containerd_arch=$(norm_arch)
-
-	local archive_pattern=containerd-[0-9]*-${OS}-${containerd_arch}.tar.gz
-
-	local tmpdir
-	tmpdir=$(mktemp -d)
-	gh_download_release \
-		containerd/containerd \
-		"$archive_pattern" \
-		"$tmpdir" || return 1
-	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
-	mv "$tmpdir"/bin/containerd ~/.local/bin/containerd || return 1
-	chmod +x ~/.local/bin/containerd || return 1
-	rm -rf "$tmpdir"
-}
-
-install_etcd() {
-	local etcd_arch
-	etcd_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/')
-
-	local archive_pattern=etcd-*-${OS}-${etcd_arch}.tar.gz
-
-	local tmpdir
-	tmpdir=$(mktemp -d)
-	gh_download_release \
-		etcd-io/etcd \
-		"$archive_pattern" \
-		"$tmpdir" || return 1
-	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
-
-	local extracted_dir
-	extracted_dir=$(find "$tmpdir" -maxdepth 1 -type d -name "etcd-*-${OS}-${etcd_arch}" | head -n 1)
-	[[ -n "$extracted_dir" ]] || return 1
-
-	mv "$extracted_dir"/etcd ~/.local/bin/etcd || return 1
-	mv "$extracted_dir"/etcdctl ~/.local/bin/etcdctl || return 1
-	mv "$extracted_dir"/etcdutl ~/.local/bin/etcdutl || return 1
-	chmod +x ~/.local/bin/etcd ~/.local/bin/etcdctl ~/.local/bin/etcdutl || return 1
-	rm -rf "$tmpdir"
-}
-
+# ======= install bundles
 install_bins() {
+	# Go
 	if have_cmd go; then
 		# export GOPROXY=https://goproxy.io
 
@@ -253,6 +276,7 @@ install_bins() {
 
 	fi
 
+	# Bun
 	if have_cmd bun; then
 		# 	bun i -g tree-sitter-cli
 		bun i -g @slidev/cli
@@ -263,6 +287,7 @@ install_bins() {
 		bun i -g @typescript/native-preview
 	fi
 
+	# uv
 	if have_cmd uv; then
 		# 	uv tool install --force jupyterlab
 		# 	uv tool install --force notebook
@@ -273,6 +298,7 @@ install_bins() {
 		uv tool install awscli
 	fi
 
+	# Cargo
 	if have_cmd cargo; then
 		# NOTE: use `cargo binstall` to install bins
 		# cargo install cargo-binstall
@@ -306,14 +332,6 @@ install_bins() {
 	# 	gh extension install yusukebe/gh-markdown-preview
 	# fi
 
-	if have_cmd kubectl; then
-		install_kubectl
-	fi
-
-	if have_cmd helm; then
-		install_helm
-	fi
-
 	if have_cmd terraform; then
 		install_terraform
 	fi
@@ -321,6 +339,7 @@ install_bins() {
 }
 
 install_lsp() {
+	# Go
 	if have_cmd go; then
 		go install golang.org/x/tools/gopls@latest
 		go install github.com/bufbuild/buf/cmd/buf@latest
@@ -328,6 +347,7 @@ install_lsp() {
 		go install github.com/hashicorp/terraform-ls@latest
 	fi
 
+	# Bun
 	if have_cmd bun; then
 		bun i -g vscode-json-languageserver
 		bun i -g yaml-language-server
@@ -344,19 +364,18 @@ install_lsp() {
 		# bun i -g nushell
 	fi
 
+	# uv
 	if have_cmd uv; then
 		uv tool install --force ast-grep-cli
 		uv tool install --force basedpyright
 		uv tool install --force pyright
 		uv tool install --force ruff
 		uv tool install --force ty
-
-		# Alternative kept from the LSP config notes:
 	fi
 
+	# Cargo
 	if have_cmd cargo; then
 		# rustup component add rust-analyzer
-		cargo install emmylua_ls
 		# cargo install jinja-lsp
 		cargo install --features lsp --locked taplo-cli
 		# cargo install --git https://github.com/ribru17/ts_query_ls.git ts_query_ls
@@ -366,22 +385,28 @@ install_lsp() {
 		# cargo install nu
 	fi
 
+	# Direct binaries
+	_install_emmylua_ls
+
 	# Download from https://github.com/zigtools/zls/releases
 	devlangs zls
 }
 
 install_dap() {
+	# uv
 	if have_cmd uv; then
 		uv tool install --force debugpy
 		uv tool install --force pytest
 	fi
 
+	# Go
 	if have_cmd go; then
 		go install github.com/go-delve/delve/cmd/dlv@latest
 	fi
 }
 
 install_nvimdep() {
+	# Go
 	if have_cmd go; then
 		go install golang.org/x/tools/cmd/goimports@latest
 		go install mvdan.cc/gofumpt@latest
@@ -394,11 +419,13 @@ install_nvimdep() {
 		go install github.com/AlexanderGrooff/mermaid-ascii@latest
 	fi
 
+	# Bun
 	if have_cmd bun; then
 		bun i -g oxlint
 		bun i -g oxfmt
 	fi
 
+	# uv
 	if have_cmd uv; then
 		uv tool install --force isort
 		uv tool install --force black
@@ -406,8 +433,7 @@ install_nvimdep() {
 		uv tool install --force sqlfluff
 	fi
 
-	install_stylua
-
+	# Cargo
 	if have_cmd cargo; then
 		cargo install --git https://github.com/1jehuang/mermaid-rs-renderer
 
@@ -420,15 +446,19 @@ install_nvimdep() {
 		cargo install websocat
 	fi
 
+	# Direct binaries
+	_install_stylua
+
 	# if ! have_cmd jq; then
-	# 	install_jq
+	# 	_install_jq
 	# fi
 
 	if ! have_cmd shellcheck; then
-		install_shellcheck
+		_install_shellcheck
 	fi
 }
 
+# ======= entrypoint
 if [[ -z "$1" ]]; then
 	install_bins
 elif declare -f "install_$1" >/dev/null; then
