@@ -1,17 +1,20 @@
 #! /bin/bash
 
 # ======= helper
+: "${OS:=$(uname -s | tr '[:upper:]' '[:lower:]')}"
+: "${ARCH:=$(uname -m)}"
 have_cmd() { command -v "$1" >/dev/null 2>&1; }
+norm_arch() {
+	printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/'
+}
 backup_existing() {
 	local target="$1" backup="${2:-$1.bak}"
 	[[ -e "$target" ]] || return 0
 	rm -rf "$backup"
 	mv "$target" "$backup"
 }
-cdenv() {
-	local d="${LIU_ENV:-$HOME/env}/$1"
-	mkdir -p "$d" && cd "$d" && pwd
-}
+envdir() { local d="${LIU_ENV:-$HOME/env}/$1"; mkdir -p "$d"; echo "$d"; }
+cdenv() { cd "$(envdir "$1")" && pwd; }
 link_bin() { mkdir -p "$HOME/.local/bin" && ln -svf "$1" "$HOME/.local/bin/$2"; }
 download() {
 	local url="$1" out="${2:-}"
@@ -22,6 +25,16 @@ download() {
 		curl -fL --retry 3 --connect-timeout 10 -O "$url"
 	fi
 }
+extract_archive() {
+	local archive=$1
+	local dir=${2:-.}
+	case "$archive" in
+		*.tar.gz | *.tgz) tar xzf "$archive" -C "$dir" ;;
+		*.tar.xz) tar xJf "$archive" -C "$dir" ;;
+		*.zip) unzip -q "$archive" -d "$dir" ;;
+		*) echo "unsupported archive: $archive" >&2; return 1 ;;
+	esac
+}
 gh_latest_tag() {
 	gh release list --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName' -R "$1"
 }
@@ -31,99 +44,56 @@ gh_download() {
 # ======= helper
 
 install_go() {
-	local os
-	os="$(uname -s | tr '[:upper:]' '[:lower:]')"
-	local arch
-	arch="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
-	# 1. version
-	local version
+	local arch version pkg url
+	arch=$(norm_arch)
 	version="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
-	# 2. info
-	local pkg="$version.${os}-${arch}.tar.gz"
-	local url="https://go.dev/dl/$pkg"
-	echo "updating to $version (${os}-${arch}) from $url..."
-	# 3. env dir
+	pkg="$version.${OS}-${arch}.tar.gz"
+	url="https://go.dev/dl/$pkg"
+	echo "updating to $version (${OS}-${arch}) from $url..."
 	cdenv golang
-	# 4. download
-	download "$url" "$pkg" || {
-		echo "fail to download go" >&2
-		return 1
-	}
-	# 5. extract
+	download "$url" "$pkg" || { echo "fail to download go" >&2; return 1; }
 	backup_existing go
-	tar -zxvf "$pkg"
-	# 6. finalize
+	extract_archive "$pkg" && rm "$pkg"
 	export GOPROXY=https://goproxy.io
 	go install golang.org/x/tools/gopls@latest
 	go install github.com/go-delve/delve/cmd/dlv@latest
 }
 
 install_zls() {
-	local os
-	os="$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')"
-	local arch
-	arch="$(uname -m | sed 's/arm64/aarch64/')"
-
-	# 1. version
-	local version
+	local zls_os zls_arch version pkg
+	zls_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+	zls_arch=$(printf '%s' "$ARCH" | sed 's/^arm64$/aarch64/')
 	version="$(gh_latest_tag zigtools/zls)"
-	# 2. info
-	local pkg="zls-${arch}-${os}.tar.xz"
-	local url="https://github.com/zigtools/zls/releases/download/${version}/${pkg}"
-	echo "updating to $version (${arch}-${os}) from $url..."
-	# 3. env dir
+	pkg="zls-${zls_arch}-${zls_os}.tar.xz"
+	echo "updating to $version (${ARCH}-${zls_os})..."
 	cdenv ziglang
-	# 4. download
-	gh_download zigtools/zls "$version" "$pkg" || {
-		echo "fail to download zls" >&2
-		return 1
-	}
-	# 5. extract
-	tar xvJf "$pkg"
-	# 6. finalize
-	rm "$pkg"
+	gh_download zigtools/zls "$version" "$pkg" || { echo "fail to download zls" >&2; return 1; }
+	extract_archive "$pkg" && rm "$pkg"
 	chmod +x zls
 	link_bin "$(pwd)/zls" zls
 }
 
 install_zig() {
-	local os
-	os="$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/darwin/macos/')"
-	local arch
-	arch="$(uname -m | sed 's/arm64/aarch64/')"
-	local arch_key="${arch}-${os}"
-
-	# 1. version
-	local index
-	index="$(curl -s https://ziglang.org/download/index.json | jq 'to_entries[1].value')"
-	local version
+	local zig_os zig_arch arch_key index version url pkg
+	zig_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+	zig_arch=$(printf '%s' "$ARCH" | sed 's/^arm64$/aarch64/')
+	arch_key="${zig_arch}-${zig_os}"
+	index="$(curl -s https://ziglang.org/download/index.json | jq 'to_entries | map(select(.key != "master")) | max_by(.key | split(".") | map(tonumber)) | .value')"
 	version="$(jq -r '.version' <<<"$index")"
-	local url
 	url="$(jq -r ".\"$arch_key\".tarball" <<<"$index")"
-	# 2. info
-	echo "updating to $version ($arch_key) from $url..."
-	# 3. env dir
-	cdenv ziglang
-	# 4. download
-	local pkg
 	pkg="$(basename "$url")"
-	download "$url" "$pkg" || {
-		echo "fail to download zig" >&2
-		return 1
-	}
-	# 5. extract
-	tar xvJf "$pkg"
-	# 6. finalize
-	rm "$pkg"
+	echo "updating to $version ($arch_key) from $url..."
+	cdenv ziglang
+	download "$url" "$pkg" || { echo "fail to download zig" >&2; return 1; }
+	extract_archive "$pkg" && rm "$pkg"
 	backup_existing zig
 	mv "zig-${arch_key}-$version" zig
-
 	install_zls
 }
 
 install_rust() {
 	local dir
-	dir="$(cdenv rust)"
+	dir="$(envdir rust)"
 	export RUSTUP_HOME="$dir/rustup"
 	export CARGO_HOME="$dir/cargo"
 
@@ -137,7 +107,7 @@ install_rust() {
 
 install_bunjs() {
 	local dir
-	dir="$(cdenv nodejs)"
+	dir="$(envdir nodejs)"
 	export BUN_INSTALL="$dir/bun"
 
 	if have_cmd bun; then
@@ -148,43 +118,24 @@ install_bunjs() {
 }
 
 install_nodejs() {
-	local os
-	os="$(uname -s | tr '[:upper:]' '[:lower:]')"
-	local arch
-	arch="$(uname -m | sed 's/x86_64/x64/;s/aarch64/arm64/')"
-	local ext
-	[[ "$os" == linux ]] && ext="tar.xz" || ext="tar.gz"
-
-	# 1. version
-	local version
+	local arch ext version pkg url
+	arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/x64/; s/^aarch64$/arm64/')
+	[[ "$OS" == linux ]] && ext="tar.xz" || ext="tar.gz"
 	version="$(gh_latest_tag nodejs/node)"
-	# 2. info
-	local pkg="node-${version}-${os}-${arch}.${ext}"
-	local url="https://nodejs.org/dist/${version}/${pkg}"
-	echo "updating to $version (${os}-${arch}) from $url..."
-	# 3. env dir
+	pkg="node-${version}-${OS}-${arch}.${ext}"
+	url="https://nodejs.org/dist/${version}/${pkg}"
+	echo "updating to $version (${OS}-${arch}) from $url..."
 	cdenv nodejs
-	# 4. download
-	download "$url" "$pkg" || {
-		echo "fail to download nodejs" >&2
-		return 1
-	}
-	# 5. extract
+	download "$url" "$pkg" || { echo "fail to download nodejs" >&2; return 1; }
 	backup_existing node
-	if [[ "$ext" == "tar.xz" ]]; then
-		tar xvJf "$pkg"
-	else
-		tar xvzf "$pkg"
-	fi
-	# 6. finalize
-	rm "$pkg"
-	mv "node-${version}-${os}-${arch}" node
+	extract_archive "$pkg" && rm "$pkg"
+	mv "node-${version}-${OS}-${arch}" node
 }
 
 
 install_uv() {
 	local dir
-	dir="$(cdenv python)"
+	dir="$(envdir python)"
 	export UV_INSTALL_DIR="$dir/uv"
 
 	if have_cmd uv; then
