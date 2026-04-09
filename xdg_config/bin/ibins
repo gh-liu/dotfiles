@@ -68,6 +68,7 @@ _install_helm() {
 }
 
 _install_nerdctl() {
+	[[ "$OS" == darwin ]] && { echo "nerdctl: no macOS release available, skipping" >&2; return 0; }
 	local arch tmpdir
 	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
@@ -84,6 +85,7 @@ _install_nerdctl() {
 }
 
 _install_containerd() {
+	[[ "$OS" == darwin ]] && { echo "containerd: no macOS release available, skipping" >&2; return 0; }
 	local arch tmpdir
 	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
@@ -100,11 +102,12 @@ _install_containerd() {
 }
 
 _install_etcd() {
-	local arch tmpdir
+	local arch ext tmpdir
 	arch=$(norm_arch)
+	[[ "$OS" == darwin ]] && ext="zip" || ext="tar.gz"
 	tmpdir=$(mktemp -d)
 
-	local archive_pattern=etcd-*-${OS}-${arch}.tar.gz
+	local archive_pattern=etcd-*-${OS}-${arch}.${ext}
 	gh_download_release \
 		etcd-io/etcd \
 		"$archive_pattern" \
@@ -179,13 +182,14 @@ _install_jq() {
 }
 
 _install_shellcheck() {
-	local tmpdir
+	local sc_arch tmpdir
+	sc_arch=$(printf '%s' "$ARCH" | sed 's/^arm64$/aarch64/')
 	tmpdir=$(mktemp -d)
 	gh_download_release \
 		koalaman/shellcheck \
-		"shellcheck-v*.${OS}.${ARCH}.tar.xz" \
+		"shellcheck-v*.${OS}.${sc_arch}.tar.xz" \
 		"$tmpdir"
-	extract_archive "$tmpdir"/shellcheck-v*.${OS}.${ARCH}.tar.xz "$tmpdir"
+	extract_archive "$tmpdir"/shellcheck-v*.${OS}.${sc_arch}.tar.xz "$tmpdir"
 	mv "$tmpdir"/shellcheck-v*/shellcheck ~/.local/bin/shellcheck
 	chmod +x ~/.local/bin/shellcheck
 	rm -rf "$tmpdir"
@@ -210,11 +214,12 @@ _install_emmylua_ls() {
 
 # ======= nvimdep
 _install_stylua() {
-	local stylua_os tmpdir
+	local stylua_os stylua_arch tmpdir
 	stylua_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+	stylua_arch=$(printf '%s' "$ARCH" | sed 's/^arm64$/aarch64/')
 	tmpdir=$(mktemp -d)
 
-	local archive=stylua-${stylua_os}-${ARCH}.zip
+	local archive=stylua-${stylua_os}-${stylua_arch}.zip
 	gh_download_release \
 		JohnnyMorganz/StyLua \
 		"$archive" \
