@@ -98,6 +98,7 @@ return { -- Git {{{2
 						nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
 						nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
 
+						nnoremap <buffer> com :<C-U>Git checkout main<CR>
 						nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 						nnoremap <buffer> cbu :<C-U>Git branch -u origin/<C-R>=FugitiveHead()<CR><CR>
 
