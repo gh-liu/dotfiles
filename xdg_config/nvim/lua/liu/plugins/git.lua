@@ -122,36 +122,18 @@ return { -- Git {{{2
 			})
 
 			--[[ Toggle summary window ]]
-			local function make_fugitive_toggler(augroup)
-				local function toggle()
-					local buf = vim.t.fugitive_buf or -1
-					local win = buf > 0 and vim.fn.bufwinid(buf) or -1
-
-					if win > 0 then
+			local function toggle_fugitive_summary()
+				for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
+					local buf = api.nvim_win_get_buf(win)
+					if vim.b[buf].fugitive_type == "index" then
 						api.nvim_buf_delete(buf, { force = true })
-					else
-						vim.cmd.G({ mods = { keepalt = true } })
+						return
 					end
 				end
 
-				api.nvim_create_autocmd("User", {
-					group = augroup,
-					pattern = "FugitiveIndex",
-					callback = function(data)
-						vim.t.fugitive_buf = data.buf
-						api.nvim_create_autocmd("BufWipeout", {
-							callback = function()
-								vim.t.fugitive_buf = -1
-							end,
-							buffer = data.buf,
-						})
-					end,
-				})
-
-				return toggle
+				vim.cmd.G({ mods = { keepalt = true } })
 			end
-			local G_toggle = make_fugitive_toggler(augroup)
-			vim.keymap.set("n", "g<space>", G_toggle, { silent = true, desc = "Toggle fugitive summary" })
+			vim.keymap.set("n", "g<space>", toggle_fugitive_summary, { silent = true, desc = "Toggle fugitive summary" })
 
 			--[[ Custom commands ]]
 			utils.set_cmds({
