@@ -68,7 +68,10 @@ _install_helm() {
 }
 
 _install_nerdctl() {
-	[[ "$OS" == darwin ]] && { echo "nerdctl: no macOS release available, skipping" >&2; return 0; }
+	[[ "$OS" == darwin ]] && {
+		echo "nerdctl: no macOS release available, skipping" >&2
+		return 0
+	}
 	local arch tmpdir
 	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
@@ -85,7 +88,10 @@ _install_nerdctl() {
 }
 
 _install_containerd() {
-	[[ "$OS" == darwin ]] && { echo "containerd: no macOS release available, skipping" >&2; return 0; }
+	[[ "$OS" == darwin ]] && {
+		echo "containerd: no macOS release available, skipping" >&2
+		return 0
+	}
 	local arch tmpdir
 	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
@@ -134,7 +140,7 @@ install_k8s() {
 }
 
 # ======= infrastructure / IaC
-install_terraform() {
+_install_terraform() {
 	local version arch pkg tmpdir
 	version=$(gh_latest_tag hashicorp/terraform) || return 1
 	version=${version#v}
@@ -150,7 +156,7 @@ install_terraform() {
 	rm -rf "$tmpdir"
 }
 
-install_terragrunt() {
+_install_terragrunt() {
 	local arch tmpdir
 	arch=$(norm_arch)
 	tmpdir=$(mktemp -d)
@@ -163,6 +169,11 @@ install_terragrunt() {
 	mv "$tmpdir"/"$asset" ~/.local/bin/terragrunt || return 1
 	chmod +x ~/.local/bin/terragrunt || return 1
 	rm -rf "$tmpdir"
+}
+
+install_iac() {
+	_install_terraform
+	_install_terragrunt
 }
 
 # ======= cli utilities
@@ -336,11 +347,6 @@ install_bins() {
 	# if have_cmd gh; then
 	# 	gh extension install yusukebe/gh-markdown-preview
 	# fi
-
-	if have_cmd terraform; then
-		install_terraform
-	fi
-
 }
 
 install_lsp() {
