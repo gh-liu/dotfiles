@@ -301,6 +301,9 @@ install_bins() {
 		bun i -g oxfmt
 
 		bun i -g @typescript/native-preview
+
+		# https://redis.io/blog/get-redis-cli-without-installing-redis-server
+		bun i -g redis-cli # rdcli?
 	fi
 
 	# uv
