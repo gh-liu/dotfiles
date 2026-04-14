@@ -347,9 +347,15 @@ install_bins() {
 
 	fi
 
-	# if have_cmd gh; then
-	# 	gh extension install yusukebe/gh-markdown-preview
-	# fi
+	# https://github.com/topics/gh-extension
+	if have_cmd gh; then
+		# gh extension install yusukebe/gh-markdown-preview
+		# gh extension install seachicken/gh-poi
+		# gh extension install dlvhdr/gh-dash
+
+		# https://github.github.com/gh-stack
+		gh extension install github/gh-stack
+	fi
 }
 
 install_lsp() {
