@@ -36,4 +36,7 @@ skills add https://github.com/MiniMax-AI/skills --skill fullstack-dev $FLAGS
 # use-modern-go:
 skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go $FLAGS
 
+skills add ast-grep/agent-skill
+skills add vercel-labs/agent-browser
+
 # vim: set filetype=sh

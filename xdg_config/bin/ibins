@@ -376,6 +376,7 @@ install_lsp() {
 
 		bun i -g typescript
 		bun i -g typescript-language-server
+		bun i -g agent-browser
 
 		# bun i -g @github/copilot-language-server
 
