@@ -108,8 +108,8 @@ install_rust() {
 		rustup update
 	else
 		curl https://sh.rustup.rs -sSf | sh
-		rustup component add rust-analyzer rust-src
 	fi
+	rustup component add rust-analyzer rust-src
 }
 
 install_bunjs() {
