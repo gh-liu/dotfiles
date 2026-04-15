@@ -345,7 +345,7 @@ M.set_highlights = function()
 			-- ["@lsp.type.enumMember"] = { link = "@constant" },
 			-- ["@lsp.type.function"] = { link = "@function" },
 			-- ["@lsp.type.interface"] = { link = "@type" },
-			-- ["@lsp.type.macro"] = { link = "@constant.macro" },
+			["@lsp.type.macro"] = { link = "Macro" },
 			-- ["@lsp.type.method"] = { link = "@function.method" },
 			-- ["@lsp.type.namespace"] = { link = "@module" },
 			-- ["@lsp.type.parameter"] = { link = "@variable.parameter" },
