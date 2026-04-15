@@ -88,7 +88,14 @@ install_zig() {
 	extract_archive "$pkg" && rm "$pkg"
 	backup_existing zig
 	mv "zig-${arch_key}-$version" zig
-	install_zls
+
+	zls_version="$(gh_latest_tag zigtools/zls)"
+	if [ "$zls_version" != "$version" ]; then
+		echo "zls version ($zls_version) != zig version ($version), skipping zls install"
+		return
+	else
+		install_zls
+	fi
 }
 
 install_rust() {
