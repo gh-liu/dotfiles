@@ -1,29 +1,27 @@
+---@param cmd string[]
+---@param parse fun(stdout: string): string
+---@return fun(): string
+local function cached_stdlib(cmd, parse)
+	local result
+	return function()
+		if not result then
+			local obj = vim.system(cmd, { text = true }):wait()
+			result = parse(obj.stdout)
+		end
+		return result
+	end
+end
+
 local ft_lib_pattern_fns = {
-	rust = function()
-		if not vim.env.RUSTSTDLIB then
-			local obj = vim.system({ "rustc", "--print", "sysroot" }, { text = true }):wait()
-			local sysroot = vim.trim(obj.stdout)
-			vim.env.RUSTSTDLIB = sysroot .. "/lib/rustlib/src/rust"
-		end
-		return vim.env.RUSTSTDLIB .. "*rs"
-	end,
-	zig = function()
-		if not vim.env.ZIGSTDLIB then
-			local obj = vim.system({ "zig", "env" }, { text = true }):wait()
-			local stdout = obj.stdout
-			local std_dir = stdout:match([[%.std_dir = "([^"]+)"]])
-			vim.env.ZIGSTDLIB = std_dir
-		end
-		return vim.env.ZIGSTDLIB .. "*zig"
-	end,
-	go = function()
-		if not vim.env.GOSTDLIB then
-			local obj = vim.system({ "go", "env", "GOROOT" }, { text = true }):wait()
-			local stdout = obj.stdout
-			vim.env.GOSTDLIB = vim.trim(stdout) .. "/src"
-		end
-		return vim.env.GOSTDLIB .. "*go"
-	end,
+	rust = cached_stdlib({ "rustc", "--print", "sysroot" }, function(s)
+		return vim.trim(s) .. "/lib/rustlib/src/rust*rs"
+	end),
+	zig = cached_stdlib({ "zig", "env" }, function(s)
+		return s:match([[%.std_dir = "([^"]+)"]]) .. "*zig"
+	end),
+	go = cached_stdlib({ "go", "env", "GOROOT" }, function(s)
+		return vim.trim(s) .. "/src*go"
+	end),
 	python = function()
 		local root = vim.fs.root(0, { ".venv" })
 		if root then
@@ -45,10 +43,8 @@ for lang, lib_pattern_fn in pairs(ft_lib_pattern_fns) do
 					pattern = pattern,
 					command = "setlocal readonly | setlocal nomodifiable",
 				})
-				-- vim.api.nvim_exec_autocmds("BufRead", { buffer = env.buf, modeline = false })
-				-- Check if current buffer matches pattern and apply immediately
 				local bufname = vim.api.nvim_buf_get_name(env.buf)
-				if bufname ~= "" and vim.fn.match(bufname, pattern) >= 0 then
+				if bufname ~= "" and vim.fn.matchstr(bufname, vim.fn.glob2regpat(pattern)) ~= "" then
 					vim.bo[env.buf].readonly = true
 					vim.bo[env.buf].modifiable = false
 				end
