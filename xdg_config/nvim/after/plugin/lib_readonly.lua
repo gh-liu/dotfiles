@@ -3,8 +3,8 @@ local ft_lib_pattern_fns = {
 		if not vim.env.ZIGSTDLIB then
 			local obj = vim.system({ "zig", "env" }, { text = true }):wait()
 			local stdout = obj.stdout
-			local res = vim.json.decode(stdout, {})
-			vim.env.ZIGSTDLIB = res.std_dir
+			local std_dir = stdout:match([[%.std_dir = "([^"]+)"]])
+			vim.env.ZIGSTDLIB = std_dir
 		end
 		return vim.env.ZIGSTDLIB .. "*zig"
 	end,
