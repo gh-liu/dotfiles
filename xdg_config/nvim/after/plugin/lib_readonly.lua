@@ -1,4 +1,12 @@
 local ft_lib_pattern_fns = {
+	rust = function()
+		if not vim.env.RUSTSTDLIB then
+			local obj = vim.system({ "rustc", "--print", "sysroot" }, { text = true }):wait()
+			local sysroot = vim.trim(obj.stdout)
+			vim.env.RUSTSTDLIB = sysroot .. "/lib/rustlib/src/rust"
+		end
+		return vim.env.RUSTSTDLIB .. "*rs"
+	end,
 	zig = function()
 		if not vim.env.ZIGSTDLIB then
 			local obj = vim.system({ "zig", "env" }, { text = true }):wait()
