@@ -41,12 +41,20 @@ gh_latest_tag() {
 gh_download() {
 	gh release download "$2" -R "$1" -p "$3"
 }
+skip_if_current() {
+	local cmd="$1" version_cmd="$2" target="$3" current
+	have_cmd "$cmd" || return 1
+	current="$(eval "$version_cmd")"
+	[[ "$current" == "$target" ]] && echo "$cmd already at $target, skipping" && return 0
+	return 1
+}
 # ======= helper
 
 install_go() {
 	local arch version pkg url
 	arch=$(norm_arch)
 	version="$(curl -s "https://go.dev/dl/?mode=json" | jq -r '.[0].version')"
+	skip_if_current go "go version | awk '{print \$3}'" "$version" && return 0
 	pkg="$version.${OS}-${arch}.tar.gz"
 	url="https://go.dev/dl/$pkg"
 	echo "updating to $version (${OS}-${arch}) from $url..."
@@ -80,6 +88,7 @@ install_zig() {
 	arch_key="${zig_arch}-${zig_os}"
 	index="$(curl -s https://ziglang.org/download/index.json | jq 'to_entries | map(select(.key != "master")) | max_by(.key | split(".") | map(tonumber)) | .value')"
 	version="$(jq -r '.version' <<<"$index")"
+	skip_if_current zig "zig version" "$version" && return 0
 	url="$(jq -r ".\"$arch_key\".tarball" <<<"$index")"
 	pkg="$(basename "$url")"
 	echo "updating to $version ($arch_key) from $url..."
@@ -129,6 +138,7 @@ install_nodejs() {
 	arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/x64/; s/^aarch64$/arm64/')
 	[[ "$OS" == linux ]] && ext="tar.xz" || ext="tar.gz"
 	version="$(gh_latest_tag nodejs/node)"
+	skip_if_current node "node --version" "$version" && return 0
 	pkg="node-${version}-${OS}-${arch}.${ext}"
 	url="https://nodejs.org/dist/${version}/${pkg}"
 	echo "updating to $version (${OS}-${arch}) from $url..."
