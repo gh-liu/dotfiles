@@ -86,6 +86,8 @@ vim.api.nvim_create_autocmd("BufReadPost", {
 vim.api.nvim_create_autocmd("LspNotify", {
 	callback = function(args)
 		if args.data.method == "textDocument/didOpen" then
+			-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#foldingRangeKind
+			-- comment, imports, region
 			vim.lsp.foldclose("imports", vim.fn.bufwinid(args.buf))
 		end
 	end,
