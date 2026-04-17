@@ -223,6 +223,25 @@ _install_emmylua_ls() {
 	rm -rf "$tmpdir"
 }
 
+install_zls() {
+	local zls_os zls_arch version pkg tmpdir
+	zls_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+	zls_arch=$(printf '%s' "$ARCH" | sed 's/^arm64$/aarch64/')
+	version="$(gh_latest_tag zigtools/zls)"
+	pkg="zls-${zls_arch}-${zls_os}.tar.xz"
+	tmpdir=$(mktemp -d)
+
+	echo "installing zls $version (${zls_arch}-${zls_os})..."
+	gh_download_release \
+		zigtools/zls \
+		"$pkg" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir/$pkg" "$tmpdir" || return 1
+	mv "$tmpdir"/zls ~/.local/bin/zls || return 1
+	chmod +x ~/.local/bin/zls || return 1
+	rm -rf "$tmpdir"
+}
+
 # ======= nvimdep
 _install_stylua() {
 	local stylua_os stylua_arch tmpdir
@@ -411,7 +430,7 @@ install_lsp() {
 	_install_emmylua_ls
 
 	# Download from https://github.com/zigtools/zls/releases
-	devlangs zls
+	install_zls
 }
 
 install_dap() {

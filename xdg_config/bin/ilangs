@@ -68,17 +68,7 @@ install_go() {
 }
 
 install_zls() {
-	local zls_os zls_arch version pkg
-	zls_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
-	zls_arch=$(printf '%s' "$ARCH" | sed 's/^arm64$/aarch64/')
-	version="$(gh_latest_tag zigtools/zls)"
-	pkg="zls-${zls_arch}-${zls_os}.tar.xz"
-	echo "updating to $version (${ARCH}-${zls_os})..."
-	cdenv ziglang
-	gh_download zigtools/zls "$version" "$pkg" || { echo "fail to download zls" >&2; return 1; }
-	extract_archive "$pkg" && rm "$pkg"
-	chmod +x zls
-	link_bin "$(pwd)/zls" zls
+	ibins zls
 }
 
 install_zig() {
