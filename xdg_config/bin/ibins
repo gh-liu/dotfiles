@@ -360,7 +360,7 @@ install_bins() {
 		# cargo install hyperfine # command-line benchmarking
 		# cargo install inferno # flamegraph
 
-		# cargo install tree-sitter-cli
+		cargo install tree-sitter-cli
 
 		# cargo install shpool
 		cargo install git-stack # git stack alias --register
