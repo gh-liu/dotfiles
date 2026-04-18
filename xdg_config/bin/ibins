@@ -6,6 +6,12 @@
 have_cmd() {
 	command -v "$1" >/dev/null 2>&1
 }
+link_local_bin() {
+	local src=$1
+	local name=${2:-$(basename "$src")}
+	mkdir -p ~/.local/bin
+	ln -sfn "$src" ~/.local/bin/"$name"
+}
 norm_arch() {
 	printf '%s' "$ARCH" | sed 's/^x86_64$/amd64/; s/^aarch64$/arm64/'
 }
@@ -203,6 +209,37 @@ _install_shellcheck() {
 	extract_archive "$tmpdir"/shellcheck-v*.${OS}.${sc_arch}.tar.xz "$tmpdir"
 	mv "$tmpdir"/shellcheck-v*/shellcheck ~/.local/bin/shellcheck
 	chmod +x ~/.local/bin/shellcheck
+	rm -rf "$tmpdir"
+}
+
+# NOTE: https://github.com/tmux/tmux/wiki/Installing
+install_tmux() {
+	local version archive tmpdir src_dir prefix
+	version=$(gh_latest_tag tmux/tmux) || return 1
+	archive="tmux-${version}.tar.gz"
+	tmpdir=$(mktemp -d)
+	prefix="$HOME/tools/tmux"
+
+	gh_download_release \
+		tmux/tmux \
+		"$archive" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir/$archive" "$tmpdir" || return 1
+
+	src_dir="$tmpdir/tmux-$version"
+	[[ -d "$src_dir" ]] || return 1
+
+	rm -rf "$prefix"
+	mkdir -p "$prefix" || return 1
+
+	(
+		cd "$src_dir" || exit 1
+		./configure --prefix="$prefix" || exit 1
+		make -j"$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)" || exit 1
+		make install || exit 1
+	) || return 1
+
+	link_local_bin "$prefix/bin/tmux" tmux || return 1
 	rm -rf "$tmpdir"
 }
 
