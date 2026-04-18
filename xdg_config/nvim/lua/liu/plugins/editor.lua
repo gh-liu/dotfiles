@@ -380,6 +380,7 @@ return {
 	-- Visualize diffs (Git index or saved file) with signs and hunk navigation
 	{
 		"nvim-mini/mini.diff",
+		-- !!! Do not use Overlay
 		event = "VeryLazy",
 		init = function()
 			_G.Flag_diff_summary = function()

@@ -68,3 +68,19 @@ Requires Nvim `v0.12.0`
 - `zm` ~ 减去 count1 到 foldlevel；若 foldenable 关闭，先执行 `zR` 打开所有折叠（会设置foldlevel到当前最大层级）再执行 `zm`
 
 ## How I Use Diff
+
+> mini.diff 对比 working vs index，`[c` `]c` 移动，`gh` 推到 index，`gH` 以 index 为准（即丢弃）；不用 overlay 
+> `:h diff-mode` 内建的 diff 能力: diffthis,diffoff; diffget,diffput; diffsplit, diffupdate, diffpatch 
+> vim-fugitive 使用 vim diff 的能力，比较git任意Blob对象（即文件）
+
+diffe.vim 日常工作流
+refuge.vim git review
+
+TODO: diffopt, diffanchors(Mark,Pattern,Visual,line)
+
+### 高亮
+
+- `DiffAdd` `DiffChange` `DiffDelete` `DiffText` 用 `bg`，表示整块 diff 区域或行内变更块
+- `Added` `Removed` `Changed` 用 `fg`，表示增删改语义色，适合 signs、treesitter、文本标签等不该整块铺底色的场景
+- mini.diff Gutter ( MiniDiffSignAdd MiniDiffSignChange MiniDiffSignDelete )
+- treesitter ( @diff.plus @diff.minus @diff.delta )

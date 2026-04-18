@@ -66,11 +66,11 @@ M.colors = {
 	cursorline = M.palette.nord0_5, -- distinct darker background for cursor line
 
 	-- Diff tinted backgrounds (nord1-level lightness, hue-shifted toward aurora colors)
-	diff_add = "#354535", -- nord1 shifted toward nord14 (green)
-	diff_change = "#383735", -- nord1 shifted toward nord13 (yellow)
-	diff_delete = "#4A353C", -- nord1 shifted toward nord11 (red)
-	diff_text = "#3E507A", -- stronger nord10 tint (changed chars)
-	diff_text_add = "#3E6E42", -- stronger nord14 tint (added chars)
+	diff_add_b = "#354535", -- nord1 shifted toward nord14 (green)
+	diff_change_b = "#383735", -- nord1 shifted toward nord13 (yellow)
+	diff_delete_b = "#4A353C", -- nord1 shifted toward nord11 (red)
+	diff_text_b = "#3E507A", -- stronger nord10 tint (changed chars)
+	diff_text_add_b = "#3E6E42", -- stronger nord14 tint (added chars)
 }
 
 -- terminal colors
@@ -121,17 +121,17 @@ M.set_highlights = function()
 			EndOfBuffer = { link = "NonText" },
 		},
 		diff = {
-			Added = { fg = c.diff_add },
-			Changed = { fg = c.diff_change },
-			Removed = { fg = c.diff_delete },
+			Added = { fg = c.green },
+			Removed = { fg = c.red },
+			Changed = { fg = c.yellow },
 			-- diff
 			-- linewise diff (tinted backgrounds, no fg so syntax colors show through)
-			DiffAdd = { bg = c.diff_add },
-			DiffChange = { bg = c.diff_change },
-			DiffDelete = { bg = c.diff_delete },
+			DiffAdd = { bg = c.diff_add_b },
+			DiffChange = { bg = c.diff_change_b },
+			DiffDelete = { bg = c.diff_delete_b },
 			-- inline(charwise) diff (stronger tint for the actual changed text)
-			DiffText = { bg = c.diff_text, bold = true },
-			DiffTextAdd = { bg = c.diff_text_add, bold = true },
+			DiffText = { bg = c.diff_text_b, bold = true },
+			DiffTextAdd = { bg = c.diff_text_add_b, bold = true },
 		},
 		float = {
 			-- float window
@@ -450,9 +450,9 @@ M.set_highlights = function()
 			-- ["@markup.list.checked"] = { link = "DiagnosticOk" },
 			-- ["@markup.list.unchecked"] = { link = "DiagnosticWarn" },
 
-			-- ["@diff.plus"] = { link = "Added" },
-			-- ["@diff.minus"] = { link = "Removed" },
-			-- ["@diff.delta"] = { link = "Changed" },
+			["@diff.plus"] = { link = "DiffAdd" },
+			["@diff.minus"] = { link = "DiffDelete" },
+			["@diff.delta"] = { link = "DiffChange" },
 			-- ["@tag"] = { link = "Tag" },
 			-- ["@tag.delimiter"] = { link = "Delimiter" },
 			-- user defined
@@ -495,28 +495,13 @@ M.set_highlights = function()
 			-- vim-fugitive
 			diffAdded = { link = "DiffAdd" },
 			diffRemoved = { link = "DiffDelete" },
+			diffChanged = { link = "DiffText" },
 			StatusLineFugitive = { link = "fugitiveHeader" },
 
 			-- mini.diff
-			-- MiniDiffSignAdd = {
-			-- 	-- fg = c.diff_add,
-			-- 	bg = c.diff_add,
-			-- },
-			-- MiniDiffSignChange = {
-			-- 	-- fg = c.diff_change,
-			-- 	bg = c.diff_change,
-			-- },
-			-- MiniDiffSignDelete = {
-			-- 	-- fg = c.diff_delete,
-			-- 	bg = c.diff_delete,
-			-- },
-			MiniDiffOverAdd = { fg = c.diff_add },
-			MiniDiffOverChange = { bg = c.diff_change },
-			MiniDiffOverChangeBuf = { bg = c.diff_change },
-			MiniDiffOverContext = { fg = c.darkwhite },
-			MiniDiffOverContextBuf = { fg = c.darkwhite },
-			MiniDiffOverDelete = { bg = c.diff_delete },
-
+			MiniDiffSignAdd = { link = "Added" },
+			MiniDiffSignDelete = { link = "Removed" },
+			MiniDiffSignChange = { link = "Changed" },
 			-- vim-flog
 			flogBranch1 = { fg = c.blue },
 			flogBranch2 = { fg = c.green },
