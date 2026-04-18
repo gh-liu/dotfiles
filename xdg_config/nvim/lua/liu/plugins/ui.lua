@@ -92,6 +92,7 @@ return {
 	-- Statusline spinners showing LSP progress and async operation status
 	{
 		"xieyonn/spinner.nvim",
+		enabled = false,
 		config = function()
 			local SPINNER_LSP = "spinner_lsp"
 			require("spinner").config(SPINNER_LSP, {
