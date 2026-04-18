@@ -143,6 +143,14 @@ return {
 				local ret = vim.api.nvim_eval_statusline(vim.diagnostic.status(...), {})
 				return ret.str or ""
 			end
+			vim.lsp.get_clients_name = function(bufnr)
+				return vim.iter(vim.lsp.get_clients({ bufnr = bufnr }))
+					:map(function(client)
+						local client = client ---@class vim.lsp.Client
+						return client.name
+					end)
+					:join(",")
+			end
 
 			-- default statusline is not empty anymore
 			-- https://github.com/neovim/neovim/pull/33036
@@ -197,6 +205,7 @@ return {
 				  autocmd User Flags call Hoist("buffer", 9, "%{empty(&buftype) ? flagship#surround(v:lua.vim.diagnostic.status_raw(0)) : ''}")
 				  autocmd User Flags call Hoist('buffer', 10, '%{flagship#surround( type(get(b:,"UserBufFlagship")) == 2 ? b:UserBufFlagship() : get(b:,"UserBufFlagship","") )}')
 				  autocmd User Flags call Hoist("buffer", 99, "%{flagship#surround(index(argv(), bufname('%')) >= 0 ? printf('@%d/%d', index(argv(), bufname('%')) + 1, len(argv())) : '')}")
+				  autocmd User Flags call Hoist("buffer", 100, "%{empty(&buftype) ? flagship#surround(v:lua.vim.lsp.get_clients_name(0)) : ''}")
 				augroup END
 			]])
 		end,
