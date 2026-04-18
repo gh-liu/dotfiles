@@ -541,6 +541,7 @@ return {
 	{
 		-- Custom terminal wrapper with enhanced features
 		"gh-liu/nvim-winterm",
+		enabled = false,
 		dev = true,
 		opts = {},
 	},
