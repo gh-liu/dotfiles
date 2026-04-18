@@ -346,6 +346,10 @@ install_bins() {
 		go install github.com/stern/stern@latest
 		go install github.com/derailed/k9s@latest
 
+		# kafka
+		go install github.com/birdayz/kaf/cmd/kaf@latest
+		# go install github.com/fgrosse/kafkactl@latest
+
 	fi
 
 	# Bun

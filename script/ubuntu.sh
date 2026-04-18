@@ -25,6 +25,9 @@ sudo apt install -y \
 # mongodb: https://www.mongodb.com/try/download/shell
 wget https://downloads.mongodb.com/compass/mongodb-mongosh_2.5.6_amd64.deb | sudo apt install ./mongodb-mongosh_2.5.6_amd64.deb
 
+# TODO: kafka bin
+# https://dlcdn.apache.org/kafka/4.2.0
+
 # dev: version control
 sudo apt install -y \
         git git-flow
