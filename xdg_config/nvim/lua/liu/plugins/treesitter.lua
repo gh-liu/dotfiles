@@ -85,7 +85,9 @@ return {
 	},
 	-- Display current function/context at top of window as a floating anchor line
 	{
-		"nvim-treesitter/nvim-treesitter-context",
+		-- "nvim-treesitter/nvim-treesitter-context",
+		"gh-liu/nvim-treesitter-context",
+		dev = true,
 		event = "VeryLazy",
 		init = function()
 			vim.api.nvim_create_autocmd("WinClosed", {
