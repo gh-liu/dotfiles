@@ -1,7 +1,7 @@
 " save/quit {{{
 noremap <c-q> <cmd>quit<CR>
 noremap <leader>q <cmd>quit<CR>
-noremap <leader>Q <cmd>qall<CR>
+noremap <leader>Q <cmd>qall!<CR>
 
 noremap <leader>w <cmd>write<cr>
 noremap <leader>W <cmd>wall<cr>
