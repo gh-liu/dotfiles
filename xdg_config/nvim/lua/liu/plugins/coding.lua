@@ -297,6 +297,7 @@ return {
 	-- Smart increment/decrement with LSP-aware enum sequences and date patterns
 	{
 		"gh-liu/nvim-mobius",
+		enabled = false,
 		dev = true,
 		keys = {
 			{ "<C-a>", "<Plug>(MobiusIncrement)", mode = { "n", "v" }, desc = "Increment" },
@@ -330,7 +331,7 @@ return {
 	{
 		"monaqa/dial.nvim",
 		-- overrides: default <C-a>/<C-x> behavior (increment/decrement)
-		enabled = false,
+		enabled = true,
 		keys = {
 			{ "<C-a>", "<Plug>(dial-increment)", mode = { "n", "v" }, desc = "Increment" },
 			{ "<C-x>", "<Plug>(dial-decrement)", mode = { "n", "v" }, desc = "Decrement" },
