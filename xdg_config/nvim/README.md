@@ -1,6 +1,6 @@
 # neovim config
 
-Requires Nvim `v0.12.0`
+Requires Nvim `v0.13.0`
 
 ## 7 habits of effective text editing
 
