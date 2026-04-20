@@ -136,4 +136,5 @@ return {
 			vim.g.table_disable_mappings = 1
 		end,
 	},
+	{ "thinca/vim-partedit" },
 }
