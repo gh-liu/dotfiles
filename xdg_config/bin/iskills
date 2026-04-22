@@ -39,4 +39,7 @@ skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-
 skills add ast-grep/agent-skill
 skills add vercel-labs/agent-browser
 
+skills add https://github.com/ccheney/robust-skills --skill clean-ddd-hexagonal $FLAGS
+
+
 # vim: set filetype=sh
