@@ -58,3 +58,5 @@ set cpo-=C " 'C' flag: continue matching after line break
 " Restore original 'cpoptions' setting
 let &cpo = s:cpo_save
 unlet s:cpo_save
+
+" vim: set ft=vim
