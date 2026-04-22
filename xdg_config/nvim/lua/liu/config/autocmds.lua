@@ -6,10 +6,6 @@ augroup liu_autocmds_core
   "automatically save all modified buffers without prompting for confirmation whenever focus is lost
   autocmd FocusLost * let s:confirm = &confirm | setglobal noconfirm | silent! wall | let &confirm = s:confirm
   autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
-  "-- Don't auto-wrap comments and don't insert comment leader after hitting 'o'
-  "-- If don't do this on `FileType`, this keeps reappearing due to being set in
-  "-- filetype plugins.
-  autocmd TermOpen * startinsert
 augroup END
 ]])
 
