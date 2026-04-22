@@ -182,6 +182,12 @@ api.nvim_create_autocmd("LspAttach", {
 		-- nmap("grl", lsp.codelens.run, "Code [L]en")
 
 		-- vim.keymap.set("i", "<C-]>", lsp.buf.signature_help, { buffer = bufnr, desc = "Signature Documentation" })
+
+		vim.keymap.set("n", "yoI", function()
+			local filter = { bufnr = bufnr }
+			local is_enabled = vim.lsp.inlay_hint.is_enabled(filter)
+			vim.lsp.inlay_hint.enable(not is_enabled, filter)
+		end, {})
 	end,
 })
 -- }}}
