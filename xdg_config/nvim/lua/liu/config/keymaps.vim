@@ -145,7 +145,6 @@ nnoremap <silent> yA
 noremap <leader>m <cmd>message<cr>
 
 if has("nvim")
-	noremap ZR <cmd>restart<cr>
 	noremap ZT <cmd>trust<cr>
 	noremap zI <cmd>Inspect<cr>
 end
