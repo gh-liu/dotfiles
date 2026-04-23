@@ -84,6 +84,7 @@ return {
 		map("b", "buffers")
 		map("d", "diagnostics_buffer")
 		map("f", "files")
+		map("j", "jumps")
 		map("g", "live_grep")
 		map("h", "help")
 		map("m", "marks")
