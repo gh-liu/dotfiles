@@ -116,6 +116,8 @@ nnoremap g<C-T> :echo strftime('%Y-%m-%d %H:%M:%S', len(expand('<cword>')) > 10 
 inoremap <silent> <C-G><C-T> <C-R>=repeat(complete(col('.'),map(["%Y-%m-%d %H:%M:%S","%a, %d %b %Y %H:%M:%S %z","%Y %b %d","%d-%b-%y","%a %b %d %T %Z %Y","%Y%m%d"],'strftime(v:val)')+[localtime()]),0)<CR>
 " }}}
 " fold {{{
+" zC: No count = original zC (close all); with count N = close to fold level N (2zC = close to level 2)
+nnoremap <expr> zC printf('<cmd>silent! execute "normal! zC%szz"<cr>', repeat('zo', v:count1 - 1))
 " zN: If count is given, set foldlevel to count; otherwise restore previous fold state
 nnoremap <expr> zN v:count > 0 ? printf('<Cmd>setlocal foldenable foldlevel=%d<CR>', v:count-1) : '<Cmd>setlocal foldenable<CR>'
 " zm: If foldenable is off, open all folds first, then fold more

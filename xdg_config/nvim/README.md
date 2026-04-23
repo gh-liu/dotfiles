@@ -66,6 +66,7 @@ Requires Nvim `v0.13.0`
 - `z?` ~ 查看当前折叠配置
 - `zr` — 添加 count1 到 foldlevel
 - `zm` ~ 减去 count1 到 foldlevel；若 foldenable 关闭，先执行 `zR` 打开所有折叠（会设置foldlevel到当前最大层级）再执行 `zm`
+- `zC` ~ 递归关闭光标处所有折叠；支持指定目标层级：`zC`/`1zC` 关到顶层，`2zC` 关到第2层，`3zC` 关到第3层
 
 ## How I Use Diff
 
