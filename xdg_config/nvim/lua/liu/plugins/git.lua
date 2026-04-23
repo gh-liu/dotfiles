@@ -208,4 +208,9 @@ return { -- Git {{{2
 		cmd = { "Flog", "Flogsplit", "Floggit" },
 	},
 	-- }}}
+	{
+		"neogitorg/neogit",
+		dependencies = { "nvim-lua/plenary.nvim" },
+		cmd = { "Neogit" },
+	},
 }
