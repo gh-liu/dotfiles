@@ -365,7 +365,7 @@ vim.lsp.enable("terraformls")
 
 -- vim.lsp.enable({ "copilot" })
 
-vim.lsp.enable("obsidian_ls")
+-- vim.lsp.enable("obsidian_ls")
 -- }}}
 
 -- vim: foldmethod=marker
