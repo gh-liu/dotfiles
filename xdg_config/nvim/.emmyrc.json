@@ -4,7 +4,8 @@
     "library": [
       "$VIMRUNTIME/lua",
       "$XDG_CONFIG_HOME/nvim/lua",
-      "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua"
+      "$XDG_DATA_HOME/nvim/lazy/lazy.nvim/lua",
+      "$XDG_DATA_HOME/nvim/lazy/nvim-lspconfig/lua"
     ]
   }
 }

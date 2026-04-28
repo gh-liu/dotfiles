@@ -1,6 +1,7 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#yamlls
 return {
 	-- https://github.com/redhat-developer/yaml-language-server#language-server-settings
+	---@type lspconfig.settings.yamlls
 	settings = {
 		yaml = {
 			format = { enable = false },

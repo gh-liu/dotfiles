@@ -1,6 +1,7 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#zls
 return {
 	-- https://github.com/zigtools/zls#configuration-options
+	---@type lspconfig.settings.zls
 	settings = {
 		zls = {
 			enable_inlay_hints = true,

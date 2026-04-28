@@ -4,6 +4,7 @@ return {
 	cmd = { "vscode-json-languageserver", "--stdio" },
 	-- https://code.visualstudio.com/docs/getstarted/settings serach `// JSON`
 	-- https://github.com/microsoft/vscode/tree/main/extensions/json-language-features/server#settings
+	---@type lspconfig.settings.jsonls
 	settings = {
 		json = {
 			format = { enable = false },

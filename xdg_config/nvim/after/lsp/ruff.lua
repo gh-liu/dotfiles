@@ -2,4 +2,6 @@
 ---@type vim.lsp.Config
 return {
 	-- https://docs.astral.sh/ruff/editors/setup/#neovim
+	---@type lspconfig.settings.ruff
+	settings = {},
 }
