@@ -174,8 +174,8 @@ return {
 
 			vim.g.tabsuffix = ""
 			vim.g.tabsuffix = vim.g.tabsuffix .. tabitem("%{v:lua.Flag_dap_status()}", { hl = "Debug" })
-			vim.g.tabsuffix = tabitem("%{v:lua.vim.ui.progress_status_raw()}%<", { hl = "@markup.heading" })
-				.. vim.g.tabsuffix
+			-- vim.g.tabsuffix = tabitem("%{v:lua.vim.ui.progress_status_raw()}%<", { hl = "@markup.heading" })
+			-- 	.. vim.g.tabsuffix
 			vim.cmd([[
 			augroup liu_flagship_tab
 			  autocmd!
