@@ -212,6 +212,28 @@ _install_shellcheck() {
 	rm -rf "$tmpdir"
 }
 
+_install_mongosh() {
+	local mongosh_os mongosh_arch ext archive_pattern tmpdir extracted_dir
+	mongosh_os=$(printf '%s' "$OS" | sed 's/^darwin$/macos/')
+	mongosh_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/x64/; s/^aarch64$/arm64/')
+	[[ "$mongosh_os" == linux ]] && ext=tgz || ext=zip
+	archive_pattern="mongosh-*.${mongosh_os}-${mongosh_arch}.${ext}"
+	tmpdir=$(mktemp -d)
+
+	gh_download_release \
+		mongodb-js/mongosh \
+		"$archive_pattern" \
+		"$tmpdir" || return 1
+	extract_archive "$tmpdir"/$archive_pattern "$tmpdir" || return 1
+
+	extracted_dir=$(find "$tmpdir" -maxdepth 1 -type d -name "mongosh-*" | head -n 1)
+	[[ -n "$extracted_dir" ]] || return 1
+
+	mv "$extracted_dir"/bin/mongosh ~/.local/bin/mongosh || return 1
+	chmod +x ~/.local/bin/mongosh || return 1
+	rm -rf "$tmpdir"
+}
+
 # NOTE: https://github.com/tmux/tmux/wiki/Installing
 install_tmux() {
 	local version archive tmpdir src_dir prefix
