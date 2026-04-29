@@ -26,8 +26,11 @@ require("liu.config.autocmds")
 -- =============================================================================
 -- Plugin Manager
 -- =============================================================================
-require("liu.lazy")
--- require("liu.pack")
+if vim.env.NVIMPACK then
+	require("liu.pack")
+else
+	require("liu.lazy")
+end
 
 -- =============================================================================
 -- Language Services
