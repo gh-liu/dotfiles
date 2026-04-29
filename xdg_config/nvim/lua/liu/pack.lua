@@ -655,6 +655,17 @@ vim.g.loaded_netrwPlugin = 1
 
 local aug_mini_files = vim.api.nvim_create_augroup("liu.mini.files", { clear = true })
 vim.pack.add({ "https://github.com/nvim-mini/mini.files" })
+require("mini.files").setup({
+	mappings = {
+		go_in = "<c-l>", -- Enter directory or open file (default)
+		go_out = "<c-h>", -- Go to parent directory (default)
+		go_in_plus = "", -- Enter and close file explorer
+		go_out_plus = "", -- Go out and trim right columns
+		mark_set = "m",
+		mark_goto = "`",
+	},
+	options = { use_as_default_explorer = false },
+})
 vim.api.nvim_create_autocmd("User", {
 	group = aug_mini_files,
 	pattern = "MiniFilesExplorerOpen",
@@ -668,6 +679,43 @@ vim.api.nvim_create_autocmd("User", {
 		end, { desc = "Root directory" })
 	end,
 })
+vim.api.nvim_create_autocmd("User", {
+	group = aug_mini_files,
+	pattern = "MiniFilesBufferCreate",
+	callback = function(args)
+		local buf = args.data.buf_id
+		vim.b[buf].completion = false -- disable blink.cmp
+
+		vim.keymap.set("n", "gx", function()
+			local MiniFiles = require("mini.files")
+			vim.ui.open(MiniFiles.get_fs_entry().path)
+		end, { buffer = buf, desc = "OS open" })
+
+		vim.keymap.set("n", "<CR>", function()
+			local MiniFiles = require("mini.files")
+			MiniFiles.go_in({ close_on_file = true })
+		end, { buffer = buf, desc = "Go in (close on file)" })
+
+		vim.keymap.set("n", "<leader><CR>", function()
+			local MiniFiles = require("mini.files")
+			MiniFiles.synchronize()
+		end, { buffer = buf, desc = "Synchronize changes" })
+	end,
+})
+vim.api.nvim_create_autocmd("User", {
+	group = aug_mini_files,
+	pattern = "MiniFilesWindowOpen",
+	callback = function(args)
+		local buf = args.data.buf_id
+		local win = args.data.win_id
+		local file = vim.api.nvim_buf_get_name(buf)
+		local _, _, buf, relpath = file:find([[^minifiles://(%d+)/(.*)]])
+		if relpath then
+			vim.wo[win].statusline = relpath
+		end
+	end,
+})
+
 vim.keymap.set("n", "<leader>E", function()
 	local MiniFiles = require("mini.files")
 	if not MiniFiles.close() then
