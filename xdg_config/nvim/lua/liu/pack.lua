@@ -482,3 +482,35 @@ vim.api.nvim_create_autocmd("InsertEnter", {
 	end,
 	once = true,
 })
+
+--====== lint
+local aug_lint = vim.api.nvim_create_augroup("liu.lint", { clear = true })
+vim.pack.add({ "https://github.com/mfussenegger/nvim-lint" })
+-- https://github.com/mfussenegger/nvim-lint?tab=readme-ov-file#available-linters
+local linters_by_ft = {
+	go = { "golangcilint" },
+	proto = { "buf_lint" },
+	bash = { "shellcheck" },
+	-- python = { "pylint" },
+	-- sql = { "sqlfluff" },
+	javascript = { "oxlint" },
+	typescript = { "oxlint" },
+
+	-- Use the "*" filetype to run linters on all filetypes.
+	-- ['*'] = { 'global linter' },
+	-- Use the "_" filetype to run linters on filetypes that don't have other linters configured.
+	-- ['_'] = { 'fallback linter' },
+	-- ["*"] = { "typos" },
+}
+require("lint").linters_by_ft = linters_by_ft
+vim.api.nvim_create_autocmd({
+	"BufWritePost",
+	"BufReadPost",
+	"InsertLeave",
+	-- "TextChanged",
+}, {
+	group = aug_lint,
+	callback = function()
+		require("lint").try_lint()
+	end,
+})
