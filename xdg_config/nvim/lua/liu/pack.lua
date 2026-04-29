@@ -652,3 +652,200 @@ vim.pack.add({ "https://github.com/tpope/vim-repeat" })
 vim.pack.add({ "https://github.com/tpope/vim-abolish" })
 vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
 
+--====== editor
+vim.pack.add({ "https://github.com/justinmk/vim-dirvish" })
+vim.g.loaded_netrwPlugin = 1
+
+local aug_mini_files = vim.api.nvim_create_augroup("liu.mini.files", { clear = true })
+vim.pack.add({ "https://github.com/nvim-mini/mini.files" })
+vim.api.nvim_create_autocmd("User", {
+	group = aug_mini_files,
+	pattern = "MiniFilesExplorerOpen",
+	callback = function()
+		local MiniFiles = require("mini.files")
+		MiniFiles.set_bookmark("~", "~", { desc = "Home directory" })
+		MiniFiles.set_bookmark("C", vim.fn.stdpath("config"), { desc = "nvim Config directory" })
+		MiniFiles.set_bookmark("w", vim.fn.getcwd, { desc = "Working directory" })
+		MiniFiles.set_bookmark("r", function()
+			return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
+		end, { desc = "Root directory" })
+	end,
+})
+vim.keymap.set("n", "<leader>E", function()
+	local MiniFiles = require("mini.files")
+	if not MiniFiles.close() then
+		local path = vim.fn.getcwd()
+		MiniFiles.open(path, false)
+	end
+end)
+vim.keymap.set("n", "<leader>e", function()
+	local MiniFiles = require("mini.files")
+	if not MiniFiles.close() then
+		local bufname = vim.api.nvim_buf_get_name(0)
+		local is_dir = vim.fn.isdirectory(bufname) == 1
+		local dirs = {}
+		if is_dir then
+			table.insert(dirs, bufname)
+		else
+			local file_not_valid = bufname == "" or vim.fn.filereadable(bufname) == 0
+			if file_not_valid then
+				bufname = vim.fs.normalize(vim.fn.getcwd(), {})
+				table.insert(dirs, bufname)
+			end
+		end
+		for dir in vim.fs.parents(bufname) do
+			table.insert(dirs, dir)
+		end
+
+		local count = vim.v.count1
+		local path = dirs[count]
+		if count == 1 and vim.fn.isdirectory(bufname) == 0 then
+			-- If it is a path to file, its parent directory is used as anchor
+			-- while explorer will focus on the supplied file.
+			MiniFiles.open(bufname, false)
+		else
+			MiniFiles.open(path, false)
+		end
+	end
+end)
+
+local aug_mini_bufremove = vim.api.nvim_create_augroup("liu.mini.bufremove", { clear = true })
+vim.pack.add({ "https://github.com/nvim-mini/mini.bufremove" })
+require("mini.bufremove").setup({})
+vim.api.nvim_create_autocmd("User", {
+	group = aug_mini_bufremove,
+	pattern = "MiniFilesActionDelete",
+	callback = function(args)
+		local fname = args.data.from
+		local buf = vim.fn.bufnr(fname)
+		if vim.api.nvim_buf_is_valid(buf) then
+			require("mini.bufremove").delete(buf, false)
+		end
+	end,
+})
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.keymap" })
+local map_combo = require("mini.keymap").map_combo
+map_combo({ "i", "x", "s" }, "jk", "<BS><BS><Esc>")
+local map_multistep = require("mini.keymap").map_multistep
+map_multistep({ "i" }, "<Tab>", {
+	"vimsnippet_next",
+	"pmenu_next",
+	-- "blink_next",
+})
+map_multistep({ "i" }, "<S-Tab>", {
+	"vimsnippet_prev",
+	"pmenu_prev",
+	-- "blink_prev",
+})
+map_multistep({ "i", "s" }, "<C-l>", { "vimsnippet_next" })
+map_multistep({ "i", "s" }, "<C-h>", { "vimsnippet_prev" })
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.diff" })
+require("mini.diff").setup({
+	view = {
+		-- Visualization style. Possible values are 'sign' and 'number'.
+		style = "sign",
+		-- Signs used for hunks with 'sign' view
+		signs = { add = "▒", change = "▒", delete = "▒" },
+		-- Priority of used visualization extmarks
+		priority = vim.hl.priorities.user - 1,
+	},
+	-- Source for how reference text is computed/updated/etc
+	-- Uses content from Git index by default
+	source = nil, -- NOTE(liu): be changed in config function
+	-- Delays (in ms) defining asynchronous processes
+	delay = {
+		-- How much to wait before update following every text change
+		text_change = 200,
+	},
+	-- Module mappings. Use `''` (empty string) to disable one.
+	mappings = {
+		-- 	-- Apply hunks inside a visual/operator region
+		-- 	apply = "gh", -- WRITE TO DIFF SOURCE
+		-- 	-- Reset hunks inside a visual/operator region
+		-- 	reset = "gH", -- READ FROM DIFF SOURCE
+		-- 	-- Hunk range textobject to be used inside operator
+		textobject = "ah",
+		-- 	-- Go to hunk range in corresponding direction
+		-- 	goto_first = "[H",
+		-- 	goto_prev = "[h",
+		-- 	goto_next = "]h",
+		-- 	goto_last = "]H",
+	},
+	-- Various options
+	options = {
+		-- Diff algorithm. See `:h vim.diff()`.
+		algorithm = "histogram",
+		-- Whether to use "indent heuristic". See `:h vim.diff()`.
+		indent_heuristic = true,
+		-- The amount of second-stage diff to align lines (in Neovim>=0.9)
+		linematch = 60,
+	},
+})
+
+vim.pack.add({ "https://github.com/tpope/vim-obsession" })
+vim.cmd([[
+	setglobal sessionoptions-=buffers 
+	setglobal sessionoptions+=globals
+	"setglobal sessionoptions-=curdir 
+	"setglobal sessionoptions+=sesdir
+
+	augroup liu.obsession
+	  autocmd!
+	  autocmd VimEnter * nested
+			  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
+			  \   let s:session_paths = ['Session.vim', '.git/Session.vim', '.config/Session.vim'] |
+			  \   for s:path in s:session_paths |
+			  \     if filereadable(s:path) |
+			  \       execute 'source' fnameescape(s:path) |
+			  \       break |
+			  \     endif |
+			  \   endfor |
+			  \ endif
+	augroup END
+]])
+
+vim.pack.add({ "https://github.com/tpope/vim-dispatch" })
+vim.g.dispatch_no_maps = false
+vim.g.dispatch_compilers = {
+	-- python
+	["uv run"] = "python",
+	["python3"] = "python",
+	["python -m pytest"] = "pytest",
+	["python3 -m pytest"] = "pytest",
+	-- golang
+	["go test"] = "gotest",
+	["golangci-lint run"] = "go",
+}
+vim.cmd([[
+	nmap `<bs> <cmd>AbortDispatch<cr>
+
+	augroup liu.dispatch
+	  autocmd!
+	  autocmd BufReadPost *
+	  \ if getline(1) =~# '^#!' |
+	  \   let b:dispatch =
+	  \       matchstr(getline(1), '#!\%(/usr/bin/env \+\)\=\zs.*') . ' %:S' |
+	  \   let b:start = '-wait=always ' . b:dispatch |
+	  \ endif
+
+	  autocmd FileType python
+	  \ if getline(1) =~# '^# /// script' |
+	  \   let b:dispatch = 'uv run --script %' |
+	  \   let b:start = '-wait=always ' . b:dispatch |
+	  \ endif
+	augroup END
+]])
+
+vim.pack.add({ "https://github.com/tpope/vim-sleuth" })
+vim.pack.add({ "https://github.com/tpope/vim-eunuch" })
+vim.pack.add({ "https://github.com/tpope/vim-rsi" })
+
+-- vim.pack.add({ "https://github.com/tpope/vim-projectionist" })
+vim.pack.add({ "https://github.com/gh-liu/vim-projectionist" })
+vim.cmd([[
+	nnoremap <leader>aa <cmd>A<cr>
+	nnoremap <leader>as <cmd>AS<cr>
+	nnoremap <leader>ac <cmd>AV<cr>
+]])
