@@ -164,3 +164,103 @@ vim.lsp.buf.code_action = function(...)
 	end
 	require("tiny-code-action").code_action(...)
 end
+
+--====== treesitter
+local aug_treesitter = vim.api.nvim_create_augroup("liu.treesitter", { clear = true })
+vim.api.nvim_create_autocmd("PackChanged", {
+	group = aug_treesitter,
+	callback = function(ev)
+		if ev.data.spec.name ~= "nvim-treesitter" or (ev.data.kind ~= "install" and ev.data.kind ~= "update") then
+			return
+		end
+		if ev.data.active then
+			-- bun install tree-sitter-cli
+			vim.cmd("TSUpdate")
+		end
+	end,
+})
+vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter" })
+---@class TSCapabilities
+---@field highlight boolean
+---@field fold boolean
+---@field indent boolean
+local ts_cache_fts = {} ---@type table<string,TSCapabilities>
+local ts_available = nil ---@type table<string,true>?
+local ts_installed = nil ---@type table<string,true>?
+local ts_installing = {} ---@type table<string,true>
+vim.api.nvim_create_autocmd("FileType", {
+	group = aug_treesitter,
+	callback = function(event)
+		local filetype = event.match
+		if not ts_cache_fts[filetype] then
+			local lang = vim.treesitter.language.get_lang(filetype)
+			if not lang then
+				return true
+			end
+
+			if not ts_available then
+				local list = require("nvim-treesitter").get_available()
+				ts_available = {}
+				for _, l in ipairs(list) do
+					ts_available[l] = true
+				end
+			end
+			if not ts_installed then
+				local list = require("nvim-treesitter").get_installed()
+				ts_installed = {}
+				for _, l in ipairs(list) do
+					ts_installed[l] = true
+				end
+			end
+
+			if not ts_available[lang] then
+				return
+			end
+
+			if not ts_installed[lang] then
+				if not ts_installing[lang] then
+					require("nvim-treesitter").install(lang, {})
+					ts_installing[lang] = true
+				end
+				return
+			end
+
+			ts_cache_fts[filetype] = { highlight = true, fold = false, indent = false }
+			if vim.treesitter.query.get(lang, "folds") then
+				ts_cache_fts[filetype].fold = true
+			end
+			if vim.treesitter.query.get(lang, "indents") then
+				ts_cache_fts[filetype].indent = true
+			end
+		end
+
+		if ts_cache_fts[filetype].highlight then
+			-- vim.treesitter.start()
+			local ok, err = pcall(vim.treesitter.start)
+			if not ok then
+				-- print(err)
+				vim.api.nvim_echo({ { err } }, true, { err = true })
+			end
+		end
+		if ts_cache_fts[filetype].fold then
+			vim.wo[0][0].foldmethod = "expr"
+			vim.wo[0][0].foldexpr = "v:lua.vim.treesitter.foldexpr()"
+		end
+		if ts_cache_fts[filetype].indent then
+			vim.bo.indentexpr = "v:lua.require('nvim-treesitter').indentexpr()"
+		end
+	end,
+})
+
+-- vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter-context" })
+vim.pack.add({ "https://github.com/gh-liu/nvim-treesitter-context" })
+require("treesitter-context").setup({
+	multiwindow = true,
+	max_lines = 1,
+	min_window_height = 0,
+	line_numbers = true,
+	trim_scope = "outer",
+	mode = "topline", ---@type 'cursor' | 'topline'
+	separator = nil,
+})
+vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined", default = true })
