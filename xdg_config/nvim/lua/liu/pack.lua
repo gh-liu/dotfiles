@@ -514,3 +514,36 @@ vim.api.nvim_create_autocmd({
 		require("lint").try_lint()
 	end,
 })
+
+--====== format
+vim.pack.add({ "https://github.com/stevearc/conform.nvim" })
+vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+local formatters_by_ft = {
+	go = { "gofmt" },
+	lua = { "stylua" },
+	rust = { "rustfmt" },
+	zig = { "zigfmt" },
+	python = { "ruff_format", "ruff_organize_imports" },
+	javascript = { "oxfmt" },
+	typescript = { "oxfmt" },
+	markdown = { "injected" },
+	json = { "jq" },
+	yaml = { "yamlfmt" },
+	toml = { "taplo" },
+	proto = { "buf" },
+	sh = { "shfmt" },
+	zsh = { "shfmt" },
+	just = { "just" },
+	query = { "format-queries" },
+}
+require("conform").setup({
+	-- :help conform-formatters
+	formatters_by_ft = formatters_by_ft,
+	default_format_opts = { lsp_format = "fallback" },
+	format_on_save = function(bufnr)
+		return {
+			lsp_format = "fallback",
+			timeout_ms = 500,
+		}
+	end,
+})
