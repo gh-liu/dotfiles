@@ -547,3 +547,108 @@ require("conform").setup({
 		}
 	end,
 })
+
+--====== textobj, operator
+-- vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter-textobjects" })
+vim.pack.add({ "https://github.com/gh-liu/nvim-treesitter-textobjects" })
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.ai" })
+local mini_ai_gen = require("mini.ai").gen_spec
+local mini_ai_ts_gen = mini_ai_gen.treesitter
+require("mini.ai").setup({
+	silent = true,
+	search_method = "cover",
+	n_lines = 300,
+	custom_textobjects = {
+		-- Code blocks (if/for/while/etc.)
+		o = mini_ai_ts_gen({
+			a = { "@block.outer", "@conditional.outer", "@loop.outer" },
+			i = { "@block.inner", "@conditional.inner", "@loop.inner" },
+		}),
+		-- Function
+		f = mini_ai_ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
+		-- Class
+		c = mini_ai_ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
+		-- NOTE: Use built-in `a` for argument/parameter instead of custom `P`
+		-- Assignment: = for whole, l for lhs, r for rhs
+		["="] = mini_ai_ts_gen({ a = "@assignment.outer", i = "@assignment.inner" }, {}),
+		l = mini_ai_ts_gen({ a = "@assignment.lhs", i = "@assignment.lhs" }, {}), -- lhs (left-hand side)
+		r = mini_ai_ts_gen({ a = "@assignment.rhs", i = "@assignment.rhs" }, {}), -- rhs (right-hand side)
+		-- Function call (usage)
+		u = mini_ai_gen.function_call(),
+	},
+	mappings = {
+		-- Move cursor to corresponding edge of `a` textobject
+		-- goto_left = "g[",
+		-- goto_right = "g]",
+		goto_left = "",
+		goto_right = "",
+	},
+})
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.surround" })
+local mini_surround_ts_input = require("mini.surround").gen_spec.input.treesitter
+require("mini.surround").setup({
+	mappings = {
+		add = "ys", -- Add surrounding in Normal and Visual modes
+		delete = "ds", -- Delete surrounding
+		replace = "cs", -- Replace surrounding
+
+		find = "", -- Find surrounding (to the right) - surround next
+		find_left = "", -- Find surrounding (to the left) - surround prev
+		highlight = "", -- Highlight surrounding - surround highlight
+		update_n_lines = "", -- Update `n_lines`
+
+		suffix_last = "l", -- Suffix to search with "prev" method
+		suffix_next = "n", -- Suffix to search with "next" method
+	},
+	custom_textobjects = {
+		f = mini_surround_ts_input({ outer = "@call.outer", inner = "@call.inner" }),
+	},
+	n_lines = 300,
+	search_method = "cover",
+})
+vim.keymap.set("n", "yS", "ys$", { remap = true })
+vim.keymap.set("n", "yss", "ys_", { remap = true })
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.operators" })
+require("mini.operators").setup({
+	replace = {
+		prefix = "dr",
+		reindent_linewise = true,
+	},
+	exchange = {
+		prefix = "cx",
+		reindent_linewise = true,
+	},
+	evaluate = { prefix = "g=" },
+	multiply = { prefix = "" },
+	sort = { prefix = "" },
+})
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.move" })
+require("mini.move").setup({})
+
+vim.pack.add({ "https://github.com/nvim-mini/mini.align" })
+require("mini.align").setup({
+	mappings = {
+		start = "gl",
+		start_with_preview = "gL",
+	},
+})
+
+vim.pack.add({ "https://github.com/monaqa/dial.nvim" })
+vim.keymap.set({ "n", "v" }, "<C-a>", "<Plug>(dial-increment)", {})
+vim.keymap.set({ "n", "v" }, "<C-x>", "<Plug>(dial-decrement)", {})
+vim.keymap.set({ "n", "v" }, "g<C-a>", "<Plug>(dial-g-increment)", {})
+vim.keymap.set({ "n", "v" }, "g<C-x>", "<Plug>(dial-g-decrement)", {})
+
+vim.pack.add({ "https://github.com/Wansmer/treesj" })
+require("treesj").setup({ use_default_keymaps = false, max_join_length = 300 })
+vim.keymap.set("n", "gJ", "<CMD>TSJJoin<CR>", {})
+vim.keymap.set("n", "gS", "<CMD>TSJSplit<CR>", {})
+
+vim.pack.add({ "https://github.com/tpope/vim-repeat" })
+vim.pack.add({ "https://github.com/tpope/vim-abolish" })
+vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
+
