@@ -1,6 +1,13 @@
 -- https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack
 
-vim.api.nvim_create_user_command("Pack", function()
+vim.api.nvim_create_user_command("Pack", function(args)
+	if #args.fargs > 0 then
+		if args.fargs[1] == "update" then
+			vim.pack.update()
+		end
+		return
+	end
+
 	vim.ui.select(vim.pack.get(), {
 		format_item = function(plugin)
 			return plugin.spec.name
@@ -8,7 +15,12 @@ vim.api.nvim_create_user_command("Pack", function()
 	}, function(plugin)
 		vim.print(plugin)
 	end)
-end, { nargs = 0 })
+end, {
+	nargs = "*",
+	complete = function()
+		return { "update" }
+	end,
+})
 
 --====== git
 local aug_fug = vim.api.nvim_create_augroup("liu.fugitive", { clear = true })
