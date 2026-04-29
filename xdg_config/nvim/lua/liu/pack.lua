@@ -480,17 +480,9 @@ vim.api.nvim_create_autocmd("InsertEnter", {
 	once = true,
 })
 
-local aug_mini_pairs = vim.api.nvim_create_augroup("liu.mini.pairs", { clear = true })
-vim.pack.add({ "https://github.com/nvim-mini/mini.pairs" }, { load = function() end })
-vim.api.nvim_create_autocmd("InsertEnter", {
-	group = aug_mini_pairs,
-	callback = function()
-		vim.cmd.packadd("mini.pairs")
-		require("mini.pairs").setup({
-			modes = { insert = true, command = true, terminal = false },
-		})
-	end,
-	once = true,
+vim.pack.add({ "https://github.com/nvim-mini/mini.pairs" })
+require("mini.pairs").setup({
+	modes = { insert = true, command = true, terminal = false },
 })
 
 --====== lint
