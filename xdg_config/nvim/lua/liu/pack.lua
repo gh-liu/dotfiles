@@ -1,5 +1,15 @@
 -- https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack
 
+vim.api.nvim_create_user_command("Pack", function()
+	vim.ui.select(vim.pack.get(), {
+		format_item = function(plugin)
+			return plugin.spec.name
+		end,
+	}, function(plugin)
+		vim.print(plugin)
+	end)
+end, { nargs = 0 })
+
 --====== git
 local aug_fug = vim.api.nvim_create_augroup("liu.fugitive", { clear = true })
 vim.pack.add({
