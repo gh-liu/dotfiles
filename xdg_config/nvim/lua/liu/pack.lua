@@ -103,3 +103,45 @@ vim.pack.add({
 	"https://github.com/nvim-lua/plenary.nvim",
 	"https://github.com/neogitorg/neogit",
 })
+
+--====== ui
+vim.pack.add({ "https://github.com/nvim-mini/mini.icons" })
+package.preload["nvim-web-devicons"] = function()
+	require("mini.icons").mock_nvim_web_devicons()
+	return package.loaded["nvim-web-devicons"]
+end
+
+vim.pack.add({ "https://github.com/tpope/vim-flagship" })
+vim.o.showtabline = 2
+-- default statusline is not empty anymore
+-- https://github.com/neovim/neovim/pull/33036
+if #vim.o.statusline > 0 then
+	-- https://github.com/tpope/vim-flagship/blob/0bb6e26c31446b26900e0d38434f33ba13663cff/autoload/flagship.vim#L606
+	vim.o.statusline = "%!flagship#statusline()"
+end
+-- https://github.com/tpope/vim-flagship/issues/11#issuecomment-149616002
+-- a regexp matching any flags you want to opt out of
+vim.g.flagship_skip = ""
+vim.g.tabprefix = ""
+do -- lsp, diagnostic
+	vim.diagnostic.status_raw = function(...)
+		local ret = vim.api.nvim_eval_statusline(vim.diagnostic.status(...), {})
+		return ret.str or ""
+	end
+	vim.lsp.get_clients_name = function(bufnr)
+		return vim.iter(vim.lsp.get_clients({ bufnr = bufnr }))
+			:map(function(client)
+				local client = client ---@class vim.lsp.Client
+				return client.name
+			end)
+			:join(",")
+	end
+	vim.cmd([[
+		augroup liu.flagship
+		  autocmd!
+		  " buffer flags (by priority)
+		  autocmd User Flags call Hoist("buffer", 9, "%{empty(&buftype) ? flagship#surround(v:lua.vim.diagnostic.status_raw(0)) : ''}")
+		  autocmd User Flags call Hoist("buffer", 100, "%{empty(&buftype) ? flagship#surround(v:lua.vim.lsp.get_clients_name(0)) : ''}")
+		augroup END
+	]])
+end
