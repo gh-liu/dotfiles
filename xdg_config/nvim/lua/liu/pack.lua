@@ -145,3 +145,22 @@ do -- lsp, diagnostic
 		augroup END
 	]])
 end
+
+--====== lsp
+vim.pack.add({ "https://github.com/neovim/nvim-lspconfig" })
+
+vim.pack.add({ "https://github.com/rachartier/tiny-code-action.nvim" })
+vim.lsp.buf.code_action = function(...)
+	if not vim.g.did_tiny_code_action_setup then
+		vim.g.did_tiny_code_action_setup = true
+		require("tiny-code-action").setup({
+			picker = {
+				"buffer",
+				opts = {
+					auto_preview = true,
+				},
+			},
+		})
+	end
+	require("tiny-code-action").code_action(...)
+end
