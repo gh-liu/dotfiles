@@ -109,11 +109,6 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
-vim.pack.add({
-	"https://github.com/nvim-lua/plenary.nvim",
-	"https://github.com/neogitorg/neogit",
-})
-
 --====== ui
 vim.pack.add({ "https://github.com/nvim-mini/mini.icons" })
 package.preload["nvim-web-devicons"] = function()
