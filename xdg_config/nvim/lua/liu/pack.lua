@@ -298,3 +298,187 @@ picker_map("m", "marks")
 picker_map("s", "lsp_symbols")
 picker_map("w", "grep_word")
 picker_map("o", "recent", { filter = { cwd = true } })
+
+--====== cmp
+local cmp_float_opts = {
+	border = vim.o.winborder,
+	winhighlight = "Normal:NormalFloat,FloatBorder:FloatBorder,CursorLine:Visual,Search:None",
+}
+vim.pack.add({ "https://github.com/rafamadriz/friendly-snippets" })
+local aug_blink_cmp = vim.api.nvim_create_augroup("liu.blink.cmp", { clear = true })
+vim.pack.add(
+	{ {
+		src = "https://github.com/saghen/blink.cmp",
+		version = vim.version.range("1.*"),
+	} },
+	{ load = function() end }
+)
+vim.api.nvim_create_autocmd("InsertEnter", {
+	group = aug_blink_cmp,
+	callback = function()
+		vim.cmd.packadd("blink.cmp")
+		require("blink.cmp").setup({
+			enabled = function()
+				return not (vim.bo.buftype == "prompt" or vim.b.completion)
+			end,
+			keymap = {
+				-- preset = "default",
+				--
+				-- Available commands: https://cmp.saghen.dev/configuration/keymap.html#commands
+				--	show, hide, cancel, accept,
+				-- 	select_and_accept, select_prev, select_next,
+				-- 	show_documentation, hide_documentation,
+				-- 	scroll_documentation_up, scroll_documentation_down,
+				-- 	snippet_forward, snippet_backward,
+				--
+				-- ["<C-space>"] = { "show", "show_documentation", "hide_documentation" },
+				["<C-e>"] = { "hide", "fallback" },
+				["<C-y>"] = { "accept", "fallback" },
+				["<CR>"] = { "select_and_accept", "fallback" },
+
+				["<Tab>"] = { "select_next", "fallback" },
+				["<S-Tab>"] = { "select_prev", "fallback" },
+
+				["<C-p>"] = { "select_prev", "fallback" },
+				["<C-n>"] = { "select_next", "fallback" },
+
+				["<C-l>"] = { "snippet_forward", "fallback" },
+				["<C-h>"] = { "snippet_backward", "fallback" },
+
+				["<C-b>"] = { "scroll_documentation_up", "fallback" },
+				["<C-f>"] = { "scroll_documentation_down", "fallback" },
+			},
+			appearance = {},
+			completion = {
+				-- trigger = {},
+				-- list = {},
+				accept = {
+					-- Experimental auto-brackets support
+					auto_brackets = {
+						enabled = true,
+					},
+				},
+				menu = vim.tbl_extend("force", cmp_float_opts, {
+					draw = {
+						-- Use treesitter to highlight the label text
+						-- for the given list of sources
+						treesitter = { "lsp" },
+						columns = {
+							{ "label", "label_description", gap = 1 },
+							{ "kind_icon", "kind", gap = 1 },
+							{ "source_name", gap = 1 },
+						},
+						components = {
+							source_name = {
+								text = function(ctx)
+									return string.format("[%s]", string.sub(ctx.item.source_name, 0, 3))
+								end,
+								highlight = "PreProc",
+							},
+							kind_icon = {
+								text = function(ctx)
+									local kind_icon, _, _ = require("mini.icons").get("lsp", ctx.kind)
+									return kind_icon
+								end,
+								highlight = function(ctx)
+									local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
+									return hl
+								end,
+							},
+							kind = {
+								highlight = function(ctx)
+									local _, hl, _ = require("mini.icons").get("lsp", ctx.kind)
+									return hl
+								end,
+							},
+						},
+					},
+				}),
+				documentation = {
+					auto_show = true,
+					auto_show_delay_ms = 200,
+					window = cmp_float_opts,
+				},
+				-- ghost_text = {},
+			},
+			signature = { -- NOTE: !experimental
+				enabled = true,
+				window = cmp_float_opts,
+			},
+			sources = {
+				default = function(ctx)
+					local buf_sourcess = vim.b.blink_cmp_sources
+					if buf_sourcess then
+						if type(buf_sourcess) == "table" then
+							return buf_sourcess
+						end
+						if type(buf_sourcess) == "string" then
+							return vim.split(buf_sourcess, ",")
+						end
+					end
+
+					-- local node = vim.treesitter.get_node()
+					-- if node and vim.tbl_contains({ "comment", "line_comment", "block_comment" }, node:type()) then
+					-- 	return { "buffer" }
+					-- end
+
+					local default = { "lsp", "path", "snippets", "buffer" }
+					-- local buf_sources_inherit = vim.b.blink_cmp_sources_inherit
+					-- if buf_provider_inherit then
+					-- 	local providers = {}
+					-- 	if type(buf_provider_inherit) == "table" then
+					-- 		providers = buf_provider_inherit
+					-- 	end
+					-- 	if type(buf_provider_inherit) == "string" then
+					-- 		providers = vim.split(buf_provider_inherit, ",")
+					-- 	end
+					-- 	for _, p in ipairs(providers) do
+					-- 		table.insert(default, p)
+					-- 	end
+					-- end
+					return default
+				end,
+				-- per_filetype = { lua = { inherit_defaults = true, "lazydev" } },
+				providers = {
+					path = {
+						opts = {
+							-- path completion from cwd instead of current buffer’s directory
+							get_cwd = function(_)
+								return vim.fn.getcwd()
+							end,
+						},
+					},
+				},
+			},
+			-- https://cmp.saghen.dev/configuration/reference#cmdline
+			cmdline = {
+				enabled = false,
+				sources = { "cmdline", "buffer" },
+			},
+			-- https://cmp.saghen.dev/configuration/reference#terminal
+			term = {
+				enabled = false,
+				sources = { "buffer" },
+			},
+			-- https://cmp.saghen.dev/recipes.html#fuzzy-sorting-filtering
+			fuzzy = {
+				implementation = "prefer_rust_with_warning",
+				-- sort = {},
+			},
+		})
+	end,
+	once = true,
+})
+
+local aug_mini_pairs = vim.api.nvim_create_augroup("liu.mini.pairs", { clear = true })
+vim.pack.add({ "https://github.com/nvim-mini/mini.pairs" }, { load = function() end })
+vim.api.nvim_create_autocmd("InsertEnter", {
+	group = aug_mini_pairs,
+	callback = function()
+		vim.cmd.packadd("mini.pairs")
+		require("mini.pairs").setup({
+			modes = { insert = true, command = true, terminal = false },
+		})
+	end,
+	once = true,
+})
