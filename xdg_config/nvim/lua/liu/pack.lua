@@ -264,3 +264,37 @@ require("treesitter-context").setup({
 	separator = nil,
 })
 vim.api.nvim_set_hl(0, "TreesitterContextBottom", { link = "Underlined", default = true })
+
+--====== picker
+vim.pack.add({ "https://github.com/folke/snacks.nvim" })
+require("snacks").setup({
+	-- :h snacks.nvim-picker-config
+	picker = {
+		enabled = true,
+		win = {
+			input = { keys = input_keys, wo = {} },
+			list = { wo = {} },
+			preview = { wo = {} },
+		},
+	},
+})
+vim.ui.select = function(...)
+	require("snacks.picker.select").select(...)
+end
+local picker_map = function(op, cmd, opts)
+	opts = opts or {}
+	vim.keymap.set("n", "<leader>s" .. op, function()
+		require("snacks").picker(cmd, opts)
+		-- require("snacks.picker")[cmd](opts)
+	end)
+end
+picker_map("b", "buffers")
+picker_map("d", "diagnostics_buffer")
+picker_map("f", "files")
+picker_map("j", "jumps")
+picker_map("g", "live_grep")
+picker_map("h", "help")
+picker_map("m", "marks")
+picker_map("s", "lsp_symbols")
+picker_map("w", "grep_word")
+picker_map("o", "recent", { filter = { cwd = true } })
