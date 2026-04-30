@@ -214,7 +214,6 @@ vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter" })
 ---@field indent boolean
 local ts_cache_fts = {} ---@type table<string,TSCapabilities>
 local ts_available = nil ---@type table<string,true>?
-local ts_installed = nil ---@type table<string,true>?
 local ts_installing = {} ---@type table<string,true>
 vim.api.nvim_create_autocmd("FileType", {
 	group = aug_treesitter,
@@ -233,18 +232,14 @@ vim.api.nvim_create_autocmd("FileType", {
 					ts_available[l] = true
 				end
 			end
-			if not ts_installed then
-				local list = require("nvim-treesitter").get_installed()
-				ts_installed = {}
-				for _, l in ipairs(list) do
-					ts_installed[l] = true
-				end
-			end
-
 			if not ts_available[lang] then
 				return
 			end
 
+			local ts_installed = {}
+			for _, l in ipairs(require("nvim-treesitter").get_installed()) do
+				ts_installed[l] = true
+			end
 			if not ts_installed[lang] then
 				if not ts_installing[lang] then
 					require("nvim-treesitter").install(lang, {})
