@@ -848,18 +848,25 @@ vim.cmd([[
 	"setglobal sessionoptions-=curdir 
 	"setglobal sessionoptions+=sesdir
 
-	augroup liu.obsession
-	  autocmd!
-	  autocmd VimEnter * nested
-			  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
-			  \   let s:session_paths = ['Session.vim', '.git/Session.vim', '.config/Session.vim'] |
-			  \   for s:path in s:session_paths |
-			  \     if filereadable(s:path) |
-			  \       execute 'source' fnameescape(s:path) |
-			  \       break |
-			  \     endif |
-			  \   endfor |
-			  \ endif
+	  " Extension points from vim-obsession:
+	  " - Use List g:obsession_append to append Vimscript lines to Session.vim.
+	  " - Use User autocommands ObsessionPre and Obsession to hook before/after mksession.
+	  augroup liu.obsession
+		  autocmd!
+		  " Clear the argument list before saving the sessions and after loading them.
+		  " There is no option for this in |sessionoptions|.
+		  autocmd User ObsessionPre %argdel
+
+		  autocmd VimEnter * nested
+				  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
+				  \   let s:session_paths = ['Session.vim', '.git/Session.vim', '.config/Session.vim'] |
+				  \   for s:path in s:session_paths |
+				  \     if filereadable(s:path) |
+				  \       execute 'source' fnameescape(s:path) |
+				  \       break |
+				  \     endif |
+				  \   endfor |
+				  \ endif
 	augroup END
 ]])
 
