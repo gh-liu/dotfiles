@@ -1,11 +1,15 @@
 vim.cmd([[
-augroup liu_autocmds_core
+augroup liu.core
   autocmd!
   autocmd VimResized * wincmd = 
+augroup END
+
+augroup liu.focus
+  autocmd!
   autocmd FocusGained *  if &buftype=='' | checktime | endif
   "automatically save all modified buffers without prompting for confirmation whenever focus is lost
   autocmd FocusLost * let s:confirm = &confirm | setglobal noconfirm | silent! wall | let &confirm = s:confirm
-  autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
+  autocmd FocusLost,BufHidden * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
 augroup END
 
 augroup liu.mkview
