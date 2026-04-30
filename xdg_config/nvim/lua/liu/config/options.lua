@@ -163,7 +163,15 @@ vim.o.shada = vim.iter({
 -- =============================================================================
 --}}}
 
-vim.o.clipboard = "unnamedplus"
+-- vim.o.clipboard = "unnamedplus"
+vim.api.nvim_create_autocmd("UIEnter", {
+	once = true,
+	callback = function()
+		vim.schedule(function()
+			vim.o.clipboard = "unnamedplus"
+		end)
+	end,
+})
 
 -- Disable providers we do not care a about
 vim.g.loaded_ruby_provider = 0 -- disable ruby support
