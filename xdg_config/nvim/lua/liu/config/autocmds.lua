@@ -7,6 +7,12 @@ augroup liu_autocmds_core
   autocmd FocusLost * let s:confirm = &confirm | setglobal noconfirm | silent! wall | let &confirm = s:confirm
   autocmd BufHidden,FocusLost * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
 augroup END
+
+augroup liu.mkview
+  autocmd!
+  au BufWinLeave * if &buftype ==# '' && expand('%') !=# '' | silent! mkview | endif
+  au BufWinEnter * if &buftype ==# '' && expand('%') !=# '' | silent! loadview | endif
+augroup END
 ]])
 
 local api = vim.api
