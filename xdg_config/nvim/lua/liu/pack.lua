@@ -41,11 +41,10 @@ vim.pack.add({
 	"https://github.com/tpope/vim-rhubarb",
 })
 vim.keymap.set("n", "g<space>", function()
-	local api = vim.api
-	for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
-		local buf = api.nvim_win_get_buf(win)
+	for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+		local buf = vim.api.nvim_win_get_buf(win)
 		if vim.b[buf].fugitive_type == "index" then
-			api.nvim_buf_delete(buf, { force = true })
+			vim.api.nvim_buf_delete(buf, { force = true })
 			return
 		end
 	end
@@ -91,7 +90,7 @@ vim.api.nvim_create_autocmd("User", {
 vim.api.nvim_create_autocmd("VimLeavePre", {
 	group = aug_fug,
 	callback = function(ev)
-		local buf = ev.buf or api.nvim_get_current_buf()
+		local buf = ev.buf or vim.api.nvim_get_current_buf()
 		if vim.api.nvim_buf_is_valid(buf) and vim.b[buf].fugitive_type == "index" then
 			vim.api.nvim_buf_delete(buf, { force = true })
 		end
