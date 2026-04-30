@@ -23,6 +23,10 @@ end, {
 })
 
 --====== git
+-- NOTE for fugitive
+-- 1. >REV = current file within version REV
+-- 2. `:Gvdiffsplit!` always split leftabove
+-- 3. `:Git blame %` and `~` could use `CTRL-o``CTRL-i` jump back
 local aug_fug = vim.api.nvim_create_augroup("liu.fugitive", { clear = true })
 vim.pack.add({
 	"https://github.com/tpope/vim-fugitive",
