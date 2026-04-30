@@ -27,6 +27,14 @@ end, {
 -- 1. >REV = current file within version REV
 -- 2. `:Gvdiffsplit!` always split leftabove
 -- 3. `:Git blame %` and `~` could use `CTRL-o``CTRL-i` jump back
+-- NOTE for review workflow
+-- 1. checkout the PR branch
+-- 2. `:Gclog origin/master..HEAD` list commits in PR
+-- 3. `:G difftool --name-status !~..!` list files changed by current commit
+-- 4. `:G difftool --name-status origin/master..HEAD` list files changed by whole PR
+-- 5. `:Gvdiffsplit !~:%` diff current file in selected commit
+-- 5. `:Gvdiffsplit origin/master:%` diff current file against origin/master
+-- 5. `:Gvdiffsplit origin/master...HEAD:%` diff current file against merge-base of origin/master and HEAD
 local aug_fug = vim.api.nvim_create_augroup("liu.fugitive", { clear = true })
 vim.pack.add({
 	"https://github.com/tpope/vim-fugitive",
