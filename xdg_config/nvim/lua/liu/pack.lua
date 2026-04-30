@@ -76,7 +76,7 @@ vim.api.nvim_create_autocmd("User", {
 		vim.wo[0][0].winhighlight = "StatusLine:StatusLineFugitive"
 	end,
 })
-vim.api.nvim_create_autocmd("SessionLoadPost", {
+vim.api.nvim_create_autocmd("VimLeavePre", {
 	group = aug_fug,
 	callback = function(ev)
 		local buf = ev.buf or api.nvim_get_current_buf()
