@@ -664,7 +664,7 @@ vim.keymap.set({ "n", "v" }, "<C-x>", "<Plug>(dial-decrement)", {})
 vim.keymap.set({ "n", "v" }, "g<C-a>", "<Plug>(dial-g-increment)", {})
 vim.keymap.set({ "n", "v" }, "g<C-x>", "<Plug>(dial-g-decrement)", {})
 
-vim.pack.add({ "https://github.com/Wansmer/treesj" })
+vim.pack.add({ "https://github.com/gh-liu/treesj" })
 require("treesj").setup({ use_default_keymaps = false, max_join_length = 300 })
 vim.keymap.set("n", "gJ", "<CMD>TSJJoin<CR>", {})
 vim.keymap.set("n", "gS", "<CMD>TSJSplit<CR>", {})
