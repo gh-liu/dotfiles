@@ -10,12 +10,9 @@ cabbr <expr> W (getcmdtype() is# ':' && getcmdline() is# 'W') ? 'w' : 'W'
 cabbr <expr> Q (getcmdtype() is# ':' && getcmdline() is# 'Q') ? 'q' : 'Q'
 " }}}
 " navigation {{{
-nnoremap gf gfzv
-nnoremap gF gFzv
-
 " do not need `zv` cause option `foldopen` contain serach
-nnoremap <expr> n 'Nn'[v:searchforward]..'zz'
-nnoremap <expr> N 'nN'[v:searchforward]..'zz'
+nnoremap <expr> n 'Nn'[v:searchforward]..'zzzv'
+nnoremap <expr> N 'nN'[v:searchforward]..'zzzv'
 
 nnoremap L Lzz
 nnoremap H Hzz
@@ -23,10 +20,13 @@ nnoremap H Hzz
 nnoremap <c-d> <c-d>zz
 nnoremap <c-u> <c-u>zz
 
-nnoremap g, g,zvzz
-nnoremap g; g;zvzz
+"nnoremap g, g,zvzz
+"nnoremap g; g;zvzz
 "nmap g<C-o> g;
 "nmap g<C-i> g,
+
+"nnoremap gf gfzv
+"nnoremap gF gFzv
 
 nmap j gj
 nmap k gk
@@ -35,15 +35,15 @@ nmap k gk
 " :h Y-default
 xnoremap Y <ESC>y$gv
 " copy entire file contents (to gui-clipboard if available)
-nnoremap <silent> yY :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:winview) <cr>
+nnoremap <silent> yY :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVG"+y' <bar> call winrestview(b:_winview) <cr>
 
-nnoremap dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
+nnoremap <silent> dD :exe 'keepjumps keepmarks norm ggVG"+d' <cr>
+
 " delete the selection
 snoremap <bs>  <C-o>"_s
 
 " keep the old content
 xnoremap p P
-
 " Paste before/after linewise. See `:h put`
 nnoremap [p <Cmd>exe "iput! " . v:register<CR>
 xnoremap [p <Cmd>exe "iput! " . v:register<CR>
@@ -52,20 +52,20 @@ xnoremap ]p <Cmd>exe "iput "  . v:register<CR>
 " }}}
 " editing {{{
 inoremap <c-c> <esc>
-" select last inserted text.
-nnoremap gV `[v`]
-
-" press . to repeat the last change
-nnoremap gs mr:let @/='\<'.expand('<cword>').'\>'<CR>cgn
-xnoremap gs mr"sy:let @/=@s<CR>cgn
-
 " nice block
 xnoremap <expr> I (mode()=~#'[vV]'?'<C-v>^o^I':'I')
 xnoremap <expr> A (mode()=~#'[vV]'?'<C-v>0o$A':'A')
 
-" Format whole buffer with formatprg without changing cursor position
-nnoremap <silent> gq<leader> :let b:winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:winview) <cr>
 nnoremap gq? <Cmd>set formatprg? formatexpr?<CR>
+" Format whole buffer with formatprg without changing cursor position
+nnoremap <silent> gqQ :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:_winview) <cr>
+
+" select last inserted text.
+"nnoremap gV `[v`]
+
+" press . to repeat the last change
+nnoremap gs mr:let @/='\<'.expand('<cword>').'\>'<CR>cgn
+xnoremap gs mr"sy:let @/=@s<CR>cgn
 " }}}
 " tab/win/buffer {{{
 " switch to alternate buffer
@@ -86,6 +86,7 @@ nnoremap <leader>3 3gt
 nnoremap <leader>4 4gt
 nnoremap <leader>5 5gt
 nnoremap <leader>6 6gt
+nnoremap <leader>7 7gt
 
 nnoremap [<tab> <cmd>tabprev<cr>
 nnoremap ]<tab> <cmd>tabnext<cr>
@@ -111,7 +112,6 @@ nnoremap cd- :lcd -<CR>
 " datetime {{{
 " print unix time at cursor as human-readable datetime. 1677604904 => '2023-02-28 09:21:45'
 nnoremap g<C-T> :echo strftime('%Y-%m-%d %H:%M:%S', len(expand('<cword>')) > 10 ? str2nr(expand('<cword>')) / 1000 : str2nr(expand('<cword>')))<CR>
-
 " insert formatted datetime (from @tpope vimrc).
 inoremap <silent> <C-G><C-T> <C-R>=repeat(complete(col('.'),map(["%Y-%m-%d %H:%M:%S","%a, %d %b %Y %H:%M:%S %z","%Y %b %d","%d-%b-%y","%a %b %d %T %Z %Y","%Y%m%d"],'strftime(v:val)')+[localtime()]),0)<CR>
 " }}}
@@ -183,4 +183,5 @@ cnoremap <expr> <A-Space> getcmdtype() =~ '[/?]' ? '\_s\+' : ' '
 " //: "Search within visual selection".
 cnoremap <expr> / (getcmdtype() =~ '[/?]' && getcmdline() == '') ? "\<C-c>\<Esc>/\\%V" : '/'
 " }}}
+
 " vim: set foldmethod=marker:
