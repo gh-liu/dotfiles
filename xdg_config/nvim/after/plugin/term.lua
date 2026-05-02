@@ -1,11 +1,12 @@
-augroup term_setup
-  autocmd!
-  autocmd TermOpen * startinsert
-  autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
-augroup END
-
+vim.cmd([[
 nnoremap `\ <cmd> vsplit <bar> term <cr>
 nnoremap `- <cmd> bo split  <bar> term <cr>
+
+augroup liu.term
+  autocmd!
+  autocmd TermOpen * startinsert
+  "autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
+augroup END
 
 tnoremap jk <C-\><C-n>
 tnoremap <esc> <C-\><C-n>
@@ -18,3 +19,5 @@ tnoremap <C-b> <Left>
 tnoremap <C-a> <Home>
 tnoremap <C-e> <End>
 tnoremap <C-q> <C-\><C-n>:quit<cr>
+]])
+
