@@ -41,3 +41,20 @@ vim.api.nvim_create_autocmd({ "TermRequest" }, {
 		end
 	end,
 })
+
+local ns_term_prompt = vim.api.nvim_create_namespace("liu.term.prompt")
+local aug_term_prompt = vim.api.nvim_create_augroup("liu.term.prompt", { clear = true })
+vim.api.nvim_create_autocmd("TermOpen", { command = "setlocal signcolumn=auto" })
+vim.api.nvim_create_autocmd({ "TermRequest" }, {
+	group = aug_term_prompt,
+	callback = function(ev)
+		if string.match(ev.data.sequence, "^\027]133;A") then
+			-- OSC 133: shell-prompt
+			local lnum = ev.data.cursor[1] ---@type integer
+			vim.api.nvim_buf_set_extmark(ev.buf, ns_term_prompt, lnum - 1, 0, {
+				sign_text = "∙",
+				sign_hl_group = "SpecialChar",
+			})
+		end
+	end,
+})
