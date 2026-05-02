@@ -166,6 +166,11 @@ cabbr <expr> E (getcmdtype() is# ':' && getcmdline() is# 'E') ? 'e' : 'E'
 " Mark position before search
 nnoremap / ms/
 
+" Make "*" / "g*" stay on the first match (don't jump to next).
+" Cursor stays put, all matches highlighted; use n/N to navigate.
+nnoremap <silent> *  ms:<c-u>let @/='\V\<'.escape(expand('<cword>'), '/\').'\>'<bar>call histadd('/',@/)<bar>set hlsearch<cr>
+nnoremap <silent> g* ms:<c-u>let @/='\V'.escape(expand('<cword>'), '/\')<bar>call histadd('/',@/)<bar>set hlsearch<cr>
+
 " search current buffer and open results in loclist
 "nnoremap \c   ms:<c-u>lvimgrep // % <bar> lw<s-left><s-left><s-left><s-left><right>
 nnoremap \c   ms:<c-u>lgrep  % <bar> lw<s-left><s-left><s-left><s-left>
