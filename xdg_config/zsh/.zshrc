@@ -423,6 +423,8 @@ print_osc7() {
 add-zsh-hook chpwd print_osc7
 print_osc7
 
+PROMPT=$'%{\033]133;A\007%}'"$PROMPT"
+
 path+=("$XDG_CONFIG_HOME/bin")
 [ -f "$ZDOTDIR/zsh-conf/custom.zsh" ] && source "$ZDOTDIR/zsh-conf/custom.zsh"
 
