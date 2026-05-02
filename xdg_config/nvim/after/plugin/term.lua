@@ -5,6 +5,8 @@ nnoremap `- <cmd> bo split  <bar> term <cr>
 augroup liu.term
   autocmd!
   autocmd TermOpen * startinsert
+  "autocmd TermOpen * setlocal stl=%f
+  autocmd TermOpen * setlocal statusline=%{b:term_title}
   "autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
 augroup END
 
