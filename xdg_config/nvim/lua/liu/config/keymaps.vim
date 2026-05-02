@@ -66,6 +66,9 @@ nnoremap <silent> gqQ :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmar
 " press . to repeat the last change
 nnoremap gs mr:let @/='\<'.expand('<cword>').'\>'<CR>cgn
 xnoremap gs mr"sy:let @/=@s<CR>cgn
+
+" Repeat last command for each line of a visual selection.
+xnoremap . :normal .<CR>
 " }}}
 " tab/win/buffer {{{
 " switch to alternate buffer
