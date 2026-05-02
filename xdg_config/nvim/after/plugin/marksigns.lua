@@ -29,6 +29,10 @@ api.nvim_set_decoration_provider(ns, {
 	on_win = function(_, _, bufnr, toprow, botrow)
 		api.nvim_buf_clear_namespace(bufnr, ns, toprow, botrow)
 
+		if vim.bo.buftype == "terminal" then
+			return
+		end
+
 		local current_file = api.nvim_buf_get_name(bufnr)
 
 		local skip_marks = { "s" }
