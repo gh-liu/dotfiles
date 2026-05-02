@@ -416,6 +416,13 @@ _set_title() {
 	print -Pn " [%l]\a"
 }
 
+print_osc7() {
+  printf '\033]7;file://%s%s\033\\' "${HOST:-$HOSTNAME}" "$PWD"
+}
+# autoload -Uz add-zsh-hook
+add-zsh-hook chpwd print_osc7
+print_osc7
+
 path+=("$XDG_CONFIG_HOME/bin")
 [ -f "$ZDOTDIR/zsh-conf/custom.zsh" ] && source "$ZDOTDIR/zsh-conf/custom.zsh"
 
