@@ -1,92 +1,75 @@
-local api = vim.api
+vim.api.nvim_set_hl(0, "MarkSign", { link = "SpecialChar", default = true })
 
-api.nvim_set_hl(0, "MarkSign", { link = "SpecialChar", default = true })
--- api.nvim_set_hl(0, "MarkSignPos", { default = true })
+vim.keymap.set("n", "dm", "<Cmd>exe 'delmarks ' . getcharstr()<CR>", { desc = "Del mark" })
 
-local ns = api.nvim_create_namespace("liu/marksigns")
+local ns_marksigns = vim.api.nvim_create_namespace("liu.marksigns")
 
 --- @param bufnr integer
---- @param mark vim.fn.getmarklist.ret.item
-local function decor_mark(bufnr, mark)
-	local row = mark.pos[2] - 1
-	local nr = vim.fn.str2nr(mark.mark)
-	local priority = vim.hl.priorities.user + (mark.mark:match("%l") and nr - 32 or nr) -- a->77; A->65
-	pcall(api.nvim_buf_set_extmark, bufnr, ns, row, 0, {
-		sign_text = "'" .. mark.mark:sub(2),
-		priority = priority,
-		sign_hl_group = "MarkSign",
-	})
-
-	-- local col = mark.pos[3] - 1
-	-- local off = mark.pos[4]
-	-- pcall(api.nvim_buf_set_extmark, bufnr, ns, row, col, {
-	-- 	end_col = col + off + 1,
-	-- 	hl_group = "MarkSignPos",
-	-- })
+--- @param name string single char like "a" or "A"
+local function render_mark(bufnr, name)
+	if not vim.api.nvim_buf_is_loaded(bufnr) or vim.bo[bufnr].buftype == "terminal" then
+		return
+	end
+	local id = string.byte(name)
+	local row
+	if name:match("%u") then
+		local m = vim.api.nvim_get_mark(name, {})
+		local bufname = vim.api.nvim_buf_get_name(bufnr)
+		if m[3] == bufnr or (m[4] ~= "" and vim.fn.fnamemodify(m[4], ":p:a") == bufname) then
+			row = m[1]
+		end
+	else
+		row = vim.api.nvim_buf_get_mark(bufnr, name)[1]
+	end
+	if row and row > 0 and row <= vim.api.nvim_buf_line_count(bufnr) then
+		local nr = vim.fn.str2nr(name)
+		local priority = vim.hl.priorities.user + (name:match("%l") and nr - 32 or nr)
+		pcall(vim.api.nvim_buf_set_extmark, bufnr, ns_marksigns, row - 1, 0, {
+			id = id,
+			sign_text = "'" .. name,
+			sign_hl_group = "MarkSign",
+			priority = priority,
+		})
+	else
+		vim.api.nvim_buf_del_extmark(bufnr, ns_marksigns, id)
+	end
 end
 
-api.nvim_set_decoration_provider(ns, {
-	on_win = function(_, _, bufnr, toprow, botrow)
-		api.nvim_buf_clear_namespace(bufnr, ns, toprow, botrow)
-
-		if vim.bo.buftype == "terminal" then
-			return
-		end
-
-		local current_file = api.nvim_buf_get_name(bufnr)
-
-		local skip_marks = { "s" }
-		-- Global marks
-		for _, mark in ipairs(vim.fn.getmarklist()) do
-			local mark_char = mark.mark:match("%u")
-			if mark_char and not vim.tbl_contains(skip_marks, mark_char) then
-				local mark_file = vim.fn.fnamemodify(mark.file, ":p:a")
-				if current_file == mark_file then
-					decor_mark(bufnr, mark)
-				end
+local aug_marksigns = vim.api.nvim_create_augroup("liu.marksigns", { clear = true })
+vim.api.nvim_create_autocmd("BufRead", {
+	group = aug_marksigns,
+	desc = "Draw mark signs on buffer read",
+	callback = function(e)
+		vim.api.nvim_buf_clear_namespace(e.buf, ns_marksigns, 0, -1)
+		local bufname = vim.api.nvim_buf_get_name(e.buf)
+		-- Global marks (uppercase) belonging to this file
+		for _, m in ipairs(vim.fn.getmarklist()) do
+			local name = m.mark:sub(2)
+			if name:match("^%u$") and vim.fn.fnamemodify(m.file, ":p:a") == bufname then
+				render_mark(e.buf, name)
 			end
 		end
-
-		-- Local marks
-		for _, mark in ipairs(vim.fn.getmarklist(bufnr)) do
-			local mark_char = mark.mark:match("%l")
-			if mark_char and not vim.tbl_contains(skip_marks, mark_char) then
-				decor_mark(bufnr, mark)
+		-- Local marks (lowercase)
+		for _, m in ipairs(vim.fn.getmarklist(e.buf)) do
+			local name = m.mark:sub(2)
+			if name:match("^%l$") then
+				render_mark(e.buf, name)
 			end
 		end
 	end,
 })
-
-local redraw = function(mark)
-	-- Redraw all win if global mark
-	if mark:match("%u") then
-		for _, win in ipairs(api.nvim_tabpage_list_wins(0)) do
-			api.nvim__redraw({ win = win, range = { 0, -1 } })
+vim.api.nvim_create_autocmd("MarkSet", {
+	group = aug_marksigns,
+	pattern = "[A-Za-z]",
+	desc = "Draw mark sign when mark is set",
+	callback = function(e)
+		-- For global marks, redraw across all loaded buffers
+		if e.match:match("%u") then
+			for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+				render_mark(buf, e.match)
+			end
+		else
+			render_mark(e.buf, e.match)
 		end
-	else
-		api.nvim__redraw({ range = { 0, -1 } })
-	end
-end
-
--- Redraw screen when marks are changed via `m` commands
-vim.on_key(function(_, typed)
-	local mark
-	if typed:sub(1, 1) == "m" then
-		mark = typed:sub(2)
-	end
-	if not mark then
-		return
-	end
-	vim.schedule(function()
-		redraw(mark)
-	end)
-end, ns)
-
-vim.keymap.set("n", "dm", function()
-	local mark = vim.fn.nr2char(vim.fn.getchar())
-	vim.cmd("delmarks " .. mark)
-	vim.schedule(function()
-		redraw(mark)
-	end)
-end, { desc = "delete mark" })
--- vim.keymap.set("n", "M", "g`", { desc = "Jump to the exact location of a mark" })
+	end,
+})
