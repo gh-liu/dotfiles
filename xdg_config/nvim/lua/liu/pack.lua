@@ -877,7 +877,7 @@ vim.cmd([[
 		  autocmd!
 		  " Clear the argument list before saving the sessions and after loading them.
 		  " There is no option for this in |sessionoptions|.
-		  autocmd User ObsessionPre %argdel
+		  autocmd VimLeavePre * %argdel
 
 		  autocmd VimEnter * nested
 				  \ if !argc() && empty(bufname()) && empty(v:this_session) && !&modified |
