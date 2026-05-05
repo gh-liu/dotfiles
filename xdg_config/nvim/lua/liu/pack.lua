@@ -683,6 +683,21 @@ require("mini.files").setup({
 		mark_goto = "`",
 	},
 	options = { use_as_default_explorer = false },
+	content = {
+		highlight = function(fs_entry)
+			if fs_entry.fs_type == "file" then
+				local entry = vim.iter(vim.fn.argv())
+					:map(function(arg)
+						return vim.fs.abspath(arg)
+					end)
+					:find(fs_entry.path)
+				if entry then
+					return "Todo"
+				end
+			end
+			return require("mini.files").default_highlight(fs_entry)
+		end,
+	},
 })
 vim.api.nvim_create_autocmd("User", {
 	group = aug_mini_files,
