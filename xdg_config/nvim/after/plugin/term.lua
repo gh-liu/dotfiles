@@ -53,6 +53,12 @@ vim.api.nvim_create_autocmd({ "TermRequest" }, {
 		if string.match(ev.data.sequence, "^\027]133;A") then
 			-- OSC 133: shell-prompt
 			local lnum = ev.data.cursor[1] ---@type integer
+			-- Clean up stale extmarks at or below the new prompt line
+			-- (e.g., after `clear`, the cursor jumps back and old marks become invalid)
+			local marks = vim.api.nvim_buf_get_extmarks(ev.buf, ns_term_prompt, { lnum - 1, 0 }, -1, {})
+			for _, mark in ipairs(marks) do
+				vim.api.nvim_buf_del_extmark(ev.buf, ns_term_prompt, mark[1])
+			end
 			vim.api.nvim_buf_set_extmark(ev.buf, ns_term_prompt, lnum - 1, 0, {
 				sign_text = "∙",
 				sign_hl_group = "SpecialChar",
