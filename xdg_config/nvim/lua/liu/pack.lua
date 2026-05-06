@@ -654,6 +654,8 @@ require("mini.operators").setup({
 	multiply = { prefix = "" },
 	sort = { prefix = "" },
 })
+vim.keymap.set({ "n", "x" }, "dR", "<cmd>normal dr$<cr>")
+vim.keymap.set({ "n", "x" }, "cX", "<cmd>normal cx$<cr>")
 
 vim.pack.add({ "https://github.com/nvim-mini/mini.move" })
 require("mini.move").setup({})
