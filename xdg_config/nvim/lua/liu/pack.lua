@@ -802,6 +802,7 @@ vim.keymap.set("n", "<leader>e", function()
 		end
 	end
 end)
+vim.api.nvim_create_user_command("DirOpen", "lua MiniFiles.open(<f-args>)", { complete = "dir", nargs = 1 })
 
 local aug_mini_bufremove = vim.api.nvim_create_augroup("liu.mini.bufremove", { clear = true })
 vim.pack.add({ "https://github.com/nvim-mini/mini.bufremove" })
