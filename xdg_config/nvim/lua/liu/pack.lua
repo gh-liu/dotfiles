@@ -757,6 +757,7 @@ vim.api.nvim_create_autocmd("User", {
 	callback = function(args)
 		local buf = args.data.buf_id
 		local win = args.data.win_id
+		vim.wo[win].signcolumn = "no"
 		local file = vim.api.nvim_buf_get_name(buf)
 		local _, _, buf, relpath = file:find([[^minifiles://(%d+)/(.*)]])
 		if relpath then
@@ -764,7 +765,6 @@ vim.api.nvim_create_autocmd("User", {
 		end
 	end,
 })
-
 vim.keymap.set("n", "<leader>E", function()
 	local MiniFiles = require("mini.files")
 	if not MiniFiles.close() then
