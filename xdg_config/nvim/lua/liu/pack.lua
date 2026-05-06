@@ -5,6 +5,20 @@ vim.api.nvim_create_user_command("Pack", function(args)
 		if args.fargs[1] == "update" then
 			vim.pack.update()
 		end
+		if args.fargs[1] == "clean" then
+			local plugs = vim.iter(vim.pack.get())
+				:filter(function(plug)
+					return not plug.active
+				end)
+				:map(function(plug)
+					return plug.spec.name
+				end)
+				:totable()
+			if #plugs > 0 then
+				vim.print(plugs)
+				vim.pack.del(plugs)
+			end
+		end
 		return
 	end
 
@@ -18,7 +32,7 @@ vim.api.nvim_create_user_command("Pack", function(args)
 end, {
 	nargs = "*",
 	complete = function()
-		return { "update" }
+		return { "update", "clean" }
 	end,
 })
 
