@@ -4,24 +4,10 @@ api.nvim_set_hl(0, "FlogMarkSign", { link = "MarkSign", default = true })
 
 local M = {}
 
-M.ns = api.nvim_create_namespace("liu/flogmark")
-
-api.nvim_create_autocmd("FileType", {
-	group = api.nvim_create_augroup("liu/flogmark", { clear = true }),
-	pattern = "floggraph",
-	callback = function()
-		vim.wo.foldcolumn = "1"
-		vim.wo.signcolumn = "yes:1"
-	end,
-})
-
-local function get_flog_state(bufnr)
-	if vim.bo[bufnr].filetype ~= "floggraph" then
-		return nil
-	end
-
+M.ns = api.nvim_create_namespace("liu.flogmark")
+function M.get_flog_state(bufnr)
 	local state = vim.b[bufnr].flog_state
-	if type(state) ~= "table" then
+	if not state or type(state) ~= "table" then
 		return nil
 	end
 
@@ -87,38 +73,35 @@ local function get_visible_marks(state, toprow, botrow)
 		:totable()
 end
 
-local function clear_marks(bufnr, toprow, botrow)
-	api.nvim_buf_clear_namespace(bufnr, M.ns, toprow, botrow)
-end
-
-local function render_marks(bufnr, marks)
-	for _, mark in ipairs(marks) do
-		pcall(api.nvim_buf_set_extmark, bufnr, M.ns, mark.row, 0, mark.opts)
-	end
-end
-
-function M.collect_marks(bufnr, toprow, botrow)
-	local state = get_flog_state(bufnr)
-	if not state then
-		return {}
-	end
-
-	return get_visible_marks(state, toprow, botrow)
-end
-
 function M.render(bufnr, toprow, botrow)
-	local state = get_flog_state(bufnr)
-	clear_marks(bufnr, toprow, botrow)
+	if vim.bo[bufnr].filetype ~= "floggraph" then
+		return
+	end
+
+	api.nvim_buf_clear_namespace(bufnr, M.ns, toprow, botrow)
+
+	local state = M.get_flog_state(bufnr)
 	if not state then
 		return
 	end
 
 	local marks = get_visible_marks(state, toprow, botrow)
-	render_marks(bufnr, marks)
+	for _, mark in ipairs(marks) do
+		pcall(api.nvim_buf_set_extmark, bufnr, M.ns, mark.row, 0, mark.opts)
+	end
 end
 
 api.nvim_set_decoration_provider(M.ns, {
 	on_win = function(_, _, bufnr, toprow, botrow)
 		M.render(bufnr, toprow, botrow)
+	end,
+})
+
+api.nvim_create_autocmd("FileType", {
+	group = api.nvim_create_augroup("liu.flogmark", { clear = true }),
+	pattern = "floggraph",
+	callback = function()
+		vim.wo.foldcolumn = "1"
+		vim.wo.signcolumn = "yes:1"
 	end,
 })
