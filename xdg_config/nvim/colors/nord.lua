@@ -168,10 +168,13 @@ M.set_highlights = function()
 		},
 		msg = {
 			-- msg
-			ErrorMsg = { fg = c.red },
+			OkMsg = { fg = c.green },
 			WarningMsg = { fg = c.yellow },
-			MoreMsg = { fg = c.orange },
+			ErrorMsg = { fg = c.red },
+			-- StderrMsg
+			-- StdoutMsg
 			ModeMsg = { fg = c.green, bold = true },
+			MoreMsg = { fg = c.orange },
 			MsgArea = { fg = c.fg },
 			MsgSeparator = { link = "WinSeparator" },
 		},
