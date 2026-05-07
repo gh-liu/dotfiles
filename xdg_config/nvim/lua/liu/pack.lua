@@ -1026,3 +1026,5 @@ vim.api.nvim_create_autocmd({ "BufReadPre" }, {
 	end,
 	once = true,
 })
+
+vim.pack.add({ "https://github.com/gh-liu/nvim-tester" })
