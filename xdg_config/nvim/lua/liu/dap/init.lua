@@ -1,8 +1,10 @@
 require("liu.dap.events")
 
-for _, file in ipairs(vim.fn.readdir(vim.fn.stdpath("config") .. "/lua/liu/dap/adapters", [[v:val =~ '\.lua$']])) do
-	-- print("liu.dap.adapters." .. file:gsub("%.lua$", ""))
-	require("liu.dap.adapters." .. file:gsub("%.lua$", ""))
+local adapters_dir = vim.fs.joinpath(vim.fn.stdpath("config"), "lua", "liu", "dap", "adapters")
+for name, type in vim.fs.dir(adapters_dir) do
+	if type == "file" and name:sub(-4) == ".lua" then
+		require("liu.dap.adapters." .. name:sub(1, -5))
+	end
 end
 
 local dap = require("dap")
