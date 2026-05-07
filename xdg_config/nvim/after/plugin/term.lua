@@ -8,6 +8,9 @@ augroup liu.term
   "autocmd TermOpen * setlocal stl=%f
   autocmd TermOpen * setlocal statusline=%{b:term_title}
   "autocmd TermOpen * noremap <buffer> dq <cmd>bd!<cr>
+
+  autocmd BufEnter,TermOpen * if &buftype ==# 'terminal' && &laststatus != 0 | let g:laststatus_save = &laststatus | set laststatus=0 | endif
+  autocmd BufLeave * if &buftype ==# 'terminal' && exists('g:laststatus_save') | let &laststatus = g:laststatus_save | endif
 augroup END
 
 tnoremap jk <C-\><C-n>
