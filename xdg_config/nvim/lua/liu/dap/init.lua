@@ -6,15 +6,6 @@ for _, file in ipairs(vim.fn.readdir(vim.fn.stdpath("config") .. "/lua/liu/dap/a
 end
 
 local dap = require("dap")
-if vim.g.dap_configurations and type(vim.g.dap_configurations) == "table" then
-	for lang, config in pairs(vim.g.dap_configurations) do
-		if dap.configurations[lang] and type(dap.configurations[lang]) == "table" then
-			for _, c in ipairs(config) do
-				table.insert(dap.configurations[lang], c)
-			end
-		end
-	end
-end
 dap.defaults.fallback.switchbuf = "usetab,uselast"
 -- dap.defaults.fallback.focus_terminal = true
 -- dap.defaults.fallback.force_external_terminal = true
@@ -27,13 +18,23 @@ dap.defaults.fallback.switchbuf = "usetab,uselast"
 -- 	},
 -- }
 
+if vim.g.dap_configurations and type(vim.g.dap_configurations) == "table" then
+	for lang, config in pairs(vim.g.dap_configurations) do
+		if dap.configurations[lang] and type(dap.configurations[lang]) == "table" then
+			for _, c in ipairs(config) do
+				table.insert(dap.configurations[lang], c)
+			end
+		end
+	end
+end
+
 -- NOTE: sync maps in plugin spec
 vim.g.dap_map_prefix = "dc"
 
 local api = vim.api
-api.nvim_create_autocmd("User", {
+vim.api.nvim_create_autocmd("User", {
 	pattern = "DAPInitialize",
-	group = api.nvim_create_augroup("liu/dap_maps-cmds", { clear = true }),
+	group = vim.api.nvim_create_augroup("liu/dap_maps-cmds", { clear = true }),
 	callback = function(data)
 		local map_dap = function(lhs, rhs, desc, mode)
 			if desc then
@@ -114,7 +115,7 @@ api.nvim_create_autocmd("User", {
 	once = true,
 })
 
-api.nvim_create_autocmd({ "FileType" }, {
+vim.api.nvim_create_autocmd({ "FileType" }, {
 	pattern = "dap-float",
 	callback = function(ev)
 		local buf = ev.buf
@@ -122,7 +123,7 @@ api.nvim_create_autocmd({ "FileType" }, {
 	end,
 })
 
-api.nvim_create_autocmd({ "BufWinEnter" }, {
+vim.api.nvim_create_autocmd({ "BufWinEnter" }, {
 	pattern = "dap-*",
 	callback = function(ev)
 		local win = vim.api.nvim_get_current_win()
@@ -133,8 +134,7 @@ api.nvim_create_autocmd({ "BufWinEnter" }, {
 	end,
 })
 
--- dap-repl {{{3
-api.nvim_create_autocmd("FileType", {
+vim.api.nvim_create_autocmd("FileType", {
 	pattern = "dap-repl",
 	group = vim.api.nvim_create_augroup("liu/dap/repl-setup", { clear = true }),
 	callback = function(ev)
@@ -155,4 +155,3 @@ api.nvim_create_autocmd("FileType", {
 		})
 	end,
 })
--- }}}
