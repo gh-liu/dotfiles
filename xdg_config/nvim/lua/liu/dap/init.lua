@@ -29,6 +29,18 @@ dap.providers.configs["g:dap_configurations"] = function(bufnr)
 	return g[vim.bo[bufnr].filetype] or {}
 end
 
+vim.api.nvim_set_hl(0, "DebugLine", { link = "CursorLine", default = true })
+local signs = {
+	DapStopped = { text = "", texthl = "ModeMsg", numhl = "ModeMsg", linehl = "ModeMsg" },
+	DapLogPoint = { text = "", texthl = "Tag", numhl = "Tag", linehl = "Tag" },
+	DapBreakpoint = { text = "", texthl = "Debug", numhl = "Debug", linehl = "DebugLine" },
+	DapBreakpointCondition = { text = "", texthl = "Conditional", numhl = "Conditional", linehl = "Conditional" },
+	DapBreakpointRejected = { text = "", texthl = "ErrorMsg", numhl = "ErrorMsg", linehl = "" },
+}
+for name, opt in pairs(signs) do
+	vim.fn.sign_define(name, opt)
+end
+
 -- NOTE: sync maps in plugin spec
 vim.g.dap_map_prefix = "dc"
 
