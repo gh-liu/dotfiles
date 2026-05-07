@@ -207,6 +207,18 @@ vim.lsp.buf.code_action = function(...)
 	require("tiny-code-action").code_action(...)
 end
 
+--====== dap
+local aug_dap = vim.api.nvim_create_augroup("liu.dap", { clear = true })
+vim.pack.add({ "https://github.com/mfussenegger/nvim-dap" })
+vim.api.nvim_create_autocmd("VimEnter", {
+	group = aug_dap,
+	callback = function(ev)
+		require("liu.dap")
+	end,
+})
+
+vim.pack.add({ "https://github.com/igorlfs/nvim-dap-view" })
+
 --====== treesitter
 local aug_treesitter = vim.api.nvim_create_augroup("liu.treesitter", { clear = true })
 vim.api.nvim_create_autocmd("PackChanged", {
