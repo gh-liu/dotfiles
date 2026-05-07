@@ -18,14 +18,13 @@ dap.defaults.fallback.switchbuf = "usetab,uselast"
 -- 	},
 -- }
 
-if vim.g.dap_configurations and type(vim.g.dap_configurations) == "table" then
-	for lang, config in pairs(vim.g.dap_configurations) do
-		if dap.configurations[lang] and type(dap.configurations[lang]) == "table" then
-			for _, c in ipairs(config) do
-				table.insert(dap.configurations[lang], c)
-			end
-		end
+-- :h dap-providers-configs
+dap.providers.configs["g:dap_configurations"] = function(bufnr)
+	local g = vim.g.dap_configurations
+	if type(g) ~= "table" then
+		return {}
 	end
+	return g[vim.bo[bufnr].filetype] or {}
 end
 
 -- NOTE: sync maps in plugin spec
