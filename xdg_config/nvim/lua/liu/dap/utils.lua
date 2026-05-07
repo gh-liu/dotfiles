@@ -26,21 +26,21 @@ _G.DAP_ARGS_CACHE = function(ArgLead, CmdLine, CursorPos)
 end
 
 M.args_fn = function()
-	local args
-	vim.ui.input({
-		prompt = "Enter arguments: ",
-		completion = "customlist,v:lua.DAP_ARGS_CACHE",
-	}, function(input)
-		args = input
-	end)
-	if not args then
-		return dap.ABORT
-	else
-		args_cache[get_root()][args] = true
-	end
+	return coroutine.create(function(dap_run_co)
+		vim.ui.input({
+			prompt = "Enter arguments: ",
+			completion = "customlist,v:lua.DAP_ARGS_CACHE",
+		}, function(args)
+			if args == nil then
+				coroutine.resume(dap_run_co, dap.ABORT)
+				return
+			end
 
-	vim.cmd.stopinsert()
-	return vim.split(args, " ")
+			args_cache[get_root()][args] = true
+			vim.cmd.stopinsert()
+			coroutine.resume(dap_run_co, vim.split(args, " "))
+		end)
+	end)
 end
 
 M.closest_node = function(lang, query, captures)
