@@ -59,23 +59,6 @@ vim.api.nvim_create_autocmd("User", {
 		-- map("c", [[:lua require("dap").continue()<CR>]], "Continue")
 		-- map("b", [[:lua require("dap").set_breakpoint()<CR>]], "Toggle Breakpoint")
 
-		map_dap("u", [[:lua require("dap").run_to_cursor()<CR>]], "Until to Cursor")
-
-		map_dap("n", [[:lua require("dap").step_over()<CR>]], "Step over")
-		map_dap("p", [[:lua require("dap").step_back()<CR>]], "Step back")
-		map_dap("i", [[:lua require("dap").step_into()<CR>]], "Step into")
-		map_dap("o", [[:lua require("dap").step_out()<CR>]], "Step out")
-
-		map_dap("j", [[:lua require("dap").down()<CR>]], "Go down in current stacktrace without stepping")
-		map_dap("k", [[:lua require("dap").up()<CR>]], "Go up in current stacktrace without stepping")
-		map_dap("f", [[:lua require("dap").focus_frame()<CR>]], "Jump/focus the current frame")
-
-		-- map_dap("r", function()
-		-- 	dap.repl.toggle({ height = 12, winfixheight = true })
-		-- end)
-		map_dap("q", [[:lua require("dap").terminate()<CR>]], "Terminates the debug session")
-		map_dap("x", [[:lua require("dap").clear_breakpoints()<CR>]], "Removes all breakpoints")
-		-- map_dap("?", [[:lua=require("dap").status()<CR>]], "debug status")
 		map_dap(
 			"?",
 			[[:lua vim.api.nvim_echo({ { require("dap").status(), "Debug" } }, false, {})<CR>]],

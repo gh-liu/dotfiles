@@ -216,6 +216,23 @@ vim.api.nvim_create_autocmd("VimEnter", {
 		require("liu.dap")
 	end,
 })
+local dap_map = function(op, cmd, opts)
+	opts = opts or {}
+	local rhs = string.format([[:lua require("dap").%s()<CR>]], cmd)
+	vim.keymap.set("n", "dc" .. op, rhs)
+end
+dap_map("c", "continue")
+dap_map("b", "toggle_breakpoint")
+dap_map("x", "clear_breakpoints")
+dap_map("u", "run_to_cursor")
+dap_map("n", "step_over")
+dap_map("p", "step_back")
+dap_map("i", "step_into")
+dap_map("o", "step_out")
+dap_map("j", "down")
+dap_map("k", "up")
+dap_map("f", "focus_frame")
+dap_map("q", "terminate")
 
 vim.pack.add({ "https://github.com/igorlfs/nvim-dap-view" })
 
