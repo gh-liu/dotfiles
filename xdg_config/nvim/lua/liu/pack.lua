@@ -894,7 +894,7 @@ require("mini.diff").setup({
 vim.pack.add({ "https://github.com/tpope/vim-obsession" })
 vim.cmd([[
 	setglobal sessionoptions-=buffers 
-	"setglobal sessionoptions-=folds
+	setglobal sessionoptions-=folds
 	setglobal sessionoptions+=globals
 	"setglobal sessionoptions-=curdir 
 	"setglobal sessionoptions+=sesdir
