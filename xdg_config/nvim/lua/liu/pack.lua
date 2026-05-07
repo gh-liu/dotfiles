@@ -957,6 +957,32 @@ vim.pack.add({ "https://github.com/tpope/vim-sleuth" })
 vim.pack.add({ "https://github.com/tpope/vim-eunuch" })
 vim.pack.add({ "https://github.com/tpope/vim-rsi" })
 
+vim.g.projectionist_heuristics = {
+	["go.mod"] = {
+		["go.mod"] = { type = "dep" },
+		["*.go"] = {
+			alternate = "{}_test.go",
+			-- related = "{}_test.go",
+			type = "source",
+			template = [[package {file|dirname|basename}]],
+			dispatch = "go run %",
+		},
+		["*_test.go"] = {
+			alternate = "{}.go",
+			-- related = "{}.go",
+			type = "test",
+			template = [[package {file|dirname|basename}_test]],
+			dispatch = "go test ./...",
+		},
+		["cmd/*/main.go"] = {
+			type = "main", -- argument will replace the glob
+			template = "package main",
+			dispatch = "go run {file|dirname}",
+			-- start = "go run {file|dirname}",
+			make = "go build {file|dirname}",
+		},
+	},
+}
 -- vim.pack.add({ "https://github.com/tpope/vim-projectionist" })
 vim.pack.add({ "https://github.com/gh-liu/vim-projectionist" })
 vim.cmd([[
