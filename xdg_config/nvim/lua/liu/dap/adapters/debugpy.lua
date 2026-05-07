@@ -12,20 +12,21 @@ local function get_python()
 	return vim.fn.exepath("python")
 end
 
-local py_adapter = {
-	type = "executable",
-	enrich_config = utils.enrich_config,
-}
+dap.adapters.python = function(cb, cfg)
+	local py_adapter = {
+		type = "executable",
+		enrich_config = utils.enrich_config,
+	}
 
-if vim.fs.root(0, { "uv.lock" }) then
-	py_adapter["command"] = "uv"
-	py_adapter["args"] = { "run", "--with", "debugpy", "python", "-m", "debugpy.adapter" }
-else
-	py_adapter["command"] = get_python()
-	py_adapter["args"] = { "-m", "debugpy.adapter" }
+	if vim.fs.root(0, { "uv.lock" }) then
+		py_adapter["command"] = "uv"
+		py_adapter["args"] = { "run", "--with", "debugpy", "python", "-m", "debugpy.adapter" }
+	else
+		py_adapter["command"] = get_python()
+		py_adapter["args"] = { "-m", "debugpy.adapter" }
+	end
+	cb(py_adapter)
 end
-
-dap.adapters.python = py_adapter
 dap.adapters.debugpy = dap.adapters.python
 
 ---@type liu.dap.console
