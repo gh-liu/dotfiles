@@ -13,6 +13,7 @@ local function get_python()
 end
 
 dap.adapters.python = function(cb, cfg)
+	---@type dap.Adapter
 	local py_adapter = {
 		type = "executable",
 		enrich_config = utils.enrich_config,

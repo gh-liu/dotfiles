@@ -1,6 +1,7 @@
 local dap = require("dap")
 
 local utils = require("liu.dap.utils")
+---@type dap.Adapter
 dap.adapters.go = {
 	type = "server",
 	port = "${port}",
