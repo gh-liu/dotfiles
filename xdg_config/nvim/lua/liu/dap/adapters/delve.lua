@@ -44,9 +44,6 @@ local outputMode = "remote"
 -- https://github.com/go-delve/delve/pull/3253/files
 ---@field outputMode 'remote'|'local'| nil
 
--- make vim.g.dap_configurations works.
-dap.configurations.go = {}
-
 local configurations = {}
 
 ---@type liu.dap.config_delve[]
@@ -185,6 +182,10 @@ local is_test = function(bufnr)
 	return vim.endswith(fname, "_test.go")
 end
 dap.providers.configs["delve"] = function(bufnr)
+	if vim.bo[bufnr].filetype ~= "go" then
+		return {}
+	end
+
 	if is_test(bufnr) then
 		return configurations.go_test
 	else
