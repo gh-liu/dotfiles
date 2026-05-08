@@ -85,3 +85,12 @@ TODO: diffopt, diffanchors(Mark,Pattern,Visual,line)
 - `Added` `Removed` `Changed` 用 `fg`，表示增删改语义色，适合 signs、treesitter、文本标签等不该整块铺底色的场景
 - mini.diff Gutter ( MiniDiffSignAdd MiniDiffSignChange MiniDiffSignDelete )
 - treesitter ( @diff.plus @diff.minus @diff.delta )
+
+## view, session
+
+> `:h views-sessions`：
+> View = 窗口快照（`'viewoptions'`）
+> Session = 工作区快照（`'sessionoptions'`），Session 内含每窗口的 View
+
+- **View（仅折叠）**：`mkview 9` / `loadview 9` 专用编号，`viewoptions=folds` 只存折叠；`BufWinLeave` 保存，`BufWinEnter` 用 `timer_start(0, …)` 延迟恢复
+- **Session（vim-obsession）**：`sessionoptions -=buffers +=globals`；`:Obsess` 续写，`VimEnter` 空启动时自动 source 
