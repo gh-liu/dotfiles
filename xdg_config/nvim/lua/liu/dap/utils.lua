@@ -75,13 +75,11 @@ end
 
 ---@alias liu.dap.console 'internalConsole'|'integratedTerminal'|'externalTerminal'|nil
 
----@class liu.dap.configuration
----@field name string
----@field type string
----@field request 'attach'|'launch'
-
+---@type fun(config: dap.Configuration, on_config: fun(config: dap.Configuration))
 M.enrich_config = function(config, on_config)
-	config.options = { timeout = 10000 }
+	config.options = {
+		initialize_timeout_sec = 10,
+	}
 	vim.g.dap_last_config = config
 	on_config(config)
 end

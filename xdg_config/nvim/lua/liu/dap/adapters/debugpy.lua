@@ -12,8 +12,9 @@ local function get_python()
 	return vim.fn.exepath("python")
 end
 
-dap.adapters.python = function(cb, cfg)
-	---@type dap.Adapter
+---@type dap.AdapterFactory
+dap.adapters.python = function(on_config, config, _)
+	---@type dap.ExecutableAdapter
 	local py_adapter = {
 		type = "executable",
 		enrich_config = utils.enrich_config,
@@ -26,7 +27,7 @@ dap.adapters.python = function(cb, cfg)
 		py_adapter["command"] = get_python()
 		py_adapter["args"] = { "-m", "debugpy.adapter" }
 	end
-	cb(py_adapter)
+	on_config(py_adapter)
 end
 dap.adapters.debugpy = dap.adapters.python
 
@@ -38,7 +39,7 @@ local console = nil
 ---@field remoteRoot string
 
 -- https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings
----@class liu.dap.config_debugpy: liu.dap.configuration
+---@class liu.dap.config_debugpy: dap.Configuration
 ---@field module 'pytest'|'unittest'|nil
 ---@field type 'python'|'debugpy'
 ---@field program string|nil

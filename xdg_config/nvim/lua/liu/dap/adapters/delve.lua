@@ -1,7 +1,7 @@
 local dap = require("dap")
 
 local utils = require("liu.dap.utils")
----@type dap.Adapter
+---@type dap.ServerAdapter
 dap.adapters.go = {
 	type = "server",
 	port = "${port}",
@@ -25,7 +25,7 @@ local outputMode = "remote"
 ---@field to string
 
 -- https://github.com/golang/vscode-go/wiki/debugging#configuration
----@class liu.dap.config_delve: liu.dap.configuration
+---@class liu.dap.config_delve: dap.Configuration
 ---@field type 'go'|'delve'
 ---@field mode 'debug'|'test'|'auto'|'local'|'remote'
 ---@field args string[]|nil
