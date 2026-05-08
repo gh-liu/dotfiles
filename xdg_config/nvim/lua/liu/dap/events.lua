@@ -42,3 +42,9 @@ dap.listeners.after["event_terminated"]["user"] = function(session, _)
 	}
 	api.nvim_exec_autocmds("User", { pattern = pattern, data = data })
 end
+
+-- save last config
+dap.listeners.on_config["last_config"] = function(config)
+	vim.g.dap_last_config = config
+	return config
+end

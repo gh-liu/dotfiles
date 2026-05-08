@@ -80,7 +80,6 @@ M.enrich_config = function(config, on_config)
 	config.options = {
 		initialize_timeout_sec = 10,
 	}
-	vim.g.dap_last_config = config
 	on_config(config)
 end
 
