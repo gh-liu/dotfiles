@@ -95,6 +95,15 @@ TODO: diffopt, diffanchors(Mark,Pattern,Visual,line)
 - **View（仅折叠）**：`mkview 9` / `loadview 9` 专用编号，`viewoptions=folds` 只存折叠；`BufWinLeave` 保存，`BufWinEnter` 用 `timer_start(0, …)` 延迟恢复
 - **Session（vim-obsession）**：`sessionoptions -=buffers +=globals`；`:Obsess` 续写，`VimEnter` 空启动时自动 source 
 
+## pattern, search
+
+- \c 忽略大小写
+- \C 区分大小写
+- \zs 设置匹配开始位置
+- \ze 设置匹配结束位置
+- `\<` 单词开头
+- `\>` 单词结尾
+
 ## plugin: abolish
 
 > 面向“词及其变体”的查找、替换 / 转换能力
