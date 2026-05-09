@@ -94,3 +94,18 @@ TODO: diffopt, diffanchors(Mark,Pattern,Visual,line)
 
 - **View（仅折叠）**：`mkview 9` / `loadview 9` 专用编号，`viewoptions=folds` 只存折叠；`BufWinLeave` 保存，`BufWinEnter` 用 `timer_start(0, …)` 延迟恢复
 - **Session（vim-obsession）**：`sessionoptions -=buffers +=globals`；`:Obsess` 续写，`VimEnter` 空启动时自动 source 
+
+## plugin: abolish
+
+> 面向“词及其变体”的查找、替换 / 转换能力
+
+`变体`有两层：flag `I` 可禁用默认大小写变体
+- 默认大小写变体：3 种 case 变体：全小写、首字母大写、全大写
+- `{}` 控制词形 / 拼写变体：展开多个候选形式，再套默认大小写变体
+
+1. 增强搜索、替换：
+   - `:S/box{,es}/` 
+   - `:S /box{,es}/ *.txt`：带文件参数时走 `:grep`，用于跨文件搜索，结果进 quickfix
+   - `:%S/box{,es}/bag{,s}/g`：当前 buffer 内替换
+2. 缩写、自动纠错：本质上也是一种替换，区别在于`输入时自动触发`
+3. 命名风格转换：`cr` mapping，见 `:h abolish-coercion`
