@@ -1,4 +1,6 @@
 local dap = require("dap")
+-- mute event
+dap.listeners.before["event_debugpySockets"]["debugpy"] = function() end
 
 local utils = require("liu.dap.utils")
 local function get_python()
@@ -20,13 +22,14 @@ dap.adapters.python = function(on_config, config, _)
 		enrich_config = utils.enrich_config,
 	}
 
-	if vim.fs.root(0, { "uv.lock" }) then
-		py_adapter["command"] = "uv"
-		py_adapter["args"] = { "run", "--with", "debugpy", "python", "-m", "debugpy.adapter" }
-	else
-		py_adapter["command"] = get_python()
-		py_adapter["args"] = { "-m", "debugpy.adapter" }
-	end
+	py_adapter["command"] = "uv"
+	py_adapter["args"] = { "run", "--with", "debugpy", "python", "-m", "debugpy.adapter" }
+	-- if vim.fs.root(0, { "uv.lock" }) then
+	-- else
+	-- 	py_adapter["command"] = get_python()
+	-- 	py_adapter["args"] = { "-m", "debugpy.adapter" }
+	-- end
+	vim.print(py_adapter)
 	on_config(py_adapter)
 end
 dap.adapters.debugpy = dap.adapters.python
