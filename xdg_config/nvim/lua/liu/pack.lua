@@ -64,6 +64,12 @@ vim.keymap.set("n", "g<space>", function()
 	end
 	vim.cmd.G({ mods = { keepalt = true } })
 end, { silent = true, desc = "Toggle fugitive summary" })
+vim.cmd([[
+augroup liu.fug
+  autocmd!
+  autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
+augroup END
+]])
 vim.api.nvim_create_autocmd("FileType", {
 	group = aug_fug,
 	pattern = { "git", "fugitive" },
