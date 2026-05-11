@@ -18,7 +18,7 @@ vim.api.nvim_create_autocmd("VimEnter", {
 					return prefix, "Diagnostic" .. level:gsub("^%l", string.upper)
 				end,
 			},
-			-- signs = false,
+			signs = false,
 			underline = true,
 			virtual_lines = false,
 			virtual_text = {
