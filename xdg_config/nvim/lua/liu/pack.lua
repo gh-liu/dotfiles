@@ -68,13 +68,14 @@ vim.cmd([[
 augroup liu.fug
   autocmd!
   autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
+  autocmd FileType fugitive,git setlocal foldmethod=syntax
+  autocmd User FugitiveIndex,FugitiveObject,FugitiveStageBlob setlocal winhighlight=StatusLine:StatusLineFugitive
 augroup END
 ]])
 vim.api.nvim_create_autocmd("FileType", {
 	group = aug_fug,
 	pattern = { "git", "fugitive" },
 	callback = function()
-		vim.wo[0][0].foldmethod = "syntax"
 		if vim.b.fugitive_type == "commit" then
 			-- fold all files
 			vim.wo[0][0].foldlevel = 0
@@ -98,13 +99,6 @@ vim.api.nvim_create_autocmd("FileType", {
 			nnoremap <buffer> gaa :<C-U>Git absorb<space>
 			nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
 		]])
-	end,
-})
-vim.api.nvim_create_autocmd("User", {
-	group = aug_fug,
-	pattern = { "FugitiveIndex", "FugitiveObject", "FugitiveStageBlob" },
-	callback = function()
-		vim.wo[0][0].winhighlight = "StatusLine:StatusLineFugitive"
 	end,
 })
 vim.api.nvim_create_autocmd("VimLeavePre", {
