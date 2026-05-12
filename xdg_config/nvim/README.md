@@ -95,6 +95,34 @@ TODO: diffopt, diffanchors(Mark,Pattern,Visual,line)
 - **View（仅折叠）**：`mkview 9` / `loadview 9` 专用编号，`viewoptions=folds` 只存折叠；`BufWinLeave` 保存，`BufWinEnter` 用 `timer_start(0, …)` 延迟恢复
 - **Session（vim-obsession）**：`sessionoptions -=buffers +=globals`；`:Obsess` 续写，`VimEnter` 空启动时自动 source 
 
+## change
+
+> operator + motion
+
+y 复制(yank)
+p 粘贴(paste)
+d 删除(delete)
+c 修改(change) Normal->Insert
+r 替换(replace) Normal->Replace
+gu/gU 大小写替换(upper)
+gq/gw 格式化
+<</>> 缩进
+!外部命令过滤
+
+可以使用"寄存器，读取/写入寄存器
+
+:substitute 替换
+:sort 排序
+:uniq 去重
+
+## gq, gw, =
+
+`gq` 用于格式化文本，会优先使用 `formatexpr`、`formatprg` 或内建格式化。  
+`gw` 也格式化文本，但只使用内建格式化，并尽量保留光标位置。  
+`=` 只负责重新缩进，不会像 `gq`/`gw` 那样重排段落或注释内容。
+
+内建格式化：按自身规则对段落/注释重新换行、续注释、保持缩进。
+
 ## pattern, search
 
 - \c 忽略大小写
