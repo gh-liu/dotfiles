@@ -1,3 +1,8 @@
+if true then
+	return
+end
+-- TODO: conflict with loadview
+
 local cache_fts = {} ---@type table<string,boolean>
 vim.api.nvim_create_autocmd("FileType", {
 	callback = function(event)
