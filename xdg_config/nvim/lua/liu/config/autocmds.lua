@@ -41,6 +41,31 @@ local liu_augroup = function(group_name)
 	return augroup("liu/" .. group_name, { clear = true })
 end
 
+autocmd("TextPutPost", {
+	desc = "Highlight on put (mirrors TextYankPost behavior)",
+	group = liu_augroup("hl_put"),
+	callback = function()
+		local event = vim.v.event
+		local regtype = event.regtype
+		if regtype == "" then
+			return
+		end
+		-- Skip during macro replay to avoid flicker storms.
+		if vim.fn.reg_executing() ~= "" then
+			return
+		end
+		-- Skip nvim_put() API calls (regname == "_") used by plugins (LSP rename, completion, etc.).
+		if event.regname == "_" then
+			return
+		end
+		-- mini.operators "replace" uses temp register "x" → @diff.delta
+		-- everything else (p/P, visual put, <C-r> paste) → @diff.plus
+		local higroup = event.regname == "x" and "@diff.delta" or "@diff.plus"
+		local ns = api.nvim_create_namespace("liu.hl.put")
+		vim.hl.range(0, ns, higroup, "'[", "']", { regtype = regtype, inclusive = true, timeout = 166 })
+	end,
+})
+
 -- last location {{{1
 autocmd("BufReadPost", {
 	desc = "Go to the last location when opening a buffer",
