@@ -115,7 +115,7 @@ gq/gw 格式化
 :sort 排序
 :uniq 去重
 
-## gq, gw, =
+### gq, gw, =
 
 `gq` 用于格式化文本，会优先使用 `formatexpr`、`formatprg` 或内建格式化。  
 `gw` 也格式化文本，但只使用内建格式化，并尽量保留光标位置。  
