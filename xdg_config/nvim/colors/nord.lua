@@ -204,8 +204,8 @@ M.set_highlights = function()
 		},
 		visual = {
 			-- visual
-			Visual = { bg = c.brightgray },
-			VisualNOS = { bg = c.brightgray },
+			Visual = { bg = c.brightergray },
+			VisualNOS = { bg = c.brightergray },
 		},
 		pmenu = {
 			-- pmenu
