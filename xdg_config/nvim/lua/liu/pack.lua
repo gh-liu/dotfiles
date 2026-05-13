@@ -720,6 +720,7 @@ vim.keymap.set("n", "gS", "<CMD>TSJSplit<CR>", {})
 vim.pack.add({ "https://github.com/tpope/vim-repeat" })
 vim.pack.add({ "https://github.com/tpope/vim-abolish" })
 vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
+vim.keymap.set("n", "cR", "<Plug>(abolish-coerce)")
 
 --====== editor
 vim.pack.add({ "https://github.com/justinmk/vim-dirvish" })
