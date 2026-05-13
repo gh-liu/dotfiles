@@ -338,7 +338,16 @@ require("snacks").setup({
 	picker = {
 		enabled = true,
 		win = {
-			input = { keys = input_keys, wo = {} },
+			input = {
+				keys = {
+					["<c-j>"] = { "history_forward", mode = { "i" } },
+					["<c-k>"] = { "history_back", mode = { "i" } },
+					["<c-a>"] = { "<c-o>I", mode = { "i" }, expr = true },
+					["<c-f>"] = { "<right>", mode = { "i" }, expr = true },
+					["<c-b>"] = { "<left>", mode = { "i" }, expr = true },
+				},
+				wo = {},
+			},
 			list = { wo = {} },
 			preview = { wo = {} },
 		},
