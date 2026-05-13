@@ -132,6 +132,27 @@ gq/gw 格式化
 - `\<` 单词开头
 - `\>` 单词结尾
 
+## abbr, snippet
+
+> https://vonheikemen.github.io/devlog/tools/using-vim-abbreviations
+
+abbreviation: insert/command mode 里的轻量自动化机制；适合少量、高频、局部、能用`Vim 动作表达`的展开。
+
+- 纠正输入习惯
+- 可以放 Vim 特殊按键，比如 <CR>、<Tab>、<Left>、<Esc>、<C-o> 等；最好设计成带触发符号的短语，比如后缀带@
+- 可以调用 Vim 的编辑能力，比如在 insert mode 临时执行一个 normal mode 命令
+   * 不只是“文本替换”，变成输入上下文 + Vim motion + register + search + paste 的组合自动化
+
+abbreviation 和 snippet 在能力上有重叠：
+
+- snippet：以模板为中心，更容易维护，尤其是多行模板、防止在 comment/string 中展开、吃掉多余空格、复杂 placeholder 等场景
+- abbreviation：以编辑动作和触发词为中心，不用插件，更轻量
+
+合理的边界是：
+
+- 少量、高频、个人化、小自动化：abbreviation
+- 复杂、多 placeholder、团队共享模板：snippet
+
 ## plugin: abolish
 
 > 面向“词及其变体”的查找、替换 / 转换能力
