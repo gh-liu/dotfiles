@@ -1,0 +1,4 @@
+#!/bin/sh
+curl -s -L -X GET 'https://api.deepseek.com/user/balance' \
+        -H 'Accept: application/json' \
+        -H "Authorization: Bearer $DEEPSEEK_APIKEY" | jq .
