@@ -1039,6 +1039,24 @@ vim.pack.add({ "https://github.com/numEricL/table.vim" })
 
 --====== tools
 vim.pack.add({ "https://github.com/tpope/vim-dadbod" })
+vim.cmd([[
+	xnoremap <expr> <Plug>(DBExe)     db#op_exec()
+	nnoremap <expr> <Plug>(DBExe)     db#op_exec()
+	nnoremap <expr> <Plug>(DBExeLine) db#op_exec() . '_'
+
+	nmap d=  <Plug>(DBExe)
+	nmap d== <Plug>(DBExeLine)
+	nmap d=? <cmd> echo db#url#safe_format(db#resolve(get(g:,"db",get(b:,"db","no db")))) <cr>
+
+	augroup liu.dadbod
+	  autocmd!
+	  autocmd User Flags call Hoist('buffer', 99, '%{exists("b:db") ? flagship#surround(toupper(matchstr(db#resolve(b:db), "^[^:]*"))) : ""}')
+	augroup END
+]])
+-- NOTE: define your adapters:
+-- use `g:db_adapter_ADAPTERNAME` to define methods of you adapter
+-- https://github.com/tpope/vim-dadbod/blob/e95afed23712f969f83b4857a24cf9d59114c2e6/autoload/db/adapter.vim#L14
+-- call adapter methods by `db#adapter#call(arg1, adapter_method, ...)`
 
 local aug_kulala = vim.api.nvim_create_augroup("liu.kulala", { clear = true })
 vim.pack.add({ "https://github.com/mistweaverco/kulala.nvim" }, { load = function() end })
