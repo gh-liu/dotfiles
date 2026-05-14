@@ -29,6 +29,7 @@ update_zsh_completions() {
 	(($+commands[uv])) && uv generate-shell-completion zsh >"$completion_dir/_uv"
 	(($+commands[uvx])) && uvx --generate-shell-completion zsh >"$completion_dir/_uvx"
 	(($+commands[bun])) && SHELL=zsh bun completions >"$completion_dir/_bun"
+	(($+commands[kaf])) && kaf completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kaf
 
 	# (( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
 	# 	>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
