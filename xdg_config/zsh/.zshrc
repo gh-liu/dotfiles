@@ -436,7 +436,7 @@ source "$ZDOTDIR/fzf.zsh" # !make sure fzf after completion, cause use <tab> for
 function update_llm_clis() {
 	bun i -g @anthropic-ai/claude-code
 	bun i -g @openai/codex
-	bun i -g @sourcegraph/amp@latest
+	# curl -fsSL https://ampcode.com/install.sh | bash
 	bun i -g opencode-ai
 	bun i -g skills vercel-labs/agent-skills
 }
