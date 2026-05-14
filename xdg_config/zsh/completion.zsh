@@ -6,29 +6,29 @@ update_zsh_completions() {
 
 	mkdir -p "$completion_dir"
 
-	(( $+commands[gh] )) && gh completion -s zsh >"$completion_dir/_gh"
-	(( $+commands[git-absorb] )) && git-absorb --gen-completions zsh >"$completion_dir/_git-absorb"
+	(($+commands[gh])) && gh completion -s zsh >"$completion_dir/_gh"
+	(($+commands[git-absorb])) && git-absorb --gen-completions zsh >"$completion_dir/_git-absorb"
 
-	(( $+commands[just] )) && just --completions=zsh >"$completion_dir/_just"
-	(( $+commands[starship] )) && starship completions zsh >"$completion_dir/_starship"
+	(($+commands[just])) && just --completions=zsh >"$completion_dir/_just"
+	(($+commands[starship])) && starship completions zsh >"$completion_dir/_starship"
 
 	# (( $+commands[atuin] )) && atuin gen-completions --shell zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_atuin
 
 	# (( $+commands[podman] )) && podman completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_podman
 	# (( $+commands[docker] )) && docker completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_docker
 	# (( $+commands[helm] )) && helm completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_helm
-	(( $+commands[kubectl] )) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
-	(( $+commands[kind] )) && kind completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kind
+	(($+commands[kubectl])) && kubectl completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kubectl
+	(($+commands[kind])) && kind completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kind
 	# (( $+commands[minikube] )) && minikube completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_minikube
 
-	if (( $+commands[rustc] )); then
+	if (($+commands[rustc])); then
 		cargo_completion="$(rustc --print sysroot)/share/zsh/site-functions/_cargo"
 		[[ -f "$cargo_completion" ]] && cp "$cargo_completion" "$completion_dir/_cargo"
 	fi
-	(( $+commands[rustup] )) && rustup completions zsh >"$completion_dir/_rustup"
-	(( $+commands[uv] )) && uv generate-shell-completion zsh >"$completion_dir/_uv"
-	(( $+commands[uvx] )) && uvx --generate-shell-completion zsh >"$completion_dir/_uvx"
-	(( $+commands[bun] )) && SHELL=zsh bun completions >"$completion_dir/_bun"
+	(($+commands[rustup])) && rustup completions zsh >"$completion_dir/_rustup"
+	(($+commands[uv])) && uv generate-shell-completion zsh >"$completion_dir/_uv"
+	(($+commands[uvx])) && uvx --generate-shell-completion zsh >"$completion_dir/_uvx"
+	(($+commands[bun])) && SHELL=zsh bun completions >"$completion_dir/_bun"
 
 	# (( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
 	# 	>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
@@ -58,7 +58,7 @@ if [[ "${OS:-}" == darwin ]]; then
 			_homebrew_prefix=/usr/local
 		fi
 	fi
-	[[ -d "$_homebrew_prefix/share/zsh/site-functions" ]] && \
+	[[ -d "$_homebrew_prefix/share/zsh/site-functions" ]] &&
 		_completion_fpath+=("$_homebrew_prefix/share/zsh/site-functions")
 	unset _homebrew_prefix
 fi

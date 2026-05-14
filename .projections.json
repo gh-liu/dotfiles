@@ -2,6 +2,9 @@
   "xdg_config/zsh/.zshrc": {
     "type": "zshrc"
   },
+  "xdg_config/zsh/completion.zsh": {
+    "type": "zshcompletion"
+  },
   "xdg_config/zsh/zsh-conf/custom.zsh": {
     "type": "zshcustom"
   },
