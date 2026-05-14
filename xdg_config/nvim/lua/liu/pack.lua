@@ -234,7 +234,7 @@ dap_map("k", "up")
 dap_map("f", "focus_frame")
 dap_map("q", "terminate")
 
-vim.pack.add({ "https://github.com/igorlfs/nvim-dap-view" })
+-- vim.pack.add({ "https://github.com/igorlfs/nvim-dap-view" })
 
 --====== treesitter
 local aug_treesitter = vim.api.nvim_create_augroup("liu.treesitter", { clear = true })
