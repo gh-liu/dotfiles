@@ -68,6 +68,13 @@ vim.cmd([[
 augroup liu.fug
   autocmd!
   autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
+  autocmd FileType fugitive 
+	\| nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
+	\| nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
+	\| nnoremap <buffer> cob :<C-U>Git checkout -b<space>
+	"cargo install git-absorb
+	\| nnoremap <buffer> gaa :<C-U>Git absorb<space>
+	\| nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
   autocmd FileType fugitive,git setlocal foldmethod=syntax
   autocmd User FugitiveIndex,FugitiveObject,FugitiveStageBlob setlocal winhighlight=StatusLine:StatusLineFugitive
 augroup END
@@ -80,25 +87,6 @@ vim.api.nvim_create_autocmd("FileType", {
 			-- fold all files
 			vim.wo[0][0].foldlevel = 0
 		end
-	end,
-})
-vim.api.nvim_create_autocmd("FileType", {
-	group = aug_fug,
-	pattern = "fugitive",
-	callback = function()
-		vim.cmd([[
-			nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
-			nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
-
-			nnoremap <buffer> cob :<C-U>Git checkout -b<space>
-			"nnoremap <buffer> com :<C-U>Git checkout main<CR>
-			"nnoremap <buffer> cbu :<C-U>Git branch -u origin/<C-R>=FugitiveHead()<CR><CR>
-			"nnoremap <buffer> cpu :Git push --set-upstream origin <C-R>=FugitiveHead()<CR><CR>
-
-			"cargo install git-absorb
-			nnoremap <buffer> gaa :<C-U>Git absorb<space>
-			nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
-		]])
 	end,
 })
 vim.api.nvim_create_autocmd("VimLeavePre", {
