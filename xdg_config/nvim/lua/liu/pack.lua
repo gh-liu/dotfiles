@@ -1036,6 +1036,12 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 })
 
 vim.pack.add({ "https://github.com/numEricL/table.vim" })
+vim.cmd([[
+augroup liu.table
+  autocmd!
+  autocmd FileType markdown nmap <silent><buffer><nowait> =at :<C-U>Table Align<CR>
+augroup END
+]])
 
 --====== tools
 vim.pack.add({ "https://github.com/tpope/vim-dadbod" })
