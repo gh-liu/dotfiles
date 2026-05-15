@@ -129,22 +129,22 @@ vim.api.nvim_create_autocmd("VimEnter", {
 	end,
 })
 
-local aug_flog = vim.api.nvim_create_augroup("liu.flog", { clear = true })
+-- local aug_flog = vim.api.nvim_create_augroup("liu.flog", { clear = true })
 vim.pack.add({ "https://github.com/rbong/vim-flog" })
 vim.g.flog_enable_dynamic_branch_hl = 0
 vim.g.flog_use_internal_lua = 1
 vim.g.flog_default_opts = { max_count = 2000 }
 vim.g.flog_permanent_default_opts = { date = "format:%Y-%m-%d %H:%M" }
 vim.keymap.set("ca", "F", "Flogsplit", {})
-vim.api.nvim_create_autocmd("FileType", {
-	group = aug_flog,
-	pattern = "floggraph",
-	callback = function(env)
-		local buf = env.buf
-		vim.keymap.set("n", "crt", "<Cmd>exec flog#Format('Floggit reset %h')<CR>", { buf = buf })
-		vim.keymap.set("n", "crT", "<Cmd>exec flog#Format('Floggit reset --hard %h')<CR>", { buf = buf })
-	end,
-})
+vim.cmd([[
+augroup liu.flog
+  autocmd!
+  autocmd FileType floggraph
+    \  nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
+    \| nmap <silent><buffer><nowait> crt <Cmd>exec flog#Format('Floggit reset %h')<CR>
+    \| nmap <silent><buffer><nowait> crT <Cmd>exec flog#Format('Floggit reset --hard %h')<CR>
+augroup END
+]])
 
 --====== ui
 vim.pack.add({ "https://github.com/nvim-mini/mini.icons" })
