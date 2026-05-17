@@ -1,27 +1,6 @@
 -- https://echasnovski.com/blog/2026-03-13-a-guide-to-vim-pack
 
 vim.api.nvim_create_user_command("Pack", function(args)
-	if #args.fargs > 0 then
-		if args.fargs[1] == "update" then
-			vim.pack.update()
-		end
-		if args.fargs[1] == "clean" then
-			local plugs = vim.iter(vim.pack.get())
-				:filter(function(plug)
-					return not plug.active
-				end)
-				:map(function(plug)
-					return plug.spec.name
-				end)
-				:totable()
-			if #plugs > 0 then
-				vim.print(plugs)
-				vim.pack.del(plugs)
-			end
-		end
-		return
-	end
-
 	vim.ui.select(vim.pack.get(), {
 		format_item = function(plugin)
 			return plugin.spec.name
@@ -32,7 +11,7 @@ vim.api.nvim_create_user_command("Pack", function(args)
 end, {
 	nargs = "*",
 	complete = function()
-		return { "update", "clean" }
+		return {}
 	end,
 })
 
