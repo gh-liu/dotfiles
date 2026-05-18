@@ -578,6 +578,7 @@ local formatters_by_ft = {
 	zsh = { "shfmt" },
 	just = { "just" },
 	query = { "format-queries" },
+	["*"] = { "trim_whitespace" },
 }
 require("conform").setup({
 	-- :help conform-formatters
