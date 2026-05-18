@@ -168,10 +168,6 @@
     "vim-sleuth": {
       "rev": "be69bff86754b1aa5adcbb527d7fcd1635a84080",
       "src": "https://github.com/tpope/vim-sleuth"
-    },
-    "vim-ug": {
-      "rev": "ef6406d938bd680cc030181f08b1fe0ec517d572",
-      "src": "https://github.com/justinmk/vim-ug"
     }
   }
 }

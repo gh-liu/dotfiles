@@ -78,24 +78,6 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 	end,
 })
 
-local aug_ug = vim.api.nvim_create_augroup("liu.ug", { clear = true })
-vim.pack.add({ "https://github.com/justinmk/vim-ug" })
-vim.api.nvim_create_autocmd("VimEnter", {
-	group = aug_ug,
-	callback = function(ev)
-		vim.cmd([[
-			" not gitsigns
-			nunmap Un
-			nunmap UN
-			nunmap <c-n>
-			nunmap <c-p>
-
-			"nmap Ubb 1Ub
-			"nmap UL 9Ul
-		]])
-	end,
-})
-
 -- local aug_flog = vim.api.nvim_create_augroup("liu.flog", { clear = true })
 vim.pack.add({ "https://github.com/rbong/vim-flog" })
 vim.g.flog_enable_dynamic_branch_hl = 0
