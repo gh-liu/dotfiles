@@ -326,20 +326,29 @@ end
 local picker_map = function(op, cmd, opts)
 	opts = opts or {}
 	vim.keymap.set("n", "<leader>s" .. op, function()
+		if opts.count_cmd and vim.v.count > 0 then
+			require("snacks").picker(opts.count_cmd, opts)
+			return
+		end
 		require("snacks").picker(cmd, opts)
 		-- require("snacks.picker")[cmd](opts)
 	end)
 end
-picker_map("b", "buffers")
-picker_map("d", "diagnostics_buffer")
-picker_map("f", "files")
-picker_map("j", "jumps")
-picker_map("g", "live_grep")
-picker_map("h", "help")
+
 picker_map("m", "marks")
-picker_map("s", "lsp_symbols")
+picker_map("b", "buffers")
+picker_map("h", "help")
+picker_map("r", "registers", { confirm = { "paste" } })
+-- picker_map("j", "jumps")
+-- picker_map("q", "qflist")
+-- picker_map("l", "loclist")
+picker_map("f", "files")
+picker_map("g", "live_grep")
 picker_map("w", "grep_word")
 picker_map("o", "recent", { filter = { cwd = true } })
+picker_map("d", "diagnostics_buffer", { count_cmd = "diagnostics" })
+picker_map("s", "lsp_symbols", { count_cmd = "lsp_workspace_symbols" })
+picker_map("O", "lsp_symbols", { layout = "left" })
 
 --====== cmp
 local cmp_float_opts = {
