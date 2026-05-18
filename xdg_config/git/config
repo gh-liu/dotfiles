@@ -1,11 +1,16 @@
+[init]
+  defaultBranch = main
 # [user]
 # 	name = gh-liu
 # 	email = liugh.cs@gmail.com
 [alias]
-	ai = add -i
-	b = branch
-	c = commit
-	d = diff
-	l = log --oneline
+	b = branch -vv
+	s = status -sb
+	l = log -8 --graph --oneline --decorate
+	# ai = add -i
+	# c = commit
+	# d = diff
+[fetch]
+  writeCommitGraph = true
 
 # vi: ft=dosini
