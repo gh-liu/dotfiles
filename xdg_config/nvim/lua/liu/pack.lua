@@ -78,6 +78,46 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 	end,
 })
 
+-- from https://github.com/justinmk/vim-ug/blob/main/plugin/ug.vim
+vim.cmd([[
+augroup liu.ug
+  autocmd!
+  autocmd FileType fugitive unmap <buffer> U
+  autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> q gq
+  "when Vim starts in diff-mode (vim -d, git mergetool):
+  "  - do/dp should not auto-fold
+  autocmd VimEnter * if &diff | exe 'windo set foldmethod=manual' | endif
+augroup END
+nnoremap <silent> Uw <cmd>Gwrite<cr>
+nmap UW Uw
+
+nnoremap <silent> Ue  :Gedit<cr>
+nmap UE Ue
+nnoremap <silent> Uu  :Gedit <C-R><C-A><cr>
+nmap UU Uu
+
+nnoremap <expr>   Ur  '@_<cmd>Gread'.(v:count?(' @'.repeat('^',v:count).':%'):'').'<cr>'
+nmap UR Ur
+
+nnoremap <expr>   Ud  &diff ? ':diffupdate<cr>'
+                  \   : '<Cmd>update<bar>if !'..v:count..' && [""] == FugitiveExecute(["diff", "--", FugitivePath()]).stdout<bar>echo "no changes"'
+                  \     ..'<bar>else<bar>Gvdiffsplit '..(v:count ? ' HEAD'.repeat('^', v:count) : '')..'<bar>endif<cr>'
+nmap UD Ud
+
+nnoremap <expr>   Uc  '@_:G commit '..(v:count ? '--no-verify' : '')..' --edit -m '..shellescape(FugitiveExecute(['log', '-1', '--format=%s', '--', FugitivePath()]).stdout[0])..'<cr>'
+nmap UC Uc
+nnoremap          Uf  :G commit --fixup=<c-r>=FugitiveExecute(['log', '-1', '--format=%h', '--', FugitivePath()]).stdout[0]<cr>
+nmap UF Uf
+
+" Blame:
+nnoremap <expr>   Ub  '@_<cmd>G blame '..(v:count?'--ignore-revs-file ""':'')..'<cr>'
+nnoremap <silent> 1Ub :.,G blame<bar>call feedkeys("\<lt>cr>")<cr>
+xnoremap          Ub  :G blame<cr>
+nmap UB Ub
+nmap 1UB 1Ub
+xmap UB Ub
+]])
+
 -- local aug_flog = vim.api.nvim_create_augroup("liu.flog", { clear = true })
 vim.pack.add({ "https://github.com/rbong/vim-flog" })
 vim.g.flog_enable_dynamic_branch_hl = 0
