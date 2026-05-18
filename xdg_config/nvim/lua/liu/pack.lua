@@ -47,10 +47,9 @@ vim.cmd([[
 augroup liu.fug
   autocmd!
   autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
-  autocmd FileType fugitive
+  autocmd FileType fugitive nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 	\| nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
 	\| nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
-	\| nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 	"cargo install git-absorb
 	\| nnoremap <buffer> gaa :<C-U>Git absorb<space>
 	\| nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
