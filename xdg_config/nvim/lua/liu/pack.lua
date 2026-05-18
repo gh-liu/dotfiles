@@ -55,18 +55,9 @@ augroup liu.fug
 	\| nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
   autocmd FileType fugitive,git setlocal foldmethod=syntax
   autocmd User FugitiveIndex,FugitiveObject,FugitiveStageBlob setlocal winhighlight=StatusLine:StatusLineFugitive
+  autocmd FileType git if get(b:, 'fugitive_type', '') ==# 'commit' | setlocal foldlevel=0 | endif
 augroup END
 ]])
-vim.api.nvim_create_autocmd("FileType", {
-	group = aug_fug,
-	pattern = { "git", "fugitive" },
-	callback = function()
-		if vim.b.fugitive_type == "commit" then
-			-- fold all files
-			vim.wo[0][0].foldlevel = 0
-		end
-	end,
-})
 vim.api.nvim_create_autocmd("VimLeavePre", {
 	group = aug_fug,
 	callback = function(ev)
