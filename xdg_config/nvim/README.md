@@ -153,6 +153,45 @@ abbreviation 和 snippet 在能力上有重叠：
 - 少量、高频、个人化、小自动化：abbreviation
 - 复杂、多 placeholder、团队共享模板：snippet
 
+## undo, redo
+
+ `:h undo-redo`、`:h undo-branches`、`:h persistent-undo`
+
+Vim 的 undo 不是一条线，而是一棵树：每次「先 undo、再做新改动」都会长出新分支，旧分支的内容不会丢，只是 `u` / `<C-r>` 这条主路径走不到。
+
+### plugin: nvim.undotree
+
+> packadd nvim.undotree：:Undotree 可视化整棵树
+
+用法是：:Undotree → 用 j/k 上下移动 → 源 buffer 实时变成对应状态 → 觉得对了就 :q 关掉树。没有显式的 "apply" 按键，移动即应用。
+
+fold：直线段超过 3 个节点，就把段首 2 个之外的全部折成一行
+
+### workflow
+
+1. 线性回退（90% 场景）
+   - `u` / `<C-r>`：redo/undo 一步一步走主线
+   - `U`：撤销当前行的所有最近修改（本身也算一次 change，可被 `u` 撤销）
+
+2. 控制 undo 粒度
+   - 在 insert mode 中按 `<C-g>u`：把当前 insert 切成两个 undo block，下次 `u` 只回退到这里而不是整段输入
+   - 长输入（一段话、一个函数）建议在「自然停顿处」按 `<C-g>u`，方便后面精修
+   - 写 mapping / 脚本时如果想合并到上一步，用 `:undojoin | <cmd>`
+
+3. 时间穿梭（不关心分支）
+   - `g-` / `g+`：按时间顺序遍历**所有**文本状态（会跨分支），比 `u`/`<C-r>` 全
+   - `:earlier 5m` / `:later 30s`：按时间
+   - `:earlier 1f` / `:later 1f`：按 file write 跳，等价于「回到上次 `:w` 的样子」/「回到最新保存」——大改动前先 `:w` 一下，相当于打了个 checkpoint
+
+4. 跨分支精确跳转（需要找回「之前那条路」）
+   - `:undolist` 看所有 leaf 的 change number、时间、对应第几次 save
+   - `:undo {N}` 跳到指定 change number
+   - 或者直接 `:Undotree` 看树形图，交互式选
+
+5. 危险操作
+   - `:undo! {N}`：跳到 N 并丢弃当前分支后续历史，不可逆，仅用于真的不想要那条分支时
+   - `:setlocal undolevels=-1` + 一次空改动：彻底清空 undo（见 `:h clear-undo`），用于「这段历史不希望被 undofile 持久化」
+
 ## plugin: abolish
 
 > 面向“词及其变体”的查找、替换 / 转换能力
