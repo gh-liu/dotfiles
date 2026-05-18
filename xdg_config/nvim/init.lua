@@ -33,10 +33,3 @@ require("liu.pack")
 -- =============================================================================
 require("liu.lsp")
 require("liu.diagnostics")
-
--- =============================================================================
--- Built-in Plugins
--- =============================================================================
-vim.cmd("packadd nvim.difftool")
-vim.cmd("packadd nvim.undotree")
-vim.cmd("packadd nohlsearch")

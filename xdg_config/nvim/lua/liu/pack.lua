@@ -1050,3 +1050,10 @@ vim.api.nvim_create_autocmd({ "BufReadPre" }, {
 })
 
 vim.pack.add({ "https://github.com/gh-liu/nvim-tester" })
+
+-- =============================================================================
+-- Built-in Plugins
+-- =============================================================================
+vim.cmd("packadd nvim.difftool")
+vim.cmd("packadd nvim.undotree")
+vim.cmd("packadd nohlsearch")
