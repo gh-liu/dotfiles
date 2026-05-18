@@ -41,28 +41,41 @@ local liu_augroup = function(group_name)
 	return augroup("liu/" .. group_name, { clear = true })
 end
 
-autocmd("TextPutPost", {
-	desc = "Highlight on put (mirrors TextYankPost behavior)",
-	group = liu_augroup("hl_put"),
-	callback = function()
+-- -- :h vim.hl.on_yank
+-- augroups.highlighting_yank = {
+-- 	highlighting_yank = {
+-- 		event = { "TextYankPost" },
+-- 		callback = function()
+-- 			vim.hl.on_yank({
+-- 				-- higroup = "Search",
+-- 				timeout = vim.o.timeoutlen,
+-- 				priority = vim.hl.priorities.user + 111,
+-- 			})
+-- 		end,
+-- 	},
+-- }
+
+autocmd({ "TextYankPost", "TextPutPost" }, {
+	desc = "highlight on operator",
+	group = liu_augroup("hl_op"),
+	callback = function(ev)
 		local event = vim.v.event
-		local regtype = event.regtype
-		if regtype == "" then
+		if event.regtype == "" or event.regname == "_" then
 			return
 		end
-		-- Skip during macro replay to avoid flicker storms.
-		if vim.fn.reg_executing() ~= "" then
-			return
+		local higroup
+		-- if ev.event == "TextYankPost" then
+		-- end
+		if ev.event == "TextPutPost" then
+			-- mini.operators "replace" uses temp register "x" → @diff.delta
+			-- everything else (p/P, visual put, <C-r> paste) → @diff.plus
+			higroup = event.regname == "x" and "@diff.delta" or "@diff.plus"
 		end
-		-- Skip nvim_put() API calls (regname == "_") used by plugins (LSP rename, completion, etc.).
-		if event.regname == "_" then
-			return
-		end
-		-- mini.operators "replace" uses temp register "x" → @diff.delta
-		-- everything else (p/P, visual put, <C-r> paste) → @diff.plus
-		local higroup = event.regname == "x" and "@diff.delta" or "@diff.plus"
-		local ns = api.nvim_create_namespace("liu.hl.put")
-		vim.hl.range(0, ns, higroup, "'[", "']", { regtype = regtype, inclusive = true, timeout = 166 })
+		vim.hl.hl_op({
+			higroup = higroup,
+			timeout = vim.o.timeoutlen,
+			priority = vim.hl.priorities.user + 111,
+		})
 	end,
 })
 
