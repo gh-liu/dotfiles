@@ -47,7 +47,7 @@ vim.cmd([[
 augroup liu.fug
   autocmd!
   autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
-  autocmd FileType fugitive 
+  autocmd FileType fugitive
 	\| nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
 	\| nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
 	\| nnoremap <buffer> cob :<C-U>Git checkout -b<space>
@@ -896,10 +896,10 @@ require("mini.diff").setup({
 })
 
 vim.cmd([[
-	setglobal sessionoptions-=buffers 
+	setglobal sessionoptions-=buffers
 	setglobal sessionoptions-=folds
 	setglobal sessionoptions+=globals
-	"setglobal sessionoptions-=curdir 
+	"setglobal sessionoptions-=curdir
 	"setglobal sessionoptions+=sesdir
 
 	augroup liu.sessionoptions
