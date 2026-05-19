@@ -1053,6 +1053,22 @@ vim.cmd([[
 -- https://github.com/tpope/vim-dadbod/blob/e95afed23712f969f83b4857a24cf9d59114c2e6/autoload/db/adapter.vim#L14
 -- call adapter methods by `db#adapter#call(arg1, adapter_method, ...)`
 
+vim.pack.add({ "https://github.com/tpope/vim-tbone" })
+vim.cmd([[
+" :Twrite with per-buffer cached target.
+" count > 0 (e.g. `1gz`) forces re-prompt.
+function! s:TboneTwrite() abort
+  let l:target = get(b:, 'tbone_target', '')
+  if v:count > 0 || empty(l:target)
+    let l:target = input('Twrite target: ', l:target, 'custom,tbone#complete_panes')
+    if empty(l:target) | return | endif
+    let b:tbone_target = l:target
+  endif
+  execute "'<,'>Twrite " . l:target
+endfunction
+xnoremap <silent> gz :<C-U>call <SID>TboneTwrite()<CR>
+]])
+
 local aug_kulala = vim.api.nvim_create_augroup("liu.kulala", { clear = true })
 vim.pack.add({ "https://github.com/mistweaverco/kulala.nvim" }, { load = function() end })
 vim.api.nvim_create_autocmd({ "BufReadPre" }, {
