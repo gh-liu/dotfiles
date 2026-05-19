@@ -1055,18 +1055,32 @@ vim.cmd([[
 
 vim.pack.add({ "https://github.com/tpope/vim-tbone" })
 vim.cmd([[
-" :Twrite with per-buffer cached target.
+" Resolve per-buffer cached tbone target.
 " count > 0 (e.g. `1gz`) forces re-prompt.
-function! s:TboneTwrite() abort
+function! s:TboneTarget() abort
   let l:target = get(b:, 'tbone_target', '')
   if v:count > 0 || empty(l:target)
     let l:target = input('Twrite target: ', l:target, 'custom,tbone#complete_panes')
-    if empty(l:target) | return | endif
+    if empty(l:target) | return '' | endif
     let b:tbone_target = l:target
   endif
+  return l:target
+endfunction
+" gz: :Twrite selection (strips leading whitespace)
+function! s:TboneTwrite() abort
+  let l:target = s:TboneTarget()
+  if empty(l:target) | return | endif
   execute "'<,'>Twrite " . l:target
 endfunction
+" gZ: send selection via tbone#send_keys, joining lines with \r (preserves indent)
+function! s:TboneSendKeys() abort
+  let l:target = s:TboneTarget()
+  if empty(l:target) | return | endif
+  let l:keys = join(getline(line("'<"), line("'>")), "\r") . "\r"
+  call tbone#send_keys(l:target, l:keys)
+endfunction
 xnoremap <silent> gz :<C-U>call <SID>TboneTwrite()<CR>
+xnoremap <silent> gZ :<C-U>call <SID>TboneSendKeys()<CR>
 ]])
 
 local aug_kulala = vim.api.nvim_create_augroup("liu.kulala", { clear = true })
