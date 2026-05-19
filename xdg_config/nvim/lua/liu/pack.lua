@@ -695,11 +695,26 @@ require("mini.align").setup({
 	},
 })
 
+local aug_dial = vim.api.nvim_create_augroup("liu.dial", { clear = true })
 vim.pack.add({ "https://github.com/monaqa/dial.nvim" })
 vim.keymap.set({ "n", "v" }, "<C-a>", "<Plug>(dial-increment)", {})
 vim.keymap.set({ "n", "v" }, "<C-x>", "<Plug>(dial-decrement)", {})
 vim.keymap.set({ "n", "v" }, "g<C-a>", "<Plug>(dial-g-increment)", {})
 vim.keymap.set({ "n", "v" }, "g<C-x>", "<Plug>(dial-g-decrement)", {})
+vim.api.nvim_create_autocmd("VimEnter", {
+	group = aug_dial,
+	callback = function(ev)
+		local augend = require("dial.augend")
+		require("dial.config").augends:register_group({
+			default = {
+				augend.integer.alias.decimal,
+				augend.integer.alias.hex,
+				augend.constant.alias.bool,
+				augend.date.alias["%Y/%m/%d"],
+			},
+		})
+	end,
+})
 
 vim.pack.add({ "https://github.com/gh-liu/treesj" })
 require("treesj").setup({ use_default_keymaps = false, max_join_length = 300 })
