@@ -1058,11 +1058,11 @@ vim.cmd([[
 " Resolve per-buffer cached tbone target.
 " count > 0 (e.g. `1gz`) forces re-prompt.
 function! s:TboneTarget() abort
-  let l:target = get(b:, 'tbone_target', '')
+  let l:target = get(b:, 'tbone_write_pane', '')
   if v:count > 0 || empty(l:target)
     let l:target = input('Twrite target: ', l:target, 'custom,tbone#complete_panes')
     if empty(l:target) | return '' | endif
-    let b:tbone_target = l:target
+    let b:tbone_write_pane = l:target
   endif
   return l:target
 endfunction
