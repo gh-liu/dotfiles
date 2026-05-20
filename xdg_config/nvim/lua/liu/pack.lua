@@ -603,6 +603,7 @@ require("conform").setup({
 		}
 	end,
 })
+vim.keymap.set("n", "<leader>=", "<cmd>lua require('conform').format()<cr>", {})
 
 --====== textobj, operator
 -- vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter-textobjects" })
