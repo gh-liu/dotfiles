@@ -1,0 +1,59 @@
+[[commands]]
+name = "swap-left"
+note = "swap current pane with the left pane"
+run = ["swap-pane", "-t", "{left}"]
+
+[[commands]]
+name = "swap-right"
+note = "swap current pane with the right pane"
+run = ["swap-pane", "-t", "{right}"]
+
+[[commands]]
+name = "swap-up"
+note = "swap current pane with the pane above"
+run = ["swap-pane", "-t", "{up-of}"]
+
+[[commands]]
+name = "swap-down"
+note = "swap current pane with the pane below"
+run = ["swap-pane", "-t", "{down-of}"]
+
+[[commands]]
+name = "stack-right-up"
+note = "move the right pane above the current pane"
+run = ["join-pane", "-s", "{right}", "-t", ".", "-b"]
+
+[[commands]]
+name = "stack-right-down"
+note = "move the right pane below the current pane"
+run = ["join-pane", "-s", "{right}", "-t", "."]
+
+[[commands]]
+name = "stack-left-up"
+note = "move the left pane above the current pane"
+run = ["join-pane", "-s", "{left}", "-t", ".", "-b"]
+
+[[commands]]
+name = "stack-left-down"
+note = "move the left pane below the current pane"
+run = ["join-pane", "-s", "{left}", "-t", "."]
+
+[[commands]]
+name = "stack-down-left"
+note = "move the pane below to the left of the current pane"
+run = ["join-pane", "-s", "{down-of}", "-t", ".", "-h", "-b"]
+
+[[commands]]
+name = "stack-down-right"
+note = "move the pane below to the right of the current pane"
+run = ["join-pane", "-s", "{down-of}", "-t", ".", "-h"]
+
+[[commands]]
+name = "stack-up-left"
+note = "move the pane above to the left of the current pane"
+run = ["join-pane", "-s", "{up-of}", "-t", ".", "-h", "-b"]
+
+[[commands]]
+name = "stack-up-right"
+note = "move the pane above to the right of the current pane"
+run = ["join-pane", "-s", "{up-of}", "-t", ".", "-h"]
