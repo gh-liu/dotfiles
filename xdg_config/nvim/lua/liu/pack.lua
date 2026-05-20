@@ -28,6 +28,17 @@ end, {
 -- 5. `:Gvdiffsplit !~:%` diff current file in selected commit
 -- 5. `:Gvdiffsplit origin/master:%` diff current file against origin/master
 -- 5. `:Gvdiffsplit origin/master...HEAD:%` diff current file against merge-base of origin/master and HEAD
+-- NOTE In-place blame:
+-- 1. `:Gedit <commit>:%` open current file at <commit>
+-- 2. `:Git blame` blame that version
+-- 3. `~` reblame parent / prior change, convenient but fragile
+-- 4. `<CR>` open commit that introduced the line
+-- 5. `gq` return to worktree version
+-- NOTE Patch-based blame, more robust:
+-- 1. `:Git blame`
+-- 2. `<CR>` open introducing commit
+-- 3. move to the corresponding `-` line in the patch
+-- 4. `<CR><CR>` reblame that old line
 local aug_fug = vim.api.nvim_create_augroup("liu.fugitive", { clear = true })
 vim.pack.add({
 	"https://github.com/tpope/vim-fugitive",
