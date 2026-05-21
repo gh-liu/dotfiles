@@ -12,3 +12,14 @@ hi def link gitStashHash     Identifier
 hi def link gitStashDate     Number
 hi def link gitStashIndex    Function
 hi def link gitStashBraces   Delimiter
+
+" Fold each commit in custom pretty `git log` output (e.g.
+"   git log --pretty="%h%d %s  %aN (%cr)" -L :func:file
+" ), where each entry starts with an abbreviated hash instead of
+" `commit <fullhash>` and is therefore not covered by the runtime
+" gitHead fold region.
+if getline(1) =~# '^\x\{7,\} '
+  syn region gitLogEntry matchgroup=gitHashAbbrev start=/^\x\{7,\}\ze / end=/^\%(\x\{7,\} \)\@=/ keepend fold contains=gitDiff,gitDiffMerge,@NoSpell
+elseif getline(1) =~# '^[|\/\\_ ]\{-\}\*[|\/\\_ ]\{-\} \x\{7,\} '
+  syn region gitLogEntry matchgroup=gitHashAbbrev start=/^[|\/\\_ ]\{-\}\*[|\/\\_ ]\{-\} \zs\x\{7,\}\ze / end=/^\%([|\/\\_ ]\{-\}\*[|\/\\_ ]\{-\} \x\{7,\} \)\@=/ keepend fold contains=gitGraph,gitDiff,gitDiffMerge,@NoSpell
+endif
