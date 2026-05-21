@@ -110,6 +110,14 @@ nmap UC Uc
 nnoremap          Uf  :G commit --fixup=<c-r>=FugitiveExecute(['log', '-1', '--format=%h', '--', FugitivePath()]).stdout[0]<cr>
 nmap UF Uf
 
+nnoremap          Um  :G log --date=relative -L :<C-r><C-w>:<C-r>%
+nmap UM Um
+
+nnoremap <expr>   Ul  '@_<cmd>G log --pretty="%h%d %s  %aN (%cr)" --date=relative'.(v:count?'':' --follow -- %').'<cr>'
+nmap UL Ul
+xnoremap          Ul  :Gclog!<cr>
+xmap UL Ul
+
 " Blame:
 nnoremap <expr>   Ub  '@_<cmd>G blame '..(v:count?'--ignore-revs-file ""':'')..'<cr>'
 nnoremap <silent> 1Ub :.,G blame<bar>call feedkeys("\<lt>cr>")<cr>
