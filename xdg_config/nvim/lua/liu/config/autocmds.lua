@@ -12,24 +12,25 @@ augroup liu.focus
   autocmd FocusLost,BufHidden * if &buftype=='' && filereadable(expand('%:p')) | silent lockmarks update ++p | endif
 augroup END
 
-augroup liu.mkview.folds
-  autocmd!
-  " Use numbered view 9 dedicated to fold info only, so it never conflicts
-  " with the unnumbered view (cursor/curdir/etc). Save/restore the global
-  " 'viewoptions' around mkview to limit what gets persisted to folds.
-  au BufWinLeave * if &buftype ==# '' && expand('%') !=# ''
-    \ | let s:save_vop = &viewoptions
-    \ | set viewoptions=folds
-    \ | silent! mkview 9
-    \ | let &viewoptions = s:save_vop
-    \ | endif
-  " Defer loadview to the next event loop tick via timer_start(0, ...).
-  " For foldmethod=expr (e.g. treesitter), the fold tree may not be ready
-  " right at BufWinEnter, so the per-line `sil! normal! zo` commands inside
-  " the view file would no-op. Deferring lets the fold structure settle
-  " before loadview runs, so manually opened folds are restored correctly.
-  au BufWinEnter * if &buftype ==# '' && expand('%') !=# '' | call timer_start(0, {-> execute('silent! loadview 9')}) | endif
-augroup END
+"augroup liu.mkview.folds
+"  autocmd!
+"  " Use numbered view 9 dedicated to fold info only, so it never conflicts
+"  " with the unnumbered view (cursor/curdir/etc). Save/restore the global
+"  " 'viewoptions' around mkview to limit what gets persisted to folds.
+"  au BufWinLeave * if &buftype ==# '' && expand('%') !=# ''
+"    \ | let s:save_vop = &viewoptions
+"    \ | set viewoptions=folds
+"    \ | silent! mkview 9
+"    \ | let &viewoptions = s:save_vop
+"    \ | endif
+"  " Defer loadview to the next event loop tick via timer_start(0, ...).
+"  " For foldmethod=expr (e.g. treesitter), the fold tree may not be ready
+"  " right at BufWinEnter, so the per-line `sil! normal! zo` commands inside
+"  " the view file would no-op. Deferring lets the fold structure settle
+"  " before loadview runs, so manually opened folds are restored correctly.
+"  "au BufWinEnter * if &buftype ==# '' && expand('%') !=# '' | call timer_start(0, {-> execute('silent! loadview 9')}) | endif
+"  au BufWinEnter * if &buftype ==# '' && expand('%') !=# '' | silent! loadview 9 | endif
+"augroup END
 ]])
 
 local api = vim.api
