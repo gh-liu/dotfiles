@@ -1,7 +1,7 @@
 vim.cmd([[
 augroup liu.core
   autocmd!
-  autocmd VimResized * wincmd = 
+  autocmd VimResized * wincmd =
 augroup END
 
 augroup liu.focus
