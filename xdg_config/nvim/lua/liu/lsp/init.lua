@@ -172,6 +172,7 @@ api.nvim_create_autocmd("LspAttach", {
 		-- end, "[G]oto [R]eferences")
 
 		-- nmap("K", lsp.buf.hover, "Hover Documentation")
+		nmap("grf", lsp.buf.format, "Formats Documentation")
 
 		-- NOTE: default mapping for rename: grn
 		-- if client:supports_method(ms.textDocument_rename) then
