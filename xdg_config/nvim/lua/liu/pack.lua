@@ -61,7 +61,6 @@ augroup liu.fug
   autocmd FileType fugitive nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 	\| nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
 	\| nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
-	"cargo install git-absorb
 	\| nnoremap <buffer> gaa :<C-U>Git absorb<space>
 	\| nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
   autocmd FileType fugitive,git setlocal foldmethod=syntax
