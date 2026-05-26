@@ -987,7 +987,7 @@ vim.g.dispatch_compilers = {
 	["go test"] = "gotest",
 	["golangci-lint run"] = "go",
 	-- buf cli
-	["buf build"] = "bufbuild",
+	["buf build"] = "buf_build",
 }
 vim.cmd([[
 	nmap `<bs> <cmd>AbortDispatch<cr>
