@@ -15,6 +15,8 @@ end, {
 	end,
 })
 
+local nvim_on = require("vim._core.util").nvim_on
+
 --====== git
 -- NOTE for fugitive
 -- 1. >REV = current file within version REV
@@ -207,12 +209,9 @@ end
 --====== dap
 local aug_dap = vim.api.nvim_create_augroup("liu.dap", { clear = true })
 vim.pack.add({ "https://github.com/mfussenegger/nvim-dap" })
-vim.api.nvim_create_autocmd("VimEnter", {
-	group = aug_dap,
-	callback = function(ev)
-		require("liu.dap")
-	end,
-})
+nvim_on("VimEnter", aug_dap, function()
+	require("liu.dap")
+end)
 local dap_map = function(op, cmd, opts)
 	opts = opts or {}
 	local rhs = string.format([[:lua require("dap").%s()<CR>]], cmd)
@@ -720,20 +719,17 @@ vim.keymap.set({ "n", "v" }, "<C-a>", "<Plug>(dial-increment)", {})
 vim.keymap.set({ "n", "v" }, "<C-x>", "<Plug>(dial-decrement)", {})
 vim.keymap.set({ "n", "v" }, "g<C-a>", "<Plug>(dial-g-increment)", {})
 vim.keymap.set({ "n", "v" }, "g<C-x>", "<Plug>(dial-g-decrement)", {})
-vim.api.nvim_create_autocmd("VimEnter", {
-	group = aug_dial,
-	callback = function(ev)
-		local augend = require("dial.augend")
-		require("dial.config").augends:register_group({
-			default = {
-				augend.integer.alias.decimal,
-				augend.integer.alias.hex,
-				augend.constant.alias.bool,
-				augend.date.alias["%Y/%m/%d"],
-			},
-		})
-	end,
-})
+nvim_on("VimEnter", aug_dial, function(ev)
+	local augend = require("dial.augend")
+	require("dial.config").augends:register_group({
+		default = {
+			augend.integer.alias.decimal,
+			augend.integer.alias.hex,
+			augend.constant.alias.bool,
+			augend.date.alias["%Y/%m/%d"],
+		},
+	})
+end)
 
 vim.pack.add({ "https://github.com/gh-liu/treesj" })
 require("treesj").setup({ use_default_keymaps = false, max_join_length = 300 })
