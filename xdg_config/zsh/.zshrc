@@ -433,13 +433,13 @@ source "$ZDOTDIR/fzf.zsh" # !make sure fzf after completion, cause use <tab> for
 # }}}
 
 # 9999. LLM {{{
-function update_llm_clis() {
-	bun i -g @anthropic-ai/claude-code
-	bun i -g @openai/codex
+# function update_llm_clis() {
+	# curl -fsSL https://claude.ai/install.sh | bash
+	# curl -fsSL https://chatgpt.com/codex/install.sh | bash
 	# curl -fsSL https://ampcode.com/install.sh | bash
-	bun i -g opencode-ai
-	bun i -g skills vercel-labs/agent-skills
-}
+	# curl -fsSL https://opencode.ai/install | bash
+	# bun i -g skills vercel-labs/agent-skills
+# }
 # #claude
 # export ANTHROPIC_API_KEY=""
 # export ANTHROPIC_BASE_URL=""
