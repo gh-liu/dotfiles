@@ -30,6 +30,7 @@ return {
 				parameterNames = true,
 				rangeVariableTypes = true,
 			},
+			analysisProgressReporting = false,
 		},
 	},
 	on_attach = function(client, bufnr)
