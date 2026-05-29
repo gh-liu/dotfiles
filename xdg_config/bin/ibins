@@ -59,18 +59,7 @@ _install_kubectl() {
 }
 
 _install_helm() {
-	local version arch pkg dir tmpdir
-	version=$(gh_latest_tag helm/helm) || return 1
-	arch=$(norm_arch)
-	pkg="helm-${version}-${OS}-${arch}.tar.gz"
-	dir="${OS}-${arch}"
-	tmpdir=$(mktemp -d)
-
-	curl -fsSL -o "$tmpdir/$pkg" "https://get.helm.sh/$pkg" || return 1
-	extract_archive "$tmpdir/$pkg" "$tmpdir" || return 1
-	mv "$tmpdir/$dir/helm" ~/.local/bin/helm || return 1
-	chmod +x ~/.local/bin/helm || return 1
-	rm -rf "$tmpdir"
+	go install helm.sh/helm/v4/cmd/helm@latest
 }
 
 _install_nerdctl() {
