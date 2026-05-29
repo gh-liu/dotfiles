@@ -365,6 +365,8 @@ install_bins() {
 		go install github.com/birdayz/kaf/cmd/kaf@latest
 		# go install github.com/fgrosse/kafkactl@latest
 
+		go install github.com/sagernet/sing-box/cmd/sing-box@latest
+
 	fi
 
 	# Bun
