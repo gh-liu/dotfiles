@@ -1034,6 +1034,23 @@ vim.g.projectionist_heuristics = {
 			make = "go build {file|dirname}",
 		},
 	},
+	["Cargo.toml"] = {
+		["Cargo.toml"] = { type = "dep" },
+		["src/main.rs"] = {
+			type = "main",
+			dispatch = "cargo run",
+			start = "cargo run",
+		},
+		["src/*.rs"] = {
+			type = "source",
+			alternate = "tests/{}.rs",
+		},
+		["tests/*.rs"] = {
+			type = "test",
+			alternate = "src/{}.rs",
+			dispatch = "cargo test {}",
+		},
+	},
 }
 -- vim.pack.add({ "https://github.com/tpope/vim-projectionist" })
 vim.pack.add({ "https://github.com/gh-liu/vim-projectionist" })
