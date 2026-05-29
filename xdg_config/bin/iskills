@@ -6,8 +6,8 @@
 SCOPE="-g"
 for arg in "$@"; do
   case "$arg" in
-    --local) SCOPE="" ;;
-    --clean) skills remove --all -g -y ;;
+  --local) SCOPE="" ;;
+  --clean) skills remove --all -g -y ;;
   esac
 done
 
@@ -26,20 +26,20 @@ skills add https://github.com/upstash/context7 --skill find-docs $FLAGS
 skills add https://github.com/obra/superpowers --skill brainstorming $FLAGS
 
 # test-driven-development:
-# skills add https://github.com/obra/superpowers --skill test-driven-development $FLAGS
+skills add https://github.com/obra/superpowers --skill test-driven-development $FLAGS
 # tdd
-skills add mattpocock/skills/tdd $FLAGS
+# skills add mattpocock/skills/tdd $FLAGS
 
 # fullstack-dev
-skills add https://github.com/MiniMax-AI/skills --skill fullstack-dev $FLAGS
+# skills add https://github.com/MiniMax-AI/skills --skill fullstack-dev $FLAGS
 
 # use-modern-go:
-skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go $FLAGS
+# skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go $FLAGS
 
-skills add ast-grep/agent-skill
-skills add vercel-labs/agent-browser
+# skills add ast-grep/agent-skill $FLAGS
 
-skills add https://github.com/ccheney/robust-skills --skill clean-ddd-hexagonal $FLAGS
+# skills add https://github.com/ccheney/robust-skills --skill clean-ddd-hexagonal $FLAGS
 
+skills add vercel-labs/agent-browser $FLAGS
 
 # vim: set filetype=sh
