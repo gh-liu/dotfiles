@@ -18,7 +18,7 @@
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "kulala.nvim": {
-      "rev": "5809fe0b599bba8a125adf02922b535303f78b01",
+      "rev": "bccba0c4b21557ee916a82268c8993e9a84276b9",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.ai": {
@@ -38,7 +38,7 @@
       "src": "https://github.com/nvim-mini/mini.diff"
     },
     "mini.files": {
-      "rev": "423d6b5afb7a94e658950d470957f830d43dd41e",
+      "rev": "17b58c3227cffe47ded884c234aa61dab492363a",
       "src": "https://github.com/nvim-mini/mini.files"
     },
     "mini.icons": {
@@ -74,7 +74,7 @@
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "a4ed4e761c400849e8c9f8bda33e5083f890268c",
+      "rev": "9573948c38bfabeec353ae7dd7d3ffec4c506a6b",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-tester": {
