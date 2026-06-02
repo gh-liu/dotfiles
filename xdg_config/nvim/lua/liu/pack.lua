@@ -85,6 +85,7 @@ vim.cmd([[
 augroup liu.ug
   autocmd!
   autocmd FileType fugitive unmap <buffer> U
+	\| nnoremap <expr>  Uc  '@_:G commit '..(v:count ? '--no-verify' : '')..' --edit -m '..shellescape(FugitiveExecute(['log', '-1', '--format=%s']).stdout[0])..'<cr>'
   autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> q gq
   "when Vim starts in diff-mode (vim -d, git mergetool):
   "  - do/dp should not auto-fold
