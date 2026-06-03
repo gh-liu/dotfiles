@@ -730,6 +730,12 @@ nvim_on("VimEnter", aug_dial, function(ev)
 			augend.date.alias["%Y/%m/%d"],
 		},
 	})
+
+	require("dial.config").augends:on_filetype({
+		python = {
+			augend.constant.alias.Bool,
+		},
+	})
 end)
 
 vim.pack.add({ "https://github.com/gh-liu/treesj" })
