@@ -18,7 +18,7 @@
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "kulala.nvim": {
-      "rev": "cc31bcaa8a9b21ce8e04b73c7969409958142632",
+      "rev": "a82a20a4f065275b91375744fbff9839db1dffd0",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.ai": {
@@ -74,7 +74,7 @@
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "07dff35e7c95288861200b788ef32d6103f107f0",
+      "rev": "229b79051b380377664edc4cbd534930154921a1",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-tester": {
@@ -98,7 +98,7 @@
       "src": "https://github.com/stefandtw/quickfix-reflector.vim"
     },
     "snacks.nvim": {
-      "rev": "0770753c88228f7f15449c6a5b242e3f7cd0d71c",
+      "rev": "882c996cf28183f4d63640de0b4c02ec886d01f2",
       "src": "https://github.com/folke/snacks.nvim"
     },
     "table.vim": {
@@ -110,7 +110,7 @@
       "src": "https://github.com/rachartier/tiny-code-action.nvim"
     },
     "treesj": {
-      "rev": "5fa4e7ba3517f8fe743bb4488f9e9c7ce83330fc",
+      "rev": "a8dc7a852d5221f68e80ed8632706bfa7dd4f393",
       "src": "https://github.com/gh-liu/treesj"
     },
     "vim-abolish": {
