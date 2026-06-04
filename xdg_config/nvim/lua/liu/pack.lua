@@ -69,6 +69,8 @@ augroup liu.fug
   autocmd User FugitiveIndex,FugitiveObject,FugitiveStageBlob setlocal winhighlight=StatusLine:StatusLineFugitive
   autocmd FileType git if get(b:, 'fugitive_type', '') ==# 'commit' | setlocal foldlevel=0 | endif
 augroup END
+
+nnoremap d. :<C-U>Gvdiffsplit :%<left><left>
 ]])
 vim.api.nvim_create_autocmd("VimLeavePre", {
 	group = aug_fug,
