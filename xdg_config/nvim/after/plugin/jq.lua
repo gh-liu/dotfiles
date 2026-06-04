@@ -8,4 +8,7 @@ vim.api.nvim_create_user_command("ToJsonText", function(_)
 	vim.cmd("%!jq -c '. | tojson'")
 end, { nargs = 0 })
 
-vim.cmd([[command! -bang FormatJsonText setlocal ft=json | execute '%!jq ' . (<bang>0 ? '-c ' : '') . '.']])
+vim.cmd([[
+command! -bang -nargs=? FormatJsonText setlocal ft=json
+	\| execute '%!jq ' . (<bang>0 ? '-c ' : '') .' -r '. shellescape(<q-args> == '' ? '.' : <q-args>)
+]])
