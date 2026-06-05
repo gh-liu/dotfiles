@@ -902,10 +902,10 @@ local formatters_by_ft = {
 require("conform").setup({
 	-- :help conform-formatters
 	formatters_by_ft = formatters_by_ft,
-	default_format_opts = { lsp_format = "fallback" },
+	-- default_format_opts = { lsp_format = "fallback" },
 	format_on_save = function(bufnr)
 		return {
-			lsp_format = "fallback",
+			lsp_format = "last",
 			timeout_ms = 500,
 		}
 	end,
