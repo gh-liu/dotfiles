@@ -65,11 +65,11 @@ require("mini.ai").setup({
 local mini_surround_ts_input = require("mini.surround").gen_spec.input.treesitter
 require("mini.surround").setup({
 	mappings = {
-		add = "ys", -- Add surrounding in Normal and Visual modes
+		add = "ys",    -- Add surrounding in Normal and Visual modes
 		delete = "ds", -- Delete surrounding
 		replace = "cs", -- Replace surrounding
 
-		find = "", -- Find surrounding (to the right) - surround next
+		find = "",     -- Find surrounding (to the right) - surround next
 		find_left = "", -- Find surrounding (to the left) - surround prev
 		highlight = "", -- Highlight surrounding - surround highlight
 		update_n_lines = "", -- Update `n_lines`
@@ -739,8 +739,8 @@ vim.api.nvim_create_autocmd("InsertEnter", {
 						-- for the given list of sources
 						treesitter = { "lsp" },
 						columns = {
-							{ "label", "label_description", gap = 1 },
-							{ "kind_icon", "kind", gap = 1 },
+							{ "label",       "label_description", gap = 1 },
+							{ "kind_icon",   "kind",              gap = 1 },
 							{ "source_name", gap = 1 },
 						},
 						components = {
