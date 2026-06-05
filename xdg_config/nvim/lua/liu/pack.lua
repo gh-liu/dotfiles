@@ -1174,6 +1174,10 @@ vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
 					"script_output",
 				},
 			},
+			lsp = {
+				enable = true,
+				filetypes = { "http", "lua", "javascript", "json" },
+			},
 		})
 	end,
 	once = true,
