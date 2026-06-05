@@ -298,6 +298,8 @@ require("mini.diff").setup({
 		linematch = 60,
 	},
 })
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.input" })
+require("mini.input").setup()
 
 --====== git
 -- NOTE for fugitive
