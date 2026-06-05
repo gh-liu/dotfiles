@@ -1164,6 +1164,15 @@ vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
 				-- split_direction = "", -- vertical/horizontal
 				-- win_opts = {},
 				-- default_view = "body",
+				default_winbar_panes = {
+					"body",
+					"headers",
+					"headers_body",
+					"verbose",
+					"stats",
+					"report",
+					"script_output",
+				},
 			},
 		})
 	end,
@@ -1179,6 +1188,7 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 		local kulala = require("kulala")
 		vim.keymap.set("n", "[[", kulala.jump_prev, { buffer = buf, desc = "Jump to previous request" })
 		vim.keymap.set("n", "]]", kulala.jump_next, { buffer = buf, desc = "Jump to next request" })
+		vim.keymap.set("n", "<cr>", kulala.run, { buffer = buf, desc = "Run" })
 	end,
 })
 
