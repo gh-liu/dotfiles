@@ -1179,6 +1179,27 @@ vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
 				filetypes = { "http", "lua", "javascript", "json" },
 			},
 		})
+
+		vim.api.nvim_create_user_command("Kulala", function(args)
+			local kulala = require("kulala")
+			local fn = args.fargs[1]
+			local fargs = { unpack(args.fargs, 2) }
+			assert(type(kulala[fn]) == "function", "kulala: not a function: " .. tostring(fn))
+			kulala[fn](unpack(fargs))
+		end, {
+			nargs = "+",
+			complete = function(arglead, cmdline)
+				-- only complete the first arg (function name)
+				if cmdline:match("^%s*Kulala%s+%S*$") then
+					return vim.iter(vim.tbl_keys(require("kulala")))
+						:filter(function(k)
+							return type(require("kulala")[k]) == "function" and vim.startswith(k, arglead)
+						end)
+						:totable()
+				end
+				return {}
+			end,
+		})
 	end,
 	once = true,
 })
@@ -1193,15 +1214,6 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 		vim.keymap.set("n", "[[", kulala.jump_prev, { buffer = buf, desc = "Jump to previous request" })
 		vim.keymap.set("n", "]]", kulala.jump_next, { buffer = buf, desc = "Jump to next request" })
 		vim.keymap.set("n", "<cr>", kulala.run, { buffer = buf, desc = "Run" })
-	end,
-})
-
-vim.api.nvim_create_user_command("Kulala", function(args)
-	vim.cmd(string.format("lua require('kulala').%s()", args.fargs[1]))
-end, {
-	nargs = 1,
-	complete = function()
-		return { "copy", "run", "run_all", "set_selected_env" }
 	end,
 })
 
