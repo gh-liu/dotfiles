@@ -18,6 +18,7 @@ end, {
 local nvim_on = require("vim._core.util").nvim_on
 
 --====== mini.nvim
+local aug_mini = vim.api.nvim_create_augroup("liu.mini", { clear = true })
 vim.pack.add({ "https://github.com/nvim-mini/mini.nvim" })
 -- vim.pack.add({ "https://github.com/nvim-mini/mini.icons" })
 package.preload["nvim-web-devicons"] = function()
@@ -25,296 +26,317 @@ package.preload["nvim-web-devicons"] = function()
 	return package.loaded["nvim-web-devicons"]
 end
 -- vim.pack.add({ "https://github.com/nvim-mini/mini.pairs" })
-require("mini.pairs").setup({
-	modes = { insert = true, command = true, terminal = false },
-})
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.pairs").setup({
+		modes = { insert = true, command = true, terminal = false },
+	})
+end)
 -- vim.pack.add({ "https://github.com/nvim-mini/mini.ai" })
-local mini_ai_gen = require("mini.ai").gen_spec
-local mini_ai_ts_gen = mini_ai_gen.treesitter
-require("mini.ai").setup({
-	silent = true,
-	search_method = "cover",
-	n_lines = 300,
-	custom_textobjects = {
-		-- Code blocks (if/for/while/etc.)
-		o = mini_ai_ts_gen({
-			a = { "@block.outer", "@conditional.outer", "@loop.outer" },
-			i = { "@block.inner", "@conditional.inner", "@loop.inner" },
-		}),
-		-- Function
-		f = mini_ai_ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
-		-- Class
-		c = mini_ai_ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
-		-- NOTE: Use built-in `a` for argument/parameter instead of custom `P`
-		-- Assignment: = for whole, l for lhs, r for rhs
-		["="] = mini_ai_ts_gen({ a = "@assignment.outer", i = "@assignment.inner" }, {}),
-		l = mini_ai_ts_gen({ a = "@assignment.lhs", i = "@assignment.lhs" }, {}), -- lhs (left-hand side)
-		r = mini_ai_ts_gen({ a = "@assignment.rhs", i = "@assignment.rhs" }, {}), -- rhs (right-hand side)
-		-- Function call (usage)
-		u = mini_ai_gen.function_call(),
-	},
-	mappings = {
-		-- Move cursor to corresponding edge of `a` textobject
-		-- goto_left = "g[",
-		-- goto_right = "g]",
-		goto_left = "",
-		goto_right = "",
-	},
-})
+nvim_on("VimEnter", aug_mini, function()
+	local mini_ai_gen = require("mini.ai").gen_spec
+	local mini_ai_ts_gen = mini_ai_gen.treesitter
+	require("mini.ai").setup({
+		silent = true,
+		search_method = "cover",
+		n_lines = 300,
+		custom_textobjects = {
+			-- Code blocks (if/for/while/etc.)
+			o = mini_ai_ts_gen({
+				a = { "@block.outer", "@conditional.outer", "@loop.outer" },
+				i = { "@block.inner", "@conditional.inner", "@loop.inner" },
+			}),
+			-- Function
+			f = mini_ai_ts_gen({ a = "@function.outer", i = "@function.inner" }, {}),
+			-- Class
+			c = mini_ai_ts_gen({ a = "@class.outer", i = "@class.inner" }, {}),
+			-- NOTE: Use built-in `a` for argument/parameter instead of custom `P`
+			-- Assignment: = for whole, l for lhs, r for rhs
+			["="] = mini_ai_ts_gen({ a = "@assignment.outer", i = "@assignment.inner" }, {}),
+			l = mini_ai_ts_gen({ a = "@assignment.lhs", i = "@assignment.lhs" }, {}), -- lhs (left-hand side)
+			r = mini_ai_ts_gen({ a = "@assignment.rhs", i = "@assignment.rhs" }, {}), -- rhs (right-hand side)
+			-- Function call (usage)
+			u = mini_ai_gen.function_call(),
+		},
+		mappings = {
+			-- Move cursor to corresponding edge of `a` textobject
+			-- goto_left = "g[",
+			-- goto_right = "g]",
+			goto_left = "",
+			goto_right = "",
+		},
+	})
+end)
 -- vim.pack.add({ "https://github.com/nvim-mini/mini.surround" })
 local mini_surround_ts_input = require("mini.surround").gen_spec.input.treesitter
-require("mini.surround").setup({
-	mappings = {
-		add = "ys",    -- Add surrounding in Normal and Visual modes
-		delete = "ds", -- Delete surrounding
-		replace = "cs", -- Replace surrounding
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.surround").setup({
+		mappings = {
+			add = "ys", -- Add surrounding in Normal and Visual modes
+			delete = "ds", -- Delete surrounding
+			replace = "cs", -- Replace surrounding
 
-		find = "",     -- Find surrounding (to the right) - surround next
-		find_left = "", -- Find surrounding (to the left) - surround prev
-		highlight = "", -- Highlight surrounding - surround highlight
-		update_n_lines = "", -- Update `n_lines`
+			find = "",  -- Find surrounding (to the right) - surround next
+			find_left = "", -- Find surrounding (to the left) - surround prev
+			highlight = "", -- Highlight surrounding - surround highlight
+			update_n_lines = "", -- Update `n_lines`
 
-		suffix_last = "l", -- Suffix to search with "prev" method
-		suffix_next = "n", -- Suffix to search with "next" method
-	},
-	custom_textobjects = {
-		f = mini_surround_ts_input({ outer = "@call.outer", inner = "@call.inner" }),
-	},
-	n_lines = 300,
-	search_method = "cover",
-})
-vim.keymap.set("n", "yS", "ys$", { remap = true })
-vim.keymap.set("n", "yss", "ys_", { remap = true })
--- vim.pack.add({ "https://github.com/nvim-mini/mini.operators" })
-require("mini.operators").setup({
-	replace = {
-		prefix = "dr",
-		reindent_linewise = true,
-	},
-	exchange = {
-		prefix = "cx",
-		reindent_linewise = true,
-	},
-	evaluate = { prefix = "g=" },
-	multiply = { prefix = "" },
-	sort = { prefix = "" },
-})
-vim.keymap.set({ "n", "x" }, "dR", "<cmd>normal dr$<cr>")
-vim.keymap.set({ "n", "x" }, "cX", "<cmd>normal cx$<cr>")
--- vim.pack.add({ "https://github.com/nvim-mini/mini.move" })
-require("mini.move").setup({})
--- vim.pack.add({ "https://github.com/nvim-mini/mini.align" })
-require("mini.align").setup({
-	mappings = {
-		start = "gl",
-		start_with_preview = "gL",
-	},
-})
--- vim.pack.add({ "https://github.com/nvim-mini/mini.files" })
-local aug_mini_files = vim.api.nvim_create_augroup("liu.mini.files", { clear = true })
-require("mini.files").setup({
-	mappings = {
-		go_in = "<c-l>", -- Enter directory or open file (default)
-		go_out = "<c-h>", -- Go to parent directory (default)
-		go_in_plus = "", -- Enter and close file explorer
-		go_out_plus = "", -- Go out and trim right columns
-		mark_set = "m",
-		mark_goto = "`",
-	},
-	options = { use_as_default_explorer = false },
-	content = {
-		highlight = function(fs_entry)
-			if fs_entry.fs_type == "file" then
-				local entry = vim.iter(vim.fn.argv())
-					:map(function(arg)
-						return vim.fs.abspath(arg)
-					end)
-					:find(fs_entry.path)
-				if entry then
-					return "Todo"
-				end
-			end
-			return require("mini.files").default_highlight(fs_entry)
-		end,
-	},
-})
-vim.api.nvim_create_autocmd("User", {
-	group = aug_mini_files,
-	pattern = "MiniFilesExplorerOpen",
-	callback = function()
-		local MiniFiles = require("mini.files")
-		MiniFiles.set_bookmark("~", "~", { desc = "Home directory" })
-		MiniFiles.set_bookmark("C", vim.fn.stdpath("config"), { desc = "nvim Config directory" })
-		MiniFiles.set_bookmark("w", vim.fn.getcwd, { desc = "Working directory" })
-		MiniFiles.set_bookmark("r", function()
-			return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
-		end, { desc = "Root directory" })
-	end,
-})
-vim.api.nvim_create_autocmd("User", {
-	group = aug_mini_files,
-	pattern = "MiniFilesBufferCreate",
-	callback = function(args)
-		local buf = args.data.buf_id
-		vim.b[buf].completion = false -- disable blink.cmp
-
-		vim.keymap.set("n", "gx", function()
-			local MiniFiles = require("mini.files")
-			vim.ui.open(MiniFiles.get_fs_entry().path)
-		end, { buffer = buf, desc = "OS open" })
-
-		vim.keymap.set("n", "<CR>", function()
-			local MiniFiles = require("mini.files")
-			MiniFiles.go_in({ close_on_file = true })
-		end, { buffer = buf, desc = "Go in (close on file)" })
-
-		vim.keymap.set("n", "<leader><CR>", function()
-			local MiniFiles = require("mini.files")
-			MiniFiles.synchronize()
-		end, { buffer = buf, desc = "Synchronize changes" })
-	end,
-})
-vim.api.nvim_create_autocmd("User", {
-	group = aug_mini_files,
-	pattern = "MiniFilesWindowOpen",
-	callback = function(args)
-		local buf = args.data.buf_id
-		local win = args.data.win_id
-		vim.wo[win].signcolumn = "no"
-		local file = vim.api.nvim_buf_get_name(buf)
-		local _, _, buf, relpath = file:find([[^minifiles://(%d+)/(.*)]])
-		if relpath then
-			vim.wo[win].statusline = relpath
-		end
-	end,
-})
-vim.keymap.set("n", "<leader>E", function()
-	local MiniFiles = require("mini.files")
-	if not MiniFiles.close() then
-		local path = vim.fn.getcwd()
-		MiniFiles.open(path, false)
-	end
+			suffix_last = "l", -- Suffix to search with "prev" method
+			suffix_next = "n", -- Suffix to search with "next" method
+		},
+		custom_textobjects = {
+			f = mini_surround_ts_input({ outer = "@call.outer", inner = "@call.inner" }),
+		},
+		n_lines = 300,
+		search_method = "cover",
+	})
+	vim.keymap.set("n", "yS", "ys$", { remap = true })
+	vim.keymap.set("n", "yss", "ys_", { remap = true })
 end)
-vim.keymap.set("n", "<leader>e", function()
-	local MiniFiles = require("mini.files")
-	if not MiniFiles.close() then
-		local bufname = vim.api.nvim_buf_get_name(0)
-		local is_dir = vim.fn.isdirectory(bufname) == 1
-		local dirs = {}
-		if is_dir then
-			table.insert(dirs, bufname)
-		else
-			local file_not_valid = bufname == "" or vim.fn.filereadable(bufname) == 0
-			if file_not_valid then
-				bufname = vim.fs.normalize(vim.fn.getcwd(), {})
-				table.insert(dirs, bufname)
-			end
-		end
-		for dir in vim.fs.parents(bufname) do
-			table.insert(dirs, dir)
-		end
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.operators" })
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.operators").setup({
+		replace = {
+			prefix = "dr",
+			reindent_linewise = true,
+		},
+		exchange = {
+			prefix = "cx",
+			reindent_linewise = true,
+		},
+		evaluate = { prefix = "g=" },
+		multiply = { prefix = "" },
+		sort = { prefix = "" },
+	})
+	vim.keymap.set({ "n", "x" }, "dR", "<cmd>normal dr$<cr>")
+	vim.keymap.set({ "n", "x" }, "cX", "<cmd>normal cx$<cr>")
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.move" })
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.move").setup({})
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.align" })
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.align").setup({
+		mappings = {
+			start = "gl",
+			start_with_preview = "gL",
+		},
+	})
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.files" })
+nvim_on("VimEnter", aug_mini, function()
+	local aug_mini_files = vim.api.nvim_create_augroup("liu.mini.files", { clear = true })
+	require("mini.files").setup({
+		mappings = {
+			go_in = "<c-l>", -- Enter directory or open file (default)
+			go_out = "<c-h>", -- Go to parent directory (default)
+			go_in_plus = "", -- Enter and close file explorer
+			go_out_plus = "", -- Go out and trim right columns
+			mark_set = "m",
+			mark_goto = "`",
+		},
+		options = { use_as_default_explorer = false },
+		content = {
+			highlight = function(fs_entry)
+				if fs_entry.fs_type == "file" then
+					local entry = vim.iter(vim.fn.argv())
+						:map(function(arg)
+							return vim.fs.abspath(arg)
+						end)
+						:find(fs_entry.path)
+					if entry then
+						return "Todo"
+					end
+				end
+				return require("mini.files").default_highlight(fs_entry)
+			end,
+		},
+	})
+	vim.api.nvim_create_autocmd("User", {
+		group = aug_mini_files,
+		pattern = "MiniFilesExplorerOpen",
+		callback = function()
+			local MiniFiles = require("mini.files")
+			MiniFiles.set_bookmark("~", "~", { desc = "Home directory" })
+			MiniFiles.set_bookmark("C", vim.fn.stdpath("config"), { desc = "nvim Config directory" })
+			MiniFiles.set_bookmark("w", vim.fn.getcwd, { desc = "Working directory" })
+			MiniFiles.set_bookmark("r", function()
+				return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
+			end, { desc = "Root directory" })
+		end,
+	})
+	vim.api.nvim_create_autocmd("User", {
+		group = aug_mini_files,
+		pattern = "MiniFilesBufferCreate",
+		callback = function(args)
+			local buf = args.data.buf_id
+			vim.b[buf].completion = false -- disable blink.cmp
 
-		local count = vim.v.count1
-		local path = dirs[count]
-		if count == 1 and vim.fn.isdirectory(bufname) == 0 then
-			-- If it is a path to file, its parent directory is used as anchor
-			-- while explorer will focus on the supplied file.
-			MiniFiles.open(bufname, false)
-		else
+			vim.keymap.set("n", "gx", function()
+				local MiniFiles = require("mini.files")
+				vim.ui.open(MiniFiles.get_fs_entry().path)
+			end, { buffer = buf, desc = "OS open" })
+
+			vim.keymap.set("n", "<CR>", function()
+				local MiniFiles = require("mini.files")
+				MiniFiles.go_in({ close_on_file = true })
+			end, { buffer = buf, desc = "Go in (close on file)" })
+
+			vim.keymap.set("n", "<leader><CR>", function()
+				local MiniFiles = require("mini.files")
+				MiniFiles.synchronize()
+			end, { buffer = buf, desc = "Synchronize changes" })
+		end,
+	})
+	vim.api.nvim_create_autocmd("User", {
+		group = aug_mini_files,
+		pattern = "MiniFilesWindowOpen",
+		callback = function(args)
+			local buf = args.data.buf_id
+			local win = args.data.win_id
+			vim.wo[win].signcolumn = "no"
+			local file = vim.api.nvim_buf_get_name(buf)
+			local _, _, buf, relpath = file:find([[^minifiles://(%d+)/(.*)]])
+			if relpath then
+				vim.wo[win].statusline = relpath
+			end
+		end,
+	})
+	vim.keymap.set("n", "<leader>E", function()
+		local MiniFiles = require("mini.files")
+		if not MiniFiles.close() then
+			local path = vim.fn.getcwd()
 			MiniFiles.open(path, false)
 		end
-	end
-end)
-vim.api.nvim_create_user_command("DirOpen", "lua MiniFiles.open(<f-args>)", { complete = "dir", nargs = 1 })
--- vim.pack.add({ "https://github.com/nvim-mini/mini.bufremove" })
-local aug_mini_bufremove = vim.api.nvim_create_augroup("liu.mini.bufremove", { clear = true })
-require("mini.bufremove").setup({})
-vim.api.nvim_create_autocmd("User", {
-	group = aug_mini_bufremove,
-	pattern = "MiniFilesActionDelete",
-	callback = function(args)
-		local fname = args.data.from
-		local buf = vim.fn.bufnr(fname)
-		if vim.api.nvim_buf_is_valid(buf) then
-			require("mini.bufremove").delete(buf, false)
+	end)
+	vim.keymap.set("n", "<leader>e", function()
+		local MiniFiles = require("mini.files")
+		if not MiniFiles.close() then
+			local bufname = vim.api.nvim_buf_get_name(0)
+			local is_dir = vim.fn.isdirectory(bufname) == 1
+			local dirs = {}
+			if is_dir then
+				table.insert(dirs, bufname)
+			else
+				local file_not_valid = bufname == "" or vim.fn.filereadable(bufname) == 0
+				if file_not_valid then
+					bufname = vim.fs.normalize(vim.fn.getcwd(), {})
+					table.insert(dirs, bufname)
+				end
+			end
+			for dir in vim.fs.parents(bufname) do
+				table.insert(dirs, dir)
+			end
+
+			local count = vim.v.count1
+			local path = dirs[count]
+			if count == 1 and vim.fn.isdirectory(bufname) == 0 then
+				-- If it is a path to file, its parent directory is used as anchor
+				-- while explorer will focus on the supplied file.
+				MiniFiles.open(bufname, false)
+			else
+				MiniFiles.open(path, false)
+			end
 		end
-	end,
-})
--- vim.pack.add({ "https://github.com/nvim-mini/mini.keymap" })
-local map_combo = require("mini.keymap").map_combo
-map_combo({ "i", "x", "s" }, "jk", "<BS><BS><Esc>")
-local map_multistep = require("mini.keymap").map_multistep
-map_multistep({ "i" }, "<Tab>", {
-	"vimsnippet_next",
-	"pmenu_next",
-	-- "blink_next",
-})
-map_multistep({ "i" }, "<S-Tab>", {
-	"vimsnippet_prev",
-	"pmenu_prev",
-	-- "blink_prev",
-})
-map_multistep({ "i", "s" }, "<C-l>", { "vimsnippet_next" })
-map_multistep({ "i", "s" }, "<C-h>", { "vimsnippet_prev" })
--- vim.pack.add({ "https://github.com/nvim-mini/mini.diff" })
-require("mini.diff").setup({
-	view = {
-		-- Visualization style. Possible values are 'sign' and 'number'.
-		style = "sign",
-		-- Signs used for hunks with 'sign' view
-		signs = { add = "▒", change = "▒", delete = "▒" },
-		-- Priority of used visualization extmarks
-		priority = vim.hl.priorities.user - 1,
-	},
-	-- Source for how reference text is computed/updated/etc
-	-- Uses content from Git index by default
-	source = nil, -- NOTE(liu): be changed in config function
-	-- Delays (in ms) defining asynchronous processes
-	delay = {
-		-- How much to wait before update following every text change
-		text_change = 200,
-	},
-	-- Module mappings. Use `''` (empty string) to disable one.
-	mappings = {
-		-- 	-- Apply hunks inside a visual/operator region
-		-- 	apply = "gh", -- WRITE TO DIFF SOURCE
-		-- 	-- Reset hunks inside a visual/operator region
-		-- 	reset = "gH", -- READ FROM DIFF SOURCE
-		-- 	-- Hunk range textobject to be used inside operator
-		textobject = "ah",
-		-- 	-- Go to hunk range in corresponding direction
-		-- 	goto_first = "[H",
-		-- 	goto_prev = "[h",
-		-- 	goto_next = "]h",
-		-- 	goto_last = "]H",
-	},
-	-- Various options
-	options = {
-		-- Diff algorithm. See `:h vim.diff()`.
-		algorithm = "histogram",
-		-- Whether to use "indent heuristic". See `:h vim.diff()`.
-		indent_heuristic = true,
-		-- The amount of second-stage diff to align lines (in Neovim>=0.9)
-		linematch = 60,
-	},
-})
--- vim.pack.add({ "https://github.com/nvim-mini/mini.input" })
-require("mini.input").setup({
-	handlers = {
-		-- :h MiniInput.default_key()
-		key = function(state, key)
-			-- if key == vim.keycode("<C-k>") then
-			-- 	return MiniInput.default_key(state, vim.keycode("<Up>"))
-			-- end
-			-- if key == vim.keycode("<C-j>") then
-			-- 	return MiniInput.default_key(state, vim.keycode("<Down>"))
-			-- end
-
-			return MiniInput.default_key(state, key)
+	end)
+	vim.api.nvim_create_user_command("DirOpen", "lua MiniFiles.open(<f-args>)", { complete = "dir", nargs = 1 })
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.bufremove" })
+nvim_on("VimEnter", aug_mini, function()
+	local aug_mini_bufremove = vim.api.nvim_create_augroup("liu.mini.bufremove", { clear = true })
+	require("mini.bufremove").setup({})
+	vim.api.nvim_create_autocmd("User", {
+		group = aug_mini_bufremove,
+		pattern = "MiniFilesActionDelete",
+		callback = function(args)
+			local fname = args.data.from
+			local buf = vim.fn.bufnr(fname)
+			if vim.api.nvim_buf_is_valid(buf) then
+				require("mini.bufremove").delete(buf, false)
+			end
 		end,
-	},
-})
+	})
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.keymap" })
+nvim_on("VimEnter", aug_mini, function()
+	local map_combo = require("mini.keymap").map_combo
+	map_combo({ "i", "x", "s" }, "jk", "<BS><BS><Esc>")
+	local map_multistep = require("mini.keymap").map_multistep
+	map_multistep({ "i" }, "<Tab>", {
+		"vimsnippet_next",
+		"pmenu_next",
+		-- "blink_next",
+	})
+	map_multistep({ "i" }, "<S-Tab>", {
+		"vimsnippet_prev",
+		"pmenu_prev",
+		-- "blink_prev",
+	})
+	map_multistep({ "i", "s" }, "<C-l>", { "vimsnippet_next" })
+	map_multistep({ "i", "s" }, "<C-h>", { "vimsnippet_prev" })
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.diff" })
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.diff").setup({
+		view = {
+			-- Visualization style. Possible values are 'sign' and 'number'.
+			style = "sign",
+			-- Signs used for hunks with 'sign' view
+			signs = { add = "▒", change = "▒", delete = "▒" },
+			-- Priority of used visualization extmarks
+			priority = vim.hl.priorities.user - 1,
+		},
+		-- Source for how reference text is computed/updated/etc
+		-- Uses content from Git index by default
+		source = nil, -- NOTE(liu): be changed in config function
+		-- Delays (in ms) defining asynchronous processes
+		delay = {
+			-- How much to wait before update following every text change
+			text_change = 200,
+		},
+		-- Module mappings. Use `''` (empty string) to disable one.
+		mappings = {
+			-- 	-- Apply hunks inside a visual/operator region
+			-- 	apply = "gh", -- WRITE TO DIFF SOURCE
+			-- 	-- Reset hunks inside a visual/operator region
+			-- 	reset = "gH", -- READ FROM DIFF SOURCE
+			-- 	-- Hunk range textobject to be used inside operator
+			textobject = "ah",
+			-- 	-- Go to hunk range in corresponding direction
+			-- 	goto_first = "[H",
+			-- 	goto_prev = "[h",
+			-- 	goto_next = "]h",
+			-- 	goto_last = "]H",
+		},
+		-- Various options
+		options = {
+			-- Diff algorithm. See `:h vim.diff()`.
+			algorithm = "histogram",
+			-- Whether to use "indent heuristic". See `:h vim.diff()`.
+			indent_heuristic = true,
+			-- The amount of second-stage diff to align lines (in Neovim>=0.9)
+			linematch = 60,
+		},
+	})
+end)
+-- vim.pack.add({ "https://github.com/nvim-mini/mini.input" })
+nvim_on("VimEnter", aug_mini, function()
+	require("mini.input").setup({
+		handlers = {
+			-- :h MiniInput.default_key()
+			key = function(state, key)
+				-- if key == vim.keycode("<C-k>") then
+				-- 	return MiniInput.default_key(state, vim.keycode("<Up>"))
+				-- end
+				-- if key == vim.keycode("<C-j>") then
+				-- 	return MiniInput.default_key(state, vim.keycode("<Down>"))
+				-- end
 
+				return MiniInput.default_key(state, key)
+			end,
+		},
+	})
+end)
 --====== git
 -- NOTE for fugitive
 -- 1. >REV = current file within version REV
