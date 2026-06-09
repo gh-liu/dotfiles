@@ -386,6 +386,8 @@ augroup liu.fug
 	\| nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
 	\| nnoremap <buffer> gaa :<C-U>Git absorb<space>
 	\| nnoremap <buffer> gar :<C-U>Git absorb --and-rebase<space>
+	\| nnoremap <expr><buffer> cc ':<C-U>Git commit'.(v:count ? ' --no-verify' : '').'<CR>'
+	\| nnoremap <expr><buffer> ca ':<C-U>Git commit'.(v:count ? ' --no-verify' : '').' --amend <CR>'
   autocmd FileType fugitive,git setlocal foldmethod=syntax
   autocmd User FugitiveIndex,FugitiveObject,FugitiveStageBlob setlocal winhighlight=StatusLine:StatusLineFugitive
   autocmd FileType git if get(b:, 'fugitive_type', '') ==# 'commit' | setlocal foldlevel=0 | endif
