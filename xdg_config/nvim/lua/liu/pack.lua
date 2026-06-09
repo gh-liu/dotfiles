@@ -67,8 +67,8 @@ nvim_on("VimEnter", aug_mini, function()
 	})
 end)
 -- vim.pack.add({ "https://github.com/nvim-mini/mini.surround" })
-local mini_surround_ts_input = require("mini.surround").gen_spec.input.treesitter
 nvim_on("VimEnter", aug_mini, function()
+	local mini_surround_ts_input = require("mini.surround").gen_spec.input.treesitter
 	require("mini.surround").setup({
 		mappings = {
 			add = "ys", -- Add surrounding in Normal and Visual modes
@@ -337,6 +337,7 @@ nvim_on("VimEnter", aug_mini, function()
 		},
 	})
 end)
+
 --====== git
 -- NOTE for fugitive
 -- 1. >REV = current file within version REV
