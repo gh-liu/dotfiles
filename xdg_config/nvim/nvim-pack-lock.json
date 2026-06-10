@@ -65,10 +65,6 @@
       "rev": "20e9c3c93a0b03e506a6b64d0d783604355b0eff",
       "src": "https://github.com/numEricL/table.vim"
     },
-    "tiny-code-action.nvim": {
-      "rev": "0d040ed81f7953118b81cd12681fcdfcac069803",
-      "src": "https://github.com/rachartier/tiny-code-action.nvim"
-    },
     "treesj": {
       "rev": "a8dc7a852d5221f68e80ed8632706bfa7dd4f393",
       "src": "https://github.com/gh-liu/treesj"
