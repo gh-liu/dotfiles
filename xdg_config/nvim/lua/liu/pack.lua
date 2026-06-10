@@ -394,6 +394,8 @@ augroup liu.fug
 augroup END
 
 nnoremap d. :<C-U>Gvdiffsplit :%<left><left>
+nnoremap Us :<C-U>G difftool --name-status<space>
+nmap US Us
 ]])
 vim.api.nvim_create_autocmd("VimLeavePre", {
 	group = aug_fug,
@@ -404,7 +406,6 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 		end
 	end,
 })
-
 -- from https://github.com/justinmk/vim-ug/blob/main/plugin/ug.vim
 vim.cmd([[
 augroup liu.ug
