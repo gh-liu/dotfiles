@@ -391,21 +391,13 @@ augroup liu.fug
   autocmd FileType fugitive,git setlocal foldmethod=syntax
   autocmd User FugitiveIndex,FugitiveObject,FugitiveStageBlob setlocal winhighlight=StatusLine:StatusLineFugitive
   autocmd FileType git if get(b:, 'fugitive_type', '') ==# 'commit' | setlocal foldlevel=0 | endif
+  autocmd VimLeavePre * if get(b:, 'fugitive_type', '') ==# 'index' | execute 'bwipe!' bufnr() | endif
 augroup END
 
 nnoremap d. :<C-U>Gvdiffsplit :%<left><left>
 nnoremap Us :<C-U>G difftool --name-status<space>
 nmap US Us
 ]])
-vim.api.nvim_create_autocmd("VimLeavePre", {
-	group = aug_fug,
-	callback = function(ev)
-		local buf = ev.buf or vim.api.nvim_get_current_buf()
-		if vim.api.nvim_buf_is_valid(buf) and vim.b[buf].fugitive_type == "index" then
-			vim.api.nvim_buf_delete(buf, { force = true })
-		end
-	end,
-})
 -- from https://github.com/justinmk/vim-ug/blob/main/plugin/ug.vim
 vim.cmd([[
 augroup liu.ug
