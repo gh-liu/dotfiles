@@ -380,7 +380,7 @@ end, { silent = true, desc = "Toggle fugitive summary" })
 vim.cmd([[
 augroup liu.fug
   autocmd!
-  autocmd FileType fugitive,fugitiveblame nmap <silent><buffer><nowait> gq :<C-U>if winnr('$') == 1<Bar>bdelete<Bar>else<Bar>quit<Bar>endif<CR>
+  autocmd FileType fugitive nmap <silent><buffer><nowait> gq :<C-U>execute winnr('$') != 1 ? 'quit' : tabpagenr('$') != 1 ? 'bprevious' : 'bdelete'<CR>
   autocmd FileType fugitive nnoremap <buffer> cob :<C-U>Git checkout -b<space>
 	\| nnoremap <buffer> crt :<C-U>Git reset @~<C-R>=v:count1<CR><CR>
 	\| nnoremap <buffer> crT :<C-U>Git reset --hard @~<C-R>=v:count1<CR><CR>
