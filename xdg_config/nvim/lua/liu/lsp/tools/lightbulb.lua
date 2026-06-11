@@ -49,14 +49,16 @@ local function update_extmark(bufnr, line)
 end
 
 ---@param diagnostics vim.Diagnostic[]
----@param cursor integer[] # (row, col) tuple
+---@param line integer # 0-based line
+---@param col integer # 0-based column
 ---@return vim.Diagnostic[]
-local function filter_diagnostic_at_cursor(diagnostics, cursor)
-	local line, col = unpack(cursor)
+local function filter_diagnostic_at_cursor(diagnostics, line, col)
 	return vim.iter(diagnostics)
 		:map(function(diag)
-			if diag.lnum <= line and line <= diag.end_lnum then
-				if diag.col <= col and col <= diag.end_col then
+			local end_lnum = diag.end_lnum or diag.lnum
+			local end_col = diag.end_col or diag.col
+			if diag.lnum <= line and line <= end_lnum then
+				if diag.col <= col and col <= end_col then
 					return diag
 				end
 			end
@@ -70,11 +72,15 @@ end
 local function render(bufnr)
 	local win = vim.api.nvim_get_current_win()
 	local cursor = vim.api.nvim_win_get_cursor(win)
-	local line, _ = unpack(cursor)
+	local line, col = unpack(cursor)
 	line = line - 1
 
 	local params_with_diag = function(client, buf)
-		local params = vim.lsp.util.make_range_params(win, client.offset_encoding)
+		local position = vim.pos.cursor(buf, api.nvim_win_get_cursor(win)):to_lsp(client.offset_encoding)
+		local params = {
+			textDocument = vim.lsp.util.make_text_document_params(buf),
+			range = { start = position, ["end"] = position },
+		}
 
 		local diagnostics = {}
 		for _, ns in pairs(vim.diagnostic.get_namespaces()) do
@@ -82,22 +88,30 @@ local function render(bufnr)
 				vim.list_extend(diagnostics, vim.diagnostic.get(buf, { namespace = ns.id, lnum = line }))
 			end
 		end
-		diagnostics = filter_diagnostic_at_cursor(diagnostics, cursor)
+		diagnostics = filter_diagnostic_at_cursor(diagnostics, line, col)
 
 		local extra_param = {
 			context = {
-				diagnostics = vim.lsp.diagnostic.from(diagnostics),
+				diagnostics = vim.tbl_map(function(diagnostic)
+					return diagnostic.user_data and diagnostic.user_data.lsp or diagnostic
+				end, diagnostics),
 				triggerKind = lsp.protocol.CodeActionTriggerKind.Automatic,
 			},
 		}
 		return vim.tbl_extend("force", params, extra_param)
 	end
 
+	local has_actions = false
 	lsp.buf_request(bufnr, code_action_method, params_with_diag, function(_, res, _)
 		if api.nvim_get_current_buf() ~= bufnr then
 			return
 		end
-		update_extmark(bufnr, (res and #res > 0 and line) or nil)
+		if res and #res > 0 then
+			has_actions = true
+			update_extmark(bufnr, line)
+		elseif not has_actions then
+			update_extmark(bufnr)
+		end
 	end)
 end
 
