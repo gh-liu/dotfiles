@@ -48,7 +48,7 @@ local servers = {
 	end,
 	ty = function(client, bufnr)
 		-- `ty` provides "Add import" as quick fixes.
-		apply_code_actions(client, bufnr, { "quickfix" }, { title_pattern = "^[Aa]dd import" })
+		apply_code_actions(client, bufnr, { "quickfix" }, { title_pattern = "^import" })
 	end,
 	gopls = function(client, bufnr)
 		apply_code_actions(client, bufnr, { "source.organizeImports" })
