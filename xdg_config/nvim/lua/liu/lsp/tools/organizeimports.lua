@@ -10,9 +10,13 @@ local apply_code_actions = function(client, bufnr, only, opts)
 	end
 
 	local params = vim.lsp.util.make_range_params(0, client.offset_encoding)
-	params.context = { only = only }
+	-- https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#codeActionContext
+	params.context = {
+		only = only,
+		diagnostics = vim.lsp.diagnostic.from(vim.diagnostic.get(bufnr, {})),
+	}
 
-	local response = client:request_sync("textDocument/codeAction", params, 3000, bufnr)
+	local response = client:request_sync("textDocument/codeAction", params, 1000, bufnr)
 	local actions = response and response.result
 	if not actions then
 		return
