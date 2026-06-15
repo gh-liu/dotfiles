@@ -388,6 +388,15 @@ export STARSHIP_CONFIG="$ZDOTDIR/starship/starship.toml"
 
 # }}}
 
+# 99. docker command{{{
+kafka() {
+	script="$1"
+	shift
+	case "$script" in *.sh) ;; *) script="kafka-${script}.sh" ;; esac
+	docker run --rm -it --network host apache/kafka:4.2.0 "/opt/kafka/bin/${script}" "$@"
+}
+# }}}
+
 # 999. misc{{{
 # NOTE: `man zshmisc`, see `EXPANSION`
 # %n     $USERNAME.
