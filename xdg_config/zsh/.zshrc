@@ -395,6 +395,7 @@ kafka() {
 	script="$1"
 	shift
 	case "$script" in *.sh) ;; *) script="kafka-${script}.sh" ;; esac
+	[ -n "${KAFKA_BOOTSTRAP_SERVER:-}" ] && set -- --bootstrap-server "$KAFKA_BOOTSTRAP_SERVER" "$@"
 	docker run --rm -it --network host apache/kafka:4.2.0 "/opt/kafka/bin/${script}" "$@"
 }
 # }}}
