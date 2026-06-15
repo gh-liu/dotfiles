@@ -496,6 +496,7 @@ do -- lsp, diagnostic
 		  " buffer flags (by priority)
 		  autocmd User Flags call Hoist("buffer", 9, "%{empty(&buftype) ? flagship#surround(v:lua.vim.diagnostic.status_raw(0)) : ''}")
 		  autocmd User Flags call Hoist("buffer", 100, "%{empty(&buftype) ? flagship#surround(v:lua.vim.lsp.get_clients_name(0)) : ''}")
+		  autocmd User Flags call Hoist("buffer", 999, "%{&busy > 0 ? '...' : ''}", {"hl": "SpecialChar"})
 		augroup END
 	]])
 end
