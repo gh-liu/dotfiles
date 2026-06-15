@@ -389,6 +389,8 @@ export STARSHIP_CONFIG="$ZDOTDIR/starship/starship.toml"
 # }}}
 
 # 99. docker command{{{
+# https://docs.confluent.io/kafka/operations-tools/kafka-tools.html
+# https://kafka.apache.org/43/getting-started/
 kafka() {
 	script="$1"
 	shift
