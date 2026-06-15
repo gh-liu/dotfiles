@@ -311,7 +311,8 @@ function gotrace() {
 }
 ## test cover
 function gocover() {
-	local t; t=$(mktemp -t)
+	local t
+	t=$(mktemp -t)
 	go test "${(@z)COVERFLAGS}" -coverprofile="$t" "$@" && go tool cover -func="$t" && unlink "$t"
 }
 # }}}
@@ -371,19 +372,20 @@ fi
 ## starship
 # curl -sS https://starship.rs/install.sh | sh
 export STARSHIP_CONFIG="$ZDOTDIR/starship/starship.toml"
-(( $+commands[starship] )) && eval "$(starship init zsh)"
+(($+commands[starship])) && eval "$(starship init zsh)"
 ## direnv
 # curl -sfL https://direnv.net/install.sh | bash
-(( $+commands[direnv] )) && eval "$(direnv hook zsh)"
+(($+commands[direnv])) && eval "$(direnv hook zsh)"
 ## zoxide
-(( $+commands[zoxide] )) && eval "$(zoxide init zsh)" # must be added after compinit is called.
+(($+commands[zoxide])) && eval "$(zoxide init zsh)" # must be added after compinit is called.
 
-(( $+commands[nvim] )) && alias e=nvim
-(( $+commands[fd] )) && alias find="fd"
-(( $+commands[eza] )) && alias ls="eza"
-(( $+commands[bat] )) && alias cat="bat --theme=\"Nord\" --style=\"changes\""
+(($+commands[nvim])) && alias e=nvim
+(($+commands[fd])) && alias find="fd"
+(($+commands[eza])) && alias ls="eza"
+(($+commands[bat])) && alias cat="bat --theme=\"Nord\" --style=\"changes\""
 # wt config shell install zsh
-(( $+commands[wt] )) && eval "$(wt config shell init zsh)"
+(($+commands[wt])) && eval "$(wt config shell init zsh)"
+
 # }}}
 
 # 999. misc{{{
@@ -417,7 +419,7 @@ _set_title() {
 }
 
 print_osc7() {
-  printf '\033]7;file://%s%s\033\\' "${HOST:-$HOSTNAME}" "$PWD"
+	printf '\033]7;file://%s%s\033\\' "${HOST:-$HOSTNAME}" "$PWD"
 }
 # autoload -Uz add-zsh-hook
 add-zsh-hook chpwd print_osc7
@@ -434,11 +436,11 @@ source "$ZDOTDIR/fzf.zsh" # !make sure fzf after completion, cause use <tab> for
 
 # 9999. LLM {{{
 # function update_llm_clis() {
-	# curl -fsSL https://claude.ai/install.sh | bash
-	# curl -fsSL https://chatgpt.com/codex/install.sh | bash
-	# curl -fsSL https://ampcode.com/install.sh | bash
-	# curl -fsSL https://opencode.ai/install | bash
-	# bun i -g skills vercel-labs/agent-skills
+# curl -fsSL https://claude.ai/install.sh | bash
+# curl -fsSL https://chatgpt.com/codex/install.sh | bash
+# curl -fsSL https://ampcode.com/install.sh | bash
+# curl -fsSL https://opencode.ai/install | bash
+# bun i -g skills vercel-labs/agent-skills
 # }
 # #claude
 # export ANTHROPIC_API_KEY=""
