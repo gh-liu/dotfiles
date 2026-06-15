@@ -18,11 +18,11 @@
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "kulala.nvim": {
-      "rev": "34189185048988248a6a4b78fc35d83a6ac7f343",
+      "rev": "bf50254965aff8228fa51067d79bb16d2124461e",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.nvim": {
-      "rev": "d5e6f5b843f1d813d9c4bfb242b751dc5ab6f8ae",
+      "rev": "a59a9b7fb0a42cbcf022938ee5f0724320b66f63",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "nvim-dap": {
