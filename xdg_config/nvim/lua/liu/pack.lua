@@ -891,7 +891,7 @@ local formatters_by_ft = {
 	python = { "ruff_format" },
 	javascript = { "oxfmt" },
 	typescript = { "oxfmt" },
-	markdown = { "injected" },
+	-- markdown = { "injected" },
 	json = { "jq" },
 	yaml = { "yamlfmt" },
 	toml = { "taplo" },
@@ -900,7 +900,7 @@ local formatters_by_ft = {
 	zsh = { "shfmt" },
 	just = { "just" },
 	query = { "format-queries" },
-	["*"] = { "trim_whitespace" },
+	["*"] = { "injected", "trim_whitespace" },
 }
 require("conform").setup({
 	-- :help conform-formatters
