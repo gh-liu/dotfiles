@@ -6,6 +6,9 @@
 " N-line split anchored to the bottom of the screen.
 func! s:OpenWin(cnt) abort
   exe (a:cnt == 0 ? 'tab split' : 'botright ' . a:cnt . 'split')
+  if a:cnt == 0 && exists('+cmdheight')
+    setlocal cmdheight=0
+  endif
 endfunc
 
 " Jump back to the previous window if currently inside :shell.
