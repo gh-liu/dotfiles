@@ -447,6 +447,9 @@ source "$ZDOTDIR/fzf.zsh" # !make sure fzf after completion, cause use <tab> for
 # }}}
 
 # 9999. LLM {{{
+# curl -fsSL https://pi.dev/install.sh | bash
+# https://pi.dev/docs/latest/usage#environment-variables
+export PI_CODING_AGENT_DIR=$XDG_CONFIG_HOME/pi/agent
 # function update_llm_clis() {
 # curl -fsSL https://claude.ai/install.sh | bash
 # curl -fsSL https://chatgpt.com/codex/install.sh | bash
