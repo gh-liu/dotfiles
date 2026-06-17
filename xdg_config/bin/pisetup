@@ -1,2 +1,4 @@
 #!/bin/sh
 # https://pi.dev/packages
+pi install npm:pi-web-access
+pi install npm:pi-subagents
