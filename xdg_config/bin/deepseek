@@ -1,7 +1,7 @@
 #!/bin/sh
 curl -s -L -X GET 'https://api.deepseek.com/user/balance' \
         -H 'Accept: application/json' \
-        -H "Authorization: Bearer $DEEPSEEK_APIKEY" | jq .
+        -H "Authorization: Bearer $DEEPSEEK_API_KEY" | jq .
 
 # curl -s -L -X GET 'https://chatgpt.com/backend-api/wham/usage' \
 #         -H 'Accept: application/json' \
