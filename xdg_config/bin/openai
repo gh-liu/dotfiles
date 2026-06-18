@@ -1,0 +1,17 @@
+#!/bin/sh
+curl -s -L -X GET 'https://chatgpt.com/backend-api/wham/usage' \
+        -H 'Accept: application/json' \
+        -H "Authorization: Bearer $(jq -r '.tokens.access_token' ~/.codex/auth.json)" |
+        jq -r '
+  def bar($p):
+    ($p * 30 / 100 | floor) as $filled |
+    (30 - $filled) as $empty |
+    "[" + ("█" * $filled) + ("░" * $empty) + "] " + ($p|tostring) + "%";
+
+  def fmt_time_8($ts):
+    (($ts + 8 * 3600) | strftime("%Y-%m-%d %H:%M:%S +08:00"));
+
+  .rate_limit |
+  "primary   reset_at=" + fmt_time_8(.primary_window.reset_at) + "   " + bar(.primary_window.used_percent),
+  "secondary reset_at=" + fmt_time_8(.secondary_window.reset_at) + "   " + bar(.secondary_window.used_percent)
+'
