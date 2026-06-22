@@ -868,17 +868,21 @@ local linters_by_ft = {
 	-- ["*"] = { "typos" },
 }
 require("lint").linters_by_ft = linters_by_ft
-vim.api.nvim_create_autocmd({
-	"BufWritePost",
-	"BufReadPost",
-	"InsertLeave",
-	-- "TextChanged",
-}, {
-	group = aug_lint,
-	callback = function()
-		require("lint").try_lint()
-	end,
-})
+nvim_on("FileType", aug_lint, { pattern = vim.tbl_keys(linters_by_ft) }, function()
+	nvim_on(
+		{
+			"BufWritePost",
+			"BufReadPost",
+			"InsertLeave",
+			-- "TextChanged",
+		},
+		aug_lint,
+		function()
+			require("lint").try_lint()
+		end
+	)
+	return true -- run this command only once
+end)
 
 --====== format
 vim.pack.add({ "https://github.com/stevearc/conform.nvim" })
