@@ -8,6 +8,9 @@
   "xdg_config/zsh/zsh-conf/custom.zsh": {
     "type": "zshcustom"
   },
+  "xdg_config/pi/agent/*.json": {
+    "type": "pi"
+  },
   "xdg_config/zsh/starship/starship.toml": {
     "type": "startship"
   },
