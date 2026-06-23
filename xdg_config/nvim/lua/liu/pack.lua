@@ -1035,6 +1035,8 @@ vim.cmd([[
 	  \   let b:start = '-wait=always ' . b:dispatch |
 	  \ endif
 	augroup END
+
+	" TODO: just --list -u --list-heading "" --list-prefix ""
 ]])
 
 vim.pack.add({ "https://github.com/tpope/vim-sleuth" })
