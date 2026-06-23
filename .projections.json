@@ -8,20 +8,8 @@
   "xdg_config/zsh/zsh-conf/custom.zsh": {
     "type": "zshcustom"
   },
-  "xdg_config/nushell/*.nu": {
-    "type": "nushell"
-  },
-  "xdg_config/nushell/config.nu": {
-    "type": "nushell"
-  },
   "xdg_config/zsh/starship/starship.toml": {
     "type": "startship"
-  },
-  "xdg_config/nvim/init.lua": {
-    "type": "nvim"
-  },
-  "xdg_config/dlv/config.yml": {
-    "type": "dlv"
   },
   "xdg_config/wsl/.wslconfig": {
     "type": "wsl"
