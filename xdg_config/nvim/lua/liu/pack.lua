@@ -177,6 +177,14 @@ nvim_on("VimEnter", aug_mini, function()
 				vim.ui.open(MiniFiles.get_fs_entry().path)
 			end, { buffer = buf, desc = "OS open" })
 
+			vim.keymap.set("n", "`-", function()
+				local MiniFiles = require("mini.files")
+				local path = MiniFiles.get_fs_entry().path
+				local dir = vim.fs.dirname(path)
+				MiniFiles.close()
+				vim.cmd("bo new | " .. "lcd " .. dir .. " | terminal")
+			end, { buffer = buf, desc = "Open terminal in current dir" })
+
 			vim.keymap.set("n", "<CR>", function()
 				local MiniFiles = require("mini.files")
 				MiniFiles.go_in({ close_on_file = true })
