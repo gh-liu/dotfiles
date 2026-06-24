@@ -9,7 +9,11 @@
     "type": "zshcustom"
   },
   "xdg_config/pi/agent/*.json": {
-    "type": "pi"
+    "type": "Pi"
+  },
+  "xdg_config/pi/agent/extensions/*/index.ts": {
+    "type": "PiExt",
+    "template": "// https://pi.dev/docs/latest/extensions#available-imports\nimport \"@earendil-works/pi-ai\";\nimport \"@earendil-works/pi-tui\";\nimport \"@earendil-works/pi-coding-agent\";\nimport \"typebox\";"
   },
   "xdg_config/zsh/starship/starship.toml": {
     "type": "startship"
