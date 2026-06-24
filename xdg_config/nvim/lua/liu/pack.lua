@@ -1035,9 +1035,26 @@ vim.cmd([[
 	  \   let b:start = '-wait=always ' . b:dispatch |
 	  \ endif
 	augroup END
-
-	" TODO: just --list -u --list-heading "" --list-prefix ""
 ]])
+nvim_on("VimEnter", nil, function()
+	local hasjustfile = vim.fs.root(0, ".justfile")
+	if hasjustfile then
+		vim.api.nvim_create_user_command("Just", function(args)
+			vim.cmd.Dispatch("just " .. args.fargs[1])
+		end, {
+			nargs = 1,
+			complete = function()
+				local obj = vim.system({ "just", "--list", "-u", "--list-prefix", "", "--list-heading", "" }):wait()
+				if obj.code == 0 then
+					return vim.split(obj.stdout, "\n", { plain = true, trimempty = true })
+				else
+					print(obj.stderr)
+					return {}
+				end
+			end,
+		})
+	end
+end)
 
 vim.pack.add({ "https://github.com/tpope/vim-sleuth" })
 vim.pack.add({ "https://github.com/tpope/vim-eunuch" })
