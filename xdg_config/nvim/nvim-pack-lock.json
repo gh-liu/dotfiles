@@ -18,11 +18,11 @@
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "kulala.nvim": {
-      "rev": "bed6150762d4a5ab5c0a336ebb01626f7ad0ab26",
+      "rev": "a627ebcafe2d053fa395b2d324dc9f6cbb61495e",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.nvim": {
-      "rev": "1345d191bb3da9c7b0e977f4387c5761f9bff68d",
+      "rev": "c594be5b095204e99473825ec2dee872e7409a4d",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "nvim-dap": {
@@ -78,7 +78,7 @@
       "src": "https://github.com/tpope/vim-dadbod"
     },
     "vim-dirvish": {
-      "rev": "ad478b4ac86484edc525bfc5379f261204dfbf4c",
+      "rev": "09c60f20ddc248fa2955c58b3183d44e1885f151",
       "src": "https://github.com/justinmk/vim-dirvish"
     },
     "vim-dispatch": {
