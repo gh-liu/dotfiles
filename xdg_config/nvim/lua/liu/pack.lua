@@ -945,6 +945,7 @@ nvim_on("VimEnter", aug_dial, function(ev)
 			augend.integer.alias.hex,
 			augend.constant.alias.bool,
 			augend.date.alias["%Y/%m/%d"],
+			augend.constant.new({ elements = { "yes", "no" }, word = true, cyclic = true }),
 		},
 	})
 
