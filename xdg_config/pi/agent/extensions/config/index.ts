@@ -6,6 +6,7 @@ import {
   formatCodexUsageStatus,
   resolveCodexAccessTokenFromProviderAuth,
 } from "./codex-usage.ts";
+import { syncCodexAuthFromCodexCli } from "./codex-auth.ts";
 import {
   DEEPSEEK_PROVIDER,
   DEEPSEEK_STATUS_KEY,
@@ -30,6 +31,8 @@ export default function(pi: ExtensionAPI) {
       ctx.ui.setStatus(CODEX_STATUS_KEY, undefined);
       return;
     }
+
+    syncCodexAuthFromCodexCli(ctx.modelRegistry.authStorage);
 
     try {
       const usage = await fetchCodexUsage(await getCodexAccessToken(ctx));
@@ -62,6 +65,7 @@ export default function(pi: ExtensionAPI) {
   }
 
   pi.on("session_start", async (_event, ctx) => {
+    syncCodexAuthFromCodexCli(ctx.modelRegistry.authStorage);
     await syncProviderStatus(ctx.model?.provider, ctx);
   });
 
