@@ -1,2 +1,31 @@
 #!/bin/sh
 # https://pi.dev/packages
+
+authcodex() {
+  src="$HOME/.codex/auth.json"
+  dst="$XDG_CONFIG_HOME/pi/agent/auth.json"
+
+  [ -f "$dst" ] || echo '{}' >"$dst"
+
+  jq -s '
+  def codex_auth($src):
+    {
+      type: "oauth",
+      access: $src.tokens.access_token,
+      refresh: $src.tokens.refresh_token,
+      accountId: $src.tokens.account_id
+    };
+
+  .[0] as $src | .[1] as $dst
+  | $dst | ."openai-codex" = ((."openai-codex" // {}) + codex_auth($src))
+' "$src" "$dst" >"$dst.tmp"
+
+  mv "$dst.tmp" "$dst"
+}
+
+case "${1:-}" in
+authcodex)
+  shift
+  authcodex "$@"
+  ;;
+esac
