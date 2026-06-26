@@ -180,7 +180,8 @@ vim.g.loaded_node_provider = 0 -- disable nodejs support
 vim.g.loaded_python_provider = 0 -- disable python2 support
 vim.g.loaded_python3_provider = 0 -- disable python3 support
 -- buildin plugins
-vim.g.loaded_netrwPlugin = 1 -- disable netrw
+-- vim.g.loaded_nvim_dir_plugin = 1    -- builtin plugin: dir
+vim.g.loaded_netrwPlugin = 1        -- disable netrw
 vim.g.did_install_default_menus = 1 -- avoid stupid menu.vim (saves ~100ms)
 
 --:h terminal-debugger

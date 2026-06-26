@@ -967,9 +967,6 @@ vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim
 vim.keymap.set("n", "cR", "<Plug>(abolish-coerce)")
 
 --====== editor
-vim.pack.add({ "https://github.com/justinmk/vim-dirvish" })
-vim.g.loaded_netrwPlugin = 1
-
 vim.cmd([[
 	setglobal sessionoptions-=buffers
 	setglobal sessionoptions-=folds
