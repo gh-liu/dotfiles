@@ -1210,6 +1210,9 @@ vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
 				enable = true,
 				filetypes = { "http", "lua", "javascript", "json" },
 			},
+			kulala_core = {
+				path = vim.fn.exepath("kulala-core"),
+			},
 		})
 
 		vim.api.nvim_create_user_command("Kulala", function(args)

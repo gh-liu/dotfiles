@@ -223,6 +223,30 @@ _install_mongosh() {
 	rm -rf "$tmpdir"
 }
 
+install_kulala_core() {
+	local kulala_os kulala_arch asset tmpdir
+	kulala_os=$OS
+	kulala_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/x86_64/; s/^aarch64$/aarch64/; s/^arm64$/arm64/')
+	case "$kulala_os:$kulala_arch" in
+	linux:x86_64 | linux:aarch64 | darwin:x86_64 | darwin:arm64)
+		;;
+	*)
+		echo "kulala-core: unsupported platform: $kulala_os-$kulala_arch" >&2
+		return 1
+		;;
+	esac
+
+	asset="kulala-core-${kulala_os}-${kulala_arch}"
+	tmpdir=$(mktemp -d)
+	local version url
+	version=$(gh_latest_tag mistweaverco/kulala-core) || return 1
+	url="https://github.com/mistweaverco/kulala-core/releases/download/${version}/${asset}"
+	curl -fL --progress-bar -o "$tmpdir/$asset" "$url" || return 1
+	mv "$tmpdir/$asset" ~/.local/bin/kulala-core || return 1
+	chmod +x ~/.local/bin/kulala-core || return 1
+	rm -rf "$tmpdir"
+}
+
 # NOTE: https://github.com/tmux/tmux/wiki/Installing
 install_tmux() {
 	local version archive tmpdir src_dir prefix
