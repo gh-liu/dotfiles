@@ -189,10 +189,15 @@ skilla() {
 		;;
 	esac
 }
-# alias mdagent="cp $XDG_CONFIG_HOME/AGENTS.md ."
-alias mdagent="ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md ."
-alias mdclaude="ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md CLAUDE.md"
 
+mdagent() {
+	# https://developers.openai.com/codex/guides/agents-md
+	ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md $HOME/.codex/AGENTS.md
+	# https://ampcode.com/manual#AGENTS.md
+	ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md $XDG_CONFIG_HOME/amp/AGENTS.md
+	# https://pi.dev/docs/latest/usage#context-files
+	ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md $XDG_CONFIG_HOME/pi/agent/AGENTS.md
+}
 # }}}
 
 # 5. plugins{{{
