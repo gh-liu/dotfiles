@@ -125,12 +125,12 @@ nnoremap <expr> zC printf('<cmd>silent! execute "normal! zC%szz"<cr>', repeat('z
 nnoremap <expr> zN v:count > 0 ? printf('<Cmd>setlocal foldenable foldlevel=%d<CR>', v:count-1) : '<Cmd>setlocal foldenable<CR>'
 " zm: If foldenable is off, open all folds first, then fold more
 nnoremap <silent> zm :if &foldenable == 0 <bar> execute 'normal! zR' <bar> endif<CR>zm
-noremap z? <cmd> setlocal foldenable? 
-\ <bar> setlocal foldlevel? 
-\ <bar> setlocal foldmethod? 
-\ <bar> setlocal foldexpr? 
-\ <bar> setlocal foldmarker? 
-\ <bar> setlocal foldtext? 
+noremap z? <cmd> setlocal foldenable?
+\ <bar> setlocal foldlevel?
+\ <bar> setlocal foldmethod?
+\ <bar> setlocal foldexpr?
+\ <bar> setlocal foldmarker?
+\ <bar> setlocal foldtext?
 \ <cr>
 " }}}
 " misc {{{
@@ -141,7 +141,7 @@ noremap cO m' <cmd> call search("\\v^[[:alpha:]$_]", "b", 1, 100) <cr>
 
 nnoremap <silent> yA
   \ :execute index(argv(), bufname('%')) >= 0 ?
-  \ 'argdelete %' 
+  \ 'argdelete %'
   \ :
   \ 'argadd % <Bar> argdedupe'
   \ <Bar>redrawstatus

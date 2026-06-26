@@ -88,7 +88,7 @@ vim.o.matchpairs = vim.iter({
 -- Search and Replace {{{
 -- =============================================================================
 vim.o.ignorecase = true -- search case insensitive
-vim.o.smartcase = true -- search matters if capital letter
+vim.o.smartcase = true  -- search matters if capital letter
 -- vim.o.inccommand = "split"
 -- =============================================================================
 -- }}}
@@ -174,10 +174,10 @@ vim.api.nvim_create_autocmd("UIEnter", {
 })
 
 -- Disable providers we do not care a about
-vim.g.loaded_ruby_provider = 0 -- disable ruby support
-vim.g.loaded_perl_provider = 0 -- disable perl support
-vim.g.loaded_node_provider = 0 -- disable nodejs support
-vim.g.loaded_python_provider = 0 -- disable python2 support
+vim.g.loaded_ruby_provider = 0    -- disable ruby support
+vim.g.loaded_perl_provider = 0    -- disable perl support
+vim.g.loaded_node_provider = 0    -- disable nodejs support
+vim.g.loaded_python_provider = 0  -- disable python2 support
 vim.g.loaded_python3_provider = 0 -- disable python3 support
 -- buildin plugins
 -- vim.g.loaded_nvim_dir_plugin = 1    -- builtin plugin: dir
