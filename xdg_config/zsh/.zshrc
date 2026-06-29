@@ -170,25 +170,10 @@ function extract {
 		fi
 	fi
 }
-skilla() {
-	case $# in
-	1) add-skill "$1" --list ;;
-	2)
-		repo=$1
-		skills=$2
-		set -- "$repo" # reset positional args
-		IFS=','
-		for s in $skills; do
-			set -- "$@" --skill "$s"
-		done
-		add-skill "$@"
-		;;
-	*)
-		echo "Usage: skilla <repo> | skilla <repo> skill1,skill2,..." >&2
-		return 1
-		;;
-	esac
-}
+
+# bun i -g skills vercel-labs/agent-skills
+alias skillsra="skills remove --all -g -y"
+alias skillsua="skills update --all -g -y"
 
 mdagent() {
 	# https://developers.openai.com/codex/guides/agents-md
@@ -460,7 +445,6 @@ export PI_CODING_AGENT_DIR=$XDG_CONFIG_HOME/pi/agent
 # curl -fsSL https://chatgpt.com/codex/install.sh | bash
 # curl -fsSL https://ampcode.com/install.sh | bash
 # curl -fsSL https://opencode.ai/install | bash
-# bun i -g skills vercel-labs/agent-skills
 # }
 # #claude
 # export ANTHROPIC_API_KEY=""
