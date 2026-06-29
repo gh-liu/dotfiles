@@ -8,7 +8,7 @@ skills remove --all -g -y
 FLAGS=(-a '*' -g -y)
 
 # local skills
-skills add $LIU_TOOLS/dotfiles/skills "${FLAGS[@]}"
+# skills add $LIU_TOOLS/dotfiles/skills "${FLAGS[@]}"
 
 # find-skills:
 skills add https://github.com/vercel-labs/skills --skill find-skills "${FLAGS[@]}"
