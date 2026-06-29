@@ -18,11 +18,11 @@
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "kulala.nvim": {
-      "rev": "87c8f0136f0eaebe1dcea6f7448a34cea40b9513",
+      "rev": "b78b1aab31844bdba8a94041ff22a61d1563ba35",
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.nvim": {
-      "rev": "c594be5b095204e99473825ec2dee872e7409a4d",
+      "rev": "1599a473aa6f5290a5d740b1144846e6f0c3963d",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "nvim-dap": {
@@ -30,11 +30,11 @@
       "src": "https://github.com/mfussenegger/nvim-dap"
     },
     "nvim-lint": {
-      "rev": "01c9842c089069ab497430159312b2c8868a4590",
+      "rev": "a219b2c9e5b4765e5c845aba119dad55806fcaf1",
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "bfcc0171a43f22afa61d927ffe9fcb6cb85dc99e",
+      "rev": "3371bf298c1f56efc26771ee961f461176958fb5",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-tester": {
@@ -66,7 +66,7 @@
       "src": "https://github.com/numEricL/table.vim"
     },
     "treesj": {
-      "rev": "a8dc7a852d5221f68e80ed8632706bfa7dd4f393",
+      "rev": "ddf848b086a11b236b49779b7e98713109134b71",
       "src": "https://github.com/gh-liu/treesj"
     },
     "vim-abolish": {
