@@ -327,24 +327,6 @@ nvim_on("VimEnter", aug_mini, function()
 		},
 	})
 end)
--- vim.pack.add({ "https://github.com/nvim-mini/mini.input" })
-nvim_on("VimEnter", aug_mini, function()
-	require("mini.input").setup({
-		handlers = {
-			-- :h MiniInput.default_key()
-			key = function(state, key)
-				-- if key == vim.keycode("<C-k>") then
-				-- 	return MiniInput.default_key(state, vim.keycode("<Up>"))
-				-- end
-				-- if key == vim.keycode("<C-j>") then
-				-- 	return MiniInput.default_key(state, vim.keycode("<Down>"))
-				-- end
-
-				return MiniInput.default_key(state, key)
-			end,
-		},
-	})
-end)
 
 --====== git
 -- NOTE for fugitive
