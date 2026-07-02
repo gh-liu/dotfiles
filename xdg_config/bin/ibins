@@ -549,6 +549,7 @@ install_nvimdep() {
 	if have_cmd bun; then
 		bun i -g oxlint
 		bun i -g oxfmt
+		bun i -g @astrojs/language-server
 	fi
 
 	# uv
