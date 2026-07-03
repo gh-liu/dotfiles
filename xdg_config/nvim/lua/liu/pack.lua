@@ -992,7 +992,7 @@ vim.g.dispatch_compilers = {
 	["python -m pytest"] = "pytest",
 	["python3 -m pytest"] = "pytest",
 	-- golang
-	["go test"] = "gotest",
+	["go test"] = "",
 	["golangci-lint run"] = "go",
 	-- buf cli
 	["buf build"] = "buf_build",
@@ -1055,7 +1055,7 @@ vim.g.projectionist_heuristics = {
 			-- related = "{}.go",
 			type = "test",
 			template = [[package {file|dirname|basename}_test]],
-			dispatch = "go test ./...",
+			dispatch = "go test -v ./{dirname}",
 		},
 		["cmd/*/main.go"] = {
 			type = "main", -- argument will replace the glob
