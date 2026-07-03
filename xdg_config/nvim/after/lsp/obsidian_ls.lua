@@ -9,6 +9,7 @@ local Config = {
 				"^.templates/",
 				"^blog/",
 			},
+			imagePaths = { ".ref" },
 		},
 	},
 }
