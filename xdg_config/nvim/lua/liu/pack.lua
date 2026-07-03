@@ -1067,14 +1067,14 @@ vim.g.projectionist_heuristics = {
 	},
 	["Cargo.toml"] = {
 		["Cargo.toml"] = { type = "dep" },
+		["src/*.rs"] = {
+			type = "source",
+			alternate = "tests/{}.rs",
+		},
 		["src/main.rs"] = {
 			type = "main",
 			dispatch = "cargo run",
 			start = "cargo run",
-		},
-		["src/*.rs"] = {
-			type = "source",
-			alternate = "tests/{}.rs",
 		},
 		["tests/*.rs"] = {
 			type = "test",
