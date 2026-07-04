@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+: "${SUB_URL:?SUB_URL is required}"
+
+DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+OUT=${SINGBOX_CONFIG:-/dev/stdout}
+
+subc -T singbox "$SUB_URL" |
+        jq '.outbounds |= map(select(.type != "hysteria2" and .type != "tuic"))' |
+        jq --slurpfile base "$DIR"/singbox.config.json \
+                -f "$DIR"/singbox-groups.jq \
+                >"$OUT"
