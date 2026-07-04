@@ -1,0 +1,5 @@
+{
+  "singbox.config.json": {
+    "dispatch": "bash configgen"
+  }
+}
