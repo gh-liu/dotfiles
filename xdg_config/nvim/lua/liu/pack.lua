@@ -1065,6 +1065,16 @@ vim.g.projectionist_heuristics = {
 			make = "go build {file|dirname}",
 		},
 	},
+	["package.json"] = {
+		["*.ts"] = {
+			type = "source",
+			alternate = "{}.test.ts",
+		},
+		["*.test.ts"] = {
+			type = "test",
+			alternate = "{}.ts",
+		},
+	},
 	["Cargo.toml"] = {
 		["Cargo.toml"] = { type = "dep" },
 		["src/*.rs"] = {
