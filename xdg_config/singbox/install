@@ -1,0 +1,54 @@
+#!/bin/sh
+set -eu
+
+repo=${SINGBOX_REPO:-SagerNet/sing-box}
+version=${SINGBOX_VERSION:-}
+arch=${SINGBOX_ARCH:-$(uname -m)}
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT INT TERM
+
+need() {
+        if ! command -v "$1" >/dev/null 2>&1; then
+                echo "missing required command: $1" >&2
+                exit 1
+        fi
+}
+
+need curl
+need apt-get
+
+if [ "$(uname -s)" != Linux ]; then
+        echo "this installer only supports Linux deb packages" >&2
+        exit 1
+fi
+
+if [ -z "$version" ]; then
+        version=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" |
+                sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' |
+                head -n 1)
+fi
+
+if [ -z "$version" ]; then
+        echo "failed to resolve latest sing-box version" >&2
+        exit 1
+fi
+
+case "$arch" in
+        x86_64|amd64) deb_arch=amd64 ;;
+        aarch64|arm64) deb_arch=arm64 ;;
+        *)
+                echo "unsupported architecture: $arch" >&2
+                exit 1
+                ;;
+esac
+
+version_no_v=${version#v}
+deb="sing-box_${version_no_v}_linux_${deb_arch}.deb"
+url="https://github.com/$repo/releases/download/$version/$deb"
+out="$tmpdir/$deb"
+
+echo "download: $url" >&2
+curl -fL "$url" -o "$out"
+sudo apt-get install -y "$out"
+
+sing-box version
