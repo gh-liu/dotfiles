@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+import json
+import urllib.request
+from datetime import datetime
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+API_URL_RESET = "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits"
+AUTH_PATH = Path.home() / ".codex" / "auth.json"
+TIMEZONE = "Asia/Shanghai"
+
+API_URL_USAGE = "https://chatgpt.com/backend-api/wham/usage"
+
+
+# 2026-06-18T00:34:29.519373Z
+def fmt(time_str):
+    parsed = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+    return parsed.astimezone(ZoneInfo(TIMEZONE)).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+# 1783138304
+def fmt2(timestamp):
+    dt = datetime.fromtimestamp(timestamp, tz=ZoneInfo(TIMEZONE))
+    return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+auth = json.loads(AUTH_PATH.read_text())
+tokens = auth["tokens"]
+
+headers = {
+    "Authorization": f"Bearer {tokens['access_token']}",
+    "OpenAI-Beta": "codex-1",
+    "originator": "Codex Desktop",
+}
+
+account_id = tokens.get("account_id")
+if account_id:
+    headers["ChatGPT-Account-ID"] = account_id
+
+# usage
+request = urllib.request.Request(API_URL_USAGE, headers=headers)
+payload = json.loads(urllib.request.urlopen(request, timeout=30).read().decode())
+# print(json.dumps(payload))
+rate_limit = payload.get("rate_limit", {})
+used_percent_5h = rate_limit.get("primary_window", {})
+used_percent_1w = rate_limit.get("secondary_window", {})
+used_percent_remaining_5h = 100 - used_percent_5h.get("used_percent", 0)
+used_percent_remaining_1w = 100 - used_percent_1w.get("used_percent", 0)
+print("# Usage remaining")
+print(
+    f"1. 5h: {used_percent_remaining_5h}%; reset at: {fmt2(used_percent_5h.get('reset_at', 0))}"
+)
+print(
+    f"2. 1w: {used_percent_remaining_1w}%; reset at: {fmt2(used_percent_5h.get('reset_at', 0))}"
+)
+available_count = payload.get("rate_limit_reset_credits", {}).get("available_count", 0)
+
+if available_count > 0:
+    # reset
+    request = urllib.request.Request(API_URL_RESET, headers=headers)
+    payload = json.loads(urllib.request.urlopen(request, timeout=30).read().decode())
+    # print(json.dumps(payload))
+    credits = payload.get("credits") or []
+    print("\n# Reset credits")
+    print(f"1. resets available: {payload.get('available_count', 0)}")
+    print(
+        "2. granted: "
+        + ("; ".join(fmt(c.get("granted_at")) for c in credits) or "none")
+    )
+    print(
+        "3. expires: "
+        + ("; ".join(fmt(c.get("expires_at")) for c in credits) or "none")
+    )
