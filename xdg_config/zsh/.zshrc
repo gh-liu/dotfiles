@@ -336,10 +336,11 @@ path+=("$CARGO_BIN")
 path+=("$LIU_ENV/ziglang/zig")
 # }}}
 # 7. lang: js{{{
+export NVM_DIR="$HOME/env/nodejs/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
 ## bun: curl -fsSL https://bun.sh/install | bash
 export BUN_INSTALL="$LIU_ENV/nodejs/bun"
-export NODE_INSTALL="$LIU_ENV/nodejs/node"
-path=("$BUN_INSTALL/bin" "$NODE_INSTALL/bin" $path)
+path=("$BUN_INSTALL/bin" $path)
 # bun completions
 # https://github.com/oven-sh/bun/issues/11179#issuecomment-2151457758
 # }}}

@@ -123,22 +123,30 @@ install_bunjs() {
 	fi
 }
 
-install_nodejs() {
-	local arch ext version pkg url
-	arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/x64/; s/^aarch64$/arm64/')
-	[[ "$OS" == linux ]] && ext="tar.xz" || ext="tar.gz"
-	version="$(gh_latest_tag nodejs/node)"
-	skip_if_current node "node --version" "$version" && return 0
-	pkg="node-${version}-${OS}-${arch}.${ext}"
-	url="https://nodejs.org/dist/${version}/${pkg}"
-	echo "updating to $version (${OS}-${arch}) from $url..."
-	cdenv nodejs
-	download "$url" "$pkg" || { echo "fail to download nodejs" >&2; return 1; }
-	backup_existing node
-	extract_archive "$pkg" && rm "$pkg"
-	mv "node-${version}-${OS}-${arch}" node
+install_nvm() {
+	local dir version
+	dir="$(envdir nodejs)"
+	export NVM_DIR="$dir/nvm"
+	version="$(gh_latest_tag nvm-sh/nvm)"
+	echo "installing nvm $version to $NVM_DIR..."
+	mkdir -p "$NVM_DIR"
+	curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${version}/install.sh" | bash
 }
 
+install_nodejs() {
+	local dir
+	dir="$(envdir nodejs)"
+	export NVM_DIR="$dir/nvm"
+
+	# confirm nvm exists, bootstrap it if missing
+	[[ -s "$NVM_DIR/nvm.sh" ]] || install_nvm
+	# shellcheck disable=SC1091
+	. "$NVM_DIR/nvm.sh"
+
+	# download nodejs via nvm
+	nvm install --lts
+	nvm alias default 'lts/*'
+}
 
 install_uv() {
 	local dir
@@ -165,7 +173,7 @@ install_uv() {
 }
 
 if [[ -z "$1" ]]; then
-	echo "select one language: go | uv | zig | rust | bunjs"
+	echo "select one language: go | uv | zig | rust | bunjs | nodejs"
 elif declare -f "install_$1" >/dev/null; then
 	echo "======== installing $1 ========"
 	install_"$1"
