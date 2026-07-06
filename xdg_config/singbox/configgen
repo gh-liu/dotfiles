@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+SINGBOX_CONFIG=$HOME/singbox.config.json
+
 : "${SUB_URL:?SUB_URL is required}"
 
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
