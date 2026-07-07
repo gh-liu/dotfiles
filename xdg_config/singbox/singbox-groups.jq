@@ -35,6 +35,11 @@ def group_urltests:
 def group_tags($groups):
   $groups | map(.tag);
 
+def proxy_default($outbounds):
+  ([env.SINGBOX_PROXY_DEFAULT | select(. != "") | select($outbounds | index(.))][0]
+   // $outbounds[0]
+   // "direct");
+
 . as $subc
 | group_urltests as $groups
 | group_tags($groups) as $proxy_outbounds
@@ -42,7 +47,7 @@ def group_tags($groups):
 | .outbounds = (
     (.outbounds | map(if .tag == "proxy" then . + {
       outbounds: $proxy_outbounds,
-      default: ($proxy_outbounds[0] // "direct")
+      default: proxy_default($proxy_outbounds)
     } else . end))
     + $groups
     + ($subc.outbounds // [])
