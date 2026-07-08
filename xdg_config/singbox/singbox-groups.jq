@@ -18,10 +18,13 @@ def groups: [
   {tag: "MY", regex: "(?i)(马国|MY|Malaysia)"}
 ];
 
+def status_node:
+  .tag | test("(?i)(剩余|流量|重置|到期|expire|traffic|subscription)");
+
 def group_urltests:
   [
     groups[] as $group
-    | [subc_nodes[] | select(.tag | test($group.regex)) | .tag] as $tags
+    | [subc_nodes[] | select(status_node | not) | select(.tag | test($group.regex)) | .tag] as $tags
     | select($tags | length > 0)
     | {
         type: "urltest",

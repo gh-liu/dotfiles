@@ -11,6 +11,28 @@
       "listen_port": 19999
     }
   ],
+  "dns": {
+    "servers": [
+      {
+        "tag": "remote",
+        "type": "udp",
+        "server": "223.5.5.5"
+      },
+      {
+        "tag": "local",
+        "type": "local"
+      }
+    ],
+    "rules": [
+      {
+        "rule_set": [
+          "geosite-cn"
+        ],
+        "server": "local"
+      }
+    ],
+    "final": "remote"
+  },
   "outbounds": [
     {
       "tag": "proxy",
@@ -31,6 +53,7 @@
   ],
   "route": {
     "auto_detect_interface": true,
+    "default_domain_resolver": "remote",
     "rule_set": [
       {
         "type": "remote",
