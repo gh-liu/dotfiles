@@ -371,6 +371,7 @@ install_bins() {
 		# CGO_ENABLED=1 go install -tags extended github.com/gohugoio/hugo@latest
 
 		go install github.com/sagernet/sing-box/cmd/sing-box@latest
+		# go install -tags with_utls github.com/sagernet/sing-box/cmd/sing-box@latest
 
 		# go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
