@@ -150,8 +150,7 @@ nnoremap <silent> yA
 noremap <leader>m <cmd>message<cr>
 
 if has("nvim")
-	noremap ZT <cmd>trust<cr>
-	noremap zI <cmd>Inspect<cr>
+	noremap <expr> zI "<Cmd>" .. (v:count ? "InspectTree" : "Inspect") .. "<CR>"
 end
 " }}}
 " split {{{
