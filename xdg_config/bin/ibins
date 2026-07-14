@@ -388,8 +388,9 @@ install_bins() {
 		go install istio.io/istio/istioctl/cmd/istioctl@latest
 
 		# kafka
-		go install github.com/birdayz/kaf/cmd/kaf@latest
+		# go install github.com/birdayz/kaf/cmd/kaf@latest
 		# go install github.com/fgrosse/kafkactl@latest
+		go install github.com/twmb/kcl@latest
 
 		go install github.com/sagernet/sing-box/cmd/sing-box@latest
 
