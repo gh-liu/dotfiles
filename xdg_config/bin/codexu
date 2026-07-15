@@ -42,16 +42,11 @@ request = urllib.request.Request(API_URL_USAGE, headers=headers)
 payload = json.loads(urllib.request.urlopen(request, timeout=30).read().decode())
 # print(json.dumps(payload))
 rate_limit = payload.get("rate_limit", {})
-used_percent_5h = rate_limit.get("primary_window", {})
-used_percent_1w = rate_limit.get("secondary_window", {})
-used_percent_remaining_5h = 100 - used_percent_5h.get("used_percent", 0)
+used_percent_1w = rate_limit.get("primary_window", {})
 used_percent_remaining_1w = 100 - used_percent_1w.get("used_percent", 0)
 print("# Usage remaining")
 print(
-    f"1. 5h: {used_percent_remaining_5h}%; reset at: {fmt2(used_percent_5h.get('reset_at', 0))}"
-)
-print(
-    f"2. 1w: {used_percent_remaining_1w}%; reset at: {fmt2(used_percent_5h.get('reset_at', 0))}"
+    f"1. 1w: {used_percent_remaining_1w}%; reset at: {fmt2(used_percent_1w.get('reset_at', 0))}"
 )
 available_count = payload.get("rate_limit_reset_credits", {}).get("available_count", 0)
 
