@@ -1041,6 +1041,7 @@ vim.pack.add({ "https://github.com/tpope/vim-eunuch" })
 vim.pack.add({ "https://github.com/tpope/vim-rsi" })
 
 vim.g.projectionist_heuristics = {
+	[".justfile"] = { [".justfile"] = { type = "just" } },
 	["go.mod"] = {
 		["go.mod"] = { type = "dep" },
 		["*.go"] = {
