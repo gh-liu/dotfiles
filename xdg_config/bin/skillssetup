@@ -17,12 +17,14 @@ skills add https://github.com/upstash/context7 --skill find-docs "${FLAGS[@]}"
 skills add https://github.com/seflless/deepwiki --skill deepwiki "${FLAGS[@]}"
 
 # brainstorming:
-skills add https://github.com/obra/superpowers --skill brainstorming "${FLAGS[@]}"
+# skills add https://github.com/obra/superpowers --skill brainstorming "${FLAGS[@]}"
 # test-driven-development:
-skills add https://github.com/obra/superpowers --skill test-driven-development "${FLAGS[@]}"
+# skills add https://github.com/obra/superpowers --skill test-driven-development "${FLAGS[@]}"
+
 # tdd
-# skills add mattpocock/skills/tdd "${FLAGS[@]}"
+skills add mattpocock/skills/tdd "${FLAGS[@]}"
 skills add mattpocock/skills/domain-modeling "${FLAGS[@]}"
+
 # use-modern-go:
 # skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go "${FLAGS[@]}"
 
