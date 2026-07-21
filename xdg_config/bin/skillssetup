@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-gh skill install --scope user --agent amp upstash/context7 find-docs
-gh skill install --scope user --agent amp seflless/deepwiki deepwiki
+gh skill install -f --scope user --agent amp upstash/context7 find-docs
+gh skill install -f --scope user --agent amp seflless/deepwiki deepwiki
 
-gh skill install --scope user --agent amp mattpocock/skills tdd
-gh skill install --scope user --agent amp mattpocock/skills domain-modeling
+gh skill install -f --scope user --agent amp mattpocock/skills tdd
+gh skill install -f --scope user --agent amp mattpocock/skills domain-modeling
 
-gh skill install --scope user --agent amp vercel-labs/agent-browser agent-browser
-# gh skill install --scope project --agent amp jetbrains/go-modern-guidelines use-modern-go
+gh skill install -f --scope user --agent amp vercel-labs/agent-browser agent-browser
+# gh skill install -f --scope project --agent amp jetbrains/go-modern-guidelines use-modern-go
 
+# %s/amp/pi/g
 # vim: set filetype=sh
