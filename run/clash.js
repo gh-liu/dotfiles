@@ -51,15 +51,40 @@ const main = (config) => {
         }
 
         if (groups.length > 0) {
+                const countryGroupNames = groups.map((group) => group.name);
+
                 groups.unshift({
                         name: "Proxy",
                         type: "select",
-                        proxies: groups.map((group) => group.name),
+                        proxies: countryGroupNames,
+                });
+                groups.splice(1, 0, {
+                        name: "OpenAI",
+                        type: "select",
+                        proxies: ["Proxy", ...countryGroupNames, "DIRECT"],
                 });
         }
 
         config["proxy-groups"] = groups;
-        delete config["rule-providers"];
+        config["geox-url"] ??= {};
+        config["geox-url"].asn ??=
+                "https://github.com/xishang0128/geoip/releases/download/latest/GeoLite2-ASN.mmdb";
+        config["rule-providers"] = {
+                OpenAI: {
+                        type: "http",
+                        behavior: "classical",
+                        format: "yaml",
+                        url: "https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/OpenAI/OpenAI_No_Resolve.yaml",
+                        interval: 86400,
+                },
+                ASNChina: {
+                        type: "http",
+                        behavior: "classical",
+                        format: "yaml",
+                        url: "https://cdn.jsdelivr.net/gh/Kwisma/ASN-List@main/country/CN/CN_ASN_No_Resolve.yaml",
+                        interval: 86400,
+                },
+        };
 
         const defaultPolicy = groups.some((group) => group.name === "Proxy") ? "Proxy" : "DIRECT";
 
@@ -77,6 +102,8 @@ const main = (config) => {
                 "IP-CIDR6,::1/128,DIRECT,no-resolve",
                 "IP-CIDR6,fc00::/7,DIRECT,no-resolve",
                 "IP-CIDR6,fe80::/10,DIRECT,no-resolve",
+                "RULE-SET,OpenAI,OpenAI",
+                "RULE-SET,ASNChina,DIRECT",
                 "GEOIP,CN,DIRECT",
                 `MATCH,${defaultPolicy}`,
         ];
