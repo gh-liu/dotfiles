@@ -43,6 +43,7 @@ const main = (config) => {
                         name,
                         type: "url-test",
                         proxies,
+                        icon: `https://cdn.jsdelivr.net/gh/gh-liu/dotfiles@master/run/img/flags_png/${name === "UK" ? "GB" : name}.png`,
                         url: TEST_URL,
                         interval: 600,
                         tolerance: 50,
@@ -57,11 +58,13 @@ const main = (config) => {
                         name: "Proxy",
                         type: "select",
                         proxies: countryGroupNames,
+                        icon: "https://cdn.jsdelivr.net/gh/gh-liu/dotfiles@master/run/img/Default.png",
                 });
                 groups.splice(1, 0, {
                         name: "OpenAI",
                         type: "select",
                         proxies: ["Proxy", ...countryGroupNames, "DIRECT"],
+                        icon: "https://cdn.jsdelivr.net/gh/Orz-3/mini@master/Color/OpenAI.png",
                 });
         }
 
