@@ -28,7 +28,14 @@ const main = (config) => {
         config.profile ??= {};
         config.profile["store-selected"] = true;
 
-        const allProxyNames = config.proxies.map((p) => p.name);
+        const allProxyNames = config.proxies
+                .map((proxy) => proxy.name)
+                .filter(
+                        (name) =>
+                                !/(剩余流量|流量剩余|到期时间|过期时间|有效期|下次重置|重置时间|套餐信息|订阅信息|\b(?:traffic|remaining|expiration|expires?|reset|bandwidth)\b)/i.test(
+                                        name,
+                                ),
+                );
         const groups = [];
 
         for (const [name, pattern] of COUNTRY_GROUPS) {
