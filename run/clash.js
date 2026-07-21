@@ -24,6 +24,9 @@ const main = (config) => {
         console.log("🚀 脚本开始执行");
 
         config.proxies ??= [];
+        config.mode = "rule";
+        config.profile ??= {};
+        config.profile["store-selected"] = true;
 
         const allProxyNames = config.proxies.map((p) => p.name);
         const groups = [];
@@ -63,6 +66,8 @@ const main = (config) => {
         config.rules = [
                 "DOMAIN,localhost,DIRECT",
                 "DOMAIN-SUFFIX,local,DIRECT",
+                "DOMAIN-SUFFIX,lan,DIRECT",
+                "DOMAIN-SUFFIX,home.arpa,DIRECT",
                 "IP-CIDR,10.0.0.0/8,DIRECT,no-resolve",
                 "IP-CIDR,100.64.0.0/10,DIRECT,no-resolve",
                 "IP-CIDR,127.0.0.0/8,DIRECT,no-resolve",
