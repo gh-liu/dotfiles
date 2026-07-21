@@ -1,33 +1,11 @@
 #!/usr/bin/env bash
-# https://skills.sh
-# skills add
-# skills update
+gh skill install --scope user --agent amp upstash/context7 find-docs
+gh skill install --scope user --agent amp seflless/deepwiki deepwiki
 
-skills remove --all -g -y
+gh skill install --scope user --agent amp mattpocock/skills tdd
+gh skill install --scope user --agent amp mattpocock/skills domain-modeling
 
-FLAGS=(-a '*' -g -y)
-
-# local skills
-skills add $LIU_TOOLS/dotfiles/xdg_config/agents/skills "${FLAGS[@]}"
-
-# find-skills:
-skills add https://github.com/vercel-labs/skills --skill find-skills "${FLAGS[@]}"
-# find-docs:
-skills add https://github.com/upstash/context7 --skill find-docs "${FLAGS[@]}"
-skills add https://github.com/seflless/deepwiki --skill deepwiki "${FLAGS[@]}"
-
-# brainstorming:
-# skills add https://github.com/obra/superpowers --skill brainstorming "${FLAGS[@]}"
-# test-driven-development:
-# skills add https://github.com/obra/superpowers --skill test-driven-development "${FLAGS[@]}"
-
-# tdd
-skills add mattpocock/skills/tdd "${FLAGS[@]}"
-skills add mattpocock/skills/domain-modeling "${FLAGS[@]}"
-
-# use-modern-go:
-# skills add https://github.com/jetbrains/go-modern-guidelines --skill use-modern-go "${FLAGS[@]}"
-
-skills add vercel-labs/agent-browser "${FLAGS[@]}"
+gh skill install --scope user --agent amp vercel-labs/agent-browser agent-browser
+# gh skill install --scope project --agent amp jetbrains/go-modern-guidelines use-modern-go
 
 # vim: set filetype=sh
