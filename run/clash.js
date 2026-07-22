@@ -1,21 +1,21 @@
 const COUNTRY_GROUPS = [
         ["HK", "(?i)(香港|港|Hong Kong|(^|[^a-z])HK($|[^a-z]))"],
-        ["MO", "(?i)(澳门|澳門|Macau|(^|[^a-z])MO($|[^a-z]))"],
+        // ["MO", "(?i)(澳门|澳門|Macau|(^|[^a-z])MO($|[^a-z]))"],
         ["TW", "(?i)(台湾|台灣|台北|台中|Taiwan|Taipei|(^|[^a-z])TW($|[^a-z]))"],
         ["JP", "(?i)(日本|川日|东京|東京|大阪|泉日|埼玉|沪日|深日|Japan|(^|[^a-z])JP($|[^a-z]))"],
         ["KR", "(?i)(韩国|韓國|首尔|首爾|韩|韓|Korea|(^|[^a-z])(KR|KOR)($|[^a-z]))"],
+        ["SG", "(?i)(新加坡|狮城|獅城|坡|Singapore|(^|[^a-z])SG($|[^a-z]))"],
+        ["MY", "(?i)(马来西亚|馬來西亞|马国|馬國|Malaysia|(^|[^a-z])MY($|[^a-z]))"],
+        ["PH", "(?i)(菲律宾|菲律賓|菲|Philippines|(^|[^a-z])PH($|[^a-z]))"],
+        ["UK", "(?i)(英国|英國|伦敦|倫敦|United Kingdom|Britain|(^|[^a-z])(UK|GB)($|[^a-z]))"],
+        ["FR", "(?i)(法国|法國|巴黎|France|(^|[^a-z])FR($|[^a-z]))"],
+        ["DE", "(?i)(德国|德國|柏林|法兰克福|法蘭克福|Germany|Deutschland|(^|[^a-z])DE($|[^a-z]))"],
+        ["NL", "(?i)(荷兰|荷蘭|阿姆斯特丹|Netherlands|(^|[^a-z])NL($|[^a-z]))"],
+        // ["IT", "(?i)(意大利|義大利|米兰|米蘭|罗马|羅馬|Italy|(^|[^a-z])IT($|[^a-z]))"],
         [
                 "US",
                 "(?i)(美国|美國|波特兰|達拉斯|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|洛杉磯|圣何塞|圣克拉拉|西雅图|芝加哥|America|United States|(^|[^a-z])US($|[^a-z]))",
         ],
-        ["SG", "(?i)(新加坡|狮城|獅城|坡|Singapore|(^|[^a-z])SG($|[^a-z]))"],
-        ["PH", "(?i)(菲律宾|菲律賓|菲|Philippines|(^|[^a-z])PH($|[^a-z]))"],
-        ["MY", "(?i)(马来西亚|馬來西亞|马国|馬國|Malaysia|(^|[^a-z])MY($|[^a-z]))"],
-        ["UK", "(?i)(英国|英國|伦敦|倫敦|United Kingdom|Britain|(^|[^a-z])(UK|GB)($|[^a-z]))"],
-        ["FR", "(?i)(法国|法國|巴黎|France|(^|[^a-z])FR($|[^a-z]))"],
-        ["IT", "(?i)(意大利|義大利|米兰|米蘭|罗马|羅馬|Italy|(^|[^a-z])IT($|[^a-z]))"],
-        ["NL", "(?i)(荷兰|荷蘭|阿姆斯特丹|Netherlands|(^|[^a-z])NL($|[^a-z]))"],
-        ["DE", "(?i)(德国|德國|柏林|法兰克福|法蘭克福|Germany|Deutschland|(^|[^a-z])DE($|[^a-z]))"],
 ];
 
 const TEST_URL = "http://www.gstatic.com/generate_204";
