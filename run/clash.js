@@ -1,24 +1,26 @@
 const COUNTRY_GROUPS = [
-        ["HK", /(香港|港|Hong Kong|(?:^|[^a-z])HK(?:$|[^a-z]))/i],
-        ["MO", /(澳门|澳門|Macau|(?:^|[^a-z])MO(?:$|[^a-z]))/i],
-        ["TW", /(台湾|台灣|台北|台中|Taiwan|Taipei|(?:^|[^a-z])TW(?:$|[^a-z]))/i],
-        ["JP", /(日本|川日|东京|東京|大阪|泉日|埼玉|沪日|深日|Japan|(?:^|[^a-z])JP(?:$|[^a-z]))/i],
-        ["KR", /(韩国|韓國|首尔|首爾|韩|韓|Korea|(?:^|[^a-z])(?:KR|KOR)(?:$|[^a-z]))/i],
+        ["HK", "(?i)(香港|港|Hong Kong|(^|[^a-z])HK($|[^a-z]))"],
+        ["MO", "(?i)(澳门|澳門|Macau|(^|[^a-z])MO($|[^a-z]))"],
+        ["TW", "(?i)(台湾|台灣|台北|台中|Taiwan|Taipei|(^|[^a-z])TW($|[^a-z]))"],
+        ["JP", "(?i)(日本|川日|东京|東京|大阪|泉日|埼玉|沪日|深日|Japan|(^|[^a-z])JP($|[^a-z]))"],
+        ["KR", "(?i)(韩国|韓國|首尔|首爾|韩|韓|Korea|(^|[^a-z])(KR|KOR)($|[^a-z]))"],
         [
                 "US",
-                /(美国|美國|波特兰|達拉斯|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|洛杉磯|圣何塞|圣克拉拉|西雅图|芝加哥|America|United States|(?:^|[^a-z])US(?:$|[^a-z]))/i,
+                "(?i)(美国|美國|波特兰|達拉斯|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|洛杉磯|圣何塞|圣克拉拉|西雅图|芝加哥|America|United States|(^|[^a-z])US($|[^a-z]))",
         ],
-        ["SG", /(新加坡|狮城|獅城|坡|Singapore|(?:^|[^a-z])SG(?:$|[^a-z]))/i],
-        ["PH", /(菲律宾|菲律賓|菲|Philippines|(?:^|[^a-z])PH(?:$|[^a-z]))/i],
-        ["MY", /(马来西亚|馬來西亞|马国|馬國|Malaysia|(?:^|[^a-z])MY(?:$|[^a-z]))/i],
-        ["UK", /(英国|英國|伦敦|倫敦|United Kingdom|Britain|(?:^|[^a-z])(?:UK|GB)(?:$|[^a-z]))/i],
-        ["FR", /(法国|法國|巴黎|France|(?:^|[^a-z])FR(?:$|[^a-z]))/i],
-        ["IT", /(意大利|義大利|米兰|米蘭|罗马|羅馬|Italy|(?:^|[^a-z])IT(?:$|[^a-z]))/i],
-        ["NL", /(荷兰|荷蘭|阿姆斯特丹|Netherlands|(?:^|[^a-z])NL(?:$|[^a-z]))/i],
-        ["DE", /(德国|德國|柏林|法兰克福|法蘭克福|Germany|Deutschland|(?:^|[^a-z])DE(?:$|[^a-z]))/i],
+        ["SG", "(?i)(新加坡|狮城|獅城|坡|Singapore|(^|[^a-z])SG($|[^a-z]))"],
+        ["PH", "(?i)(菲律宾|菲律賓|菲|Philippines|(^|[^a-z])PH($|[^a-z]))"],
+        ["MY", "(?i)(马来西亚|馬來西亞|马国|馬國|Malaysia|(^|[^a-z])MY($|[^a-z]))"],
+        ["UK", "(?i)(英国|英國|伦敦|倫敦|United Kingdom|Britain|(^|[^a-z])(UK|GB)($|[^a-z]))"],
+        ["FR", "(?i)(法国|法國|巴黎|France|(^|[^a-z])FR($|[^a-z]))"],
+        ["IT", "(?i)(意大利|義大利|米兰|米蘭|罗马|羅馬|Italy|(^|[^a-z])IT($|[^a-z]))"],
+        ["NL", "(?i)(荷兰|荷蘭|阿姆斯特丹|Netherlands|(^|[^a-z])NL($|[^a-z]))"],
+        ["DE", "(?i)(德国|德國|柏林|法兰克福|法蘭克福|Germany|Deutschland|(^|[^a-z])DE($|[^a-z]))"],
 ];
 
 const TEST_URL = "http://www.gstatic.com/generate_204";
+const EXCLUDE_FILTER =
+        "(?i)(剩余流量|流量剩余|到期时间|过期时间|有效期|下次重置|重置时间|套餐信息|订阅信息|\\b(traffic|remaining|expiration|expires?|reset|bandwidth)\\b)";
 
 const main = (config) => {
         console.log("🚀 脚本开始执行");
@@ -28,34 +30,21 @@ const main = (config) => {
         config.profile ??= {};
         config.profile["store-selected"] = true;
 
-        const allProxyNames = config.proxies
-                .map((proxy) => proxy.name)
-                .filter(
-                        (name) =>
-                                !/(剩余流量|流量剩余|到期时间|过期时间|有效期|下次重置|重置时间|套餐信息|订阅信息|\b(?:traffic|remaining|expiration|expires?|reset|bandwidth)\b)/i.test(
-                                        name,
-                                ),
-                );
         const groups = [];
 
-        for (const [name, pattern] of COUNTRY_GROUPS) {
-                const proxies = allProxyNames.filter((proxyName) => pattern.test(proxyName));
-
-                if (proxies.length === 0) {
-                        console.log(`⚠️ 国家代理组 [${name}] 未匹配到任何节点`);
-                        continue;
-                }
-
+        for (const [name, filter] of COUNTRY_GROUPS) {
                 groups.push({
                         name,
                         type: "url-test",
-                        proxies,
+                        "include-all": true,
+                        filter,
+                        "exclude-filter": EXCLUDE_FILTER,
                         icon: `https://cdn.jsdelivr.net/gh/gh-liu/dotfiles@master/run/img/flags_png/${name === "UK" ? "GB" : name}.png`,
                         url: TEST_URL,
                         interval: 600,
                         tolerance: 50,
                 });
-                console.log(`✅ 添加国家代理组：${name}（${proxies.length} 节点）`);
+                console.log(`✅ 添加国家代理组：${name}`);
         }
 
         if (groups.length > 0) {
