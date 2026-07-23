@@ -10,15 +10,19 @@ export function codexAuth(): [Record<string, unknown>, boolean] {
       refresh_token: refresh,
       account_id: accountId,
     } = source.tokens ?? {};
+    const { exp } = JSON.parse(
+      Buffer.from(access.split(".")[1] ?? "", "base64url").toString("utf8"),
+    );
 
     if (
       typeof access !== "string" ||
       typeof refresh !== "string" ||
-      typeof accountId !== "string"
+      typeof accountId !== "string" ||
+      typeof exp !== "number"
     ) {
       return [{}, false];
     }
-    return [{ type: "oauth", access, refresh, accountId }, true];
+    return [{ type: "oauth", access, refresh, accountId, expires: exp * 1000 }, true];
   } catch {
     return [{}, false];
   }
