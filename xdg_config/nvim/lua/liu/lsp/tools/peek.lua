@@ -1,31 +1,27 @@
 local M = {}
 
+vim.o.previewpopup = "height:20,width:80"
+
 local open_previewwin = function(bufnr, pos)
-	local pvwid
-	local winids = vim.api.nvim_tabpage_list_wins(0)
-	for _, winid in ipairs(winids) do
+	vim.api.nvim_cmd({ cmd = "pbuffer", args = { tostring(bufnr) } }, {})
+
+	local pvwinid
+	for _, winid in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
 		if vim.wo[winid].previewwindow then
-			pvwid = winid
+			pvwinid = winid
+			break
 		end
 	end
-	if not pvwid then
-		local winid = vim.api.nvim_open_win(bufnr, false, {
-			split = "above", ---@type "left"| "right"| "above"| "below"
-			height = vim.o.previewheight,
-		})
-		vim.wo[winid].previewwindow = true
-		pvwid = winid
-	else
-		vim.api.nvim_win_set_buf(pvwid, bufnr)
-	end
-	vim.api.nvim_win_set_cursor(pvwid, pos)
-	vim.api.nvim_win_call(pvwid, function()
+	assert(pvwinid, "pbuffer did not open a preview window")
+
+	vim.api.nvim_win_set_cursor(pvwinid, pos)
+	vim.api.nvim_win_call(pvwinid, function()
 		vim.cmd.normal("zz")
 	end)
-	return pvwid
+	return pvwinid
 end
 
-local preview_location = function(loc, _, _)
+local preview_location = function(loc, focus, source_bufnr)
 	-- location may be LocationLink or Location
 	local uri = loc.targetUri or loc.uri
 	if uri == nil then
@@ -44,29 +40,43 @@ local preview_location = function(loc, _, _)
 		local timer = vim.uv.new_timer()
 		timer:start(1000, 0, function()
 			vim.schedule(function()
-				if vim.api.nvim_get_current_win() ~= pvwinid then
-					return
+				if vim.api.nvim_win_is_valid(pvwinid) then
+					pcall(vim.fn.matchdelete, m, pvwinid)
 				end
-				vim.fn.matchdelete(m, pvwinid)
 			end)
 			timer:close()
 		end)
 	end)
+	if focus then
+		vim.api.nvim_set_current_win(pvwinid)
+	else
+		vim.api.nvim_create_autocmd("CursorMoved", {
+			once = true,
+			buffer = source_bufnr,
+			callback = function()
+				if vim.api.nvim_win_is_valid(pvwinid) then
+					vim.api.nvim_win_close(pvwinid, true)
+				end
+			end,
+		})
+	end
 end
 
-local preview_location_callback = function(err, res, ctx, cfg)
-	if err then
-		vim.notify(("Error running LSP query '%s'"):format(cfg.method), vim.log.levels.ERROR)
-		return nil
-	end
-	if res == nil or vim.tbl_isempty(res) then
-		vim.notify("Unable to find code location.", vim.log.levels.WARN)
-		return nil
-	end
-	if vim.islist(res) then
-		preview_location(res[1], ctx, cfg)
-	else
-		preview_location(res, ctx, cfg)
+local preview_location_callback = function(focus, source_bufnr)
+	return function(err, res, _, cfg)
+		if err then
+			vim.notify(("Error running LSP query '%s'"):format(cfg.method), vim.log.levels.ERROR)
+			return nil
+		end
+		if res == nil or vim.tbl_isempty(res) then
+			vim.notify("Unable to find code location.", vim.log.levels.WARN)
+			return nil
+		end
+		if vim.islist(res) then
+			preview_location(res[1], focus, source_bufnr)
+		else
+			preview_location(res, focus, source_bufnr)
+		end
 	end
 end
 
@@ -84,17 +94,18 @@ local function client_position_params(win, extra)
 	end
 end
 
-function M.peek_definition()
+function M.peek_definition(focus)
+	local bufnr = vim.api.nvim_get_current_buf()
 	local param = client_position_params()
-	return vim.lsp.buf_request(0, "textDocument/definition", param, preview_location_callback)
+	return vim.lsp.buf_request(bufnr, "textDocument/definition", param, preview_location_callback(focus, bufnr))
 end
 
 M.on_attach = function(client, buf)
 	vim.keymap.set("n", "grp", M.peek_definition, { buffer = buf })
 
-	vim.api.nvim_buf_create_user_command(buf, "Peek", function()
-		M.peek_definition()
-	end, { nargs = 0 })
+	vim.api.nvim_buf_create_user_command(buf, "Peek", function(opts)
+		M.peek_definition(opts.bang)
+	end, { nargs = 0, bang = true })
 end
 
 return M
