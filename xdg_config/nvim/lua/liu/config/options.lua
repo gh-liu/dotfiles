@@ -34,6 +34,8 @@ vim.o.guicursor = vim.iter({
 
 vim.o.messagesopt = "hit-enter,history:500,progress:c"
 
+vim.o.previewpopup = "height:20,width:100"
+
 vim.o.cursorline = true
 vim.cmd([[
 augroup liu_options_ui

@@ -1,7 +1,5 @@
 local M = {}
 
-vim.o.previewpopup = "height:20,width:100"
-
 local sessions = {}
 
 local open_previewwin = function(bufnr)
