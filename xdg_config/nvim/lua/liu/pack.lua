@@ -493,6 +493,14 @@ end
 
 --====== lsp
 vim.pack.add({ "https://github.com/neovim/nvim-lspconfig" })
+vim.pack.add({ "https://github.com/gh-liu/nvim-peek" })
+vim.api.nvim_create_autocmd("LspAttach", {
+	callback = function(args)
+		local bufnr = args.buf
+		local client = vim.lsp.get_client_by_id(args.data.client_id)
+		require("peek").on_attach(client, bufnr)
+	end,
+})
 
 --====== dap
 local aug_dap = vim.api.nvim_create_augroup("liu.dap", { clear = true })
