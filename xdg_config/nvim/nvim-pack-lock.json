@@ -38,7 +38,7 @@
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-peek": {
-      "rev": "2e24dadb51b0b6706b8fec92f74799edcd23213d",
+      "rev": "5ec772365bedbf123342d645ef23f7781a8a2827",
       "src": "https://github.com/gh-liu/nvim-peek"
     },
     "nvim-tester": {
