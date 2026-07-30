@@ -410,6 +410,8 @@ install_bins() {
 
 		# https://redis.io/blog/get-redis-cli-without-installing-redis-server
 		bun i -g redis-cli # rdcli?
+
+		bun i -g wrangler
 	fi
 
 	# uv
