@@ -207,6 +207,7 @@ WORDCHARS=${WORDCHARS//./} # ignore dot
 ## https://github.com/jeffreytse/zsh-vi-mode
 USERPLUGINS+=(https://github.com/jeffreytse/zsh-vi-mode)
 function zvm_config() {
+	ZVM_INIT_MODE=sourcing
 	ZVM_VI_INSERT_ESCAPE_BINDKEY=jk
 
 	ZVM_INSERT_MODE_CURSOR=$ZVM_CURSOR_BLINKING_BEAM
@@ -466,3 +467,6 @@ export PI_CODING_AGENT_DIR=$XDG_CONFIG_HOME/pi/agent
 # zprof
 
 ## vim: foldmethod=marker foldlevel=0
+
+# Iris Autocomplete
+eval "$(iris init zsh)"
