@@ -1,3 +1,4 @@
+import { watch, type FSWatcher } from "node:fs";
 import {
   type ExtensionAPI,
   type ExtensionContext,
@@ -277,6 +278,7 @@ export default function status(pi: ExtensionAPI) {
   let requestRender = () => { };
   let spinnerFrame = 0;
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
+  let settingsWatcher: FSWatcher | undefined;
 
   const stopSpinner = () => {
     if (spinnerTimer !== undefined) clearInterval(spinnerTimer);
@@ -292,6 +294,11 @@ export default function status(pi: ExtensionAPI) {
     }, 80);
   };
 
+  const stopSettingsWatcher = () => {
+    settingsWatcher?.close();
+    settingsWatcher = undefined;
+  };
+
   const isCurrentSession = (ctx: ExtensionContext) =>
     ctx.sessionManager === currentSessionManager;
 
@@ -302,6 +309,7 @@ export default function status(pi: ExtensionAPI) {
 
   pi.on("session_start", (_event, ctx) => {
     stopSpinner();
+    stopSettingsWatcher();
     currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "working";
     snapshot = readSnapshot(pi, ctx);
@@ -334,10 +342,14 @@ export default function status(pi: ExtensionAPI) {
           unsubscribe();
           if (isCurrentSession(ctx)) {
             stopSpinner();
+            stopSettingsWatcher();
             requestRender = () => { };
           }
         },
       };
+    });
+    settingsWatcher = watch(getAgentDir(), { persistent: false }, (_eventType, filename) => {
+      if (filename === "settings.json" && isCurrentSession(ctx)) refresh(ctx);
     });
     if (activity === "working") startSpinner();
   });
@@ -373,6 +385,7 @@ export default function status(pi: ExtensionAPI) {
     if (!isCurrentSession(ctx)) return;
     ctx.ui.setFooter(undefined);
     stopSpinner();
+    stopSettingsWatcher();
     currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
