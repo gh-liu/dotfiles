@@ -141,6 +141,7 @@ function renderStatusLine(
   snapshot: StatusSnapshot,
   branch: string | null,
 ): string {
+  width = Math.max(0, width - 1);
   if (width <= 0) return "";
   const contextColor =
     snapshot.contextPercent !== undefined && snapshot.contextPercent >= 90
