@@ -253,9 +253,12 @@ function renderStatusLine(
 
 export default function status(pi: ExtensionAPI) {
   let activity: Activity = "ready";
-  let currentContext: ExtensionContext | undefined;
+  let currentSessionManager: ExtensionContext["sessionManager"] | undefined;
   let snapshot: StatusSnapshot | undefined;
   let requestRender = () => { };
+
+  const isCurrentSession = (ctx: ExtensionContext) =>
+    ctx.sessionManager === currentSessionManager;
 
   const refresh = (ctx: ExtensionContext) => {
     snapshot = readSnapshot(pi, ctx);
@@ -263,15 +266,16 @@ export default function status(pi: ExtensionAPI) {
   };
 
   pi.on("session_start", (_event, ctx) => {
-    currentContext = ctx;
+    currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "working";
     snapshot = readSnapshot(pi, ctx);
     if (ctx.mode !== "tui") return;
 
+    ctx.ui.setWorkingVisible(false);
     ctx.ui.setFooter((tui, theme, footerData) => {
       let disposed = false;
       requestRender = () => {
-        if (!disposed && currentContext === ctx) tui.requestRender();
+        if (!disposed && isCurrentSession(ctx)) tui.requestRender();
       };
       const unsubscribe = footerData.onBranchChange(requestRender);
       return {
@@ -291,41 +295,41 @@ export default function status(pi: ExtensionAPI) {
           if (disposed) return;
           disposed = true;
           unsubscribe();
-          if (currentContext === ctx) requestRender = () => { };
+          if (isCurrentSession(ctx)) requestRender = () => { };
         },
       };
     });
   });
 
   pi.on("agent_start", (_event, ctx) => {
-    if (ctx !== currentContext) return;
+    if (!isCurrentSession(ctx)) return;
     activity = "working";
     requestRender();
   });
 
   pi.on("agent_settled", (_event, ctx) => {
-    if (ctx !== currentContext || !ctx.isIdle()) return;
+    if (!isCurrentSession(ctx) || !ctx.isIdle()) return;
     activity = "ready";
     refresh(ctx);
   });
 
   pi.on("turn_end", (_event, ctx) => {
-    if (ctx === currentContext) refresh(ctx);
+    if (isCurrentSession(ctx)) refresh(ctx);
   });
   pi.on("model_select", (_event, ctx) => {
-    if (ctx === currentContext) refresh(ctx);
+    if (isCurrentSession(ctx)) refresh(ctx);
   });
   pi.on("thinking_level_select", (_event, ctx) => {
-    if (ctx === currentContext) refresh(ctx);
+    if (isCurrentSession(ctx)) refresh(ctx);
   });
   pi.on("session_compact", (_event, ctx) => {
-    if (ctx === currentContext) refresh(ctx);
+    if (isCurrentSession(ctx)) refresh(ctx);
   });
 
   pi.on("session_shutdown", (_event, ctx) => {
-    if (ctx !== currentContext) return;
+    if (!isCurrentSession(ctx)) return;
     ctx.ui.setFooter(undefined);
-    currentContext = undefined;
+    currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
   });
