@@ -1,0 +1,8 @@
+{
+  "name": "pi-extension-mermaid",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "beautiful-mermaid": "1.1.3"
+  }
+}
