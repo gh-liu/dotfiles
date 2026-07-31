@@ -22,7 +22,7 @@
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.nvim": {
-      "rev": "946ae64e0ee807ae3c41f382f0114b4ed4915b2c",
+      "rev": "8bf5c57bc82dd590932faa41bfde9fd6d40a9433",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "nvim-dap": {
@@ -34,7 +34,7 @@
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "7ab79bb1b57160a537f427ac8a6026102f12b701",
+      "rev": "b7b920947f21339ee41fbb38c79d6445e12900aa",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-peek": {
@@ -46,7 +46,7 @@
       "src": "https://github.com/gh-liu/nvim-tester"
     },
     "nvim-treesitter": {
-      "rev": "61df84986b4b4ec469ee745a182e433d49f8c27e",
+      "rev": "0f32dff7f19476629c77467f887b95e5e2d33509",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter"
     },
     "nvim-treesitter-context": {
