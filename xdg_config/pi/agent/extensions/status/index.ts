@@ -9,6 +9,19 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
 type Activity = "ready" | "working";
 
+const SPINNER_FRAMES = [
+  "⠋",
+  "⠙",
+  "⠹",
+  "⠸",
+  "⠼",
+  "⠴",
+  "⠦",
+  "⠧",
+  "⠇",
+  "⠏",
+] as const;
+
 interface StatusSnapshot {
   provider?: string;
   model?: string;
@@ -124,6 +137,7 @@ function renderStatusLine(
   theme: Theme,
   width: number,
   activity: Activity,
+  spinnerFrame: number,
   snapshot: StatusSnapshot,
   branch: string | null,
 ): string {
@@ -146,7 +160,11 @@ function renderStatusLine(
       text: paint(
         theme,
         activity === "ready" ? "blue" : "amber",
-        theme.bold(`● ${activity.toUpperCase()}`),
+        theme.bold(
+          activity === "ready"
+            ? "● READY"
+            : `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} WORKING`,
+        ),
       ),
       dropRank: Number.POSITIVE_INFINITY,
       required: true,
@@ -256,6 +274,22 @@ export default function status(pi: ExtensionAPI) {
   let currentSessionManager: ExtensionContext["sessionManager"] | undefined;
   let snapshot: StatusSnapshot | undefined;
   let requestRender = () => { };
+  let spinnerFrame = 0;
+  let spinnerTimer: ReturnType<typeof setInterval> | undefined;
+
+  const stopSpinner = () => {
+    if (spinnerTimer !== undefined) clearInterval(spinnerTimer);
+    spinnerTimer = undefined;
+    spinnerFrame = 0;
+  };
+
+  const startSpinner = () => {
+    if (spinnerTimer !== undefined) return;
+    spinnerTimer = setInterval(() => {
+      spinnerFrame = (spinnerFrame + 1) % SPINNER_FRAMES.length;
+      requestRender();
+    }, 80);
+  };
 
   const isCurrentSession = (ctx: ExtensionContext) =>
     ctx.sessionManager === currentSessionManager;
@@ -266,6 +300,7 @@ export default function status(pi: ExtensionAPI) {
   };
 
   pi.on("session_start", (_event, ctx) => {
+    stopSpinner();
     currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "working";
     snapshot = readSnapshot(pi, ctx);
@@ -285,6 +320,7 @@ export default function status(pi: ExtensionAPI) {
               theme,
               width,
               activity,
+              spinnerFrame,
               snapshot ?? readSnapshot(pi, ctx),
               footerData.getGitBranch(),
             ),
@@ -295,21 +331,27 @@ export default function status(pi: ExtensionAPI) {
           if (disposed) return;
           disposed = true;
           unsubscribe();
-          if (isCurrentSession(ctx)) requestRender = () => { };
+          if (isCurrentSession(ctx)) {
+            stopSpinner();
+            requestRender = () => { };
+          }
         },
       };
     });
+    if (activity === "working") startSpinner();
   });
 
   pi.on("agent_start", (_event, ctx) => {
-    if (!isCurrentSession(ctx)) return;
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     activity = "working";
+    startSpinner();
     requestRender();
   });
 
   pi.on("agent_settled", (_event, ctx) => {
     if (!isCurrentSession(ctx) || !ctx.isIdle()) return;
     activity = "ready";
+    stopSpinner();
     refresh(ctx);
   });
 
@@ -329,6 +371,7 @@ export default function status(pi: ExtensionAPI) {
   pi.on("session_shutdown", (_event, ctx) => {
     if (!isCurrentSession(ctx)) return;
     ctx.ui.setFooter(undefined);
+    stopSpinner();
     currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
