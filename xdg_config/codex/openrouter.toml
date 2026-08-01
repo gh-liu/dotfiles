@@ -1,6 +1,7 @@
 model = "~openai/gpt-latest"
 model_provider = "openrouter"
 model_reasoning_effort = "high"
+service_tier = "default"
 
 [model_providers.openrouter]
 name = "openrouter"
@@ -9,3 +10,6 @@ base_url = "https://openrouter.ai/api/v1"
 [model_providers.openrouter.auth]
 command = "sh"
 args = ["-c", "printf %s \"$OPENROUTER_API_KEY\""]
+
+[features]
+apps = false
