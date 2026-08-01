@@ -27,7 +27,7 @@ local fn = vim.fn
 ---
 ---@param info qftf_info
 ---@return string[]
-function _G.QuickfixTextFunc(info)
+function quickfixTextFunc(info)
 	local results = {}
 
 	local items
@@ -142,4 +142,4 @@ function _G.QuickfixTextFunc(info)
 	return results
 end
 
-vim.o.quickfixtextfunc = "v:lua._G.QuickfixTextFunc"
+vim.o.quickfixtextfunc = quickfixTextFunc
