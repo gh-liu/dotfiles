@@ -1,5 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { renderMermaidASCII } from "beautiful-mermaid";
+import { createHash } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import { renderMermaidSVG } from "beautiful-mermaid";
 
 const SOURCE_ENTRY_TYPE = "mermaid-ascii-source";
 const MERMAID_FENCE =
@@ -22,6 +27,28 @@ interface SourceEntry {
   }>;
 }
 
+function getCacheDirectory(): string {
+  const cacheRoot =
+    process.env.XDG_CACHE_HOME ??
+    (process.platform === "darwin"
+      ? join(homedir(), "Library", "Caches")
+      : join(homedir(), ".cache"));
+  return join(cacheRoot, "pi", "mermaid");
+}
+
+function renderMermaidLink(diagram: string): string {
+  const svg = renderMermaidSVG(diagram, {
+    bg: "#ffffff",
+    fg: "#111827",
+  });
+  const cacheDirectory = getCacheDirectory();
+  const filename = `${createHash("sha256").update(diagram).digest("hex")}.svg`;
+  const path = join(cacheDirectory, filename);
+  mkdirSync(cacheDirectory, { recursive: true });
+  writeFileSync(path, svg, "utf8");
+  return `[Open Mermaid diagram ↗](${pathToFileURL(path).href})`;
+}
+
 function renderMermaidBlocks(text: string, replacements: Replacement[]): string {
   return text.replace(
     MERMAID_FENCE,
@@ -34,12 +61,7 @@ function renderMermaidBlocks(text: string, replacements: Replacement[]): string 
       diagram: string,
     ) => {
       try {
-        const rendered = renderMermaidASCII(diagram, {
-          colorMode: "none",
-          paddingX: 3,
-          paddingY: 1,
-        });
-        const block = `${prefix}${indent}${fence}text\n${rendered}\n${indent}${fence}`;
+        const block = `${prefix}${indent}${renderMermaidLink(diagram)}\n${source.slice(prefix.length)}`;
         replacements.push({ rendered: block, source });
         return block;
       } catch {
