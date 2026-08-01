@@ -1,0 +1,8 @@
+# https://developers.openai.com/codex/config-basic
+
+model = "gpt-5.4"
+model_reasoning_effort = "medium"
+service_tier = "fast"
+
+[features]
+remote-control = true

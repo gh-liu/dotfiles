@@ -1,0 +1,32 @@
+#!/bin/sh
+
+config_dir="${XDG_CONFIG_HOME:-"$HOME/.config"}/codex"
+codex_dir=${CODEX_HOME:-"$HOME/.codex"}
+models_path="$codex_dir/models.json"
+
+if [ "$#" -ne 0 ]; then
+        echo "Usage: codexp" >&2
+        exit 2
+fi
+
+mkdir -p "$codex_dir" || exit 1
+ln -sf "$config_dir/config.toml" "$codex_dir/config.toml" || exit 1
+echo "Synced Codex config: $codex_dir/config.toml"
+
+jq -s '{ models: [.[].models[]] }' "$config_dir"/*.json >"$models_path.tmp" || exit 1
+mv "$models_path.tmp" "$models_path" || exit 1
+echo "Synced Codex models: $models_path"
+
+for config_template in "$config_dir"/*.toml; do
+        provider=${config_template##*/}
+        provider=${provider%.toml}
+        [ "$provider" = config ] && continue
+        profile_path="$codex_dir/$provider.config.toml"
+
+        awk -v models_path="$models_path" '
+                { gsub("@MODELS_PATH@", models_path) }
+                { print }
+        ' "$config_template" >"$profile_path.tmp" || exit 1
+        mv "$profile_path.tmp" "$profile_path" || exit 1
+        echo "Generated Codex profile: $profile_path"
+done
