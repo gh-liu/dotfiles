@@ -3,19 +3,36 @@ import { renderMermaidASCII } from "beautiful-mermaid";
 
 const SOURCE_ENTRY_TYPE = "mermaid-ascii-source";
 const MERMAID_FENCE =
-  /(^|\n)([ \t]*)(`{3,}|~{3,})[ \t]*mermaid[^\r\n]*\r?\n([\s\S]*?)\r?\n\2\3[ \t]*(?=\r?\n|$)/gi;
+  /(^|\n)([ \t]*)((`|~)\4{2,})[ \t]*mermaid[^\r\n]*\r?\n([\s\S]*?)\r?\n[ \t]*\3\4*[ \t]*(?=\r?\n|$)/gi;
+
+interface Replacement {
+  rendered: string;
+  source: string;
+}
+
+interface LegacySourceEntry {
+  replacements: Replacement[];
+}
 
 interface SourceEntry {
-  replacements: Array<{
-    rendered: string;
-    source: string;
+  messageTimestamp: number;
+  parts: Array<{
+    index: number;
+    replacements: Replacement[];
   }>;
 }
 
-function renderMermaidBlocks(text: string, replacements: SourceEntry["replacements"]): string {
+function renderMermaidBlocks(text: string, replacements: Replacement[]): string {
   return text.replace(
     MERMAID_FENCE,
-    (source, prefix: string, indent: string, fence: string, diagram: string) => {
+    (
+      source,
+      prefix: string,
+      indent: string,
+      fence: string,
+      _fenceCharacter: string,
+      diagram: string,
+    ) => {
       try {
         const rendered = renderMermaidASCII(diagram, {
           colorMode: "none",
@@ -32,9 +49,9 @@ function renderMermaidBlocks(text: string, replacements: SourceEntry["replacemen
   );
 }
 
-function isSourceEntry(data: unknown): data is SourceEntry {
+function isLegacySourceEntry(data: unknown): data is LegacySourceEntry {
   if (!data || typeof data !== "object" || !("replacements" in data)) return false;
-  const { replacements } = data as SourceEntry;
+  const { replacements } = data as LegacySourceEntry;
   return (
     Array.isArray(replacements) &&
     replacements.every(
@@ -46,50 +63,126 @@ function isSourceEntry(data: unknown): data is SourceEntry {
   );
 }
 
+function isSourceEntry(data: unknown): data is SourceEntry {
+  if (!data || typeof data !== "object" || !("parts" in data)) return false;
+  const { messageTimestamp, parts } = data as SourceEntry;
+  return (
+    typeof messageTimestamp === "number" &&
+    Array.isArray(parts) &&
+    parts.every(
+      (part) =>
+        part &&
+        Number.isInteger(part.index) &&
+        part.index >= 0 &&
+        Array.isArray(part.replacements) &&
+        part.replacements.length > 0 &&
+        part.replacements.every(
+          (replacement) =>
+            replacement &&
+            typeof replacement.rendered === "string" &&
+            typeof replacement.source === "string",
+        ),
+    )
+  );
+}
+
+function restoreReplacements(text: string, replacements: Replacement[]): string | undefined {
+  for (const replacement of replacements) {
+    if (!text.includes(replacement.rendered)) return undefined;
+    text = text.replace(replacement.rendered, replacement.source);
+  }
+  return text;
+}
+
 export default function mermaid(pi: ExtensionAPI) {
   pi.on("message_end", (event) => {
     if (event.message.role !== "assistant") return;
 
-    const replacements: SourceEntry["replacements"] = [];
-    const content = event.message.content.map((part) =>
-      part.type === "text"
-        ? { ...part, text: renderMermaidBlocks(part.text, replacements) }
-        : part,
-    );
-    if (replacements.length === 0) return;
+    const parts: SourceEntry["parts"] = [];
+    const content = event.message.content.map((part, index) => {
+      if (part.type !== "text") return part;
+      const replacements: Replacement[] = [];
+      const rendered = renderMermaidBlocks(part.text, replacements);
+      if (replacements.length === 0) return part;
+      parts.push({ index, replacements });
+      return { ...part, text: rendered };
+    });
+    if (parts.length === 0) return;
 
-    pi.appendEntry(SOURCE_ENTRY_TYPE, { replacements } satisfies SourceEntry);
+    pi.appendEntry(SOURCE_ENTRY_TYPE, {
+      messageTimestamp: event.message.timestamp,
+      parts,
+    } satisfies SourceEntry);
     return { message: { ...event.message, content } };
   });
 
   pi.on("context", (event, ctx) => {
-    const replacements = ctx.sessionManager
+    const sourceEntries = ctx.sessionManager
       .getBranch()
       .flatMap((entry) =>
         entry.type === "custom" &&
           entry.customType === SOURCE_ENTRY_TYPE &&
-          isSourceEntry(entry.data)
-          ? entry.data.replacements
+          (isSourceEntry(entry.data) || isLegacySourceEntry(entry.data))
+          ? [entry.data]
           : [],
       );
-    if (replacements.length === 0) return;
+    if (sourceEntries.length === 0) return;
 
-    return {
-      messages: event.messages.map((message) =>
-        message.role === "assistant"
-          ? {
-            ...message,
-            content: message.content.map((part) => {
-              if (part.type !== "text") return part;
-              let text = part.text;
-              for (const replacement of replacements) {
-                text = text.replaceAll(replacement.rendered, replacement.source);
-              }
-              return text === part.text ? part : { ...part, text };
+    const messages = [...event.messages];
+    const restoredMessageIndexes = new Set<number>();
+    for (const sourceEntry of sourceEntries) {
+      if (isSourceEntry(sourceEntry)) {
+        const messageIndex = messages.findIndex(
+          (message, index) =>
+            !restoredMessageIndexes.has(index) &&
+            message.role === "assistant" &&
+            message.timestamp === sourceEntry.messageTimestamp &&
+            sourceEntry.parts.every(({ index: partIndex, replacements }) => {
+              const part = message.content[partIndex];
+              return (
+                part?.type === "text" &&
+                restoreReplacements(part.text, replacements) !== undefined
+              );
             }),
-          }
-          : message,
-      ),
-    };
+        );
+        if (messageIndex === -1) continue;
+
+        const message = messages[messageIndex];
+        if (message.role !== "assistant") continue;
+
+        const content = [...message.content];
+        for (const { index, replacements } of sourceEntry.parts) {
+          const part = content[index];
+          if (part?.type !== "text") continue;
+          const restored = restoreReplacements(part.text, replacements);
+          if (restored !== undefined) content[index] = { ...part, text: restored };
+        }
+        messages[messageIndex] = { ...message, content };
+        restoredMessageIndexes.add(messageIndex);
+        continue;
+      }
+
+      for (const replacement of sourceEntry.replacements) {
+        for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
+          const message = messages[messageIndex];
+          if (message.role !== "assistant") continue;
+          const partIndex = message.content.findIndex(
+            (part) => part.type === "text" && part.text.includes(replacement.rendered),
+          );
+          if (partIndex === -1) continue;
+
+          const content = [...message.content];
+          const part = content[partIndex];
+          if (part.type !== "text") continue;
+          const restored = restoreReplacements(part.text, [replacement]);
+          if (restored === undefined) continue;
+          content[partIndex] = { ...part, text: restored };
+          messages[messageIndex] = { ...message, content };
+          break;
+        }
+      }
+    }
+
+    return { messages };
   });
 }
