@@ -28,12 +28,7 @@ interface SourceEntry {
 }
 
 function getCacheDirectory(): string {
-  const cacheRoot =
-    process.env.XDG_CACHE_HOME ??
-    (process.platform === "darwin"
-      ? join(homedir(), "Library", "Caches")
-      : join(homedir(), ".cache"));
-  return join(cacheRoot, "pi", "mermaid");
+  return join(process.env.HOME ?? homedir(), ".pi", "cache", "mermaid");
 }
 
 function renderMermaidLink(diagram: string): string {
@@ -162,8 +157,7 @@ export default function mermaid(pi: ExtensionAPI) {
             sourceEntry.parts.every(({ index: partIndex, replacements }) => {
               const part = message.content[partIndex];
               return (
-                part?.type === "text" &&
-                restoreReplacements(part.text, replacements) !== undefined
+                part?.type === "text" && restoreReplacements(part.text, replacements) !== undefined
               );
             }),
         );

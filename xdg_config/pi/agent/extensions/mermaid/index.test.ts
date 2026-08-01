@@ -7,17 +7,17 @@ import { fileURLToPath } from "node:url";
 
 import mermaid from "./index.ts";
 
-const originalCacheHome = process.env.XDG_CACHE_HOME;
-const testCacheHome = mkdtempSync(join(tmpdir(), "pi-mermaid-test-"));
+const originalHome = process.env.HOME;
+const testHome = mkdtempSync(join(tmpdir(), "pi-mermaid-test-"));
 
 beforeAll(() => {
-  process.env.XDG_CACHE_HOME = testCacheHome;
+  process.env.HOME = testHome;
 });
 
 afterAll(() => {
-  if (originalCacheHome === undefined) delete process.env.XDG_CACHE_HOME;
-  else process.env.XDG_CACHE_HOME = originalCacheHome;
-  rmSync(testCacheHome, { recursive: true, force: true });
+  if (originalHome === undefined) delete process.env.HOME;
+  else process.env.HOME = originalHome;
+  rmSync(testHome, { recursive: true, force: true });
 });
 
 function setup() {
@@ -59,6 +59,7 @@ describe("mermaid extension", () => {
 
     expect(url).toBeDefined();
     expect(text).toContain(block);
+    expect(fileURLToPath(url!)).toStartWith(join(testHome, ".pi", "cache", "mermaid") + "/");
     expect(readFileSync(fileURLToPath(url!), "utf8")).toStartWith("<svg");
     expect(restore([rendered])[0].content[0].text).toBe(source);
   });
