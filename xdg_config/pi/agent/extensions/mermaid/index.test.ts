@@ -20,125 +20,127 @@ afterAll(() => {
   rmSync(testHome, { recursive: true, force: true });
 });
 
-function setup() {
+function setup(entries: any[] = []) {
   const handlers = new Map<string, (...args: any[]) => any>();
-  const entries: any[] = [];
+  let transformer: ((markdown: string, context: any) => string) | undefined;
   const pi = {
     on: (name: string, handler: (...args: any[]) => any) => handlers.set(name, handler),
-    appendEntry: (customType: string, data: unknown) =>
-      entries.push({ type: "custom", customType, data }),
+    registerMarkdownTransformer: (registered: typeof transformer) => {
+      transformer = registered;
+    },
   } as unknown as ExtensionAPI;
   mermaid(pi);
 
-  const transform = (text: string, timestamp: number) =>
-    handlers.get("message_end")?.({
-      message: {
-        role: "assistant",
-        timestamp,
-        content: [{ type: "text", text }],
-      },
-    })?.message;
+  const transform = (
+    markdown: string,
+    context: { messageType: string; isStreaming: boolean } = {
+      messageType: "assistant",
+      isStreaming: false,
+    },
+  ) => transformer!(markdown, { ...context, availableWidth: 120 });
   const restore = (messages: any[]) =>
     handlers.get("context")?.(
       { messages },
       { sessionManager: { getBranch: () => entries } },
     )?.messages;
 
-  return { entries, restore, transform };
+  return { restore, transform };
+}
+
+function getSvgUrl(markdown: string): string | undefined {
+  return markdown.match(/\[Open Mermaid diagram ↗\]\((file:\/\/[^)]+)\)/)?.[1];
 }
 
 describe("mermaid extension", () => {
-  test("preserves the Mermaid block, adds an SVG link, and restores its exact source", () => {
-    const { restore, transform } = setup();
+  test("adds an SVG link while preserving the Mermaid block", () => {
+    const { transform } = setup();
     const block = "```mermaid\ngraph LR\n  A --> B\n```";
     const source = `Before\n${block}\nAfter`;
 
-    const rendered = transform(source, 1);
-    const text = rendered.content[0].text;
-    const url = text.match(/\[Open Mermaid diagram ↗\]\((file:\/\/[^)]+)\)/)?.[1];
+    const rendered = transform(source);
+    const url = getSvgUrl(rendered);
 
     expect(url).toBeDefined();
-    expect(text).toContain(block);
+    expect(rendered).toContain(block);
     expect(fileURLToPath(url!)).toStartWith(join(testHome, ".pi", "cache", "mermaid") + "/");
     expect(readFileSync(fileURLToPath(url!), "utf8")).toStartWith("<svg");
-    expect(restore([rendered])[0].content[0].text).toBe(source);
+    expect(source).toBe(`Before\n${block}\nAfter`);
   });
 
-  test("restores multiple distinct sources independently", () => {
-    const { restore, transform } = setup();
-    const source = [
-      "One",
-      "```mermaid",
-      "graph LR",
-      "A --> B",
-      "```",
-      "Two",
-      "```mermaid",
-      "graph LR",
-      "  A --> B",
-      "```",
-    ].join("\n");
-
-    const rendered = transform(source, 2);
-
-    expect(restore([rendered])[0].content[0].text).toBe(source);
-  });
-
-  test("does not restore a matching rendered block in another message", () => {
-    const { restore, transform } = setup();
+  test("does not transform user, thinking, or streaming Markdown", () => {
+    const { transform } = setup();
     const source = "```mermaid\ngraph LR\nA --> B\n```";
-    const rendered = transform(source, 4);
-    const unrelated = {
-      ...rendered,
-      timestamp: 3,
-      content: rendered.content.map((part: any) => ({ ...part })),
-    };
 
-    const restored = restore([unrelated, rendered]);
-
-    expect(restored[0]).toEqual(unrelated);
-    expect(restored[1].content[0].text).toBe(source);
+    expect(transform(source, { messageType: "user", isStreaming: false })).toBe(source);
+    expect(transform(source, { messageType: "assistant-thinking", isStreaming: false })).toBe(
+      source,
+    );
+    expect(transform(source, { messageType: "assistant", isStreaming: true })).toBe(source);
   });
 
-  test("distinguishes messages with the same timestamp", () => {
-    const { restore, transform } = setup();
-    const firstSource = "```mermaid\ngraph LR\nA --> B\n```";
-    const secondSource = "```mermaid\ngraph LR\n  A --> B\n```";
+  test("transforms multiple blocks and supports a longer closing fence", () => {
+    const { transform } = setup();
+    const firstBlock = "```mermaid\ngraph LR\nA --> B\n````";
+    const secondBlock = "```mermaid\nsequenceDiagram\nA->>B: hello\n```";
+    const source = `${firstBlock}\n${secondBlock}`;
 
-    const firstRendered = transform(firstSource, 5);
-    const secondRendered = transform(secondSource, 5);
-    const restored = restore([firstRendered, secondRendered]);
+    const rendered = transform(source);
 
-    expect(restored[0].content[0].text).toBe(firstSource);
-    expect(restored[1].content[0].text).toBe(secondSource);
+    expect(rendered.match(/\[Open Mermaid diagram ↗\]/g)).toHaveLength(2);
+    expect(rendered).toContain(firstBlock);
+    expect(rendered).toContain(secondBlock);
   });
 
-  test("accepts a closing fence longer than the opening fence", () => {
-    const { restore, transform } = setup();
-    const source = "```mermaid\ngraph LR\nA --> B\n````";
-
-    const rendered = transform(source, 5);
-
-    expect(rendered.content[0].text).toContain("[Open Mermaid diagram ↗](file://");
-    expect(rendered.content[0].text).toContain(source);
-    expect(restore([rendered])[0].content[0].text).toBe(source);
-  });
-
-  test("restores entries written by the previous extension version", () => {
-    const { entries, restore, transform } = setup();
+  test("replaces a persisted generated link instead of duplicating it", () => {
+    const { transform } = setup();
     const source = "```mermaid\ngraph LR\nA --> B\n```";
-    const rendered = transform(source, 6);
-    const replacements = entries[0].data.parts[0].replacements;
-    entries[0].data = { replacements };
+    const first = transform(source);
 
-    expect(restore([rendered])[0].content[0].text).toBe(source);
+    const second = transform(first);
+
+    expect(second.match(/\[Open Mermaid diagram ↗\]/g)).toHaveLength(1);
+    expect(second).toContain(source);
+  });
+
+  test("recreates an evicted SVG from restored Markdown", () => {
+    const { transform } = setup();
+    const source = "```mermaid\ngraph LR\nA --> B\n```";
+    const rendered = transform(source);
+    const path = fileURLToPath(getSvgUrl(rendered)!);
+    rmSync(path);
+
+    transform(rendered);
+
+    expect(readFileSync(path, "utf8")).toStartWith("<svg");
   });
 
   test("leaves invalid Mermaid unchanged", () => {
-    const { entries, transform } = setup();
+    const { transform } = setup();
     const source = "```mermaid\nnot a diagram\n```";
 
-    expect(transform(source, 7)).toBeUndefined();
-    expect(entries).toEqual([]);
+    expect(transform(source)).toBe(source);
+  });
+
+  test("restores messages written by the previous extension version", () => {
+    const source = "```mermaid\ngraph LR\nA --> B\n```";
+    const rendered = `[Open Mermaid diagram ↗](file:///tmp/${"a".repeat(64)}.svg)\n${source}`;
+    const entries = [
+      {
+        type: "custom",
+        customType: "mermaid-ascii-source",
+        data: {
+          messageTimestamp: 7,
+          parts: [{ index: 0, replacements: [{ rendered, source }] }],
+        },
+      },
+    ];
+    const { restore } = setup(entries);
+    const message = {
+      role: "assistant",
+      timestamp: 7,
+      content: [{ type: "text", text: rendered }],
+    };
+
+    expect(restore([message])[0].content[0].text).toBe(source);
   });
 });

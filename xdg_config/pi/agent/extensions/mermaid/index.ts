@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createHash } from "node:crypto";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -9,6 +9,8 @@ import { renderMermaidSVG } from "beautiful-mermaid";
 const SOURCE_ENTRY_TYPE = "mermaid-ascii-source";
 const MERMAID_FENCE =
   /(^|\n)([ \t]*)((`|~)\4{2,})[ \t]*mermaid[^\r\n]*\r?\n([\s\S]*?)\r?\n[ \t]*\3\4*[ \t]*(?=\r?\n|$)/gi;
+const GENERATED_LINK =
+  /(^|\n)([ \t]*)(?:\[Open Mermaid diagram ↗\]\(file:\/\/\/[^)\r\n]+\/[a-f0-9]{64}\.svg\)|`mermaid` · \[Open diagram ↗\]\(file:\/\/\/[^)\r\n]+\/[a-f0-9]{64}\.svg\))\r?\n(?=\2(?:`{3,}|~{3,})[ \t]*mermaid)/gi;
 
 interface Replacement {
   rendered: string;
@@ -32,20 +34,22 @@ function getCacheDirectory(): string {
 }
 
 function renderMermaidLink(diagram: string): string {
-  const svg = renderMermaidSVG(diagram, {
-    bg: "#ffffff",
-    fg: "#111827",
-  });
   const cacheDirectory = getCacheDirectory();
-  const filename = `${createHash("sha256").update(diagram).digest("hex")}.svg`;
+  const filename = `${createHash("sha256").update("svg-v1\0").update(diagram).digest("hex")}.svg`;
   const path = join(cacheDirectory, filename);
-  mkdirSync(cacheDirectory, { recursive: true });
-  writeFileSync(path, svg, "utf8");
+  if (!existsSync(path)) {
+    const svg = renderMermaidSVG(diagram, {
+      bg: "#ffffff",
+      fg: "#111827",
+    });
+    mkdirSync(cacheDirectory, { recursive: true });
+    writeFileSync(path, svg, "utf8");
+  }
   return `[Open Mermaid diagram ↗](${pathToFileURL(path).href})`;
 }
 
-function renderMermaidBlocks(text: string, replacements: Replacement[]): string {
-  return text.replace(
+function renderMermaidBlocks(text: string): string {
+  return text.replace(GENERATED_LINK, "$1").replace(
     MERMAID_FENCE,
     (
       source,
@@ -56,9 +60,7 @@ function renderMermaidBlocks(text: string, replacements: Replacement[]): string 
       diagram: string,
     ) => {
       try {
-        const block = `${prefix}${indent}${renderMermaidLink(diagram)}\n${source.slice(prefix.length)}`;
-        replacements.push({ rendered: block, source });
-        return block;
+        return `${prefix}${indent}${renderMermaidLink(diagram)}\n${source.slice(prefix.length)}`;
       } catch {
         return source;
       }
@@ -112,25 +114,9 @@ function restoreReplacements(text: string, replacements: Replacement[]): string 
 }
 
 export default function mermaid(pi: ExtensionAPI) {
-  pi.on("message_end", (event) => {
-    if (event.message.role !== "assistant") return;
-
-    const parts: SourceEntry["parts"] = [];
-    const content = event.message.content.map((part, index) => {
-      if (part.type !== "text") return part;
-      const replacements: Replacement[] = [];
-      const rendered = renderMermaidBlocks(part.text, replacements);
-      if (replacements.length === 0) return part;
-      parts.push({ index, replacements });
-      return { ...part, text: rendered };
-    });
-    if (parts.length === 0) return;
-
-    pi.appendEntry(SOURCE_ENTRY_TYPE, {
-      messageTimestamp: event.message.timestamp,
-      parts,
-    } satisfies SourceEntry);
-    return { message: { ...event.message, content } };
+  pi.registerMarkdownTransformer((markdown, { messageType, isStreaming }) => {
+    if (messageType !== "assistant" || isStreaming) return markdown;
+    return renderMermaidBlocks(markdown);
   });
 
   pi.on("context", (event, ctx) => {
