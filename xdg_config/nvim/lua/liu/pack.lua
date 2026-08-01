@@ -124,6 +124,25 @@ nvim_on("VimEnter", aug_mini, function()
 	})
 end)
 -- vim.pack.add({ "https://github.com/nvim-mini/mini.files" })
+local function realBufname(bufnr)
+	local bufname = vim.api.nvim_buf_get_name(bufnr)
+	local namespace = bufname:match("^(%a%a+):")
+	if not namespace then
+		return bufname
+	end
+
+	local real_fn = namespace:sub(1, 1):upper() .. namespace:sub(2) .. "Real"
+	if vim.fn.exists("*" .. real_fn) == 0 then
+		return bufname
+	end
+
+	local ok, real_bufname = pcall(vim.fn[real_fn], bufname)
+	if ok and type(real_bufname) == "string" and #real_bufname > 0 then
+		return real_bufname
+	end
+	return bufname
+end
+
 nvim_on("VimEnter", aug_mini, function()
 	local aug_mini_files = vim.api.nvim_create_augroup("liu.mini.files", { clear = true })
 	require("mini.files").setup({
@@ -220,7 +239,7 @@ nvim_on("VimEnter", aug_mini, function()
 	vim.keymap.set("n", "<leader>e", function()
 		local MiniFiles = require("mini.files")
 		if not MiniFiles.close() then
-			local bufname = vim.api.nvim_buf_get_name(0)
+			local bufname = realBufname(0)
 			local is_dir = vim.fn.isdirectory(bufname) == 1
 			local dirs = {}
 			if is_dir then
