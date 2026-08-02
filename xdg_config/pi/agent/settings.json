@@ -1,2 +1,10 @@
-{}
-
+{
+  "quietStartup": true,
+  "hideThinkingBlock": true,
+  "steeringMode": "all",
+  "followUpMode": "all",
+  "packages": [
+    "npm:pi-web-access@0.14.0"
+  ],
+  "theme": "dark"
+}
