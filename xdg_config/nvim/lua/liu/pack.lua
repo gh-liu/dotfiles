@@ -628,8 +628,7 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
--- vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter-context" })
-vim.pack.add({ "https://github.com/gh-liu/nvim-treesitter-context" })
+vim.pack.add({ "https://github.com/nvim-treesitter/nvim-treesitter-context" })
 require("treesitter-context").setup({
 	multiwindow = true,
 	max_lines = 1,
