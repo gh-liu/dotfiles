@@ -15,7 +15,11 @@
     "down",
     "ctrl+n"
   ],
+  "app.models.toggleProvider": [],
   "app.session.toggleNamedFilter": [
+    "ctrl+l"
+  ],
+  "app.session.togglePath": [
     "ctrl+l"
   ]
 }
