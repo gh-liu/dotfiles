@@ -6,6 +6,8 @@ gh skill install -f --scope user --agent amp mattpocock/skills tdd
 gh skill install -f --scope user --agent amp mattpocock/skills domain-modeling
 
 gh skill install -f --scope user --agent amp vercel-labs/agent-browser agent-browser
+
+gh skill install -f --scope user --agent amp openclaw/openclaw tmux
 # gh skill install -f --scope project --agent amp jetbrains/go-modern-guidelines use-modern-go
 
 # %s/amp/pi/g
