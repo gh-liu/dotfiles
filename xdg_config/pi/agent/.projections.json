@@ -1,0 +1,8 @@
+{
+  "keybindings.json": {
+    "dispatch": ":lua vim.ui.open(\"https://pi.dev/docs/latest/keybindings\")"
+  },
+  "settings.json": {
+    "dispatch": ":lua vim.ui.open(\"https://pi.dev/docs/latest/settings\")"
+  }
+}
