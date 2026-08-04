@@ -4,6 +4,7 @@
   "steeringMode": "all",
   "followUpMode": "all",
   "packages": [
+    "npm:pi-subagents",
     "npm:pi-web-access@0.14.0"
   ],
   "theme": "dark"
