@@ -8,7 +8,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-type Activity = "ready" | "working";
+type Activity = "ready" | "thinking" | "working";
 
 const SPINNER_FRAMES = [
   "⠋",
@@ -161,11 +161,13 @@ function renderStatusLine(
       zone: "left",
       text: paint(
         theme,
-        activity === "ready" ? "blue" : "amber",
+        activity === "ready" ? "blue" : activity === "thinking" ? "purple" : "amber",
         theme.bold(
           activity === "ready"
             ? "● READY"
-            : `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} WORKING`,
+            : `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} ${
+              activity === "thinking" ? "THINKING" : "WORKING"
+            }`,
         ),
       ),
       dropRank: Number.POSITIVE_INFINITY,
@@ -358,6 +360,29 @@ export default function status(pi: ExtensionAPI) {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     activity = "working";
     startSpinner();
+    requestRender();
+  });
+
+  pi.on("message_update", (event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    if (
+      event.assistantMessageEvent.type === "thinking_start" ||
+      event.assistantMessageEvent.type === "thinking_delta"
+    ) {
+      activity = "thinking";
+      requestRender();
+    } else if (
+      event.assistantMessageEvent.type === "text_start" ||
+      event.assistantMessageEvent.type === "text_delta"
+    ) {
+      activity = "working";
+      requestRender();
+    }
+  });
+
+  pi.on("tool_execution_start", (_event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    activity = "working";
     requestRender();
   });
 
