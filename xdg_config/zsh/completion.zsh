@@ -31,6 +31,11 @@ update_zsh_completions() {
 	(($+commands[bun])) && SHELL=zsh bun completions >"$completion_dir/_bun"
 	(($+commands[kaf])) && kaf completion zsh >"$XDG_CONFIG_HOME"/zsh/zsh-completions/_kaf
 
+	if (($+commands[wt])); then
+		rm -f "$completion_dir/_wt"
+		wt config shell init zsh >"$completion_dir/wt.zsh"
+	fi
+
 	# (( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
 	# 	>"$XDG_CONFIG_HOME"/zsh/zsh-completions/_ollama
 
@@ -125,4 +130,9 @@ if ((_zcompdump_stale)); then
 else
 	compinit -C -d "$_zcompdump"
 fi
-unset _zcompdump _zcompdump_stale _completion_file
+unset _zcompdump _zcompdump_stale
+
+for _completion_file in "$XDG_CONFIG_HOME"/zsh/zsh-completions/[^_]*.zsh(N); do
+	source "$_completion_file"
+done
+unset _completion_file
