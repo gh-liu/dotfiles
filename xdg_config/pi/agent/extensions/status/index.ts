@@ -293,6 +293,7 @@ export default function status(pi: ExtensionAPI) {
   let spinnerFrame = 0;
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let settingsWatcher: FSWatcher | undefined;
+  const pendingToolCalls = new Set<string>();
 
   const stopSpinner = () => {
     if (spinnerTimer !== undefined) clearInterval(spinnerTimer);
@@ -324,6 +325,7 @@ export default function status(pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     stopSpinner();
     stopSettingsWatcher();
+    pendingToolCalls.clear();
     currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "working";
     snapshot = readSnapshot(pi, ctx);
@@ -370,42 +372,62 @@ export default function status(pi: ExtensionAPI) {
 
   pi.on("agent_start", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    pendingToolCalls.clear();
     activity = "working";
     startSpinner();
-    requestRender();
   });
 
   pi.on("message_update", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     if (
-      event.assistantMessageEvent.type === "thinking_start" ||
-      event.assistantMessageEvent.type === "thinking_delta"
+      event.assistantMessageEvent.type === "thinking_delta" ||
+      event.assistantMessageEvent.type === "thinking_end"
     ) {
       activity = "thinking";
-      requestRender();
     } else if (
       event.assistantMessageEvent.type === "text_start" ||
       event.assistantMessageEvent.type === "text_delta"
     ) {
       activity = "working";
-      requestRender();
     } else if (
       event.assistantMessageEvent.type === "toolcall_start" ||
-      event.assistantMessageEvent.type === "toolcall_delta"
+      event.assistantMessageEvent.type === "toolcall_delta" ||
+      event.assistantMessageEvent.type === "toolcall_end"
     ) {
+      if (event.assistantMessageEvent.type === "toolcall_end") {
+        pendingToolCalls.add(event.assistantMessageEvent.toolCall.id);
+      }
       activity = "tool_calling";
-      requestRender();
     }
   });
 
-  pi.on("tool_execution_start", (_event, ctx) => {
+  pi.on("message_end", (event, ctx) => {
+    if (
+      !isCurrentSession(ctx) ||
+      ctx.mode !== "tui" ||
+      event.message.role !== "assistant"
+    ) return;
+    if (event.message.stopReason === "error" || event.message.stopReason === "aborted") {
+      pendingToolCalls.clear();
+      activity = "working";
+    }
+  });
+
+  pi.on("tool_execution_start", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    pendingToolCalls.add(event.toolCallId);
     activity = "tool_calling";
-    requestRender();
+  });
+
+  pi.on("tool_execution_end", (event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    pendingToolCalls.delete(event.toolCallId);
+    if (pendingToolCalls.size === 0) activity = "working";
   });
 
   pi.on("agent_settled", (_event, ctx) => {
     if (!isCurrentSession(ctx) || !ctx.isIdle()) return;
+    pendingToolCalls.clear();
     activity = "ready";
     stopSpinner();
     refresh(ctx);
@@ -429,6 +451,7 @@ export default function status(pi: ExtensionAPI) {
     ctx.ui.setFooter(undefined);
     stopSpinner();
     stopSettingsWatcher();
+    pendingToolCalls.clear();
     currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
