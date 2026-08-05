@@ -4,9 +4,10 @@ import { codexAuth } from "./codex-auth.ts";
 
 export default function(pi: ExtensionAPI) {
   const [_codexAuth, codexAuthsynced] = codexAuth();
-  let _codexAuthsynced = false;
+  const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
+  let credentialsSynced = false;
   pi.on("session_start", async (_event, ctx) => {
-    if (_codexAuthsynced) return;
+    if (credentialsSynced) return;
 
     const credentials = (
       ctx.modelRegistry as unknown as {
@@ -24,11 +25,24 @@ export default function(pi: ExtensionAPI) {
     ).runtime?.credentials;
     if (!credentials?.modify) return;
 
-    if (!codexAuthsynced) return;
+    if (!codexAuthsynced && !deepseekApiKey) return;
 
-    await credentials.modify("openai-codex", async (current) => ({ ...current, ..._codexAuth }));
+    if (codexAuthsynced) {
+      await credentials.modify("openai-codex", async (current) => ({
+        ...current,
+        ..._codexAuth,
+      }));
+    }
+    if (deepseekApiKey) {
+      await credentials.modify("deepseek", async (current) => ({
+        ...current,
+        type: "api_key",
+        key: deepseekApiKey,
+      }));
+    }
+
     await ctx.modelRegistry.refresh();
-    _codexAuthsynced = true;
+    credentialsSynced = true;
   });
 
   pi.on("agent_end", async () => {
