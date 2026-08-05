@@ -57,6 +57,16 @@ const NORD = {
   muted: [82, 90, 108], // nord3.5
 } as const;
 
+const ACTIVITY_DISPLAY = {
+  ready: { color: "blue", label: "● READY", spinning: false },
+  thinking: { color: "purple", label: "THINKING", spinning: true },
+  tool_calling: { color: "cyan", label: "TOOL CALLING", spinning: true },
+  working: { color: "amber", label: "WORKING", spinning: true },
+} as const satisfies Record<
+  Activity,
+  { color: keyof typeof NORD; label: string; spinning: boolean }
+>;
+
 function paint(theme: Theme, color: keyof typeof NORD, text: string): string {
   if ("NO_COLOR" in process.env) {
     const fallback =
@@ -155,29 +165,18 @@ function renderStatusLine(
     }`;
   const metric = (label: string, value: string, color: keyof typeof NORD) =>
     `${paint(theme, "muted", label)} ${paint(theme, color, value)}`;
+  const activityDisplay = ACTIVITY_DISPLAY[activity];
   const items: StatusItem[] = [
     {
       id: "activity",
       zone: "left",
       text: paint(
         theme,
-        activity === "ready"
-          ? "blue"
-          : activity === "thinking"
-            ? "purple"
-            : activity === "tool_calling"
-              ? "cyan"
-              : "amber",
+        activityDisplay.color,
         theme.bold(
-          activity === "ready"
-            ? "● READY"
-            : `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} ${
-              activity === "thinking"
-                ? "THINKING"
-                : activity === "tool_calling"
-                  ? "TOOL CALLING"
-                  : "WORKING"
-            }`,
+          activityDisplay.spinning
+            ? `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} ${activityDisplay.label}`
+            : activityDisplay.label,
         ),
       ),
       dropRank: Number.POSITIVE_INFINITY,
