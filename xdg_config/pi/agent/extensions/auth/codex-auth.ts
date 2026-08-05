@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-export function codexAuth(): [Record<string, unknown>, boolean] {
+export function codexAuth(): [credential: Record<string, unknown>, available: boolean] {
   try {
     const source = JSON.parse(readFileSync(join(homedir(), ".codex", "auth.json"), "utf8"));
     const {
