@@ -8,7 +8,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-type Activity = "ready" | "thinking" | "working";
+type Activity = "ready" | "thinking" | "tool_calling" | "working";
 
 const SPINNER_FRAMES = [
   "⠋",
@@ -161,12 +161,22 @@ function renderStatusLine(
       zone: "left",
       text: paint(
         theme,
-        activity === "ready" ? "blue" : activity === "thinking" ? "purple" : "amber",
+        activity === "ready"
+          ? "blue"
+          : activity === "thinking"
+            ? "purple"
+            : activity === "tool_calling"
+              ? "cyan"
+              : "amber",
         theme.bold(
           activity === "ready"
             ? "● READY"
             : `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} ${
-              activity === "thinking" ? "THINKING" : "WORKING"
+              activity === "thinking"
+                ? "THINKING"
+                : activity === "tool_calling"
+                  ? "TOOL CALLING"
+                  : "WORKING"
             }`,
         ),
       ),
@@ -377,12 +387,18 @@ export default function status(pi: ExtensionAPI) {
     ) {
       activity = "working";
       requestRender();
+    } else if (
+      event.assistantMessageEvent.type === "toolcall_start" ||
+      event.assistantMessageEvent.type === "toolcall_delta"
+    ) {
+      activity = "tool_calling";
+      requestRender();
     }
   });
 
   pi.on("tool_execution_start", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    activity = "working";
+    activity = "tool_calling";
     requestRender();
   });
 
