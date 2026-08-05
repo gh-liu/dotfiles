@@ -33,7 +33,7 @@ update_zsh_completions() {
 
 	if (($+commands[wt])); then
 		rm -f "$completion_dir/_wt"
-		wt config shell init zsh >"$completion_dir/wt.zsh"
+		command wt config shell init zsh >"$completion_dir/wt.zsh"
 	fi
 
 	# (( $+commands[ollama] )) && curl https://gist.githubusercontent.com/obeone/9313811fd61a7cbb843e0001a4434c58/raw/_ollama.zsh \
