@@ -23,6 +23,9 @@ const SPINNER_FRAMES = [
   "⠏",
 ] as const;
 
+const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
+const TOOL_CALLING_FRAMES = ["›", "»", "≫", "»"] as const;
+
 interface StatusSnapshot {
   provider?: string;
   model?: string;
@@ -58,13 +61,13 @@ const NORD = {
 } as const;
 
 const ACTIVITY_DISPLAY = {
-  ready: { color: "blue", label: "● READY", spinning: false },
-  thinking: { color: "purple", label: "THINKING", spinning: true },
-  tool_calling: { color: "cyan", label: "TOOL CALLING", spinning: true },
-  working: { color: "amber", label: "WORKING", spinning: true },
+  ready: { color: "blue", label: "● READY", spinner: [] },
+  thinking: { color: "purple", label: "THINKING", spinner: THINKING_FRAMES },
+  tool_calling: { color: "cyan", label: "TOOL CALLING", spinner: TOOL_CALLING_FRAMES },
+  working: { color: "amber", label: "WORKING", spinner: SPINNER_FRAMES },
 } as const satisfies Record<
   Activity,
-  { color: keyof typeof NORD; label: string; spinning: boolean }
+  { color: keyof typeof NORD; label: string; spinner: readonly string[] }
 >;
 
 function paint(theme: Theme, color: keyof typeof NORD, text: string): string {
@@ -174,8 +177,8 @@ function renderStatusLine(
         theme,
         activityDisplay.color,
         theme.bold(
-          activityDisplay.spinning
-            ? `${SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]} ${activityDisplay.label}`
+          activityDisplay.spinner.length > 0
+            ? `${activityDisplay.spinner[spinnerFrame % activityDisplay.spinner.length]} ${activityDisplay.label}`
             : activityDisplay.label,
         ),
       ),
