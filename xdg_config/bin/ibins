@@ -412,6 +412,7 @@ install_bins() {
 		bun i -g redis-cli # rdcli?
 
 		bun i -g wrangler
+		# bun i -g clickhousectl
 	fi
 
 	# uv
@@ -423,6 +424,7 @@ install_bins() {
 		#
 		# 	uv tool install mitmproxy
 		uv tool install awscli
+		uv tool install clickhousectl
 	fi
 
 	# Cargo
