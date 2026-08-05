@@ -9,7 +9,12 @@ function! s:CtrlG()
   endif
   call insert(msg, printf("%s %s", oldmsg, mtime))
 
-  call insert(msg, printf("dir: %s", fnamemodify(getcwd(), ":~")))
+  "call insert(msg, printf("dir: %s", fnamemodify(getcwd(), ":~")))
+
+  "call insert(msg, printf("dir: %s", trim(execute("verbose pwd"))))
+
+  let m = matchlist(execute("verbose pwd"), '\[\(\w\+\)\]\_s*\([^\r\n]*\n\?\s*[^\r\n]*\)')
+  call insert(msg, printf("dir: %s [%s]", fnamemodify(trim(m[2]), ":~"), m[1]))
 
   if exists("*FugitiveHead")
     call insert(msg, printf("branch: %s", FugitiveHead(7)))
