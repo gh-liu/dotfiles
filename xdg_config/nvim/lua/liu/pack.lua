@@ -509,6 +509,7 @@ do -- lsp, diagnostic
 		augroup END
 	]])
 end
+vim.pack.add({ "https://github.com/gh-liu/fold_line.nvim" })
 
 --====== lsp
 vim.pack.add({ "https://github.com/neovim/nvim-lspconfig" })
