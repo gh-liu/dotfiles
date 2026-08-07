@@ -1,13 +1,6 @@
-import { describe, expect, test } from "bun:test";
-import type {
-  SessionEntry,
-  SessionTreeNode,
-} from "@earendil-works/pi-coding-agent";
-import {
-  buildBranchProjection,
-  buildLogicalTree,
-  rebuildArchiveState,
-} from "./index.ts";
+import { describe, expect, test } from "vitest";
+import type { SessionEntry, SessionTreeNode } from "@earendil-works/pi-coding-agent";
+import { buildBranchProjection, buildLogicalTree, rebuildArchiveState } from "./index.ts";
 
 let sequence = 0;
 
@@ -21,11 +14,7 @@ function entry(id: string, parentId: string | null): SessionEntry {
   };
 }
 
-function archiveEntry(
-  id: string,
-  parentId: string | null,
-  data: unknown,
-): SessionEntry {
+function archiveEntry(id: string, parentId: string | null, data: unknown): SessionEntry {
   return {
     type: "custom",
     customType: "branch-archive",
@@ -43,10 +32,7 @@ function node(value: SessionEntry, children: SessionTreeNode[] = []): SessionTre
 function conversationTree(metadataChildren: SessionTreeNode[] = []): SessionTreeNode[] {
   return [
     node(entry("B", null), [
-      node(entry("C", "B"), [
-        node(entry("D", "C")),
-        node(entry("F", "C")),
-      ]),
+      node(entry("C", "B"), [node(entry("D", "C")), node(entry("F", "C"))]),
       node(entry("E", "B"), metadataChildren),
     ]),
   ];
@@ -88,9 +74,12 @@ describe("logical conversation projection", () => {
 
     expect(projection.roots).toEqual(["C", "E"]);
     expect(projection.children.get("C")).toEqual(["D", "F"]);
-    expect([...projection.roots, ...[...projection.children.values()].flat()]).toEqual(
-      ["C", "E", "D", "F"],
-    );
+    expect([...projection.roots, ...[...projection.children.values()].flat()]).toEqual([
+      "C",
+      "E",
+      "D",
+      "F",
+    ]);
     expect(tree.nodes.size).toBe(5);
   });
 });

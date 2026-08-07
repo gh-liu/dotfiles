@@ -13,11 +13,7 @@ import {
 } from "node:fs";
 import { createHash, randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
-import type {
-  CustomEntry,
-  SessionEntry,
-  SessionHeader,
-} from "@earendil-works/pi-coding-agent";
+import type { CustomEntry, SessionEntry, SessionHeader } from "@earendil-works/pi-coding-agent";
 
 export interface ArchivedRecord {
   id: string;
@@ -101,19 +97,23 @@ function isObject(value: unknown): value is Record<string, unknown> {
 export function isPhysicalArchiveEvent(value: unknown): value is PhysicalArchiveEvent {
   if (!isObject(value) || value.op !== "archive" || value.version !== 1) return false;
   const originalEntryCount = value.originalEntryCount;
-  if (!(
-    typeof value.txId === "string" &&
-    typeof value.sessionId === "string" &&
-    typeof value.rootId === "string" &&
-    typeof value.resumeId === "string" &&
-    typeof value.archivedAt === "number" &&
-    typeof value.snapshotDigest === "string" &&
-    typeof value.retainedDigest === "string" &&
-    typeof originalEntryCount === "number" &&
-    Number.isInteger(originalEntryCount) &&
-    originalEntryCount >= 0 &&
-    Array.isArray(value.records) && value.records.length > 0
-  )) return false;
+  if (
+    !(
+      typeof value.txId === "string" &&
+      typeof value.sessionId === "string" &&
+      typeof value.rootId === "string" &&
+      typeof value.resumeId === "string" &&
+      typeof value.archivedAt === "number" &&
+      typeof value.snapshotDigest === "string" &&
+      typeof value.retainedDigest === "string" &&
+      typeof originalEntryCount === "number" &&
+      Number.isInteger(originalEntryCount) &&
+      originalEntryCount >= 0 &&
+      Array.isArray(value.records) &&
+      value.records.length > 0
+    )
+  )
+    return false;
 
   const ids = new Set<string>();
   const ordinals = new Set<number>();
@@ -131,14 +131,16 @@ export function isPhysicalArchiveEvent(value: unknown): value is PhysicalArchive
       typeof record.raw !== "string" ||
       typeof record.digest !== "string" ||
       digest(record.raw) !== record.digest
-    ) return false;
+    )
+      return false;
     let parsed: unknown;
     try {
       parsed = JSON.parse(record.raw);
     } catch {
       return false;
     }
-    if (!isObject(parsed) || parsed.id !== record.id || typeof parsed.type !== "string") return false;
+    if (!isObject(parsed) || parsed.id !== record.id || typeof parsed.type !== "string")
+      return false;
     ids.add(record.id);
     ordinals.add(ordinal);
   }
@@ -243,10 +245,7 @@ function serialize(headerRaw: string, records: string[]): Buffer {
   return Buffer.from(`${[headerRaw, ...records].join("\n")}\n`, "utf8");
 }
 
-export function collectPhysicalSubtreeIds(
-  snapshot: SessionSnapshot,
-  rootId: string,
-): Set<string> {
+export function collectPhysicalSubtreeIds(snapshot: SessionSnapshot, rootId: string): Set<string> {
   if (!snapshot.records.some((record) => record.entry.id === rootId)) {
     throw new Error(`Archive root ${rootId} is not present in the session file`);
   }
@@ -268,20 +267,13 @@ export function collectPhysicalSubtreeIds(
   return result;
 }
 
-function validateArchiveBoundary(
-  snapshot: SessionSnapshot,
-  extractedIds: Set<string>,
-): void {
+function validateArchiveBoundary(snapshot: SessionSnapshot, extractedIds: Set<string>): void {
   for (const { entry } of snapshot.records) {
     const extracted = extractedIds.has(entry.id);
     if (!extracted && entry.parentId && extractedIds.has(entry.parentId)) {
       throw new Error(`Retained entry ${entry.id} depends on archived parent ${entry.parentId}`);
     }
-    if (
-      !extracted &&
-      entry.type === "compaction" &&
-      extractedIds.has(entry.firstKeptEntryId)
-    ) {
+    if (!extracted && entry.type === "compaction" && extractedIds.has(entry.firstKeptEntryId)) {
       throw new Error(`Compaction ${entry.id} references the archived subtree`);
     }
     if (!extracted && entry.type === "branch_summary" && extractedIds.has(entry.fromId)) {
@@ -290,11 +282,7 @@ function validateArchiveBoundary(
     if (!extracted && entry.type === "label" && extractedIds.has(entry.targetId)) {
       throw new Error(`Retained label ${entry.id} targets the archived subtree`);
     }
-    if (
-      extracted &&
-      entry.type === "label" &&
-      !extractedIds.has(entry.targetId)
-    ) {
+    if (extracted && entry.type === "label" && !extractedIds.has(entry.targetId)) {
       throw new Error(`Archived label ${entry.id} targets a retained entry`);
     }
   }
@@ -315,13 +303,13 @@ export function buildArchiveTransaction(
   if (activeLeafId && !snapshot.records.some((record) => record.entry.id === activeLeafId)) {
     throw new Error(`Active leaf ${activeLeafId} is not present in the session file`);
   }
-  const eventParentId = activeLeafId && !extractedIds.has(activeLeafId)
-    ? activeLeafId
-    : root.parentId;
+  const eventParentId =
+    activeLeafId && !extractedIds.has(activeLeafId) ? activeLeafId : root.parentId;
   if (!extractedIds.has(resumeId)) {
     throw new Error(`Resume entry ${resumeId} is outside the archived subtree`);
   }
-  if (extractedIds.has(eventParentId)) throw new Error("Archive event parent is inside the subtree");
+  if (extractedIds.has(eventParentId))
+    throw new Error("Archive event parent is inside the subtree");
   validateArchiveBoundary(snapshot, extractedIds);
 
   const retained = snapshot.records.filter((record) => !extractedIds.has(record.entry.id));
@@ -370,18 +358,12 @@ export function getActivePhysicalArchive(
     if (isPhysicalArchiveEvent(entry.data)) {
       if (active) throw new Error("Multiple physical archives are not supported");
       active = { entry: entry as CustomEntry<PhysicalArchiveEvent>, event: entry.data };
-    } else if (
-      isObject(entry.data) &&
-      entry.data.op === "archive" &&
-      entry.data.version === 1
-    ) {
+    } else if (isObject(entry.data) && entry.data.op === "archive" && entry.data.version === 1) {
       throw new Error(`Physical archive event ${entry.id} is invalid or corrupted`);
     } else if (isPhysicalRestoreEvent(entry.data)) {
       if (!active) throw new Error(`Physical restore event ${entry.id} has no active archive`);
-      if (
-        entry.data.archiveTxId !== active.event.txId ||
-        entry.data.rootId !== active.event.rootId
-      ) throw new Error(`Physical restore event ${entry.id} does not match its archive`);
+      if (entry.data.archiveTxId !== active.event.txId || entry.data.rootId !== active.event.rootId)
+        throw new Error(`Physical restore event ${entry.id} does not match its archive`);
       active = undefined;
     } else if (
       isObject(entry.data) &&
@@ -427,21 +409,18 @@ export function buildRestoreTransaction(
   snapshot: SessionSnapshot,
   active: ActivePhysicalArchive,
 ): SessionTransaction {
-  const snapshotActive = getActivePhysicalArchive(
-    snapshot.records.map((record) => record.entry),
-  );
+  const snapshotActive = getActivePhysicalArchive(snapshot.records.map((record) => record.entry));
   if (
     !snapshotActive ||
     snapshotActive.entry.id !== active.entry.id ||
     snapshotActive.event.txId !== active.event.txId
-  ) throw new Error("Active archive changed while the restore transaction was being prepared");
+  )
+    throw new Error("Active archive changed while the restore transaction was being prepared");
   active = snapshotActive;
   if (active.event.sessionId !== snapshot.header.id) {
     throw new Error("Archive payload belongs to a different session");
   }
-  const archiveIndex = snapshot.records.findIndex(
-    (record) => record.entry.id === active.entry.id,
-  );
+  const archiveIndex = snapshot.records.findIndex((record) => record.entry.id === active.entry.id);
   if (archiveIndex < 0) throw new Error("Archive event is missing from the session");
 
   const liveIds = new Set(snapshot.records.map((record) => record.entry.id));
@@ -454,10 +433,7 @@ export function buildRestoreTransaction(
   if (digest(serialize(snapshot.headerRaw, original)) !== active.event.snapshotDigest) {
     throw new Error("Archive payload cannot reproduce the original session snapshot");
   }
-  const ids = new Set([
-    ...liveIds,
-    ...active.event.records.map((record) => record.id),
-  ]);
+  const ids = new Set([...liveIds, ...active.event.records.map((record) => record.id)]);
   const restore: CustomEntry<PhysicalRestoreEvent> = {
     type: "custom",
     customType: "branch-archive",
@@ -513,7 +489,11 @@ export function commitSessionTransaction(
   let backupCreated = false;
   let targetReplaced = false;
   try {
-    const fd = openSync(tempPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, snapshot.mode & 0o777);
+    const fd = openSync(
+      tempPath,
+      constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY,
+      snapshot.mode & 0o777,
+    );
     tempCreated = true;
     try {
       writeFileSync(fd, bytes);
@@ -566,7 +546,9 @@ export function rollbackSessionTransaction(
   targetDigest: string,
 ): void {
   if (readSessionSnapshot(snapshot.path).digest !== targetDigest) {
-    throw new Error(`Session reload was cancelled and the changed file cannot be rolled back safely; backup: ${backupPath}`);
+    throw new Error(
+      `Session reload was cancelled and the changed file cannot be rolled back safely; backup: ${backupPath}`,
+    );
   }
   if (digest(readFileSync(backupPath)) !== snapshot.digest) {
     throw new Error(`Session transaction backup is invalid: ${backupPath}`);

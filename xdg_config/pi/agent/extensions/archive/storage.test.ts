@@ -1,13 +1,8 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import {
-  existsSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { afterEach, describe, expect, test } from "vitest";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { join } from "node:path";
+
 import {
   SessionManager,
   type SessionEntry,
@@ -48,7 +43,10 @@ function info(id: string, parentId: string | null): SessionEntry {
   };
 }
 
-function writeSyntheticSession(path: string): void {
+function writeSyntheticSession(
+  path: string,
+  entries: SessionEntry[] = [info("A", null), info("B", "A"), info("C", "A"), info("D", "B")],
+): void {
   const lines = [
     JSON.stringify({
       type: "session",
@@ -57,10 +55,7 @@ function writeSyntheticSession(path: string): void {
       timestamp: "2026-08-07T00:00:00.000Z",
       cwd: "/tmp",
     }),
-    JSON.stringify(info("A", null)),
-    JSON.stringify(info("B", "A")),
-    JSON.stringify(info("C", "A")),
-    JSON.stringify(info("D", "B")),
+    ...entries.map((entry) => JSON.stringify(entry)),
   ];
   writeFileSync(path, `${lines.join("\n")}\n`);
 }
@@ -99,9 +94,7 @@ describe("physical archive transactions", () => {
     expect(archivedIds.has("C")).toBe(true);
 
     const archivedSnapshot = readSessionSnapshot(path);
-    const active = getActivePhysicalArchive(
-      archivedSnapshot.records.map((record) => record.entry),
-    );
+    const active = getActivePhysicalArchive(archivedSnapshot.records.map((record) => record.entry));
     expect(active?.event.rootId).toBe("B");
     expect(active?.entry.parentId).toBe("C");
     expect(active?.event.records.map((record) => record.id)).toEqual(["B", "D"]);
@@ -120,7 +113,9 @@ describe("physical archive transactions", () => {
     expect(
       restoredSnapshot.records.slice(0, original.records.length).map((record) => record.raw),
     ).toEqual(original.records.map((record) => record.raw));
-    expect(getActivePhysicalArchive(restoredSnapshot.records.map((record) => record.entry))).toBeUndefined();
+    expect(
+      getActivePhysicalArchive(restoredSnapshot.records.map((record) => record.entry)),
+    ).toBeUndefined();
     const restoredIds = treeIds(SessionManager.open(path).getTree());
     expect(restoredIds.has("B")).toBe(true);
     expect(restoredIds.has("D")).toBe(true);
@@ -217,16 +212,29 @@ describe("physical archive transactions", () => {
   });
 });
 
-describe("real session copies", () => {
-  const sources = [
-    "/home/liu/tools/dotfiles/xdg_config/pi/agent/sessions/--home-liu-work--/2026-08-06T01-31-54-013Z_019fd4b2-c71d-7a24-9748-bc44dd9f20e2.jsonl",
-    "/home/liu/tools/dotfiles/xdg_config/pi/agent/sessions/--home-liu-work--/2026-08-07T02-55-27-322Z_019fda25-a25a-73c9-9afb-27fc792f847e.jsonl",
+describe("mock session copies", () => {
+  const sessions = [
+    {
+      name: "root-branch.jsonl",
+      entries: [info("A", null), info("B", "A"), info("C", "A"), info("D", "B")],
+    },
+    {
+      name: "nested-branch.jsonl",
+      entries: [
+        info("A", null),
+        info("B", "A"),
+        info("C", "B"),
+        info("D", "B"),
+        info("E", "C"),
+        info("F", "D"),
+      ],
+    },
   ];
 
-  for (const source of sources) {
-    test(`round-trips original records from ${basename(source)}`, () => {
-      const path = temporarySession(basename(source));
-      writeFileSync(path, readFileSync(source));
+  for (const session of sessions) {
+    test(`round-trips original records from ${session.name}`, () => {
+      const path = temporarySession(session.name);
+      writeSyntheticSession(path, session.entries);
       const original = readSessionSnapshot(path);
       const manager = SessionManager.open(path);
       const branchParent = [...manager.getTree()]
@@ -239,12 +247,7 @@ describe("real session copies", () => {
       let resume = root;
       while (resume.children.length > 0) resume = resume.children.at(-1)!;
 
-      const archived = commitArchive(
-        path,
-        root.entry.id,
-        resume.entry.id,
-        manager.getLeafId()!,
-      );
+      const archived = commitArchive(path, root.entry.id, resume.entry.id, manager.getLeafId()!);
       const archivedEntries = readSessionSnapshot(path);
       const active = getActivePhysicalArchive(
         archivedEntries.records.map((record) => record.entry),

@@ -8,12 +8,7 @@ import {
   type SessionTreeNode,
   type Theme,
 } from "@earendil-works/pi-coding-agent";
-import {
-  type Component,
-  matchesKey,
-  truncateToWidth,
-  visibleWidth,
-} from "@earendil-works/pi-tui";
+import { type Component, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
   buildArchiveTransaction,
   buildRestoreTransaction,
@@ -31,18 +26,18 @@ const ARCHIVE_ENTRY_TYPE = "branch-archive";
 
 type ArchiveEvent =
   | {
-      op: "archive";
-      version?: number;
-      rootId: string;
-      resumeId: string;
-      archivedAt: number;
-    }
+    op: "archive";
+    version?: number;
+    rootId: string;
+    resumeId: string;
+    archivedAt: number;
+  }
   | {
-      op: "restore";
-      version?: number;
-      rootId: string;
-      restoredAt: number;
-    };
+    op: "restore";
+    version?: number;
+    rootId: string;
+    restoredAt: number;
+  };
 
 interface ArchivedBranch {
   rootId: string;
@@ -311,9 +306,7 @@ function findContainingArchivedBranch(
   tree: LogicalTree,
   archived: Map<string, ArchivedBranch>,
 ): ArchivedBranch | undefined {
-  return [...archived.values()].find((branch) =>
-    isDescendant(tree, branch.rootId, nodeId),
-  );
+  return [...archived.values()].find((branch) => isDescendant(tree, branch.rootId, nodeId));
 }
 
 function preferredResumeId(tree: LogicalTree, rootId: string): string {
@@ -335,10 +328,7 @@ function preferredResumeId(tree: LogicalTree, rootId: string): string {
   return preferred?.entry.id ?? rootId;
 }
 
-async function toggleArchive(
-  rootId: string,
-  ctx: ExtensionCommandContext,
-): Promise<boolean> {
+async function toggleArchive(rootId: string, ctx: ExtensionCommandContext): Promise<boolean> {
   if (!ctx.isIdle() || ctx.hasPendingMessages()) {
     ctx.ui.notify("Wait for the current response and queued messages to finish", "warning");
     return false;
@@ -355,26 +345,30 @@ async function toggleArchive(
   try {
     const snapshot = readSessionSnapshot(sessionPath);
     const transaction = existing
-      ? buildRestoreTransaction(snapshot, physicalArchive ?? (() => {
+      ? buildRestoreTransaction(
+        snapshot,
+        physicalArchive ??
+        (() => {
           throw new Error("Archived branch payload is unavailable");
-        })())
+        })(),
+      )
       : (() => {
-          if (physicalArchive) {
-            throw new Error("Restore the archived branch before archiving another branch");
-          }
-          if (!isBranchRoot(tree, rootId)) {
-            throw new Error("Only branch roots can be archived");
-          }
-          if (!tree.nodes.get(rootId)?.parentId) {
-            throw new Error("The session root cannot be archived");
-          }
-          return buildArchiveTransaction(
-            snapshot,
-            rootId,
-            preferredResumeId(tree, rootId),
-            ctx.sessionManager.getLeafId(),
-          );
-        })();
+        if (physicalArchive) {
+          throw new Error("Restore the archived branch before archiving another branch");
+        }
+        if (!isBranchRoot(tree, rootId)) {
+          throw new Error("Only branch roots can be archived");
+        }
+        if (!tree.nodes.get(rootId)?.parentId) {
+          throw new Error("The session root cannot be archived");
+        }
+        return buildArchiveTransaction(
+          snapshot,
+          rootId,
+          preferredResumeId(tree, rootId),
+          ctx.sessionManager.getLeafId(),
+        );
+      })();
 
     const committed = commitSessionTransaction(snapshot, transaction.bytes);
     let verified = false;
@@ -402,7 +396,10 @@ async function toggleArchive(
           ctx.ui.notify("Session switch was cancelled; archive transaction rolled back", "warning");
           return false;
         } catch (rollbackError) {
-          ctx.ui.notify(rollbackError instanceof Error ? rollbackError.message : String(rollbackError), "error");
+          ctx.ui.notify(
+            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+            "error",
+          );
           ctx.shutdown();
           return true;
         }
@@ -413,7 +410,10 @@ async function toggleArchive(
       try {
         rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
       } catch (rollbackError) {
-        ctx.ui.notify(rollbackError instanceof Error ? rollbackError.message : String(rollbackError), "error");
+        ctx.ui.notify(
+          rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          "error",
+        );
         ctx.shutdown();
         return true;
       }
@@ -429,7 +429,10 @@ async function toggleArchive(
           error.targetDigest,
         );
       } catch (rollbackError) {
-        ctx.ui.notify(rollbackError instanceof Error ? rollbackError.message : String(rollbackError), "error");
+        ctx.ui.notify(
+          rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          "error",
+        );
         ctx.shutdown();
         return true;
       }
@@ -439,10 +442,7 @@ async function toggleArchive(
   }
 }
 
-async function restoreAndNavigate(
-  nodeId: string,
-  ctx: ExtensionCommandContext,
-): Promise<void> {
+async function restoreAndNavigate(nodeId: string, ctx: ExtensionCommandContext): Promise<void> {
   const { tree, archived, physicalArchive } = readState(ctx);
   const branch = archived.get(nodeId) ?? findContainingArchivedBranch(nodeId, tree, archived);
   if (!branch) {
@@ -451,7 +451,9 @@ async function restoreAndNavigate(
   }
   if (!physicalArchive || !ctx.isIdle() || ctx.hasPendingMessages()) {
     ctx.ui.notify(
-      physicalArchive ? "Wait for the current response and queued messages to finish" : "Archived branch payload is unavailable",
+      physicalArchive
+        ? "Wait for the current response and queued messages to finish"
+        : "Archived branch payload is unavailable",
       "warning",
     );
     return;
@@ -463,11 +465,11 @@ async function restoreAndNavigate(
   }
 
   const targetId =
-      nodeId === branch.rootId &&
+    nodeId === branch.rootId &&
       tree.nodes.has(branch.resumeId) &&
       isDescendant(tree, branch.rootId, branch.resumeId)
-        ? branch.resumeId
-        : nodeId;
+      ? branch.resumeId
+      : nodeId;
   try {
     const snapshot = readSessionSnapshot(sessionPath);
     const transaction = buildRestoreTransaction(snapshot, physicalArchive);
@@ -485,7 +487,8 @@ async function restoreAndNavigate(
               readSessionSnapshot(sessionPath).digest !== committed.targetDigest ||
               getActivePhysicalArchive(newCtx.sessionManager.getEntries()) ||
               !restorePersisted
-            ) throw new Error("Session reload did not verify the restore transaction");
+            )
+              throw new Error("Session reload did not verify the restore transaction");
             removeTransactionBackup(committed.backupPath);
             const result = await newCtx.navigateTree(targetId, { summarize: false });
             if (result.cancelled) {
@@ -501,7 +504,10 @@ async function restoreAndNavigate(
           rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
           ctx.ui.notify("Session switch was cancelled; restore transaction rolled back", "warning");
         } catch (rollbackError) {
-          ctx.ui.notify(rollbackError instanceof Error ? rollbackError.message : String(rollbackError), "error");
+          ctx.ui.notify(
+            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+            "error",
+          );
           ctx.shutdown();
         }
       }
@@ -510,7 +516,10 @@ async function restoreAndNavigate(
         try {
           rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
         } catch (rollbackError) {
-          ctx.ui.notify(rollbackError instanceof Error ? rollbackError.message : String(rollbackError), "error");
+          ctx.ui.notify(
+            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+            "error",
+          );
           ctx.shutdown();
           return;
         }
@@ -527,7 +536,10 @@ async function restoreAndNavigate(
           error.targetDigest,
         );
       } catch (rollbackError) {
-        ctx.ui.notify(rollbackError instanceof Error ? rollbackError.message : String(rollbackError), "error");
+        ctx.ui.notify(
+          rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
+          "error",
+        );
         ctx.shutdown();
         return;
       }
@@ -571,7 +583,9 @@ function nodeText(node: LogicalNode): string {
     case "message": {
       const message = entry.message;
       if (message.role === "user" || message.role === "assistant") {
-        const text = extractText(message.content).replace(/[\n\t]+/g, " ").trim();
+        const text = extractText(message.content)
+          .replace(/[\n\t]+/g, " ")
+          .trim();
         return `${message.role}: ${text || "(no content)"}`;
       }
       if (message.role === "toolResult") return `[${message.toolName ?? "tool"}]`;
@@ -579,7 +593,9 @@ function nodeText(node: LogicalNode): string {
       return `[${message.role}]`;
     }
     case "custom_message":
-      return `[${entry.customType}] ${extractText(entry.content).replace(/[\n\t]+/g, " ").trim()}`;
+      return `[${entry.customType}] ${extractText(entry.content)
+        .replace(/[\n\t]+/g, " ")
+        .trim()}`;
     case "compaction":
       return `[compaction: ${Math.round(entry.tokensBefore / 1000)}k tokens]`;
     case "branch_summary":
@@ -616,7 +632,7 @@ class ArchiveTreeComponent implements Component {
     this.ensureVisibleSelection();
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   private rows(): TreeRow[] {
     const rows: TreeRow[] = [];
@@ -634,13 +650,7 @@ class ArchiveTreeComponent implements Component {
       if (this.archived.has(id) && this.collapsed.has(id)) return;
       const children = projection.children.get(id) ?? [];
       children.forEach((childId, index) =>
-        visit(
-          childId,
-          depth + 1,
-          index === children.length - 1,
-          [...ancestorLast, isLast],
-          true,
-        ),
+        visit(childId, depth + 1, index === children.length - 1, [...ancestorLast, isLast], true),
       );
     };
     projection.roots.forEach((rootId, index) =>
@@ -737,10 +747,7 @@ class ArchiveTreeComponent implements Component {
       ),
     );
     const end = Math.min(rows.length, start + this.maxVisibleRows);
-    const lines = [
-      this.theme.fg("accent", this.theme.bold("  Archive Branches")),
-      "",
-    ];
+    const lines = [this.theme.fg("accent", this.theme.bold("  Archive Branches")), ""];
 
     for (let index = start; index < end; index++) {
       const row = rows[index];
@@ -750,15 +757,12 @@ class ArchiveTreeComponent implements Component {
         row.depth === 0
           ? ""
           : `${row.ancestorLast
-              .slice(1)
-              .map((last) => (last ? "   " : "│  "))
-              .join("")}${row.showConnector ? (row.isLast ? "└─ " : "├─ ") : "   "}`;
+            .slice(1)
+            .map((last) => (last ? "   " : "│  "))
+            .join("")}${row.showConnector ? (row.isLast ? "└─ " : "├─ ") : "   "}`;
       const exactArchive = this.archived.has(id);
       const containingArchive = findContainingArchivedBranch(id, this.tree, this.archived);
-      const hidden =
-        exactArchive && this.collapsed.has(id)
-          ? descendantCount(this.tree, id)
-          : 0;
+      const hidden = exactArchive && this.collapsed.has(id) ? descendantCount(this.tree, id) : 0;
       const statuses = [
         exactArchive ? "archived" : undefined,
         hidden > 0 ? `${hidden} hidden` : undefined,
@@ -797,7 +801,8 @@ class ArchiveTreeComponent implements Component {
         "",
       ),
     );
-    if (this.message) lines.push(truncateToWidth(this.theme.fg("warning", `  ${this.message}`), width, ""));
+    if (this.message)
+      lines.push(truncateToWidth(this.theme.fg("warning", `  ${this.message}`), width, ""));
     return lines.map((line) =>
       visibleWidth(line) > width ? truncateToWidth(line, width, "") : line,
     );
@@ -811,18 +816,19 @@ async function showArchiveTree(
   selectedId: string | undefined,
   ctx: ExtensionCommandContext,
 ): Promise<ArchiveAction | undefined> {
-  return ctx.ui.custom<ArchiveAction | undefined>((tui, theme, keybindings, done) =>
-    new ArchiveTreeComponent(
-      tree,
-      archived,
-      collapsed,
-      selectedId,
-      Math.max(5, Math.floor(tui.terminal.rows / 2)),
-      theme,
-      keybindings,
-      () => tui.requestRender(),
-      done,
-    ),
+  return ctx.ui.custom<ArchiveAction | undefined>(
+    (tui, theme, keybindings, done) =>
+      new ArchiveTreeComponent(
+        tree,
+        archived,
+        collapsed,
+        selectedId,
+        Math.max(5, Math.floor(tui.terminal.rows / 2)),
+        theme,
+        keybindings,
+        () => tui.requestRender(),
+        done,
+      ),
   );
 }
 
@@ -849,13 +855,7 @@ export default function archiveExtension(pi: ExtensionAPI): void {
         const state = readState(ctx);
         const tree = state.tree;
         archived = state.archived;
-        const action = await showArchiveTree(
-          tree,
-          archived,
-          collapsed,
-          selectedId,
-          ctx,
-        );
+        const action = await showArchiveTree(tree, archived, collapsed, selectedId, ctx);
         if (!action) return;
         selectedId = action.nodeId;
 
