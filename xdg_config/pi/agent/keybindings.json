@@ -16,6 +16,19 @@
     "ctrl+n"
   ],
   "app.models.toggleProvider": [],
+  "app.tree.foldOrUp": [
+    "ctrl+left"
+  ],
+  "app.tree.foldOrDown": [
+    "ctrl+right"
+  ],
+  "app.session.new": [
+    "ctrl+s"
+  ],
+  "app.session.resume": [
+    "ctrl+r"
+  ],
+  "app.session.tree": [],
   "app.session.toggleNamedFilter": [
     "ctrl+l"
   ],
