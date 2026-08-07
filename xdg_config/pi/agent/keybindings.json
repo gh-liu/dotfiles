@@ -28,7 +28,10 @@
   "app.session.resume": [
     "ctrl+r"
   ],
-  "app.session.tree": [],
+  "app.session.tree": [
+    "ctrl+up",
+    "ctrl+down"
+  ],
   "app.session.toggleNamedFilter": [
     "ctrl+l"
   ],
