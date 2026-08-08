@@ -33,6 +33,7 @@ export interface PhysicalArchiveEvent {
   snapshotDigest: string;
   retainedDigest: string;
   originalEntryCount: number;
+  retainedIds?: string[];
   records: ArchivedRecord[];
 }
 
@@ -144,6 +145,18 @@ export function isPhysicalArchiveEvent(value: unknown): value is PhysicalArchive
     ids.add(record.id);
     ordinals.add(ordinal);
   }
+  if (value.retainedIds !== undefined) {
+    if (
+      !Array.isArray(value.retainedIds) ||
+      value.retainedIds.length !== originalEntryCount - value.records.length
+    )
+      return false;
+    const retainedIds = new Set<string>();
+    for (const id of value.retainedIds) {
+      if (typeof id !== "string" || ids.has(id) || retainedIds.has(id)) return false;
+      retainedIds.add(id);
+    }
+  }
   return ids.has(value.rootId as string) && ids.has(value.resumeId as string);
 }
 
@@ -245,6 +258,46 @@ function serialize(headerRaw: string, records: string[]): Buffer {
   return Buffer.from(`${[headerRaw, ...records].join("\n")}\n`, "utf8");
 }
 
+function withoutArchiveMetadata(records: RawRecord[]): string[] {
+  const byId = new Map(records.map((record) => [record.entry.id, record.entry]));
+  const archiveIds = new Set(
+    records
+      .filter(
+        ({ entry }) => entry.type === "custom" && entry.customType === "branch-archive",
+      )
+      .map(({ entry }) => entry.id),
+  );
+  const retainedParent = (parentId: string | null): string | null => {
+    const visited = new Set<string>();
+    while (parentId && archiveIds.has(parentId)) {
+      if (visited.has(parentId)) throw new Error(`Archive metadata cycle at ${parentId}`);
+      visited.add(parentId);
+      parentId = byId.get(parentId)?.parentId ?? null;
+    }
+    return parentId;
+  };
+
+  return records
+    .filter(({ entry }) => !archiveIds.has(entry.id))
+    .map(({ raw, entry }) => {
+      const parentId = retainedParent(entry.parentId);
+      return parentId === entry.parentId ? raw : JSON.stringify({ ...entry, parentId });
+    });
+}
+
+function retainedLeafId(snapshot: SessionSnapshot, leafId: string | null): string | null {
+  if (!leafId) return null;
+  const byId = new Map(snapshot.records.map((record) => [record.entry.id, record.entry]));
+  let entry = byId.get(leafId);
+  const visited = new Set<string>();
+  while (entry?.type === "custom" && entry.customType === "branch-archive") {
+    if (visited.has(entry.id)) throw new Error(`Archive metadata cycle at ${entry.id}`);
+    visited.add(entry.id);
+    entry = entry.parentId ? byId.get(entry.parentId) : undefined;
+  }
+  return entry?.id ?? null;
+}
+
 export function collectPhysicalSubtreeIds(snapshot: SessionSnapshot, rootId: string): Set<string> {
   if (!snapshot.records.some((record) => record.entry.id === rootId)) {
     throw new Error(`Archive root ${rootId} is not present in the session file`);
@@ -297,14 +350,20 @@ export function buildArchiveTransaction(
   if (getActivePhysicalArchive(snapshot.records.map((record) => record.entry))) {
     throw new Error("Restore the active physical archive before creating another one");
   }
+  activeLeafId = retainedLeafId(snapshot, activeLeafId);
+  const normalizedBytes = serialize(snapshot.headerRaw, withoutArchiveMetadata(snapshot.records));
+  const normalized = parseSnapshot(snapshot.path, normalizedBytes);
+  snapshot = normalized;
   const extractedIds = collectPhysicalSubtreeIds(snapshot, rootId);
   const root = snapshot.records.find((record) => record.entry.id === rootId)?.entry;
   if (!root?.parentId) throw new Error("The session root cannot be archived");
   if (activeLeafId && !snapshot.records.some((record) => record.entry.id === activeLeafId)) {
     throw new Error(`Active leaf ${activeLeafId} is not present in the session file`);
   }
-  const eventParentId =
-    activeLeafId && !extractedIds.has(activeLeafId) ? activeLeafId : root.parentId;
+  if (activeLeafId && extractedIds.has(activeLeafId)) {
+    throw new Error("The active branch cannot be archived");
+  }
+  const eventParentId = root.parentId;
   if (!extractedIds.has(resumeId)) {
     throw new Error(`Resume entry ${resumeId} is outside the archived subtree`);
   }
@@ -321,7 +380,7 @@ export function buildArchiveTransaction(
     customType: "branch-archive",
     id: uniqueId(ids),
     parentId: eventParentId,
-    timestamp: new Date().toISOString(),
+    timestamp: root.timestamp,
     data: {
       op: "archive",
       version: 1,
@@ -333,6 +392,7 @@ export function buildArchiveTransaction(
       snapshotDigest: snapshot.digest,
       retainedDigest: digest(retained.map((record) => record.raw).join("\n")),
       originalEntryCount: snapshot.records.length,
+      retainedIds: retained.map((record) => record.entry.id),
       records: extracted.map((record) => ({
         id: record.entry.id,
         ordinal: record.ordinal,
@@ -341,9 +401,13 @@ export function buildArchiveTransaction(
       })),
     },
   };
+  const activeLeaf = retained.find((record) => record.entry.id === activeLeafId);
   const bytes = serialize(snapshot.headerRaw, [
-    ...retained.map((record) => record.raw),
+    ...retained
+      .filter((record) => record.entry.id !== activeLeafId)
+      .map((record) => record.raw),
     JSON.stringify(event),
+    ...(activeLeaf ? [activeLeaf.raw] : []),
   ]);
   parseSnapshot(snapshot.path, bytes);
   return { bytes, event };
@@ -405,6 +469,33 @@ function restoreOriginalRecords(
   return slots as string[];
 }
 
+function partitionLiveArchiveRecords(
+  records: RawRecord[],
+  active: ActivePhysicalArchive,
+): { retained: RawRecord[]; suffix: RawRecord[] } {
+  if (!active.event.retainedIds) {
+    const archiveIndex = records.findIndex((record) => record.entry.id === active.entry.id);
+    if (archiveIndex < 0) throw new Error("Archive event is missing from the session");
+    return {
+      retained: records.slice(0, archiveIndex),
+      suffix: records.slice(archiveIndex + 1),
+    };
+  }
+
+  const byId = new Map(records.map((record) => [record.entry.id, record]));
+  const retained = active.event.retainedIds.map((id) => byId.get(id));
+  if (retained.some((record) => !record)) {
+    throw new Error("Retained session entries changed since archive");
+  }
+  const retainedIds = new Set(active.event.retainedIds);
+  return {
+    retained: retained as RawRecord[],
+    suffix: records.filter(
+      (record) => record.entry.id !== active.entry.id && !retainedIds.has(record.entry.id),
+    ),
+  };
+}
+
 export function buildRestoreTransaction(
   snapshot: SessionSnapshot,
   active: ActivePhysicalArchive,
@@ -420,15 +511,11 @@ export function buildRestoreTransaction(
   if (active.event.sessionId !== snapshot.header.id) {
     throw new Error("Archive payload belongs to a different session");
   }
-  const archiveIndex = snapshot.records.findIndex((record) => record.entry.id === active.entry.id);
-  if (archiveIndex < 0) throw new Error("Archive event is missing from the session");
-
   const liveIds = new Set(snapshot.records.map((record) => record.entry.id));
   if (active.event.records.some((record) => liveIds.has(record.id))) {
     throw new Error("Archived entries are already present in the live session");
   }
-  const retained = snapshot.records.slice(0, archiveIndex);
-  const suffix = snapshot.records.slice(archiveIndex);
+  const { retained, suffix } = partitionLiveArchiveRecords(snapshot.records, active);
   const original = restoreOriginalRecords(retained, active.event);
   if (digest(serialize(snapshot.headerRaw, original)) !== active.event.snapshotDigest) {
     throw new Error("Archive payload cannot reproduce the original session snapshot");
@@ -449,11 +536,14 @@ export function buildRestoreTransaction(
       restoredAt: Date.now(),
     },
   };
-  const bytes = serialize(snapshot.headerRaw, [
+  const restoredRecords = [
     ...original,
+    JSON.stringify(active.entry),
     ...suffix.map((record) => record.raw),
-    JSON.stringify(restore),
-  ]);
+  ].map(
+    (raw, ordinal) => ({ raw, entry: JSON.parse(raw) as SessionEntry, ordinal }),
+  );
+  const bytes = serialize(snapshot.headerRaw, withoutArchiveMetadata(restoredRecords));
   parseSnapshot(snapshot.path, bytes);
   return { bytes, event: restore };
 }
@@ -462,19 +552,18 @@ export function materializeArchivedEntries(
   entries: SessionEntry[],
   active: ActivePhysicalArchive,
 ): SessionEntry[] {
-  const archiveIndex = entries.findIndex((entry) => entry.id === active.entry.id);
-  if (archiveIndex < 0) throw new Error("Archive event is missing from live entries");
-  const retained = entries.slice(0, archiveIndex).map((entry, ordinal) => ({
+  const records = entries.map((entry, ordinal) => ({
     raw: JSON.stringify(entry),
     entry,
     ordinal,
   }));
+  const { retained, suffix } = partitionLiveArchiveRecords(records, active);
   // SessionManager exposes parsed entries rather than their original JSONL
   // bytes. Ordinals still reconstruct the display tree exactly; byte-level
   // digest verification remains mandatory for the disk restore transaction.
   const originalRaw = restoreOriginalRecords(retained, active.event, false);
   const original = originalRaw.map((raw) => JSON.parse(raw) as SessionEntry);
-  return [...original, ...entries.slice(archiveIndex)];
+  return [...original, active.entry, ...suffix.map((record) => record.entry)];
 }
 
 export function commitSessionTransaction(

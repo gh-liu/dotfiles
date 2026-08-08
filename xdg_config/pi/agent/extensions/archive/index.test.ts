@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import type { SessionEntry, SessionTreeNode } from "@earendil-works/pi-coding-agent";
-import { buildBranchProjection, buildLogicalTree, rebuildArchiveState } from "./index.ts";
+import {
+  buildBranchProjection,
+  buildLogicalTree,
+  canArchiveBranch,
+  rebuildArchiveState,
+  shouldBlockArchiveNavigation,
+} from "./index.ts";
 
 let sequence = 0;
 
@@ -82,9 +88,54 @@ describe("logical conversation projection", () => {
     ]);
     expect(tree.nodes.size).toBe(5);
   });
+
+  test("does not allow archiving the current branch", () => {
+    const tree = buildLogicalTree(conversationTree(), "F");
+
+    expect(canArchiveBranch(tree, "F")).toBe(false);
+    expect(canArchiveBranch(tree, "D")).toBe(true);
+    expect(canArchiveBranch(tree, "B")).toBe(false);
+  });
+
+  test("does not allow archiving an ancestor of the current nested branch", () => {
+    const tree = buildLogicalTree([
+      node(entry("A", null), [
+        node(entry("B", "A"), [
+          node(entry("C", "B"), [node(entry("E", "C")), node(entry("F", "C"))]),
+          node(entry("D", "B")),
+        ]),
+        node(entry("G", "A")),
+      ]),
+    ], "E");
+
+    expect(canArchiveBranch(tree, "B")).toBe(false);
+    expect(canArchiveBranch(tree, "C")).toBe(false);
+    expect(canArchiveBranch(tree, "D")).toBe(true);
+  });
 });
 
 describe("archive event replay", () => {
+  test("blocks native tree navigation only for the active archive entry", () => {
+    const active = archiveEntry("active", "B", {
+      op: "archive",
+      version: 1,
+      rootId: "C",
+      resumeId: "D",
+      archivedAt: 1,
+    });
+    const historical = archiveEntry("historical", "B", {
+      op: "restore",
+      version: 1,
+      rootId: "C",
+      restoredAt: 2,
+    });
+
+    expect(shouldBlockArchiveNavigation(active, active.id)).toBe(true);
+    expect(shouldBlockArchiveNavigation(historical, active.id)).toBe(false);
+    expect(shouldBlockArchiveNavigation(entry("message", "B"), active.id)).toBe(false);
+    expect(shouldBlockArchiveNavigation(undefined, active.id)).toBe(false);
+  });
+
   test("replays archive and restore events in append order", () => {
     const tree = buildLogicalTree(conversationTree(), "E");
     const entries = [

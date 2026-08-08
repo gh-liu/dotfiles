@@ -96,8 +96,9 @@ describe("physical archive transactions", () => {
     const archivedSnapshot = readSessionSnapshot(path);
     const active = getActivePhysicalArchive(archivedSnapshot.records.map((record) => record.entry));
     expect(active?.event.rootId).toBe("B");
-    expect(active?.entry.parentId).toBe("C");
+    expect(active?.entry.parentId).toBe("A");
     expect(active?.event.records.map((record) => record.id)).toEqual(["B", "D"]);
+    expect(archivedManager.getLeafId()).toBe("C");
     expect(
       materializeArchivedEntries(
         archivedSnapshot.records.map((record) => record.entry),
@@ -110,9 +111,14 @@ describe("physical archive transactions", () => {
     const restore = buildRestoreTransaction(archivedSnapshot, active!);
     const restored = commitSessionTransaction(archivedSnapshot, restore.bytes);
     const restoredSnapshot = readSessionSnapshot(path);
+    expect(restoredSnapshot.records.map((record) => record.raw)).toEqual(
+      original.records.map((record) => record.raw),
+    );
     expect(
-      restoredSnapshot.records.slice(0, original.records.length).map((record) => record.raw),
-    ).toEqual(original.records.map((record) => record.raw));
+      restoredSnapshot.records.filter(
+        ({ entry }) => entry.type === "custom" && entry.customType === "branch-archive",
+      ),
+    ).toHaveLength(0);
     expect(
       getActivePhysicalArchive(restoredSnapshot.records.map((record) => record.entry)),
     ).toBeUndefined();
@@ -154,13 +160,13 @@ describe("physical archive transactions", () => {
     expect(existsSync(archived.committed.backupPath)).toBe(false);
   });
 
-  test("moves the leaf to the branch parent when archiving the current branch", () => {
+  test("rejects archiving a subtree containing the active leaf", () => {
     const path = temporarySession();
     writeSyntheticSession(path);
     const snapshot = readSessionSnapshot(path);
-    const transaction = buildArchiveTransaction(snapshot, "B", "D", "D");
-
-    expect(transaction.event.parentId).toBe("A");
+    expect(() => buildArchiveTransaction(snapshot, "B", "D", "D")).toThrow(
+      "active branch cannot be archived",
+    );
   });
 
   test("fails closed when the archive payload is modified", () => {
@@ -168,9 +174,10 @@ describe("physical archive transactions", () => {
     writeSyntheticSession(path);
     const archived = commitArchive(path, "B", "D", "A");
     const lines = readFileSync(path, "utf8").trimEnd().split("\n");
-    const event = JSON.parse(lines.at(-1)!);
+    const eventIndex = lines.findIndex((line) => JSON.parse(line).customType === "branch-archive");
+    const event = JSON.parse(lines[eventIndex]);
     event.data.records[0].raw = `${event.data.records[0].raw} `;
-    lines[lines.length - 1] = JSON.stringify(event);
+    lines[eventIndex] = JSON.stringify(event);
     writeFileSync(path, `${lines.join("\n")}\n`);
 
     const snapshot = readSessionSnapshot(path);
@@ -192,15 +199,128 @@ describe("physical archive transactions", () => {
     removeTransactionBackup(archived.committed.backupPath);
   });
 
+  test("restores entries appended beneath a legacy archive event", () => {
+    const path = temporarySession();
+    writeSyntheticSession(path);
+    const original = readSessionSnapshot(path);
+    const archived = commitArchive(path, "B", "D", "C");
+    const snapshot = readSessionSnapshot(path);
+    const active = getActivePhysicalArchive(snapshot.records.map((record) => record.entry))!;
+    const legacyEvent = {
+      ...active.entry,
+      parentId: "C",
+      data: { ...active.event, retainedIds: undefined },
+    };
+    const appended = info("E", legacyEvent.id);
+    writeFileSync(
+      path,
+      `${[
+        snapshot.headerRaw,
+        ...snapshot.records
+          .filter((record) => record.entry.id !== active.entry.id)
+          .map((record) => record.raw),
+        JSON.stringify(legacyEvent),
+        JSON.stringify(appended),
+      ].join("\n")}\n`,
+    );
+
+    const legacySnapshot = readSessionSnapshot(path);
+    const legacyActive = getActivePhysicalArchive(
+      legacySnapshot.records.map((record) => record.entry),
+    )!;
+    const restore = buildRestoreTransaction(legacySnapshot, legacyActive);
+    const restoredEntries = restore.bytes
+      .toString("utf8")
+      .trimEnd()
+      .split("\n")
+      .slice(1)
+      .map((line) => JSON.parse(line) as SessionEntry);
+
+    expect(restoredEntries.slice(0, original.records.length).map((entry) => entry.id)).toEqual(
+      original.records.map((record) => record.entry.id),
+    );
+    expect(restoredEntries.at(-1)).toMatchObject({ id: "E", parentId: "C" });
+    expect(
+      restoredEntries.filter(
+        (entry) => entry.type === "custom" && entry.customType === "branch-archive",
+      ),
+    ).toHaveLength(0);
+
+    removeTransactionBackup(archived.committed.backupPath);
+  });
+
+  test("keeps exactly one archive metadata node across repeated toggles", () => {
+    const path = temporarySession();
+    writeSyntheticSession(path);
+    const original = readSessionSnapshot(path);
+
+    const firstArchive = commitArchive(path, "B", "D", "C");
+    let snapshot = readSessionSnapshot(path);
+    expect(
+      snapshot.records.filter(
+        ({ entry }) => entry.type === "custom" && entry.customType === "branch-archive",
+      ),
+    ).toHaveLength(1);
+
+    let active = getActivePhysicalArchive(snapshot.records.map((record) => record.entry));
+    const firstRestore = buildRestoreTransaction(snapshot, active!);
+    const firstRestored = commitSessionTransaction(snapshot, firstRestore.bytes);
+    snapshot = readSessionSnapshot(path);
+    expect(snapshot.records.map((record) => record.raw)).toEqual(
+      original.records.map((record) => record.raw),
+    );
+
+    writeFileSync(
+      path,
+      `${[
+        original.headerRaw,
+        ...original.records.map((record) => record.raw),
+        JSON.stringify(firstArchive.transaction.event),
+        JSON.stringify(firstRestore.event),
+      ].join("\n")}\n`,
+    );
+    snapshot = readSessionSnapshot(path);
+    expect(
+      snapshot.records.filter(
+        ({ entry }) => entry.type === "custom" && entry.customType === "branch-archive",
+      ),
+    ).toHaveLength(2);
+
+    const secondArchive = commitArchive(path, "B", "D", "C");
+    snapshot = readSessionSnapshot(path);
+    expect(
+      snapshot.records.filter(
+        ({ entry }) => entry.type === "custom" && entry.customType === "branch-archive",
+      ),
+    ).toHaveLength(1);
+
+    active = getActivePhysicalArchive(snapshot.records.map((record) => record.entry));
+    const secondRestore = buildRestoreTransaction(snapshot, active!);
+    const secondRestored = commitSessionTransaction(snapshot, secondRestore.bytes);
+    expect(readSessionSnapshot(path).records.map((record) => record.raw)).toEqual(
+      original.records.map((record) => record.raw),
+    );
+
+    for (const backupPath of [
+      firstArchive.committed.backupPath,
+      firstRestored.backupPath,
+      secondArchive.committed.backupPath,
+      secondRestored.backupPath,
+    ]) {
+      removeTransactionBackup(backupPath);
+    }
+  });
+
   test("rejects payload ordinals that do not reproduce the original snapshot", () => {
     const path = temporarySession();
     writeSyntheticSession(path);
     const archived = commitArchive(path, "B", "D", "C");
     const lines = readFileSync(path, "utf8").trimEnd().split("\n");
-    const entry = JSON.parse(lines.at(-1)!);
+    const eventIndex = lines.findIndex((line) => JSON.parse(line).customType === "branch-archive");
+    const entry = JSON.parse(lines[eventIndex]);
     const records = entry.data.records;
     [records[0].ordinal, records[1].ordinal] = [records[1].ordinal, records[0].ordinal];
-    lines[lines.length - 1] = JSON.stringify(entry);
+    lines[eventIndex] = JSON.stringify(entry);
     writeFileSync(path, `${lines.join("\n")}\n`);
     const snapshot = readSessionSnapshot(path);
     const active = getActivePhysicalArchive(snapshot.records.map((record) => record.entry));
@@ -243,11 +363,14 @@ describe("mock session copies", () => {
         })
         .find((node) => node.children.length > 1);
       expect(branchParent).toBeDefined();
-      const root = branchParent!.children[0];
+      const activeLeafId = manager.getLeafId();
+      const containsActiveLeaf = (node: SessionTreeNode): boolean =>
+        node.entry.id === activeLeafId || node.children.some(containsActiveLeaf);
+      const root = branchParent!.children.find((node) => !containsActiveLeaf(node))!;
       let resume = root;
       while (resume.children.length > 0) resume = resume.children.at(-1)!;
 
-      const archived = commitArchive(path, root.entry.id, resume.entry.id, manager.getLeafId()!);
+      const archived = commitArchive(path, root.entry.id, resume.entry.id, activeLeafId!);
       const archivedEntries = readSessionSnapshot(path);
       const active = getActivePhysicalArchive(
         archivedEntries.records.map((record) => record.entry),

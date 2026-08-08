@@ -20,6 +20,7 @@ import {
   rollbackSessionTransaction,
   type ActivePhysicalArchive,
   SessionTransactionCommitError,
+  type SessionSnapshot,
 } from "./storage";
 
 const ARCHIVE_ENTRY_TYPE = "branch-archive";
@@ -80,6 +81,13 @@ interface BranchProjection {
 
 function isArchiveMetadata(entry: SessionEntry): entry is CustomEntry {
   return entry.type === "custom" && entry.customType === ARCHIVE_ENTRY_TYPE;
+}
+
+export function shouldBlockArchiveNavigation(
+  target: SessionEntry | undefined,
+  activeArchiveEntryId: string | undefined,
+): boolean {
+  return !!target && isArchiveMetadata(target) && target.id === activeArchiveEntryId;
 }
 
 function buildSessionTree(entries: SessionEntry[]): SessionTreeNode[] {
@@ -214,6 +222,10 @@ function findCurrentBranchRoot(tree: LogicalTree): string | undefined {
   return undefined;
 }
 
+export function canArchiveBranch(tree: LogicalTree, nodeId: string): boolean {
+  return isBranchRoot(tree, nodeId) && !(tree.leafId && isDescendant(tree, nodeId, tree.leafId));
+}
+
 function isArchiveEvent(value: unknown): value is ArchiveEvent {
   if (!value || typeof value !== "object") return false;
   const event = value as Record<string, unknown>;
@@ -301,6 +313,47 @@ function readState(ctx: ExtensionContext): {
   };
 }
 
+interface DiskArchiveState {
+  snapshot: SessionSnapshot;
+  tree: LogicalTree;
+  archived: Map<string, ArchivedBranch>;
+  physicalArchive?: ActivePhysicalArchive;
+}
+
+function readDiskState(sessionPath: string, activeLeafId: string | null): DiskArchiveState {
+  const snapshot = readSessionSnapshot(sessionPath);
+  const liveEntries = snapshot.records.map((record) => record.entry);
+  const physicalArchive = getActivePhysicalArchive(liveEntries);
+  const entries = physicalArchive
+    ? materializeArchivedEntries(liveEntries, physicalArchive)
+    : liveEntries;
+  const tree = buildLogicalTree(buildSessionTree(entries), activeLeafId);
+  return {
+    snapshot,
+    tree,
+    archived: rebuildArchiveState(entries, tree),
+    physicalArchive,
+  };
+}
+
+function verifyReloadedSession(
+  expected: SessionSnapshot,
+  actual: SessionSnapshot,
+  managerEntries: SessionEntry[],
+): boolean {
+  if (
+    actual.headerRaw !== expected.headerRaw ||
+    actual.records.length < expected.records.length ||
+    expected.records.some((record, index) => actual.records[index]?.raw !== record.raw)
+  ) {
+    return false;
+  }
+  return (
+    managerEntries.length === actual.records.length &&
+    managerEntries.every((entry, index) => entry.id === actual.records[index]?.entry.id)
+  );
+}
+
 function findContainingArchivedBranch(
   nodeId: string,
   tree: LogicalTree,
@@ -326,226 +379,6 @@ function preferredResumeId(tree: LogicalTree, rootId: string): string {
     }
   }
   return preferred?.entry.id ?? rootId;
-}
-
-async function toggleArchive(rootId: string, ctx: ExtensionCommandContext): Promise<boolean> {
-  if (!ctx.isIdle() || ctx.hasPendingMessages()) {
-    ctx.ui.notify("Wait for the current response and queued messages to finish", "warning");
-    return false;
-  }
-
-  const sessionPath = ctx.sessionManager.getSessionFile();
-  if (!sessionPath) {
-    ctx.ui.notify("Archive requires a persisted session", "error");
-    return false;
-  }
-
-  const { tree, archived, physicalArchive } = readState(ctx);
-  const existing = archived.get(rootId);
-  try {
-    const snapshot = readSessionSnapshot(sessionPath);
-    const transaction = existing
-      ? buildRestoreTransaction(
-        snapshot,
-        physicalArchive ??
-        (() => {
-          throw new Error("Archived branch payload is unavailable");
-        })(),
-      )
-      : (() => {
-        if (physicalArchive) {
-          throw new Error("Restore the archived branch before archiving another branch");
-        }
-        if (!isBranchRoot(tree, rootId)) {
-          throw new Error("Only branch roots can be archived");
-        }
-        if (!tree.nodes.get(rootId)?.parentId) {
-          throw new Error("The session root cannot be archived");
-        }
-        return buildArchiveTransaction(
-          snapshot,
-          rootId,
-          preferredResumeId(tree, rootId),
-          ctx.sessionManager.getLeafId(),
-        );
-      })();
-
-    const committed = commitSessionTransaction(snapshot, transaction.bytes);
-    let verified = false;
-    let replacementStarted = false;
-    try {
-      const switched = await ctx.switchSession(sessionPath, {
-        withSession: async (newCtx) => {
-          replacementStarted = true;
-          try {
-            const active = getActivePhysicalArchive(newCtx.sessionManager.getEntries());
-            verified =
-              readSessionSnapshot(sessionPath).digest === committed.targetDigest &&
-              (existing ? !active : active?.entry.id === transaction.event.id);
-            if (!verified) throw new Error("Session reload did not verify the archive transaction");
-            removeTransactionBackup(committed.backupPath);
-            newCtx.ui.notify(existing ? "Branch restored" : "Branch archived", "info");
-          } catch (error) {
-            newCtx.ui.notify(error instanceof Error ? error.message : String(error), "error");
-          }
-        },
-      });
-      if (switched.cancelled) {
-        try {
-          rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
-          ctx.ui.notify("Session switch was cancelled; archive transaction rolled back", "warning");
-          return false;
-        } catch (rollbackError) {
-          ctx.ui.notify(
-            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-            "error",
-          );
-          ctx.shutdown();
-          return true;
-        }
-      }
-      return true;
-    } catch (error) {
-      if (replacementStarted) return true;
-      try {
-        rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
-      } catch (rollbackError) {
-        ctx.ui.notify(
-          rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-          "error",
-        );
-        ctx.shutdown();
-        return true;
-      }
-      throw error;
-    }
-  } catch (error) {
-    if (error instanceof SessionTransactionCommitError) {
-      try {
-        const backupSnapshot = readSessionSnapshot(error.backupPath);
-        rollbackSessionTransaction(
-          { ...backupSnapshot, path: sessionPath },
-          error.backupPath,
-          error.targetDigest,
-        );
-      } catch (rollbackError) {
-        ctx.ui.notify(
-          rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-          "error",
-        );
-        ctx.shutdown();
-        return true;
-      }
-    }
-    ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
-    return false;
-  }
-}
-
-async function restoreAndNavigate(nodeId: string, ctx: ExtensionCommandContext): Promise<void> {
-  const { tree, archived, physicalArchive } = readState(ctx);
-  const branch = archived.get(nodeId) ?? findContainingArchivedBranch(nodeId, tree, archived);
-  if (!branch) {
-    await ctx.navigateTree(nodeId, { summarize: false });
-    return;
-  }
-  if (!physicalArchive || !ctx.isIdle() || ctx.hasPendingMessages()) {
-    ctx.ui.notify(
-      physicalArchive
-        ? "Wait for the current response and queued messages to finish"
-        : "Archived branch payload is unavailable",
-      "warning",
-    );
-    return;
-  }
-  const sessionPath = ctx.sessionManager.getSessionFile();
-  if (!sessionPath) {
-    ctx.ui.notify("Restore requires a persisted session", "error");
-    return;
-  }
-
-  const targetId =
-    nodeId === branch.rootId &&
-      tree.nodes.has(branch.resumeId) &&
-      isDescendant(tree, branch.rootId, branch.resumeId)
-      ? branch.resumeId
-      : nodeId;
-  try {
-    const snapshot = readSessionSnapshot(sessionPath);
-    const transaction = buildRestoreTransaction(snapshot, physicalArchive);
-    const committed = commitSessionTransaction(snapshot, transaction.bytes);
-    let replacementStarted = false;
-    try {
-      const switched = await ctx.switchSession(sessionPath, {
-        withSession: async (newCtx) => {
-          replacementStarted = true;
-          try {
-            const restorePersisted = newCtx.sessionManager
-              .getEntries()
-              .some((entry) => entry.id === transaction.event.id);
-            if (
-              readSessionSnapshot(sessionPath).digest !== committed.targetDigest ||
-              getActivePhysicalArchive(newCtx.sessionManager.getEntries()) ||
-              !restorePersisted
-            )
-              throw new Error("Session reload did not verify the restore transaction");
-            removeTransactionBackup(committed.backupPath);
-            const result = await newCtx.navigateTree(targetId, { summarize: false });
-            if (result.cancelled) {
-              newCtx.ui.notify("Branch restored, but navigation was cancelled", "warning");
-            }
-          } catch (error) {
-            newCtx.ui.notify(error instanceof Error ? error.message : String(error), "error");
-          }
-        },
-      });
-      if (switched.cancelled) {
-        try {
-          rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
-          ctx.ui.notify("Session switch was cancelled; restore transaction rolled back", "warning");
-        } catch (rollbackError) {
-          ctx.ui.notify(
-            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-            "error",
-          );
-          ctx.shutdown();
-        }
-      }
-    } catch (error) {
-      if (!replacementStarted) {
-        try {
-          rollbackSessionTransaction(snapshot, committed.backupPath, committed.targetDigest);
-        } catch (rollbackError) {
-          ctx.ui.notify(
-            rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-            "error",
-          );
-          ctx.shutdown();
-          return;
-        }
-        throw error;
-      }
-    }
-  } catch (error) {
-    if (error instanceof SessionTransactionCommitError) {
-      try {
-        const backupSnapshot = readSessionSnapshot(error.backupPath);
-        rollbackSessionTransaction(
-          { ...backupSnapshot, path: sessionPath },
-          error.backupPath,
-          error.targetDigest,
-        );
-      } catch (rollbackError) {
-        ctx.ui.notify(
-          rollbackError instanceof Error ? rollbackError.message : String(rollbackError),
-          "error",
-        );
-        ctx.shutdown();
-        return;
-      }
-    }
-    ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
-  }
 }
 
 function descendantCount(tree: LogicalTree, rootId: string): number {
@@ -616,10 +449,12 @@ function nodeText(node: LogicalNode): string {
 class ArchiveTreeComponent implements Component {
   private selectedId: string | undefined;
   private message = "";
+  private busy = false;
+  private disposed = false;
 
   constructor(
-    private readonly tree: LogicalTree,
-    private readonly archived: Map<string, ArchivedBranch>,
+    private tree: LogicalTree,
+    private archived: Map<string, ArchivedBranch>,
     private readonly collapsed: Set<string>,
     selectedId: string | undefined,
     private readonly maxVisibleRows: number,
@@ -627,12 +462,19 @@ class ArchiveTreeComponent implements Component {
     private readonly keybindings: KeybindingsManager,
     private readonly requestRender: () => void,
     private readonly done: (action: ArchiveAction | undefined) => void,
+    private readonly toggle: (
+      nodeId: string,
+    ) => Promise<{ tree: LogicalTree; archived: Map<string, ArchivedBranch>; restored: boolean }>,
   ) {
     this.selectedId = selectedId ?? findCurrentBranchRoot(tree);
     this.ensureVisibleSelection();
   }
 
   invalidate(): void { }
+
+  dispose(): void {
+    this.disposed = true;
+  }
 
   private rows(): TreeRow[] {
     const rows: TreeRow[] = [];
@@ -675,12 +517,13 @@ class ArchiveTreeComponent implements Component {
   private canToggle(nodeId: string): boolean {
     return (
       this.archived.has(nodeId) ||
-      (isBranchRoot(this.tree, nodeId) &&
+      (canArchiveBranch(this.tree, nodeId) &&
         !findContainingArchivedBranch(nodeId, this.tree, this.archived))
     );
   }
 
   handleInput(data: string): void {
+    if (this.busy || this.disposed) return;
     const rows = this.rows();
     const index = Math.max(
       0,
@@ -714,17 +557,46 @@ class ArchiveTreeComponent implements Component {
     } else if (data === " ") {
       const selected = this.selectedRow();
       if (selected && this.canToggle(selected.node.entry.id)) {
-        this.done({ type: "toggle", nodeId: selected.node.entry.id });
+        const nodeId = selected.node.entry.id;
+        this.busy = true;
+        this.message = "Working…";
+        this.requestRender();
+        void this.toggle(nodeId).then(
+          (result) => {
+            if (this.disposed) return;
+            this.tree = result.tree;
+            this.archived = result.archived;
+            if (result.restored) this.collapsed.delete(nodeId);
+            else this.collapsed.add(nodeId);
+            this.selectedId = nodeId;
+            this.ensureVisibleSelection();
+            this.message = result.restored ? "Branch restored" : "Branch archived";
+          },
+          (error) => {
+            if (!this.disposed)
+              this.message = error instanceof Error ? error.message : String(error);
+          },
+        ).finally(() => {
+          if (this.disposed) return;
+          this.busy = false;
+          this.requestRender();
+        });
         return;
       }
-      this.message = "Space is only available on branch roots";
+      this.message =
+        selected && this.tree.leafId &&
+          isDescendant(this.tree, selected.node.entry.id, this.tree.leafId)
+          ? "The current branch cannot be archived"
+          : "Space is only available on branch roots";
     } else if (this.keybindings.matches(data, "tui.select.confirm")) {
       const selected = this.selectedRow();
       if (selected) {
+        this.disposed = true;
         this.done({ type: "navigate", nodeId: selected.node.entry.id });
         return;
       }
     } else if (this.keybindings.matches(data, "tui.select.cancel")) {
+      this.disposed = true;
       this.done(undefined);
       return;
     }
@@ -815,6 +687,9 @@ async function showArchiveTree(
   collapsed: Set<string>,
   selectedId: string | undefined,
   ctx: ExtensionCommandContext,
+  toggle: (
+    nodeId: string,
+  ) => Promise<{ tree: LogicalTree; archived: Map<string, ArchivedBranch>; restored: boolean }>,
 ): Promise<ArchiveAction | undefined> {
   return ctx.ui.custom<ArchiveAction | undefined>(
     (tui, theme, keybindings, done) =>
@@ -828,6 +703,7 @@ async function showArchiveTree(
         keybindings,
         () => tui.requestRender(),
         done,
+        toggle,
       ),
   );
 }
@@ -839,6 +715,15 @@ export default function archiveExtension(pi: ExtensionAPI): void {
     archived = readState(ctx).archived;
   });
 
+  pi.on("session_before_tree", (event, ctx) => {
+    const target = ctx.sessionManager.getEntry(event.preparation.targetId);
+    const active = getActivePhysicalArchive(ctx.sessionManager.getEntries());
+    if (!shouldBlockArchiveNavigation(target, active?.entry.id)) return;
+
+    ctx.ui.notify("Use /archive to restore this branch", "warning");
+    return { cancel: true };
+  });
+
   pi.registerCommand("archive", {
     description: "Manage archived conversation branches",
     handler: async (_args, ctx) => {
@@ -847,26 +732,170 @@ export default function archiveExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      archived = readState(ctx).archived;
-      const collapsed = new Set(archived.keys());
-      let selectedId: string | undefined;
+      if (!ctx.isIdle() || ctx.hasPendingMessages()) {
+        ctx.ui.notify("Wait for the current response and queued messages to finish", "warning");
+        return;
+      }
+      const sessionPath = ctx.sessionManager.getSessionFile();
+      if (!sessionPath) {
+        ctx.ui.notify("Archive requires a persisted session", "error");
+        return;
+      }
 
-      while (true) {
-        const state = readState(ctx);
-        const tree = state.tree;
-        archived = state.archived;
-        const action = await showArchiveTree(tree, archived, collapsed, selectedId, ctx);
-        if (!action) return;
-        selectedId = action.nodeId;
+      const managerState = readState(ctx);
+      const activeLeafId = managerState.tree.leafId;
+      const initial = readDiskState(sessionPath, activeLeafId);
+      let expectedDigest = initial.snapshot.digest;
+      let baselineBackup: string | undefined;
+      let mutated = false;
 
-        if (action.type === "navigate") {
-          await restoreAndNavigate(action.nodeId, ctx);
-          return;
+      const mutate = async (rootId: string) => {
+        const state = readDiskState(sessionPath, activeLeafId);
+        if (state.snapshot.digest !== expectedDigest) {
+          throw new Error("Session changed while the archive picker was open");
         }
+        const existing = state.archived.get(rootId);
+        const transaction = existing
+          ? buildRestoreTransaction(
+            state.snapshot,
+            state.physicalArchive ?? (() => { throw new Error("Archived branch payload is unavailable"); })(),
+          )
+          : (() => {
+            if (state.physicalArchive)
+              throw new Error("Restore the archived branch before archiving another branch");
+            if (!canArchiveBranch(state.tree, rootId))
+              throw new Error(
+                state.tree.leafId && isDescendant(state.tree, rootId, state.tree.leafId)
+                  ? "The current branch cannot be archived"
+                  : "Only branch roots can be archived",
+              );
+            return buildArchiveTransaction(
+              state.snapshot,
+              rootId,
+              preferredResumeId(state.tree, rootId),
+              activeLeafId,
+            );
+          })();
+        let committed: ReturnType<typeof commitSessionTransaction>;
+        try {
+          committed = commitSessionTransaction(state.snapshot, transaction.bytes);
+        } catch (error) {
+          if (error instanceof SessionTransactionCommitError) {
+            try {
+              rollbackSessionTransaction(state.snapshot, error.backupPath, error.targetDigest);
+            } catch (rollbackError) {
+              ctx.ui.notify(
+                `Archive transaction could not be rolled back; recovery backup: ${error.backupPath}`,
+                "error",
+              );
+              ctx.shutdown();
+              throw rollbackError;
+            }
+            throw new Error("Archive transaction failed durability verification and was rolled back", {
+              cause: error,
+            });
+          }
+          throw error;
+        }
+        try {
+          const verified = readDiskState(sessionPath, activeLeafId);
+          const active = verified.physicalArchive;
+          if (
+            verified.snapshot.digest !== committed.targetDigest ||
+            (existing ? !!active : active?.entry.id !== transaction.event.id)
+          ) {
+            throw new Error("Disk verification failed after archive transaction");
+          }
+          if (!baselineBackup) baselineBackup = committed.backupPath;
+          else removeTransactionBackup(committed.backupPath);
+          expectedDigest = committed.targetDigest;
+          mutated = true;
+          archived = verified.archived;
+          return { tree: verified.tree, archived: verified.archived, restored: !!existing };
+        } catch (error) {
+          rollbackSessionTransaction(state.snapshot, committed.backupPath, committed.targetDigest);
+          throw error;
+        }
+      };
 
-        // A successful transaction reloads the session and invalidates this
-        // command context. Close the picker; users can reopen it if needed.
-        if (await toggleArchive(action.nodeId, ctx)) return;
+      archived = initial.archived;
+      const action = await showArchiveTree(
+        initial.tree,
+        archived,
+        new Set(archived.keys()),
+        undefined,
+        ctx,
+        mutate,
+      );
+      let navigateId: string | undefined;
+      if (action?.type === "navigate") {
+        const state = readDiskState(sessionPath, activeLeafId);
+        const branch = state.archived.get(action.nodeId) ??
+          findContainingArchivedBranch(action.nodeId, state.tree, state.archived);
+        if (branch) {
+          navigateId = action.nodeId === branch.rootId ? branch.resumeId : action.nodeId;
+          try {
+            await mutate(branch.rootId);
+          } catch (error) {
+            navigateId = undefined;
+            ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
+          }
+        } else navigateId = action.nodeId;
+      }
+      if (!mutated) {
+        if (navigateId) await ctx.navigateTree(navigateId, { summarize: false });
+        return;
+      }
+
+      const finalState = readDiskState(sessionPath, activeLeafId);
+      if (finalState.snapshot.digest !== expectedDigest) {
+        ctx.ui.notify(
+          `Session changed before reload; recovery backup: ${baselineBackup}`,
+          "error",
+        );
+        return;
+      }
+      let replacementVerified = false;
+      try {
+        const switched = await ctx.switchSession(sessionPath, {
+          withSession: async (newCtx) => {
+            const disk = readDiskState(sessionPath, activeLeafId);
+            const managerEntries = newCtx.sessionManager.getEntries();
+            const managerActive = getActivePhysicalArchive(managerEntries);
+            if (
+              !verifyReloadedSession(finalState.snapshot, disk.snapshot, managerEntries) ||
+              managerActive?.entry.id !== finalState.physicalArchive?.entry.id ||
+              disk.physicalArchive?.entry.id !== finalState.physicalArchive?.entry.id
+            ) throw new Error("Session reload did not verify the final archive state");
+            replacementVerified = true;
+            if (baselineBackup) {
+              try {
+                removeTransactionBackup(baselineBackup);
+              } catch {
+                newCtx.ui.notify(`Archive changes applied; remove backup manually: ${baselineBackup}`, "warning");
+              }
+            }
+            if (navigateId) {
+              try {
+                await newCtx.navigateTree(navigateId, { summarize: false });
+              } catch (error) {
+                newCtx.ui.notify(
+                  `Archive changes applied, but navigation failed: ${error instanceof Error ? error.message : String(error)}`,
+                  "error",
+                );
+              }
+            }
+          },
+        });
+        if (switched.cancelled) {
+          rollbackSessionTransaction(initial.snapshot, baselineBackup!, expectedDigest);
+          ctx.ui.notify("Session switch was cancelled; archive changes rolled back", "warning");
+        } else if (!replacementVerified) {
+          throw new Error(`Session replacement was not verified; backup: ${baselineBackup}`);
+        }
+      } catch (error) {
+        ctx.ui.notify(error instanceof Error ? error.message : String(error), "error");
+        throw error;
       }
     },
   });

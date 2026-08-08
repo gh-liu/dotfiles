@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:tui": "bash archive/tui.e2e.sh"
   },
   "dependencies": {
     "@earendil-works/pi-coding-agent": "0.84.1",
