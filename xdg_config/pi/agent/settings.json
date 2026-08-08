@@ -7,7 +7,7 @@
   "tuiMode": "fullscreen",
   "packages": [
     "npm:pi-subagents",
-    "npm:pi-web-access@0.14.0"
+    "npm:pi-web-access"
   ],
   "theme": "dark"
 }
