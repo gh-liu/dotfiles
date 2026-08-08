@@ -1,3 +1,5 @@
+// Syncs OAuth credentials from ~/.codex/auth.json into Pi's openai-codex provider.
+
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 import { codexAuth } from "./codex-auth.ts";

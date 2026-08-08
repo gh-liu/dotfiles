@@ -1,3 +1,5 @@
+// Renders a live footer with agent activity, model, token usage, cost, and context status.
+
 import { watch, type FSWatcher } from "node:fs";
 import {
   type ExtensionAPI,

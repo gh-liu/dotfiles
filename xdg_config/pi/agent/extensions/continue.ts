@@ -1,3 +1,5 @@
+// Automatically resumes the active task after Pi compacts the session context.
+
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 function buildContinuationPrompt(

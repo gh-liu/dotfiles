@@ -1,3 +1,5 @@
+// Adds a TUI for archiving, restoring, and navigating inactive conversation branches.
+
 import {
   type CustomEntry,
   type ExtensionAPI,
