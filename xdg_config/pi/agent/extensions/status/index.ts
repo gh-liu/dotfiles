@@ -1,4 +1,21 @@
-// Renders a live footer with agent activity, model, token usage, cost, and context status.
+/**
+ * Renders a live footer with agent activity, model, token usage, cost, and context status.
+ *
+ * Pi event                                          Footer activity
+ * ------------------------------------------------  ----------------
+ * session_start (idle), agent_settled (idle)        READY
+ * session_start (active), agent_start               WAITING
+ * assistant start/done or content phase end         WAITING
+ * thinking_start, thinking_delta                    THINKING
+ * text_start, text_delta                            STREAMING
+ * toolcall_start, toolcall_delta                    TOOL CALLING
+ * tool_execution_start, tool_execution_update       RUNNING TOOLS
+ * last tool_execution_end                           WAITING
+ * assistant provider error                          ERROR
+ *
+ * WAITING is the conservative fallback while the agent is active but Pi exposes no
+ * current thinking, text streaming, or tool execution activity.
+ */
 
 import { watch, type FSWatcher } from "node:fs";
 import {
@@ -10,23 +27,18 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 
-type Activity = "ready" | "thinking" | "tool_calling" | "working";
+type Activity =
+  | "ready"
+  | "waiting"
+  | "thinking"
+  | "streaming"
+  | "tool_calling"
+  | "running_tools"
+  | "error";
 
-const SPINNER_FRAMES = [
-  "⠋",
-  "⠙",
-  "⠹",
-  "⠸",
-  "⠼",
-  "⠴",
-  "⠦",
-  "⠧",
-  "⠇",
-  "⠏",
-] as const;
-
+const ACTIVE_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
-const TOOL_CALLING_FRAMES = ["›", "»", "≫", "»"] as const;
+const TOOL_SPINNER_FRAMES = ["›", "»", "≫", "»"] as const;
 
 interface StatusSnapshot {
   provider?: string;
@@ -64,9 +76,12 @@ const NORD = {
 
 const ACTIVITY_DISPLAY = {
   ready: { color: "blue", label: "● READY", spinner: [] },
+  waiting: { color: "amber", label: "WAITING", spinner: ACTIVE_SPINNER_FRAMES },
   thinking: { color: "purple", label: "THINKING", spinner: THINKING_FRAMES },
-  tool_calling: { color: "cyan", label: "TOOL CALLING", spinner: TOOL_CALLING_FRAMES },
-  working: { color: "amber", label: "WORKING", spinner: SPINNER_FRAMES },
+  streaming: { color: "amber", label: "STREAMING", spinner: ACTIVE_SPINNER_FRAMES },
+  tool_calling: { color: "cyan", label: "TOOL CALLING", spinner: TOOL_SPINNER_FRAMES },
+  running_tools: { color: "cyan", label: "RUNNING TOOLS", spinner: TOOL_SPINNER_FRAMES },
+  error: { color: "red", label: "◌ ERROR", spinner: [] },
 } as const satisfies Record<
   Activity,
   { color: keyof typeof NORD; label: string; spinner: readonly string[] }
@@ -295,7 +310,7 @@ export default function status(pi: ExtensionAPI) {
   let spinnerFrame = 0;
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let settingsWatcher: FSWatcher | undefined;
-  const pendingToolCalls = new Set<string>();
+  const executingToolCalls = new Set<string>();
 
   const stopSpinner = () => {
     if (spinnerTimer !== undefined) clearInterval(spinnerTimer);
@@ -306,9 +321,16 @@ export default function status(pi: ExtensionAPI) {
   const startSpinner = () => {
     if (spinnerTimer !== undefined) return;
     spinnerTimer = setInterval(() => {
-      spinnerFrame = (spinnerFrame + 1) % SPINNER_FRAMES.length;
+      spinnerFrame = (spinnerFrame + 1) % ACTIVE_SPINNER_FRAMES.length;
       requestRender();
     }, 80);
+  };
+
+  const setActivity = (next: Activity) => {
+    activity = next;
+    if (ACTIVITY_DISPLAY[next].spinner.length > 0) startSpinner();
+    else stopSpinner();
+    requestRender();
   };
 
   const stopSettingsWatcher = () => {
@@ -316,8 +338,7 @@ export default function status(pi: ExtensionAPI) {
     settingsWatcher = undefined;
   };
 
-  const isCurrentSession = (ctx: ExtensionContext) =>
-    ctx.sessionManager === currentSessionManager;
+  const isCurrentSession = (ctx: ExtensionContext) => ctx.sessionManager === currentSessionManager;
 
   const refresh = (ctx: ExtensionContext) => {
     snapshot = readSnapshot(pi, ctx);
@@ -327,9 +348,9 @@ export default function status(pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
     stopSpinner();
     stopSettingsWatcher();
-    pendingToolCalls.clear();
+    executingToolCalls.clear();
     currentSessionManager = ctx.sessionManager;
-    activity = ctx.isIdle() ? "ready" : "working";
+    activity = ctx.isIdle() ? "ready" : "waiting";
     snapshot = readSnapshot(pi, ctx);
     if (ctx.mode !== "tui") return;
 
@@ -369,69 +390,76 @@ export default function status(pi: ExtensionAPI) {
     settingsWatcher = watch(getAgentDir(), { persistent: false }, (_eventType, filename) => {
       if (filename === "settings.json" && isCurrentSession(ctx)) refresh(ctx);
     });
-    if (activity === "working") startSpinner();
+    if (ACTIVITY_DISPLAY[activity].spinner.length > 0) startSpinner();
   });
 
   pi.on("agent_start", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    pendingToolCalls.clear();
-    activity = "working";
-    startSpinner();
+    executingToolCalls.clear();
+    setActivity("waiting");
   });
 
   pi.on("message_update", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    if (
-      event.assistantMessageEvent.type === "thinking_delta" ||
-      event.assistantMessageEvent.type === "thinking_end"
-    ) {
-      activity = "thinking";
-    } else if (
-      event.assistantMessageEvent.type === "text_start" ||
-      event.assistantMessageEvent.type === "text_delta"
-    ) {
-      activity = "working";
-    } else if (
-      event.assistantMessageEvent.type === "toolcall_start" ||
-      event.assistantMessageEvent.type === "toolcall_delta" ||
-      event.assistantMessageEvent.type === "toolcall_end"
-    ) {
-      if (event.assistantMessageEvent.type === "toolcall_end") {
-        pendingToolCalls.add(event.assistantMessageEvent.toolCall.id);
-      }
-      activity = "tool_calling";
+    switch (event.assistantMessageEvent.type) {
+      case "start":
+      case "thinking_end":
+      case "text_end":
+      case "toolcall_end":
+      case "done":
+        setActivity("waiting");
+        break;
+      case "thinking_start":
+      case "thinking_delta":
+        setActivity("thinking");
+        break;
+      case "text_start":
+      case "text_delta":
+        setActivity("streaming");
+        break;
+      case "toolcall_start":
+      case "toolcall_delta":
+        setActivity("tool_calling");
+        break;
+      case "error":
+        setActivity(event.assistantMessageEvent.reason === "error" ? "error" : "waiting");
+        break;
     }
   });
 
   pi.on("message_end", (event, ctx) => {
-    if (
-      !isCurrentSession(ctx) ||
-      ctx.mode !== "tui" ||
-      event.message.role !== "assistant"
-    ) return;
-    if (event.message.stopReason === "error" || event.message.stopReason === "aborted") {
-      pendingToolCalls.clear();
-      activity = "working";
-    }
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui" || event.message.role !== "assistant") return;
+    setActivity(
+      event.message.stopReason === "error"
+        ? "error"
+        : executingToolCalls.size > 0
+          ? "running_tools"
+          : "waiting",
+    );
   });
 
   pi.on("tool_execution_start", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    pendingToolCalls.add(event.toolCallId);
-    activity = "tool_calling";
+    executingToolCalls.add(event.toolCallId);
+    setActivity("running_tools");
+  });
+
+  pi.on("tool_execution_update", (event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    executingToolCalls.add(event.toolCallId);
+    setActivity("running_tools");
   });
 
   pi.on("tool_execution_end", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    pendingToolCalls.delete(event.toolCallId);
-    if (pendingToolCalls.size === 0) activity = "working";
+    executingToolCalls.delete(event.toolCallId);
+    setActivity(executingToolCalls.size > 0 ? "running_tools" : "waiting");
   });
 
   pi.on("agent_settled", (_event, ctx) => {
     if (!isCurrentSession(ctx) || !ctx.isIdle()) return;
-    pendingToolCalls.clear();
-    activity = "ready";
-    stopSpinner();
+    executingToolCalls.clear();
+    setActivity("ready");
     refresh(ctx);
   });
 
@@ -453,7 +481,7 @@ export default function status(pi: ExtensionAPI) {
     ctx.ui.setFooter(undefined);
     stopSpinner();
     stopSettingsWatcher();
-    pendingToolCalls.clear();
+    executingToolCalls.clear();
     currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
