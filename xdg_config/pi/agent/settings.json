@@ -5,6 +5,9 @@
   "followUpMode": "all",
   "treeFilterMode": "all",
   "tuiMode": "fullscreen",
+  "terminal": {
+    "showTerminalProgress": true
+  },
   "packages": [
     "npm:pi-intercom",
     "npm:pi-subagents",
