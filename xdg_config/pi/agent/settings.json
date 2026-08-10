@@ -10,8 +10,7 @@
   },
   "packages": [
     "npm:pi-intercom",
-    "npm:pi-subagents",
-    "npm:pi-web-access"
+    "npm:pi-subagents"
   ],
   "theme": "dark"
 }
