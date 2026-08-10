@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 _skills_install() {
         local agent=$1
-        local -a target=(--scope user --agent "$agent")
+        local -a target=(-g -y -a "$agent")
 
         if [[ $agent == pi && -n ${PI_CODING_AGENT_DIR:-} ]]; then
-                target=(--dir "$PI_CODING_AGENT_DIR/skills")
+                mkdir -p "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent"
+                ln -sfnT "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent/skills" || return
         fi
 
-        gh skill install -f "${target[@]}" upstash/context7 find-docs
-        gh skill install -f "${target[@]}" seflless/deepwiki deepwiki
+        skills add upstash/context7 "${target[@]}" -s find-docs
+        skills add seflless/deepwiki "${target[@]}" -s deepwiki
 
-        gh skill install -f "${target[@]}" mattpocock/skills tdd
-        gh skill install -f "${target[@]}" mattpocock/skills domain-modeling
+        skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling
 
-        gh skill install -f "${target[@]}" vercel-labs/agent-browser agent-browser
+        skills add vercel-labs/agent-browser "${target[@]}" -s agent-browser
 
-        gh skill install -f "${target[@]}" openclaw/openclaw tmux
-        # gh skill install -f "${target[@]}" jetbrains/go-modern-guidelines use-modern-go
+        skills add openclaw/openclaw "${target[@]}" -s tmux --dangerously-accept-openclaw-risks
+        # skills add jetbrains/go-modern-guidelines "${target[@]}" -s use-modern-go
 }
 
 if (($# > 1)); then
