@@ -169,6 +169,7 @@ function renderStatusLine(
   width: number,
   activity: Activity,
   spinnerFrame: number,
+  tokensPerSecond: number | undefined,
   snapshot: StatusSnapshot,
   branch: string | null,
 ): string {
@@ -186,6 +187,10 @@ function renderStatusLine(
   const metric = (label: string, value: string, color: keyof typeof NORD) =>
     `${paint(theme, "muted", label)} ${paint(theme, color, value)}`;
   const activityDisplay = ACTIVITY_DISPLAY[activity];
+  const activityLabel =
+    activity === "streaming"
+      ? `${activityDisplay.label} ${tokensPerSecond === undefined ? "—" : tokensPerSecond.toFixed(1)} TPS`
+      : activityDisplay.label;
   const items: StatusItem[] = [
     {
       id: "activity",
@@ -195,8 +200,8 @@ function renderStatusLine(
         activityDisplay.color,
         theme.bold(
           activityDisplay.spinner.length > 0
-            ? `${activityDisplay.spinner[spinnerFrame % activityDisplay.spinner.length]} ${activityDisplay.label}`
-            : activityDisplay.label,
+            ? `${activityDisplay.spinner[spinnerFrame % activityDisplay.spinner.length]} ${activityLabel}`
+            : activityLabel,
         ),
       ),
       dropRank: Number.POSITIVE_INFINITY,
@@ -310,7 +315,29 @@ export default function status(pi: ExtensionAPI) {
   let spinnerFrame = 0;
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let settingsWatcher: FSWatcher | undefined;
+  let streamStartedAt: number | undefined;
+  let streamedTextCharacters = 0;
+  let lastTpsUpdatedAt: number | undefined;
+  let tokensPerSecond: number | undefined;
   const executingToolCalls = new Set<string>();
+
+  const resetStreamingMetrics = () => {
+    streamStartedAt = undefined;
+    streamedTextCharacters = 0;
+    lastTpsUpdatedAt = undefined;
+    tokensPerSecond = undefined;
+  };
+
+  const updateStreamingMetrics = (delta: string) => {
+    const now = performance.now();
+    streamStartedAt ??= now;
+    streamedTextCharacters += delta.length;
+    const elapsedSeconds = (now - streamStartedAt) / 1_000;
+    if (elapsedSeconds < 1 || (lastTpsUpdatedAt !== undefined && now - lastTpsUpdatedAt < 500)) return;
+    // Match Pi's token estimation heuristic; providers report exact usage only near stream end.
+    tokensPerSecond = streamedTextCharacters / 4 / elapsedSeconds;
+    lastTpsUpdatedAt = now;
+  };
 
   const stopSpinner = () => {
     if (spinnerTimer !== undefined) clearInterval(spinnerTimer);
@@ -349,6 +376,7 @@ export default function status(pi: ExtensionAPI) {
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();
+    resetStreamingMetrics();
     currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "waiting";
     snapshot = readSnapshot(pi, ctx);
@@ -369,6 +397,7 @@ export default function status(pi: ExtensionAPI) {
               width,
               activity,
               spinnerFrame,
+              tokensPerSecond,
               snapshot ?? readSnapshot(pi, ctx),
               footerData.getGitBranch(),
             ),
@@ -396,6 +425,7 @@ export default function status(pi: ExtensionAPI) {
   pi.on("agent_start", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     executingToolCalls.clear();
+    resetStreamingMetrics();
     setActivity("waiting");
   });
 
@@ -414,7 +444,12 @@ export default function status(pi: ExtensionAPI) {
         setActivity("thinking");
         break;
       case "text_start":
+        resetStreamingMetrics();
+        streamStartedAt = performance.now();
+        setActivity("streaming");
+        break;
       case "text_delta":
+        updateStreamingMetrics(event.assistantMessageEvent.delta);
         setActivity("streaming");
         break;
       case "toolcall_start":
@@ -482,6 +517,7 @@ export default function status(pi: ExtensionAPI) {
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();
+    resetStreamingMetrics();
     currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
