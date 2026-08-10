@@ -1,24 +1,29 @@
 #!/usr/bin/env bash
 _skills_install() {
         local agent=$1
+        local -a target=(--scope user --agent "$agent")
 
-        gh skill install -f --scope user --agent "$agent" upstash/context7 find-docs
-        gh skill install -f --scope user --agent "$agent" seflless/deepwiki deepwiki
+        if [[ $agent == pi && -n ${PI_CODING_AGENT_DIR:-} ]]; then
+                target=(--dir "$PI_CODING_AGENT_DIR/skills")
+        fi
 
-        gh skill install -f --scope user --agent "$agent" mattpocock/skills tdd
-        gh skill install -f --scope user --agent "$agent" mattpocock/skills domain-modeling
+        gh skill install -f "${target[@]}" upstash/context7 find-docs
+        gh skill install -f "${target[@]}" seflless/deepwiki deepwiki
 
-        gh skill install -f --scope user --agent "$agent" vercel-labs/agent-browser agent-browser
+        gh skill install -f "${target[@]}" mattpocock/skills tdd
+        gh skill install -f "${target[@]}" mattpocock/skills domain-modeling
 
-        gh skill install -f --scope user --agent "$agent" openclaw/openclaw tmux
-        # gh skill install -f --scope project --agent "$agent" jetbrains/go-modern-guidelines use-modern-go
+        gh skill install -f "${target[@]}" vercel-labs/agent-browser agent-browser
+
+        gh skill install -f "${target[@]}" openclaw/openclaw tmux
+        # gh skill install -f "${target[@]}" jetbrains/go-modern-guidelines use-modern-go
 }
 
-if (($# != 1)); then
-        echo "Usage: skillsu <agent>" >&2
+if (($# > 1)); then
+        echo "Usage: skillsu [agent]" >&2
         exit 2
 fi
 
-_skills_install "$1"
+_skills_install "${1:-pi}"
 
 # vim: set filetype=sh
