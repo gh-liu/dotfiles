@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+_skills_install() {
+        local agent=$1
+
+        gh skill install -f --scope user --agent "$agent" upstash/context7 find-docs
+        gh skill install -f --scope user --agent "$agent" seflless/deepwiki deepwiki
+
+        gh skill install -f --scope user --agent "$agent" mattpocock/skills tdd
+        gh skill install -f --scope user --agent "$agent" mattpocock/skills domain-modeling
+
+        gh skill install -f --scope user --agent "$agent" vercel-labs/agent-browser agent-browser
+
+        gh skill install -f --scope user --agent "$agent" openclaw/openclaw tmux
+        # gh skill install -f --scope project --agent "$agent" jetbrains/go-modern-guidelines use-modern-go
+}
+
+if (($# != 1)); then
+        echo "Usage: skillsu <agent>" >&2
+        exit 2
+fi
+
+_skills_install "$1"
+
+# vim: set filetype=sh
