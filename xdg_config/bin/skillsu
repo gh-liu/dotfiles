@@ -5,7 +5,12 @@ _skills_install() {
 
         if [[ $agent == pi && -n ${PI_CODING_AGENT_DIR:-} ]]; then
                 mkdir -p "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent"
-                ln -sfnT "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent/skills" || return
+                if [[ -L $HOME/.pi/agent/skills ]]; then
+                        rm "$HOME/.pi/agent/skills" || return
+                elif [[ -d $HOME/.pi/agent/skills ]]; then
+                        rmdir "$HOME/.pi/agent/skills" || return
+                fi
+                ln -s "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent/skills" || return
         fi
 
         skills add upstash/context7 "${target[@]}" -s find-docs
