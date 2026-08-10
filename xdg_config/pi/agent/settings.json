@@ -9,7 +9,6 @@
     "showTerminalProgress": true
   },
   "packages": [
-    "npm:pi-intercom",
     "npm:pi-subagents"
   ],
   "theme": "dark"
