@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Draft
-- Updated: 2026-08-09
+- Updated: 2026-08-11
 
 ## 1. Background
 
@@ -429,6 +429,26 @@ The extension registers the canonical `subagent` name. Any package-provided tool
 with the same name, such as `npm:pi-subagents`, must be removed or disabled in
 the same Pi runtime.
 
+### 7.1 Current implementation status
+
+The current implementation exposes `list`, `run`, `start`, `status`, `wait`,
+`interrupt`, and `close`. Lifecycle actions identify operations by
+`operationId`; there is not yet a separate runtime ID or the target `send`
+action. `start` launches a background **one-shot** RPC execution, not a reusable
+multi-turn worker.
+
+Implemented today:
+
+- RPC execution with `agent_settled` completion and bounded JSONL parsing.
+- Fresh child context, explicit tools, filtered environment, and process cleanup.
+- Durable session paths under `<agent-dir>/subagent-sessions`.
+- `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
+- In-memory operation tracking with bounded retention.
+
+Remaining M1 work includes reusable multi-turn sessions, monotonic revisions,
+an atomic run ledger, unclean-restart reconciliation, expected-operation guards
+for interrupts, reconnect/reporting after restart, and follow-up operations.
+
 ## 8. Context requirements
 
 ### 8.1 Fresh context
@@ -701,7 +721,11 @@ process ownership. Because it uses `--no-session`, it intentionally does not
 provide the durable-transcript guarantee and is a development vertical slice,
 not a V1 cutover candidate.
 
-### Milestone 1: Persistent RPC runtime
+### Milestone 1: Persistent RPC runtime (partial)
+
+The RPC executor, durable session references, basic lifecycle actions, identity
+separation, concurrency limit, and `agent_settled` completion are implemented.
+The remaining work is listed explicitly below.
 
 Replace or generalize the executor around:
 
@@ -709,17 +733,19 @@ Replace or generalize the executor around:
 pi --mode rpc --session-dir <managed-dir>
 ```
 
-Add:
+Implemented:
 
-- `start`, `status`, operation-targeted `wait` and `interrupt`, idempotent
-  `close`, and idle-only `send(..., mode: "follow_up")`.
-- Separate immutable runtime, process-instance, session, and operation IDs.
-- Separate runtime and operation state machines.
-- Durable child sessions and transcript references.
-- An atomic local run ledger and unclean-restart reconciliation.
-- Concurrency limits.
-- `agent_settled`-based completion.
-- Idempotent shutdown escalation.
+- RPC-backed one-shot execution with durable session references.
+- Basic `start`, `status`, `wait`, `interrupt`, and idempotent `close` actions.
+- Separate run, operation, process-instance, and session identities.
+- Concurrency limits and `agent_settled`-based completion.
+
+Remaining:
+
+- Reusable multi-turn workers and idle-only `send(..., mode: "follow_up")`.
+- Separate runtime state/revision model.
+- Atomic local run ledger and unclean-restart reconciliation.
+- Idempotent shutdown escalation with authoritative runtime ownership.
 
 Acceptance:
 
@@ -780,8 +806,10 @@ incrementally extending delegated execution.
 
 ## 15. Migration and coexistence
 
-The current Pi setup loads `npm:pi-subagents`, which already registers subagent
-tools and owns `extensions/subagent/config.json` semantics.
+The repository contains `pi-subagents` as an installed npm dependency, but the
+current `xdg_config/pi/agent/settings.json` has `"packages": []`; installation
+does not imply that the package is loaded. Verify the effective runtime before
+canonical tool cutover.
 
 During development:
 
