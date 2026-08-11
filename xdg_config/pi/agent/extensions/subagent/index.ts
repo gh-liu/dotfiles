@@ -7,7 +7,7 @@ import { Type } from "typebox";
 
 import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
-import { createJsonSubagentExecutor } from "./executor.ts";
+import { createRpcSubagentExecutor } from "./rpc-executor.ts";
 import { boundText } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
 import { renderSubagentCall, renderSubagentResult } from "./render.ts";
@@ -110,8 +110,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
   const executeChild: SubagentExecutor =
     options.execute ??
-    createJsonSubagentExecutor({
+    createRpcSubagentExecutor({
       piAgentDirectory: getAgentDir(),
+      sessionRoot: join(getAgentDir(), "subagent-sessions"),
       authEnvAllowlist,
       toolProviders: {
         web_search: {
