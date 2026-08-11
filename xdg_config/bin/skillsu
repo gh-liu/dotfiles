@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 _skills_install() {
+        # skills remove --all -g -y
         local agent=$1
         local -a target=(-g -y -a "$agent")
 
@@ -12,6 +13,8 @@ _skills_install() {
                 fi
                 ln -s "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent/skills" || return
         fi
+
+        skills remove "${target[@]}"
 
         skills add upstash/context7 "${target[@]}" -s find-docs
         skills add seflless/deepwiki "${target[@]}" -s deepwiki
