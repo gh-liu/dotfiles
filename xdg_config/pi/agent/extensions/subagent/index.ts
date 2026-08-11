@@ -3,7 +3,6 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
@@ -11,6 +10,7 @@ import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context
 import { createJsonSubagentExecutor } from "./executor.ts";
 import { boundText } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
+import { renderSubagentCall, renderSubagentResult } from "./render.ts";
 import type {
   SubagentExecutor,
   SubagentResult,
@@ -23,13 +23,6 @@ interface SubagentExtensionOptions {
   execute?: SubagentExecutor;
   idFactory?: () => string;
 }
-
-interface SubagentRenderState {
-  spinnerFrame?: number;
-  spinnerTimer?: ReturnType<typeof setInterval>;
-}
-
-const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 const SubagentParameters = Type.Union([
   Type.Object({
@@ -46,21 +39,10 @@ const SubagentParameters = Type.Union([
   }),
 ]);
 
-function oneLine(text: string, maxCharacters = 120): string {
-  const normalized = text.replace(/\s+/g, " ").trim();
-  return normalized.length <= maxCharacters
-    ? normalized
-    : `${normalized.slice(0, maxCharacters - 1)}…`;
-}
-
-function resultText(result: { content: Array<{ type: string; text?: string }> }): string {
-  return result.content.find((part) => part.type === "text")?.text ?? "";
-}
-
 function formatAgentCatalog(discovery: AgentDiscovery): string {
   const agents = discovery.agents.length === 0
-    ? ["- none"]
-    : discovery.agents.map((agent) => `- ${agent.name}: ${agent.description}`);
+    ? ["none"]
+    : discovery.agents.map((agent) => `${agent.name}: ${agent.description.replace(/\s+/g, " ").trim()}`);
   const invalid = discovery.errors.length === 0
     ? []
     : [
@@ -68,10 +50,7 @@ function formatAgentCatalog(discovery: AgentDiscovery): string {
       "Invalid agent definitions:",
       ...discovery.errors.map((error) => `- ${error.error}`),
     ];
-  return boundText(
-    ["Available registered agents:", ...agents, ...invalid].join("\n"),
-    { maxCharacters: 16_000, maxLines: 200 },
-  );
+  return [...agents, ...invalid].join("\n");
 }
 
 function createWorkOrder(
@@ -122,7 +101,10 @@ function serializeSubagentResult(result: SubagentResult): string {
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
   let registry = discoverUserAgents(agentDirectory);
-  const startupCatalog = formatAgentCatalog(registry);
+  const startupCatalog = boundText(
+    formatAgentCatalog(registry),
+    { maxCharacters: 16_000, maxLines: 200 },
+  );
   const authEnvAllowlist =
     options.authEnvAllowlist ??
     process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
@@ -158,48 +140,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ],
     executionMode: "parallel",
     parameters: SubagentParameters,
-    renderCall(args, theme) {
-      if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
-      let text = theme.fg("accent", theme.bold(args.agent || "unknown"));
-      if (args.task) text += theme.fg("dim", ` — ${oneLine(args.task)}`);
-      if (args.cwd) text += theme.fg("muted", ` (${args.cwd})`);
-      return new Text(text, 0, 0);
-    },
-    renderResult(result, { expanded, isPartial }, theme, context) {
-      const details = result.details as { agent?: string; status?: string; summary?: string } | undefined;
-      const output = details?.summary ?? resultText(result);
-      const preview = oneLine(output, 160);
-      const state = context.state as SubagentRenderState;
-      let text: string;
-      if (isPartial) {
-        state.spinnerFrame ??= 0;
-        if (!state.spinnerTimer) {
-          state.spinnerTimer = setInterval(() => {
-            state.spinnerFrame = ((state.spinnerFrame ?? 0) + 1) % SPINNER_FRAMES.length;
-            context.invalidate();
-          }, 80);
-          state.spinnerTimer.unref?.();
-        }
-        text = theme.fg("warning", SPINNER_FRAMES[state.spinnerFrame]);
-      } else if (context.isError || details?.status === "failed") {
-        if (state.spinnerTimer) clearInterval(state.spinnerTimer);
-        state.spinnerTimer = undefined;
-        text = theme.fg("error", "✗ Failed");
-      } else {
-        if (state.spinnerTimer) clearInterval(state.spinnerTimer);
-        state.spinnerTimer = undefined;
-        text = theme.fg("success", "✓ Completed");
-      }
-
-      if (expanded && output) {
-        const lines = output.split("\n");
-        for (const line of lines.slice(0, 20)) text += `\n${theme.fg("dim", line)}`;
-        if (lines.length > 20) text += `\n${theme.fg("muted", "… output truncated in UI")}`;
-      } else if (preview) {
-        text += theme.fg("dim", ` — ${preview}`);
-      }
-      return new Text(text, 0, 0);
-    },
+    renderCall: renderSubagentCall,
+    renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (shuttingDown) {
         return {

@@ -216,6 +216,43 @@ describe("subagent tool", () => {
     expect(execute).toHaveBeenCalledOnce();
   });
 
+  test("renders every refreshed agent as name and description", async () => {
+    const root = temporaryDirectory("pi-subagent-project-");
+    const agents = temporaryDirectory("pi-subagent-agents-");
+    mkdirSync(agents, { recursive: true });
+    for (let index = 0; index < 25; index += 1) {
+      const name = `agent-${String(index).padStart(2, "0")}`;
+      writeFileSync(
+        join(agents, `${name}.md`),
+        `---\nname: ${name}\ndescription: Agent ${index}\ntools: [read]\n---\nInspect files.\n`,
+      );
+    }
+    const extension = harness();
+    registerSubagentExtension(extension.pi, { agentDirectory: agents, execute: vi.fn<SubagentExecutor>() });
+    const tool = extension.getTool();
+    const args = { action: "list" } as const;
+    const result = await tool.execute("tool-call", args, undefined, undefined, context(root));
+    const theme = {
+      fg: (_color: string, text: string) => text,
+      bold: (text: string) => text,
+    };
+    const rendered = tool.renderResult!(
+      result,
+      { expanded: false, isPartial: false },
+      theme,
+      { args, isError: false, state: {}, invalidate: vi.fn() },
+    ).render(200).join("\n");
+    const output = (result.content[0] as { text: string }).text;
+
+    expect(output.split("\n")).toHaveLength(25);
+    expect(output).toContain("agent-00: Agent 0");
+    expect(output).toContain("agent-24: Agent 24");
+    expect(output).not.toContain("Available registered agents");
+    expect(rendered).toContain("agent-00: Agent 0");
+    expect(rendered).toContain("agent-24: Agent 24");
+    expect(rendered).not.toContain("output truncated in UI");
+  });
+
   test("returns a bounded JSON envelope for escaped executor output", async () => {
     const root = temporaryDirectory("pi-subagent-project-");
     const agents = temporaryDirectory("pi-subagent-agents-");
