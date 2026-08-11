@@ -8,8 +8,6 @@
   "terminal": {
     "showTerminalProgress": true
   },
-  "packages": [
-    "npm:pi-subagents"
-  ],
+  "packages": [],
   "theme": "dark"
 }
