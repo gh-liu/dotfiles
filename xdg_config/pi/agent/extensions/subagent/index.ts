@@ -24,6 +24,17 @@ interface SubagentExtensionOptions {
   idFactory?: () => string;
 }
 
+type OperationState = "running" | "completed" | "failed" | "interrupted";
+
+interface OperationRecord {
+  operationId: string;
+  runId: string;
+  agent: string;
+  state: OperationState;
+  startedAt: number;
+  finishedAt?: number;
+}
+
 const SubagentParameters = Type.Union([
   Type.Object({
     action: Type.Literal("list", { description: "Refresh and list registered user agents" }),
@@ -124,6 +135,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const idFactory = options.idFactory ?? randomUUID;
   const active = new Set<AbortController>();
   const executions = new Map<AbortController, Promise<unknown>>();
+  const operations = new Map<string, OperationRecord>();
   let shuttingDown = false;
 
   pi.registerTool({
@@ -194,6 +206,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const runId = idFactory();
       const operationId = idFactory();
       const controller = new AbortController();
+      const operation: OperationRecord = {
+        operationId,
+        runId,
+        agent: agent.name,
+        state: "running",
+        startedAt: Date.now(),
+      };
+      operations.set(operationId, operation);
       const forwardAbort = () => controller.abort();
       if (signal?.aborted) controller.abort();
       else signal?.addEventListener("abort", forwardAbort, { once: true });
@@ -223,6 +243,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         });
         executions.set(controller, execution);
         const result = await execution;
+        operation.state = result.status === "completed"
+          ? "completed"
+          : result.status === "interrupted"
+            ? "interrupted"
+            : "failed";
+        operation.finishedAt = Date.now();
         return {
           content: [
             {
@@ -235,6 +261,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         };
       } catch (error) {
         const cancelled = error instanceof SubagentCancellationError;
+        operation.state = cancelled ? "interrupted" : "failed";
+        operation.finishedAt = Date.now();
         const message = error instanceof Error ? error.message : String(error);
         return {
           content: [
@@ -253,6 +281,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         signal?.removeEventListener("abort", forwardAbort);
         active.delete(controller);
         executions.delete(controller);
+        if (operations.size > 128) {
+          for (const [id, record] of operations) {
+            if (record.state !== "running") {
+              operations.delete(id);
+              break;
+            }
+          }
+        }
       }
     },
   });
