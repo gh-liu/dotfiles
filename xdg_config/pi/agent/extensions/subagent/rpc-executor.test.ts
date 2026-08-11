@@ -89,6 +89,7 @@ process.stdin.on("data", (chunk) => {
     const result = await createRpcSubagentExecutor({ command: process.execPath, commandArgsPrefix: [script], sessionRoot })(options(script, sessionRoot));
 
     expect(result.status).toBe("completed");
+    expect(result.processInstanceId).toMatch(/^[0-9a-f-]{36}$/);
     const summary = JSON.parse(result.summary);
     const delegatedWorkOrder = JSON.parse(summary.goal.split("\n\n", 2)[1]);
     expect(delegatedWorkOrder.goal).toBe("Inspect the fixture");

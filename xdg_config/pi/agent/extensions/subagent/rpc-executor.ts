@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -228,8 +229,16 @@ function credentialValues(options: RpcOptions): string[] {
     .sort((a, b) => b.length - a.length);
 }
 
-function identity(options: RpcOptions): Pick<SubagentResult, "runId" | "operationId" | "agent"> {
-  return { runId: options.runId, operationId: options.operationId, agent: options.agent.name };
+function identity(
+  options: RpcOptions,
+  processInstanceId: string,
+): Pick<SubagentResult, "runId" | "operationId" | "agent" | "processInstanceId"> {
+  return {
+    runId: options.runId,
+    operationId: options.operationId,
+    agent: options.agent.name,
+    processInstanceId,
+  };
 }
 
 function result(
@@ -238,9 +247,10 @@ function result(
   summary: string,
   transcript: SubagentResult["transcript"],
   secrets: string[],
+  processInstanceId: string,
 ): SubagentResult {
   return {
-    ...identity(options),
+    ...identity(options, processInstanceId),
     status,
     summary: boundText(summary, { maxCharacters: 32_000, maxLines: 400 }, secrets),
     transcript,
@@ -260,6 +270,7 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
   }
   if (options.signal?.aborted) throw new SubagentCancellationError("Subagent run cancelled before process creation");
 
+  const processInstanceId = randomUUID();
   const sessionRoot = options.sessionRoot ?? join(tmpdir(), "pi-subagent-sessions");
   await mkdir(sessionRoot, { recursive: true });
   const sessionDirectory = await mkdtemp(join(sessionRoot, "run-"));
@@ -425,13 +436,13 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
     if (cleanupError) throw new SubagentCancellationError(`${terminalCause.error.message}; process cleanup failed: ${cleanupError.message}`);
     throw terminalCause.error;
   }
-  if (terminalCause?.kind === "protocol") return result(options, "failed", `Child protocol failure: ${terminalCause.error.message}`, transcript, secrets);
-  if (spawnError) return result(options, "failed", `Child process failed to start: ${spawnError.message}`, transcript, secrets);
-  if (operationError) return result(options, "failed", operationError.message, transcript, secrets);
-  if (exited.code !== 0) return result(options, "failed", stderr || `Child process exited with code ${String(exited.code)}`, transcript, secrets);
-  if (!settled || !finalText) return result(options, "failed", finalText?.error || finalText?.text || "Child exited without a complete final assistant response.", transcript, secrets);
+  if (terminalCause?.kind === "protocol") return result(options, "failed", `Child protocol failure: ${terminalCause.error.message}`, transcript, secrets, processInstanceId);
+  if (spawnError) return result(options, "failed", `Child process failed to start: ${spawnError.message}`, transcript, secrets, processInstanceId);
+  if (operationError) return result(options, "failed", operationError.message, transcript, secrets, processInstanceId);
+  if (exited.code !== 0) return result(options, "failed", stderr || `Child process exited with code ${String(exited.code)}`, transcript, secrets, processInstanceId);
+  if (!settled || !finalText) return result(options, "failed", finalText?.error || finalText?.text || "Child exited without a complete final assistant response.", transcript, secrets, processInstanceId);
   const completed = finalText.stopReason === "stop" && finalText.text.trim() !== "";
-  return result(options, completed ? "completed" : "failed", finalText.error || finalText.text || "Child did not produce a complete final assistant response.", transcript, secrets);
+  return result(options, completed ? "completed" : "failed", finalText.error || finalText.text || "Child did not produce a complete final assistant response.", transcript, secrets, processInstanceId);
 }
 
 export function createRpcSubagentExecutor(config: RpcSubagentConfig = {}): SubagentExecutor {

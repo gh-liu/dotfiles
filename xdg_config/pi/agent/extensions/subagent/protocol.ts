@@ -33,6 +33,8 @@ export interface SubagentRunOptions {
 export interface SubagentResult {
   runId: string;
   operationId: string;
+  /** Identity of the concrete child process instance, when available. */
+  processInstanceId?: string;
   agent: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
