@@ -33,7 +33,19 @@ interface OperationRecord {
   state: OperationState;
   startedAt: number;
   finishedAt?: number;
+  controller: AbortController;
+  execution: Promise<SubagentResult>;
+  settled: Promise<void>;
+  result?: SubagentResult;
+  processInstanceId?: string;
+  error?: string;
+  interruptRequested?: boolean;
 }
+
+type OperationSnapshot = Pick<
+  OperationRecord,
+  "operationId" | "runId" | "agent" | "startedAt" | "finishedAt" | "processInstanceId" | "interruptRequested"
+> & { status: OperationState; error?: string };
 
 const SubagentParameters = Type.Union([
   Type.Object({
@@ -47,6 +59,31 @@ const SubagentParameters = Type.Union([
     deadlineMs: Type.Optional(
       Type.Integer({ minimum: 1_000, maximum: 3_600_000, default: 300_000, description: "Execution deadline" }),
     ),
+  }),
+  Type.Object({
+    action: Type.Literal("start", { description: "Start a background one-shot child agent" }),
+    agent: Type.String({ description: "Canonical user agent name" }),
+    task: Type.String({ minLength: 1, description: "Self-contained task delegated to the child" }),
+    cwd: Type.Optional(Type.String({ description: "Child cwd under the parent's canonical project root" })),
+    deadlineMs: Type.Optional(
+      Type.Integer({ minimum: 1_000, maximum: 3_600_000, default: 300_000, description: "Execution deadline" }),
+    ),
+  }),
+  Type.Object({
+    action: Type.Literal("status", { description: "Return the status of an operation" }),
+    operationId: Type.String({ minLength: 1 }),
+  }),
+  Type.Object({
+    action: Type.Literal("wait", { description: "Wait for an operation to settle" }),
+    operationId: Type.String({ minLength: 1 }),
+    timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000 })),
+  }),
+  Type.Object({
+    action: Type.Literal("interrupt", { description: "Interrupt an operation" }),
+    operationId: Type.String({ minLength: 1 }),
+  }),
+  Type.Object({
+    action: Type.Literal("close", { description: "Close the subagent runtime" }),
   }),
 ]);
 
@@ -137,6 +174,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const executions = new Map<AbortController, Promise<unknown>>();
   const operations = new Map<string, OperationRecord>();
   let shuttingDown = false;
+  let closePromise: Promise<void> | undefined;
 
   pi.registerTool({
     name: "subagent",
@@ -156,6 +194,89 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderCall: renderSubagentCall,
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
+      const snapshotFor = (operation: OperationRecord): OperationSnapshot => ({
+        operationId: operation.operationId,
+        runId: operation.runId,
+        agent: operation.agent,
+        status: operation.state,
+        startedAt: operation.startedAt,
+        ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
+        ...(operation.processInstanceId === undefined ? {} : { processInstanceId: operation.processInstanceId }),
+        ...(operation.error === undefined ? {} : { error: operation.error }),
+        ...(operation.interruptRequested ? { interruptRequested: true } : {}),
+      });
+      const notFound = (operationId: string) => ({
+        content: [{ type: "text" as const, text: `Unknown subagent operation: ${operationId}.` }],
+        details: { operationId },
+        isError: true,
+      });
+
+      if (params.action === "close") {
+        if (!closePromise) {
+          shuttingDown = true;
+          const owned = [...operations.values()]
+            .filter((operation) => active.has(operation.controller))
+            .map((operation) => operation.settled);
+          for (const controller of active) controller.abort();
+          closePromise = Promise.allSettled(owned).then(() => undefined);
+        }
+        await closePromise;
+        const details = { status: "closed" as const };
+        return { content: [{ type: "text", text: JSON.stringify(details) }], details };
+      }
+
+      if (params.action === "status" || params.action === "wait" || params.action === "interrupt") {
+        const operation = operations.get(params.operationId);
+        if (!operation) return notFound(params.operationId);
+
+        if (params.action === "status") {
+          const details = snapshotFor(operation);
+          return { content: [{ type: "text", text: JSON.stringify(details) }], details };
+        }
+
+        if (params.action === "interrupt") {
+          const accepted = operation.state === "running";
+          if (accepted) {
+            operation.interruptRequested = true;
+            operation.controller.abort();
+          }
+          const details = { accepted, snapshot: snapshotFor(operation) };
+          return { content: [{ type: "text", text: JSON.stringify(details) }], details };
+        }
+
+        let settled = operation.state !== "running";
+        if (!settled && params.timeoutMs !== undefined) {
+          let timeout: ReturnType<typeof setTimeout> | undefined;
+          const timedOut = new Promise<false>((resolve) => {
+            timeout = setTimeout(() => resolve(false), params.timeoutMs);
+          });
+          settled = await Promise.race([operation.settled.then(() => true), timedOut]);
+          if (timeout) clearTimeout(timeout);
+        } else if (!settled) {
+          await operation.settled;
+          settled = true;
+        }
+        if (!settled) {
+          const snapshot = snapshotFor(operation);
+          const details = { reason: "timeout" as const, snapshot };
+          return { content: [{ type: "text", text: JSON.stringify(details) }], details };
+        }
+        if (operation.result) {
+          return {
+            content: [{ type: "text", text: serializeSubagentResult(operation.result) }],
+            details: operation.result,
+            isError: operation.result.status === "failed",
+          };
+        }
+        const message = operation.error ?? "Subagent operation did not produce a result.";
+        const details = { ...snapshotFor(operation), error: message };
+        return {
+          content: [{ type: "text", text: boundText(`Subagent controller failure: ${message}`, { maxCharacters: 32_000, maxLines: 400 }) }],
+          details,
+          isError: true,
+        };
+      }
+
       if (shuttingDown) {
         return {
           content: [{ type: "text", text: "Subagent runtime is shutting down; new runs are rejected." }],
@@ -206,81 +327,66 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const runId = idFactory();
       const operationId = idFactory();
       const controller = new AbortController();
+      let settleOperation!: () => void;
       const operation: OperationRecord = {
         operationId,
         runId,
         agent: agent.name,
         state: "running",
         startedAt: Date.now(),
+        controller,
+        execution: Promise.resolve(undefined as never),
+        settled: new Promise<void>((resolve) => { settleOperation = resolve; }),
       };
       operations.set(operationId, operation);
       const forwardAbort = () => controller.abort();
       if (signal?.aborted) controller.abort();
       else signal?.addEventListener("abort", forwardAbort, { once: true });
-
       active.add(controller);
-      try {
-        onUpdate?.({
-          content: [{ type: "text", text: "Starting isolated child…" }],
-          details: { runId, operationId, agent: agent.name, status: "running" },
-        });
-        const execution = executeChild({
-          cwd,
-          agent,
-          workOrder: createWorkOrder(params.task, cwd, loadProjectGuidance(allowedRoot, cwd)),
-          runId,
-          operationId,
-          parentSessionId: ctx.sessionManager.getSessionId(),
-          deadlineMs: params.deadlineMs ?? 300_000,
-          signal: controller.signal,
-          onProgress: onUpdate
-            ? (summary) =>
-                onUpdate({
-                  content: [{ type: "text", text: summary }],
-                  details: { runId, operationId, agent: agent.name, status: "running" },
-                })
-            : undefined,
-        });
-        executions.set(controller, execution);
-        const result = await execution;
-        operation.state = result.status === "completed"
-          ? "completed"
-          : result.status === "interrupted"
-            ? "interrupted"
-            : "failed";
+      onUpdate?.({
+        content: [{ type: "text", text: "Starting isolated child…" }],
+        details: { runId, operationId, agent: agent.name, status: "running" },
+      });
+
+      const execution = Promise.resolve().then(() => executeChild({
+        cwd,
+        agent,
+        workOrder: createWorkOrder(params.task, cwd, loadProjectGuidance(allowedRoot, cwd)),
+        runId,
+        operationId,
+        parentSessionId: ctx.sessionManager.getSessionId(),
+        deadlineMs: params.deadlineMs ?? 300_000,
+        signal: controller.signal,
+        onProgress: onUpdate
+          ? (summary) =>
+              onUpdate({
+                content: [{ type: "text", text: summary }],
+                details: { runId, operationId, agent: agent.name, status: "running" },
+              })
+          : undefined,
+      }));
+      operation.execution = execution;
+      executions.set(controller, execution);
+      execution.then(
+        (result) => {
+          operation.result = result;
+          operation.processInstanceId = result.processInstanceId;
+          operation.state = result.status === "completed"
+            ? "completed"
+            : result.status === "interrupted"
+              ? "interrupted"
+              : "failed";
+        },
+        (error) => {
+          operation.error = error instanceof Error ? error.message : String(error);
+          operation.state = error instanceof SubagentCancellationError ? "interrupted" : "failed";
+        },
+      ).then(() => {
         operation.finishedAt = Date.now();
-        return {
-          content: [
-            {
-              type: "text",
-              text: serializeSubagentResult(result),
-            },
-          ],
-          details: result,
-          isError: result.status === "failed",
-        };
-      } catch (error) {
-        const cancelled = error instanceof SubagentCancellationError;
-        operation.state = cancelled ? "interrupted" : "failed";
-        operation.finishedAt = Date.now();
-        const message = error instanceof Error ? error.message : String(error);
-        return {
-          content: [
-            {
-              type: "text",
-              text: boundText(
-                `${cancelled ? "Controller cancellation" : "Subagent controller failure"}: ${message}`,
-                { maxCharacters: 32_000, maxLines: 400 },
-              ),
-            },
-          ],
-          details: { runId, operationId, agent: agent.name, controllerCancellation: cancelled },
-          isError: true,
-        };
-      } finally {
         signal?.removeEventListener("abort", forwardAbort);
         active.delete(controller);
         executions.delete(controller);
+        settleOperation();
         if (operations.size > 128) {
           for (const [id, record] of operations) {
             if (record.state !== "running") {
@@ -289,16 +395,44 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             }
           }
         }
+      });
+
+      if (params.action === "start") {
+        const details = snapshotFor(operation);
+        return { content: [{ type: "text", text: JSON.stringify(details) }], details };
       }
+
+      await operation.settled;
+      if (operation.result) {
+        return {
+          content: [{ type: "text", text: serializeSubagentResult(operation.result) }],
+          details: operation.result,
+          isError: operation.result.status === "failed",
+        };
+      }
+      const message = operation.error ?? "Subagent controller failure";
+      const cancelled = operation.state === "interrupted";
+      return {
+        content: [{
+          type: "text",
+          text: boundText(`${cancelled ? "Controller cancellation" : "Subagent controller failure"}: ${message}`, { maxCharacters: 32_000, maxLines: 400 }),
+        }],
+        details: { runId, operationId, agent: agent.name, controllerCancellation: cancelled },
+        isError: true,
+      };
     },
   });
 
   pi.on("session_shutdown", async () => {
     shuttingDown = true;
-    const ownedControllers = [...active];
-    const ownedExecutions = [...executions.values()];
-    for (const controller of ownedControllers) controller.abort();
-    await Promise.allSettled(ownedExecutions);
+    if (!closePromise) {
+      const owned = [...operations.values()]
+        .filter((operation) => active.has(operation.controller))
+        .map((operation) => operation.settled);
+      for (const controller of active) controller.abort();
+      closePromise = Promise.allSettled(owned).then(() => undefined);
+    }
+    await closePromise;
   });
 }
 

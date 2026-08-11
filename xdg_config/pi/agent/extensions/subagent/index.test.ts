@@ -6,7 +6,7 @@ import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { registerSubagentExtension } from "./index.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentExecutor } from "./protocol.ts";
+import type { SubagentExecutor, SubagentResult } from "./protocol.ts";
 
 const temporaryDirectories: string[] = [];
 
@@ -358,6 +358,124 @@ describe("subagent tool", () => {
     expect(result.isError).toBe(true);
     expect((result.content[0] as { text: string }).text).toContain("Available agents: scout");
     expect(execute).not.toHaveBeenCalled();
+  });
+
+  test("starts background work, reports status, and waits without changing state on timeout", async () => {
+    const root = temporaryDirectory("pi-subagent-project-");
+    const agents = temporaryDirectory("pi-subagent-agents-");
+    writeScout(agents);
+    let release!: (result: SubagentResult) => void;
+    const execute = vi.fn<SubagentExecutor>(
+      (options) => new Promise((resolve) => {
+        release = () => resolve({
+          runId: options.runId,
+          operationId: options.operationId,
+          agent: options.agent.name,
+          status: "completed",
+          summary: "Finished.",
+          transcript: {},
+        });
+      }),
+    );
+    const extension = harness();
+    registerSubagentExtension(extension.pi, { agentDirectory: agents, execute });
+
+    const started = await extension.getTool().execute(
+      "tool-call",
+      { action: "start", agent: "scout", task: "Inspect" },
+      undefined,
+      undefined,
+      context(root),
+    );
+    const identity = JSON.parse((started.content[0] as { text: string }).text) as { operationId: string; runId: string };
+    expect(identity).toMatchObject({ operationId: expect.any(String), runId: expect.any(String) });
+    expect(execute).toHaveBeenCalledOnce();
+
+    const running = await extension.getTool().execute(
+      "tool-call",
+      { action: "status", operationId: identity.operationId },
+      undefined,
+      undefined,
+      context(root),
+    );
+    expect(running.details).toMatchObject({
+      operationId: identity.operationId,
+      runId: identity.runId,
+      status: "running",
+    });
+
+    const timedOut = await extension.getTool().execute(
+      "tool-call",
+      { action: "wait", operationId: identity.operationId, timeoutMs: 1 },
+      undefined,
+      undefined,
+      context(root),
+    );
+    expect(timedOut.details).toMatchObject({ reason: "timeout", snapshot: { status: "running" } });
+    expect((await extension.getTool().execute(
+      "tool-call",
+      { action: "status", operationId: identity.operationId },
+      undefined,
+      undefined,
+      context(root),
+    )).details).toMatchObject({ status: "running" });
+
+    release({
+      runId: identity.runId,
+      operationId: identity.operationId,
+      agent: "scout",
+      status: "completed",
+      summary: "Finished.",
+      transcript: {},
+    });
+    const waited = await extension.getTool().execute(
+      "tool-call",
+      { action: "wait", operationId: identity.operationId },
+      undefined,
+      undefined,
+      context(root),
+    );
+    expect(waited.details).toMatchObject({ status: "completed", summary: "Finished." });
+  });
+
+  test("interrupts an operation and close is idempotent while awaiting shutdown", async () => {
+    const root = temporaryDirectory("pi-subagent-project-");
+    const agents = temporaryDirectory("pi-subagent-agents-");
+    writeScout(agents);
+    let observedSignal: AbortSignal | undefined;
+    const execute = vi.fn<SubagentExecutor>(
+      (options) => new Promise((_resolve, reject) => {
+        observedSignal = options.signal;
+        options.signal?.addEventListener(
+          "abort",
+          () => reject(new SubagentCancellationError("cancelled by interrupt")),
+          { once: true },
+        );
+      }),
+    );
+    const extension = harness();
+    registerSubagentExtension(extension.pi, { agentDirectory: agents, execute });
+    const started = await extension.getTool().execute(
+      "tool-call",
+      { action: "start", agent: "scout", task: "Wait" },
+      undefined,
+      undefined,
+      context(root),
+    );
+    const { operationId } = JSON.parse((started.content[0] as { text: string }).text) as { operationId: string };
+
+    const interrupted = await extension.getTool().execute(
+      "tool-call",
+      { action: "interrupt", operationId },
+      undefined,
+      undefined,
+      context(root),
+    );
+    expect(interrupted.details).toMatchObject({ accepted: true });
+    expect(observedSignal?.aborted).toBe(true);
+    await extension.getTool().execute("tool-call", { action: "close" }, undefined, undefined, context(root));
+    const repeated = await extension.getTool().execute("tool-call", { action: "close" }, undefined, undefined, context(root));
+    expect(repeated.details).toEqual({ status: "closed" });
   });
 
   test("parent shutdown cancels and awaits owned children", async () => {

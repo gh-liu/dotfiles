@@ -3,7 +3,9 @@ import { Text } from "@earendil-works/pi-tui";
 
 type SubagentRenderArgs =
   | { action: "list" }
-  | { action: "run"; agent: string; task: string; cwd?: string; deadlineMs?: number };
+  | { action: "run" | "start"; agent: string; task: string; cwd?: string; deadlineMs?: number }
+  | { action: "status" | "wait" | "interrupt"; operationId: string; timeoutMs?: number }
+  | { action: "close" };
 
 interface SubagentRenderState {
   spinnerFrame?: number;
@@ -37,6 +39,10 @@ function resultText(result: SubagentRenderResult): string {
 
 export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme): Text {
   if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
+  if (args.action === "close") return new Text(theme.fg("accent", "close runtime"), 0, 0);
+  if (args.action !== "run" && args.action !== "start") {
+    return new Text(theme.fg("accent", `${args.action} — ${"operationId" in args ? args.operationId : ""}`), 0, 0);
+  }
   let text = theme.fg("accent", theme.bold(args.agent || "unknown"));
   if (args.task) text += theme.fg("dim", ` — ${oneLine(args.task)}`);
   if (args.cwd) text += theme.fg("muted", ` (${args.cwd})`);
