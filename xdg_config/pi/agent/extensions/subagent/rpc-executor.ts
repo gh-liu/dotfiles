@@ -332,6 +332,13 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
     child.once("error", (error) => { spawnError = error; });
     child.once("close", (code) => resolve({ code }));
   });
+  const cleanUpProcessTree = (): void => {
+    if (cleanup) return;
+    signalProcessTree(child, "SIGTERM");
+    cleanup = waitForProcessTreeCleanup(child, options.terminationGraceMs ?? 5_000).catch((failure) => {
+      cleanupError = failure instanceof Error ? failure : new Error(String(failure));
+    });
+  };
   const terminate = (error: Error): void => {
     if (terminalCause) return;
     terminalCause = {
@@ -339,10 +346,7 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
       error,
     };
     if (deadline) clearTimeout(deadline);
-    signalProcessTree(child, "SIGTERM");
-    cleanup ??= waitForProcessTreeCleanup(child, options.terminationGraceMs ?? 5_000).catch((failure) => {
-      cleanupError = failure instanceof Error ? failure : new Error(String(failure));
-    });
+    cleanUpProcessTree();
   };
 
   const failIfTerminated = (): void => {
@@ -473,6 +477,7 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
 
   const exited = await exit;
   if (deadline) clearTimeout(deadline);
+  if (child.pid !== undefined && processGroupExists(child.pid)) cleanUpProcessTree();
   if (cleanup) await cleanup;
   pendingStderr += stderrDecoder.end();
   stderr = appendStderr(stderr, redactSecrets(pendingStderr, secrets));
@@ -487,6 +492,7 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
     if (cleanupError) throw new SubagentCancellationError(`${terminalCause.error.message}; process cleanup failed: ${cleanupError.message}`);
     throw terminalCause.error;
   }
+  if (cleanupError) return result(options, "failed", `Child process cleanup failed: ${cleanupError.message}`, transcript, secrets, processInstanceId);
   if (terminalCause?.kind === "protocol") return result(options, "failed", `Child protocol failure: ${terminalCause.error.message}`, transcript, secrets, processInstanceId);
   if (spawnError) return result(options, "failed", `Child process failed to start: ${spawnError.message}`, transcript, secrets, processInstanceId);
   if (operationError) return result(options, "failed", operationError.message, transcript, secrets, processInstanceId);
