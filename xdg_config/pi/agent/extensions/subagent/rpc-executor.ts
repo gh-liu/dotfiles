@@ -29,6 +29,11 @@ type RpcRecord = {
   success?: boolean;
   data?: unknown;
   event?: string;
+  toolCallId?: string;
+  toolName?: string;
+  args?: unknown;
+  isError?: boolean;
+  assistantMessageEvent?: { type?: string };
   message?: {
     role?: string;
     content?: Array<{ type?: string; text?: string }>;
@@ -263,6 +268,26 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
   return { promise, resolve };
 }
 
+function boundedOneLine(text: string, maxCharacters: number, secrets: string[]): string {
+  const normalized = redactSecrets(text, secrets).replace(/\s+/g, " ").trim();
+  return normalized.length <= maxCharacters
+    ? normalized
+    : `${normalized.slice(0, maxCharacters - 1)}…`;
+}
+
+function safeToolProgress(record: RpcRecord, secrets: string[]): string {
+  const toolName = typeof record.toolName === "string" ? record.toolName : "tool";
+  const args = record.args && typeof record.args === "object" && !Array.isArray(record.args)
+    ? record.args as Record<string, unknown>
+    : {};
+  const values = toolName === "grep" ? [args.pattern, args.path] : [args.path];
+  const detail = values
+    .filter((value): value is string => typeof value === "string" && value.trim() !== "")
+    .map((value) => boundedOneLine(value, 80, secrets))
+    .join(" · ");
+  return boundedOneLine(`${toolName}${detail ? ` ${detail}` : ""}`, 120, secrets);
+}
+
 async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
   if (!Number.isSafeInteger(options.deadlineMs) || options.deadlineMs <= 0) throw new Error("deadlineMs must be a positive integer");
   if (options.terminationGraceMs !== undefined && (!Number.isSafeInteger(options.terminationGraceMs) || options.terminationGraceMs <= 0)) {
@@ -293,6 +318,14 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
   let deadline: NodeJS.Timeout | undefined;
   const settledWaiter = deferred<void>();
   const responses = new Map<string, ReturnType<typeof deferred<RpcResponse>>>();
+  const activeTools = new Map<string, string>();
+  let lastProgress = "";
+  const reportProgress = (summary: string): void => {
+    const bounded = boundedOneLine(summary, 160, secrets);
+    if (bounded === lastProgress) return;
+    lastProgress = bounded;
+    options.onProgress?.(bounded);
+  };
 
   let spawnError: Error | undefined;
   const exit = new Promise<{ code: number | null }>((resolve) => {
@@ -324,6 +357,23 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
       const waiter = responses.get(record.id);
       if (!waiter) throw new Error(`Unexpected RPC response id: ${record.id}`);
       waiter.resolve(record as RpcResponse);
+    } else if (record.type === "agent_start") {
+      reportProgress("Child started; waiting for model…");
+    } else if (record.type === "message_update") {
+      const updateType = record.assistantMessageEvent?.type;
+      if (updateType?.startsWith("thinking_")) reportProgress("Thinking…");
+      else if (updateType?.startsWith("toolcall_")) reportProgress("Preparing tool call…");
+      else if (updateType?.startsWith("text_")) reportProgress("Writing response…");
+    } else if (record.type === "tool_execution_start") {
+      const label = safeToolProgress(record, secrets);
+      if (typeof record.toolCallId === "string") activeTools.set(record.toolCallId, label);
+      reportProgress(label.endsWith("…") ? label : `${label}…`);
+    } else if (record.type === "tool_execution_end") {
+      const label = typeof record.toolCallId === "string"
+        ? activeTools.get(record.toolCallId) ?? safeToolProgress(record, secrets)
+        : safeToolProgress(record, secrets);
+      if (typeof record.toolCallId === "string") activeTools.delete(record.toolCallId);
+      reportProgress(record.isError ? `${label} failed; reviewing result…` : `${label} completed; continuing…`);
     } else if (record.type === "agent_settled") {
       settled = true;
       settledWaiter.resolve();
@@ -337,6 +387,7 @@ async function runRpcSubagent(options: RpcOptions): Promise<SubagentResult> {
         stopReason: record.message.stopReason,
         error: record.message.errorMessage,
       };
+      if (record.message.stopReason === "stop") reportProgress("Finalizing response…");
     }
   };
   const decoder = new BoundedJsonlDecoder(onRecord);

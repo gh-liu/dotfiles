@@ -250,6 +250,8 @@ describe("subagent tool", () => {
     expect(output).not.toContain("Available registered agents");
     expect(rendered).toContain("agent-00: Agent 0");
     expect(rendered).toContain("agent-24: Agent 24");
+    expect(rendered).toContain("Registered agents");
+    expect(rendered).not.toContain("Completed");
     expect(rendered).not.toContain("output truncated in UI");
   });
 
@@ -281,7 +283,7 @@ describe("subagent tool", () => {
     expect(JSON.parse(serialized)).toMatchObject({ status: "completed" });
   });
 
-  test("renders the delegated task and visible running/completed status", () => {
+  test("renders a bounded multiline task and visible running/completed status", () => {
     vi.useFakeTimers();
     const extension = harness();
     registerSubagentExtension(extension.pi);
@@ -290,7 +292,16 @@ describe("subagent tool", () => {
       fg: (_color: string, text: string) => text,
       bold: (text: string) => text,
     };
-    const args = { action: "run", agent: "scout", task: "Inspect authentication" };
+    const args = {
+      action: "run",
+      agent: "scout",
+      task: [
+        "Inspect authentication.",
+        "1) Find the entry point.",
+        "2) Explain the request flow.",
+        "3) Cite code evidence.",
+      ].join("\n"),
+    };
     const renderContext = {
       args,
       isError: false,
@@ -299,6 +310,11 @@ describe("subagent tool", () => {
     };
 
     const call = tool.renderCall!(args, theme, renderContext).render(200).join("\n");
+    const expandedCall = tool.renderCall!(
+      args,
+      theme,
+      { ...renderContext, expanded: true },
+    ).render(200).join("\n");
     const running = tool.renderResult!(
       {
         content: [{ type: "text", text: "Reading auth files" }],
@@ -328,7 +344,12 @@ describe("subagent tool", () => {
       renderContext,
     ).render(200).join("\n");
 
-    expect(call).toContain("scout — Inspect authentication");
+    expect(call).toContain("scout");
+    expect(call).toContain("  Inspect authentication.");
+    expect(call).toContain("  2) Explain the request flow.");
+    expect(call).not.toContain("3) Cite code evidence.");
+    expect(call).toContain("…");
+    expect(expandedCall).toContain("  3) Cite code evidence.");
     expect(call).not.toContain("subagent");
     expect(running).toContain("⠋ — Reading auth files");
     expect(running).not.toContain("Running");
@@ -337,6 +358,52 @@ describe("subagent tool", () => {
     expect(nextFrame).toContain("⠙ — Reading auth files");
     expect(completed).toContain("✓ Completed — Located auth.");
     expect(completed).not.toContain("scout");
+  });
+
+  test("renders lifecycle actions without reporting running or interrupted work as completed", () => {
+    const extension = harness();
+    registerSubagentExtension(extension.pi);
+    const tool = extension.getTool();
+    const theme = {
+      fg: (_color: string, text: string) => text,
+      bold: (text: string) => text,
+    };
+    const render = (
+      args: Record<string, unknown>,
+      details: Record<string, unknown>,
+      isError = false,
+    ) => tool.renderResult!(
+      { content: [{ type: "text", text: JSON.stringify(details) }], details },
+      { expanded: false, isPartial: false },
+      theme,
+      { args, isError, state: {}, invalidate: vi.fn() },
+    ).render(200).join("\n").trimEnd();
+
+    expect(render(
+      { action: "start", agent: "scout", task: "Inspect" },
+      { status: "running", operationId: "operation-1" },
+    )).toBe("↗ Started");
+    expect(render(
+      { action: "status", operationId: "operation-1" },
+      { status: "running" },
+    )).toBe("● Running");
+    expect(render(
+      { action: "wait", operationId: "operation-1", timeoutMs: 1 },
+      { reason: "timeout", snapshot: { status: "running" } },
+    )).toBe("◷ Still running");
+    expect(render(
+      { action: "interrupt", operationId: "operation-1" },
+      { accepted: true, snapshot: { status: "running" } },
+    )).toBe("■ Interrupt requested");
+    expect(render(
+      { action: "interrupt", operationId: "missing" },
+      { operationId: "missing" },
+      true,
+    )).toContain("✗ Failed");
+    expect(render(
+      { action: "run", agent: "scout", task: "Inspect" },
+      { status: "interrupted", summary: "Cancelled." },
+    )).toContain("■ Interrupted — Cancelled.");
   });
 
   test("reports unknown agents without starting a process", async () => {

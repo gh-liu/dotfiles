@@ -10,6 +10,7 @@ import type { SubagentExecutionProfile, SubagentRunOptions, SubagentWorkOrder } 
 const temporaryDirectories: string[] = [];
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
+  delete process.env.SUBAGENT_RPC_TEST_SECRET;
 });
 
 function temporaryScript(source: string): string {
@@ -125,6 +126,61 @@ process.stdin.on("data", (chunk) => {
     expect(result.summary).toBe("partial");
     expect(result.transcript.sessionId).toBe("session-failed");
     expect(result.transcript.sessionPath).toContain("session.jsonl");
+  });
+
+  test("reduces RPC model and tool events to bounded redacted progress", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const script = temporaryScript(`
+let input = "";
+function emit(value) { process.stdout.write(JSON.stringify(value) + "\\n"); }
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  let newline;
+  while ((newline = input.indexOf("\\n")) !== -1) {
+    const command = JSON.parse(input.slice(0, newline));
+    input = input.slice(newline + 1);
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-progress", sessionFile: process.argv[process.argv.indexOf("--session-dir") + 1] + "/session.jsonl" } });
+    if (command.type === "prompt") {
+      emit({ type: "response", id: command.id, command: "prompt", success: true });
+      emit({ type: "agent_start" });
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "private reasoning" } });
+      emit({ type: "message_update", assistantMessageEvent: { type: "toolcall_start" } });
+      emit({ type: "tool_execution_start", toolCallId: "tool-1", toolName: "read", args: { path: "token=rpc-secret-" + "x".repeat(300) } });
+      emit({ type: "tool_execution_update", toolCallId: "tool-1", toolName: "read", partialResult: { content: [{ type: "text", text: "private tool output" }] } });
+      emit({ type: "tool_execution_end", toolCallId: "tool-1", toolName: "read", isError: false, result: { content: [{ type: "text", text: "private tool output" }] } });
+      emit({ type: "message_update", assistantMessageEvent: { type: "text_delta", delta: "Final answer" } });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Final answer" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    }
+  }
+});
+`);
+    process.env.SUBAGENT_RPC_TEST_SECRET = "rpc-secret";
+    const progress: string[] = [];
+    const execute = createRpcSubagentExecutor({
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+      authEnvAllowlist: ["SUBAGENT_RPC_TEST_SECRET"],
+    });
+
+    const result = await execute(options(script, sessionRoot, {
+      onProgress: (summary) => progress.push(summary),
+    }));
+
+    expect(result.status).toBe("completed");
+    expect(progress.slice(0, 3)).toEqual([
+      "Child started; waiting for model…",
+      "Thinking…",
+      "Preparing tool call…",
+    ]);
+    expect(progress[3]).toMatch(/^read token=\[REDACTED\]-x+…$/);
+    expect(progress[4]).toContain("completed; continuing…");
+    expect(progress.slice(-2)).toEqual(["Writing response…", "Finalizing response…"]);
+    expect(progress.join("\n")).not.toContain("private reasoning");
+    expect(progress.join("\n")).not.toContain("private tool output");
+    expect(progress.every((entry) => entry.length <= 161)).toBe(true);
   });
 
   test("cancels and cleans up the owned process group", async () => {
