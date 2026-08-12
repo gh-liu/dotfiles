@@ -213,6 +213,25 @@ describe("subagent tool", () => {
     const options = env.fake.controllers[0].starts[0].options;
     const canonicalRoot = realpathSync(env.root);
     expect(env.extension.getTool().description).toContain("scout: Inspect files");
+    expect(env.extension.getTool().description).toContain("instead of chaining multiple parent web searches");
+    expect(env.extension.getTool().description).toContain("before loading a parent research workflow or making parent web searches");
+    expect(env.extension.getTool().description).toContain("without repeating the same searches or reads");
+    expect(env.extension.getTool().description).toContain("parent self-review cannot satisfy independence");
+    expect(env.extension.getTool().promptSnippet).toContain("route every explicitly independent review");
+    expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
+      expect.stringContaining("Before any read, search, or review tool call"),
+      expect.stringContaining("Otherwise do simple work directly"),
+      expect.stringContaining("catalog description and declared capabilities"),
+      expect.stringContaining("Delegate source-heavy external research"),
+      expect.stringContaining("before loading a parent research skill or making parent web searches"),
+      expect.stringContaining("parent reviewing its own work is not independent"),
+      expect.stringContaining("Every subagent task must be self-contained"),
+      expect.stringContaining("Omit cwd to use the parent's current working directory"),
+      expect.stringContaining("Every subagent call must include action"),
+      expect.stringContaining("For independent review work"),
+      expect.stringContaining("Treat a subagent result as a handoff, not proof"),
+      expect.stringContaining("do not repeat the same searches or re-read every cited file"),
+    ]));
     expect(options).toMatchObject({
       cwd: canonicalRoot,
       runId: "run-fixed",
