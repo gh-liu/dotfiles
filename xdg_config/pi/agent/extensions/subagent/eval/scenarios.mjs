@@ -103,6 +103,27 @@ export const scenarios = [
     prompt: "Complete plan.md using staged delegation. First delegate bounded local discovery to map the change seam. After that handoff, delegate implementation to a writing-capable subagent. After tests pass, delegate an independent read-only review of the resulting diff. Address any blocking finding, but do not commit. Do not replace these stages with parent self-review.",
   },
   {
+    id: "parallel-evidence",
+    description: "Independent local and external evidence should start in parallel before synthesis.",
+    quick: false,
+    repeats: 1,
+    fixture: "baseline",
+    workspace: "read-only",
+    targetRate: 1,
+    hardExpectation: {
+      requiredAgents: ["scout", "researcher"],
+      maxSubagentCalls: 2,
+      parallelAgents: ["scout", "researcher"],
+    },
+    expectation: {
+      requiredAgents: ["scout", "researcher"],
+      maxSubagentCalls: 2,
+      parallelAgents: ["scout", "researcher"],
+      parentToolCounts: { web_search: { max: 0 } },
+    },
+    prompt: "Resolve the TTL compatibility question without editing. Start exactly two independent read-only evidence tasks in parallel: scout should inspect the local API and tests; researcher should consult multiple authoritative JavaScript interoperability sources. Do not start an oracle or any dependent task until both evidence tasks settle. Synthesize their handoffs with citations and do not repeat their searches or reads in the parent.",
+  },
+  {
     id: "combo-evidence-decision",
     description: "Local and external evidence gathering should precede the oracle decision.",
     quick: false,
