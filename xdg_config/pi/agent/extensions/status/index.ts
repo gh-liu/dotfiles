@@ -39,11 +39,12 @@ type Activity =
 const ACTIVE_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
 const TOOL_SPINNER_FRAMES = ["›", "»", "≫", "»"] as const;
+const MAX_BRANCH_WIDTH = 32;
 
 interface StatusSnapshot {
   provider?: string;
   model?: string;
-  thinking?: string;
+  thinking?: Parameters<Theme["getThinkingBorderColor"]>[0];
   input: number;
   output: number;
   cacheHit?: number;
@@ -70,6 +71,7 @@ const NORD = {
   cyan: [136, 192, 208], // nord8
   amber: [235, 203, 139], // nord13
   red: [191, 97, 106], // nord11
+  green: [163, 190, 140], // nord14
   primary: [216, 222, 233], // nord4
   muted: [82, 90, 108], // nord3.5
 } as const;
@@ -96,7 +98,9 @@ function paint(theme: Theme, color: keyof typeof NORD, text: string): string {
           ? "warning"
           : color === "muted"
             ? "muted"
-            : "text";
+            : color === "green"
+              ? "success"
+              : "text";
     return theme.fg(fallback, text);
   }
   const [red, green, blue] = NORD[color];
@@ -207,8 +211,17 @@ function renderStatusLine(
         {
           id: "model",
           zone: "left" as const,
-          text: `${paint(theme, "primary", snapshot.model)}${snapshot.provider ? paint(theme, "muted", `(${snapshot.provider})`) : ""
-            }`,
+          text: paint(theme, "primary", snapshot.model),
+          dropRank: 50,
+        },
+      ]
+      : []),
+    ...(snapshot.provider
+      ? [
+        {
+          id: "provider",
+          zone: "left" as const,
+          text: paint(theme, "muted", `(${snapshot.provider})`),
           dropRank: 30,
         },
       ]
@@ -218,7 +231,7 @@ function renderStatusLine(
         {
           id: "thinking",
           zone: "left" as const,
-          text: paint(theme, "muted", snapshot.thinking),
+          text: theme.getThinkingBorderColor(snapshot.thinking)(snapshot.thinking),
           dropRank: 10,
         },
       ]
@@ -228,8 +241,8 @@ function renderStatusLine(
         {
           id: "branch",
           zone: "left" as const,
-          text: paint(theme, "primary", branch),
-          dropRank: 10,
+          text: paint(theme, "green", truncateToWidth(branch, MAX_BRANCH_WIDTH, "…")),
+          dropRank: 20,
         },
       ]
       : []),
@@ -275,11 +288,16 @@ function renderStatusLine(
   ];
 
   const active = [...items];
-  const renderZone = (zone: StatusItem["zone"], separator: string) =>
-    active
-      .filter((item) => item.zone === zone)
-      .map((item) => item.text)
-      .join(separator);
+  const renderZone = (zone: StatusItem["zone"], separator: string) => {
+    const zoneItems = active.filter((item) => item.zone === zone);
+    return zoneItems.reduce((result, item, index) => {
+      if (index === 0) return item.text;
+      const previous = zoneItems[index - 1];
+      const itemSeparator =
+        (previous.id === "model" && item.id === "provider") ? "" : separator;
+      return `${result}${itemSeparator}${item.text}`;
+    }, "");
+  };
   const left = () => renderZone("left", " · ");
   const right = () => renderZone("right", "  ");
   const measured = () => visibleWidth(left()) + visibleWidth(right()) + (left() && right() ? 2 : 0);
