@@ -570,7 +570,10 @@ Semantics:
 
 The extension registers the canonical `subagent` name. Any package-provided tool
 with the same name, such as `npm:pi-subagents`, must be removed or disabled in
-the same Pi runtime.
+the same Pi runtime. Its provider-facing parameter schema has a single object
+root with action-dependent optional fields; root-level JSON Schema unions are
+not used because DeepSeek rejects them before tool invocation. The extension
+validates each action's required fields before accessing runtime state.
 
 ### 7.1 Current implementation status
 
@@ -595,12 +598,14 @@ Implemented today:
 - Bounded in-memory runtime and operation tracking.
 - Bounded parent completion notifications for each submitted persistent operation;
   queued operations cancelled by close or shutdown do not notify.
+- Compact runtime UI with bounded task previews, reduced live progress, short
+  collapsed identifiers, and full expanded completion summaries.
 
 Optional remaining reliability work is durable history and unclean-restart
 reconciliation. That work would not make a runtime resumable. Reconnect/reporting
 for a live prior process requires a different transport or supervisor design and
 is not implied by the current architecture. Rich structured handoffs, usage
-accounting, and a more compact status UI remain Milestone 2 work.
+accounting, and needs-decision messages remain Milestone 2 work.
 
 ## 8. Context requirements
 
@@ -766,6 +771,16 @@ UI/details may additionally show:
 - Usage/cost where Pi exposes it reliably.
 - Full bounded diagnostic error.
 
+Collapsed calls show up to six task lines. Collapsed results hide runtime and
+operation IDs, showing only user-relevant state such as a queued follow-up.
+Expanded calls and results show the bounded full task and full IDs. While an operation is
+active, its partial-state branch contributes only an animated spinner; the common
+output-preview path appends the latest reduced, redacted progress summary once.
+It does not repeat the agent name or a generic `Running` label. Terminal and
+status lines include the agent and relevant active or queued operation context.
+Expanded completion notifications retain bounded multiline summaries instead
+of flattening them to one line.
+
 Intermediate child reasoning must not be copied into the parent model context.
 JSONL parse failures and protocol violations must be surfaced as diagnostics,
 not silently discarded.
@@ -930,12 +945,12 @@ Acceptance:
 Implemented:
 
 - Active `steer` and controller-queued `follow_up` modes.
+- Compact status/progress UI with collapsed and expanded presentations.
 
 Remaining:
 
 - Structured progress, needs-decision, and final handoff messages.
 - Usage and timing accounting where reliable.
-- A compact status UI.
 
 Acceptance:
 

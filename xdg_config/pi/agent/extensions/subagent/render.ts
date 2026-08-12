@@ -61,9 +61,15 @@ export function renderSubagentCompletion(
   const agent = oneLine(details?.agent ?? "subagent", 80);
   const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""));
   let text = `${theme.fg(color, marker)} ${theme.bold(agent)} ${status}`;
-  if (summary) text += theme.fg("dim", ` — ${summary}`);
-  if (expanded && details) {
-    text += `\n${theme.fg("dim", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
+  if (!expanded && summary) text += theme.fg("dim", ` — ${summary}`);
+  if (expanded) {
+    const expandedSummary = details?.summary ?? (typeof message.content === "string" ? message.content : "");
+    for (const line of boundedLines(expandedSummary, 4_000, 20)) {
+      if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
+    }
+    if (details) {
+      text += `\n${theme.fg("muted", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
+    }
   }
   const box = new Box(outputPad, 0, (value) => theme.bg("customMessageBg", value));
   box.addChild(new Text(text, 0, 0));
@@ -85,27 +91,38 @@ function resultText(result: SubagentRenderResult): string {
   return result.content.find((part) => part.type === "text")?.text ?? "";
 }
 
+function shortId(value: string): string {
+  return value.length > 12 ? value.slice(0, 8) : value;
+}
+
+function shownId(value: string, expanded: boolean): string {
+  return expanded ? value : shortId(value);
+}
+
 export function renderSubagentCall(
   args: SubagentRenderArgs,
   theme: Theme,
   context?: SubagentRenderContext,
 ): Text {
   if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
-  if (args.action === "close") return new Text(theme.fg("accent", `close — ${args.id}`), 0, 0);
+  const expanded = context?.expanded ?? false;
+  if (args.action === "close") return new Text(theme.fg("accent", `close · ${shownId(args.id, expanded)}`), 0, 0);
   if (args.action === "send") {
-    let text = theme.fg("accent", `${args.mode === "steer" ? "steer" : "follow up"} — ${args.id}`);
-    for (const line of boundedLines(args.message, 480, 3)) text += `\n${theme.fg("dim", `  ${line}`)}`;
+    let text = theme.fg("accent", `${args.mode === "steer" ? "steer" : "follow up"} · ${shownId(args.id, expanded)}`);
+    for (const line of boundedLines(args.message, expanded ? 8_000 : 1_200, expanded ? 40 : 6)) {
+      text += `\n${theme.fg("dim", `  ${line}`)}`;
+    }
     return new Text(text, 0, 0);
   }
   if (args.action !== "run" && args.action !== "start") {
-    return new Text(theme.fg("accent", `${args.action} — ${args.id}`), 0, 0);
+    const operation = args.action === "wait" ? ` · operation ${shownId(args.operationId, expanded)}` : "";
+    return new Text(theme.fg("accent", `${args.action} · ${shownId(args.id, expanded)}${operation}`), 0, 0);
   }
   let text = theme.fg("accent", theme.bold(args.agent || "unknown"));
   if (args.action === "start") text += theme.fg("muted", " · background");
   if (args.cwd) text += theme.fg("muted", ` · ${args.cwd}`);
   if (args.task) {
-    const expanded = context?.expanded ?? false;
-    const lines = boundedLines(args.task, expanded ? 4_000 : 480, expanded ? 20 : 3);
+    const lines = boundedLines(args.task, expanded ? 8_000 : 1_200, expanded ? 40 : 6);
     for (const line of lines) text += `\n${theme.fg("dim", `  ${line}`)}`;
   }
   return new Text(text, 0, 0);
@@ -134,6 +151,48 @@ function errorFrom(details: Record<string, unknown>): string | undefined {
   return undefined;
 }
 
+function snapshotFrom(details: Record<string, unknown>): Record<string, unknown> {
+  return details.snapshot && typeof details.snapshot === "object"
+    ? details.snapshot as Record<string, unknown>
+    : details;
+}
+
+function stringField(details: Record<string, unknown>, name: string): string | undefined {
+  const direct = details[name];
+  if (typeof direct === "string") return direct;
+  const snapshot = snapshotFrom(details)[name];
+  return typeof snapshot === "string" ? snapshot : undefined;
+}
+
+function queuedOperationId(details: Record<string, unknown>): string | undefined {
+  const queued = snapshotFrom(details).queuedOperation;
+  if (!queued || typeof queued !== "object") return undefined;
+  const operationId = (queued as Record<string, unknown>).operationId;
+  return typeof operationId === "string" ? operationId : undefined;
+}
+
+function resultMetadata(
+  details: Record<string, unknown>,
+  args: SubagentRenderArgs,
+  expanded: boolean,
+): string {
+  const queuedId = queuedOperationId(details);
+  if (!expanded) return args.action === "status" && queuedId ? "follow-up queued" : "";
+  const runId = stringField(details, "runId") ?? ("id" in args ? args.id : undefined);
+  const operationId = stringField(details, "operationId")
+    ?? ("operationId" in args ? args.operationId : undefined)
+    ?? ("expectedOperationId" in args ? args.expectedOperationId : undefined);
+  const activeOperationId = stringField(details, "activeOperationId");
+  const entries: string[] = [];
+  if (runId) entries.push(`run ${shownId(runId, expanded)}`);
+  if (operationId && operationId !== activeOperationId && operationId !== queuedId) {
+    entries.push(`operation ${shownId(operationId, expanded)}`);
+  }
+  if (activeOperationId) entries.push(`active ${shownId(activeOperationId, expanded)}`);
+  if (queuedId) entries.push(`queued ${shownId(queuedId, expanded)}`);
+  return entries.join(" · ");
+}
+
 export function renderSubagentResult(
   result: SubagentRenderResult,
   { expanded, isPartial }: { expanded: boolean; isPartial: boolean },
@@ -149,6 +208,8 @@ export function renderSubagentResult(
   const state = context.state;
   const status = statusFrom(details);
   const action = context.args.action;
+  const agent = stringField(details, "agent");
+  const subject = agent ? `${agent} ` : "";
   let text: string;
   if (isPartial) {
     state.spinnerFrame ??= 0;
@@ -174,10 +235,10 @@ export function renderSubagentResult(
     text = theme.fg("success", "✓ Closed");
   } else if (action === "start" && (status === "running" || status === "idle")) {
     stopSpinner(state);
-    text = theme.fg("accent", "↗ Started");
+    text = theme.fg("accent", `↗ ${subject}started`);
   } else if (action === "wait" && details.reason === "timeout") {
     stopSpinner(state);
-    text = theme.fg("warning", "◷ Still running");
+    text = theme.fg("warning", `◷ ${subject}still running`);
   } else if (action === "interrupt") {
     stopSpinner(state);
     text = details.accepted === true
@@ -190,19 +251,29 @@ export function renderSubagentResult(
       : theme.fg("muted", "• Steering not applied");
   } else if (status === "queued" || details.queued === true) {
     stopSpinner(state);
-    text = theme.fg("accent", "◷ Queued");
+    text = theme.fg("accent", "◷ Follow-up queued");
   } else if (status === "running") {
     stopSpinner(state);
-    text = theme.fg("warning", "● Running");
+    text = theme.fg("warning", `● ${subject}running`);
   } else if (status === "idle") {
     stopSpinner(state);
-    text = theme.fg("accent", "○ Idle");
-  } else if (status === "failed") {
+    text = theme.fg("accent", `○ ${subject}idle`);
+  } else if (status === "failed" || status === "crashed" || status === "cancelled") {
     stopSpinner(state);
-    text = theme.fg("error", "✗ Failed");
+    text = theme.fg("error", `✗ ${subject}${status}`);
+  } else if (status === "closed") {
+    stopSpinner(state);
+    text = theme.fg("muted", `• ${subject}closed`);
   } else {
     stopSpinner(state);
-    text = theme.fg("success", "✓ Completed");
+    text = theme.fg("success", `✓ ${subject}completed`);
+  }
+
+  const metadata = isPartial || action === "list" ? "" : resultMetadata(details, context.args, expanded);
+  if (metadata) {
+    text += expanded
+      ? `\n${theme.fg("muted", `  ${metadata}`)}`
+      : theme.fg("muted", ` · ${metadata}`);
   }
 
   const showOutput =

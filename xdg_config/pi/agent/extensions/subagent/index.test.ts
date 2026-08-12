@@ -191,6 +191,20 @@ async function startIdle(env: ReturnType<typeof setup>) {
 }
 
 describe("subagent tool", () => {
+  test("publishes a provider-compatible root object schema and validates action fields", async () => {
+    const env = setup();
+    expect(env.extension.getTool().parameters).toMatchObject({ type: "object" });
+    expect(env.extension.getTool().parameters).not.toHaveProperty("anyOf");
+    expect(await env.invoke({ action: "run" })).toMatchObject({
+      isError: true,
+      details: { error: "agent is required for subagent run" },
+    });
+    expect(await env.invoke({ action: "send", id: "runtime", mode: "steer", message: "redirect" })).toMatchObject({
+      isError: true,
+      details: { error: "expectedOperationId is required for subagent send" },
+    });
+  });
+
   test("discovers agents and builds a canonical, guided work order with declared tools", async () => {
     const env = setup({ ids: ["run-fixed", "operation-fixed"] });
     writeFileSync(join(env.root, "AGENTS.md"), "Project guidance");
@@ -256,18 +270,60 @@ describe("subagent tool", () => {
         { args, isError: false, state: {}, invalidate: vi.fn() },
       ).render(200).join("\n");
     const call = tool.renderCall!(
-      { action: "run", agent: "scout", task: "one\ntwo\nthree\nfour" }, theme,
+      { action: "run", agent: "scout", task: "one\ntwo\nthree\nfour\nfive\nsix\nseven" }, theme,
       { args: {}, isError: false, state: {}, invalidate: vi.fn() } as never,
     ).render(200).join("\n");
     expect(call).toContain("scout");
     expect(call).toContain("…");
-    expect(render({ action: "status" }, { status: "running" })).toContain("Running");
-    expect(render({ action: "wait" }, { reason: "timeout", snapshot: { status: "running" } })).toContain("Still running");
+    expect(call).not.toContain("seven");
+    const partialState = {};
+    const partial = tool.renderResult!(
+      { content: [{ type: "text", text: "grep completed; continuing…" }], details: {
+        runId: "runtime", operationId: "operation", agent: "scout", status: "running",
+      } },
+      { expanded: false, isPartial: true }, theme,
+      { args: { action: "run", agent: "scout", task: "Inspect" }, isError: false, state: partialState, invalidate: vi.fn() },
+    ).render(200).join("\n");
+    expect(partial.trim()).toBe("⠋ — grep completed; continuing…");
+    expect(partial.match(/grep completed; continuing…/g)).toHaveLength(1);
+    expect(partial).not.toContain("Running");
+    tool.renderResult!(
+      { content: [{ type: "text", text: "done" }], details: { status: "completed" } },
+      { expanded: false, isPartial: false }, theme,
+      { args: { action: "run", agent: "scout", task: "Inspect" }, isError: false, state: partialState, invalidate: vi.fn() },
+    );
+    expect(render({ action: "status", id: "runtime-123456789" }, {
+      runId: "runtime-123456789",
+      agent: "scout",
+      status: "running",
+      activeOperationId: "operation-123456789",
+      queuedOperation: { operationId: "queued-123456789" },
+    })).toContain("scout running · follow-up queued");
+    expect(render({ action: "run" }, {
+      runId: "runtime-123456789", operationId: "operation-123456789", agent: "scout", status: "completed", summary: "Done",
+    }).trimEnd()).toBe("✓ scout completed — Done");
+    const expandedStatus = tool.renderResult!(
+      { content: [{ type: "text", text: "" }], details: {
+        runId: "runtime-123456789",
+        agent: "scout",
+        status: "running",
+        activeOperationId: "operation-123456789",
+        queuedOperation: { operationId: "queued-123456789" },
+      } },
+      { expanded: true, isPartial: false }, theme,
+      { args: { action: "status", id: "runtime-123456789" }, isError: false, state: {}, invalidate: vi.fn() },
+    ).render(200).map((line) => line.trimEnd()).join("\n");
+    expect(expandedStatus).toContain("run runtime-123456789 · active operation-123456789 · queued queued-123456789");
+    expect(render({ action: "wait", id: "runtime", operationId: "operation" }, {
+      reason: "timeout", snapshot: { status: "running", agent: "scout" },
+    })).toContain("scout still running");
     expect(render({ action: "interrupt" }, { accepted: true })).toContain("Interrupt requested");
-    expect(render({ action: "send", mode: "follow_up" }, { status: "running", queued: true })).toContain("Queued");
+    expect(render({ action: "send", id: "runtime", mode: "follow_up" }, {
+      status: "running", queued: true, operationId: "queued-operation",
+    })).toContain("Follow-up queued");
     expect(render({ action: "send", mode: "steer" }, { accepted: true })).toContain("Steering sent");
     expect(render({ action: "run" }, { status: "interrupted", summary: "Stopped" })).toContain("Interrupted");
-    expect(render({ action: "run" }, { status: "completed", summary: "Done" })).toContain("Completed");
+    expect(render({ action: "run" }, { status: "completed", summary: "Done" })).toContain("completed");
     const listed = await env.invoke({ action: "list" });
     expect(tool.renderResult!(listed, { expanded: false, isPartial: false }, theme, {
       args: { action: "list" }, isError: false, state: {}, invalidate: vi.fn(),
@@ -345,8 +401,8 @@ describe("subagent tool", () => {
       },
       { expanded: true, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
-    )!.render(240).join("\n");
-    expect(rendered).toContain("✓ scout completed — Located auth. With supporting evidence.");
+    )!.render(240).map((line) => line.trimEnd()).join("\n");
+    expect(rendered).toContain("✓ scout completed\n  Located auth.\n  With supporting evidence.");
     expect(rendered).toContain("run runtime · operation initial · runtime idle");
   });
 
