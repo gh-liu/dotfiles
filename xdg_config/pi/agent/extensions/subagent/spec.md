@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Draft
-- Updated: 2026-08-11
+- Updated: 2026-08-12
 
 ## 1. Background
 
@@ -127,10 +127,10 @@ interface AgentDefinition {
 
 Initial definitions are Markdown files with YAML frontmatter and a Markdown
 system prompt. User definitions are loaded from
-`${PI_CODING_AGENT_DIR:-~/.pi/agent}/agents/*.md`; project definitions are loaded
-from `<canonical-project-root>/.pi/agents/*.md` and override user definitions by
-canonical agent name. Project-controlled definitions are untrusted until
-explicitly enabled by policy. No compatibility path is scanned implicitly.
+`${PI_CODING_AGENT_DIR:-~/.pi/agent}/agents/*.md`. The current implementation
+does not discover project-local definitions or compatibility paths. If
+project-local definitions are added later, they are repository-controlled input
+and require an explicit trust/override policy before becoming executable.
 
 ### 5.2 Work order
 
@@ -343,7 +343,138 @@ Responsibilities:
 These names describe responsibilities. Implementation may keep them together
 until separation removes demonstrated complexity.
 
-### 6.3 Spawn contract
+### 6.3 Current implementation map
+
+The current implementation deliberately has two main ownership boundaries rather
+than one class per responsibility:
+
+```text
+Parent model / Pi tool runtime
+  |
+  | subagent action + tool-call AbortSignal + progress callback
+  v
+index.ts: in-memory control plane
+  |-- agents.ts: discover and validate user agent definitions
+  |-- context.ts: canonical cwd boundary and bounded AGENTS.md materialization
+  |-- RuntimeRecord map: runtime state, revision, controller, capacity ownership
+  |-- OperationRecord maps: accepted/settled state and retained results
+  |-- render.ts: bounded call, progress, and terminal-state presentation
+  |
+  | SubagentRunOptions / SubagentOperation / SubagentResult
+  v
+rpc-executor.ts: one RpcSubagentController per process
+  |-- spawn arguments and filtered environment
+  |-- bounded JSONL and stderr decoding
+  |-- RPC request correlation
+  |-- operation-local event/progress reduction
+  |-- prompt acceptance and agent_settled completion
+  |-- RPC abort, watchdogs, fatal notification, and process-group cleanup
+  v
+pi --mode rpc --session-dir <managed-dir>
+  |
+  +--> child session JSONL (durable transcript evidence)
+```
+
+`protocol.ts` is the contract boundary between the control plane and controller.
+`output.ts` provides shared bounding and redaction. The registry, concurrency,
+operation registry, and result reducer in the conceptual diagram above are
+currently cohesive responsibilities inside `index.ts` or `rpc-executor.ts`, not
+separate runtime services.
+
+Ownership is split as follows:
+
+| Component | Owns | Does not own |
+| --- | --- | --- |
+| Tool/control plane (`index.ts`) | Model-facing actions, runtime/operation IDs, state transitions, revisions, capacity slots, waiters, result retention, shutdown coordination | RPC framing, child listeners, process signals |
+| RPC controller (`rpc-executor.ts`) | Exactly one child process, one Pi session, stdin/stdout/stderr, RPC requests, event reduction, operation deadline/abort, fatal signal, teardown | Multi-runtime scheduling, model-facing status policy |
+| Pi child | Model turns, tool execution, session transcript | Parent integration decisions, runtime registry |
+| Renderer (`render.ts`) | Bounded visual presentation and spinner lifecycle | Authoritative state or completion decisions |
+
+The controller exposes two distinct operation promises:
+
+- `accepted`: Pi session identity is known and the `prompt` RPC command has been
+  accepted. `start` and `send` return after this boundary.
+- `result`: the operation has reached authoritative `agent_settled` and the
+  controller has reduced the final assistant message into `SubagentResult`.
+
+The controller also exposes `failure`, which lets the control plane observe an
+idle child process or protocol failure instead of discovering it only on the next
+operation.
+
+### 6.4 Current data flows
+
+#### One-shot `run`
+
+```text
+run
+ -> resolve agent, cwd, guidance, work order
+ -> reserve runtime slot and create controller
+ -> get_state -> prompt accepted
+ -> wait for agent_settled -> reduce result
+ -> close controller/process tree -> release slot
+ -> return bounded SubagentResult
+```
+
+The runtime is retained only as a bounded in-memory terminal record; it is not a
+warm worker after `run` returns.
+
+#### Persistent `start` and `send(follow_up)`
+
+```text
+start
+ -> reserve slot -> create one controller/process/session
+ -> submit initial operation -> prompt accepted -> return runId + operationId
+ -> agent_settled -> runtime becomes idle
+
+send(follow_up), only while idle
+ -> create a new operationId
+ -> submit prompt through the same controller
+ -> prompt accepted -> return operationId
+ -> agent_settled -> runtime becomes idle again
+
+close
+ -> closing -> interrupt accepted active operation if necessary
+ -> close/reap process tree -> release slot -> closed
+```
+
+No controller queue exists in M1. A `send` while `starting`, `running`,
+`closing`, `closed`, or `crashed` returns a conflict/error rather than buffering
+the message.
+
+#### Interrupt and deadline
+
+```text
+expected operation still active and accepted
+ -> RPC abort
+ -> wait for both abort response and authoritative agent_settled
+ -> operation interrupted
+ -> healthy runtime returns to idle
+```
+
+A stale operation ID is a no-op. Missing abort response or settlement trips a
+watchdog and crashes/cleans the controller rather than leaving shutdown blocked.
+Direct process termination is reserved for close, fatal process/protocol failure,
+or abort-watchdog escalation; it is not the normal operation-interrupt path.
+
+### 6.5 Persistence and restart boundary
+
+Current persistence is intentionally limited:
+
+- The Pi child session JSONL is durable transcript evidence.
+- Runtime records, operation records, revisions, retained results, and capacity
+  reservations exist only in the extension process memory.
+- The RPC transport is the spawned child's stdin/stdout pair. After the parent Pi
+  or extension process exits, a new extension instance cannot reconnect to that
+  transport or safely continue, interrupt, or close the old logical runtime.
+
+Therefore the current design provides **persistent workers within one extension
+lifetime** and **durable transcripts**, but not crash-resumable or restart-durable
+runtimes. An atomic ledger by itself would add durable history and unclean-restart
+reconciliation only; it must not advertise the runtime as resumable. True runtime
+recovery requires a reconnectable transport or an independently durable
+supervisor with an explicit adoption protocol.
+
+### 6.6 Spawn contract
 
 The child process must be started with:
 
@@ -357,8 +488,8 @@ The child process must be started with:
   parent secrets.
 - A child marker containing run ID, parent session ID, and depth.
 
-The initial implementation is pinned to Pi 0.84.1. The JSON and RPC executors start Pi with
-`--no-context-files` and `--no-extensions`. The parent resolves applicable
+The current implementation is pinned to Pi 0.84.1. The RPC controller starts Pi
+with `--no-context-files` and `--no-extensions`. The parent resolves applicable
 project guidance and materializes the selected text into the work-order envelope,
 so the child never relies on implicit AGENTS.md inheritance. No extension is
 inherited by default; each executable extension path must be explicitly trusted
@@ -449,9 +580,11 @@ Implemented today:
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
 - Bounded in-memory runtime and operation tracking.
 
-Remaining M1 work includes an atomic run ledger, unclean-restart reconciliation,
-and reconnect/reporting after restart. Active steering and queued follow-ups
-remain Milestone 2 work.
+Optional remaining reliability work is durable history and unclean-restart
+reconciliation. That work would not make a runtime resumable. Reconnect/reporting
+for a live prior process requires a different transport or supervisor design and
+is not implied by the current M1 architecture. Active steering and queued
+follow-ups remain Milestone 2 work.
 
 ## 8. Context requirements
 
@@ -752,8 +885,10 @@ Implemented:
 
 Remaining:
 
-- Atomic local run ledger and unclean-restart reconciliation.
-- Reconnect/reporting for a prior process after extension restart.
+- Optional atomic local history and unclean-restart reconciliation, explicitly
+  without a resumability claim.
+- A separate reconnectable transport or durable-supervisor design before live
+  process adoption after extension restart can be supported.
 
 Acceptance:
 
