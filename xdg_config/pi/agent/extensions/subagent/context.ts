@@ -16,22 +16,22 @@ function isWithin(root: string, candidate: string): boolean {
 }
 
 export function findAllowedRoot(parentCwd: string): string {
-  const canonicalParent = realpathSync(parentCwd);
+  const canonicalParent = realpathSync.native(parentCwd);
   try {
     const gitRoot = execFileSync("git", ["rev-parse", "--show-toplevel"], {
       cwd: canonicalParent,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
     }).trim();
-    return realpathSync(gitRoot);
+    return realpathSync.native(gitRoot);
   } catch {
     return canonicalParent;
   }
 }
 
 export function resolveChildCwd(allowedRoot: string, requestedCwd: string): string {
-  const canonicalRoot = realpathSync(allowedRoot);
-  const candidate = realpathSync(resolve(canonicalRoot, requestedCwd));
+  const canonicalRoot = realpathSync.native(allowedRoot);
+  const candidate = realpathSync.native(resolve(canonicalRoot, requestedCwd));
   if (!isWithin(canonicalRoot, candidate)) {
     throw new Error(`Child cwd is outside the allowed root: ${candidate}`);
   }
@@ -58,8 +58,8 @@ function readGuidanceFile(filePath: string): string {
 }
 
 export function loadProjectGuidance(allowedRoot: string, childCwd: string): string[] {
-  const root = realpathSync(allowedRoot);
-  const child = realpathSync(childCwd);
+  const root = realpathSync.native(allowedRoot);
+  const child = realpathSync.native(childCwd);
   if (!isWithin(root, child)) throw new Error(`Child cwd is outside the allowed root: ${child}`);
 
   const relativeChild = relative(root, child);
@@ -75,7 +75,7 @@ export function loadProjectGuidance(allowedRoot: string, childCwd: string): stri
     .map((directory) => join(directory, "AGENTS.md"))
     .filter((filePath) => {
       if (!existsSync(filePath)) return false;
-      const canonicalFile = realpathSync(filePath);
+      const canonicalFile = realpathSync.native(filePath);
       return isWithin(root, canonicalFile) && statSync(canonicalFile).isFile();
     });
   const guidance: string[] = [];
@@ -89,7 +89,7 @@ export function loadProjectGuidance(allowedRoot: string, childCwd: string): stri
       guidance.push(GUIDANCE_OMISSION_MARKER.slice(0, remainingCharacters));
       break;
     }
-    const canonicalFile = realpathSync(filePath);
+    const canonicalFile = realpathSync.native(filePath);
     const content = boundText(`Guidance from ${filePath}:\n${readGuidanceFile(canonicalFile)}`, {
       maxCharacters: remainingCharacters - reservedCharacters,
       maxLines: remainingLines - reservedLines,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -26,6 +26,19 @@ describe("child execution context", () => {
     mkdirSync(nested, { recursive: true });
 
     expect(resolveChildCwd(root, nested)).toBe(realpathSync(nested));
+  });
+
+  test("uses native canonical casing on a case-insensitive filesystem", () => {
+    const root = temporaryDirectory("pi-subagent-case-root-");
+    const nested = join(root, "packages", "api");
+    mkdirSync(nested, { recursive: true });
+    const differentlyCased = nested.replace(/api$/u, "API");
+
+    if (existsSync(differentlyCased)) {
+      expect(resolveChildCwd(root, differentlyCased)).toBe(realpathSync.native(nested));
+    } else {
+      expect(resolveChildCwd(root, nested)).toBe(realpathSync.native(nested));
+    }
   });
 
   test("rejects lexical and symlink escapes", () => {
