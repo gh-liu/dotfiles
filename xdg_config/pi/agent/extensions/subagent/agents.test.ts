@@ -143,6 +143,7 @@ Return concise findings with file and line evidence.
   test.each([
     ["missing tools", "thinking: low"],
     ["unknown capability", "tools: [read, custom_tool]"],
+    ["model fallback", "tools: [read]\nfallbackModels: [openai/gpt-5-mini]"],
   ])("rejects unsupported %s", (_label, fields) => {
     expect(() =>
       parseAgentDefinition(

@@ -18,8 +18,6 @@ const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhi
 
 export interface ParsedAgentDefinition extends SubagentExecutionProfile {
   description: string;
-  fallbackModels?: string[];
-  extensions?: string[];
   contextPolicy: "fresh";
   maxDepth: 1;
 }
@@ -74,6 +72,9 @@ export function parseAgentDefinition(content: string): ParsedAgentDefinition {
   if (frontmatter.extensions !== undefined) {
     throw new Error("subagents do not enable executable extensions");
   }
+  if (frontmatter.fallbackModels !== undefined) {
+    throw new Error("subagents do not support model fallbacks");
+  }
   if (frontmatter.contextPolicy !== undefined && frontmatter.contextPolicy !== "fresh") {
     throw new Error("subagents support only contextPolicy: fresh");
   }
@@ -96,10 +97,6 @@ export function parseAgentDefinition(content: string): ParsedAgentDefinition {
     systemPrompt,
     model: optionalString(frontmatter.model, "model"),
     thinking,
-    fallbackModels:
-      frontmatter.fallbackModels === undefined
-        ? undefined
-        : stringArray(frontmatter.fallbackModels, "fallbackModels"),
     tools,
     contextPolicy: "fresh",
     maxDepth: 1,
