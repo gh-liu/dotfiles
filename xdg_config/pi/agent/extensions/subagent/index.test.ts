@@ -421,7 +421,7 @@ describe("subagent tool", () => {
       { expanded: true, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(240).map((line) => line.trimEnd()).join("\n");
-    expect(rendered).toContain("✓ scout completed\n  Located auth.\n  With supporting evidence.");
+    expect(rendered).toContain("✓ scout completed\n  task: Initial\n  Located auth.\n  With supporting evidence.");
     expect(rendered).toContain("run runtime · operation initial · runtime idle");
   });
 

@@ -250,6 +250,8 @@ interface RuntimeSnapshot {
 interface OperationSnapshot {
   operationId: string;
   status: OperationState;
+  /** Bounded human-readable task context for status UI and diagnostics. */
+  task: string;
   queuedAt?: number;
   startedAt?: number;
   finishedAt?: number;
@@ -812,8 +814,10 @@ Current UI/details additionally show:
 
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
 operation IDs, showing only user-relevant state such as a queued follow-up.
-Expanded calls and results show the bounded full task and full IDs. While an operation is
-active, its partial-state branch contributes only an animated spinner; the common
+Expanded calls and results show the bounded full task and full IDs. Persistent completion
+cards also show the task before the summary, so a delayed notification remains
+understandable without replaying the original call. While an operation is active, its
+partial-state branch contributes only an animated spinner; the common
 output-preview path appends the latest reduced, redacted progress summary once.
 It does not repeat the agent name or a generic `Running` label. Terminal and
 status lines include the agent and relevant active or queued operation context.
