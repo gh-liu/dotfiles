@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
+    "test:subagent:live": "node -e 'if (!process.env.DEEPSEEK_API_KEY) { console.error(\"DEEPSEEK_API_KEY is required\"); process.exit(1) }' && PI_SUBAGENT_LIVE_TEST=1 npx -y node@22 node_modules/vitest/vitest.mjs run subagent/live.test.ts",
     "test:tui": "bash archive/tui.e2e.sh"
   },
   "dependencies": {

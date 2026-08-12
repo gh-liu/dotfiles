@@ -528,6 +528,58 @@ describe("subagent tool", () => {
     expect(env.extension.messages).toEqual([]);
   });
 
+  test("controller crash fails active work and cancels its queued follow-up", async () => {
+    const env = setup({ ids: ["runtime", "active", "queued"] });
+    await env.invoke({ action: "start", agent: "scout", task: "Wait" });
+    await env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Never run" });
+    env.fake.controllers[0].fail(new Error("Process exited"));
+    await vi.waitFor(() => expect(env.fake.controllers[0].closeCalls).toBe(1));
+    expect((await env.invoke({ action: "wait", id: "runtime", operationId: "active" })).details)
+      .toMatchObject({ status: "failed" });
+    expect((await env.invoke({ action: "wait", id: "runtime", operationId: "queued" })).details)
+      .toMatchObject({ status: "cancelled" });
+    expect((await env.invoke({ action: "status", id: "runtime" })).details)
+      .toMatchObject({ status: "crashed" });
+  });
+
+  test("shutdown cancels queued work and multiple waiters observe the same active result", async () => {
+    const env = setup({ ids: ["runtime", "active", "queued"] });
+    await env.invoke({ action: "start", agent: "scout", task: "Wait" });
+    await env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Never run" });
+    const waiters = [
+      env.invoke({ action: "wait", id: "runtime", operationId: "active" }),
+      env.invoke({ action: "wait", id: "runtime", operationId: "active" }),
+    ];
+    await env.extension.shutdown();
+    const results = await Promise.all(waiters);
+    expect(results.map((result) => (result.details as { status: string }).status))
+      .toEqual(["interrupted", "interrupted"]);
+    expect((await env.invoke({ action: "wait", id: "runtime", operationId: "queued" })).details)
+      .toMatchObject({ status: "cancelled" });
+    expect(env.fake.controllers[0].starts).toHaveLength(1);
+    expect(env.extension.messages).toEqual([]);
+  });
+
+  test("a rejected steer leaves the active runtime healthy", async () => {
+    const env = setup({ ids: ["runtime", "active"] });
+    await env.invoke({ action: "start", agent: "scout", task: "Wait" });
+    vi.spyOn(env.fake.controllers[0], "steer").mockRejectedValueOnce(new Error("Steer rejected"));
+    const rejected = await env.invoke({
+      action: "send",
+      id: "runtime",
+      mode: "steer",
+      expectedOperationId: "active",
+      message: "Change direction",
+    });
+    expect(rejected).toMatchObject({
+      isError: true,
+      details: { accepted: false, error: "Steer rejected", snapshot: { status: "running" } },
+    });
+    env.fake.controllers[0].settle();
+    expect((await env.invoke({ action: "wait", id: "runtime", operationId: "active" })).details)
+      .toMatchObject({ status: "completed" });
+  });
+
   test("interrupt settles the current operation authoritatively, then runtime is idle", async () => {
     const env = setup();
     const started = await env.invoke({ action: "start", agent: "scout", task: "Wait" });
