@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { VERSION } from "@earendil-works/pi-coding-agent";
 import { boundText, redactSecrets } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentExecutor, SubagentResult, SubagentRunOptions } from "./protocol.ts";
+import type { SubagentController, SubagentExecutor, SubagentOperation, SubagentResult, SubagentRunOptions } from "./protocol.ts";
 
 export interface RpcSubagentConfig {
   command?: string;
@@ -289,12 +289,7 @@ function safeToolProgress(record: RpcRecord, secrets: string[]): string {
 }
 
 /** Lower-level reusable runtime primitive. One controller owns exactly one RPC process. */
-export interface RpcSubagentController {
-  readonly processInstanceId: string;
-  readonly transcript: Readonly<SubagentResult["transcript"]>;
-  submit(options: SubagentRunOptions): Promise<SubagentResult>;
-  close(): Promise<void>;
-}
+export type RpcSubagentController = SubagentController;
 
 export async function createRpcSubagentController(
   initial: SubagentRunOptions,
@@ -329,9 +324,13 @@ export async function createRpcSubagentController(
   const stderrDecoder = new StringDecoder("utf8");
   let spawnError: Error | undefined;
   let closed = false;
+  let forcedClose = false;
   let closing: Promise<void> | undefined;
   let active = false;
+  let activeOperationId: string | undefined;
+  let abortActive: ((message: string) => Promise<boolean>) | undefined;
   let fatal: Error | undefined;
+  const controllerFailure = deferred<Error>();
   let transcript: SubagentResult["transcript"] | undefined;
   let finalized = false;
   let currentRecord: ((record: RpcRecord) => void) | undefined;
@@ -344,6 +343,7 @@ export async function createRpcSubagentController(
   const terminate = (error: Error): void => {
     if (fatal) return;
     fatal = error;
+    controllerFailure.resolve(error);
     activeTerminal?.reject(error);
     for (const waiter of responses.values()) waiter.reject(error);
     signalProcessTree(child, "SIGTERM");
@@ -402,7 +402,13 @@ export async function createRpcSubagentController(
   const close = (): Promise<void> => {
     if (closing) return closing;
     closed = true;
-    if (active) terminate(new Error("RPC subagent controller closed during active operation"));
+    if (active) {
+      forcedClose = true;
+      const error = new Error("RPC subagent controller closed during active operation");
+      activeTerminal?.reject(error);
+      for (const waiter of responses.values()) waiter.reject(error);
+      signalProcessTree(child, "SIGTERM");
+    }
     closing = (async () => {
       child.stdin.end();
       let closeTimer: NodeJS.Timeout | undefined;
@@ -428,7 +434,7 @@ export async function createRpcSubagentController(
       finalize();
       if (fatal) throw fatal;
       if (spawnError) throw new Error(`Child process failed to start: ${spawnError.message}`);
-      if (leader.code !== 0) throw new Error(stderr || `Child process exited with code ${String(leader.code)}`);
+      if (leader.code !== 0 && !forcedClose) throw new Error(stderr || `Child process exited with code ${String(leader.code)}`);
     })().finally(finalize);
     return closing;
   };
@@ -436,7 +442,11 @@ export async function createRpcSubagentController(
   return {
     processInstanceId,
     get transcript() { return { ...(transcript ?? {}) }; },
-    async submit(options): Promise<SubagentResult> {
+    failure: controllerFailure.promise,
+    start(options): SubagentOperation {
+      const accepted = deferred<void>();
+      let operationBegan = false;
+      const resultPromise = (async (): Promise<SubagentResult> => {
       if (closed) throw new Error("RPC subagent controller is closed");
       if (active) throw new Error("RPC subagent controller already has an active operation");
       if (fatal) throw fatal;
@@ -453,12 +463,22 @@ export async function createRpcSubagentController(
       if (!Number.isSafeInteger(options.deadlineMs) || options.deadlineMs <= 0) throw new Error("deadlineMs must be a positive integer");
       if (options.signal?.aborted) throw new SubagentCancellationError("Subagent run cancelled before submission");
       active = true;
+      operationBegan = true;
+      activeOperationId = options.operationId;
       const terminal = deferred<never>();
       terminal.promise.catch(() => {});
       activeTerminal = terminal;
       // Every reducer below is operation-local and therefore reset on every submit.
       let finalText: { text: string; stopReason?: string; error?: string } | undefined;
       const settled = deferred<void>();
+      let authoritativeSettled = false;
+      let abortResponseReceived = false;
+      let abortWatchdog: NodeJS.Timeout | undefined;
+      const clearAbortWatchdog = (): void => {
+        if (!authoritativeSettled || !abortResponseReceived || !abortWatchdog) return;
+        clearTimeout(abortWatchdog);
+        abortWatchdog = undefined;
+      };
       const activeTools = new Map<string, string>();
       let lastProgress = "";
       const report = (text: string): void => {
@@ -484,15 +504,17 @@ export async function createRpcSubagentController(
           const text = (record.message.content ?? []).filter((part) => part.type === "text" && typeof part.text === "string").map((part) => part.text as string).join("\n");
           finalText = { text: boundText(text, { maxCharacters: 32_000, maxLines: 400 }, secrets), stopReason: record.message.stopReason, error: record.message.errorMessage };
           if (record.message.stopReason === "stop") report("Finalizing response…");
-        } else if (record.type === "agent_settled") settled.resolve();
+        } else if (record.type === "agent_settled") {
+          authoritativeSettled = true;
+          settled.resolve();
+          clearAbortWatchdog();
+        }
       };
-      const cancelled = deferred<never>();
-      cancelled.promise.catch(() => {});
-      const cancel = (error: SubagentCancellationError): void => { cancelled.reject(error); terminate(error); };
-      const onAbort = () => cancel(new SubagentCancellationError("Subagent run cancelled by controller"));
-      options.signal?.addEventListener("abort", onAbort, { once: true });
-      const deadline = setTimeout(() => cancel(new SubagentCancellationError(`Subagent execution deadline exceeded (${options.deadlineMs} ms)`)), options.deadlineMs);
+      let interrupted: SubagentCancellationError | undefined;
+      let cancellationRequest: Promise<void> | undefined;
       const request = async (command: string, data: Record<string, unknown> = {}): Promise<RpcResponse> => {
+        if (fatal) throw fatal;
+        if (closed) throw new Error("RPC subagent controller is closed");
         const id = `${options.operationId}:${command}:${randomUUID()}`;
         const waiter = deferred<RpcResponse>();
         responses.set(id, waiter);
@@ -505,6 +527,26 @@ export async function createRpcSubagentController(
           responses.delete(id);
         }
       };
+      const cancel = async (error: SubagentCancellationError): Promise<boolean> => {
+        if (interrupted || authoritativeSettled || activeOperationId !== options.operationId) return false;
+        interrupted = error;
+        abortWatchdog = setTimeout(() => {
+          terminate(new Error("RPC abort did not reach authoritative settlement"));
+        }, base.terminationGraceMs ?? 5_000);
+        cancellationRequest = request("abort").then(() => {
+          abortResponseReceived = true;
+          clearAbortWatchdog();
+        }).catch((abortError) => {
+          terminate(abortError instanceof Error ? abortError : new Error(String(abortError)));
+          throw abortError;
+        });
+        await cancellationRequest;
+        return true;
+      };
+      const onAbort = () => {
+        void cancel(new SubagentCancellationError("Subagent run cancelled by controller")).catch(() => {});
+      };
+      let deadline: NodeJS.Timeout | undefined;
       try {
         if (!transcript) {
           const state = await request("get_state");
@@ -516,21 +558,43 @@ export async function createRpcSubagentController(
           transcript = { sessionId: data.sessionId, sessionPath };
         }
         await request("prompt", { message: ["Execute this work order exactly as provided. Return only the requested handoff.", JSON.stringify(options.workOrder, null, 2)].join("\n\n") });
-        await Promise.race([settled.promise, terminal.promise, cancelled.promise]);
+        accepted.resolve();
+        abortActive = (message) => cancel(new SubagentCancellationError(message));
+        options.signal?.addEventListener("abort", onAbort, { once: true });
+        deadline = setTimeout(() => {
+          void cancel(new SubagentCancellationError(`Subagent execution deadline exceeded (${options.deadlineMs} ms)`)).catch(() => {});
+        }, options.deadlineMs);
+        if (options.signal?.aborted) onAbort();
+        await Promise.race([settled.promise, terminal.promise]);
+        if (cancellationRequest) await cancellationRequest;
         if (fatal) throw fatal;
+        if (interrupted) return result({ ...base, ...options }, "interrupted", interrupted.message, transcript, secrets, processInstanceId);
         const complete = finalText?.stopReason === "stop" && finalText.text.trim() !== "";
         return result({ ...base, ...options }, complete ? "completed" : "failed", finalText?.error || finalText?.text || "Child did not produce a complete final assistant response.", transcript, secrets, processInstanceId);
       } catch (error) {
         const failure = error instanceof Error ? error : new Error(String(error));
-        terminate(failure);
+        accepted.reject(failure);
+        if (operationBegan && !closed) terminate(failure);
         throw failure;
       } finally {
-        clearTimeout(deadline);
+        if (deadline) clearTimeout(deadline);
+        if (abortWatchdog) clearTimeout(abortWatchdog);
         options.signal?.removeEventListener("abort", onAbort);
         currentRecord = undefined;
         if (activeTerminal === terminal) activeTerminal = undefined;
         active = false;
+        if (activeOperationId === options.operationId) activeOperationId = undefined;
+        abortActive = undefined;
       }
+      })();
+      accepted.promise.catch(() => {});
+      void resultPromise.catch((error) => accepted.reject(error instanceof Error ? error : new Error(String(error))));
+      return { accepted: accepted.promise, result: resultPromise };
+    },
+    submit(options): Promise<SubagentResult> { return this.start(options).result; },
+    async interrupt(expectedOperationId): Promise<boolean> {
+      if (activeOperationId !== expectedOperationId || !abortActive) return false;
+      return abortActive("Subagent operation interrupted by controller");
     },
     close,
   };
@@ -571,9 +635,10 @@ export function createRpcSubagentExecutor(config: RpcSubagentConfig = {}): Subag
     }
     try {
       await controller.close();
-      return value;
     } catch (error) {
       return result({ ...options, ...config }, "failed", `Child process cleanup failed: ${error instanceof Error ? error.message : String(error)}`, value.transcript, credentialValues({ ...options, ...config }), controller.processInstanceId);
     }
+    if (value.status === "interrupted") throw new SubagentCancellationError(value.summary);
+    return value;
   };
 }

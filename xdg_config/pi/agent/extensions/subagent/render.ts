@@ -4,8 +4,11 @@ import { Text } from "@earendil-works/pi-tui";
 type SubagentRenderArgs =
   | { action: "list" }
   | { action: "run" | "start"; agent: string; task: string; cwd?: string; deadlineMs?: number }
-  | { action: "status" | "wait" | "interrupt"; operationId: string; timeoutMs?: number }
-  | { action: "close" };
+  | { action: "status"; id: string }
+  | { action: "send"; id: string; mode: "follow_up"; message: string; deadlineMs?: number }
+  | { action: "wait"; id: string; operationId: string; timeoutMs?: number }
+  | { action: "interrupt"; id: string; expectedOperationId: string }
+  | { action: "close"; id: string };
 
 interface SubagentRenderState {
   spinnerFrame?: number;
@@ -55,9 +58,14 @@ export function renderSubagentCall(
   context?: SubagentRenderContext,
 ): Text {
   if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
-  if (args.action === "close") return new Text(theme.fg("accent", "close runtime"), 0, 0);
+  if (args.action === "close") return new Text(theme.fg("accent", `close — ${args.id}`), 0, 0);
+  if (args.action === "send") {
+    let text = theme.fg("accent", `follow up — ${args.id}`);
+    for (const line of boundedLines(args.message, 480, 3)) text += `\n${theme.fg("dim", `  ${line}`)}`;
+    return new Text(text, 0, 0);
+  }
   if (args.action !== "run" && args.action !== "start") {
-    return new Text(theme.fg("accent", `${args.action} — ${"operationId" in args ? args.operationId : ""}`), 0, 0);
+    return new Text(theme.fg("accent", `${args.action} — ${args.id}`), 0, 0);
   }
   let text = theme.fg("accent", theme.bold(args.agent || "unknown"));
   if (args.action === "start") text += theme.fg("muted", " · background");
@@ -131,7 +139,7 @@ export function renderSubagentResult(
   } else if (action === "close" && status === "closed") {
     stopSpinner(state);
     text = theme.fg("success", "✓ Closed");
-  } else if (action === "start" && status === "running") {
+  } else if (action === "start" && (status === "running" || status === "idle")) {
     stopSpinner(state);
     text = theme.fg("accent", "↗ Started");
   } else if (action === "wait" && details.reason === "timeout") {
@@ -145,6 +153,9 @@ export function renderSubagentResult(
   } else if (status === "running") {
     stopSpinner(state);
     text = theme.fg("warning", "● Running");
+  } else if (status === "idle") {
+    stopSpinner(state);
+    text = theme.fg("accent", "○ Idle");
   } else if (status === "failed") {
     stopSpinner(state);
     text = theme.fg("error", "✗ Failed");
