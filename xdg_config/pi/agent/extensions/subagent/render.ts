@@ -1,5 +1,16 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import { Box, Text } from "@earendil-works/pi-tui";
+
+export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
+
+export interface SubagentCompletionDetails {
+  runId: string;
+  operationId: string;
+  agent: string;
+  status: "completed" | "failed" | "interrupted";
+  summary: string;
+  runtimeStatus: "idle" | "crashed";
+}
 
 type SubagentRenderArgs =
   | { action: "list" }
@@ -35,6 +46,27 @@ function oneLine(text: string, maxCharacters = 160): string {
   return normalized.length <= maxCharacters
     ? normalized
     : `${normalized.slice(0, maxCharacters - 1)}…`;
+}
+
+export function renderSubagentCompletion(
+  message: { content: unknown; details?: SubagentCompletionDetails },
+  { expanded, outputPad }: { expanded: boolean; outputPad: number },
+  theme: Theme,
+): Box {
+  const details = message.details;
+  const status = details?.status ?? "failed";
+  const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
+  const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
+  const agent = oneLine(details?.agent ?? "subagent", 80);
+  const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""));
+  let text = `${theme.fg(color, marker)} ${theme.bold(agent)} ${status}`;
+  if (summary) text += theme.fg("dim", ` — ${summary}`);
+  if (expanded && details) {
+    text += `\n${theme.fg("dim", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
+  }
+  const box = new Box(outputPad, 0, (value) => theme.bg("customMessageBg", value));
+  box.addChild(new Text(text, 0, 0));
+  return box;
 }
 
 function boundedLines(text: string, maxCharacters: number, maxLines: number): string[] {

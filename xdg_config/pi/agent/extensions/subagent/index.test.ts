@@ -3,8 +3,14 @@ import { mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  MessageRenderer,
+  ToolDefinition,
+} from "@earendil-works/pi-coding-agent";
 import { registerSubagentExtension } from "./index.ts";
+import { SUBAGENT_COMPLETION_MESSAGE } from "./render.ts";
 import type {
   SubagentController,
   SubagentControllerFactory,
@@ -123,13 +129,27 @@ function fakeFactory(autoAccept = true) {
 function harness() {
   let tool: ToolDefinition | undefined;
   let shutdown: (() => Promise<void> | void) | undefined;
+  const messages: Array<{ message: Record<string, unknown>; options?: Record<string, unknown> }> = [];
+  const messageRenderers = new Map<string, MessageRenderer>();
   const pi = {
     registerTool(definition: ToolDefinition) { tool = definition; },
+    registerMessageRenderer(customType: string, renderer: MessageRenderer) {
+      messageRenderers.set(customType, renderer);
+    },
+    sendMessage(message: Record<string, unknown>, options?: Record<string, unknown>) {
+      messages.push({ message, options });
+    },
     on(event: string, handler: () => Promise<void> | void) {
       if (event === "session_shutdown") shutdown = handler;
     },
   } as ExtensionAPI;
-  return { pi, getTool: () => tool!, shutdown: async () => { await shutdown?.(); } };
+  return {
+    pi,
+    messages,
+    messageRenderers,
+    getTool: () => tool!,
+    shutdown: async () => { await shutdown?.(); },
+  };
 }
 
 function context(cwd: string): ExtensionContext {
@@ -263,6 +283,84 @@ describe("subagent tool", () => {
     expect((await env.invoke({ action: "status", id: "runtime" })).details).toMatchObject({ status: "idle" });
   });
 
+  test("notifies the parent when persistent operations settle and renders a bounded status", async () => {
+    const env = setup({ ids: ["runtime", "initial", "follow-up", "interrupted"] });
+    const started = await env.invoke({ action: "start", agent: "scout", task: "Initial" });
+    env.fake.controllers[0].settle(0, "completed", "Located auth.\nWith supporting evidence.");
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    expect(env.extension.messages[0]).toMatchObject({
+      message: {
+        customType: SUBAGENT_COMPLETION_MESSAGE,
+        display: true,
+        content: expect.stringContaining("Subagent scout completed operation initial in runtime runtime"),
+        details: {
+          runId: "runtime",
+          operationId: "initial",
+          agent: "scout",
+          status: "completed",
+          summary: "Located auth.\nWith supporting evidence.",
+          runtimeStatus: "idle",
+        },
+      },
+      options: { triggerTurn: true, deliverAs: "followUp" },
+    });
+
+    const follow = await env.invoke({
+      action: "send",
+      id: (started.details as { runId: string }).runId,
+      mode: "follow_up",
+      message: "Check tests",
+    });
+    env.fake.controllers[0].settle(1, "failed", "No complete final response.");
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(2));
+    expect(env.extension.messages[1].message).toMatchObject({
+      details: { operationId: (follow.details as { operationId: string }).operationId, status: "failed" },
+    });
+
+    const next = await env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Wait" });
+    await env.invoke({
+      action: "interrupt",
+      id: "runtime",
+      expectedOperationId: (next.details as { operationId: string }).operationId,
+    });
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(3));
+    expect(env.extension.messages[2].message).toMatchObject({ details: { status: "interrupted" } });
+
+    const renderer = env.extension.messageRenderers.get(SUBAGENT_COMPLETION_MESSAGE)!;
+    const rendered = renderer(
+      {
+        role: "custom",
+        timestamp: Date.now(),
+        ...(env.extension.messages[0].message as never),
+      },
+      { expanded: true, outputPad: 0 },
+      { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
+    )!.render(240).join("\n");
+    expect(rendered).toContain("✓ scout completed — Located auth. With supporting evidence.");
+    expect(rendered).toContain("run runtime · operation initial · runtime idle");
+  });
+
+  test("does not notify for one-shot runs or operations settled by close and shutdown", async () => {
+    const runEnv = setup();
+    const run = runEnv.invoke({ action: "run", agent: "scout", task: "Once" });
+    await vi.waitFor(() => expect(runEnv.fake.controllers[0]?.starts).toHaveLength(1));
+    runEnv.fake.controllers[0].settle();
+    await run;
+    expect(runEnv.extension.messages).toEqual([]);
+
+    const closeEnv = setup();
+    const active = await closeEnv.invoke({ action: "start", agent: "scout", task: "Wait" });
+    await closeEnv.invoke({ action: "close", id: (active.details as { runId: string }).runId });
+    await Promise.resolve();
+    expect(closeEnv.extension.messages).toEqual([]);
+
+    const shutdownEnv = setup();
+    await shutdownEnv.invoke({ action: "start", agent: "scout", task: "Wait" });
+    await shutdownEnv.extension.shutdown();
+    await Promise.resolve();
+    expect(shutdownEnv.extension.messages).toEqual([]);
+  });
+
   test("pre-acceptance interrupt conflicts and close finishes as closed", async () => {
     const env = setup({ autoAccept: false, ids: ["runtime", "operation"] });
     const starting = env.invoke({ action: "start", agent: "scout", task: "Inspect" });
@@ -282,22 +380,39 @@ describe("subagent tool", () => {
     const starting = env.invoke({ action: "start", agent: "scout", task: "Initial" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0);
+    await Promise.resolve();
+    expect(env.extension.messages).toEqual([]);
     env.fake.controllers[0].accept(0);
     expect((await starting).details).toMatchObject({
       runId: "runtime",
       operationId: "initial",
       status: "idle",
     });
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
 
     const sending = env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Again" });
     await vi.waitFor(() => expect(env.fake.controllers[0].starts).toHaveLength(2));
     env.fake.controllers[0].settle(1);
+    await Promise.resolve();
+    expect(env.extension.messages).toHaveLength(1);
     env.fake.controllers[0].accept(1);
     expect((await sending).details).toMatchObject({
       runId: "runtime",
       operationId: "follow-up",
       status: "idle",
     });
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(2));
+  });
+
+  test("does not notify when acceptance rejects after result settlement", async () => {
+    const env = setup({ autoAccept: false });
+    const starting = env.invoke({ action: "start", agent: "scout", task: "Initial" });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].settle();
+    env.fake.controllers[0].starts[0].accepted.reject(new Error("Prompt rejected"));
+    expect(await starting).toMatchObject({ isError: true });
+    await Promise.resolve();
+    expect(env.extension.messages).toEqual([]);
   });
 
   test("two follow-ups reuse one controller, process, runtime, and transcript session", async () => {
@@ -486,6 +601,90 @@ describe("subagent tool", () => {
     })).details).toMatchObject({ status: "crashed" });
     expect((await env.invoke({ action: "start", agent: "scout", task: "Replacement" })).isError).not.toBe(true);
     await env.extension.shutdown();
+  });
+
+  test("an accepted active controller crash sends one failed notification", async () => {
+    const env = setup();
+    const started = await env.invoke({ action: "start", agent: "scout", task: "Crash" });
+    env.fake.controllers[0].fail(new Error("Process exited"));
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    expect(env.extension.messages[0].message).toMatchObject({
+      details: {
+        runId: (started.details as { runId: string }).runId,
+        status: "failed",
+        summary: "Controller closed",
+        runtimeStatus: "crashed",
+      },
+    });
+    await Promise.resolve();
+    expect(env.extension.messages).toHaveLength(1);
+  });
+
+  test("controller failure during explicit close remains notification-suppressed", async () => {
+    const env = setup();
+    const started = await env.invoke({ action: "start", agent: "scout", task: "Close" });
+    const controller = env.fake.controllers[0];
+    vi.spyOn(controller, "interrupt").mockImplementationOnce(async (operationId) => {
+      controller.fail(new Error("Failed while closing"));
+      return FakeController.prototype.interrupt.call(controller, operationId);
+    });
+    await env.invoke({ action: "close", id: (started.details as { runId: string }).runId });
+    await Promise.resolve();
+    expect(env.extension.messages).toEqual([]);
+  });
+
+  test("notification delivery failure cannot change operation state", async () => {
+    const env = setup();
+    vi.spyOn(env.extension.pi, "sendMessage").mockImplementation(() => { throw new Error("UI unavailable"); });
+    const started = await env.invoke({ action: "start", agent: "scout", task: "Finish" });
+    const identity = started.details as { runId: string; operationId: string };
+    env.fake.controllers[0].settle();
+    const waited = await env.invoke({ action: "wait", id: identity.runId, operationId: identity.operationId });
+    expect(waited.details).toMatchObject({ status: "completed" });
+    expect((await env.invoke({ action: "status", id: identity.runId })).details).toMatchObject({ status: "idle" });
+  });
+
+  test("bounds completion message and collapsed agent label", async () => {
+    const root = temporaryDirectory("pi-subagent-project-");
+    const agents = temporaryDirectory("pi-subagent-agents-");
+    const agentName = `a${"b".repeat(399)}`;
+    mkdirSync(agents, { recursive: true });
+    writeFileSync(
+      join(agents, "long-name.md"),
+      `---\nname: ${agentName}\ndescription: Inspect files\ntools: [read]\n---\nInspect.\n`,
+    );
+    const fake = fakeFactory();
+    const extension = harness();
+    registerSubagentExtension(extension.pi, {
+      agentDirectory: agents,
+      controllerFactory: fake.factory,
+      idFactory: (() => {
+        const ids = ["runtime", "operation"];
+        return () => ids.shift()!;
+      })(),
+    });
+    const started = await extension.getTool().execute(
+      "tool-call",
+      { action: "start", agent: agentName, task: "Inspect" },
+      undefined,
+      undefined,
+      context(root),
+    );
+    fake.controllers[0].settle(0, "completed", "x".repeat(10_000));
+    await vi.waitFor(() => expect(extension.messages).toHaveLength(1));
+    const sent = extension.messages[0].message;
+    expect((sent.content as string).length).toBeLessThanOrEqual(3_000);
+    expect((sent.details as { agent: string }).agent.length).toBeLessThanOrEqual(80);
+    expect(started.details).toMatchObject({ runId: "runtime", operationId: "operation" });
+
+    const renderer = extension.messageRenderers.get(SUBAGENT_COMPLETION_MESSAGE)!;
+    const collapsed = renderer(
+      { role: "custom", timestamp: Date.now(), ...(sent as never) },
+      { expanded: false, outputPad: 0 },
+      { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
+    )!.render(500).map((line) => line.trimEnd()).join("\n");
+    expect(collapsed.length).toBeLessThanOrEqual(280);
+    expect(collapsed).not.toContain("run runtime");
   });
 
   test("one-shot cleanup failure is reported instead of ordinary completion", async () => {

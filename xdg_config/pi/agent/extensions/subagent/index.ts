@@ -9,7 +9,13 @@ import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { boundText } from "./output.ts";
 import { createRpcSubagentController } from "./rpc-executor.ts";
-import { renderSubagentCall, renderSubagentResult } from "./render.ts";
+import {
+  renderSubagentCall,
+  renderSubagentCompletion,
+  renderSubagentResult,
+  SUBAGENT_COMPLETION_MESSAGE,
+  type SubagentCompletionDetails,
+} from "./render.ts";
 import type {
   SubagentController,
   SubagentControllerFactory,
@@ -36,6 +42,7 @@ interface OperationRecord {
   finishedAt?: number;
   result?: SubagentResult;
   error?: string;
+  notifyOnSettle: boolean;
   settled: Promise<void>;
   settle(): void;
 }
@@ -232,6 +239,48 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ...(isError ? { isError: true } : {}),
   });
 
+  const notifyOperationSettled = (runtime: RuntimeRecord, operation: OperationRecord): void => {
+    if (
+      !operation.notifyOnSettle
+      || shuttingDown
+      || runtime.state === "closing"
+      || runtime.state === "closed"
+    ) return;
+    const result = operation.result;
+    const agent = runtime.agent.name.length <= 80
+      ? runtime.agent.name
+      : `${runtime.agent.name.slice(0, 79)}…`;
+    const details: SubagentCompletionDetails = {
+      runId: runtime.runId,
+      operationId: operation.operationId,
+      agent,
+      status: result?.status ?? "failed",
+      summary: boundText(
+        result?.summary ?? operation.error ?? "Subagent operation failed without a result.",
+        { maxCharacters: 2_000, maxLines: 20 },
+      ),
+      runtimeStatus: runtime.state === "idle" ? "idle" : "crashed",
+    };
+    const availability = details.runtimeStatus === "idle"
+      ? "The runtime is idle and can accept a follow-up."
+      : "The runtime crashed and cannot accept more work.";
+    const content = boundText([
+      `Subagent ${details.agent} ${details.status} operation ${details.operationId} in runtime ${details.runId}.`,
+      `Summary: ${details.summary}`,
+      availability,
+    ].join("\n"), { maxCharacters: 3_000, maxLines: 24 });
+    try {
+      pi.sendMessage<SubagentCompletionDetails>({
+        customType: SUBAGENT_COMPLETION_MESSAGE,
+        content,
+        display: true,
+        details,
+      }, { triggerTurn: true, deliverAs: "followUp" });
+    } catch {
+      // Notification delivery must not change authoritative operation state.
+    }
+  };
+
   const prune = (): void => {
     for (const runtime of runtimes.values()) {
       while (runtime.operations.size > 128) {
@@ -251,7 +300,11 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     }
   };
 
-  const closeRuntime = (runtime: RuntimeRecord): Promise<void> => {
+  const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> => {
+    if (suppressNotification && runtime.activeOperationId) {
+      const operation = runtime.operations.get(runtime.activeOperationId);
+      if (operation) operation.notifyOnSettle = false;
+    }
     if (runtime.closePromise) return runtime.closePromise;
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
@@ -307,6 +360,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     operationId: string,
     task: string,
     deadlineMs: number,
+    notifyOnSettle: boolean,
     signal?: AbortSignal,
     onProgress?: (summary: string) => void,
   ): Promise<OperationRecord> => {
@@ -315,6 +369,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       operationId,
       state: "running",
       accepted: false,
+      notifyOnSettle,
       startedAt: Date.now(),
       settled: new Promise<void>((resolve) => { settle = resolve; }),
       settle: () => settle(),
@@ -356,6 +411,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       }
       operation.settle();
       prune();
+      void started.accepted.then(() => notifyOperationSettled(runtime, operation)).catch(() => {});
     });
     await started.accepted;
     operation.accepted = true;
@@ -415,7 +471,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         if (params.action === "status") return response(runtimeSnapshot(runtime));
         if (params.action === "close") {
           try {
-            await closeRuntime(runtime);
+            await closeRuntime(runtime, true);
             return response(runtimeSnapshot(runtime));
           } catch (error) {
             return response({ ...runtimeSnapshot(runtime), error: error instanceof Error ? error.message : String(error) }, true);
@@ -472,6 +528,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             operationId,
             params.message,
             params.deadlineMs ?? 300_000,
+            true,
             signal,
             onUpdate
               ? (summary) => onUpdate({
@@ -564,6 +621,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           operationId,
           params.task,
           params.deadlineMs ?? 300_000,
+          params.action === "start",
           signal,
           onUpdate
             ? (summary) => onUpdate({
@@ -579,7 +637,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       } catch (error) {
         if (!runtime.closePromise) transition(runtime, "crashed");
         try {
-          await closeRuntime(runtime);
+          await closeRuntime(runtime, true);
         } catch {
           // The original startup/operation failure is the actionable error.
         }
@@ -591,9 +649,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     },
   });
 
+  pi.registerMessageRenderer<SubagentCompletionDetails>(
+    SUBAGENT_COMPLETION_MESSAGE,
+    renderSubagentCompletion,
+  );
+
   pi.on("session_shutdown", async () => {
     shuttingDown = true;
-    await Promise.allSettled([...runtimes.values()].map(closeRuntime));
+    await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));
   });
 }
 

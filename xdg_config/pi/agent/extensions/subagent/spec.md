@@ -358,6 +358,7 @@ index.ts: in-memory control plane
   |-- context.ts: canonical cwd boundary and bounded AGENTS.md materialization
   |-- RuntimeRecord map: runtime state, revision, controller, capacity ownership
   |-- OperationRecord maps: accepted/settled state and retained results
+  |-- completion message: wake the parent after persistent operation settlement
   |-- render.ts: bounded call, progress, and terminal-state presentation
   |
   | SubagentRunOptions / SubagentOperation / SubagentResult
@@ -401,6 +402,13 @@ The controller also exposes `failure`, which lets the control plane observe an
 idle child process or protocol failure instead of discovering it only on the next
 operation.
 
+Persistent operations additionally produce a bounded `subagent-operation-settled`
+custom message after settlement. Pi delivers it as a parent `followUp` when the
+parent is streaming, or starts a new parent turn when idle. Synchronous `run`
+operations do not notify because their tool result already carries the outcome;
+close/shutdown-driven settlement is suppressed to avoid duplicate or teardown
+noise.
+
 ### 6.4 Current data flows
 
 #### One-shot `run`
@@ -424,13 +432,13 @@ warm worker after `run` returns.
 start
  -> reserve slot -> create one controller/process/session
  -> submit initial operation -> prompt accepted -> return runId + operationId
- -> agent_settled -> runtime becomes idle
+ -> agent_settled -> runtime becomes idle -> notify parent
 
 send(follow_up), only while idle
  -> create a new operationId
  -> submit prompt through the same controller
  -> prompt accepted -> return operationId
- -> agent_settled -> runtime becomes idle again
+ -> agent_settled -> runtime becomes idle again -> notify parent
 
 close
  -> closing -> interrupt accepted active operation if necessary
@@ -579,6 +587,7 @@ Implemented today:
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
 - Bounded in-memory runtime and operation tracking.
+- Bounded parent completion notifications for persistent operations.
 
 Optional remaining reliability work is durable history and unclean-restart
 reconciliation. That work would not make a runtime resumable. Reconnect/reporting
@@ -905,7 +914,6 @@ Add:
 
 - Active `steer` and controller-queued `follow_up` modes.
 - Structured progress, needs-decision, and final handoff messages.
-- Parent completion notification.
 - Usage and timing accounting where reliable.
 - A compact status UI.
 
