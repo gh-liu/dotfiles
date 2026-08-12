@@ -546,12 +546,16 @@ Semantics:
   session identity, and prompt acceptance. It does not wait for completion.
 - `status`: return a bounded snapshot containing a monotonic `revision`, runtime
   state, active operation ID, and last settled operation; never poll internally.
-- `send(..., mode: "follow_up")`: create a new operation. In M1 it is accepted
-  only while idle and maps to an RPC `prompt`; Pi's native follow-up queue is not
-  used as the controller operation queue. M2 may queue these operations in the
-  controller and submits one `prompt` after each preceding settlement.
+- `send(..., mode: "follow_up")`: create a new operation. An idle runtime submits
+  it immediately; a running runtime accepts at most one `queued` operation and
+  submits its RPC `prompt` only after the active operation authoritatively
+  settles. The execution deadline starts when the RPC prompt is submitted, not
+  while queued. Pi's native follow-up queue is not used because it lacks the
+  per-turn correlation required by `wait`, deadlines, and stored results.
 - `send(..., mode: "steer")`: attach a control message to the active operation;
-  it does not create a new operation or independent settlement.
+  it does not create a new operation or independent settlement. The caller must
+  provide `expectedOperationId`; steering is accepted only after that operation's
+  prompt is accepted and while it remains active, then maps to RPC `steer`.
 - `wait`: wait for one specified operation. If it is already settled, return its
   stored result immediately. Timeout returns `{ reason: "timeout", snapshot }`
   without changing state or cancelling work. Multiple waiters may observe the
@@ -573,27 +577,30 @@ the same Pi runtime.
 The current implementation exposes `list`, `run`, `start`, `status`, `send`,
 `wait`, `interrupt`, and `close`. Lifecycle actions identify a persistent
 runtime by `runId` and a turn by `operationId`. `start` keeps one RPC process,
-session, and transcript warm after its initial operation; an idle runtime accepts
-sequential `send(..., mode: "follow_up")` operations. `run` remains a one-shot
-convenience action and closes its runtime after settlement.
+session, and transcript warm after its initial operation. A runtime accepts
+sequential idle follow-ups, one follow-up queued behind active work, and guarded
+steering of its accepted active operation. `run` remains a one-shot convenience
+action and closes its runtime after settlement.
 
 Implemented today:
 
 - Reusable RPC runtimes with prompt-acceptance and `agent_settled` boundaries.
-- Idle-only follow-up operations in the same process and session.
+- Idle and single-slot queued follow-up operations in the same process and session.
+- Active steering with an expected-operation guard and no extra operation result.
 - Runtime/operation identity, monotonic in-memory revisions, and guarded interrupts.
 - RPC `abort` for operation interrupt/deadline without closing a healthy runtime.
 - Fresh child context, explicit tools, filtered environment, and process cleanup.
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
 - Bounded in-memory runtime and operation tracking.
-- Bounded parent completion notifications for persistent operations.
+- Bounded parent completion notifications for each submitted persistent operation;
+  queued operations cancelled by close or shutdown do not notify.
 
 Optional remaining reliability work is durable history and unclean-restart
 reconciliation. That work would not make a runtime resumable. Reconnect/reporting
 for a live prior process requires a different transport or supervisor design and
-is not implied by the current M1 architecture. Active steering and queued
-follow-ups remain Milestone 2 work.
+is not implied by the current architecture. Rich structured handoffs, usage
+accounting, and a more compact status UI remain Milestone 2 work.
 
 ## 8. Context requirements
 
@@ -802,6 +809,8 @@ serialization. Limits are configurable downward but cannot be disabled.
 - Stream child tool activity without polluting parent-visible output.
 - Abort a targeted operation and retain the child session.
 - Send an idle follow-up to a persistent worker.
+- Queue one follow-up behind active work and submit it after settlement.
+- Steer the expected active operation without creating a second operation.
 - Close a worker and verify its process exits and slot is released.
 - Preserve transcript after close.
 - Parent shutdown cleans up all children.
@@ -882,7 +891,8 @@ pi --mode rpc --session-dir <managed-dir>
 Implemented:
 
 - RPC-backed persistent execution with durable session references.
-- `start`, `status`, idle-only `send(..., mode: "follow_up")`, `wait`, guarded
+- `start`, `status`, immediate or single-slot queued `send(..., mode:
+  "follow_up")`, guarded active `send(..., mode: "steer")`, `wait`, guarded
   `interrupt`, and idempotent targeted `close` actions.
 - Sequential operations in one process/session, with prompt acceptance separate
   from authoritative operation settlement.
@@ -910,9 +920,12 @@ Acceptance:
 
 ### Milestone 2: Steering and rich structured handoff
 
-Add:
+Implemented:
 
 - Active `steer` and controller-queued `follow_up` modes.
+
+Remaining:
+
 - Structured progress, needs-decision, and final handoff messages.
 - Usage and timing accounting where reliable.
 - A compact status UI.

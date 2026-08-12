@@ -327,6 +327,7 @@ export async function createRpcSubagentController(
   let forcedClose = false;
   let closing: Promise<void> | undefined;
   let active = false;
+  let activeAccepted = false;
   let activeOperationId: string | undefined;
   let abortActive: ((message: string) => Promise<boolean>) | undefined;
   let fatal: Error | undefined;
@@ -387,6 +388,26 @@ export async function createRpcSubagentController(
   exit.then(() => {
     if (!closed) terminate(spawnError ?? new Error("RPC child process exited unexpectedly"));
   });
+
+  const request = async (
+    idPrefix: string,
+    command: string,
+    data: Record<string, unknown> = {},
+  ): Promise<RpcResponse> => {
+    if (fatal) throw fatal;
+    if (closed) throw new Error("RPC subagent controller is closed");
+    const id = `${idPrefix}:${command}:${randomUUID()}`;
+    const waiter = deferred<RpcResponse>();
+    responses.set(id, waiter);
+    try {
+      child.stdin.write(JSON.stringify({ id, type: command, ...data }) + "\n");
+      const response = await waiter.promise;
+      if (response.command !== command || !response.success) throw new Error(`RPC command failed: ${command}`);
+      return response;
+    } finally {
+      responses.delete(id);
+    }
+  };
 
   const finalize = (): void => {
     if (finalized) return;
@@ -512,28 +533,13 @@ export async function createRpcSubagentController(
       };
       let interrupted: SubagentCancellationError | undefined;
       let cancellationRequest: Promise<void> | undefined;
-      const request = async (command: string, data: Record<string, unknown> = {}): Promise<RpcResponse> => {
-        if (fatal) throw fatal;
-        if (closed) throw new Error("RPC subagent controller is closed");
-        const id = `${options.operationId}:${command}:${randomUUID()}`;
-        const waiter = deferred<RpcResponse>();
-        responses.set(id, waiter);
-        try {
-          child.stdin.write(JSON.stringify({ id, type: command, ...data }) + "\n");
-          const response = await waiter.promise;
-          if (response.command !== command || !response.success) throw new Error(`RPC command failed: ${command}`);
-          return response;
-        } finally {
-          responses.delete(id);
-        }
-      };
       const cancel = async (error: SubagentCancellationError): Promise<boolean> => {
         if (interrupted || authoritativeSettled || activeOperationId !== options.operationId) return false;
         interrupted = error;
         abortWatchdog = setTimeout(() => {
           terminate(new Error("RPC abort did not reach authoritative settlement"));
         }, base.terminationGraceMs ?? 5_000);
-        cancellationRequest = request("abort").then(() => {
+        cancellationRequest = request(options.operationId, "abort").then(() => {
           abortResponseReceived = true;
           clearAbortWatchdog();
         }).catch((abortError) => {
@@ -549,7 +555,7 @@ export async function createRpcSubagentController(
       let deadline: NodeJS.Timeout | undefined;
       try {
         if (!transcript) {
-          const state = await request("get_state");
+          const state = await request(options.operationId, "get_state");
           const data = state.data as { sessionId?: unknown; sessionFile?: unknown } | undefined;
           if (!data || typeof data.sessionId !== "string" || data.sessionId.length === 0 || typeof data.sessionFile !== "string" || data.sessionFile.length === 0) throw new Error("get_state response did not contain session identity");
           const sessionPath = resolve(data.sessionFile);
@@ -557,7 +563,8 @@ export async function createRpcSubagentController(
           if (!isAbsolute(sessionPath) || relativePath.startsWith("..") || relativePath.includes("/..")) throw new Error("RPC session file escaped the managed session directory");
           transcript = { sessionId: data.sessionId, sessionPath };
         }
-        await request("prompt", { message: ["Execute this work order exactly as provided. Return only the requested handoff.", JSON.stringify(options.workOrder, null, 2)].join("\n\n") });
+        await request(options.operationId, "prompt", { message: ["Execute this work order exactly as provided. Return only the requested handoff.", JSON.stringify(options.workOrder, null, 2)].join("\n\n") });
+        activeAccepted = true;
         accepted.resolve();
         abortActive = (message) => cancel(new SubagentCancellationError(message));
         options.signal?.addEventListener("abort", onAbort, { once: true });
@@ -583,6 +590,7 @@ export async function createRpcSubagentController(
         currentRecord = undefined;
         if (activeTerminal === terminal) activeTerminal = undefined;
         active = false;
+        activeAccepted = false;
         if (activeOperationId === options.operationId) activeOperationId = undefined;
         abortActive = undefined;
       }
@@ -592,6 +600,11 @@ export async function createRpcSubagentController(
       return { accepted: accepted.promise, result: resultPromise };
     },
     submit(options): Promise<SubagentResult> { return this.start(options).result; },
+    async steer(expectedOperationId, message): Promise<boolean> {
+      if (activeOperationId !== expectedOperationId || !active || !activeAccepted) return false;
+      await request(expectedOperationId, "steer", { message });
+      return true;
+    },
     async interrupt(expectedOperationId): Promise<boolean> {
       if (activeOperationId !== expectedOperationId || !abortActive) return false;
       return abortActive("Subagent operation interrupted by controller");

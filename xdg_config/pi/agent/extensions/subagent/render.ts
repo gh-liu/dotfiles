@@ -9,7 +9,7 @@ export interface SubagentCompletionDetails {
   agent: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
-  runtimeStatus: "idle" | "crashed";
+  runtimeStatus: "running" | "idle" | "crashed";
 }
 
 type SubagentRenderArgs =
@@ -17,6 +17,7 @@ type SubagentRenderArgs =
   | { action: "run" | "start"; agent: string; task: string; cwd?: string; deadlineMs?: number }
   | { action: "status"; id: string }
   | { action: "send"; id: string; mode: "follow_up"; message: string; deadlineMs?: number }
+  | { action: "send"; id: string; mode: "steer"; message: string; expectedOperationId: string }
   | { action: "wait"; id: string; operationId: string; timeoutMs?: number }
   | { action: "interrupt"; id: string; expectedOperationId: string }
   | { action: "close"; id: string };
@@ -92,7 +93,7 @@ export function renderSubagentCall(
   if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
   if (args.action === "close") return new Text(theme.fg("accent", `close — ${args.id}`), 0, 0);
   if (args.action === "send") {
-    let text = theme.fg("accent", `follow up — ${args.id}`);
+    let text = theme.fg("accent", `${args.mode === "steer" ? "steer" : "follow up"} — ${args.id}`);
     for (const line of boundedLines(args.message, 480, 3)) text += `\n${theme.fg("dim", `  ${line}`)}`;
     return new Text(text, 0, 0);
   }
@@ -182,6 +183,14 @@ export function renderSubagentResult(
     text = details.accepted === true
       ? theme.fg("warning", "■ Interrupt requested")
       : theme.fg("muted", `• Already ${status ?? "settled"}`);
+  } else if (action === "send" && context.args.mode === "steer") {
+    stopSpinner(state);
+    text = details.accepted === true
+      ? theme.fg("accent", "↪ Steering sent")
+      : theme.fg("muted", "• Steering not applied");
+  } else if (status === "queued" || details.queued === true) {
+    stopSpinner(state);
+    text = theme.fg("accent", "◷ Queued");
   } else if (status === "running") {
     stopSpinner(state);
     text = theme.fg("warning", "● Running");

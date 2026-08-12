@@ -363,6 +363,45 @@ process.stdin.on("data", (chunk) => {
     await controller.close();
   });
 
+  test("steers only the expected accepted active operation", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const script = temporaryScript(`
+let input = "";
+function emit(value) { process.stdout.write(JSON.stringify(value) + "\\n"); }
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  let newline;
+  while ((newline = input.indexOf("\\n")) !== -1) {
+    const command = JSON.parse(input.slice(0, newline));
+    input = input.slice(newline + 1);
+    const sessionFile = process.argv[process.argv.indexOf("--session-dir") + 1] + "/session.jsonl";
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-steer", sessionFile } });
+    if (command.type === "prompt") emit({ type: "response", id: command.id, command: "prompt", success: true });
+    if (command.type === "steer") {
+      emit({ type: "response", id: command.id, command: "steer", success: true });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: command.message }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    }
+  }
+});
+`);
+    const runOptions = options(script, sessionRoot, { operationId: "operation-steered" });
+    const controller = await createRpcSubagentController(runOptions, {
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+    });
+    const operation = controller.start(runOptions);
+    expect(await controller.steer(runOptions.operationId, "too early")).toBe(false);
+    await operation.accepted;
+    expect(await controller.steer("stale-operation", "wrong turn")).toBe(false);
+    expect(await controller.steer(runOptions.operationId, "Focus on tests")).toBe(true);
+    await expect(operation.result).resolves.toMatchObject({ status: "completed", summary: "Focus on tests" });
+    expect(await controller.steer(runOptions.operationId, "too late")).toBe(false);
+    await controller.close();
+  });
+
   test("deadline aborts the operation without killing the reusable runtime", async () => {
     const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
     temporaryDirectories.push(sessionRoot);
