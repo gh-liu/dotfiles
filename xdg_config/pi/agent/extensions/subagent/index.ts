@@ -208,11 +208,19 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const operationSnapshot = (operation: OperationRecord) => ({
     operationId: operation.operationId,
     status: operation.state,
+    task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
     ...(operation.queuedAt === undefined ? {} : { queuedAt: operation.queuedAt }),
     ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
     ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
-    ...(operation.result === undefined ? {} : { result: operation.result }),
-    ...(operation.error === undefined ? {} : { error: operation.error }),
+    ...(operation.result === undefined ? {} : {
+      result: {
+        ...operation.result,
+        summary: boundText(operation.result.summary, { maxCharacters: 2_000, maxLines: 20 }),
+      },
+    }),
+    ...(operation.error === undefined ? {} : {
+      error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }),
+    }),
   });
 
   const runtimeSnapshot = (runtime: RuntimeRecord) => ({
@@ -223,6 +231,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ...(runtime.activeOperationId === undefined ? {} : {
       operationId: runtime.activeOperationId,
       activeOperationId: runtime.activeOperationId,
+      activeOperation: operationSnapshot(runtime.operations.get(runtime.activeOperationId)!),
     }),
     ...(runtime.queuedOperationId === undefined ? {} : {
       queuedOperation: operationSnapshot(runtime.operations.get(runtime.queuedOperationId)!),
@@ -236,11 +245,17 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     }),
   });
 
-  const response = (details: unknown, isError = false) => ({
-    content: [{ type: "text" as const, text: JSON.stringify(details) }],
-    details,
-    ...(isError ? { isError: true } : {}),
-  });
+  const response = (details: unknown, isError = false) => {
+    const serialized = JSON.stringify(details);
+    const bounded = serialized.length <= 32_000
+      ? serialized
+      : JSON.stringify({ error: "Subagent response exceeded the parent serialization limit", truncated: true });
+    return {
+      content: [{ type: "text" as const, text: bounded }],
+      details,
+      ...(isError ? { isError: true } : {}),
+    };
+  };
 
   const notifyOperationSettled = (runtime: RuntimeRecord, operation: OperationRecord): void => {
     if (
@@ -257,6 +272,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       runId: runtime.runId,
       operationId: operation.operationId,
       agent,
+      task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
       status: result?.status ?? "failed",
       summary: boundText(
         result?.summary ?? operation.error ?? "Subagent operation failed without a result.",
@@ -271,6 +287,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         : "The runtime crashed and cannot accept more work.";
     const content = boundText([
       `Subagent ${details.agent} ${details.status} operation ${details.operationId} in runtime ${details.runId}.`,
+      `Task: ${details.task}`,
       `Summary: ${details.summary}`,
       availability,
     ].join("\n"), { maxCharacters: 3_000, maxLines: 24 });
@@ -494,11 +511,18 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (params.action === "list") {
         registry = discoverUserAgents(agentDirectory);
+        const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
         return {
-          content: [{ type: "text" as const, text: formatAgentCatalog(registry) }],
+          content: [{ type: "text" as const, text: catalog }],
           details: {
-            agents: registry.agents.map(({ name, description }) => ({ name, description })),
-            discoveryErrors: registry.errors,
+            agents: registry.agents.map(({ name, description }) => ({
+              name,
+              description: boundText(description, { maxCharacters: 500, maxLines: 8 }),
+            })),
+            discoveryErrors: registry.errors.map(({ filePath, error }) => ({
+              filePath,
+              error: boundText(error, { maxCharacters: 500, maxLines: 8 }),
+            })),
           },
         };
       }

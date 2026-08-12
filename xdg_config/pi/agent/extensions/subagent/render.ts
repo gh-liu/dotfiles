@@ -7,6 +7,7 @@ export interface SubagentCompletionDetails {
   runId: string;
   operationId: string;
   agent: string;
+  task: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
   runtimeStatus: "running" | "idle" | "crashed";
@@ -61,8 +62,12 @@ export function renderSubagentCompletion(
   const agent = oneLine(details?.agent ?? "subagent", 80);
   const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""));
   let text = `${theme.fg(color, marker)} ${theme.bold(agent)} ${status}`;
-  if (!expanded && summary) text += theme.fg("dim", ` — ${summary}`);
+  if (!expanded && details?.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
+  if (!expanded && summary) text += theme.fg("dim", ` — ${oneLine(summary, 120)}`);
   if (expanded) {
+    if (details?.task) {
+      text += `\n${theme.fg("muted", `  task: ${oneLine(details.task, 240)}`)}`;
+    }
     const expandedSummary = details?.summary ?? (typeof message.content === "string" ? message.content : "");
     for (const line of boundedLines(expandedSummary, 4_000, 20)) {
       if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
@@ -164,11 +169,20 @@ function stringField(details: Record<string, unknown>, name: string): string | u
   return typeof snapshot === "string" ? snapshot : undefined;
 }
 
+function operationFrom(details: Record<string, unknown>, name: string): Record<string, unknown> | undefined {
+  const operation = snapshotFrom(details)[name];
+  return operation && typeof operation === "object" ? operation as Record<string, unknown> : undefined;
+}
+
 function queuedOperationId(details: Record<string, unknown>): string | undefined {
-  const queued = snapshotFrom(details).queuedOperation;
-  if (!queued || typeof queued !== "object") return undefined;
-  const operationId = (queued as Record<string, unknown>).operationId;
+  const operation = operationFrom(details, "queuedOperation");
+  const operationId = operation?.operationId;
   return typeof operationId === "string" ? operationId : undefined;
+}
+
+function operationTask(details: Record<string, unknown>, name: string): string | undefined {
+  const task = operationFrom(details, name)?.task;
+  return typeof task === "string" ? oneLine(task, 120) : undefined;
 }
 
 function resultMetadata(
@@ -177,7 +191,12 @@ function resultMetadata(
   expanded: boolean,
 ): string {
   const queuedId = queuedOperationId(details);
-  if (!expanded) return args.action === "status" && queuedId ? "follow-up queued" : "";
+  const activeTask = args.action === "status" ? operationTask(details, "activeOperation") : undefined;
+  const queuedTask = args.action === "status" ? operationTask(details, "queuedOperation") : undefined;
+  if (!expanded) {
+    const queue = queuedId ? `follow-up queued${queuedTask ? `: ${queuedTask}` : ""}` : "";
+    return [activeTask, queue].filter(Boolean).join(" · ");
+  }
   const runId = stringField(details, "runId") ?? ("id" in args ? args.id : undefined);
   const operationId = stringField(details, "operationId")
     ?? ("operationId" in args ? args.operationId : undefined)
@@ -189,7 +208,9 @@ function resultMetadata(
     entries.push(`operation ${shownId(operationId, expanded)}`);
   }
   if (activeOperationId) entries.push(`active ${shownId(activeOperationId, expanded)}`);
+  if (activeTask) entries.push(`task ${activeTask}`);
   if (queuedId) entries.push(`queued ${shownId(queuedId, expanded)}`);
+  if (queuedTask) entries.push(`queued task ${queuedTask}`);
   return entries.join(" · ");
 }
 
@@ -210,6 +231,7 @@ export function renderSubagentResult(
   const action = context.args.action;
   const agent = stringField(details, "agent");
   const subject = agent ? `${agent} ` : "";
+  const task = stringField(details, "task");
   let text: string;
   if (isPartial) {
     state.spinnerFrame ??= 0;
@@ -274,6 +296,9 @@ export function renderSubagentResult(
     text += expanded
       ? `\n${theme.fg("muted", `  ${metadata}`)}`
       : theme.fg("muted", ` · ${metadata}`);
+  }
+  if (expanded && task) {
+    text += `\n${theme.fg("dim", `  task: ${oneLine(task, 240)}`)}`;
   }
 
   const showOutput =
