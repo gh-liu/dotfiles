@@ -1,6 +1,6 @@
 # Pi Subagent Extension Specification
 
-- Status: Draft
+- Status: Active (Milestones 1 and 2 partial)
 - Updated: 2026-08-12
 
 ## 1. Background
@@ -24,7 +24,7 @@ surface wholesale:
 
 ## 2. Goal
 
-Build a Pi extension that lets a parent agent delegate bounded work to isolated
+Provide a Pi extension that lets a parent agent delegate bounded work to isolated
 Pi child sessions while retaining responsibility for decomposition, decisions,
 integration, verification, and the final user-facing result.
 
@@ -42,7 +42,7 @@ The extension must:
 
 ## 3. Non-goals
 
-The initial implementation will not provide:
+The current runtime does not provide:
 
 - Agent teams, shared task DAGs, task claiming, or leader election.
 - Child-to-child messaging.
@@ -67,8 +67,10 @@ validation, and reports the final result.
 ### 4.2 Fresh context by default
 
 A child does not implicitly inherit the parent transcript. The parent provides a
-self-contained work order containing the goal, scope, constraints, known
-decisions, evidence, validation, and expected return shape.
+self-contained task containing the goal, scope, constraints, known decisions,
+evidence, validation, and expected return shape. The extension wraps that task in
+a stable work-order envelope with canonical scope, runtime constraints, and
+applicable project guidance.
 
 ### 4.3 One coordinator, leaf workers
 
@@ -98,8 +100,8 @@ another.
 ### 4.6 Bounded handoff, durable evidence
 
 The parent receives a concise structured result. The complete transcript remains
-in the child session and is referenced by session ID/path for inspection and
-later recovery where explicitly supported.
+in the child session and is referenced by session ID/path for inspection. A
+transcript reference does not make the runtime recoverable after restart.
 
 ### 4.7 Routing is catalog-driven
 
@@ -146,13 +148,9 @@ interface AgentDefinition {
 
   model?: string;
   thinking?: string;
-  fallbackModels?: string[];
-
   tools: string[];
-  extensions?: string[];
-
-  contextPolicy?: "fresh" | "fork";
-  maxDepth?: number;
+  contextPolicy: "fresh";
+  maxDepth: 1;
 }
 ```
 
@@ -162,13 +160,13 @@ system prompt. User definitions are loaded from
 does not discover project-local definitions or compatibility paths. If
 project-local definitions are added later, they are repository-controlled input
 and require an explicit trust/override policy before becoming executable.
-The current parser supports only fresh, depth-one agents and rejects executable
-extension declarations. Controller-owned tool-provider mappings load any
-extension required to implement a declared tool.
+The parser rejects model fallbacks, executable extension declarations, non-fresh
+context policies, and depths other than one. Controller-owned tool-provider
+mappings load any extension required to implement a declared tool.
 
 ### 5.2 Work order
 
-Every child invocation receives a complete work order.
+Every child invocation receives the following stable envelope:
 
 ```ts
 interface WorkOrder {
@@ -194,8 +192,12 @@ interface EvidenceRef {
 }
 ```
 
-The extension may accept a plain task string for ergonomics, but it must wrap the
-string in a stable work-order envelope before sending it to the child.
+The model-facing tool accepts one self-contained `task` string. The extension
+places it in `goal`, sets `scope` to the canonical child cwd, adds fixed runtime
+constraints and applicable project guidance, and currently leaves
+`knownDecisions`, `evidence`, and `validation` empty. The parent therefore encodes
+task-specific decisions, evidence, validation, and return requirements directly
+in `task`; independently populated structured fields are future work.
 
 ### 5.3 Runtime and operation identity
 
@@ -208,10 +210,9 @@ following distinct identities:
 - `processInstanceId`: one local subprocess incarnation; a PID is only an
   observed attribute of that instance.
 - `sessionId`: Pi transcript identity, which may outlive a process.
-- `turnSeq`: a controller-assigned sequence for observed Pi turns; it is not a
-  model-facing API identity.
 
-Runtime lifecycle and operation outcome are orthogonal:
+Runtime lifecycle and operation outcome are orthogonal. The current
+parent-visible snapshots are:
 
 ```ts
 type RuntimeState =
@@ -220,8 +221,7 @@ type RuntimeState =
   | "running"
   | "closing"
   | "closed"
-  | "crashed"
-  | "start_failed";
+  | "crashed";
 
 type OperationState =
   | "queued"
@@ -231,40 +231,38 @@ type OperationState =
   | "interrupted"
   | "cancelled";
 
-interface RuntimeRecord {
+interface RuntimeSnapshot {
   runId: string;
   revision: number;
-  agentName: string;
-  parentSessionId: string;
-  parentRunId?: string;
-  depth: number;
-  state: RuntimeState;
-
-  processInstanceId?: string;
-  pid?: number;
-  sessionId?: string;
-  sessionPath?: string;
-  cwd: string;
+  agent: string;
+  status: RuntimeState;
+  operationId?: string;
   activeOperationId?: string;
-
-  createdAt: string;
-  startedAt?: string;
-  closedAt?: string;
-  error?: string;
+  queuedOperation?: OperationSnapshot;
+  lastSettledOperation?: OperationSnapshot;
+  processInstanceId?: string;
+  transcript?: {
+    sessionId?: string;
+    sessionPath?: string;
+  };
 }
 
-interface OperationRecord {
+interface OperationSnapshot {
   operationId: string;
-  runId: string;
-  state: OperationState;
-  workOrder: WorkOrder;
-  createdAt: string;
-  startedAt?: string;
-  settledAt?: string;
+  status: OperationState;
+  queuedAt?: number;
+  startedAt?: number;
+  finishedAt?: number;
   result?: SubagentResult;
   error?: string;
 }
 ```
+
+The control plane additionally keeps the parent session, canonical cwd, selected
+agent profile, operation task/deadline, waiters, controller ownership, and
+capacity reservation in private in-memory records. Startup failures use
+`crashed`; there is no separate `start_failed` state or controller-assigned turn
+sequence.
 
 Required invariants:
 
@@ -282,48 +280,39 @@ Required invariants:
 - Pi turn boundaries are observations used to reduce events; they do not replace
   operation identity.
 
-### 5.4 Structured handoff
+### 5.4 Current bounded handoff
 
 ```ts
 interface SubagentResult {
   runId: string;
   operationId: string;
+  processInstanceId?: string;
   agent: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
-
-  filesChanged?: Claimed<FileChange[]>;
-  findings?: Finding[];
-  validation?: Claimed<ValidationResult[]>;
-  blockers?: string[];
-  residualRisks?: string[];
-
   transcript: {
     sessionId?: string;
     sessionPath?: string;
   };
 }
-
-interface Claimed<T> {
-  value: T;
-  provenance: "child_claim" | "controller_observed";
-}
 ```
 
 `SubagentResult` is a controller-created envelope. The controller, never child
-JSON, owns IDs, agent identity, status, transcript references, process errors,
-and protocol diagnostics. Child-authored summary, findings, blockers, and risks
-are bounded data. Files changed and validation remain `child_claim` unless the
-controller independently observes them.
+JSON, owns IDs, agent identity, status, and transcript references. The child's
+final assistant text is bounded and returned as `summary`; the controller does
+not currently parse files, findings, validation, blockers, or risks into
+separate fields. Structured claims and controller-observed provenance remain
+Milestone 2 work.
 
 `completed` requires an authoritative settled event and a complete final
-assistant response with a normal stop reason. Startup, provider, protocol, or
-process failures map to `failed`; missing final responses and length-truncated
-responses are failed partial results. `interrupted` requires the targeted
-operation to settle as aborted after an accepted interrupt. A late interrupt
-never overwrites an already completed outcome. `interrupted` results are
-available only from the RPC executor; JSON process cancellation is reported as
-a controller cancellation without a `SubagentResult`.
+assistant response with a normal stop reason. Missing final responses and
+provider length-truncated responses produce a `failed` result containing bounded
+partial text when available. Startup, provider, protocol, or process failures
+that prevent normal reduction instead return a tool error with a failed
+operation or crashed runtime snapshot; the controller does not fabricate a
+`SubagentResult`. `interrupted` requires the targeted operation to settle as
+aborted after an accepted interrupt. A late interrupt never overwrites an
+already completed outcome.
 
 The parent-visible serialization must be bounded by both character and line
 count. Large reports and full event streams must not be embedded into the parent
@@ -369,7 +358,7 @@ Responsibilities:
 
 - `AgentRegistry`: discover, parse, validate, and resolve agent definitions.
 - `RuntimeRegistry`: own runtime, process, session, and revision state.
-- `OperationRegistry`: own immutable operation IDs, work orders, and outcomes.
+- `OperationRegistry`: own operation IDs, tasks, deadlines, and outcomes.
 - `ConcurrencyController`: enforce total child limits.
 - `ChildController`: own exactly one process and all associated listeners,
   timers, RPC requests, and teardown.
@@ -560,7 +549,7 @@ extension may claim credential isolation.
 
 ## 7. Tool surface
 
-The target model-facing API is action based:
+The current model-facing API is action based:
 
 ```ts
 subagent({ action: "list" })
@@ -735,25 +724,24 @@ for parent coordination.
 - The cwd must be canonicalized and checked against allowed roots, including
   symlink escape.
 - stdout, stderr, progress, and final result sizes must be bounded.
-- Environment variables must be selected deliberately; secrets must not appear
-  in logs or parent-visible results.
+- Environment variables must be selected deliberately. Known credential values
+  and common credential formats are redacted before retention and serialization,
+  but this best-effort filter is not a credential-isolation guarantee.
 
 ### 9.3 Process cleanup
 
-RPC cancellation and shutdown follow an idempotent escalation sequence:
+RPC operation cancellation and process shutdown follow related but distinct
+idempotent paths:
 
-1. Send RPC abort when an operation is active.
-2. Wait a bounded grace period.
-3. Close stdin to request RPC runtime shutdown.
-4. Wait for process exit.
-5. Send `SIGTERM` after the shutdown deadline.
-6. Send `SIGKILL` only after a second deadline.
-7. Clear timers and remove listeners on every terminal path.
-
-The JSON executor has no command channel. Controller cancellation sends
-`SIGTERM` to the owned process group, waits a bounded grace period, escalates to
-`SIGKILL`, and awaits authoritative process exit. It does not claim an accepted
-abort or an `interrupted` operation result.
+- `interrupt` sends RPC `abort` and waits for both the abort response and
+  authoritative `agent_settled`; a watchdog treats missing acknowledgement or
+  settlement as a fatal controller failure.
+- Normal idle `close` ends stdin and waits for process exit.
+- Closing a still-active or unhealthy controller sends `SIGTERM` to the owned
+  process group, waits a bounded grace period, and escalates to `SIGKILL` only if
+  the process tree remains alive.
+- Every terminal path awaits authoritative process exit/tree cleanup, clears
+  timers, and removes listeners.
 
 Parent `session_shutdown` must close all owned children. Cleanup must tolerate
 already-exited processes and partial startup failures. On platforms where child
@@ -812,17 +800,14 @@ Parent-model output and user-facing UI are different channels.
 
 Parent model receives:
 
-- Run ID and state.
-- Bounded progress summary when requested.
-- Final structured handoff.
+- Run, operation, and state snapshots from lifecycle actions.
+- Final bounded result envelope.
 - Transcript reference.
 
-UI/details may additionally show:
+Current UI/details additionally show:
 
-- Agent name, model, and thinking level.
-- Duration and turn/tool activity.
-- Current operation.
-- Usage/cost where Pi exposes it reliably.
+- Agent name and current or queued operation context.
+- Reduced tool activity while an operation is running.
 - Full bounded diagnostic error.
 
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
@@ -845,7 +830,7 @@ Default V1 retention limits are:
 maxJsonlRecordBytes = 1 MiB
 maxParserBufferBytes = 1 MiB
 maxRetainedStderrBytes = 64 KiB
-maxProgressSummary = 16,000 characters or 200 lines
+maxLiveProgress = 160 characters on one line
 maxFinalChildText = 32,000 characters or 400 lines
 maxParentSerialization = 32,000 characters or 400 lines
 ```
@@ -854,8 +839,10 @@ The controller continuously drains stdout and stderr; limits bound retained
 memory, not pipe consumption. It decodes split UTF-8 and partial LF-delimited
 records incrementally. An oversized record or non-empty malformed JSON line is a
 protocol failure and closes the child. Ring buffers and reduced output are
-truncated with an explicit marker; secrets are redacted before retention and
-serialization. Limits are configurable downward but cannot be disabled.
+truncated with an explicit marker. Exact configured credential values and common
+credential patterns are redacted on a best-effort basis before retention and
+serialization. These limits are fixed implementation constants; a future
+configuration surface may lower them but must not disable them.
 
 ## 13. Validation strategy
 
@@ -871,7 +858,7 @@ serialization. Limits are configurable downward but cannot be disabled.
 - Native cwd canonicalization, project-root containment, and symlink escape.
 - Partial-line and split UTF-8 JSONL decoding.
 - Idempotent cleanup and timer/listener removal.
-- Result-envelope provenance and outcome mapping.
+- Result-envelope ownership and outcome mapping.
 - Queued-operation cancellation without a fabricated interrupted result.
 
 ### Integration contracts
@@ -913,7 +900,6 @@ or Bun rather than through a package-script alias.
 - Invalid agent definition.
 - Missing model/provider authentication.
 - Child startup error before RPC ready.
-- JSON-mode stdin is not closed after the work order is written.
 - Malformed or oversized JSONL/event output.
 - Provider failure after prompt acceptance.
 - Child process exits without a final response.
@@ -922,52 +908,14 @@ or Bun rather than through a package-script alias.
 
 ## 14. Evolution roadmap
 
-### Initial phase: Contracts and one-shot vertical slice
+### Superseded exploration: JSON one-shot vertical slice
 
-Implement the smallest end-to-end path, initially using the official Pi JSON-mode
-subagent pattern if that reduces startup complexity:
-
-```text
-pi --mode json -p --no-session \
-  --no-context-files \
-  --no-extensions \
-  --tools <allowlist> \
-  --system-prompt <agent-system-prompt>
-```
-
-The controller uses `shell: false`, writes the complete work-order envelope to
-stdin, and immediately ends stdin before awaiting output. JSON mode does not use
-stdin as a persistent control channel; leaving the pipe open would prevent Pi
-0.84.1 from starting the prompt. Optional model, thinking, and explicitly trusted
-extension arguments follow the spawn contract.
-
-Scope:
-
-- User agent discovery and validation; project agents remain disabled.
-- One foreground `run` action.
-- Fresh work-order context.
-- Explicitly materialized project guidance with `--no-context-files`.
-- Explicit tool allowlist.
-- Validated per-agent tool allowlists, including one-shot implementation agents.
-- Bounded event/progress reduction.
-- Controller-created minimal result envelope and final text handoff.
-- Explicit execution deadline, process-group cancellation, and cleanup.
-
-Acceptance:
-
-- A `scout`-style read-only child can inspect a fixture repository and return a
-  bounded answer.
-- A `worker`-style child receives only its declared implementation tools and can
-  execute an approved change in the selected cwd.
-- Process-group cancellation leaves no child process and is reported as
-  controller cancellation, not an RPC `interrupted` result.
-- The parent result does not contain the full event stream.
-- Malformed or oversized JSONL fails without unbounded buffering.
-
-This milestone validates prompt shape, role usefulness, event parsing, and
-process ownership. Because it uses `--no-session`, it intentionally does not
-provide the durable-transcript guarantee and is a development vertical slice,
-not a V1 cutover candidate.
+The initial design considered Pi JSON mode as a short-lived way to validate
+prompt shape, tool allowlists, bounded event parsing, deadlines, and process-tree
+cleanup. The current source tree has no JSON executor: the RPC controller now
+provides both one-shot `run` and persistent lifecycle behavior with durable
+transcripts. JSON-mode stdin and cancellation semantics are therefore historical
+design context, not current contracts or remaining implementation work.
 
 ### Milestone 1: Persistent RPC runtime (partial)
 
@@ -975,7 +923,7 @@ The RPC executor, durable session references, basic lifecycle actions, identity
 separation, concurrency limit, and `agent_settled` completion are implemented.
 The remaining work is listed explicitly below.
 
-Replace or generalize the executor around:
+The current executor runs:
 
 ```text
 pi --mode rpc --session-dir <managed-dir>
@@ -1011,7 +959,7 @@ Acceptance:
 - `close` releases the slot and exits the process.
 - A closed transcript can be inspected but is not advertised as resumable.
 
-### Milestone 2: Steering and rich structured handoff
+### Milestone 2: Steering and rich structured handoff (partial)
 
 Implemented:
 
@@ -1046,7 +994,7 @@ Acceptance:
 - Parent and child histories diverge independently after spawn.
 - Fork does not silently broaden tools, permissions, or secrets.
 
-### Milestone 5: Optional advanced capabilities
+### Milestone 4: Optional advanced capabilities
 
 Consider only after observed need:
 
@@ -1061,29 +1009,14 @@ Agent teams, peer messaging, shared task graphs, schedules, and missions require
 separate specification because they introduce a coordination plane rather than
 incrementally extending delegated execution.
 
-## 15. Migration and coexistence
+## 15. Coexistence
 
 The canonical `subagent` name may collide with a third-party package even when
 that package is merely installed or cached. Installation does not imply that the
-package is loaded; verify the effective Pi settings and tool registry before
-cutover.
-
-During development:
-
-- Use a distinct extension entry point and temporary tool name.
-- Keep runtime state outside the tracked source directory.
-- Do not interpret the package's config or artifacts as this implementation's
-  state.
-- Compare behavior with the installed package through black-box tests where
-  useful, but do not depend on undocumented internals.
-
-At cutover:
-
-- Remove or disable `npm:pi-subagents` before registering the canonical tool
-  name.
-- Preserve agent definitions only through an explicit migration.
-- Start with new run/session state rather than attempting compatibility with old
-  durable runs.
+package is loaded; verify the effective Pi settings and tool registry. Any other
+package that registers `subagent`, such as `npm:pi-subagents`, must be disabled in
+the same runtime. This extension does not interpret or migrate another package's
+configuration, transcripts, or runtime state.
 
 ## 16. Open decisions
 
