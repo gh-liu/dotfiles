@@ -26,6 +26,7 @@ The active-session transport uses a private Unix-domain socket under
 `node subagent/eval/run.mjs --quick` (or the equivalent `bun` command) runs real
 Pi sessions against isolated fixtures to evaluate subagent routing and outcomes.
 It uses provider credentials, network access, and model quota, so it is
-intentionally separate from `npm test`. See
+intentionally separate from `npm test`. There is no package-script alias so the
+runner is equally usable with Node.js or Bun. See
 [subagent/eval/README.md](subagent/eval/README.md) for the scenario matrix, full
 statistical run, report format, and baseline comparison workflow.
