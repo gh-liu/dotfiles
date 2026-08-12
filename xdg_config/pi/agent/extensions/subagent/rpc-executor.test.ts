@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { createRpcSubagentController, createRpcSubagentExecutor } from "./rpc-executor.ts";
-import { SubagentCancellationError } from "./protocol.ts";
 import type { SubagentExecutionProfile, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
 
 const temporaryDirectories: string[] = [];
@@ -126,10 +125,12 @@ process.on("exit", () => writeFileSync(process.argv[2], String(getStateCount) + 
     await controller.close();
     expect(existsSync(exitMarker)).toBe(true);
     expect(readFileSync(exitMarker, "utf8")).toBe("1|undefined");
-    await expect(controller.submit(firstOptions)).rejects.toThrow("closed");
+    const rejected = controller.start(firstOptions);
+    await expect(rejected.accepted).rejects.toThrow("closed");
+    await expect(rejected.result).rejects.toThrow("closed");
   });
 
-  test("close rejects an active operation and remains idempotent", async () => {
+  test("close cancels an unaccepted active operation and remains idempotent", async () => {
     const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
     temporaryDirectories.push(sessionRoot);
     const script = temporaryScript(`
@@ -157,7 +158,7 @@ process.stdin.on("data", (chunk) => {
     const firstClose = controller.close();
     expect(controller.close()).toBe(firstClose);
     await expect(pending).rejects.toThrow("closed during active operation");
-    await expect(firstClose).rejects.toThrow("closed during active operation");
+    await expect(firstClose).resolves.toBeUndefined();
   });
 
   test("performs the state/prompt handshake and returns the session reference", async () => {
@@ -309,7 +310,108 @@ process.stdin.on("data", (chunk) => {
     expect(progress.every((entry) => entry.length <= 161)).toBe(true);
   });
 
-  test("cancels and cleans up the owned process group", async () => {
+  test("aborts an accepted operation authoritatively and reuses the runtime", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const script = temporaryScript(`
+let input = "";
+let operation = 0;
+function emit(value) { process.stdout.write(JSON.stringify(value) + "\\n"); }
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  let newline;
+  while ((newline = input.indexOf("\\n")) !== -1) {
+    const command = JSON.parse(input.slice(0, newline));
+    input = input.slice(newline + 1);
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-cancelled", sessionFile: process.argv[process.argv.indexOf("--session-dir") + 1] + "/session.jsonl" } });
+    if (command.type === "prompt") {
+      operation++;
+      emit({ type: "response", id: command.id, command: "prompt", success: true });
+      if (operation === 2) setTimeout(() => {
+        emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Still reusable" }], stopReason: "stop" } });
+        emit({ type: "agent_settled" });
+      }, 10);
+    }
+    if (command.type === "abort") {
+      emit({ type: "agent_settled" });
+      setTimeout(() => emit({ type: "response", id: command.id, command: "abort", success: true }), 20);
+    }
+  }
+});
+`);
+    const firstOptions = options(script, sessionRoot, { operationId: "operation-interrupted" });
+    const controller = await createRpcSubagentController(firstOptions, {
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+      terminationGraceMs: 25,
+    });
+    const first = controller.start(firstOptions);
+    await first.accepted;
+    expect(await controller.interrupt("stale-operation")).toBe(false);
+    let resultSettled = false;
+    void first.result.then(() => { resultSettled = true; });
+    const interrupt = controller.interrupt(firstOptions.operationId);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(resultSettled).toBe(false);
+    expect(await interrupt).toBe(true);
+    await expect(first.result).resolves.toMatchObject({ status: "interrupted" });
+
+    const second = await controller.submit({ ...firstOptions, operationId: "operation-reused" });
+    expect(second).toMatchObject({ status: "completed", summary: "Still reusable" });
+    expect(second.processInstanceId).toBe(controller.processInstanceId);
+    await controller.close();
+  });
+
+  test("deadline aborts the operation without killing the reusable runtime", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const script = temporaryScript(`
+let input = "";
+let operation = 0;
+function emit(value) { process.stdout.write(JSON.stringify(value) + "\\n"); }
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  let newline;
+  while ((newline = input.indexOf("\\n")) !== -1) {
+    const command = JSON.parse(input.slice(0, newline));
+    input = input.slice(newline + 1);
+    const sessionFile = process.argv[process.argv.indexOf("--session-dir") + 1] + "/session.jsonl";
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-deadline", sessionFile } });
+    if (command.type === "prompt") {
+      operation++;
+      emit({ type: "response", id: command.id, command: "prompt", success: true });
+      if (operation === 2) setTimeout(() => {
+        emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "After deadline" }], stopReason: "stop" } });
+        emit({ type: "agent_settled" });
+      }, 10);
+    }
+    if (command.type === "abort") {
+      emit({ type: "response", id: command.id, command: "abort", success: true });
+      emit({ type: "agent_settled" });
+    }
+  }
+});
+`);
+    const firstOptions = options(script, sessionRoot, { operationId: "operation-deadline", deadlineMs: 20 });
+    const controller = await createRpcSubagentController(firstOptions, {
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+    });
+    await expect(controller.submit(firstOptions)).resolves.toMatchObject({
+      status: "interrupted",
+      summary: "Subagent execution deadline exceeded (20 ms)",
+    });
+    await expect(controller.submit({
+      ...firstOptions,
+      operationId: "operation-after-deadline",
+      deadlineMs: 1_000,
+    })).resolves.toMatchObject({ status: "completed", summary: "After deadline" });
+    await controller.close();
+  });
+
+  test("abort watchdog fails a nonresponsive child instead of hanging", async () => {
     const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
     temporaryDirectories.push(sessionRoot);
     const script = temporaryScript(`
@@ -321,16 +423,27 @@ process.stdin.on("data", (chunk) => {
   while ((newline = input.indexOf("\\n")) !== -1) {
     const command = JSON.parse(input.slice(0, newline));
     input = input.slice(newline + 1);
-    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-cancelled", sessionFile: "/tmp/session-cancelled.jsonl" } });
+    const sessionFile = process.argv[process.argv.indexOf("--session-dir") + 1] + "/session.jsonl";
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-watchdog", sessionFile } });
     if (command.type === "prompt") emit({ type: "response", id: command.id, command: "prompt", success: true });
+    // Deliberately ignore abort and never emit agent_settled.
   }
 });
-setInterval(() => {}, 1000);
 `);
-    const controller = new AbortController();
-    const running = createRpcSubagentExecutor({ command: process.execPath, commandArgsPrefix: [script], sessionRoot, terminationGraceMs: 25 })(options(script, sessionRoot, { signal: controller.signal }));
-    setTimeout(() => controller.abort(), 25);
-    await expect(running).rejects.toBeInstanceOf(SubagentCancellationError);
+    const runOptions = options(script, sessionRoot);
+    const controller = await createRpcSubagentController(runOptions, {
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+      terminationGraceMs: 25,
+    });
+    const operation = controller.start(runOptions);
+    await operation.accepted;
+    await expect(controller.interrupt(runOptions.operationId)).rejects.toThrow(
+      "RPC abort did not reach authoritative settlement",
+    );
+    await expect(operation.result).rejects.toThrow("RPC abort did not reach authoritative settlement");
+    await expect(controller.close()).rejects.toThrow("RPC abort did not reach authoritative settlement");
   });
 
   test.runIf(process.platform !== "win32")("cleans up descendants after a normal leader exit", async () => {

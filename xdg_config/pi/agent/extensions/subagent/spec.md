@@ -431,23 +431,27 @@ the same Pi runtime.
 
 ### 7.1 Current implementation status
 
-The current implementation exposes `list`, `run`, `start`, `status`, `wait`,
-`interrupt`, and `close`. Lifecycle actions identify operations by
-`operationId`; there is not yet a separate runtime ID or the target `send`
-action. `start` launches a background **one-shot** RPC execution, not a reusable
-multi-turn worker.
+The current implementation exposes `list`, `run`, `start`, `status`, `send`,
+`wait`, `interrupt`, and `close`. Lifecycle actions identify a persistent
+runtime by `runId` and a turn by `operationId`. `start` keeps one RPC process,
+session, and transcript warm after its initial operation; an idle runtime accepts
+sequential `send(..., mode: "follow_up")` operations. `run` remains a one-shot
+convenience action and closes its runtime after settlement.
 
 Implemented today:
 
-- RPC execution with `agent_settled` completion and bounded JSONL parsing.
+- Reusable RPC runtimes with prompt-acceptance and `agent_settled` boundaries.
+- Idle-only follow-up operations in the same process and session.
+- Runtime/operation identity, monotonic in-memory revisions, and guarded interrupts.
+- RPC `abort` for operation interrupt/deadline without closing a healthy runtime.
 - Fresh child context, explicit tools, filtered environment, and process cleanup.
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
-- In-memory operation tracking with bounded retention.
+- Bounded in-memory runtime and operation tracking.
 
-Remaining M1 work includes reusable multi-turn sessions, monotonic revisions,
-an atomic run ledger, unclean-restart reconciliation, expected-operation guards
-for interrupts, reconnect/reporting after restart, and follow-up operations.
+Remaining M1 work includes an atomic run ledger, unclean-restart reconciliation,
+and reconnect/reporting after restart. Active steering and queued follow-ups
+remain Milestone 2 work.
 
 ## 8. Context requirements
 
@@ -735,17 +739,21 @@ pi --mode rpc --session-dir <managed-dir>
 
 Implemented:
 
-- RPC-backed one-shot execution with durable session references.
-- Basic `start`, `status`, `wait`, `interrupt`, and idempotent `close` actions.
+- RPC-backed persistent execution with durable session references.
+- `start`, `status`, idle-only `send(..., mode: "follow_up")`, `wait`, guarded
+  `interrupt`, and idempotent targeted `close` actions.
+- Sequential operations in one process/session, with prompt acceptance separate
+  from authoritative operation settlement.
+- Operation interrupt and deadline through RPC `abort`, leaving a healthy runtime
+  reusable after `agent_settled`.
 - Separate run, operation, process-instance, and session identities.
-- Concurrency limits and `agent_settled`-based completion.
+- Monotonic in-memory runtime revisions, concurrency limits, fatal-process
+  observation, and `agent_settled`-based completion.
 
 Remaining:
 
-- Reusable multi-turn workers and idle-only `send(..., mode: "follow_up")`.
-- Separate runtime state/revision model.
 - Atomic local run ledger and unclean-restart reconciliation.
-- Idempotent shutdown escalation with authoritative runtime ownership.
+- Reconnect/reporting for a prior process after extension restart.
 
 Acceptance:
 

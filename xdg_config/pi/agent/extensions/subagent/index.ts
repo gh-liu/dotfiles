@@ -7,84 +7,110 @@ import { Type } from "typebox";
 
 import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
-import { createRpcSubagentExecutor } from "./rpc-executor.ts";
 import { boundText } from "./output.ts";
-import { SubagentCancellationError } from "./protocol.ts";
+import { createRpcSubagentController } from "./rpc-executor.ts";
 import { renderSubagentCall, renderSubagentResult } from "./render.ts";
 import type {
-  SubagentExecutor,
+  SubagentController,
+  SubagentControllerFactory,
   SubagentResult,
+  SubagentRunOptions,
   SubagentWorkOrder,
 } from "./protocol.ts";
 
 interface SubagentExtensionOptions {
   agentDirectory?: string;
   authEnvAllowlist?: string[];
-  execute?: SubagentExecutor;
+  controllerFactory?: SubagentControllerFactory;
   idFactory?: () => string;
 }
 
+type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
 type OperationState = "running" | "completed" | "failed" | "interrupted";
 
 interface OperationRecord {
   operationId: string;
-  runId: string;
-  agent: string;
   state: OperationState;
+  accepted: boolean;
   startedAt: number;
   finishedAt?: number;
-  controller: AbortController;
-  execution: Promise<SubagentResult>;
-  settled: Promise<void>;
   result?: SubagentResult;
-  processInstanceId?: string;
   error?: string;
-  interruptRequested?: boolean;
+  settled: Promise<void>;
+  settle(): void;
 }
 
-type OperationSnapshot = Pick<
-  OperationRecord,
-  "operationId" | "runId" | "agent" | "startedAt" | "finishedAt" | "processInstanceId" | "interruptRequested"
-> & { status: OperationState; error?: string };
+interface RuntimeRecord {
+  runId: string;
+  revision: number;
+  agent: SubagentRunOptions["agent"];
+  cwd: string;
+  parentSessionId: string;
+  projectGuidance: string[];
+  state: RuntimeState;
+  controller?: SubagentController;
+  controllerReady: Promise<SubagentController>;
+  activeOperationId?: string;
+  lastSettled?: OperationRecord;
+  operations: Map<string, OperationRecord>;
+  closePromise?: Promise<void>;
+  slotReserved: boolean;
+}
+
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve(value: T): void;
+  reject(error: unknown): void;
+} {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((next, fail) => { resolve = next; reject = fail; });
+  return { promise, resolve, reject };
+}
+
+const deadline = () => Type.Optional(Type.Integer({
+  minimum: 1_000,
+  maximum: 3_600_000,
+  default: 300_000,
+  description: "Operation deadline",
+}));
 
 const SubagentParameters = Type.Union([
+  Type.Object({ action: Type.Literal("list", { description: "Refresh and list registered user agents" }) }),
   Type.Object({
-    action: Type.Literal("list", { description: "Refresh and list registered user agents" }),
-  }),
-  Type.Object({
-    action: Type.Literal("run", { description: "Run one foreground child agent" }),
+    action: Type.Literal("run", { description: "Run one foreground child operation and close its runtime" }),
     agent: Type.String({ description: "Canonical user agent name" }),
     task: Type.String({ minLength: 1, description: "Self-contained task delegated to the child" }),
     cwd: Type.Optional(Type.String({ description: "Child cwd under the parent's canonical project root" })),
-    deadlineMs: Type.Optional(
-      Type.Integer({ minimum: 1_000, maximum: 3_600_000, default: 300_000, description: "Execution deadline" }),
-    ),
+    deadlineMs: deadline(),
   }),
   Type.Object({
-    action: Type.Literal("start", { description: "Start a background one-shot child agent" }),
+    action: Type.Literal("start", { description: "Start a persistent child runtime and its initial operation" }),
     agent: Type.String({ description: "Canonical user agent name" }),
-    task: Type.String({ minLength: 1, description: "Self-contained task delegated to the child" }),
+    task: Type.String({ minLength: 1, description: "Self-contained initial task delegated to the child" }),
     cwd: Type.Optional(Type.String({ description: "Child cwd under the parent's canonical project root" })),
-    deadlineMs: Type.Optional(
-      Type.Integer({ minimum: 1_000, maximum: 3_600_000, default: 300_000, description: "Execution deadline" }),
-    ),
+    deadlineMs: deadline(),
+  }),
+  Type.Object({ action: Type.Literal("status"), id: Type.String({ minLength: 1, description: "Runtime ID" }) }),
+  Type.Object({
+    action: Type.Literal("send"),
+    id: Type.String({ minLength: 1, description: "Runtime ID" }),
+    mode: Type.Literal("follow_up"),
+    message: Type.String({ minLength: 1 }),
+    deadlineMs: deadline(),
   }),
   Type.Object({
-    action: Type.Literal("status", { description: "Return the status of an operation" }),
-    operationId: Type.String({ minLength: 1 }),
-  }),
-  Type.Object({
-    action: Type.Literal("wait", { description: "Wait for an operation to settle" }),
+    action: Type.Literal("wait"),
+    id: Type.String({ minLength: 1, description: "Runtime ID" }),
     operationId: Type.String({ minLength: 1 }),
     timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000 })),
   }),
   Type.Object({
-    action: Type.Literal("interrupt", { description: "Interrupt an operation" }),
-    operationId: Type.String({ minLength: 1 }),
+    action: Type.Literal("interrupt"),
+    id: Type.String({ minLength: 1, description: "Runtime ID" }),
+    expectedOperationId: Type.String({ minLength: 1 }),
   }),
-  Type.Object({
-    action: Type.Literal("close", { description: "Close the subagent runtime" }),
-  }),
+  Type.Object({ action: Type.Literal("close"), id: Type.String({ minLength: 1, description: "Runtime ID" }) }),
 ]);
 
 function formatAgentCatalog(discovery: AgentDiscovery): string {
@@ -93,19 +119,11 @@ function formatAgentCatalog(discovery: AgentDiscovery): string {
     : discovery.agents.map((agent) => `${agent.name}: ${agent.description.replace(/\s+/g, " ").trim()}`);
   const invalid = discovery.errors.length === 0
     ? []
-    : [
-      "",
-      "Invalid agent definitions:",
-      ...discovery.errors.map((error) => `- ${error.error}`),
-    ];
+    : ["", "Invalid agent definitions:", ...discovery.errors.map((error) => `- ${error.error}`)];
   return [...agents, ...invalid].join("\n");
 }
 
-function createWorkOrder(
-  task: string,
-  cwd: string,
-  projectGuidance: string[],
-): SubagentWorkOrder {
+function createWorkOrder(task: string, cwd: string, projectGuidance: string[]): SubagentWorkOrder {
   return {
     goal: task,
     scope: [cwd],
@@ -128,7 +146,6 @@ function serializeSubagentResult(result: SubagentResult): string {
   let low = 0;
   let high = Math.min(result.summary.length, maxCharacters);
   let best: string | undefined;
-
   while (low <= high) {
     const summaryLimit = Math.floor((low + high) / 2);
     const summary = summaryLimit === 0
@@ -149,39 +166,219 @@ function serializeSubagentResult(result: SubagentResult): string {
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
   let registry = discoverUserAgents(agentDirectory);
-  const startupCatalog = boundText(
-    formatAgentCatalog(registry),
-    { maxCharacters: 16_000, maxLines: 200 },
-  );
-  const authEnvAllowlist =
-    options.authEnvAllowlist ??
-    process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
-  const executeChild: SubagentExecutor =
-    options.execute ??
-    createRpcSubagentExecutor({
-      piAgentDirectory: getAgentDir(),
-      sessionRoot: join(getAgentDir(), "subagent-sessions"),
-      authEnvAllowlist,
-      toolProviders: {
-        web_search: {
-          extensionPaths: [fileURLToPath(new URL("../websearch/index.ts", import.meta.url))],
-          environmentVariables: ["EXA_API_KEY"],
-        },
+  const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
+  const authEnvAllowlist = options.authEnvAllowlist
+    ?? process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
+  const rpcConfig = {
+    piAgentDirectory: getAgentDir(),
+    sessionRoot: join(getAgentDir(), "subagent-sessions"),
+    authEnvAllowlist,
+    toolProviders: {
+      web_search: {
+        extensionPaths: [fileURLToPath(new URL("../websearch/index.ts", import.meta.url))],
+        environmentVariables: ["EXA_API_KEY"],
       },
-    });
+    },
+  };
+  const controllerFactory = options.controllerFactory
+    ?? ((initial: SubagentRunOptions) => createRpcSubagentController(initial, rpcConfig));
   const idFactory = options.idFactory ?? randomUUID;
-  const active = new Set<AbortController>();
-  const executions = new Map<AbortController, Promise<unknown>>();
-  const operations = new Map<string, OperationRecord>();
+  const runtimes = new Map<string, RuntimeRecord>();
+  let occupiedSlots = 0;
   let shuttingDown = false;
-  let closePromise: Promise<void> | undefined;
+
+  const transition = (runtime: RuntimeRecord, state: RuntimeState): void => {
+    if (runtime.state === state) return;
+    runtime.state = state;
+    runtime.revision += 1;
+  };
+
+  const releaseSlot = (runtime: RuntimeRecord): void => {
+    if (!runtime.slotReserved) return;
+    runtime.slotReserved = false;
+    occupiedSlots -= 1;
+  };
+
+  const operationSnapshot = (operation: OperationRecord) => ({
+    operationId: operation.operationId,
+    status: operation.state,
+    startedAt: operation.startedAt,
+    ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
+    ...(operation.result === undefined ? {} : { result: operation.result }),
+    ...(operation.error === undefined ? {} : { error: operation.error }),
+  });
+
+  const runtimeSnapshot = (runtime: RuntimeRecord) => ({
+    runId: runtime.runId,
+    revision: runtime.revision,
+    agent: runtime.agent.name,
+    status: runtime.state,
+    ...(runtime.activeOperationId === undefined ? {} : {
+      operationId: runtime.activeOperationId,
+      activeOperationId: runtime.activeOperationId,
+    }),
+    ...(runtime.lastSettled === undefined ? {} : {
+      lastSettledOperation: operationSnapshot(runtime.lastSettled),
+    }),
+    ...(runtime.controller === undefined ? {} : {
+      processInstanceId: runtime.controller.processInstanceId,
+      transcript: runtime.controller.transcript,
+    }),
+  });
+
+  const response = (details: unknown, isError = false) => ({
+    content: [{ type: "text" as const, text: JSON.stringify(details) }],
+    details,
+    ...(isError ? { isError: true } : {}),
+  });
+
+  const prune = (): void => {
+    for (const runtime of runtimes.values()) {
+      while (runtime.operations.size > 128) {
+        const stale = [...runtime.operations.values()].find(
+          (operation) => operation !== runtime.lastSettled && operation.state !== "running",
+        );
+        if (!stale) break;
+        runtime.operations.delete(stale.operationId);
+      }
+    }
+    while (runtimes.size > 128) {
+      const stale = [...runtimes.values()].find(
+        (runtime) => runtime.state === "closed" || runtime.state === "crashed",
+      );
+      if (!stale) break;
+      runtimes.delete(stale.runId);
+    }
+  };
+
+  const closeRuntime = (runtime: RuntimeRecord): Promise<void> => {
+    if (runtime.closePromise) return runtime.closePromise;
+    const wasCrashed = runtime.state === "crashed";
+    if (!wasCrashed) transition(runtime, "closing");
+    runtime.closePromise = (async () => {
+      let failure: unknown;
+      try {
+        await runtime.controllerReady;
+      } catch (error) {
+        failure = error;
+      }
+      const activeOperationId = runtime.activeOperationId;
+      const activeOperation = activeOperationId === undefined
+        ? undefined
+        : runtime.operations.get(activeOperationId);
+      if (activeOperationId && activeOperation?.accepted && runtime.controller && !wasCrashed) {
+        try {
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const stopped = await Promise.race([
+            (async () => {
+              await runtime.controller!.interrupt(activeOperationId);
+              await activeOperation.settled;
+              return true;
+            })(),
+            new Promise<false>((resolveTimeout) => {
+              timer = setTimeout(() => resolveTimeout(false), 5_000);
+            }),
+          ]);
+          if (timer) clearTimeout(timer);
+          if (!stopped) failure ??= new Error("Subagent operation did not settle after interrupt");
+        } catch (error) {
+          failure ??= error;
+        }
+      }
+      try {
+        await runtime.controller?.close();
+      } catch (error) {
+        failure ??= error;
+      }
+      if (failure) throw failure;
+      if (runtime.state !== "crashed") transition(runtime, "closed");
+    })().catch((error) => {
+      transition(runtime, "crashed");
+      throw error;
+    }).finally(() => {
+      releaseSlot(runtime);
+      prune();
+    });
+    return runtime.closePromise;
+  };
+
+  const beginOperation = async (
+    runtime: RuntimeRecord,
+    operationId: string,
+    task: string,
+    deadlineMs: number,
+    signal?: AbortSignal,
+    onProgress?: (summary: string) => void,
+  ): Promise<OperationRecord> => {
+    let settle!: () => void;
+    const operation: OperationRecord = {
+      operationId,
+      state: "running",
+      accepted: false,
+      startedAt: Date.now(),
+      settled: new Promise<void>((resolve) => { settle = resolve; }),
+      settle: () => settle(),
+    };
+    runtime.operations.set(operationId, operation);
+    runtime.activeOperationId = operationId;
+    transition(runtime, "running");
+    const runOptions: SubagentRunOptions = {
+      cwd: runtime.cwd,
+      agent: runtime.agent,
+      workOrder: createWorkOrder(task, runtime.cwd, runtime.projectGuidance),
+      runId: runtime.runId,
+      operationId,
+      parentSessionId: runtime.parentSessionId,
+      deadlineMs,
+      signal,
+      onProgress,
+    };
+    const started = runtime.controller!.start(runOptions);
+    started.result.then(
+      (result) => {
+        operation.result = result;
+        operation.state = result.status;
+      },
+      (error) => {
+        operation.error = error instanceof Error ? error.message : String(error);
+        operation.state = "failed";
+        if (runtime.state !== "closing" && runtime.state !== "closed") {
+          transition(runtime, "crashed");
+          void closeRuntime(runtime).catch(() => {});
+        }
+      },
+    ).finally(() => {
+      operation.finishedAt = Date.now();
+      if (runtime.activeOperationId === operationId) {
+        runtime.activeOperationId = undefined;
+        runtime.lastSettled = operation;
+        if (runtime.state === "running") transition(runtime, "idle");
+      }
+      operation.settle();
+      prune();
+    });
+    await started.accepted;
+    operation.accepted = true;
+    return operation;
+  };
+
+  const operationResponse = (operation: OperationRecord) => {
+    if (operation.result) {
+      return {
+        content: [{ type: "text" as const, text: serializeSubagentResult(operation.result) }],
+        details: operation.result,
+        isError: operation.result.status === "failed",
+      };
+    }
+    return response({ ...operationSnapshot(operation), error: operation.error ?? "Subagent operation failed" }, true);
+  };
 
   pi.registerTool({
     name: "subagent",
     label: "Subagent",
     description:
-      `Run one registered user-defined Pi child with fresh isolated context and only its declared tools. Use the canonical registered agent name in the agent parameter. The parent remains responsible for coordination, decisions, integration, and verification.\n\n${startupCatalog}`,
-    promptSnippet: "List registered agents or ask one to perform a bounded task in an isolated child",
+      `Run a registered user-defined Pi child with fresh isolated context and only its declared tools. Persistent runtimes accept idle follow-up operations. The parent remains responsible for coordination, decisions, integration, and verification.\n\n${startupCatalog}`,
+    promptSnippet: "List registered agents, run one operation, or continue an idle child runtime",
     promptGuidelines: [
       "When the user names a registered agent and asks it to perform a task, call subagent with that agent name. Also use it when the user explicitly asks for a subagent or delegation.",
       "When the user requests delegation without naming an agent, list registered agents before choosing one.",
@@ -194,100 +391,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderCall: renderSubagentCall,
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
-      const snapshotFor = (operation: OperationRecord): OperationSnapshot => ({
-        operationId: operation.operationId,
-        runId: operation.runId,
-        agent: operation.agent,
-        status: operation.state,
-        startedAt: operation.startedAt,
-        ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
-        ...(operation.processInstanceId === undefined ? {} : { processInstanceId: operation.processInstanceId }),
-        ...(operation.error === undefined ? {} : { error: operation.error }),
-        ...(operation.interruptRequested ? { interruptRequested: true } : {}),
-      });
-      const notFound = (operationId: string) => ({
-        content: [{ type: "text" as const, text: `Unknown subagent operation: ${operationId}.` }],
-        details: { operationId },
-        isError: true,
-      });
-
-      if (params.action === "close") {
-        if (!closePromise) {
-          shuttingDown = true;
-          const owned = [...operations.values()]
-            .filter((operation) => active.has(operation.controller))
-            .map((operation) => operation.settled);
-          for (const controller of active) controller.abort();
-          closePromise = Promise.allSettled(owned).then(() => undefined);
-        }
-        await closePromise;
-        const details = { status: "closed" as const };
-        return { content: [{ type: "text", text: JSON.stringify(details) }], details };
-      }
-
-      if (params.action === "status" || params.action === "wait" || params.action === "interrupt") {
-        const operation = operations.get(params.operationId);
-        if (!operation) return notFound(params.operationId);
-
-        if (params.action === "status") {
-          const details = snapshotFor(operation);
-          return { content: [{ type: "text", text: JSON.stringify(details) }], details };
-        }
-
-        if (params.action === "interrupt") {
-          const accepted = operation.state === "running";
-          if (accepted) {
-            operation.interruptRequested = true;
-            operation.controller.abort();
-          }
-          const details = { accepted, snapshot: snapshotFor(operation) };
-          return { content: [{ type: "text", text: JSON.stringify(details) }], details };
-        }
-
-        let settled = operation.state !== "running";
-        if (!settled && params.timeoutMs !== undefined) {
-          let timeout: ReturnType<typeof setTimeout> | undefined;
-          const timedOut = new Promise<false>((resolve) => {
-            timeout = setTimeout(() => resolve(false), params.timeoutMs);
-          });
-          settled = await Promise.race([operation.settled.then(() => true), timedOut]);
-          if (timeout) clearTimeout(timeout);
-        } else if (!settled) {
-          await operation.settled;
-          settled = true;
-        }
-        if (!settled) {
-          const snapshot = snapshotFor(operation);
-          const details = { reason: "timeout" as const, snapshot };
-          return { content: [{ type: "text", text: JSON.stringify(details) }], details };
-        }
-        if (operation.result) {
-          return {
-            content: [{ type: "text", text: serializeSubagentResult(operation.result) }],
-            details: operation.result,
-            isError: operation.result.status === "failed",
-          };
-        }
-        const message = operation.error ?? "Subagent operation did not produce a result.";
-        const details = { ...snapshotFor(operation), error: message };
-        return {
-          content: [{ type: "text", text: boundText(`Subagent controller failure: ${message}`, { maxCharacters: 32_000, maxLines: 400 }) }],
-          details,
-          isError: true,
-        };
-      }
-
-      if (shuttingDown) {
-        return {
-          content: [{ type: "text", text: "Subagent runtime is shutting down; new runs are rejected." }],
-          details: { shuttingDown: true },
-          isError: true,
-        };
-      }
       if (params.action === "list") {
         registry = discoverUserAgents(agentDirectory);
         return {
-          content: [{ type: "text", text: formatAgentCatalog(registry) }],
+          content: [{ type: "text" as const, text: formatAgentCatalog(registry) }],
           details: {
             agents: registry.agents.map(({ name, description }) => ({ name, description })),
             discoveryErrors: registry.errors,
@@ -295,144 +402,198 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         };
       }
 
-      const snapshot = registry;
-      const agent = snapshot.agents.find((candidate) => candidate.name === params.agent);
+      if (
+        params.action === "status"
+        || params.action === "send"
+        || params.action === "wait"
+        || params.action === "interrupt"
+        || params.action === "close"
+      ) {
+        const runtime = runtimes.get(params.id);
+        if (!runtime) return response({ error: `Unknown subagent runtime: ${params.id}` }, true);
+
+        if (params.action === "status") return response(runtimeSnapshot(runtime));
+        if (params.action === "close") {
+          try {
+            await closeRuntime(runtime);
+            return response(runtimeSnapshot(runtime));
+          } catch (error) {
+            return response({ ...runtimeSnapshot(runtime), error: error instanceof Error ? error.message : String(error) }, true);
+          }
+        }
+        if (params.action === "interrupt") {
+          const operation = runtime.operations.get(params.expectedOperationId);
+          if (
+            runtime.state !== "running"
+            || runtime.activeOperationId !== params.expectedOperationId
+            || !operation?.accepted
+          ) {
+            return response({ accepted: false, conflict: true, snapshot: runtimeSnapshot(runtime) });
+          }
+          const accepted = await runtime.controller!.interrupt(params.expectedOperationId);
+          return response({ accepted, snapshot: runtimeSnapshot(runtime) });
+        }
+        if (params.action === "wait") {
+          const operation = runtime.operations.get(params.operationId);
+          if (!operation) {
+            return response({ error: `Unknown operation ${params.operationId} for runtime ${runtime.runId}` }, true);
+          }
+          if (operation.state === "running") {
+            if (params.timeoutMs === undefined) {
+              await operation.settled;
+            } else {
+              let timer: ReturnType<typeof setTimeout> | undefined;
+              const settled = await Promise.race([
+                operation.settled.then(() => true),
+                new Promise<false>((resolveTimeout) => {
+                  timer = setTimeout(() => resolveTimeout(false), params.timeoutMs);
+                }),
+              ]);
+              if (timer) clearTimeout(timer);
+              if (!settled) return response({ reason: "timeout", snapshot: runtimeSnapshot(runtime) });
+            }
+          }
+          return operationResponse(operation);
+        }
+
+        if (shuttingDown) return response({ error: "Subagent runtime is shutting down" }, true);
+        if (runtime.state !== "idle") {
+          return response({
+            accepted: false,
+            conflict: true,
+            error: "Runtime is not idle",
+            snapshot: runtimeSnapshot(runtime),
+          }, true);
+        }
+        const operationId = idFactory();
+        try {
+          await beginOperation(
+            runtime,
+            operationId,
+            params.message,
+            params.deadlineMs ?? 300_000,
+            signal,
+            onUpdate
+              ? (summary) => onUpdate({
+                  content: [{ type: "text", text: summary }],
+                  details: { runId: runtime.runId, operationId, agent: runtime.agent.name, status: "running" },
+                })
+              : undefined,
+          );
+          return response({ ...runtimeSnapshot(runtime), operationId });
+        } catch (error) {
+          return response({ ...runtimeSnapshot(runtime), error: error instanceof Error ? error.message : String(error) }, true);
+        }
+      }
+
+      if (shuttingDown) {
+        return response({ error: "Subagent runtime is shutting down; new runs are rejected." }, true);
+      }
+      const agent = registry.agents.find((candidate) => candidate.name === params.agent);
       if (!agent) {
-        const available = snapshot.agents.map((candidate) => candidate.name).join(", ") || "none";
-        const invalid = snapshot.errors.find((error) => error.filePath.endsWith(`/${params.agent}.md`));
+        const available = registry.agents.map((candidate) => candidate.name).join(", ") || "none";
+        const invalid = registry.errors.find((error) => error.filePath.endsWith(`/${params.agent}.md`));
         return {
-          content: [
-            {
-              type: "text",
-              text: invalid
-                ? `Agent definition is invalid: ${invalid.error}`
-                : `Unknown user agent: ${params.agent}. Available agents: ${available}.`,
-            },
-          ],
-          details: { discoveryErrors: snapshot.errors },
+          content: [{
+            type: "text" as const,
+            text: invalid
+              ? `Agent definition is invalid: ${invalid.error}`
+              : `Unknown user agent: ${params.agent}. Available agents: ${available}.`,
+          }],
+          details: { discoveryErrors: registry.errors },
           isError: true,
         };
       }
-      if (active.size >= 3) {
-        return {
-          content: [{ type: "text", text: "Subagent capacity unavailable: maxConcurrentRuns is 3." }],
-          details: { activeRuns: active.size, maxConcurrentRuns: 3 },
-          isError: true,
-        };
+      if (occupiedSlots >= 3) {
+        return response({ error: "Subagent capacity unavailable: maxConcurrentRuns is 3." }, true);
       }
 
       const allowedRoot = findAllowedRoot(ctx.cwd);
-      const requestedCwd = resolve(ctx.cwd, params.cwd ?? ".");
-      const cwd = resolveChildCwd(allowedRoot, requestedCwd);
+      const cwd = resolveChildCwd(allowedRoot, resolve(ctx.cwd, params.cwd ?? "."));
       const runId = idFactory();
       const operationId = idFactory();
-      const controller = new AbortController();
-      let settleOperation!: () => void;
-      const operation: OperationRecord = {
-        operationId,
+      const controllerReady = deferred<SubagentController>();
+      const runtime: RuntimeRecord = {
         runId,
-        agent: agent.name,
-        state: "running",
-        startedAt: Date.now(),
-        controller,
-        execution: Promise.resolve(undefined as never),
-        settled: new Promise<void>((resolve) => { settleOperation = resolve; }),
+        revision: 0,
+        agent,
+        cwd,
+        parentSessionId: ctx.sessionManager.getSessionId(),
+        projectGuidance: loadProjectGuidance(allowedRoot, cwd),
+        state: "starting",
+        controllerReady: controllerReady.promise,
+        operations: new Map(),
+        slotReserved: true,
       };
-      operations.set(operationId, operation);
-      const forwardAbort = () => controller.abort();
-      if (signal?.aborted) controller.abort();
-      else signal?.addEventListener("abort", forwardAbort, { once: true });
-      active.add(controller);
-      onUpdate?.({
-        content: [{ type: "text", text: "Starting isolated child…" }],
-        details: { runId, operationId, agent: agent.name, status: "running" },
-      });
+      occupiedSlots += 1;
+      runtimes.set(runId, runtime);
 
-      const execution = Promise.resolve().then(() => executeChild({
+      const initialOptions: SubagentRunOptions = {
         cwd,
         agent,
-        workOrder: createWorkOrder(params.task, cwd, loadProjectGuidance(allowedRoot, cwd)),
+        workOrder: createWorkOrder(params.task, cwd, runtime.projectGuidance),
         runId,
         operationId,
-        parentSessionId: ctx.sessionManager.getSessionId(),
+        parentSessionId: runtime.parentSessionId,
         deadlineMs: params.deadlineMs ?? 300_000,
-        signal: controller.signal,
-        onProgress: onUpdate
-          ? (summary) =>
-              onUpdate({
+        signal,
+      };
+      void Promise.resolve().then(() => controllerFactory(initialOptions)).then(
+        (controller) => {
+          runtime.controller = controller;
+          void controller.failure.then((error) => {
+            if (runtime.state === "closed") return;
+            transition(runtime, "crashed");
+            void closeRuntime(runtime).catch(() => {});
+          });
+          controllerReady.resolve(controller);
+        },
+        (error) => controllerReady.reject(error),
+      );
+      try {
+        onUpdate?.({
+          content: [{ type: "text", text: "Starting isolated child…" }],
+          details: { runId, operationId, agent: agent.name, status: "starting" },
+        });
+        runtime.controller = await runtime.controllerReady;
+        if (shuttingDown || runtime.state !== "starting") {
+          throw new Error("Subagent runtime closed before its initial operation was accepted");
+        }
+        const operation = await beginOperation(
+          runtime,
+          operationId,
+          params.task,
+          params.deadlineMs ?? 300_000,
+          signal,
+          onUpdate
+            ? (summary) => onUpdate({
                 content: [{ type: "text", text: summary }],
                 details: { runId, operationId, agent: agent.name, status: "running" },
               })
-          : undefined,
-      }));
-      operation.execution = execution;
-      executions.set(controller, execution);
-      execution.then(
-        (result) => {
-          operation.result = result;
-          operation.processInstanceId = result.processInstanceId;
-          operation.state = result.status === "completed"
-            ? "completed"
-            : result.status === "interrupted"
-              ? "interrupted"
-              : "failed";
-        },
-        (error) => {
-          operation.error = error instanceof Error ? error.message : String(error);
-          operation.state = error instanceof SubagentCancellationError ? "interrupted" : "failed";
-        },
-      ).then(() => {
-        operation.finishedAt = Date.now();
-        signal?.removeEventListener("abort", forwardAbort);
-        active.delete(controller);
-        executions.delete(controller);
-        settleOperation();
-        if (operations.size > 128) {
-          for (const [id, record] of operations) {
-            if (record.state !== "running") {
-              operations.delete(id);
-              break;
-            }
-          }
+            : undefined,
+        );
+        if (params.action === "start") return response({ ...runtimeSnapshot(runtime), operationId });
+        await operation.settled;
+        await closeRuntime(runtime);
+        return operationResponse(operation);
+      } catch (error) {
+        if (!runtime.closePromise) transition(runtime, "crashed");
+        try {
+          await closeRuntime(runtime);
+        } catch {
+          // The original startup/operation failure is the actionable error.
         }
-      });
-
-      if (params.action === "start") {
-        const details = snapshotFor(operation);
-        return { content: [{ type: "text", text: JSON.stringify(details) }], details };
+        return response({
+          ...runtimeSnapshot(runtime),
+          error: error instanceof Error ? error.message : String(error),
+        }, true);
       }
-
-      await operation.settled;
-      if (operation.result) {
-        return {
-          content: [{ type: "text", text: serializeSubagentResult(operation.result) }],
-          details: operation.result,
-          isError: operation.result.status === "failed",
-        };
-      }
-      const message = operation.error ?? "Subagent controller failure";
-      const cancelled = operation.state === "interrupted";
-      return {
-        content: [{
-          type: "text",
-          text: boundText(`${cancelled ? "Controller cancellation" : "Subagent controller failure"}: ${message}`, { maxCharacters: 32_000, maxLines: 400 }),
-        }],
-        details: { runId, operationId, agent: agent.name, controllerCancellation: cancelled },
-        isError: true,
-      };
     },
   });
 
   pi.on("session_shutdown", async () => {
     shuttingDown = true;
-    if (!closePromise) {
-      const owned = [...operations.values()]
-        .filter((operation) => active.has(operation.controller))
-        .map((operation) => operation.settled);
-      for (const controller of active) controller.abort();
-      closePromise = Promise.allSettled(owned).then(() => undefined);
-    }
-    await closePromise;
+    await Promise.allSettled([...runtimes.values()].map(closeRuntime));
   });
 }
 

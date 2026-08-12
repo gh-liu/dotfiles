@@ -52,3 +52,24 @@ export class SubagentCancellationError extends Error {
 }
 
 export type SubagentExecutor = (options: SubagentRunOptions) => Promise<SubagentResult>;
+
+export interface SubagentOperation {
+  /** Resolves only after runtime state and prompt acceptance are authoritative. */
+  accepted: Promise<void>;
+  /** Resolves after the authoritative agent_settled event. */
+  result: Promise<SubagentResult>;
+}
+
+/** Minimal reusable runtime contract consumed by the extension control plane. */
+export interface SubagentController {
+  readonly processInstanceId: string;
+  readonly transcript: Readonly<SubagentResult["transcript"]>;
+  /** Resolves if the owned process or RPC protocol fails before explicit close. */
+  readonly failure: Promise<Error>;
+  start(options: SubagentRunOptions): SubagentOperation;
+  submit(options: SubagentRunOptions): Promise<SubagentResult>;
+  interrupt(expectedOperationId: string): Promise<boolean>;
+  close(): Promise<void>;
+}
+
+export type SubagentControllerFactory = (initial: SubagentRunOptions) => Promise<SubagentController>;
