@@ -86,50 +86,36 @@ const deadline = () => Type.Optional(Type.Integer({
   description: "Operation deadline",
 }));
 
-const SubagentParameters = Type.Union([
-  Type.Object({ action: Type.Literal("list", { description: "Refresh and list registered user agents" }) }),
-  Type.Object({
-    action: Type.Literal("run", { description: "Run one foreground child operation and close its runtime" }),
-    agent: Type.String({ description: "Canonical user agent name" }),
-    task: Type.String({ minLength: 1, description: "Self-contained task delegated to the child" }),
-    cwd: Type.Optional(Type.String({ description: "Child cwd under the parent's canonical project root" })),
-    deadlineMs: deadline(),
-  }),
-  Type.Object({
-    action: Type.Literal("start", { description: "Start a persistent child runtime and its initial operation" }),
-    agent: Type.String({ description: "Canonical user agent name" }),
-    task: Type.String({ minLength: 1, description: "Self-contained initial task delegated to the child" }),
-    cwd: Type.Optional(Type.String({ description: "Child cwd under the parent's canonical project root" })),
-    deadlineMs: deadline(),
-  }),
-  Type.Object({ action: Type.Literal("status"), id: Type.String({ minLength: 1, description: "Runtime ID" }) }),
-  Type.Object({
-    action: Type.Literal("send"),
-    id: Type.String({ minLength: 1, description: "Runtime ID" }),
-    mode: Type.Literal("follow_up"),
-    message: Type.String({ minLength: 1 }),
-    deadlineMs: deadline(),
-  }),
-  Type.Object({
-    action: Type.Literal("send"),
-    id: Type.String({ minLength: 1, description: "Runtime ID" }),
-    mode: Type.Literal("steer"),
-    message: Type.String({ minLength: 1 }),
-    expectedOperationId: Type.String({ minLength: 1 }),
-  }),
-  Type.Object({
-    action: Type.Literal("wait"),
-    id: Type.String({ minLength: 1, description: "Runtime ID" }),
-    operationId: Type.String({ minLength: 1 }),
-    timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000 })),
-  }),
-  Type.Object({
-    action: Type.Literal("interrupt"),
-    id: Type.String({ minLength: 1, description: "Runtime ID" }),
-    expectedOperationId: Type.String({ minLength: 1 }),
-  }),
-  Type.Object({ action: Type.Literal("close"), id: Type.String({ minLength: 1, description: "Runtime ID" }) }),
-]);
+// Provider tool APIs require a root object schema; a root Type.Union serializes
+// as anyOf and is rejected by DeepSeek before the model can call the tool.
+const SubagentParameters = Type.Object({
+  action: Type.Union([
+    Type.Literal("list"),
+    Type.Literal("run"),
+    Type.Literal("start"),
+    Type.Literal("status"),
+    Type.Literal("send"),
+    Type.Literal("wait"),
+    Type.Literal("interrupt"),
+    Type.Literal("close"),
+  ], { description: "Subagent lifecycle action" }),
+  agent: Type.Optional(Type.String({ description: "Required by run/start: canonical user agent name" })),
+  task: Type.Optional(Type.String({ minLength: 1, description: "Required by run/start: self-contained delegated task" })),
+  cwd: Type.Optional(Type.String({ description: "Optional run/start child cwd under the canonical project root" })),
+  id: Type.Optional(Type.String({ minLength: 1, description: "Required by runtime lifecycle actions: runtime ID" })),
+  mode: Type.Optional(Type.Union([
+    Type.Literal("follow_up"),
+    Type.Literal("steer"),
+  ], { description: "Required by send" })),
+  message: Type.Optional(Type.String({ minLength: 1, description: "Required by send" })),
+  operationId: Type.Optional(Type.String({ minLength: 1, description: "Required by wait" })),
+  expectedOperationId: Type.Optional(Type.String({
+    minLength: 1,
+    description: "Required by interrupt and steer; guards against targeting a later operation",
+  })),
+  deadlineMs: deadline(),
+  timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000, description: "Optional wait timeout" })),
+});
 
 function formatAgentCatalog(discovery: AgentDiscovery): string {
   const agents = discovery.agents.length === 0
@@ -507,6 +493,19 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           },
         };
       }
+
+      const missing = params.action === "run" || params.action === "start"
+        ? (!params.agent ? "agent" : !params.task ? "task" : undefined)
+        : !params.id
+          ? "id"
+          : params.action === "send"
+            ? (!params.mode ? "mode" : !params.message ? "message" : params.mode === "steer" && !params.expectedOperationId ? "expectedOperationId" : undefined)
+            : params.action === "wait" && !params.operationId
+              ? "operationId"
+              : params.action === "interrupt" && !params.expectedOperationId
+                ? "expectedOperationId"
+                : undefined;
+      if (missing) return response({ error: `${missing} is required for subagent ${params.action}` }, true);
 
       if (
         params.action === "status"
