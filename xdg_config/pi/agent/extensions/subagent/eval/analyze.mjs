@@ -61,13 +61,19 @@ export function parseJsonl(source) {
 export function analyzeJsonl(source) {
   const { events, malformed } = parseJsonl(source);
   const tools = events
-    .filter((event) => event.type === "tool_execution_start")
-    .map((event) => ({
+    .map((event, index) => ({ event, index }))
+    .filter(({ event }) => event.type === "tool_execution_start")
+    .map(({ event, index }) => ({
       name: event.toolName ?? event.tool?.name ?? event.name ?? "",
       args: asObject(event.args ?? event.arguments ?? event.input),
       id: event.toolCallId ?? event.id ?? null,
+      eventIndex: index,
     }));
   const subagentCalls = tools.filter((tool) => tool.name === "subagent");
+  const subagentEnds = events
+    .map((event, index) => ({ event, index }))
+    .filter(({ event }) => event.type === "tool_execution_end"
+      && (event.toolName ?? event.tool?.name ?? event.name ?? "") === "subagent");
   const subagentRoles = subagentCalls
     .filter((call) => ["run", "start"].includes(call.args.action) && typeof call.args.agent === "string")
     .map((call) => call.args.agent);
@@ -78,6 +84,16 @@ export function analyzeJsonl(source) {
   for (const tool of tools) {
     parentToolCounts[tool.name] = (parentToolCounts[tool.name] ?? 0) + 1;
   }
+
+  const subagentHandoffFields = subagentEnds.map(({ event }) => {
+    const text = errorText(event);
+    return {
+      evidence: /(?:^|\n)\s*(?:#+\s*)?evidence(?:\s|:)/iu.test(text),
+      validation: /(?:^|\n)\s*(?:#+\s*)?validation(?:\s|:)/iu.test(text),
+      blockers: /(?:^|\n)\s*(?:#+\s*)?blockers?(?:\s|:)/iu.test(text),
+      risks: /(?:^|\n)\s*(?:#+\s*)?(?:residual\s+)?risks?(?:\s|:)/iu.test(text),
+    };
+  });
 
   const toolErrors = events
     .filter((event) => event.type === "tool_execution_end")
@@ -130,6 +146,19 @@ export function analyzeJsonl(source) {
     schemaErrors,
     finalText,
     usage,
+    subagentEnds,
+    subagentHandoffFields,
+    parallelSubagentStarts: subagentCalls
+      .filter((call) => ["run", "start"].includes(call.args.action))
+      .filter((call) => {
+        const firstSubagentEnd = events.findIndex((event) =>
+          event.type === "tool_execution_end"
+          && (event.toolName ?? event.tool?.name ?? event.name ?? "") === "subagent",
+        );
+        return firstSubagentEnd >= 0 && call.eventIndex < firstSubagentEnd;
+      })
+      .map((call) => call.args.agent)
+      .filter((agent) => typeof agent === "string"),
   };
 }
 
@@ -168,11 +197,14 @@ export function evaluateExpectation(analysis, expectation = {}) {
     );
   }
   if (expectation.agentsBefore) {
-    const boundary = analysis.subagentRoles.indexOf(expectation.agentsBefore.before);
+    const boundaryCall = analysis.subagentCalls.find((call) => call.args.agent === expectation.agentsBefore.before);
     for (const agent of expectation.agentsBefore.agents) {
-      const index = analysis.subagentRoles.indexOf(agent);
-      if (boundary < 0 || index < 0 || index >= boundary) {
-        reasons.push(`${agent} did not precede ${expectation.agentsBefore.before}`);
+      const prerequisite = analysis.subagentCalls.find((call) => call.args.agent === agent);
+      const settled = prerequisite && analysis.subagentEnds.some((end) =>
+        end.index > prerequisite.eventIndex && end.index < boundaryCall.eventIndex,
+      );
+      if (!boundaryCall || !prerequisite || prerequisite.eventIndex >= boundaryCall.eventIndex || !settled) {
+        reasons.push(`${agent} did not settle before ${expectation.agentsBefore.before} started`);
       }
     }
   }
@@ -199,6 +231,19 @@ export function evaluateExpectation(analysis, expectation = {}) {
   if (expectation.finalAny?.length) {
     const matched = expectation.finalAny.some((source) => new RegExp(source, "isu").test(analysis.finalText));
     if (!matched) reasons.push("final answer does not contain the expected outcome evidence");
+  }
+  if (expectation.parallelAgents) {
+    const actual = analysis.parallelSubagentStarts ?? [];
+    for (const agent of expectation.parallelAgents) {
+      if (!actual.includes(agent)) reasons.push(`${agent} was not started before the first subagent settled`);
+    }
+  }
+  if (expectation.handoffFields) {
+    for (const field of expectation.handoffFields) {
+      if (!analysis.subagentHandoffFields?.every((handoff) => handoff[field])) {
+        reasons.push(`subagent handoff missing ${field}`);
+      }
+    }
   }
   return { passed: reasons.length === 0, reasons };
 }

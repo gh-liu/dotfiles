@@ -110,10 +110,48 @@ describe("live subagent evaluation analysis", () => {
     expect(analysis.schemaErrors).toEqual([]);
   });
 
+  test("recognizes independent evidence starts before either child settles", () => {
+    const analysis = analyzeJsonl([
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "researcher" } }),
+      line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
+    ].join("\n"));
+
+    expect(analysis.parallelSubagentStarts).toEqual(["scout", "researcher"]);
+    expect(evaluateExpectation(analysis, { parallelAgents: ["scout", "researcher"] })).toEqual({
+      passed: true,
+      reasons: [],
+    });
+  });
+
+  test("rejects a decision that starts before evidence settles", () => {
+    const analysis = analyzeJsonl([
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
+      line({ type: "tool_execution_end", toolName: "subagent", result: { content: [{ type: "text", text: "# Evidence\\nlocal" }] } }),
+    ].join("\n"));
+    expect(evaluateExpectation(analysis, {
+      agentsBefore: { agents: ["scout"], before: "oracle" },
+    }).passed).toBe(false);
+  });
+
+  test("checks required structured handoff sections", () => {
+    const analysis = analyzeJsonl([
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
+      line({ type: "tool_execution_end", toolName: "subagent", result: { content: [{ type: "text", text: "# Evidence\nlocal\n# Validation\npassed\n# Blockers\nnone\n# Risks\nnone" }] } }),
+    ].join("\n"));
+    expect(evaluateExpectation(analysis, {
+      handoffFields: ["evidence", "validation", "blockers", "risks"],
+    })).toEqual({ passed: true, reasons: [] });
+  });
+
   test("allows independent evidence agents in either order before a decision agent", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "start", agent: "researcher" } }),
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "start", agent: "scout" } }),
+      line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
     ].join("\n"));
 

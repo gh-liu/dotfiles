@@ -20,6 +20,7 @@ network access, takes several minutes, and incurs real model/search cost.
 | `explicit-worker` | `worker` implements; fixture tests pass | 1 |
 | `high-impact-decision` | `oracle` resolves a compatibility judgment | 3 |
 | `combo-implementation-review` | `scout → worker → reviewer`; tests pass | 1 |
+| `parallel-evidence` | Independent `scout` + `researcher` starts before either settles; no parent duplicate search | 1 |
 | `combo-evidence-decision` | `scout` + `researcher` evidence before `oracle` | 1 |
 | `persistent-follow-up` | `start → wait → send(follow_up) → wait → close` | 1 |
 
@@ -101,8 +102,10 @@ Deterministic invariants always fail the command:
 
 Implicit model routing is probabilistic. Full mode enforces each scenario's
 target rate (normally 2/3 for positive implicit routing and 3/3 for avoiding a
-simple-task false positive). Quick mode reports a miss as a warning unless
-`--strict` is set.
+simple-task false positive). The `parallel-evidence` scenario additionally checks
+that both independent evidence calls begin before the first subagent settles,
+making the DAG scheduling optimization observable. Quick mode reports a miss as
+a warning unless `--strict` is set.
 
 The artifact directory contains:
 
