@@ -68,6 +68,7 @@ export interface SubagentController {
   readonly failure: Promise<Error>;
   start(options: SubagentRunOptions): SubagentOperation;
   submit(options: SubagentRunOptions): Promise<SubagentResult>;
+  steer(expectedOperationId: string, message: string): Promise<boolean>;
   interrupt(expectedOperationId: string): Promise<boolean>;
   close(): Promise<void>;
 }

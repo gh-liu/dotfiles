@@ -55,6 +55,7 @@ interface FakeStart {
 
 class FakeController implements SubagentController {
   readonly starts: FakeStart[] = [];
+  readonly steerCalls: Array<{ operationId: string; message: string }> = [];
   readonly interruptCalls: string[] = [];
   private readonly failureEvent = deferred<Error>();
   readonly failure = this.failureEvent.promise;
@@ -74,6 +75,13 @@ class FakeController implements SubagentController {
     const operation = this.start(options);
     await operation.accepted;
     return operation.result;
+  }
+
+  async steer(expectedOperationId: string, message: string): Promise<boolean> {
+    const current = this.starts.at(-1);
+    if (!current || current.options.operationId !== expectedOperationId) return false;
+    this.steerCalls.push({ operationId: expectedOperationId, message });
+    return true;
   }
 
   async interrupt(expectedOperationId: string): Promise<boolean> {
@@ -256,6 +264,8 @@ describe("subagent tool", () => {
     expect(render({ action: "status" }, { status: "running" })).toContain("Running");
     expect(render({ action: "wait" }, { reason: "timeout", snapshot: { status: "running" } })).toContain("Still running");
     expect(render({ action: "interrupt" }, { accepted: true })).toContain("Interrupt requested");
+    expect(render({ action: "send", mode: "follow_up" }, { status: "running", queued: true })).toContain("Queued");
+    expect(render({ action: "send", mode: "steer" }, { accepted: true })).toContain("Steering sent");
     expect(render({ action: "run" }, { status: "interrupted", summary: "Stopped" })).toContain("Interrupted");
     expect(render({ action: "run" }, { status: "completed", summary: "Done" })).toContain("Completed");
     const listed = await env.invoke({ action: "list" });
@@ -432,17 +442,90 @@ describe("subagent tool", () => {
     await env.invoke({ action: "wait", id: initial.runId, operationId: secondId });
   });
 
-  test("send conflicts while running and wait timeout leaves state and revision unchanged", async () => {
-    const env = setup();
+  test("queues one running follow-up, starts it after settlement, and bounds the queue", async () => {
+    const env = setup({ ids: ["runtime", "initial", "queued"] });
     const started = await env.invoke({ action: "start", agent: "scout", task: "Wait" });
     const { runId, operationId, revision } = started.details as { runId: string; operationId: string; revision: number };
-    const conflict = await env.invoke({ action: "send", id: runId, mode: "follow_up", message: "Too soon" });
+    const queued = await env.invoke({ action: "send", id: runId, mode: "follow_up", message: "Next" });
+    expect(queued.details).toMatchObject({
+      operationId: "queued",
+      queued: true,
+      queuedOperation: { operationId: "queued", status: "queued" },
+    });
+    expect(env.fake.controllers[0].starts).toHaveLength(1);
+    const conflict = await env.invoke({ action: "send", id: runId, mode: "follow_up", message: "One too many" });
     expect(conflict).toMatchObject({ isError: true, details: { accepted: false, conflict: true } });
     const timeout = await env.invoke({ action: "wait", id: runId, operationId, timeoutMs: 1 });
-    expect(timeout.details).toMatchObject({ reason: "timeout", snapshot: { status: "running", revision } });
-    expect((await env.invoke({ action: "status", id: runId })).details).toMatchObject({ status: "running", revision });
+    expect(timeout.details).toMatchObject({ reason: "timeout", snapshot: { status: "running" } });
+    expect((await env.invoke({ action: "wait", id: runId, operationId: "queued", timeoutMs: 1 })).details)
+      .toMatchObject({ reason: "timeout", snapshot: { queuedOperation: { status: "queued" } } });
     env.fake.controllers[0].settle();
     await env.invoke({ action: "wait", id: runId, operationId });
+    await vi.waitFor(() => expect(env.fake.controllers[0].starts).toHaveLength(2));
+    expect(env.fake.controllers[0].starts[1].options).toMatchObject({
+      operationId: "queued",
+      deadlineMs: 300_000,
+      workOrder: { goal: "Next" },
+    });
+    expect((await env.invoke({ action: "status", id: runId })).details).toMatchObject({
+      status: "running",
+      activeOperationId: "queued",
+    });
+    expect(((await env.invoke({ action: "status", id: runId })).details as { revision: number }).revision).toBeGreaterThan(revision);
+    env.fake.controllers[0].settle(1);
+    expect((await env.invoke({ action: "wait", id: runId, operationId: "queued" })).details)
+      .toMatchObject({ status: "completed" });
+  });
+
+  test("steers only the expected accepted active operation without creating a turn", async () => {
+    const env = setup({ ids: ["runtime", "operation"] });
+    const started = await env.invoke({ action: "start", agent: "scout", task: "Inspect" });
+    const { runId, operationId, revision } = started.details as { runId: string; operationId: string; revision: number };
+    const stale = await env.invoke({
+      action: "send", id: runId, mode: "steer", expectedOperationId: "stale", message: "Stop searching docs",
+    });
+    expect(stale.details).toMatchObject({ accepted: false, conflict: true });
+    const steered = await env.invoke({
+      action: "send", id: runId, mode: "steer", expectedOperationId: operationId, message: "Focus on tests",
+    });
+    expect(steered.details).toMatchObject({ accepted: true, snapshot: { activeOperationId: operationId } });
+    expect(env.fake.controllers[0].steerCalls).toEqual([{ operationId, message: "Focus on tests" }]);
+    expect(env.fake.controllers[0].starts).toHaveLength(1);
+    expect((steered.details as { snapshot: { revision: number } }).snapshot.revision).toBeGreaterThan(revision);
+    env.fake.controllers[0].settle();
+    await env.invoke({ action: "wait", id: runId, operationId });
+    expect((await env.invoke({
+      action: "send", id: runId, mode: "steer", expectedOperationId: operationId, message: "Late",
+    })).details).toMatchObject({ accepted: false, conflict: true });
+  });
+
+  test("continues a queued follow-up after interrupting the active operation", async () => {
+    const env = setup({ ids: ["runtime", "active", "queued"] });
+    const started = await env.invoke({ action: "start", agent: "scout", task: "Wait" });
+    await env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Recover" });
+    await env.invoke({ action: "interrupt", id: "runtime", expectedOperationId: "active" });
+    await vi.waitFor(() => expect(env.fake.controllers[0].starts).toHaveLength(2));
+    expect(env.fake.controllers[0].starts[1].options.operationId).toBe("queued");
+    expect((await env.invoke({ action: "status", id: "runtime" })).details).toMatchObject({
+      status: "running",
+      activeOperationId: "queued",
+      lastSettledOperation: { operationId: "active", status: "interrupted" },
+    });
+    env.fake.controllers[0].settle(1);
+    await env.invoke({ action: "wait", id: "runtime", operationId: "queued" });
+    expect((started.details as { runId: string }).runId).toBe("runtime");
+  });
+
+  test("close cancels a queued operation without starting or notifying it", async () => {
+    const env = setup({ ids: ["runtime", "active", "queued"] });
+    await env.invoke({ action: "start", agent: "scout", task: "Wait" });
+    await env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Never run" });
+    const closing = env.invoke({ action: "close", id: "runtime" });
+    expect((await env.invoke({ action: "wait", id: "runtime", operationId: "queued" })).details)
+      .toMatchObject({ status: "cancelled", error: expect.stringContaining("runtime closed") });
+    expect((await closing).details).toMatchObject({ status: "closed" });
+    expect(env.fake.controllers[0].starts).toHaveLength(1);
+    expect(env.extension.messages).toEqual([]);
   });
 
   test("interrupt settles the current operation authoritatively, then runtime is idle", async () => {

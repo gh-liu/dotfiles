@@ -32,13 +32,16 @@ interface SubagentExtensionOptions {
 }
 
 type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
-type OperationState = "running" | "completed" | "failed" | "interrupted";
+type OperationState = "queued" | "running" | "completed" | "failed" | "interrupted" | "cancelled";
 
 interface OperationRecord {
   operationId: string;
   state: OperationState;
   accepted: boolean;
-  startedAt: number;
+  task: string;
+  deadlineMs: number;
+  queuedAt?: number;
+  startedAt?: number;
   finishedAt?: number;
   result?: SubagentResult;
   error?: string;
@@ -58,6 +61,7 @@ interface RuntimeRecord {
   controller?: SubagentController;
   controllerReady: Promise<SubagentController>;
   activeOperationId?: string;
+  queuedOperationId?: string;
   lastSettled?: OperationRecord;
   operations: Map<string, OperationRecord>;
   closePromise?: Promise<void>;
@@ -105,6 +109,13 @@ const SubagentParameters = Type.Union([
     mode: Type.Literal("follow_up"),
     message: Type.String({ minLength: 1 }),
     deadlineMs: deadline(),
+  }),
+  Type.Object({
+    action: Type.Literal("send"),
+    id: Type.String({ minLength: 1, description: "Runtime ID" }),
+    mode: Type.Literal("steer"),
+    message: Type.String({ minLength: 1 }),
+    expectedOperationId: Type.String({ minLength: 1 }),
   }),
   Type.Object({
     action: Type.Literal("wait"),
@@ -209,7 +220,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const operationSnapshot = (operation: OperationRecord) => ({
     operationId: operation.operationId,
     status: operation.state,
-    startedAt: operation.startedAt,
+    ...(operation.queuedAt === undefined ? {} : { queuedAt: operation.queuedAt }),
+    ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
     ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
     ...(operation.result === undefined ? {} : { result: operation.result }),
     ...(operation.error === undefined ? {} : { error: operation.error }),
@@ -223,6 +235,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ...(runtime.activeOperationId === undefined ? {} : {
       operationId: runtime.activeOperationId,
       activeOperationId: runtime.activeOperationId,
+    }),
+    ...(runtime.queuedOperationId === undefined ? {} : {
+      queuedOperation: operationSnapshot(runtime.operations.get(runtime.queuedOperationId)!),
     }),
     ...(runtime.lastSettled === undefined ? {} : {
       lastSettledOperation: operationSnapshot(runtime.lastSettled),
@@ -259,11 +274,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         result?.summary ?? operation.error ?? "Subagent operation failed without a result.",
         { maxCharacters: 2_000, maxLines: 20 },
       ),
-      runtimeStatus: runtime.state === "idle" ? "idle" : "crashed",
+      runtimeStatus: runtime.state === "running" ? "running" : runtime.state === "idle" ? "idle" : "crashed",
     };
     const availability = details.runtimeStatus === "idle"
       ? "The runtime is idle and can accept a follow-up."
-      : "The runtime crashed and cannot accept more work.";
+      : details.runtimeStatus === "running"
+        ? "The runtime is running another operation."
+        : "The runtime crashed and cannot accept more work.";
     const content = boundText([
       `Subagent ${details.agent} ${details.status} operation ${details.operationId} in runtime ${details.runId}.`,
       `Summary: ${details.summary}`,
@@ -285,7 +302,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     for (const runtime of runtimes.values()) {
       while (runtime.operations.size > 128) {
         const stale = [...runtime.operations.values()].find(
-          (operation) => operation !== runtime.lastSettled && operation.state !== "running",
+          (operation) => operation !== runtime.lastSettled
+            && operation.state !== "running"
+            && operation.state !== "queued",
         );
         if (!stale) break;
         runtime.operations.delete(stale.operationId);
@@ -304,6 +323,18 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     if (suppressNotification && runtime.activeOperationId) {
       const operation = runtime.operations.get(runtime.activeOperationId);
       if (operation) operation.notifyOnSettle = false;
+    }
+    if (runtime.queuedOperationId) {
+      const queued = runtime.operations.get(runtime.queuedOperationId);
+      runtime.queuedOperationId = undefined;
+      if (queued && queued.state === "queued") {
+        queued.notifyOnSettle = false;
+        queued.state = "cancelled";
+        queued.error = "Subagent operation cancelled before submission because the runtime closed";
+        queued.finishedAt = Date.now();
+        queued.settle();
+        runtime.revision += 1;
+      }
     }
     if (runtime.closePromise) return runtime.closePromise;
     const wasCrashed = runtime.state === "crashed";
@@ -363,18 +394,23 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     notifyOnSettle: boolean,
     signal?: AbortSignal,
     onProgress?: (summary: string) => void,
+    queuedOperation?: OperationRecord,
   ): Promise<OperationRecord> => {
     let settle!: () => void;
-    const operation: OperationRecord = {
+    const operation: OperationRecord = queuedOperation ?? {
       operationId,
       state: "running",
       accepted: false,
+      task,
+      deadlineMs,
       notifyOnSettle,
-      startedAt: Date.now(),
       settled: new Promise<void>((resolve) => { settle = resolve; }),
       settle: () => settle(),
     };
-    runtime.operations.set(operationId, operation);
+    if (!queuedOperation) runtime.operations.set(operationId, operation);
+    else runtime.revision += 1;
+    operation.state = "running";
+    operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
     transition(runtime, "running");
     const runOptions: SubagentRunOptions = {
@@ -407,7 +443,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (runtime.activeOperationId === operationId) {
         runtime.activeOperationId = undefined;
         runtime.lastSettled = operation;
-        if (runtime.state === "running") transition(runtime, "idle");
+        const queuedId = runtime.queuedOperationId;
+        const queued = queuedId === undefined ? undefined : runtime.operations.get(queuedId);
+        if (runtime.state === "running" && queued?.state === "queued") {
+          runtime.queuedOperationId = undefined;
+          void beginOperation(
+            runtime,
+            queued.operationId,
+            queued.task,
+            queued.deadlineMs,
+            true,
+            undefined,
+            undefined,
+            queued,
+          ).catch(() => {});
+        } else if (runtime.state === "running") transition(runtime, "idle");
       }
       operation.settle();
       prune();
@@ -433,8 +483,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Run a registered user-defined Pi child with fresh isolated context and only its declared tools. Persistent runtimes accept idle follow-up operations. The parent remains responsible for coordination, decisions, integration, and verification.\n\n${startupCatalog}`,
-    promptSnippet: "List registered agents, run one operation, or continue an idle child runtime",
+      `Run a registered user-defined Pi child with fresh isolated context and only its declared tools. Persistent runtimes accept one queued follow-up while running and guarded steering of the active operation. The parent remains responsible for coordination, decisions, integration, and verification.\n\n${startupCatalog}`,
+    promptSnippet: "List registered agents, run work, queue a follow-up, or steer active work",
     promptGuidelines: [
       "When the user names a registered agent and asks it to perform a task, call subagent with that agent name. Also use it when the user explicitly asks for a subagent or delegation.",
       "When the user requests delegation without naming an agent, list registered agents before choosing one.",
@@ -489,12 +539,34 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           const accepted = await runtime.controller!.interrupt(params.expectedOperationId);
           return response({ accepted, snapshot: runtimeSnapshot(runtime) });
         }
+        if (params.action === "send" && params.mode === "steer") {
+          const operation = runtime.operations.get(params.expectedOperationId);
+          if (
+            shuttingDown
+            || runtime.state !== "running"
+            || runtime.activeOperationId !== params.expectedOperationId
+            || !operation?.accepted
+          ) {
+            return response({ accepted: false, conflict: true, snapshot: runtimeSnapshot(runtime) });
+          }
+          try {
+            const accepted = await runtime.controller!.steer(params.expectedOperationId, params.message);
+            if (accepted) runtime.revision += 1;
+            return response({ accepted, conflict: !accepted, snapshot: runtimeSnapshot(runtime) });
+          } catch (error) {
+            return response({
+              accepted: false,
+              snapshot: runtimeSnapshot(runtime),
+              error: error instanceof Error ? error.message : String(error),
+            }, true);
+          }
+        }
         if (params.action === "wait") {
           const operation = runtime.operations.get(params.operationId);
           if (!operation) {
             return response({ error: `Unknown operation ${params.operationId} for runtime ${runtime.runId}` }, true);
           }
-          if (operation.state === "running") {
+          if (operation.state === "running" || operation.state === "queued") {
             if (params.timeoutMs === undefined) {
               await operation.settled;
             } else {
@@ -513,11 +585,30 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }
 
         if (shuttingDown) return response({ error: "Subagent runtime is shutting down" }, true);
+        if (runtime.state === "running" && runtime.queuedOperationId === undefined) {
+          let settle!: () => void;
+          const operationId = idFactory();
+          const operation: OperationRecord = {
+            operationId,
+            state: "queued",
+            accepted: false,
+            task: params.message,
+            deadlineMs: params.deadlineMs ?? 300_000,
+            queuedAt: Date.now(),
+            notifyOnSettle: true,
+            settled: new Promise<void>((resolve) => { settle = resolve; }),
+            settle: () => settle(),
+          };
+          runtime.operations.set(operationId, operation);
+          runtime.queuedOperationId = operationId;
+          runtime.revision += 1;
+          return response({ ...runtimeSnapshot(runtime), operationId, queued: true });
+        }
         if (runtime.state !== "idle") {
           return response({
             accepted: false,
             conflict: true,
-            error: "Runtime is not idle",
+            error: runtime.queuedOperationId ? "Runtime follow-up queue is full" : "Runtime cannot accept a follow-up",
             snapshot: runtimeSnapshot(runtime),
           }, true);
         }
