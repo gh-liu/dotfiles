@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { chmod, mkdir, rm } from "node:fs/promises";
+import { rm } from "node:fs/promises";
 import { homedir, platform } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import net from "node:net";
 import type { Socket } from "node:net";
 import type {
   ActiveSession,
+  ActiveSessionCancellationHandler,
   ActiveSessionDisconnectedHandler,
   ActiveSessionMessage,
   ActiveSessionMessageHandler,
@@ -57,12 +58,6 @@ type WireCancel = {
 type WirePacket = WireResponse | WireMessage | WireCancel;
 type PendingRequest = { resolve: (value: unknown) => void; reject: (error: Error) => void };
 
-type BrokerClient = {
-  socket: Socket;
-  session?: ActiveSession;
-  buffer: Buffer;
-};
-
 function agentDirectory(): string {
   return resolve(process.env.PI_CODING_AGENT_DIR?.trim() || join(homedir(), ".pi", "agent"));
 }
@@ -94,188 +89,12 @@ function writePacket(socket: Socket, packet: object): void {
   socket.write(packetBytes(packet));
 }
 
-function isMessage(value: unknown): value is ActiveSessionMessage {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<ActiveSessionMessage>;
-  return typeof candidate.id === "string"
-    && typeof candidate.timestamp === "number"
-    && !!candidate.content
-    && typeof candidate.content.text === "string"
-    && Buffer.byteLength(candidate.content.text, "utf8") <= MAX_IPC_MESSAGE_BYTES;
-}
-
-function isRegistration(value: unknown): value is ActiveSessionRegistration {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as Partial<ActiveSessionRegistration>;
-  return typeof candidate.cwd === "string"
-    && typeof candidate.model === "string"
-    && typeof candidate.pid === "number"
-    && typeof candidate.startedAt === "number"
-    && typeof candidate.lastActivity === "number"
-    && (candidate.name === undefined || typeof candidate.name === "string")
-    && (candidate.status === undefined || typeof candidate.status === "string");
-}
-
-/** The broker owns the Unix socket in a process independent from all clients. */
-class LocalBroker {
-  private readonly clients = new Map<Socket, BrokerClient>();
-  private readonly messages = new Map<string, { sender: Socket; target: Socket }>();
-  private server: net.Server | null = null;
-  private listening = false;
-  private closing = false;
-
-  constructor(private readonly socketPath: string) {}
-
-  async start(): Promise<void> {
-    if (platform() === "win32") throw new Error(unsupportedPlatformError);
-    await mkdir(dirname(this.socketPath), { recursive: true, mode: 0o700 });
-    await chmod(dirname(this.socketPath), 0o700);
-    this.server = net.createServer((socket) => this.accept(socket));
-    await new Promise<void>((resolveStart, rejectStart) => {
-      const server = this.server!;
-      const onListening = () => {
-        server.off("error", onError);
-        this.listening = true;
-        resolveStart();
-      };
-      const onError = (error: Error) => {
-        server.off("listening", onListening);
-        this.server = null;
-        rejectStart(error);
-      };
-      server.once("error", onError);
-      server.once("listening", onListening);
-      server.listen(this.socketPath);
-    });
-    await chmod(this.socketPath, 0o600);
-  }
-
-  private accept(socket: Socket): void {
-    const client: BrokerClient = { socket, buffer: Buffer.alloc(0) };
-    this.clients.set(socket, client);
-    socket.on("data", (chunk: Buffer) => this.read(client, chunk));
-    socket.on("error", () => socket.destroy());
-    socket.on("close", () => this.remove(client));
-  }
-
-  private read(client: BrokerClient, chunk: Buffer): void {
-    client.buffer = Buffer.concat([client.buffer, chunk]);
-    if (client.buffer.byteLength > MAX_IPC_FRAME_BYTES && !client.buffer.includes(10)) {
-      client.socket.destroy(new Error(`IPC frame exceeds ${MAX_IPC_FRAME_BYTES} bytes`));
-      return;
-    }
-    for (;;) {
-      const newline = client.buffer.indexOf(10);
-      if (newline < 0) return;
-      const line = client.buffer.subarray(0, newline);
-      client.buffer = client.buffer.subarray(newline + 1);
-      if (line.byteLength > MAX_IPC_FRAME_BYTES) {
-        client.socket.destroy(new Error(`IPC frame exceeds ${MAX_IPC_FRAME_BYTES} bytes`));
-        return;
-      }
-      let packet: WireRequest;
-      try {
-        packet = JSON.parse(line.toString("utf8")) as WireRequest;
-      } catch {
-        this.respond(client.socket, "", false, "Invalid IPC packet");
-        continue;
-      }
-      if (packet.type !== "request" || typeof packet.id !== "string") {
-        this.respond(client.socket, packet.id ?? "", false, "Invalid IPC request");
-        continue;
-      }
-      this.handle(client, packet);
-    }
-  }
-
-  private handle(client: BrokerClient, request: WireRequest): void {
-    try {
-      if (request.op === "register") {
-        if (client.session) throw new Error("Client is already registered");
-        if (!isRegistration(request.registration)) throw new Error("Invalid session registration");
-        const id = request.sessionId?.trim() || randomUUID();
-        if ([...this.clients.values()].some((candidate) => candidate.session?.id === id)) {
-          throw new Error(`Session id is already connected: ${id}`);
-        }
-        client.session = { id, ...request.registration };
-        this.respond(client.socket, request.id, true, client.session);
-        return;
-      }
-      if (!client.session) throw new Error("Client is not registered");
-      if (request.op === "list") {
-        this.respond(client.socket, request.id, true, [...this.clients.values()]
-          .filter((candidate): candidate is BrokerClient & { session: ActiveSession } => !!candidate.session)
-          .map((candidate) => candidate.session));
-        return;
-      }
-      if (request.op === "send") {
-        if (!request.to || !isMessage(request.message)) throw new Error("Invalid message request");
-        const target = [...this.clients.values()].find((candidate) => candidate.session?.id === request.to);
-        if (!target?.session) {
-          this.respond(client.socket, request.id, true, { id: request.message.id, delivered: false, reason: "Target session is not connected" });
-          return;
-        }
-        writePacket(target.socket, { type: "message", from: client.session, message: request.message } satisfies WireMessage);
-        this.messages.set(request.message.id, { sender: client.socket, target: target.socket });
-        this.respond(client.socket, request.id, true, { id: request.message.id, delivered: true });
-        return;
-      }
-      if (request.op === "cancel") {
-        if (!request.messageId) throw new Error("messageId is required");
-        const pending = this.messages.get(request.messageId);
-        if (!pending || pending.sender !== client.socket) {
-          this.respond(client.socket, request.id, true, { id: request.messageId, delivered: false, reason: "Message is not pending" });
-          return;
-        }
-        writePacket(pending.target, { type: "cancel", messageId: request.messageId } satisfies WireCancel);
-        this.messages.delete(request.messageId);
-        this.respond(client.socket, request.id, true, { id: request.messageId, delivered: true });
-        return;
-      }
-      throw new Error("Unknown IPC operation");
-    } catch (error) {
-      this.respond(client.socket, request.id, false, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  private respond(socket: Socket, requestId: string, ok: boolean, value: unknown): void {
-    const response: WireResponse = ok
-      ? { type: "response", requestId, ok: true, result: value }
-      : { type: "response", requestId, ok: false, error: String(value) };
-    try {
-      writePacket(socket, response);
-    } catch {
-      socket.destroy();
-    }
-  }
-
-  private remove(client: BrokerClient): void {
-    this.clients.delete(client.socket);
-    for (const [messageId, pending] of this.messages) {
-      if (pending.sender === client.socket || pending.target === client.socket) this.messages.delete(messageId);
-    }
-    if (this.clients.size === 0) void this.close();
-  }
-
-  async close(): Promise<void> {
-    if (this.closing) return;
-    this.closing = true;
-    for (const client of this.clients.values()) client.socket.destroy();
-    this.clients.clear();
-    await new Promise<void>((resolveClose) => {
-      if (!this.server) return resolveClose();
-      this.server.close(() => resolveClose());
-    });
-    this.server = null;
-    if (this.listening) await rm(this.socketPath, { force: true }).catch(() => undefined);
-  }
-}
-
 export class LocalIpcTransport implements ActiveSessionTransport {
   private socket: Socket | null = null;
   private currentSessionId: string | null = null;
   private readonly pending = new Map<string, PendingRequest>();
   private readonly messageHandlers = new Set<ActiveSessionMessageHandler>();
+  private readonly cancellationHandlers = new Set<ActiveSessionCancellationHandler>();
   private readonly disconnectedHandlers = new Set<ActiveSessionDisconnectedHandler>();
   private buffer = Buffer.alloc(0);
   private intentionalDisconnect = false;
@@ -364,6 +183,11 @@ export class LocalIpcTransport implements ActiveSessionTransport {
     return () => this.messageHandlers.delete(handler);
   }
 
+  onCancelled(handler: ActiveSessionCancellationHandler): () => void {
+    this.cancellationHandlers.add(handler);
+    return () => this.cancellationHandlers.delete(handler);
+  }
+
   onDisconnected(handler: ActiveSessionDisconnectedHandler): () => void {
     this.disconnectedHandlers.add(handler);
     return () => this.disconnectedHandlers.delete(handler);
@@ -443,6 +267,8 @@ export class LocalIpcTransport implements ActiveSessionTransport {
       } else if (packet.type === "message") {
         const message = packet as WireMessage;
         this.messageHandlers.forEach((handler) => handler(message.from, message.message));
+      } else if (packet.type === "cancel") {
+        this.cancellationHandlers.forEach((handler) => handler(packet.messageId));
       }
     }
   }

@@ -14,6 +14,7 @@ import type {
 class FakeTransport implements ActiveSessionTransport {
   readonly sessionId = "self";
   readonly sent: Array<{ to: string; options: ActiveSessionSendOptions }> = [];
+  readonly cancelledAsks: string[] = [];
   connected = false;
   sessions: ActiveSession[] = [
     {
@@ -29,6 +30,7 @@ class FakeTransport implements ActiveSessionTransport {
   ];
   error: Error | undefined;
   private readonly messageHandlers = new Set<(from: ActiveSession, message: ActiveSessionMessage) => void>();
+  private readonly cancellationHandlers = new Set<(messageId: string) => void>();
   private readonly disconnectedHandlers = new Set<(error: Error) => void>();
 
   async connect(_registration: ActiveSessionRegistration): Promise<void> {
@@ -50,7 +52,9 @@ class FakeTransport implements ActiveSessionTransport {
     return { id: messageId, delivered: true };
   }
 
-  cancelAsk(_messageId: string): void {}
+  cancelAsk(messageId: string): void {
+    this.cancelledAsks.push(messageId);
+  }
 
   async disconnect(): Promise<void> {
     this.connected = false;
@@ -61,6 +65,11 @@ class FakeTransport implements ActiveSessionTransport {
     return () => this.messageHandlers.delete(handler);
   }
 
+  onCancelled(handler: (messageId: string) => void): () => void {
+    this.cancellationHandlers.add(handler);
+    return () => this.cancellationHandlers.delete(handler);
+  }
+
   onDisconnected(handler: (error: Error) => void): () => void {
     this.disconnectedHandlers.add(handler);
     return () => this.disconnectedHandlers.delete(handler);
@@ -68,6 +77,10 @@ class FakeTransport implements ActiveSessionTransport {
 
   receive(from: ActiveSession, message: ActiveSessionMessage): void {
     this.messageHandlers.forEach((handler) => handler(from, message));
+  }
+
+  receiveCancellation(messageId: string): void {
+    this.cancellationHandlers.forEach((handler) => handler(messageId));
   }
 }
 
@@ -197,6 +210,139 @@ describe("sessions transport boundary", () => {
 
     const result = await send;
     expect((result.content[0] as { text: string }).text).toBe("Yes");
+  });
+
+  test("releases the ask waiter when sending throws", async () => {
+    const transport = new FakeTransport();
+    const send = vi.spyOn(transport, "send")
+      .mockRejectedValueOnce(new Error("send failed"))
+      .mockResolvedValueOnce({ id: "ask-2", delivered: false, reason: "not delivered" });
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+
+    const first = await h.tools.get("session_message")!.execute(
+      "first",
+      { action: "ask", to: "worker", message: "First question", timeoutMs: 5_000 },
+      new AbortController().signal,
+      undefined,
+      {} as never,
+    );
+    const second = await h.tools.get("session_message")!.execute(
+      "second",
+      { action: "ask", to: "worker", message: "Second question", timeoutMs: 5_000 },
+      new AbortController().signal,
+      undefined,
+      {} as never,
+    );
+    h.events.get("session_shutdown")?.();
+
+    expect(first.details).toMatchObject({ error: true, code: "SESSION_MESSAGE_FAILED" });
+    expect(second.details).toMatchObject({ error: true, code: "DELIVERY_FAILED" });
+    expect(send).toHaveBeenCalledTimes(2);
+  });
+
+  test("cancels the broker ask when tool execution is aborted", async () => {
+    const transport = new FakeTransport();
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+    const controller = new AbortController();
+
+    const ask = h.tools.get("session_message")!.execute(
+      "call",
+      { action: "ask", to: "worker", message: "Are you ready?", timeoutMs: 5_000 },
+      controller.signal,
+      undefined,
+      {} as never,
+    );
+    await vi.waitFor(() => expect(transport.sent).toHaveLength(1));
+    controller.abort();
+
+    const result = await ask;
+    expect(result.details).toMatchObject({ error: true, code: "SESSION_MESSAGE_FAILED" });
+    expect(transport.cancelledAsks).toEqual([transport.sent[0].options.messageId]);
+  });
+
+  test("cancels the broker ask when waiting for a reply times out", async () => {
+    const transport = new FakeTransport();
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+
+    const result = await h.tools.get("session_message")!.execute(
+      "call",
+      { action: "ask", to: "worker", message: "Are you ready?", timeoutMs: 10 },
+      new AbortController().signal,
+      undefined,
+      {} as never,
+    );
+
+    expect(result.details).toMatchObject({ error: true, code: "SESSION_MESSAGE_FAILED" });
+    expect((result.content[0] as { text: string }).text).toBe("No reply within 10ms");
+    expect(transport.cancelledAsks).toEqual([transport.sent[0].options.messageId]);
+  });
+
+  test("does not send an ask when tool execution is already aborted", async () => {
+    const transport = new FakeTransport();
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+    const controller = new AbortController();
+    controller.abort();
+
+    const result = await h.tools.get("session_message")!.execute(
+      "call",
+      { action: "ask", to: "worker", message: "Are you ready?", timeoutMs: 5_000 },
+      controller.signal,
+      undefined,
+      {} as never,
+    );
+
+    expect(result.details).toMatchObject({ error: true, code: "SESSION_MESSAGE_FAILED" });
+    expect(transport.sent).toEqual([]);
+    expect(transport.cancelledAsks).toEqual([]);
+  });
+
+  test("removes a cancelled inbound ask before it can be replied to", async () => {
+    const transport = new FakeTransport();
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+
+    transport.receive(transport.sessions[0], {
+      id: "ask-1",
+      timestamp: Date.now(),
+      expectsReply: true,
+      content: { text: "Still needed?" },
+    });
+    const pendingBefore = await h.tools.get("session_message")!.execute(
+      "pending-before",
+      { action: "pending" },
+      new AbortController().signal,
+      undefined,
+      {} as never,
+    );
+    expect(pendingBefore.details).toMatchObject({ pending: [{ messageId: "ask-1" }] });
+
+    transport.receiveCancellation("ask-1");
+
+    const pendingAfter = await h.tools.get("session_message")!.execute(
+      "pending-after",
+      { action: "pending" },
+      new AbortController().signal,
+      undefined,
+      {} as never,
+    );
+    expect(pendingAfter.details).toEqual({ pending: [] });
+    const reply = await h.tools.get("session_message")!.execute(
+      "reply",
+      { action: "reply", replyTo: "ask-1", message: "Too late" },
+      new AbortController().signal,
+      undefined,
+      {} as never,
+    );
+    expect(reply.details).toMatchObject({ error: true, code: "UNKNOWN_MESSAGE" });
   });
 
   test("reports unavailable active sessions without affecting history", async () => {

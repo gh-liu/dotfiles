@@ -22,7 +22,8 @@ The active-session transport uses a private Unix-domain socket under
 `$PI_CODING_AGENT_DIR/runtime` on macOS and Linux; Windows is not supported.
 
 `node sessions/eval/run.mjs` starts real isolated Pi processes and validates
-history search plus active `list`, `send`, `ask`, `pending`, and `reply` behavior.
+history search plus active `list`, `send`, `ask`, `pending`, `reply`, and `cancel`
+behavior.
 It uses provider credentials and model quota, so it is intentionally separate
 from `npm test`. See [sessions/eval/README.md](sessions/eval/README.md) for usage,
 assertions, and artifacts.

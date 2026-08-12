@@ -45,8 +45,15 @@ function handle(client, request) {
       if (!request.to || !validMessage(request.message)) throw new Error("Invalid message request");
       const target = [...clients.values()].find((v) => v.session?.id === request.to);
       if (!target?.session) { respond(client.socket, request.id, { id: request.message.id, delivered: false, reason: "Target session is not connected" }); return; }
+      if (request.message.replyTo) {
+        const question = pending.get(request.message.replyTo);
+        if (!question || question.sender !== target.socket || question.target !== client.socket) {
+          respond(client.socket, request.id, { id: request.message.id, delivered: false, reason: "Question is no longer pending" }); return;
+        }
+        pending.delete(request.message.replyTo);
+      }
       send(target.socket, { type: "message", from: client.session, message: request.message });
-      pending.set(request.message.id, { sender: client.socket, target: target.socket });
+      if (request.message.expectsReply) pending.set(request.message.id, { sender: client.socket, target: target.socket });
       respond(client.socket, request.id, { id: request.message.id, delivered: true }); return;
     }
     if (request.op === "cancel") {
