@@ -206,4 +206,45 @@ setInterval(() => {}, 1000);
     setTimeout(() => controller.abort(), 25);
     await expect(running).rejects.toBeInstanceOf(SubagentCancellationError);
   });
+
+  test.runIf(process.platform !== "win32")("cleans up descendants after a normal leader exit", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const descendantPidFile = join(sessionRoot, "descendant.pid");
+    const script = temporaryScript(`
+import { spawn } from "node:child_process";
+import { writeFileSync } from "node:fs";
+let input = "";
+function emit(value) { process.stdout.write(JSON.stringify(value) + "\\n"); }
+const descendant = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { stdio: "ignore" });
+writeFileSync(process.argv[2], String(descendant.pid));
+descendant.unref();
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  let newline;
+  while ((newline = input.indexOf("\\n")) !== -1) {
+    const command = JSON.parse(input.slice(0, newline));
+    input = input.slice(newline + 1);
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "session-cleanup", sessionFile: process.argv[process.argv.indexOf("--session-dir") + 1] + "/session.jsonl" } });
+    if (command.type === "prompt") {
+      emit({ type: "response", id: command.id, command: "prompt", success: true });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    }
+  }
+});
+`);
+    const execute = createRpcSubagentExecutor({
+      command: process.execPath,
+      commandArgsPrefix: [script, descendantPidFile],
+      sessionRoot,
+      terminationGraceMs: 25,
+    });
+
+    const result = await execute(options(script, sessionRoot));
+    expect(result.status).toBe("completed");
+    expect(existsSync(descendantPidFile)).toBe(true);
+    const descendantPid = Number(await import("node:fs/promises").then(({ readFile }) => readFile(descendantPidFile, "utf8")));
+    expect(() => process.kill(descendantPid, 0)).toThrow();
+  });
 });
