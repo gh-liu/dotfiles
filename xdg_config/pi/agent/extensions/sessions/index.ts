@@ -7,6 +7,7 @@ import type {
   ActiveSession,
   ActiveSessionMessage,
   ActiveSessionRegistration,
+  ActiveSessionSendResult,
   ActiveSessionTransport,
   ActiveSessionTransportFactory,
 } from "./transport/index.ts";
@@ -42,6 +43,7 @@ type ReplyWaiter = {
   resolve: (message: ActiveSessionMessage) => void;
   reject: (error: Error) => void;
   timer: NodeJS.Timeout;
+  cleanup: () => void;
 };
 
 function snippet(text: string, query: string): string {
@@ -105,6 +107,7 @@ export default function sessionsExtension(pi: ExtensionAPI, options: SessionsExt
     clearTimeout(replyWaiter.timer);
     const waiter = replyWaiter;
     replyWaiter = null;
+    waiter.cleanup();
     waiter.reject(error);
   };
 
@@ -113,6 +116,7 @@ export default function sessionsExtension(pi: ExtensionAPI, options: SessionsExt
       const waiter = replyWaiter;
       clearTimeout(waiter.timer);
       replyWaiter = null;
+      waiter.cleanup();
       waiter.resolve(message);
       return;
     }
@@ -142,6 +146,7 @@ export default function sessionsExtension(pi: ExtensionAPI, options: SessionsExt
     const next = createTransport();
     transportCleanup = [
       next.onMessage(handleIncoming),
+      next.onCancelled((messageId) => pendingInbound.delete(messageId)),
       next.onDisconnected((error) => {
         if (transport === next) {
           transport = null;
@@ -314,25 +319,46 @@ export default function sessionsExtension(pi: ExtensionAPI, options: SessionsExt
         if (replyWaiter) return errorResult("Already waiting for a reply", "ASK_IN_PROGRESS");
         const messageId = randomUUID();
         const timeoutMs = input.timeoutMs ?? ASK_TIMEOUT_MS;
+        let sent = false;
         const answer = new Promise<ActiveSessionMessage>((resolve, reject) => {
+          const onAbort = () => {
+            if (replyWaiter?.messageId !== messageId) return;
+            rejectWaiter(new Error("Ask cancelled"));
+            if (sent) active.cancelAsk(messageId);
+          };
           const timer = setTimeout(() => {
             if (replyWaiter?.messageId === messageId) {
-              replyWaiter = null;
-              reject(new Error(`No reply within ${timeoutMs}ms`));
-            }
-          }, timeoutMs);
-          replyWaiter = { messageId, resolve, reject, timer };
-          if (signal.aborted) reject(new Error("Ask cancelled"));
-          signal.addEventListener("abort", () => {
-            if (replyWaiter?.messageId === messageId) {
-              rejectWaiter(new Error("Ask cancelled"));
+              rejectWaiter(new Error(`No reply within ${timeoutMs}ms`));
               active.cancelAsk(messageId);
             }
-          }, { once: true });
+          }, timeoutMs);
+          replyWaiter = {
+            messageId,
+            resolve,
+            reject,
+            timer,
+            cleanup: () => signal.removeEventListener("abort", onAbort),
+          };
+          signal.addEventListener("abort", onAbort, { once: true });
+          if (signal.aborted) onAbort();
         });
-        const result = await active.send(target.id, { text: input.message, expectsReply: true, messageId });
+        // The answer can be cancelled while transport.send() is still pending.
+        // Attach a handler now so that rejection is not reported as unhandled before it is awaited below.
+        void answer.catch(() => undefined);
+        if (signal.aborted) return await answer;
+        let result: ActiveSessionSendResult;
+        try {
+          const send = active.send(target.id, { text: input.message, expectsReply: true, messageId });
+          sent = true;
+          result = await send;
+        } catch (error) {
+          rejectWaiter(error instanceof Error ? error : new Error(String(error)));
+          await answer.catch(() => undefined);
+          throw error;
+        }
         if (!result.delivered) {
           rejectWaiter(new Error(result.reason ?? "Question was not delivered"));
+          await answer.catch(() => undefined);
           return errorResult(result.reason ?? "Question was not delivered", "DELIVERY_FAILED");
         }
         const reply = await answer;

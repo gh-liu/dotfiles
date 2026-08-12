@@ -35,6 +35,7 @@ export type ActiveSessionSendResult = {
 };
 
 export type ActiveSessionMessageHandler = (from: ActiveSession, message: ActiveSessionMessage) => void;
+export type ActiveSessionCancellationHandler = (messageId: string) => void;
 export type ActiveSessionDisconnectedHandler = (error: Error) => void;
 
 /** The smallest communication surface required by the sessions tools. */
@@ -47,6 +48,7 @@ export interface ActiveSessionTransport {
   cancelAsk(messageId: string): void;
   disconnect(): Promise<void>;
   onMessage(handler: ActiveSessionMessageHandler): () => void;
+  onCancelled(handler: ActiveSessionCancellationHandler): () => void;
   onDisconnected(handler: ActiveSessionDisconnectedHandler): () => void;
 }
 

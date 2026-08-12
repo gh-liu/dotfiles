@@ -31,11 +31,12 @@ const HISTORY_MARKER = "PI_SESSIONS_HISTORY_LIVE_7F3A";
 const SEND_MARKER = "PI_SESSIONS_SEND_LIVE_4C2D";
 const ASK_MARKER = "PI_SESSIONS_ASK_LIVE_9B6E";
 const REPLY_MARKER = "PI_SESSIONS_REPLY_LIVE_OK";
+const CANCEL_MARKER = "PI_SESSIONS_CANCEL_LIVE_2D8A";
 
 const usage = `Usage: {node|bun} sessions/eval/run.mjs [options]
 
 Runs real Pi processes against an isolated agent directory and verifies history
-search plus active-session list/send/ask/pending/reply behavior.
+search plus active-session list/send/ask/pending/reply/cancel behavior.
 
 Options:
   --model <provider/id>  Pi model (default: openai-codex/gpt-5.6-luna)
@@ -192,6 +193,32 @@ async function runPrompt(record, prompt, timeoutMs) {
   return record.events.slice(start);
 }
 
+function waitForSettledAfter(record, start, predicate, timeoutMs) {
+  const existing = record.events.slice(start);
+  const matchIndex = existing.findIndex(predicate);
+  if (matchIndex >= 0 && existing.slice(matchIndex + 1).some((event) => event.type === "agent_settled")) {
+    return Promise.resolve();
+  }
+  return new Promise((resolveWait, rejectWait) => {
+    let matched = matchIndex >= 0;
+    let unsubscribe = () => {};
+    const timer = setTimeout(() => {
+      unsubscribe();
+      rejectWait(new Error(`Timeout waiting for ${record.name} to settle after the expected event`));
+    }, timeoutMs);
+    unsubscribe = record.client.onEvent((event) => {
+      if (!matched) {
+        matched = predicate(event);
+        return;
+      }
+      if (event.type !== "agent_settled") return;
+      clearTimeout(timer);
+      unsubscribe();
+      resolveWait();
+    });
+  });
+}
+
 function toolCalls(events, toolName, action) {
   const starts = events.filter((event) =>
     event.type === "tool_execution_start"
@@ -302,17 +329,64 @@ function validateMessaging(checks, callerEvents, responderEvents, finalText) {
   );
 }
 
-function validateRuntimeErrors(checks, records) {
+function validateCancellation(checks, callerEvents, inboundEvents, pendingEvents, lateReplyEvents) {
+  const askCalls = toolCalls(callerEvents, "session_message", "ask");
+  check(
+    checks,
+    "cancelled ask result",
+    askCalls.length === 1
+      && askCalls[0].start.args?.message?.includes(CANCEL_MARKER)
+      && resultDetails(askCalls[0]).code === "SESSION_MESSAGE_FAILED"
+      && resultText(askCalls[0]).includes("Ask cancelled"),
+    `calls=${askCalls.length} result=${resultText(askCalls[0])}`,
+  );
+
+  const inboundPendingCalls = toolCalls(inboundEvents, "session_message", "pending");
+  const inboundPending = resultDetails(inboundPendingCalls[0]).pending ?? [];
+  check(
+    checks,
+    "cancel target observed ask",
+    inboundPendingCalls.length === 1
+      && inboundPending.some((message) => message.message.includes(CANCEL_MARKER)),
+    `calls=${inboundPendingCalls.length} pending=${inboundPending.length}`,
+  );
+  check(
+    checks,
+    "cancel target did not reply",
+    toolCalls(inboundEvents, "session_message", "reply").length === 0,
+    `replyCalls=${toolCalls(inboundEvents, "session_message", "reply").length}`,
+  );
+
+  const pendingCalls = toolCalls(pendingEvents, "session_message", "pending");
+  const pending = resultDetails(pendingCalls[0]).pending ?? [];
+  check(
+    checks,
+    "cancel clears pending inbound ask",
+    pendingCalls.length === 1 && pending.length === 0,
+    `calls=${pendingCalls.length} pending=${pending.length}`,
+  );
+
+  const lateReplyCalls = toolCalls(lateReplyEvents, "session_message", "reply");
+  check(
+    checks,
+    "late reply rejected",
+    lateReplyCalls.length === 1 && resultDetails(lateReplyCalls[0]).code === "UNKNOWN_MESSAGE",
+    `calls=${lateReplyCalls.length} result=${resultText(lateReplyCalls[0])}`,
+  );
+}
+
+function validateRuntimeErrors(checks, records, expectedFailures) {
   const failures = [];
   for (const record of records) {
     for (const event of record.events) {
       if (event.type === "extension_error") failures.push(`${record.name}: extension_error`);
       if (event.type === "tool_execution_end" && (event.isError || event.result?.details?.error)) {
+        if (expectedFailures.has(event.toolCallId)) continue;
         failures.push(`${record.name}: ${event.toolName} ${event.result?.details?.code ?? "failed"}`);
       }
     }
   }
-  check(checks, "no extension or tool errors", failures.length === 0, failures.join("; ") || "none");
+  check(checks, "no unexpected extension or tool errors", failures.length === 0, failures.join("; ") || "none");
 }
 
 function eventCost(records) {
@@ -378,7 +452,7 @@ async function main() {
   }
   console.log(`Model: ${options.model}`);
   console.log("Real Pi processes: history-source -> caller + responder");
-  console.log("Checks: search_history, list, send, ask, pending, reply");
+  console.log("Checks: search_history, list, send, ask, pending, reply, cancel");
   if (options.dryRun) return;
 
   const reportDirectory = prepareReportDirectory(options.report);
@@ -420,7 +494,7 @@ async function main() {
     });
     await startClient(writer);
     writerState = writer.state;
-    console.log("[1/3] Creating a persisted real Pi session");
+    console.log("[1/4] Creating a persisted real Pi session");
     await runPrompt(
       writer,
       `Store this unique searchable marker in this real session: ${HISTORY_MARKER}.`,
@@ -435,7 +509,7 @@ async function main() {
       systemPrompt: "Follow the requested tool sequence exactly. Use only sessions and session_message.",
     });
     await startClient(caller);
-    console.log("[2/3] Searching persisted history through the sessions tool");
+    console.log("[2/4] Searching persisted history through the sessions tool");
     const historyEvents = await runPrompt(
       caller,
       `Call sessions exactly once with action search_history and query ${HISTORY_MARKER}. Report only the matched session name.`,
@@ -451,15 +525,24 @@ async function main() {
       systemPrompt: [
         "You are an IPC test responder.",
         `For a one-way session_message containing ${SEND_MARKER}, answer with exactly SEND_RECEIVED and call no tool.`,
-        "For an incoming session_message that expects a reply, first call session_message with action pending exactly once.",
+        `For an incoming session_message containing ${CANCEL_MARKER}, call session_message with action pending exactly once, do not reply, and finish with exactly CANCEL_WAITING.`,
+        "For any other incoming session_message that expects a reply, first call session_message with action pending exactly once.",
         `Then call session_message with action reply, the matching replyTo id, and message exactly ${REPLY_MARKER}.`,
         "Do not call any other tool.",
       ].join(" "),
     });
     await startClient(responder);
-    console.log("[3/3] Exercising active list/send/ask/pending/reply across two Pi processes");
+    console.log("[3/4] Exercising active list/send/ask/pending/reply across two Pi processes");
     const callerStart = caller.events.length;
     const responderStart = responder.events.length;
+    const responderSettled = waitForSettledAfter(
+      responder,
+      responderStart,
+      (event) => event.type === "tool_execution_start"
+        && event.toolName === "session_message"
+        && event.args?.action === "reply",
+      options.timeoutMs,
+    );
     const askTimeoutMs = Math.min(Math.max(Math.floor(options.timeoutMs * 0.8), 1_000), 600_000);
     await runPrompt(
       caller,
@@ -473,13 +556,60 @@ async function main() {
       options.timeoutMs,
     );
     messagingFinal = await caller.client.getLastAssistantText();
+    await responderSettled;
     validateMessaging(
       checks,
       caller.events.slice(callerStart),
       responder.events.slice(responderStart),
       messagingFinal,
     );
-    validateRuntimeErrors(checks, records);
+
+    console.log("[4/4] Cancelling an active ask and checking receiver cleanup");
+    const cancelCallerStart = caller.events.length;
+    const cancelResponderStart = responder.events.length;
+    const cancelResponderSettled = waitForSettledAfter(
+      responder,
+      cancelResponderStart,
+      (event) => event.type === "tool_execution_start"
+        && event.toolName === "session_message"
+        && event.args?.action === "pending",
+      options.timeoutMs,
+    );
+    const cancelRun = runPrompt(
+      caller,
+      `Call session_message exactly once with action ask, to responder, message "Do not reply; cancellation marker ${CANCEL_MARKER}", and timeoutMs ${askTimeoutMs}.`,
+      options.timeoutMs,
+    );
+    await cancelResponderSettled;
+    const inboundCancelEvents = responder.events.slice(cancelResponderStart);
+    const cancelMessageId = resultDetails(toolCalls(inboundCancelEvents, "session_message", "pending")[0])
+      .pending?.find((message) => message.message.includes(CANCEL_MARKER))?.messageId;
+    if (!cancelMessageId) throw new Error("Responder did not expose the cancellable ask message id");
+    await caller.client.abort();
+    const cancelledAskEvents = await cancelRun;
+
+    const pendingAfterCancelEvents = await runPrompt(
+      responder,
+      "Call session_message exactly once with action pending. Report only the number of pending asks.",
+      options.timeoutMs,
+    );
+    const lateReplyEvents = await runPrompt(
+      responder,
+      `Call session_message exactly once with action reply, replyTo ${cancelMessageId}, and message LATE_REPLY. Report only the tool result.`,
+      options.timeoutMs,
+    );
+    validateCancellation(
+      checks,
+      cancelledAskEvents,
+      inboundCancelEvents,
+      pendingAfterCancelEvents,
+      lateReplyEvents,
+    );
+    const expectedFailures = new Set([
+      ...toolCalls(cancelledAskEvents, "session_message", "ask"),
+      ...toolCalls(lateReplyEvents, "session_message", "reply"),
+    ].map((call) => call.start.toolCallId));
+    validateRuntimeErrors(checks, records, expectedFailures);
   } catch (error) {
     check(
       checks,
@@ -508,6 +638,7 @@ async function main() {
       send: SEND_MARKER,
       ask: ASK_MARKER,
       reply: REPLY_MARKER,
+      cancel: CANCEL_MARKER,
     },
     sessions: {
       historySourceId: writerState?.sessionId ?? null,

@@ -15,6 +15,8 @@ The scenario performs these steps:
    question.
 5. `responder` inspects `pending` and replies; `caller` must receive the exact
    correlated answer.
+6. `caller` starts another ask and is externally aborted; `responder` must
+   remove it from `pending` and reject a late reply.
 
 This evaluation is intentionally separate from `npm test`: it requires provider
 credentials, network access, and model quota. It normally takes one to two
@@ -55,7 +57,9 @@ with `EINVAL` before IPC starts.
 The command fails if any required model tool call is missing, a tool or
 extension returns an error, history does not contain the persisted source,
 active peer/self identity is wrong, one-way delivery is not observed, or the
-ask/pending/reply correlation does not return the exact marker.
+ask/pending/reply correlation does not return the exact marker. The cancellation
+scenario expects only the cancelled ask and deliberate late reply to return
+errors; any other tool or extension error fails the run.
 
 The artifact directory contains:
 
