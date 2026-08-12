@@ -6,7 +6,7 @@ tools:
   - grep
   - find
   - ls
-thinking: low
+thinking: minimal
 contextPolicy: fresh
 maxDepth: 1
 ---
