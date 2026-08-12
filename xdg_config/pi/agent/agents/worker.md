@@ -9,7 +9,7 @@ tools:
   - edit
   - write
   - bash
-thinking: high
+thinking: medium
 contextPolicy: fresh
 maxDepth: 1
 ---

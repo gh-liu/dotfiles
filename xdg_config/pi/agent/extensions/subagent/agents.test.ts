@@ -21,14 +21,14 @@ function temporaryAgentDir(): string {
 }
 
 describe("agent definitions", () => {
-  test("loads the bundled scout as a low-thinking read-only profile", () => {
+  test("loads the bundled scout as a minimal-thinking read-only profile", () => {
     const scout = loadAgentDefinition(
       fileURLToPath(new URL("../../agents/scout.md", import.meta.url)),
     );
 
     expect(scout).toMatchObject({
       name: "scout",
-      thinking: "low",
+      thinking: "minimal",
       tools: ["read", "grep", "find", "ls"],
       contextPolicy: "fresh",
       maxDepth: 1,
@@ -73,14 +73,14 @@ describe("agent definitions", () => {
     expect(oracle.systemPrompt).toContain("one explicit decision");
   });
 
-  test("loads the bundled worker with implementation tools", () => {
+  test("loads the bundled worker as a medium-thinking implementation profile", () => {
     const worker = loadAgentDefinition(
       fileURLToPath(new URL("../../agents/worker.md", import.meta.url)),
     );
 
     expect(worker).toMatchObject({
       name: "worker",
-      thinking: "high",
+      thinking: "medium",
       tools: ["read", "grep", "find", "ls", "edit", "write", "bash"],
       contextPolicy: "fresh",
       maxDepth: 1,
