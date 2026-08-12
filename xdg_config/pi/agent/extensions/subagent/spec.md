@@ -815,6 +815,13 @@ serialization. Limits are configurable downward but cannot be disabled.
 - Preserve transcript after close.
 - Parent shutdown cleans up all children.
 
+The deterministic suite uses protocol fixtures and never calls a model. The
+opt-in `npm run test:subagent:live` smoke test requires `DEEPSEEK_API_KEY` and
+uses DeepSeek Flash with minimal thinking and marker-only responses. It starts
+the real pinned Pi RPC CLI, steers one active operation, submits one follow-up,
+and verifies process/session/transcript reuse. Keep paid-provider tests out of
+the default `npm test` path so routine validation cannot incur model cost.
+
 ### Failure cases
 
 - Invalid agent definition.

@@ -255,6 +255,46 @@ process.stdin.on("data", (chunk) => {
     expect(value.transcript.sessionPath).toContain("session.jsonl");
   });
 
+  test("rejects a transcript path outside the managed session directory", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const script = temporaryScript(`
+let input = "";
+function emit(value) { process.stdout.write(JSON.stringify(value) + "\\n"); }
+process.stdin.on("data", (chunk) => {
+  input += chunk;
+  let newline;
+  while ((newline = input.indexOf("\\n")) !== -1) {
+    const command = JSON.parse(input.slice(0, newline));
+    input = input.slice(newline + 1);
+    if (command.type === "get_state") emit({ type: "response", id: command.id, command: "get_state", success: true, data: { sessionId: "escaped", sessionFile: "/tmp/escaped-session.jsonl" } });
+  }
+});
+`);
+    const result = await createRpcSubagentExecutor({
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+    })(options(script, sessionRoot));
+    expect(result).toMatchObject({ status: "failed" });
+    expect(result.summary).toContain("session file escaped");
+  });
+
+  test("fails closed on malformed RPC output", async () => {
+    const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
+    temporaryDirectories.push(sessionRoot);
+    const script = temporaryScript(`
+process.stdin.once("data", () => process.stdout.write("{malformed\\n"));
+`);
+    const result = await createRpcSubagentExecutor({
+      command: process.execPath,
+      commandArgsPrefix: [script],
+      sessionRoot,
+    })(options(script, sessionRoot));
+    expect(result).toMatchObject({ status: "failed" });
+    expect(result.summary).toContain("Malformed JSONL record");
+  });
+
   test("reduces RPC model and tool events to bounded redacted progress", async () => {
     const sessionRoot = mkdtempSync(join(tmpdir(), "pi-subagent-rpc-root-"));
     temporaryDirectories.push(sessionRoot);
