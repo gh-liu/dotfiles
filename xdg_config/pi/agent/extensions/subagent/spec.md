@@ -9,7 +9,7 @@ Pi provides the primitives needed to build subagents—extensions, JSON/RPC mode
 the SDK, independent sessions, tools, and lifecycle events—but intentionally does
 not prescribe one orchestration model.
 
-This extension will provide a small, production-oriented subagent runtime for Pi.
+This extension provides a small, production-oriented subagent runtime for Pi.
 It takes the following ideas from existing systems without copying their product
 surface wholesale:
 
@@ -101,6 +101,37 @@ The parent receives a concise structured result. The complete transcript remains
 in the child session and is referenced by session ID/path for inspection and
 later recovery where explicitly supported.
 
+### 4.7 Routing is catalog-driven
+
+Delegation policy is expressed in terms of task boundaries and capabilities, not
+a fixed roster. Each registered definition's `description` is its model-facing
+routing contract. The tool description contains a bounded startup catalog built
+from those definitions, and `list` refreshes discovery when definitions change
+or a requested name is absent. Prompt guidelines must select from that catalog;
+they must not duplicate agent names, assume a fixed count, or become a second
+source of truth for role capabilities.
+
+The parent classifies work before it starts equivalent reads or searches:
+
+- An explicitly independent, fresh-eyes, or second-opinion review is delegated
+  to a matching registered read-only role after prerequisite writes settle.
+  Parent self-review does not satisfy an independence requirement.
+- External research that requires multiple searches or sources, freshness
+  checks, or source assessment is delegated to a matching registered read-only
+  role before the parent starts its own web-research workflow.
+- Bounded multi-file discovery, one specific high-impact unresolved decision,
+  and separately owned implementation are strong candidates when a matching
+  registered role materially improves isolation, quality, or parallelism.
+- Simple lookups, localized edits, routine validation, and one-source factual
+  checks remain direct parent work unless the user explicitly requests
+  delegation.
+
+The parent sends a self-contained work order and retains synthesis and final
+verification. After a successful cited read-only handoff, it does not repeat the
+same searches or reads; it verifies only decision-critical uncertainty or
+contradictions. A write-capable handoff still requires inspection of the scoped
+diff and integrated validation.
+
 ## 5. Core concepts
 
 ### 5.1 Agent definition
@@ -131,6 +162,9 @@ system prompt. User definitions are loaded from
 does not discover project-local definitions or compatibility paths. If
 project-local definitions are added later, they are repository-controlled input
 and require an explicit trust/override policy before becoming executable.
+The current parser supports only fresh, depth-one agents and rejects executable
+extension declarations. Controller-owned tool-provider mappings load any
+extension required to implement a declared tool.
 
 ### 5.2 Work order
 
@@ -146,6 +180,7 @@ interface WorkOrder {
   evidence: EvidenceRef[];
   validation: string[];
   returnFormat: string;
+  projectGuidance: string[];
 }
 
 interface Decision {
@@ -434,9 +469,10 @@ start
  -> submit initial operation -> prompt accepted -> return runId + operationId
  -> agent_settled -> runtime becomes idle -> notify parent
 
-send(follow_up), only while idle
+send(follow_up)
  -> create a new operationId
- -> submit prompt through the same controller
+ -> submit immediately while idle, or hold one queued operation while running
+ -> submit queued prompt through the same controller after active settlement
  -> prompt accepted -> return operationId
  -> agent_settled -> runtime becomes idle again -> notify parent
 
@@ -445,9 +481,11 @@ close
  -> close/reap process tree -> release slot -> closed
 ```
 
-No controller queue exists in M1. A `send` while `starting`, `running`,
-`closing`, `closed`, or `crashed` returns a conflict/error rather than buffering
-the message.
+The control plane accepts at most one follow-up while the runtime is `running`.
+It records that operation as `queued` and submits it to the controller only after
+the active operation settles. The RPC controller itself has no operation queue.
+A second running follow-up, or a `send` while `starting`, `closing`, `closed`, or
+`crashed`, returns a conflict/error rather than buffering more work.
 
 #### Interrupt and deadline
 
@@ -505,14 +543,14 @@ and passed. The implementation pins and integration-tests a supported Pi version
 before relying on CLI flags, event names, or shutdown behavior.
 
 The child environment starts from a documented base allowlist (`HOME`, `PATH`,
-`SHELL`, `TMPDIR`, `USER`, `LOGNAME`, `TERM`, and locale variables). Provider
-credential environment variables are inherited only through a separate
-configured authentication allowlist, which defaults to empty. Deployments must
-name each additional variable explicitly; wildcard prefixes are not accepted.
-Arbitrary parent environment variables are not copied. User agent definitions
-are enabled by default; project-local definitions and executable extensions are
-disabled unless Pi reports the project trusted and this extension policy
-explicitly enables them.
+`SHELL`, `TMPDIR`, `USER`, `LOGNAME`, `TERM`, and locale variables). Additional
+provider credential variables are inherited only through a configured
+authentication allowlist, which defaults to empty. A controller-owned
+tool-provider mapping may also declare the exact environment variables and
+extension paths required by one declared tool, such as `web_search`; wildcard
+prefixes are not accepted. Arbitrary parent environment variables are not
+copied. User agent definitions are enabled by default; project-local definitions
+remain disabled.
 
 This is environment filtering, not file-level credential isolation. V1 shares
 the user's Pi agent directory and auth store; keeping `HOME` and exposing file
@@ -535,12 +573,18 @@ subagent({ action: "interrupt", id, expectedOperationId })
 subagent({ action: "close", id })
 ```
 
+`action` is required on every call. The provider-facing schema remains one root
+object; the implementation enforces action-specific required fields at runtime.
+
 Semantics:
 
-- `list`: return executable agent definitions and capabilities.
+- `list`: refresh discovery and return executable agent names and routing
+  descriptions. The startup catalog already covers the normal selection path.
 - `run`: convenience operation equivalent to start, wait, and close for a
   one-shot task. It has a separate execution deadline; a wait timeout is never
-  reinterpreted as that deadline.
+  reinterpreted as that deadline. Omit `cwd` to use the parent's current
+  directory; specify it only for a project subdirectory, preferably as a
+  relative path.
 - `start`: reserve capacity, start a persistent worker, submit its initial
   operation, and return the run and operation IDs only after RPC readiness,
   session identity, and prompt acceptance. It does not wait for completion.
@@ -646,6 +690,20 @@ Fork metadata must include:
 Forked context becomes child-owned after spawn; parent and child never share a
 mutable conversation object.
 
+### 8.3 Working directory
+
+The parent session's canonical Git root is the allowed root, or its canonical
+current directory when no Git root exists. `run` and `start` omit `cwd` for the
+parent's current directory. A child that must enter a project subdirectory uses
+that relative subdirectory rather than copying the absolute cwd shown by the
+system.
+
+The extension resolves and canonicalizes the result with the native filesystem
+implementation before checking containment. This preserves on-disk casing on
+case-insensitive filesystems and rejects lexical or symlink escapes. An absolute
+path is not needed for model calls and is accepted only if canonicalization still
+places it inside the allowed root.
+
 ## 9. Capability and security requirements
 
 ### 9.1 Capability is not permission or sandboxing
@@ -702,7 +760,7 @@ already-exited processes and partial startup failures. On platforms where child
 tools may create descendants, the controller starts the child in a process group
 or uses an equivalent tracked-process mechanism and applies escalation to the
 owned process tree, not only the Pi leader PID. Unexpected exit and failed spawn
-release concurrency and writer reservations immediately.
+release concurrency reservations immediately.
 
 ## 10. Concurrency requirements
 
@@ -722,35 +780,31 @@ Required behavior:
   writes and for reviewing the resulting workspace state.
 - V1 fails fast when child capacity is unavailable; it does not queue runs. A
   parent may retry after observing status or completion.
-- Static parallel batches fail preflight rather than partially start when their
-  declared capacity cannot fit.
 
 ## 11. Persistence and recovery
 
-Each persistent child uses a dedicated Pi session JSONL file. The extension must
-record enough metadata to reconnect a logical run to that transcript.
-
-M1 also maintains a small local run ledger, written atomically, containing the
-run and operation IDs, agent, parent session, session ID/path, cwd, process
-instance, owner extension instance, timestamps, and last known states.
-The ledger is controller metadata, not a second copy of the child transcript.
-
-V1 persistence guarantees:
+Each RPC child uses a dedicated Pi session directory and JSONL transcript under
+`<agent-dir>/subagent-sessions`. Current persistence guarantees are limited to
+transcript evidence:
 
 - Full child transcript survives parent context compaction.
 - A settled child result can be inspected without injecting the transcript into
   the parent context.
 - Closing a runtime does not delete its transcript.
-- Parent extension reload or restart may report existing transcripts even though
-  automatic runtime resurrection is not implemented.
 
-Normal `session_shutdown`, including extension reload, waits for owned children
-to close before the replacement instance takes ownership. After an unclean
-restart, the new instance does not attach by PID: it marks prior nonterminal runs
-`crashed`, retains their transcripts as possibly incomplete evidence, and
-quarantines their writer keys until it verifies that the prior process instance
-has exited. Full automatic process resurrection is deferred. M1 workers remain
-warm after settling until explicit close; cold residency is a later capability.
+Runtime records, operation records, revisions, retained results, and capacity
+reservations are in memory only. There is no current run ledger, restart
+reconciliation, process adoption, or action that rediscovers a prior runtime from
+its transcript. Normal `session_shutdown`, including extension reload, waits for
+owned children to close. An unclean restart may leave only a possibly incomplete
+transcript as evidence; a new extension instance must not infer that the old
+runtime is controllable from its PID or session file.
+
+An optional future atomic ledger may provide durable history and unclean-restart
+reconciliation, but it would not make a runtime resumable. Reconnection requires
+a durable supervisor or reconnectable transport with an explicit adoption
+protocol. M1 workers remain warm after settling until explicit close; cold
+residency is a later capability.
 
 ## 12. Observability
 
@@ -807,16 +861,18 @@ serialization. Limits are configurable downward but cannot be disabled.
 
 ### Unit-level contracts
 
-- Agent frontmatter parsing and precedence.
+- Agent frontmatter parsing, validation, and deterministic discovery.
 - Runtime and operation transitions and invalid transition rejection.
 - Operation-targeted wait and interrupt race cases.
 - Concurrency reservation/release.
 - Bounded output and redaction.
+- Provider-compatible root-object schema and action-specific validation.
+- Startup catalog and capability-driven routing guidance.
+- Native cwd canonicalization, project-root containment, and symlink escape.
 - Partial-line and split UTF-8 JSONL decoding.
 - Idempotent cleanup and timer/listener removal.
 - Result-envelope provenance and outcome mapping.
 - Queued-operation cancellation without a fabricated interrupted result.
-- Atomic ledger writes and unclean-restart reconciliation.
 
 ### Integration contracts
 
@@ -830,12 +886,27 @@ serialization. Limits are configurable downward but cannot be disabled.
 - Preserve transcript after close.
 - Parent shutdown cleans up all children.
 
-The deterministic suite uses protocol fixtures and never calls a model. The
-opt-in `npm run test:subagent:live` smoke test requires `DEEPSEEK_API_KEY` and
-uses DeepSeek Flash with minimal thinking and marker-only responses. It starts
-the real pinned Pi RPC CLI, steers one active operation, submits one follow-up,
-and verifies process/session/transcript reuse. Keep paid-provider tests out of
-the default `npm test` path so routine validation cannot incur model cost.
+The default `npm test` suite uses protocol fixtures and does not call a model; the
+gated `subagent/live.test.ts` provider smoke remains skipped unless explicitly
+enabled. Paid-provider tests must stay outside routine validation.
+
+Routing quality is validated separately with the real-Pi behavioral evaluator:
+
+```text
+node subagent/eval/run.mjs --quick
+bun subagent/eval/run.mjs --quick
+node subagent/eval/run.mjs
+```
+
+It runs isolated temporary Git fixtures and Pi agent directories, then measures
+direct-work false positives, registered-role selection, redundant parent work,
+implementation outcomes, ordered role composition, and persistent lifecycle
+use. Deterministic execution/tool/schema failures always fail; probabilistic
+routing thresholds are warnings in quick mode and enforced by the full run.
+Reports preserve per-run JSONL plus machine- and human-readable summaries. The
+scenario matrix, exact assertions, options, and baseline workflow live in
+`eval/README.md`; the evaluator is intentionally invoked directly with Node.js
+or Bun rather than through a package-script alias.
 
 ### Failure cases
 
@@ -944,7 +1015,7 @@ Acceptance:
 
 Implemented:
 
-- Active `steer` and controller-queued `follow_up` modes.
+- Active `steer` and control-plane-queued `follow_up` modes.
 - Compact status/progress UI with collapsed and expanded presentations.
 
 Remaining:
@@ -992,10 +1063,10 @@ incrementally extending delegated execution.
 
 ## 15. Migration and coexistence
 
-The repository contains `pi-subagents` as an installed npm dependency, but the
-current `xdg_config/pi/agent/settings.json` has `"packages": []`; installation
-does not imply that the package is loaded. Verify the effective runtime before
-canonical tool cutover.
+The canonical `subagent` name may collide with a third-party package even when
+that package is merely installed or cached. Installation does not imply that the
+package is loaded; verify the effective Pi settings and tool registry before
+cutover.
 
 During development:
 
@@ -1022,9 +1093,9 @@ that consumes it:
 
 1. Before upgrading from Pi 0.84.1: compatibility policy and contract tests for
    the new Pi version.
-2. Before M1: runtime ledger and transcript directories.
-3. Before M2: parent notification mechanism for background completion.
-4. Before enabling project agents: whether trusted-project status is sufficient
+2. Before optional durable history: ledger location, retention, and unclean-
+   restart reconciliation policy.
+3. Before enabling project agents: whether trusted-project status is sufficient
    or a second extension-specific confirmation is required in interactive and
    non-interactive modes.
 
