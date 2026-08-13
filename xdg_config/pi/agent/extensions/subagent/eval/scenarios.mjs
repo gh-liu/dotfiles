@@ -3,6 +3,22 @@ const reviewerOutcome = [
   "(?:TTL|regression|test|回归|测试).{0,100}(?:default|默认)",
 ];
 
+const completeWorkOrderFields = [
+  "outcome",
+  "scope",
+  "startingEvidence",
+  "decisions",
+  "constraints",
+  "acceptance",
+  "validation",
+  "handoff",
+];
+
+const ttlOutcome = [
+  "(?:TTL|ttlSeconds).{0,100}(?:1000|millisecond|毫秒)",
+  "(?:1000|millisecond|毫秒).{0,100}(?:TTL|ttlSeconds)",
+];
+
 export const scenarios = [
   {
     id: "simple-lookup",
@@ -28,6 +44,29 @@ export const scenarios = [
     targetRate: 2 / 3,
     expectation: { requiredAgents: ["scout"], maxSubagentCalls: 1 },
     prompt: "Map the session creation lifecycle across src/session.js, src/handler.js, and tests. Identify the call flow, TTL units, and likely change seam. This is a bounded, read-only multi-file discovery task. Do not modify files.",
+  },
+  {
+    id: "self-contained-work-order",
+    description: "The parent should decompose a fresh-context scout task instead of forwarding a thin prompt.",
+    quick: false,
+    repeats: 1,
+    fixture: "baseline",
+    workspace: "read-only",
+    targetRate: 1,
+    hardExpectation: {
+      requiredAgents: ["scout"],
+      maxSubagentCalls: 1,
+      actionSequence: [{ action: "run" }],
+    },
+    expectation: {
+      requiredAgents: ["scout"],
+      maxSubagentCalls: 1,
+      actionSequence: [{ action: "run" }],
+      workOrderFields: { scout: completeWorkOrderFields },
+      parentToolCounts: { read: { max: 0 }, bash: { max: 0 } },
+      finalAny: ttlOutcome,
+    },
+    prompt: "Delegate exactly one scout to map the TTL change seam in this repository and determine what plan.md requires. The child has fresh isolated context, so give it a complete work order rather than forwarding this sentence. Do not inspect repository files in the parent before or after delegation, do not modify files, and synthesize the cited handoff into the final answer.",
   },
   {
     id: "external-research",
@@ -80,6 +119,32 @@ export const scenarios = [
     prompt: "Delegate the implementation in plan.md to an implementation subagent. Require it to fix TTL units, add the regression test, run tests, and return a concise handoff. Verify the settled result, but do not redo its work or commit.",
   },
   {
+    id: "delegated-verification",
+    description: "The parent should give worker a complete one-shot work order, then inspect the settled diff and rerun tests.",
+    quick: false,
+    repeats: 1,
+    fixture: "baseline",
+    workspace: "implementation",
+    targetRate: 1,
+    hardExpectation: {
+      requiredAgents: ["worker"],
+      maxSubagentCalls: 1,
+      actionSequence: [{ action: "run" }],
+    },
+    expectation: {
+      requiredAgents: ["worker"],
+      maxSubagentCalls: 1,
+      actionSequence: [{ action: "run" }],
+      workOrderFields: { worker: completeWorkOrderFields },
+      parentToolCallsAfter: [
+        { agent: "worker", tool: "bash", argsMatch: "git\\s+diff" },
+        { agent: "worker", tool: "bash", argsMatch: "(?:npm\\s+test|node\\s+--test)" },
+      ],
+      finalAny: ["(?:test|测试).{0,80}(?:pass|通过|green|成功)"],
+    },
+    prompt: "Delegate plan.md to exactly one worker as a bounded one-shot. Because the worker starts with fresh context, decompose a self-contained work order with the intended outcome, exact scope and starting evidence, known decisions, constraints and non-goals, acceptance criteria, validation, and required handoff. After the worker settles, inspect the complete Git diff and rerun the repository tests in the parent before synthesizing the result. Do not redo the implementation or commit.",
+  },
+  {
     id: "high-impact-decision",
     description: "An unresolved compatibility judgment should route to oracle.",
     quick: false,
@@ -122,6 +187,28 @@ export const scenarios = [
       parentToolCounts: { web_search: { max: 0 } },
     },
     prompt: "Resolve the TTL compatibility question without editing. Start exactly two independent read-only evidence tasks in parallel: scout should inspect the local API and tests; researcher should consult multiple authoritative JavaScript interoperability sources. Do not start an oracle or any dependent task until both evidence tasks settle. Synthesize their handoffs with citations and do not repeat their searches or reads in the parent.",
+  },
+  {
+    id: "three-way-parallel",
+    description: "The parent should use all three safe slots for independent read-only evidence and review.",
+    quick: false,
+    repeats: 1,
+    fixture: "baseline",
+    workspace: "read-only",
+    targetRate: 1,
+    hardExpectation: {
+      requiredAgents: ["scout", "researcher", "reviewer"],
+      maxSubagentCalls: 3,
+      parallelAgents: ["scout", "researcher", "reviewer"],
+    },
+    expectation: {
+      requiredAgents: ["scout", "researcher", "reviewer"],
+      maxSubagentCalls: 3,
+      parallelAgents: ["scout", "researcher", "reviewer"],
+      parentToolCounts: { read: { max: 0 }, web_search: { max: 0 } },
+      finalAny: reviewerOutcome,
+    },
+    prompt: "Assess plan.md without editing. Start exactly three truly independent read-only one-shot calls in parallel in the same turn: scout maps the local change seam and API constraints; researcher checks multiple authoritative JavaScript sources for time and timestamp interoperability guidance; reviewer independently reviews the current implementation and tests against plan.md for concrete severity-ranked gaps. Do not inspect the target or search in the parent first, do not exceed three active subagents, and synthesize all three settled handoffs with citations and disagreements called out.",
   },
   {
     id: "combo-evidence-decision",

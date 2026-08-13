@@ -96,6 +96,73 @@ describe("live subagent evaluation analysis", () => {
     expect(result.reasons).toHaveLength(2);
   });
 
+  test("checks that delegated work orders are self-contained", () => {
+    const completeTask = [
+      "Goal: fix TTL conversion.",
+      "Scope: src/session.js and test/session.test.js.",
+      "Starting evidence: plan.md describes the bug.",
+      "Known decision: preserve the public epoch-millisecond shape.",
+      "Constraints and non-goals: do not commit or change handler behavior.",
+      "Acceptance criteria: the default and explicit TTL cases pass.",
+      "Validation: run npm test.",
+      "Handoff: return changed files, evidence, blockers, and risks.",
+    ].join("\n");
+    const complete = analyzeJsonl(line({
+      type: "tool_execution_start",
+      toolName: "subagent",
+      args: { action: "run", agent: "worker", task: completeTask },
+    }));
+    const incomplete = analyzeJsonl(line({
+      type: "tool_execution_start",
+      toolName: "subagent",
+      args: { action: "run", agent: "worker", task: "Fix the TTL bug." },
+    }));
+    const expectation = {
+      workOrderFields: {
+        worker: ["outcome", "scope", "startingEvidence", "decisions", "constraints", "acceptance", "validation", "handoff"],
+      },
+    };
+
+    expect(evaluateExpectation(complete, expectation)).toEqual({ passed: true, reasons: [] });
+    expect(evaluateExpectation(incomplete, expectation)).toEqual({
+      passed: false,
+      reasons: [
+        "worker work order missing scope",
+        "worker work order missing startingEvidence",
+        "worker work order missing decisions",
+        "worker work order missing constraints",
+        "worker work order missing acceptance",
+        "worker work order missing validation",
+        "worker work order missing handoff",
+      ],
+    });
+  });
+
+  test("requires parent verification after a writing subagent settles", () => {
+    const analysis = analyzeJsonl([
+      line({ type: "tool_execution_start", toolCallId: "worker-call", toolName: "subagent", args: { action: "run", agent: "worker", task: "Implement plan.md" } }),
+      line({ type: "tool_execution_start", toolCallId: "early-diff", toolName: "bash", args: { command: "git diff --check" } }),
+      line({ type: "tool_execution_end", toolCallId: "worker-call", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_start", toolCallId: "diff", toolName: "bash", args: { command: "git diff -- src/session.js test/session.test.js" } }),
+      line({ type: "tool_execution_start", toolCallId: "tests", toolName: "bash", args: { command: "npm test" } }),
+    ].join("\n"));
+
+    expect(evaluateExpectation(analysis, {
+      parentToolCallsAfter: [
+        { agent: "worker", tool: "bash", argsMatch: "git\\s+diff" },
+        { agent: "worker", tool: "bash", argsMatch: "npm\\s+test" },
+      ],
+    })).toEqual({ passed: true, reasons: [] });
+    expect(evaluateExpectation(analysis, {
+      parentToolCallsAfter: [
+        { agent: "worker", tool: "bash", argsMatch: "git\\s+status" },
+      ],
+    })).toEqual({
+      passed: false,
+      reasons: ["parent did not call bash matching /git\\s+status/ after worker settled"],
+    });
+  });
+
   test("reports a failed subagent call even when a retry succeeds", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
@@ -136,6 +203,22 @@ describe("live subagent evaluation analysis", () => {
     }).passed).toBe(false);
   });
 
+  test("requires every prerequisite subagent to settle before a dependent decision", () => {
+    const analysis = analyzeJsonl([
+      line({ type: "tool_execution_start", toolCallId: "scout-call", toolName: "subagent", args: { action: "run", agent: "scout" } }),
+      line({ type: "tool_execution_start", toolCallId: "research-call", toolName: "subagent", args: { action: "run", agent: "researcher" } }),
+      line({ type: "tool_execution_end", toolCallId: "scout-call", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_start", toolCallId: "oracle-call", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
+    ].join("\n"));
+
+    expect(evaluateExpectation(analysis, {
+      agentsBefore: { agents: ["scout", "researcher"], before: "oracle" },
+    })).toEqual({
+      passed: false,
+      reasons: ["researcher did not settle before oracle started"],
+    });
+  });
+
   test("checks required structured handoff sections", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
@@ -148,11 +231,11 @@ describe("live subagent evaluation analysis", () => {
 
   test("allows independent evidence agents in either order before a decision agent", () => {
     const analysis = analyzeJsonl([
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "start", agent: "researcher" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "start", agent: "scout" } }),
-      line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
-      line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
+      line({ type: "tool_execution_start", toolCallId: "research", toolName: "subagent", args: { action: "start", agent: "researcher" } }),
+      line({ type: "tool_execution_start", toolCallId: "scout", toolName: "subagent", args: { action: "start", agent: "scout" } }),
+      line({ type: "tool_execution_end", toolCallId: "research", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_end", toolCallId: "scout", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_start", toolCallId: "oracle", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
     ].join("\n"));
 
     expect(evaluateExpectation(analysis, {

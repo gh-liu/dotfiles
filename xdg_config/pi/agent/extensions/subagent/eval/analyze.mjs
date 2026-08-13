@@ -39,6 +39,23 @@ function number(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+const WORK_ORDER_FIELD_PATTERNS = {
+  outcome: /(?:\bgoal\b|\boutcome\b|\bobjective\b|\bimplement\b|\bfix\b|\bmap\b|\bresearch\b|\breview\b|\bdecide\b|目标|结果)/iu,
+  scope: /(?:\bscope\b|\bfiles?\b|\bpaths?\b|src\/|test\/|plan\.md|范围|文件)/iu,
+  startingEvidence: /(?:starting (?:evidence|context)|\bevidence\b|\bcontext\b|plan\.md|\bknown\b|\binspect\b|上下文|证据)/iu,
+  decisions: /(?:known decisions?|user decisions?|must (?:keep|preserve)|keep .+ stable|决策|保持)/iu,
+  constraints: /(?:\bconstraints?\b|non-goals?|do not|must not|preserve unrelated|read-only|约束|非目标|不要)/iu,
+  acceptance: /(?:acceptance criteria|done when|complete when|must (?:pass|include|change|find|report)|验收)/iu,
+  validation: /(?:\bvalidation\b|\bvalidate\b|\bverify\b|run .{0,40}\btests?\b|npm test|node --test|验证|测试)/iu,
+  handoff: /(?:\bhandoff\b|\breturn\b|\breport\b|\bdeliver\b|交付|返回|报告)/iu,
+};
+
+function classifyWorkOrder(task) {
+  return Object.fromEntries(
+    Object.entries(WORK_ORDER_FIELD_PATTERNS).map(([field, pattern]) => [field, pattern.test(task)]),
+  );
+}
+
 export function parseJsonl(source) {
   const events = [];
   const malformed = [];
@@ -71,9 +88,34 @@ export function analyzeJsonl(source) {
     }));
   const subagentCalls = tools.filter((tool) => tool.name === "subagent");
   const subagentEnds = events
-    .map((event, index) => ({ event, index }))
+    .map((event, index) => ({
+      event,
+      index,
+      id: event.toolCallId ?? event.id ?? null,
+    }))
     .filter(({ event }) => event.type === "tool_execution_end"
       && (event.toolName ?? event.tool?.name ?? event.name ?? "") === "subagent");
+  const initialSubagentCalls = subagentCalls.filter((call) => ["run", "start"].includes(call.args.action));
+  const unmatchedEnds = new Set(subagentEnds);
+  const subagentSettlements = initialSubagentCalls.map((call) => {
+    const end = call.id === null
+      ? [...unmatchedEnds].find((candidate) => candidate.index > call.eventIndex)
+      : [...unmatchedEnds].find((candidate) => candidate.id === call.id);
+    if (end) unmatchedEnds.delete(end);
+    return {
+      agent: typeof call.args.agent === "string" ? call.args.agent : null,
+      callIndex: call.eventIndex,
+      endIndex: end?.index ?? null,
+    };
+  });
+  const subagentWorkOrders = initialSubagentCalls.map((call) => {
+    const task = typeof call.args.task === "string" ? call.args.task : "";
+    return {
+      agent: typeof call.args.agent === "string" ? call.args.agent : null,
+      task,
+      fields: classifyWorkOrder(task),
+    };
+  });
   const subagentRoles = subagentCalls
     .filter((call) => ["run", "start"].includes(call.args.action) && typeof call.args.agent === "string")
     .map((call) => call.args.agent);
@@ -147,6 +189,8 @@ export function analyzeJsonl(source) {
     finalText,
     usage,
     subagentEnds,
+    subagentSettlements,
+    subagentWorkOrders,
     subagentHandoffFields,
     parallelSubagentStarts: subagentCalls
       .filter((call) => ["run", "start"].includes(call.args.action))
@@ -197,13 +241,18 @@ export function evaluateExpectation(analysis, expectation = {}) {
     );
   }
   if (expectation.agentsBefore) {
-    const boundaryCall = analysis.subagentCalls.find((call) => call.args.agent === expectation.agentsBefore.before);
+    const boundary = analysis.subagentSettlements?.find(
+      (candidate) => candidate.agent === expectation.agentsBefore.before,
+    );
     for (const agent of expectation.agentsBefore.agents) {
-      const prerequisite = analysis.subagentCalls.find((call) => call.args.agent === agent);
-      const settled = prerequisite && analysis.subagentEnds.some((end) =>
-        end.index > prerequisite.eventIndex && end.index < boundaryCall.eventIndex,
-      );
-      if (!boundaryCall || !prerequisite || prerequisite.eventIndex >= boundaryCall.eventIndex || !settled) {
+      const prerequisite = analysis.subagentSettlements?.find((candidate) => candidate.agent === agent);
+      if (
+        !boundary
+        || !prerequisite
+        || prerequisite.callIndex >= boundary.callIndex
+        || prerequisite.endIndex === null
+        || prerequisite.endIndex >= boundary.callIndex
+      ) {
         reasons.push(`${agent} did not settle before ${expectation.agentsBefore.before} started`);
       }
     }
@@ -216,6 +265,28 @@ export function evaluateExpectation(analysis, expectation = {}) {
     if (!matched) {
       reasons.push(
         `action sequence ${analysis.subagentActions.join(" -> ") || "(none)"} does not match expectation`,
+      );
+    }
+  }
+  for (const [agent, fields] of Object.entries(expectation.workOrderFields ?? {})) {
+    const workOrder = analysis.subagentWorkOrders?.find((candidate) => candidate.agent === agent);
+    for (const field of fields) {
+      if (!workOrder?.fields[field]) reasons.push(`${agent} work order missing ${field}`);
+    }
+  }
+  for (const required of expectation.parentToolCallsAfter ?? []) {
+    const settlement = analysis.subagentSettlements
+      ?.filter((candidate) => candidate.agent === required.agent && candidate.endIndex !== null)
+      .at(-1);
+    const pattern = new RegExp(required.argsMatch, "isu");
+    const matched = settlement && analysis.tools.some((tool) =>
+      tool.eventIndex > settlement.endIndex
+      && tool.name === required.tool
+      && pattern.test(JSON.stringify(tool.args)),
+    );
+    if (!matched) {
+      reasons.push(
+        `parent did not call ${required.tool} matching /${required.argsMatch}/ after ${required.agent} settled`,
       );
     }
   }

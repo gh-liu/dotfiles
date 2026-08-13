@@ -2,8 +2,9 @@
 
 This suite runs the real `pi` CLI against isolated temporary Git repositories.
 It measures whether the parent uses the subagent tool at the intended boundary,
-which role it selects, how roles compose, and whether delegated implementation
-actually produces a valid result.
+which role it selects, whether it writes a self-contained work order, how roles
+compose, how it consumes handoffs, and whether delegated implementation plus
+parent verification actually produces a valid result.
 
 It is deliberately **not** part of `npm test`: it needs provider credentials and
 network access, takes several minutes, and incurs real model/search cost.
@@ -14,13 +15,16 @@ network access, takes several minutes, and incurs real model/search cost.
 | --- | --- | ---: |
 | `simple-lookup` | Parent reads one file; no subagent | 3 |
 | `local-discovery` | `scout` maps the multi-file lifecycle | 3 |
+| `self-contained-work-order` | Parent gives one-shot `scout` a complete fresh-context work order, then synthesizes without duplicate reads | 1 |
 | `external-research` | `researcher`; no duplicate parent `web_search` | 3 |
 | `independent-review` | `reviewer` finds the missing default-TTL regression | 1 |
 | `small-coherent-implementation` | Parent implements directly; fixture tests pass | 1 |
 | `explicit-worker` | `worker` implements; fixture tests pass | 1 |
+| `delegated-verification` | Complete one-shot `worker` work order; parent inspects settled diff and reruns tests | 1 |
 | `high-impact-decision` | `oracle` resolves a compatibility judgment | 3 |
 | `combo-implementation-review` | `scout → worker → reviewer`; tests pass | 1 |
 | `parallel-evidence` | Independent `scout` + `researcher` starts before either settles; no parent duplicate search | 1 |
+| `three-way-parallel` | `scout` + `researcher` + `reviewer` use all three safe read-only slots before synthesis | 1 |
 | `combo-evidence-decision` | `scout` + `researcher` evidence before `oracle` | 1 |
 | `persistent-follow-up` | `start → wait → send(follow_up) → wait → close` | 1 |
 
@@ -96,6 +100,11 @@ Deterministic invariants always fail the command:
 - Every subagent call includes `action`; no failed subagent invocation or schema
   error is hidden by a successful retry.
 - Explicit delegation/composition and persistent lifecycle orders are honored.
+- Parent work orders include the outcome, scope, starting evidence, decisions,
+  constraints, acceptance criteria, validation, and expected handoff when a
+  scenario requires a complete fresh-context delegation.
+- Parent verification of writing handoffs happens after the worker settles and
+  includes both complete-diff inspection and an integrated test rerun.
 - Read-only scenarios do not alter files or Git history.
 - Implementation changes are limited to `src/session.js` and
   `test/session.test.js`, produce a clean diff, and pass fixture tests.
@@ -120,4 +129,7 @@ Fixture repositories, the isolated Pi config, runtime files, and child
 transcripts are removed by default. Use `--keep` to preserve them.
 
 The analyzer only counts top-level `tool_execution_start` events. Tool names
-quoted inside a child handoff are not mistaken for duplicate parent work.
+quoted inside a child handoff are not mistaken for duplicate parent work. It
+pairs parent subagent starts and settlements by tool-call ID before checking
+post-handoff verification, so pre-delegation commands cannot satisfy those
+assertions.
