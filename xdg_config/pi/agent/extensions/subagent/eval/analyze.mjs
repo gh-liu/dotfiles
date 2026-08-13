@@ -22,14 +22,30 @@ function textContent(content) {
     .join("\n");
 }
 
-function errorText(event) {
-  const result = event.result;
-  if (typeof result === "string") return result;
-  if (result && typeof result === "object") {
-    if (Array.isArray(result.content)) return textContent(result.content);
-    if (typeof result.error === "string") return result.error;
-    if (typeof result.message === "string") return result.message;
+function resultText(value) {
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object") return resultText(parsed);
+    } catch {
+      // Plain text result.
+    }
+    return value;
   }
+  if (value && typeof value === "object") {
+    const parts = [];
+    if (Array.isArray(value.content)) parts.push(resultText(textContent(value.content)));
+    for (const key of ["summary", "message", "error"]) {
+      if (typeof value[key] === "string") parts.push(resultText(value[key]));
+    }
+    return parts.filter(Boolean).join("\n");
+  }
+  return "";
+}
+
+function errorText(event) {
+  const text = resultText(event.result);
+  if (text) return text;
   if (typeof event.error === "string") return event.error;
   if (event.error && typeof event.error.message === "string") return event.error.message;
   return "";
@@ -130,10 +146,10 @@ export function analyzeJsonl(source) {
   const subagentHandoffFields = subagentEnds.map(({ event }) => {
     const text = errorText(event);
     return {
-      evidence: /(?:^|\n)\s*(?:#+\s*)?evidence(?:\s|:)/iu.test(text),
-      validation: /(?:^|\n)\s*(?:#+\s*)?validation(?:\s|:)/iu.test(text),
-      blockers: /(?:^|\n)\s*(?:#+\s*)?blockers?(?:\s|:)/iu.test(text),
-      risks: /(?:^|\n)\s*(?:#+\s*)?(?:residual\s+)?risks?(?:\s|:)/iu.test(text),
+      evidence: /(?:^|\n)\s*(?:[-*]\s*)?(?:#+\s*)?evidence(?:\s|:)/iu.test(text),
+      validation: /(?:^|\n)\s*(?:[-*]\s*)?(?:#+\s*)?validation(?:\s|:)/iu.test(text),
+      blockers: /(?:^|\n)\s*(?:[-*]\s*)?(?:#+\s*)?blockers?(?:\s|:)/iu.test(text),
+      risks: /(?:^|\n)\s*(?:[-*]\s*)?(?:#+\s*)?(?:residual\s+)?risks?(?:\s|:)/iu.test(text),
     };
   });
 

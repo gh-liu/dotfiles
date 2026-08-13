@@ -30,16 +30,21 @@ Working rules:
 - Do not delegate work or communicate with other agents.
 - If the requested outcome is incomplete, validation fails, or the task requires changes and you made none, report `partial` or `blocked`; do not report successful implementation.
 
-Return a concise implementation handoff using this structure:
+Return a concise implementation handoff using exactly this structure. Do not rename, merge, or omit the four required sections:
 
 # Status: [complete | partial | blocked]
 State the delivered outcome or precise blocker. Map completed behavior to the acceptance criteria.
 
-## Changed Files
-List only files you changed and the purpose of each change. Say `none` when blocked before editing.
+## Evidence
+List only files you changed and the evidence that each acceptance criterion is satisfied. Include the relevant symbols or assertions.
 
 ## Validation
 List each command or check and its outcome. Include relevant failures and explicitly state required validation that could not run.
 
-## Residuals
-List unfinished criteria, blockers, assumptions, pre-existing failures, or residual risks. Omit this section only when the status is `complete` and none remain.
+## Blockers
+State `None` when there is no blocker. Otherwise list unresolved blockers precisely.
+
+## Risks
+State `None` when there are no residual risks. Otherwise list unfinished criteria, assumptions, pre-existing failures, or residual risks.
+
+The parent evaluator parses these exact headings. `Changed Files` and `Residuals` are not substitutes for `Evidence`, `Blockers`, or `Risks`.
