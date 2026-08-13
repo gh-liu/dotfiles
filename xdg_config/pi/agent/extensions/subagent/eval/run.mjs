@@ -362,8 +362,15 @@ function configHash() {
     hash.update("\0");
     hash.update(readFileSync(join(agentDirectory, name)));
   }
-  hash.update("subagent/index.ts\0");
-  hash.update(readFileSync(join(extensionsRoot, "subagent/index.ts")));
+  for (const relativePath of [
+    "subagent/index.ts",
+    "subagent/eval/scenarios.mjs",
+    "subagent/eval/analyze.mjs",
+    "subagent/eval/fixture.mjs",
+  ]) {
+    hash.update(`${relativePath}\0`);
+    hash.update(readFileSync(join(extensionsRoot, relativePath)));
+  }
   return hash.digest("hex");
 }
 

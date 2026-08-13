@@ -222,8 +222,28 @@ describe("live subagent evaluation analysis", () => {
   test("checks required structured handoff sections", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
-      line({ type: "tool_execution_end", toolName: "subagent", result: { content: [{ type: "text", text: "# Evidence\nlocal\n# Validation\npassed\n# Blockers\nnone\n# Risks\nnone" }] } }),
+      line({ type: "tool_execution_end", toolName: "subagent", result: { content: [{ type: "text", text: "- Evidence: local\n- Validation: passed\n- Blockers: none\n- Risks: none" }] } }),
     ].join("\n"));
+    expect(evaluateExpectation(analysis, {
+      handoffFields: ["evidence", "validation", "blockers", "risks"],
+    })).toEqual({ passed: true, reasons: [] });
+  });
+
+  test("extracts handoff sections from the JSON envelope returned by subagent", () => {
+    const analysis = analyzeJsonl([
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "worker" } }),
+      line({
+        type: "tool_execution_end",
+        toolName: "subagent",
+        result: {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ summary: "## Evidence\nchanged files\n\n## Validation\npassed\n\n## Blockers\nNone\n\n## Risks\nNone" }),
+          }],
+        },
+      }),
+    ].join("\n"));
+
     expect(evaluateExpectation(analysis, {
       handoffFields: ["evidence", "validation", "blockers", "risks"],
     })).toEqual({ passed: true, reasons: [] });
