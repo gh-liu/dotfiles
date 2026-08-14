@@ -1,0 +1,7 @@
+{
+  "name": "scriptable",
+  "devDependencies": {
+    "@types/scriptable-ios": "^1.7.9"
+  },
+  "private": true
+}
