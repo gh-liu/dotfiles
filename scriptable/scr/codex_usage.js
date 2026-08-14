@@ -3,13 +3,16 @@
 // Setup:
 // 1. Enable device code login in ChatGPT security settings.
 // 2. Run this script in Scriptable and sign in to ChatGPT when prompted.
-// 3. Add a small Scriptable widget and select this script.
+// 3. Enable notifications for Scriptable in iOS Settings.
+// 4. Add a small Scriptable widget and select this script.
 
 const SETTINGS = Object.freeze({
   usageUrl: "https://chatgpt.com/backend-api/wham/usage",
   authBaseUrl: "https://auth.openai.com",
   clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
   credentialsKey: "com.liu.scriptable.codex.credentials",
+  notificationStateKey: "com.liu.scriptable.codex.usage-boundary",
+  resetCountStateKey: "com.liu.scriptable.codex.reset-count",
   timeZone: "Asia/Shanghai",
   requestTimeoutSeconds: 30,
   tokenRefreshLeewayMs: 60 * 1000,
@@ -78,9 +81,10 @@ class HttpClient {
 
 // Application workflow
 class CodexUsageApp {
-  constructor(auth, usageClient, view, runtime) {
+  constructor(auth, usageClient, notifier, view, runtime) {
     this.auth = auth;
     this.usageClient = usageClient;
+    this.notifier = notifier;
     this.view = view;
     this.runtime = runtime;
   }
@@ -142,6 +146,11 @@ class CodexUsageApp {
 
   async showUsage(credentials) {
     const usage = await this.usageClient.fetch(credentials);
+    try {
+      await this.notifier.notifyIfNeeded(usage);
+    } catch (error) {
+      console.warn(`Unable to schedule Codex usage notification: ${error}`);
+    }
     await this.view.show(this.view.createUsage(usage));
   }
 
@@ -407,6 +416,97 @@ class CodexUsageClient {
   }
 }
 
+// Usage notifications
+class CodexUsageNotifier {
+  constructor(settings) {
+    this.settings = settings;
+  }
+
+  async notifyIfNeeded(usage) {
+    await this.notifyUsageBoundaryIfNeeded(usage.remainingPercent);
+    await this.notifyResetIncreaseIfNeeded(usage.availableResets);
+  }
+
+  async notifyUsageBoundaryIfNeeded(remainingPercent) {
+    const boundary = this.boundaryFor(remainingPercent);
+    if (boundary === null) {
+      if (Keychain.contains(this.settings.notificationStateKey)) {
+        Keychain.remove(this.settings.notificationStateKey);
+      }
+      return;
+    }
+
+    if (this.loadLastBoundary() === boundary) return;
+
+    const body =
+      boundary === 0
+        ? "Your weekly Codex usage has been exhausted."
+        : "Your weekly Codex usage has reset and is fully available.";
+    await this.scheduleNotification(
+      `Codex weekly usage: ${boundary}%`,
+      body,
+      "codex-weekly-usage",
+    );
+
+    Keychain.set(this.settings.notificationStateKey, String(boundary));
+  }
+
+  async notifyResetIncreaseIfNeeded(availableResets) {
+    const previousCount = this.loadLastResetCount();
+    if (previousCount === null) {
+      Keychain.set(this.settings.resetCountStateKey, String(availableResets));
+      return;
+    }
+
+    if (availableResets > previousCount) {
+      await this.scheduleNotification(
+        `Codex resets: ${availableResets}`,
+        `Available reset credits increased from ${previousCount} to ${availableResets}.`,
+        "codex-reset-credits",
+      );
+    }
+
+    if (availableResets !== previousCount) {
+      Keychain.set(this.settings.resetCountStateKey, String(availableResets));
+    }
+  }
+
+  boundaryFor(remainingPercent) {
+    if (remainingPercent === 0) return 0;
+    if (remainingPercent === 100) return 100;
+    return null;
+  }
+
+  loadLastBoundary() {
+    if (!Keychain.contains(this.settings.notificationStateKey)) return null;
+    try {
+      const boundary = Number(Keychain.get(this.settings.notificationStateKey));
+      return boundary === 0 || boundary === 100 ? boundary : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  loadLastResetCount() {
+    if (!Keychain.contains(this.settings.resetCountStateKey)) return null;
+    try {
+      const count = Number(Keychain.get(this.settings.resetCountStateKey));
+      return Number.isFinite(count) && count >= 0 ? count : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async scheduleNotification(title, body, threadIdentifier) {
+    const notification = new Notification();
+    notification.title = title;
+    notification.body = body;
+    notification.sound = "default";
+    notification.threadIdentifier = threadIdentifier;
+    await notification.schedule();
+  }
+}
+
 // Widget presentation
 class CodexUsageView {
   constructor(settings, colors, runtime) {
@@ -562,8 +662,9 @@ class CodexUsageView {
 const http = new HttpClient(SETTINGS.requestTimeoutSeconds);
 const auth = new CodexAuth(http, SETTINGS);
 const usageClient = new CodexUsageClient(http, SETTINGS);
+const notifier = new CodexUsageNotifier(SETTINGS);
 const view = new CodexUsageView(SETTINGS, COLORS, RUNTIME);
-const app = new CodexUsageApp(auth, usageClient, view, RUNTIME);
+const app = new CodexUsageApp(auth, usageClient, notifier, view, RUNTIME);
 
 await app.run();
 Script.complete();
