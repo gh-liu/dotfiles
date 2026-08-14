@@ -432,6 +432,8 @@ class CodexUsageWidget {
     );
     resetLabel.rightAlignText();
 
+    widget.addSpacer(8);
+    this.addProgressBar(widget, usage.remainingPercent);
     widget.addSpacer();
 
     const footer = widget.addStack();
@@ -449,6 +451,25 @@ class CodexUsageWidget {
 
     widget.refreshAfterDate = new Date(Date.now() + REFRESH_INTERVAL_MS);
     return widget;
+  }
+
+  addProgressBar(container, percent) {
+    const width = 120;
+    const height = 6;
+    const progress = Math.min(Math.max(percent, 0), 100);
+
+    const track = container.addStack();
+    track.size = new Size(width, height);
+    track.backgroundColor = COLORS.secondaryBackground;
+    track.cornerRadius = height / 2;
+
+    if (progress > 0) {
+      const fill = track.addStack();
+      fill.size = new Size(Math.max((width * progress) / 100, height), height);
+      fill.backgroundColor = COLORS.usage;
+      fill.cornerRadius = height / 2;
+    }
+    track.addSpacer();
   }
 
   createError(title, message) {
