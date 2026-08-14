@@ -64,7 +64,7 @@ class HttpClient {
     if (text) {
       try {
         payload = JSON.parse(text);
-      } catch (_) { }
+      } catch (_) {}
     }
 
     const statusCode = request.response ? request.response.statusCode : 0;

@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "scriptable",
+      "devDependencies": {
+        "@types/scriptable-ios": "^1.7.9",
+      },
+    },
+  },
+  "packages": {
+    "@types/scriptable-ios": ["@types/scriptable-ios@1.7.9", "", {}, "sha512-adyPCwQA4G7jWBoGbj4iK3fHX1J6PnwsXMMB7kaEtJCYEuZLErRucahoYP76ksACvowdW6wgjOvOSqU5Eu6Ksg=="],
+  }
+}
