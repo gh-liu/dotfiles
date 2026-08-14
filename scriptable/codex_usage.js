@@ -5,35 +5,92 @@
 // 2. Run this script in Scriptable and sign in to ChatGPT when prompted.
 // 3. Add a small Scriptable widget and select this script.
 
-const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
-const AUTH_BASE_URL = "https://auth.openai.com";
-const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann";
-const CREDENTIALS_KEY = "com.liu.scriptable.codex.credentials";
-const TIME_ZONE = "Asia/Shanghai";
-const REFRESH_INTERVAL_MS = 15 * 60 * 1000;
-const DEVICE_AUTH_TIMEOUT_MS = 15 * 60 * 1000;
+const SETTINGS = Object.freeze({
+  usageUrl: "https://chatgpt.com/backend-api/wham/usage",
+  authBaseUrl: "https://auth.openai.com",
+  clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
+  credentialsKey: "com.liu.scriptable.codex.credentials",
+  timeZone: "Asia/Shanghai",
+  requestTimeoutSeconds: 30,
+  tokenRefreshLeewayMs: 60 * 1000,
+  refreshIntervalMs: 15 * 60 * 1000,
+  deviceAuthTimeoutMs: 15 * 60 * 1000,
+  progressBarWidth: 120,
+  progressBarHeight: 6,
+});
 
-const COLORS = {
-  background: new Color("111827"),
-  secondaryBackground: new Color("1f2937"),
-  primary: new Color("f9fafb"),
-  secondary: new Color("9ca3af"),
-  usage: new Color("34d399"),
-  resets: new Color("60a5fa"),
-  error: new Color("f87171"),
-};
+const RUNTIME = Object.freeze({
+  runsInApp: config.runsInApp,
+  runsInWidget: config.runsInWidget,
+});
 
+const dynamicColor = (light, dark) => Color.dynamic(new Color(light), new Color(dark));
+
+const COLORS = Object.freeze({
+  background: dynamicColor("f9fafb", "111827"),
+  secondaryBackground: dynamicColor("e5e7eb", "1f2937"),
+  primary: dynamicColor("111827", "f9fafb"),
+  secondary: dynamicColor("6b7280", "9ca3af"),
+  usage: dynamicColor("059669", "34d399"),
+  resets: dynamicColor("2563eb", "60a5fa"),
+  error: dynamicColor("dc2626", "f87171"),
+});
+
+// Infrastructure
+class HttpClient {
+  constructor(timeoutInterval) {
+    this.timeoutInterval = timeoutInterval;
+  }
+
+  getJson(url, headers = {}) {
+    return this.requestJson("GET", url, headers);
+  }
+
+  postJson(url, body, contentType = "application/json") {
+    return this.requestJson("POST", url, { "Content-Type": contentType }, body);
+  }
+
+  async requestJson(method, url, headers, body) {
+    const request = new Request(url);
+    request.method = method;
+    request.timeoutInterval = this.timeoutInterval;
+    request.headers = headers;
+    if (body !== undefined) {
+      request.body = typeof body === "string" ? body : JSON.stringify(body);
+    }
+
+    const text = await request.loadString();
+    let payload = null;
+    if (text) {
+      try {
+        payload = JSON.parse(text);
+      } catch (_) { }
+    }
+
+    const statusCode = request.response ? request.response.statusCode : 0;
+    return {
+      ok: statusCode >= 200 && statusCode < 300,
+      statusCode,
+      payload,
+    };
+  }
+}
+
+// Application workflow
 class CodexUsageApp {
-  constructor(auth, usageClient, widget) {
+  constructor(auth, usageClient, view, runtime) {
     this.auth = auth;
     this.usageClient = usageClient;
-    this.widget = widget;
+    this.view = view;
+    this.runtime = runtime;
   }
 
   async run() {
+    if (!this.runtime.runsInApp && !this.runtime.runsInWidget) return;
+
     let credentials = this.auth.loadCredentials();
 
-    if (config.runsInApp) {
+    if (this.runtime.runsInApp) {
       if (credentials) {
         const action = await this.chooseAction();
         if (action === -1) return;
@@ -48,8 +105,8 @@ class CodexUsageApp {
     }
 
     if (!credentials) {
-      await this.widget.show(
-        this.widget.createError("Setup required", "Run the script to sign in to ChatGPT"),
+      await this.view.show(
+        this.view.createError("Setup required", "Run the script to sign in to ChatGPT"),
       );
       return;
     }
@@ -68,7 +125,7 @@ class CodexUsageApp {
         }
       }
 
-      if (config.runsInApp && this.isAuthenticationError(error)) {
+      if (this.runtime.runsInApp && this.isAuthenticationError(error)) {
         const updatedCredentials = await this.auth.signInWithDeviceCode();
         if (!updatedCredentials) return;
         try {
@@ -79,13 +136,13 @@ class CodexUsageApp {
         }
       }
 
-      await this.widget.show(this.widget.createError(...this.errorContent(error)));
+      await this.view.show(this.view.createError(...this.errorContent(error)));
     }
   }
 
   async showUsage(credentials) {
     const usage = await this.usageClient.fetch(credentials);
-    await this.widget.show(this.widget.createUsage(usage));
+    await this.view.show(this.view.createUsage(usage));
   }
 
   async chooseAction() {
@@ -94,7 +151,7 @@ class CodexUsageApp {
     alert.addAction("Preview widget");
     alert.addAction("Sign in again");
     alert.addCancelAction("Cancel");
-    return await alert.presentSheet();
+    return alert.presentSheet();
   }
 
   isAuthenticationError(error) {
@@ -112,18 +169,18 @@ class CodexUsageApp {
   }
 }
 
+// Authentication and credential lifecycle
 class CodexAuth {
-  constructor(baseUrl, clientId, credentialsKey) {
-    this.baseUrl = baseUrl;
-    this.clientId = clientId;
-    this.credentialsKey = credentialsKey;
+  constructor(http, settings) {
+    this.http = http;
+    this.settings = settings;
   }
 
   loadCredentials() {
-    if (!Keychain.contains(this.credentialsKey)) return null;
+    if (!Keychain.contains(this.settings.credentialsKey)) return null;
 
     try {
-      const credentials = JSON.parse(Keychain.get(this.credentialsKey));
+      const credentials = JSON.parse(Keychain.get(this.settings.credentialsKey));
       if (!credentials.accessToken) return null;
       return credentials;
     } catch (_) {
@@ -162,12 +219,10 @@ class CodexAuth {
   }
 
   async requestDeviceCode() {
-    const response = await this.post(
-      `${this.baseUrl}/api/accounts/deviceauth/usercode`,
-      { client_id: this.clientId },
-      "application/json",
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    const response = await this.http.postJson(this.authUrl("/api/accounts/deviceauth/usercode"), {
+      client_id: this.settings.clientId,
+    });
+    if (!response.ok) {
       if (response.statusCode === 403 || response.statusCode === 404) {
         throw new Error("Enable device code login in ChatGPT security settings and try again.");
       }
@@ -184,22 +239,18 @@ class CodexAuth {
       deviceAuthId: payload.device_auth_id,
       userCode,
       interval: Math.max(Number(payload.interval) || 5, 1),
-      verificationUrl: `${this.baseUrl}/codex/device`,
+      verificationUrl: this.authUrl("/codex/device"),
     };
   }
 
   async pollForAuthorization(deviceCode) {
-    const deadline = Date.now() + DEVICE_AUTH_TIMEOUT_MS;
+    const deadline = Date.now() + this.settings.deviceAuthTimeoutMs;
     while (Date.now() < deadline) {
-      const response = await this.post(
-        `${this.baseUrl}/api/accounts/deviceauth/token`,
-        {
-          device_auth_id: deviceCode.deviceAuthId,
-          user_code: deviceCode.userCode,
-        },
-        "application/json",
-      );
-      if (response.statusCode >= 200 && response.statusCode < 300) {
+      const response = await this.http.postJson(this.authUrl("/api/accounts/deviceauth/token"), {
+        device_auth_id: deviceCode.deviceAuthId,
+        user_code: deviceCode.userCode,
+      });
+      if (response.ok) {
         const payload = response.payload || {};
         if (!payload.authorization_code || !payload.code_verifier) {
           throw new Error("Device authorization response is incomplete.");
@@ -211,26 +262,27 @@ class CodexAuth {
       }
       await this.sleep(deviceCode.interval);
     }
-    throw new Error("Device authorization timed out after 15 minutes.");
+    const timeoutMinutes = this.settings.deviceAuthTimeoutMs / (60 * 1000);
+    throw new Error(`Device authorization timed out after ${timeoutMinutes} minutes.`);
   }
 
   async exchangeAuthorizationCode(codeExchange) {
-    const redirectUri = `${this.baseUrl}/deviceauth/callback`;
+    const redirectUri = this.authUrl("/deviceauth/callback");
     const body = [
       ["grant_type", "authorization_code"],
       ["code", codeExchange.authorization_code],
       ["redirect_uri", redirectUri],
-      ["client_id", this.clientId],
+      ["client_id", this.settings.clientId],
       ["code_verifier", codeExchange.code_verifier],
     ]
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join("&");
-    const response = await this.post(
-      `${this.baseUrl}/oauth/token`,
+    const response = await this.http.postJson(
+      this.authUrl("/oauth/token"),
       body,
       "application/x-www-form-urlencoded",
     );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    if (!response.ok) {
       throw new Error(`Token exchange returned HTTP ${response.statusCode}.`);
     }
     return response.payload || {};
@@ -240,37 +292,33 @@ class CodexAuth {
     if (!tokens.access_token || !tokens.refresh_token || !tokens.id_token) {
       throw new Error("Token response is incomplete.");
     }
-    const idToken = this.decodeJwtPayload(tokens.id_token);
-    const auth = idToken["https://api.openai.com/auth"] || {};
     return {
       accessToken: tokens.access_token,
       refreshToken: tokens.refresh_token,
-      accountId: auth.chatgpt_account_id || null,
+      accountId: this.accountIdFromIdToken(tokens.id_token),
     };
   }
 
   saveCredentials(credentials) {
-    Keychain.set(this.credentialsKey, JSON.stringify(credentials));
+    Keychain.set(this.settings.credentialsKey, JSON.stringify(credentials));
   }
 
   async refreshCredentialsIfNeeded(credentials) {
     if (!credentials.refreshToken) return credentials;
     const payload = this.decodeJwtPayload(credentials.accessToken);
-    if (!payload.exp || payload.exp * 1000 > Date.now() + 60 * 1000) return credentials;
-    return await this.refreshCredentials(credentials);
+    if (!payload.exp || payload.exp * 1000 > Date.now() + this.settings.tokenRefreshLeewayMs) {
+      return credentials;
+    }
+    return this.refreshCredentials(credentials);
   }
 
   async refreshCredentials(credentials) {
-    const response = await this.post(
-      `${this.baseUrl}/oauth/token`,
-      {
-        client_id: this.clientId,
-        grant_type: "refresh_token",
-        refresh_token: credentials.refreshToken,
-      },
-      "application/json",
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
+    const response = await this.http.postJson(this.authUrl("/oauth/token"), {
+      client_id: this.settings.clientId,
+      grant_type: "refresh_token",
+      refresh_token: credentials.refreshToken,
+    });
+    if (!response.ok) {
       const error = new Error(`Token refresh returned HTTP ${response.statusCode}.`);
       error.statusCode = response.statusCode === 400 ? 401 : response.statusCode;
       throw error;
@@ -286,11 +334,16 @@ class CodexAuth {
       accountId: credentials.accountId,
     };
     if (tokens.id_token) {
-      const auth = this.decodeJwtPayload(tokens.id_token)["https://api.openai.com/auth"] || {};
-      updated.accountId = auth.chatgpt_account_id || updated.accountId;
+      updated.accountId = this.accountIdFromIdToken(tokens.id_token) || updated.accountId;
     }
     this.saveCredentials(updated);
     return updated;
+  }
+
+  accountIdFromIdToken(idToken) {
+    const payload = this.decodeJwtPayload(idToken);
+    const auth = payload["https://api.openai.com/auth"] || {};
+    return auth.chatgpt_account_id || null;
   }
 
   decodeJwtPayload(token) {
@@ -303,68 +356,40 @@ class CodexAuth {
     }
   }
 
-  async post(url, body, contentType) {
-    const request = new Request(url);
-    request.method = "POST";
-    request.timeoutInterval = 30;
-    request.headers = { "Content-Type": contentType };
-    request.body = typeof body === "string" ? body : JSON.stringify(body);
-
-    const text = await request.loadString();
-    let payload = null;
-    if (text) {
-      try {
-        payload = JSON.parse(text);
-      } catch (_) { }
-    }
-    return {
-      statusCode: request.response ? request.response.statusCode : 0,
-      payload,
-    };
-  }
-
   sleep(seconds) {
     return new Promise((resolve) => Timer.schedule(seconds, false, resolve));
   }
+
+  authUrl(path) {
+    return `${this.settings.authBaseUrl}${path}`;
+  }
 }
 
+// Codex usage API
 class CodexUsageClient {
-  constructor(url) {
-    this.url = url;
+  constructor(http, settings) {
+    this.http = http;
+    this.settings = settings;
   }
 
   async fetch(credentials) {
-    const request = new Request(this.url);
-    request.timeoutInterval = 30;
-    request.headers = {
+    const headers = {
       Authorization: `Bearer ${credentials.accessToken}`,
       "OpenAI-Beta": "codex-1",
       originator: "Codex Desktop",
     };
     if (credentials.accountId) {
-      request.headers["ChatGPT-Account-ID"] = credentials.accountId;
+      headers["ChatGPT-Account-ID"] = credentials.accountId;
     }
 
-    let payload;
-    try {
-      payload = await request.loadJSON();
-    } catch (cause) {
-      const statusCode = request.response ? request.response.statusCode : 0;
-      if (statusCode) {
-        const error = new Error(`Codex API returned HTTP ${statusCode}.`);
-        error.statusCode = statusCode;
-        throw error;
-      }
-      throw cause;
-    }
-
-    const statusCode = request.response ? request.response.statusCode : 0;
-    if (statusCode < 200 || statusCode >= 300) {
-      const error = new Error(`Codex API returned HTTP ${statusCode}.`);
-      error.statusCode = statusCode;
+    const response = await this.http.getJson(this.settings.usageUrl, headers);
+    if (!response.ok) {
+      const error = new Error(`Codex API returned HTTP ${response.statusCode}.`);
+      error.statusCode = response.statusCode;
       throw error;
     }
 
+    const payload = response.payload || {};
     const rateLimit = payload.rate_limit || {};
     const primaryWindow = rateLimit.primary_window || {};
     if (typeof primaryWindow.used_percent !== "number") {
@@ -382,20 +407,27 @@ class CodexUsageClient {
   }
 }
 
-class CodexUsageWidget {
+// Widget presentation
+class CodexUsageView {
+  constructor(settings, colors, runtime) {
+    this.settings = settings;
+    this.colors = colors;
+    this.runtime = runtime;
+  }
+
   createUsage(usage) {
     const widget = this.createBase();
     widget.setPadding(14, 14, 12, 14);
 
     const header = widget.addStack();
     header.centerAlignContent();
-    this.addText(header, "CODEX", Font.semiboldSystemFont(12), COLORS.primary);
+    this.addText(header, "CODEX", Font.semiboldSystemFont(12), this.colors.primary);
     header.addSpacer();
     this.addText(
       header,
       this.formatDate(Date.now() / 1000, "HH:mm"),
       Font.mediumSystemFont(10),
-      COLORS.secondary,
+      this.colors.secondary,
     );
 
     widget.addSpacer(10);
@@ -409,9 +441,9 @@ class CodexUsageWidget {
       usageColumn,
       `${this.formatNumber(usage.remainingPercent)}%`,
       Font.boldSystemFont(32),
-      COLORS.usage,
+      this.colors.usage,
     );
-    this.addText(usageColumn, "1w remaining", Font.mediumSystemFont(10), COLORS.secondary);
+    this.addText(usageColumn, "1w remaining", Font.mediumSystemFont(10), this.colors.secondary);
 
     metrics.addSpacer();
 
@@ -421,14 +453,14 @@ class CodexUsageWidget {
       resetColumn,
       this.formatNumber(usage.availableResets),
       Font.boldSystemFont(26),
-      COLORS.resets,
+      this.colors.resets,
     );
     resetCount.rightAlignText();
     const resetLabel = this.addText(
       resetColumn,
       "resets",
       Font.mediumSystemFont(10),
-      COLORS.secondary,
+      this.colors.secondary,
     );
     resetLabel.rightAlignText();
 
@@ -437,36 +469,36 @@ class CodexUsageWidget {
     widget.addSpacer();
 
     const footer = widget.addStack();
-    footer.backgroundColor = COLORS.secondaryBackground;
+    footer.backgroundColor = this.colors.secondaryBackground;
     footer.cornerRadius = 6;
     footer.setPadding(5, 7, 5, 7);
-    this.addText(footer, "Usage resets", Font.mediumSystemFont(10), COLORS.secondary);
+    this.addText(footer, "Usage resets", Font.mediumSystemFont(10), this.colors.secondary);
     footer.addSpacer();
     this.addText(
       footer,
       this.formatDate(usage.resetAt, "MM-dd HH:mm"),
       Font.semiboldSystemFont(10),
-      COLORS.primary,
+      this.colors.primary,
     );
 
-    widget.refreshAfterDate = new Date(Date.now() + REFRESH_INTERVAL_MS);
+    widget.refreshAfterDate = new Date(Date.now() + this.settings.refreshIntervalMs);
     return widget;
   }
 
   addProgressBar(container, percent) {
-    const width = 120;
-    const height = 6;
+    const width = this.settings.progressBarWidth;
+    const height = this.settings.progressBarHeight;
     const progress = Math.min(Math.max(percent, 0), 100);
 
     const track = container.addStack();
     track.size = new Size(width, height);
-    track.backgroundColor = COLORS.secondaryBackground;
+    track.backgroundColor = this.colors.secondaryBackground;
     track.cornerRadius = height / 2;
 
     if (progress > 0) {
       const fill = track.addStack();
       fill.size = new Size(Math.max((width * progress) / 100, height), height);
-      fill.backgroundColor = COLORS.usage;
+      fill.backgroundColor = this.colors.usage;
       fill.cornerRadius = height / 2;
     }
     track.addSpacer();
@@ -476,21 +508,21 @@ class CodexUsageWidget {
     const widget = this.createBase();
     widget.setPadding(14, 14, 14, 14);
 
-    this.addText(widget, "CODEX", Font.semiboldSystemFont(12), COLORS.primary);
+    this.addText(widget, "CODEX", Font.semiboldSystemFont(12), this.colors.primary);
     widget.addSpacer();
-    this.addText(widget, title, Font.boldSystemFont(18), COLORS.error);
+    this.addText(widget, title, Font.boldSystemFont(18), this.colors.error);
     widget.addSpacer(4);
-    const detail = this.addText(widget, message, Font.mediumSystemFont(11), COLORS.secondary);
+    const detail = this.addText(widget, message, Font.mediumSystemFont(11), this.colors.secondary);
     detail.lineLimit = 3;
     widget.addSpacer();
 
-    widget.refreshAfterDate = new Date(Date.now() + REFRESH_INTERVAL_MS);
+    widget.refreshAfterDate = new Date(Date.now() + this.settings.refreshIntervalMs);
     return widget;
   }
 
   createBase() {
     const widget = new ListWidget();
-    widget.backgroundColor = COLORS.background;
+    widget.backgroundColor = this.colors.background;
     return widget;
   }
 
@@ -508,7 +540,7 @@ class CodexUsageWidget {
 
     const formatter = new DateFormatter();
     formatter.locale = "en_US_POSIX";
-    formatter.timeZone = TIME_ZONE;
+    formatter.timeZone = this.settings.timeZone;
     formatter.dateFormat = format;
     return formatter.string(new Date(timestamp * 1000));
   }
@@ -518,15 +550,20 @@ class CodexUsageWidget {
   }
 
   async show(widget) {
-    Script.setWidget(widget);
-    if (config.runsInApp) await widget.presentSmall();
+    if (this.runtime.runsInWidget) {
+      Script.setWidget(widget);
+    } else if (this.runtime.runsInApp) {
+      await widget.presentSmall();
+    }
   }
 }
 
-const auth = new CodexAuth(AUTH_BASE_URL, CLIENT_ID, CREDENTIALS_KEY);
-const usageClient = new CodexUsageClient(USAGE_URL);
-const widget = new CodexUsageWidget();
-const app = new CodexUsageApp(auth, usageClient, widget);
+// Composition root
+const http = new HttpClient(SETTINGS.requestTimeoutSeconds);
+const auth = new CodexAuth(http, SETTINGS);
+const usageClient = new CodexUsageClient(http, SETTINGS);
+const view = new CodexUsageView(SETTINGS, COLORS, RUNTIME);
+const app = new CodexUsageApp(auth, usageClient, view, RUNTIME);
 
 await app.run();
 Script.complete();
