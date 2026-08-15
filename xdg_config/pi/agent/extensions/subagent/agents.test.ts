@@ -74,7 +74,7 @@ describe("agent definitions", () => {
     expect(reviewer.systemPrompt).toContain("Do not modify files");
   });
 
-  test("loads the bundled oracle as a high-thinking decision profile", () => {
+  test("loads the bundled oracle as a fresh-context read-only expert advisor", () => {
     const oracle = loadAgentDefinition(
       fileURLToPath(new URL("../../agents/oracle.md", import.meta.url)),
     );
@@ -87,10 +87,14 @@ describe("agent definitions", () => {
       contextPolicy: "fresh",
       maxDepth: 1,
     });
-    expect(oracle.systemPrompt).toContain("# Decision: [approve | revise | reject]");
-    expect(oracle.systemPrompt).toContain("authoritative");
-    expect(oracle.systemPrompt).toContain("one explicit decision");
-    expect(oracle.systemPrompt).toContain("not a general reviewer");
+    expect(oracle.systemPrompt).toContain("their tradeoff is still unresolved");
+    expect(oracle.systemPrompt).toContain("concrete suspected invariant violation or failure sequence");
+    expect(oracle.systemPrompt).toContain("You do not inherit the parent conversation");
+    expect(oracle.systemPrompt).toContain("the exact diff or patch");
+    expect(oracle.systemPrompt).toContain("the prior finding and the exact change");
+    expect(oracle.systemPrompt).toContain("Return the shortest complete answer, conclusion first");
+    expect(oracle.systemPrompt).toContain("recommendation or default");
+    expect(oracle.systemPrompt).toContain("Do not modify files");
   });
 
   test("loads the bundled worker as a medium-thinking implementation profile", () => {
