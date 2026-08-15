@@ -67,8 +67,7 @@ nnoremap <silent> gqQ :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmar
 nnoremap gs mr:let @/='\<'.expand('<cword>').'\>'<CR>cgn
 xnoremap gs mr"sy:let @/=@s<CR>cgn
 
-" Repeat last command for each line of a visual selection.
-xnoremap . :normal .<CR>
+" Semantic Visual dot-repeat lives in after/plugin/cmdatom.lua.
 " }}}
 " tab/win/buffer {{{
 " switch to alternate buffer

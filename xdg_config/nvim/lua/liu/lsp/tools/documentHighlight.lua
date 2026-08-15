@@ -94,14 +94,33 @@ end
 return {
 	on_attach = function(client, buf)
 		local group = vim.api.nvim_create_augroup("liu/lsp_doc_hi" .. buf, { clear = true })
-			vim.api.nvim_create_autocmd({ "CursorMoved", "ModeChanged" }, {
+
+		-- CmdAtom is global (its pattern is the atom type), so filter by buffer.
+		-- Replaces the CursorMoved firehose: fires only for user actions, and
+		-- collapses a Visual sequence / Insert session into one atom.
+		-- Programmatic moves (`:normal`, API) never fire; intra-insert cursor
+		-- moves are part of the insert atom, so they update once on session end.
+		vim.api.nvim_create_autocmd("CmdAtom", {
 			group = group,
-			callback = function()
-					local mode = vim.api.nvim_get_mode().mode
-					if mode:sub(1, 1) == "i" or mode:sub(1, 1) == "R" then
-						M.clear()
-						return
-					end
+			callback = function(ev)
+				if ev.buf ~= buf then
+					return
+				end
+				-- Keep buffer-local semantics: CmdAtom is global and deferred, so
+				-- only act when `buf` is still the current buffer (M.get()/update()
+				-- read the current window's cursor).
+				if vim.api.nvim_get_current_buf() ~= buf then
+					return
+				end
+				local type = ev.data.type
+				if
+					type ~= "motion"
+					and type ~= "jump"
+					and type ~= "visual"
+					and type ~= "insert"
+				then
+					return
+				end
 
 				if not M.is_enabled() then
 					M.clear()
@@ -111,7 +130,29 @@ return {
 					M.update()
 				end
 			end,
+		})
+
+		-- Intra-insert moves emit no CmdAtom until the insert session ends, so
+		-- clear highlights as soon as Insert mode starts.
+		vim.api.nvim_create_autocmd("ModeChanged", {
+			group = group,
 			buffer = buf,
+			callback = function()
+				local mode = vim.api.nvim_get_mode().mode
+				if mode:sub(1, 1) == "i" or mode:sub(1, 1) == "R" then
+					M.clear()
+				end
+			end,
+		})
+
+		-- CmdAtom autocmds are global; drop them with the augroup on detach.
+		vim.api.nvim_create_autocmd("LspDetach", {
+			group = group,
+			callback = function(args)
+				if args.buf == buf then
+					pcall(vim.api.nvim_del_augroup_by_name, "liu/lsp_doc_hi" .. buf)
+				end
+			end,
 		})
 
 		vim.keymap.set({ "n" }, "]w", function()

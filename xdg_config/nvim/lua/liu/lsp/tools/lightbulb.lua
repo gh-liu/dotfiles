@@ -152,12 +152,17 @@ M.on_attach = function(client, bufnr)
 		once = true,
 	})
 
-	api.nvim_create_autocmd({ "CursorMoved" }, {
+	api.nvim_create_autocmd("CmdAtom", {
 		group = lb_buf_group,
-		desc = "Update lightbulb when moving the cursor in normal/visual mode",
-		buffer = bufnr,
-		callback = function()
-			update(bufnr)
+		desc = "Update lightbulb on user cursor actions (typed motion/jump; insert end)",
+		callback = function(ev)
+			if ev.buf ~= bufnr or api.nvim_get_current_buf() ~= bufnr then
+				return
+			end
+			local type = ev.data.type
+			if type == "motion" or type == "jump" or type == "insert" then
+				update(bufnr)
+			end
 		end,
 	})
 

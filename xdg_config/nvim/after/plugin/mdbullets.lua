@@ -647,7 +647,7 @@ local function setup_buf(buf)
 		end,
 	})
 
-	api.nvim_create_autocmd({ "BufEnter", "CursorMoved", "InsertLeave" }, {
+	api.nvim_create_autocmd({ "BufEnter", "InsertLeave" }, {
 		group = augroup,
 		buffer = buf,
 		callback = function(opts)
@@ -678,6 +678,22 @@ end
 -- ====================================================================
 -- Entry Point
 -- ====================================================================
+
+-- Track cursor position on typed motions only. CmdAtom is global (its pattern
+-- is the atom type); programmatic moves (`:normal`, API) and intra-insert moves
+-- never fire, so `_md_last_normal_row` stays in sync with real user motion.
+api.nvim_create_autocmd("CmdAtom", {
+	group = augroup,
+	pattern = "motion",
+	callback = function(ev)
+		local buf = ev.buf
+		if vim.b[buf] and vim.b[buf]._md_bullets_setup then
+			if api.nvim_get_current_buf() == buf then
+				remember_normal_state(buf)
+			end
+		end
+	end,
+})
 
 api.nvim_create_autocmd("FileType", {
 	group = augroup,
