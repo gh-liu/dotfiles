@@ -60,7 +60,7 @@ const MAX_JSONL_BYTES = 1024 * 1024;
 const MAX_STDERR_BYTES = 64 * 1024;
 const STDERR_TRUNCATION_MARKER = "[truncated]\n";
 const STDERR_LONG_LINE_MARKER = "[truncated oversized stderr line]\n";
-const SUPPORTED_PI_VERSION = "0.84.1";
+const SUPPORTED_PI_VERSION = /^0\.84\.(0|[1-9]\d*)$/;
 
 class BoundedJsonlDecoder {
   private buffer = Buffer.alloc(0);
@@ -110,10 +110,13 @@ class BoundedJsonlDecoder {
   }
 }
 
-function pinnedPiInvocation(): { command: string; args: string[] } {
-  if (VERSION !== SUPPORTED_PI_VERSION) {
-    throw new Error(`Unsupported Pi version: ${VERSION}; expected ${SUPPORTED_PI_VERSION}`);
+export function assertSupportedPiVersion(): void {
+  if (!SUPPORTED_PI_VERSION.test(VERSION)) {
+    throw new Error(`Unsupported Pi version: ${VERSION}; expected 0.84.x`);
   }
+}
+
+function pinnedPiInvocation(): { command: string; args: string[] } {
   const packageEntry = fileURLToPath(import.meta.resolve("@earendil-works/pi-coding-agent"));
   return {
     command: process.execPath,

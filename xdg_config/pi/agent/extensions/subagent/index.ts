@@ -8,7 +8,7 @@ import { Type } from "typebox";
 import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { boundText } from "./output.ts";
-import { createRpcSubagentController } from "./rpc-executor.ts";
+import { assertSupportedPiVersion, createRpcSubagentController } from "./rpc-executor.ts";
 import {
   renderSubagentCall,
   renderSubagentCompletion,
@@ -170,6 +170,7 @@ function serializeSubagentResult(result: SubagentResult): string {
 }
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
+  assertSupportedPiVersion();
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
   let registry = discoverUserAgents(agentDirectory);
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
