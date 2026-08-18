@@ -555,8 +555,8 @@ The current model-facing API is action based:
 
 ```ts
 subagent({ action: "list" })
-subagent({ action: "run", agent, task, ... })
-subagent({ action: "start", agent, task, ... })
+subagent({ action: "run", agent, task, deadlineMs, ... })
+subagent({ action: "start", agent, task, deadlineMs, ... })
 subagent({ action: "status", id })
 subagent({ action: "send", id, mode, message })
 subagent({ action: "wait", id, operationId, timeoutMs })
@@ -572,13 +572,16 @@ Semantics:
 - `list`: refresh discovery and return executable agent names and routing
   descriptions. The startup catalog already covers the normal selection path.
 - `run`: convenience operation equivalent to start, wait, and close for a
-  one-shot task. It has a separate execution deadline; a wait timeout is never
+  one-shot task. `deadlineMs` is required: estimate the task duration and add
+  reasonable headroom for model and tool latency instead of relying on a fixed
+  default. It has a separate execution deadline; a wait timeout is never
   reinterpreted as that deadline. Omit `cwd` to use the parent's current
   directory; specify it only for a project subdirectory, preferably as a
   relative path.
 - `start`: reserve capacity, start a persistent worker, submit its initial
   operation, and return the run and operation IDs only after RPC readiness,
-  session identity, and prompt acceptance. It does not wait for completion.
+  session identity, and prompt acceptance. Its task-specific `deadlineMs` is
+  required. It does not wait for completion.
 - `status`: return a bounded snapshot containing a monotonic `revision`, runtime
   state, active operation ID, and last settled operation; never poll internally.
 - `send(..., mode: "follow_up")`: create a new operation. An idle runtime submits

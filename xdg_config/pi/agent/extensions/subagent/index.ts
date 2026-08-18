@@ -82,8 +82,7 @@ function deferred<T>(): {
 const deadline = () => Type.Optional(Type.Integer({
   minimum: 1_000,
   maximum: 3_600_000,
-  default: 600_000,
-  description: "Operation deadline",
+  description: "Required by run/start: execution deadline chosen from the task's estimated duration (1,000-3,600,000 ms)",
 }));
 
 // Provider tool APIs require a root object schema; a root Type.Union serializes
@@ -498,7 +497,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       "Delegate source-heavy external research that needs multiple searches, freshness checks, or source assessment to a matching read-only agent when registered; do so before loading a parent research skill or making parent web searches, and keep only a single factual lookup direct. A request for independent or fresh-eyes review requires a matching review agent after final writes settle and before the parent reviews the target, because the parent reviewing its own work is not independent; the parent may gather only the minimal intent and scope needed for the work order.",
       "Before calling subagent, decompose the bounded work instead of forwarding the raw user prompt. Every subagent task must be self-contained because the child has fresh context. Use these labels: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff. For each label, provide concrete content or write 'none' or 'not applicable'; never silently omit one. Do not delegate unresolved decomposition or synthesis that the parent still owns.",
       "Omit cwd to use the parent's current working directory. Set cwd only when the child must operate in a specific project subdirectory, and prefer that relative subdirectory instead of copying an absolute cwd.",
-      "Every subagent call must include action. Use action:run for a bounded one-shot. Use action:start only when background execution or context-preserving follow-ups are expected; keep its runId and operationId, steer only the guarded active operation, use follow_up for a new operation, wait only when the result blocks progress, and close the persistent runtime when finished.",
+      "Every subagent call must include action. Every action:run or action:start call must include deadlineMs: estimate how long that specific task should take, add reasonable headroom for tool and model latency, and choose a value from 1,000 to 3,600,000 ms rather than reusing a fixed default. Use action:run for a bounded one-shot. Use action:start only when background execution or context-preserving follow-ups are expected; keep its runId and operationId, steer only the guarded active operation, use follow_up for a new operation, wait only when the result blocks progress, and close the persistent runtime when finished.",
       "Run at most three truly independent subagents in parallel. For parallel bounded work, emit separate action:run calls in the same assistant turn; do not create persistent runtimes merely for concurrency. Never let the parent and a write-capable subagent, or multiple write-capable subagents, edit the same files concurrently. Start dependent review or decision work only after prerequisite evidence and writes settle and the parent has synthesized the relevant context.",
       "For independent review work, provide the intended behavior first, then the actual diff or exact files and comparison base, relevant constraints, and validation already run. Ask for severity-ranked findings tied to evidence, not a generic second opinion.",
       "Treat a subagent result as a handoff, not proof, and classify it before acting: for successful cited read-only work, do not repeat the same searches or re-read every cited file, and verify only decision-critical uncertainty or contradictions; write-capable work requires inspection of the complete settled diff and rerunning relevant integrated validation; failed or partial work requires diagnosis before retry. Produce the final synthesis yourself.",
@@ -529,7 +528,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       }
 
       const missing = params.action === "run" || params.action === "start"
-        ? (!params.agent ? "agent" : !params.task ? "task" : undefined)
+        ? (!params.agent ? "agent" : !params.task ? "task" : params.deadlineMs === undefined ? "deadlineMs" : undefined)
         : !params.id
           ? "id"
           : params.action === "send"
@@ -716,7 +715,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         runId,
         operationId,
         parentSessionId: runtime.parentSessionId,
-        deadlineMs: params.deadlineMs ?? 600_000,
+        deadlineMs: params.deadlineMs!,
         signal,
       };
       void Promise.resolve().then(() => controllerFactory(initialOptions)).then(
@@ -744,7 +743,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           runtime,
           operationId,
           params.task,
-          params.deadlineMs ?? 600_000,
+          params.deadlineMs!,
           params.action === "start",
           signal,
           onUpdate
