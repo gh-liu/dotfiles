@@ -82,7 +82,7 @@ function deferred<T>(): {
 const deadline = () => Type.Optional(Type.Integer({
   minimum: 1_000,
   maximum: 3_600_000,
-  default: 300_000,
+  default: 600_000,
   description: "Operation deadline",
 }));
 
@@ -626,7 +626,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             state: "queued",
             accepted: false,
             task: params.message,
-            deadlineMs: params.deadlineMs ?? 300_000,
+            deadlineMs: params.deadlineMs ?? 600_000,
             queuedAt: Date.now(),
             notifyOnSettle: true,
             settled: new Promise<void>((resolve) => { settle = resolve; }),
@@ -651,7 +651,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             runtime,
             operationId,
             params.message,
-            params.deadlineMs ?? 300_000,
+            params.deadlineMs ?? 600_000,
             true,
             signal,
             onUpdate
@@ -716,7 +716,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         runId,
         operationId,
         parentSessionId: runtime.parentSessionId,
-        deadlineMs: params.deadlineMs ?? 300_000,
+        deadlineMs: params.deadlineMs ?? 600_000,
         signal,
       };
       void Promise.resolve().then(() => controllerFactory(initialOptions)).then(
@@ -744,7 +744,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           runtime,
           operationId,
           params.task,
-          params.deadlineMs ?? 300_000,
+          params.deadlineMs ?? 600_000,
           params.action === "start",
           signal,
           onUpdate
