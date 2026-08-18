@@ -576,7 +576,7 @@ class CodexUsageView {
     footer.addSpacer();
     this.addText(
       footer,
-      this.formatDate(usage.resetAt, "MM-dd HH:mm"),
+      this.formatResetRemaining(usage.resetAt),
       Font.semiboldSystemFont(10),
       this.colors.primary,
     );
@@ -643,6 +643,23 @@ class CodexUsageView {
     formatter.timeZone = this.settings.timeZone;
     formatter.dateFormat = format;
     return formatter.string(new Date(timestamp * 1000));
+  }
+
+  formatResetRemaining(timestamp) {
+    if (!Number.isFinite(timestamp) || timestamp <= 0) return "--";
+
+    const remainingMs = timestamp * 1000 - Date.now();
+    if (remainingMs <= 0) return "now";
+
+    const remainingHours = Math.floor(remainingMs / (60 * 60 * 1000));
+    if (remainingHours < 1) return "<1h";
+
+    const days = Math.floor(remainingHours / 24);
+    const hours = remainingHours % 24;
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    return parts.join(" ");
   }
 
   formatNumber(value) {
