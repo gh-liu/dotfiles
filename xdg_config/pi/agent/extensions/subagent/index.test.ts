@@ -542,7 +542,7 @@ describe("subagent tool", () => {
     await vi.waitFor(() => expect(env.fake.controllers[0].starts).toHaveLength(2));
     expect(env.fake.controllers[0].starts[1].options).toMatchObject({
       operationId: "queued",
-      deadlineMs: 300_000,
+      deadlineMs: 600_000,
       workOrder: { goal: "Next" },
     });
     expect((await env.invoke({ action: "status", id: runId })).details).toMatchObject({
