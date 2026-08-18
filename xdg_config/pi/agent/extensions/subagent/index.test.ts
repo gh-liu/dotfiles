@@ -177,7 +177,11 @@ function setup(options: { autoAccept?: boolean; ids?: string[] } = {}) {
     idFactory: () => ids.shift()!,
   });
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
-    "tool-call", params as never, undefined, undefined, context(root),
+    "tool-call",
+    ((params.action === "run" || params.action === "start") && params.deadlineMs === undefined
+      ? { ...params, deadlineMs: 600_000 }
+      : params) as never,
+    undefined, undefined, context(root),
   );
   return { root, agents, fake, extension, invoke };
 }
@@ -195,9 +199,21 @@ describe("subagent tool", () => {
     const env = setup();
     expect(env.extension.getTool().parameters).toMatchObject({ type: "object" });
     expect(env.extension.getTool().parameters).not.toHaveProperty("anyOf");
+    expect((env.extension.getTool().parameters as { properties: { deadlineMs: object } }).properties.deadlineMs)
+      .not.toHaveProperty("default");
     expect(await env.invoke({ action: "run" })).toMatchObject({
       isError: true,
       details: { error: "agent is required for subagent run" },
+    });
+    expect(await env.extension.getTool().execute(
+      "tool-call",
+      { action: "run", agent: "scout", task: "Inspect" } as never,
+      undefined,
+      undefined,
+      context(env.root),
+    )).toMatchObject({
+      isError: true,
+      details: { error: "deadlineMs is required for subagent run" },
     });
     expect(await env.invoke({ action: "send", id: "runtime", mode: "steer", message: "redirect" })).toMatchObject({
       isError: true,
@@ -230,6 +246,7 @@ describe("subagent tool", () => {
       expect.stringContaining("Use these labels: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff"),
       expect.stringContaining("Omit cwd to use the parent's current working directory"),
       expect.stringContaining("Every subagent call must include action"),
+      expect.stringContaining("estimate how long that specific task should take"),
       expect.stringContaining("separate action:run calls in the same assistant turn"),
       expect.stringContaining("For independent review work"),
       expect.stringContaining("Treat a subagent result as a handoff, not proof"),
@@ -738,7 +755,7 @@ describe("subagent tool", () => {
     });
     const starting = extension.getTool().execute(
       "tool-call",
-      { action: "start", agent: "scout", task: "Must not start" },
+      { action: "start", agent: "scout", task: "Must not start", deadlineMs: 30_000 },
       undefined,
       undefined,
       context(root),
@@ -772,7 +789,7 @@ describe("subagent tool", () => {
     let shutdown: Promise<void> | undefined;
     const starting = extension.getTool().execute(
       "tool-call",
-      { action: "start", agent: "scout", task: "Must not start" },
+      { action: "start", agent: "scout", task: "Must not start", deadlineMs: 30_000 },
       undefined,
       () => { shutdown ??= extension.shutdown(); },
       context(root),
@@ -878,7 +895,7 @@ describe("subagent tool", () => {
     });
     const started = await extension.getTool().execute(
       "tool-call",
-      { action: "start", agent: agentName, task: "Inspect" },
+      { action: "start", agent: agentName, task: "Inspect", deadlineMs: 30_000 },
       undefined,
       undefined,
       context(root),
