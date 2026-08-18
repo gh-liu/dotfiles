@@ -8,6 +8,7 @@
 
 const SETTINGS = Object.freeze({
   usageUrl: "https://chatgpt.com/backend-api/wham/usage",
+  resetsCreditsUrl: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits",
   authBaseUrl: "https://auth.openai.com",
   clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
   credentialsKey: "com.liu.scriptable.codex.credentials",
@@ -20,6 +21,8 @@ const SETTINGS = Object.freeze({
   deviceAuthTimeoutMs: 15 * 60 * 1000,
   progressBarWidth: 120,
   progressBarHeight: 6,
+  // Remaining percent below this threshold is rendered in red.
+  lowUsageThresholdPercent: 20,
 });
 
 const RUNTIME = Object.freeze({
@@ -37,6 +40,7 @@ const COLORS = Object.freeze({
   usage: dynamicColor("059669", "34d399"),
   resets: dynamicColor("2563eb", "60a5fa"),
   error: dynamicColor("dc2626", "f87171"),
+  danger: dynamicColor("dc2626", "f87171"),
 });
 
 // Infrastructure
@@ -399,20 +403,84 @@ class CodexUsageClient {
     }
 
     const payload = response.payload || {};
-    const rateLimit = payload.rate_limit || {};
-    const primaryWindow = rateLimit.primary_window || {};
-    if (typeof primaryWindow.used_percent !== "number") {
+    const windows = this.parseWindows(payload.rate_limit || {});
+    if (!windows.fiveHour && !windows.weekly) {
       throw new Error("Codex API response does not contain usage data.");
     }
 
     const credits = payload.rate_limit_reset_credits || {};
     const availableCount = Number(credits.available_count || 0);
 
+    const mainWindow = windows.weekly || windows.fiveHour;
+    const resetsExpireAt = await this.fetchEarliestResetExpiry(headers);
+
     return {
-      remainingPercent: Math.min(Math.max(100 - primaryWindow.used_percent, 0), 100),
-      resetAt: Number(primaryWindow.reset_at || 0),
+      weekly: windows.weekly,
+      fiveHour: windows.fiveHour,
+      remainingPercent: mainWindow ? mainWindow.remainingPercent : 0,
+      resetAt: mainWindow ? mainWindow.resetAt : 0,
       availableResets: Number.isFinite(availableCount) ? Math.max(0, availableCount) : 0,
+      resetsExpireAt,
     };
+  }
+
+  parseWindows(rateLimit) {
+    const classify = (raw) => {
+      if (!raw || typeof raw.used_percent !== "number") return null;
+      const seconds = Number(raw.limit_window_seconds);
+      const window = {
+        remainingPercent: Math.min(Math.max(100 - raw.used_percent, 0), 100),
+        resetAt: Number(raw.reset_at || 0),
+        kind: null,
+      };
+      if (Number.isFinite(seconds) && seconds > 0) {
+        if (seconds <= 6 * 3600) window.kind = "fiveHour";
+        else if (seconds >= 6 * 24 * 3600) window.kind = "weekly";
+      }
+      return window;
+    };
+
+    const primary = classify(rateLimit.primary_window);
+    const secondary = classify(rateLimit.secondary_window);
+
+    const windows = { fiveHour: null, weekly: null };
+    for (const window of [primary, secondary]) {
+      if (window && window.kind && !windows[window.kind]) {
+        windows[window.kind] = window;
+      }
+    }
+    // Windows without a recognizable duration default by position:
+    // primary is the short (5h) window, secondary the weekly window.
+    if (primary && !primary.kind) {
+      if (!windows.fiveHour) windows.fiveHour = primary;
+      else if (!windows.weekly) windows.weekly = primary;
+    }
+    if (secondary && !secondary.kind) {
+      if (!windows.weekly) windows.weekly = secondary;
+      else if (!windows.fiveHour) windows.fiveHour = secondary;
+    }
+    return windows;
+  }
+
+  async fetchEarliestResetExpiry(headers) {
+    try {
+      const response = await this.http.getJson(this.settings.resetsCreditsUrl, headers);
+      if (!response.ok) return 0;
+      const payload = response.payload || {};
+      const credits = Array.isArray(payload.credits) ? payload.credits : [];
+      let earliest = 0;
+      for (const credit of credits) {
+        if (!credit || credit.status !== "available") continue;
+        if (typeof credit.expires_at !== "string") continue;
+        const ms = Date.parse(credit.expires_at);
+        if (!Number.isFinite(ms)) continue;
+        const seconds = ms / 1000;
+        if (!earliest || seconds < earliest) earliest = seconds;
+      }
+      return earliest;
+    } catch (_) {
+      return 0;
+    }
   }
 }
 
@@ -532,41 +600,37 @@ class CodexUsageView {
 
     widget.addSpacer(10);
 
-    const metrics = widget.addStack();
-    metrics.centerAlignContent();
+    const weekly = usage.weekly || null;
+    const fiveHour = usage.fiveHour || null;
 
-    const usageColumn = metrics.addStack();
-    usageColumn.layoutVertically();
-    this.addText(
-      usageColumn,
-      `${this.formatNumber(usage.remainingPercent)}%`,
-      Font.boldSystemFont(32),
-      this.colors.usage,
+    const rings = widget.addStack();
+    rings.centerAlignContent();
+    const fiveHourRing = rings.addImage(
+      this.createRingImage(fiveHour, this.colors.resets, "5h"),
     );
-    this.addText(usageColumn, "1w remaining", Font.mediumSystemFont(10), this.colors.secondary);
-
-    metrics.addSpacer();
-
-    const resetColumn = metrics.addStack();
-    resetColumn.layoutVertically();
-    const resetCount = this.addText(
-      resetColumn,
-      this.formatNumber(usage.availableResets),
-      Font.boldSystemFont(26),
-      this.colors.resets,
+    fiveHourRing.size = new Size(44, 56);
+    rings.addSpacer();
+    const weeklyRing = rings.addImage(
+      this.createRingImage(weekly, this.colors.usage, "1w"),
     );
-    resetCount.rightAlignText();
-    const resetLabel = this.addText(
-      resetColumn,
-      "resets",
+    weeklyRing.size = new Size(44, 56);
+
+    widget.addSpacer(6);
+
+    const resetsRow = widget.addStack();
+    resetsRow.addSpacer();
+    const resetsText = this.addText(
+      resetsRow,
+      this.formatResetsSummary(usage),
       Font.mediumSystemFont(10),
       this.colors.secondary,
     );
-    resetLabel.rightAlignText();
+    resetsText.centerAlignText();
+    resetsRow.addSpacer();
 
-    widget.addSpacer(8);
-    this.addProgressBar(widget, usage.remainingPercent);
-    widget.addSpacer();
+    widget.addSpacer(4);
+
+    const footerResetAt = weekly ? weekly.resetAt : fiveHour ? fiveHour.resetAt : 0;
 
     const footer = widget.addStack();
     footer.backgroundColor = this.colors.secondaryBackground;
@@ -576,7 +640,7 @@ class CodexUsageView {
     footer.addSpacer();
     this.addText(
       footer,
-      this.formatResetRemaining(usage.resetAt),
+      this.formatResetRemaining(footerResetAt),
       Font.semiboldSystemFont(10),
       this.colors.primary,
     );
@@ -585,23 +649,71 @@ class CodexUsageView {
     return widget;
   }
 
-  addProgressBar(container, percent) {
-    const width = this.settings.progressBarWidth;
-    const height = this.settings.progressBarHeight;
-    const progress = Math.min(Math.max(percent, 0), 100);
+  windowColor(window, baseColor) {
+    if (!window) return this.colors.secondary;
+    return window.remainingPercent < this.settings.lowUsageThresholdPercent
+      ? this.colors.danger
+      : baseColor;
+  }
 
-    const track = container.addStack();
-    track.size = new Size(width, height);
-    track.backgroundColor = this.colors.secondaryBackground;
-    track.cornerRadius = height / 2;
+  createRingImage(window, baseColor, label) {
+    // Render at 3x resolution so the ring and text stay sharp on Retina
+    // displays; the widget shows the image at 44x56 pt.
+    const scale = 3;
+    const imageSize = new Size(44 * scale, 56 * scale);
+    const ringSize = 44 * scale;
+    const ringWidth = 5 * scale;
+    const ctx = new DrawContext();
+    ctx.size = imageSize;
+    ctx.opaque = false;
 
-    if (progress > 0) {
-      const fill = track.addStack();
-      fill.size = new Size(Math.max((width * progress) / 100, height), height);
-      fill.backgroundColor = this.colors.usage;
-      fill.cornerRadius = height / 2;
+    const centerX = imageSize.width / 2;
+    const centerY = ringSize / 2;
+    const radius = ringSize / 2 - ringWidth / 2 - 1;
+    const ringRect = new Rect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+
+    ctx.setStrokeColor(this.colors.secondaryBackground);
+    ctx.setLineWidth(ringWidth);
+    ctx.strokeEllipse(ringRect);
+
+    const color = this.windowColor(window, baseColor);
+    if (window) {
+      const progress = Math.min(Math.max(window.remainingPercent, 0), 100);
+      const segments = Math.max(Math.ceil((progress / 100) * 48), 1);
+      const sweep = (progress / 100) * 2 * Math.PI;
+      ctx.setStrokeColor(color);
+      ctx.setLineWidth(ringWidth);
+      const path = new Path();
+      for (let i = 0; i <= segments; i++) {
+        const angle = -Math.PI / 2 + (i / segments) * sweep;
+        const point = new Point(
+          centerX + radius * Math.cos(angle),
+          centerY + radius * Math.sin(angle),
+        );
+        if (i === 0) path.move(point);
+        else path.addLine(point);
+      }
+      ctx.addPath(path);
+      ctx.strokePath();
     }
-    track.addSpacer();
+
+    const value = window ? `${this.formatNumber(window.remainingPercent)}%` : "--";
+    ctx.setFont(Font.boldSystemFont(13 * scale));
+    ctx.setTextColor(color);
+    ctx.setTextAlignedCenter();
+    ctx.drawTextInRect(value, new Rect(0, centerY - 7 * scale, imageSize.width, 16 * scale));
+
+    ctx.setFont(Font.mediumSystemFont(9 * scale));
+    ctx.setTextColor(this.colors.secondary);
+    ctx.drawTextInRect(label, new Rect(0, ringSize + 2 * scale, imageSize.width, 10 * scale));
+
+    return ctx.getImage();
+  }
+
+  formatResetsSummary(usage) {
+    const count = this.formatNumber(usage.availableResets);
+    const expiring = this.formatResetsIn(usage.resetsExpireAt);
+    return expiring === "--" ? `resets ${count}` : `resets ${count} · ${expiring}`;
   }
 
   createError(title, message) {
@@ -643,6 +755,12 @@ class CodexUsageView {
     formatter.timeZone = this.settings.timeZone;
     formatter.dateFormat = format;
     return formatter.string(new Date(timestamp * 1000));
+  }
+
+  formatResetsIn(timestamp) {
+    const remaining = this.formatResetRemaining(timestamp);
+    if (remaining === "--" || remaining === "now") return remaining;
+    return `in ${remaining}`;
   }
 
   formatResetRemaining(timestamp) {
