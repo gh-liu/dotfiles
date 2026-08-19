@@ -233,24 +233,22 @@ describe("subagent tool", () => {
     expect(env.extension.getTool().description).toContain("before loading a parent research workflow or making parent web searches");
     expect(env.extension.getTool().description).toContain("without repeating the same searches or reads");
     expect(env.extension.getTool().description).toContain("parent self-review cannot satisfy independence");
-    expect(env.extension.getTool().promptSnippet).toContain("route every explicitly independent review");
+    expect(env.extension.getTool().promptSnippet).toContain("Default to delegation");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
-      expect.stringContaining("Before any read, search, or review tool call"),
-      expect.stringContaining("Otherwise do simple work directly"),
+      expect.stringContaining("Mandatory delegation before direct work"),
+      expect.stringContaining("Default to delegation for implementation-class work"),
       expect.stringContaining("catalog description and declared capabilities"),
-      expect.stringContaining("Delegate source-heavy external research"),
-      expect.stringContaining("before loading a parent research skill or making parent web searches"),
-      expect.stringContaining("parent reviewing its own work is not independent"),
+      expect.stringContaining("multi-source external research"),
+      expect.stringContaining("parent web searches"),
+      expect.stringContaining("parent self-review is not independent"),
       expect.stringContaining("decompose the bounded work instead of forwarding the raw user prompt"),
-      expect.stringContaining("Every subagent task must be self-contained"),
-      expect.stringContaining("Use these labels: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff"),
-      expect.stringContaining("Omit cwd to use the parent's current working directory"),
-      expect.stringContaining("Every subagent call must include action"),
-      expect.stringContaining("estimate how long that specific task should take"),
-      expect.stringContaining("separate action:run calls in the same assistant turn"),
-      expect.stringContaining("For independent review work"),
+      expect.stringContaining("the child has fresh context"),
+      expect.stringContaining("Outcome, Scope, Starting evidence"),
+      expect.stringContaining("action:run for bounded one-shots"),
+      expect.stringContaining("deadlineMs"),
+      expect.stringContaining("separate action:run calls in the same turn"),
       expect.stringContaining("Treat a subagent result as a handoff, not proof"),
-      expect.stringContaining("do not repeat the same searches or re-read every cited file"),
+      expect.stringContaining("do not repeat the same searches"),
     ]));
     expect(options).toMatchObject({
       cwd: canonicalRoot,

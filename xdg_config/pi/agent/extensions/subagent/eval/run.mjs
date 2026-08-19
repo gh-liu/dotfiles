@@ -48,6 +48,7 @@ Selection and execution:
   --scenario <id[,id]>   Run only selected scenarios (repeatable)
   --repeat <n>           Override every selected scenario's repeat count
   --model <provider/id>  Parent Pi model (default: openai-codex/gpt-5.6-luna)
+  --thinking <level>     Parent Pi thinking level: off, minimal, low, medium, high, xhigh, max
   --jobs <n>             Concurrent isolated Pi processes (default: 1)
   --timeout <seconds>    Timeout per Pi process (default: 300)
 
@@ -67,6 +68,7 @@ function parseArguments(argv) {
     scenarioIds: [],
     repeat: null,
     model: process.env.PI_SUBAGENT_EVAL_MODEL ?? "openai-codex/gpt-5.6-luna",
+    thinking: null,
     jobs: 1,
     timeoutMs: 300_000,
     report: null,
@@ -93,6 +95,9 @@ function parseArguments(argv) {
       index += 1;
     } else if (argument === "--model") {
       options.model = value(argument, index);
+      index += 1;
+    } else if (argument === "--thinking") {
+      options.thinking = value(argument, index);
       index += 1;
     } else if (argument === "--jobs") {
       options.jobs = Number.parseInt(value(argument, index), 10);
@@ -213,7 +218,8 @@ function runPi(options, cwd, prompt) {
     const startedAt = Date.now();
     const child = spawn(
       "pi",
-      ["--mode", "json", "--print", "--no-session", "--approve", "--model", options.model, prompt],
+      ["--mode", "json", "--print", "--no-session", "--approve", "--model", options.model,
+        ...(options.thinking ? ["--thinking", options.thinking] : []), prompt],
       {
         cwd,
         env: {
@@ -450,7 +456,7 @@ async function main() {
   }
   const selected = selectedScenarios(options);
   const plan = executionPlan(options, selected);
-  console.log(`Mode: ${options.mode}; strict: ${options.strict}; model: ${options.model}`);
+  console.log(`Mode: ${options.mode}; strict: ${options.strict}; model: ${options.model}${options.thinking ? `; thinking: ${options.thinking}` : ""}`);
   for (const scenario of selected) {
     const count = plan.filter((item) => item.scenario.id === scenario.id).length;
     console.log(`- ${scenario.id} x${count}: ${scenario.description}`);
