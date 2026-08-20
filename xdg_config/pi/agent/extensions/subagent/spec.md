@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-20 — closed spec gaps: runtime snapshot model/thinking + activeOperation, result envelope enrichment, spawn env/args pinning, truncation markers, settings overrides
+- Updated: 2026-08-20 — closed spec gaps + idle-only follow_up: runtime snapshot model/thinking, result enrichment, spawn pinning, truncation markers, no settings overrides, no queue
 
 ## 1. Background
 
@@ -224,12 +224,13 @@ type RuntimeState =
   | "crashed";
 
 type OperationState =
-  | "queued"
   | "running"
   | "completed"
   | "failed"
   | "interrupted"
   | "cancelled";
+
+// `queued`/`cancelled-before-submit` was removed in the idle-only simplification: `follow_up` while `running` now fails fast with conflict instead of queueing. `cancelled` remains only as a terminal state for future use.
 
 interface RuntimeSnapshot {
   runId: string;
@@ -257,7 +258,6 @@ interface OperationSnapshot {
   status: OperationState;
   /** Bounded human-readable task context for status UI and diagnostics. */
   task: string;
-  queuedAt?: number;
   startedAt?: number;
   finishedAt?: number;
   result?: SubagentResult;
@@ -277,13 +277,11 @@ Required invariants:
   A runtime may alternate between `idle` and `running` by creating new
   operations; an operation's state is monotonic and it never runs twice.
 - `waiting` is an observer action, not runtime or operation state.
-- `close` atomically enters `closing`, rejects new operations, cancels queued
-  operations, and starts process cleanup.
+- `close` atomically enters `closing`, rejects new operations, and starts process cleanup.
 - Only authoritative process exit/close events move `closing` to `closed`.
   Unexpected exit moves the runtime to `crashed` and releases all reservations.
 - `interrupt` targets an expected operation and does not close the runtime.
-- A queued operation cancelled before Pi accepts it moves to `cancelled` and has
-  no `SubagentResult`; `interrupted` is reserved for an accepted RPC operation.
+- `interrupted` is reserved for an accepted RPC operation; `cancelled` is retained only for future use and currently has no producer.
 - Pi turn boundaries are observations used to reduce events; they do not replace
   operation identity.
 
@@ -594,10 +592,7 @@ Semantics:
 - `status`: return a bounded snapshot containing a monotonic `revision`, runtime
   state, active operation ID, and last settled operation; never poll internally.
 - `send(..., mode: "follow_up")`: create a new operation. An idle runtime submits
-  it immediately; a running runtime accepts at most one `queued` operation and
-  submits its RPC `prompt` only after the active operation authoritatively
-  settles. The execution deadline starts when the RPC prompt is submitted, not
-  while queued. Pi's native follow-up queue is not used because it lacks the
+  it immediately; a running runtime returns `{ accepted:false, conflict:true }` (fail-fast, no queue). The execution deadline starts when the RPC prompt is submitted. Pi's native follow-up queue is not used because it lacks the
   per-turn correlation required by `wait`, deadlines, and stored results.
 - `send(..., mode: "steer")`: attach a control message to the active operation;
   it does not create a new operation or independent settlement. The caller must
@@ -610,8 +605,7 @@ Semantics:
 - `interrupt`: request abort only when `expectedOperationId` is still active.
   A mismatch returns a conflict/no-op, preventing a late abort from targeting a
   later operation. The authoritative settle event determines final outcome.
-- `close`: idempotently enter `closing`, reject new input, cancel queued
-  operations, terminate the process tree, release slots after authoritative
+- `close`: idempotently enter `closing`, reject new input, terminate the process tree, release slots after authoritative
   process exit, and retain transcript and operation results. Repeated calls
   return the stored state.
 
@@ -628,14 +622,13 @@ The current implementation exposes `list`, `run`, `start`, `status`, `send`,
 `wait`, `interrupt`, and `close`. Lifecycle actions identify a persistent
 runtime by `runId` and a turn by `operationId`. `start` keeps one RPC process,
 session, and transcript warm after its initial operation. A runtime accepts
-sequential idle follow-ups, one follow-up queued behind active work, and guarded
-steering of its accepted active operation. `run` remains a one-shot convenience
+sequential idle follow-ups and guarded steering of its accepted active operation (running `follow_up` returns conflict, no queue). `run` remains a one-shot convenience
 action and closes its runtime after settlement.
 
 Implemented today:
 
 - Reusable RPC runtimes with prompt-acceptance and `agent_settled` boundaries.
-- Idle and single-slot queued follow-up operations in the same process and session.
+- Idle follow-up operations in the same process and session (running returns conflict, no queue).
 - Active steering with an expected-operation guard and no extra operation result.
 - Runtime/operation identity, monotonic in-memory revisions, and guarded interrupts.
 - RPC `abort` for operation interrupt/deadline without closing a healthy runtime.
@@ -643,9 +636,8 @@ Implemented today:
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
 - Bounded in-memory runtime and operation tracking enriched with effective `model`/`thinking` (stripped) in snapshots and serialized results.
-- Effective discovery merges `settings.json` `subagents[agent].{model,thinking,description}` overrides after `agents/*.md` file discovery; `list` and `run`/`start` both resolve the merged view and `startupCatalog` is bounded (16k/200).
-- Bounded parent completion notifications for each submitted persistent operation;
-  queued operations cancelled by close or shutdown do not notify.
+- Discovery is file-based from `agents/*.md` (Markdown is the single source of truth; no `settings.json` overrides).
+- Bounded parent completion notifications for each submitted persistent operation.
 - Compact runtime UI with bounded task previews, reduced live progress, short
   collapsed identifiers, and full expanded completion summaries.
 
@@ -876,15 +868,14 @@ configuration surface may lower them but must not disable them.
 - Partial-line and split UTF-8 JSONL decoding.
 - Idempotent cleanup and timer/listener removal.
 - Result-envelope ownership and outcome mapping.
-- Queued-operation cancellation without a fabricated interrupted result.
+- Fail-fast on running follow_up (no queue) without a fabricated result.
 
 ### Integration contracts
 
 - Spawn a read-only child and receive a final result.
 - Stream child tool activity without polluting parent-visible output.
 - Abort a targeted operation and retain the child session.
-- Send an idle follow-up to a persistent worker.
-- Queue one follow-up behind active work and submit it after settlement.
+- Send an idle follow-up to a persistent worker (running returns conflict).
 - Steer the expected active operation without creating a second operation.
 - Close a worker and verify its process exits and slot is released.
 - Preserve transcript after close.
