@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { VERSION } from "@earendil-works/pi-coding-agent";
 import { boundText, redactSecrets } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentController, SubagentExecutor, SubagentOperation, SubagentResult, SubagentRunOptions } from "./protocol.ts";
+import type { SubagentController, SubagentOperation, SubagentResult, SubagentRunOptions } from "./protocol.ts";
 
 export interface RpcSubagentConfig {
   command?: string;
@@ -602,7 +602,6 @@ export async function createRpcSubagentController(
       void resultPromise.catch((error) => accepted.reject(error instanceof Error ? error : new Error(String(error))));
       return { accepted: accepted.promise, result: resultPromise };
     },
-    submit(options): Promise<SubagentResult> { return this.start(options).result; },
     async steer(expectedOperationId, message): Promise<boolean> {
       if (activeOperationId !== expectedOperationId || !active || !activeAccepted) return false;
       await request(expectedOperationId, "steer", { message });
@@ -612,18 +611,19 @@ export async function createRpcSubagentController(
       if (activeOperationId !== expectedOperationId || !abortActive) return false;
       return abortActive("Subagent operation interrupted by controller");
     },
+    submit(options: SubagentRunOptions): Promise<SubagentResult> { return this.start(options).result; },
     close,
   };
 }
 
-export function createRpcSubagentExecutor(config: RpcSubagentConfig = {}): SubagentExecutor {
+export function createRpcSubagentExecutor(config: RpcSubagentConfig = {}): (options: SubagentRunOptions) => Promise<SubagentResult> {
   return async (options) => {
     let controller: RpcSubagentController;
     try {
       controller = await createRpcSubagentController(options, config);
     } catch (error) {
       if (error instanceof SubagentCancellationError) throw error;
-      const configured = { ...options, ...config };
+      const configured = { ...options, ...config } as RpcOptions;
       return result(
         configured,
         "failed",
@@ -635,7 +635,9 @@ export function createRpcSubagentExecutor(config: RpcSubagentConfig = {}): Subag
     }
     let value: SubagentResult;
     try {
-      value = await controller.submit(options);
+      const op = controller.start(options);
+      await op.accepted;
+      value = await op.result;
     } catch (error) {
       const operationMessage = error instanceof Error ? error.message : String(error);
       let cleanupMessage: string | undefined;
@@ -647,12 +649,12 @@ export function createRpcSubagentExecutor(config: RpcSubagentConfig = {}): Subag
         ? `${operationMessage}\n\nChild process cleanup failed: ${cleanupMessage}`
         : operationMessage;
       if (error instanceof SubagentCancellationError) throw new SubagentCancellationError(summary);
-      return result({ ...options, ...config }, "failed", summary, controller.transcript, credentialValues({ ...options, ...config }), controller.processInstanceId);
+      return result({ ...options, ...config } as RpcOptions, "failed", summary, controller.transcript, credentialValues({ ...options, ...config } as RpcOptions), controller.processInstanceId);
     }
     try {
       await controller.close();
     } catch (error) {
-      return result({ ...options, ...config }, "failed", `Child process cleanup failed: ${error instanceof Error ? error.message : String(error)}`, value.transcript, credentialValues({ ...options, ...config }), controller.processInstanceId);
+      return result({ ...options, ...config } as RpcOptions, "failed", `Child process cleanup failed: ${error instanceof Error ? error.message : String(error)}`, value.transcript, credentialValues({ ...options, ...config } as RpcOptions), controller.processInstanceId);
     }
     if (value.status === "interrupted") throw new SubagentCancellationError(value.summary);
     return value;

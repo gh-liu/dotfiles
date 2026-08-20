@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getAgentDir, SettingsManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import { applyAgentOverrides, discoverUserAgents, type AgentDiscovery } from "./agents.ts";
+import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { boundText } from "./output.ts";
 import { assertSupportedPiVersion, createRpcSubagentController } from "./rpc-executor.ts";
@@ -32,7 +32,7 @@ interface SubagentExtensionOptions {
 }
 
 type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
-type OperationState = "queued" | "running" | "completed" | "failed" | "interrupted" | "cancelled";
+type OperationState = "running" | "completed" | "failed" | "interrupted" | "cancelled";
 
 interface OperationRecord {
   operationId: string;
@@ -40,7 +40,6 @@ interface OperationRecord {
   accepted: boolean;
   task: string;
   deadlineMs: number;
-  queuedAt?: number;
   startedAt?: number;
   finishedAt?: number;
   result?: SubagentResult;
@@ -61,7 +60,6 @@ interface RuntimeRecord {
   controller?: SubagentController;
   controllerReady: Promise<SubagentController>;
   activeOperationId?: string;
-  queuedOperationId?: string;
   lastSettled?: OperationRecord;
   operations: Map<string, OperationRecord>;
   closePromise?: Promise<void>;
@@ -117,64 +115,6 @@ const SubagentParameters = Type.Object({
   deadlineMs: deadline(),
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000, description: "Optional wait timeout" })),
 });
-
-function getEffectiveSettings(ctx: { cwd: string; isProjectTrusted(): boolean }): unknown {
-  try {
-    const manager: unknown = (SettingsManager as unknown as { create: (cwd: string, agentDir: string, opts: unknown) => unknown }).create(
-      ctx.cwd,
-      getAgentDir(),
-      { projectTrusted: ctx.isProjectTrusted() },
-    );
-    const m = manager as {
-      settings?: unknown;
-      getGlobalSettings?: () => unknown;
-      getProjectSettings?: () => unknown;
-    };
-    if (m.settings !== undefined) return m.settings;
-    const global = m.getGlobalSettings?.() ?? {};
-    const project = m.getProjectSettings?.() ?? {};
-    // Deep merge fallback: shallow merge objects with nested merge for subagents
-    if (
-      global &&
-      typeof global === "object" &&
-      project &&
-      typeof project === "object"
-    ) {
-      const g = global as Record<string, unknown>;
-      const p = project as Record<string, unknown>;
-      const merged: Record<string, unknown> = { ...g };
-      for (const [k, v] of Object.entries(p)) {
-        if (
-          v !== undefined &&
-          typeof v === "object" &&
-          !Array.isArray(v) &&
-          typeof g[k] === "object" &&
-          g[k] !== null &&
-          !Array.isArray(g[k])
-        ) {
-          merged[k] = { ...(g[k] as Record<string, unknown>), ...(v as Record<string, unknown>) };
-        } else if (v !== undefined) merged[k] = v;
-      }
-      return merged;
-    }
-    return {};
-  } catch {
-    return {};
-  }
-}
-
-function getEffectiveDiscovery(
-  base: AgentDiscovery,
-  ctx: { cwd: string; isProjectTrusted(): boolean },
-): AgentDiscovery {
-  try {
-    const settings = getEffectiveSettings(ctx);
-    return applyAgentOverrides(base, settings);
-  } catch (error) {
-    console.warn(`[subagent] failed to apply settings overrides: ${error}`);
-    return base;
-  }
-}
 
 function formatAgentCatalog(discovery: AgentDiscovery): string {
   const agents = discovery.agents.length === 0
@@ -272,7 +212,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     operationId: operation.operationId,
     status: operation.state,
     task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
-    ...(operation.queuedAt === undefined ? {} : { queuedAt: operation.queuedAt }),
     ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
     ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
     ...(operation.result === undefined ? {} : {
@@ -297,9 +236,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       operationId: runtime.activeOperationId,
       activeOperationId: runtime.activeOperationId,
       activeOperation: operationSnapshot(runtime.operations.get(runtime.activeOperationId)!),
-    }),
-    ...(runtime.queuedOperationId === undefined ? {} : {
-      queuedOperation: operationSnapshot(runtime.operations.get(runtime.queuedOperationId)!),
     }),
     ...(runtime.lastSettled === undefined ? {} : {
       lastSettledOperation: operationSnapshot(runtime.lastSettled),
@@ -377,8 +313,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       while (runtime.operations.size > 128) {
         const stale = [...runtime.operations.values()].find(
           (operation) => operation !== runtime.lastSettled
-            && operation.state !== "running"
-            && operation.state !== "queued",
+            && operation.state !== "running",
         );
         if (!stale) break;
         runtime.operations.delete(stale.operationId);
@@ -397,18 +332,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     if (suppressNotification && runtime.activeOperationId) {
       const operation = runtime.operations.get(runtime.activeOperationId);
       if (operation) operation.notifyOnSettle = false;
-    }
-    if (runtime.queuedOperationId) {
-      const queued = runtime.operations.get(runtime.queuedOperationId);
-      runtime.queuedOperationId = undefined;
-      if (queued && queued.state === "queued") {
-        queued.notifyOnSettle = false;
-        queued.state = "cancelled";
-        queued.error = "Subagent operation cancelled before submission because the runtime closed";
-        queued.finishedAt = Date.now();
-        queued.settle();
-        runtime.revision += 1;
-      }
     }
     if (runtime.closePromise) return runtime.closePromise;
     const wasCrashed = runtime.state === "crashed";
@@ -468,10 +391,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     notifyOnSettle: boolean,
     signal?: AbortSignal,
     onProgress?: (summary: string) => void,
-    queuedOperation?: OperationRecord,
   ): Promise<OperationRecord> => {
     let settle!: () => void;
-    const operation: OperationRecord = queuedOperation ?? {
+    const operation: OperationRecord = {
       operationId,
       state: "running",
       accepted: false,
@@ -481,8 +403,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       settled: new Promise<void>((resolve) => { settle = resolve; }),
       settle: () => settle(),
     };
-    if (!queuedOperation) runtime.operations.set(operationId, operation);
-    else runtime.revision += 1;
+    runtime.operations.set(operationId, operation);
     operation.state = "running";
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
@@ -517,21 +438,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (runtime.activeOperationId === operationId) {
         runtime.activeOperationId = undefined;
         runtime.lastSettled = operation;
-        const queuedId = runtime.queuedOperationId;
-        const queued = queuedId === undefined ? undefined : runtime.operations.get(queuedId);
-        if (runtime.state === "running" && queued?.state === "queued") {
-          runtime.queuedOperationId = undefined;
-          void beginOperation(
-            runtime,
-            queued.operationId,
-            queued.task,
-            queued.deadlineMs,
-            true,
-            undefined,
-            undefined,
-            queued,
-          ).catch(() => {});
-        } else if (runtime.state === "running") transition(runtime, "idle");
+        if (runtime.state === "running") transition(runtime, "idle");
       }
       operation.settle();
       prune();
@@ -564,7 +471,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Delegate bounded work to a registered user-defined Pi child with fresh isolated context and only its declared tools. Mandatory routing exceptions to direct parent work: when the user asks for an independent, fresh-eyes, or second-opinion review and a matching agent is registered, invoke it before reading or reviewing the target; parent self-review cannot satisfy independence. Likewise, delegate external research requiring multiple searches, freshness checks, or source assessment before loading a parent research workflow or making parent web searches; use this instead of chaining multiple parent web searches. Other strong uses are multi-file discovery, one specific high-impact decision, and separately owned implementation; default to delegation for implementation-class work (multi-file reads, cross-file impact analysis, batch edits, test runs, refactors) and keep only simple lookups, localized single-file edits, and routine validation direct. After a successful cited read-only handoff, synthesize it without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. Use one-shot runs by default; persistent runtimes support background completion, context-preserving follow-ups, one queued operation, and guarded steering. The parent owns task decomposition, decisions, conflict avoidance, result review, integration, and final verification.\n\n${startupCatalog}`,
+      `Delegate bounded work to a registered user-defined Pi child with fresh isolated context and only its declared tools. Mandatory routing exceptions to direct parent work: when the user asks for an independent, fresh-eyes, or second-opinion review and a matching agent is registered, invoke it before reading or reviewing the target; parent self-review cannot satisfy independence. Likewise, delegate external research requiring multiple searches, freshness checks, or source assessment before loading a parent research workflow or making parent web searches; use this instead of chaining multiple parent web searches. Other strong uses are multi-file discovery, one specific high-impact decision, and separately owned implementation; default to delegation for implementation-class work (multi-file reads, cross-file impact analysis, batch edits, test runs, refactors) and keep only simple lookups, localized single-file edits, and routine validation direct. After a successful cited read-only handoff, synthesize it without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. Use one-shot runs by default; persistent runtimes support background completion, context-preserving follow-ups while idle, and guarded steering. The parent owns task decomposition, decisions, conflict avoidance, result review, integration, and final verification.\n\n${startupCatalog}`,
     promptSnippet: "MANDATORY BEFORE any read/bash: explicitly independent/fresh-eyes/second-opinion review->reviewer (parent self-review is NOT independent); multi-source freshness/source assessment->researcher; multi-file discovery->scout; batch edits/test runs->worker; keep only single-file lookups direct; NEVER list, catalog is below",
     promptGuidelines: [
       "NEVER call subagent list — catalog is already in tool description below; use the agent name directly. Mandatory delegation before direct work: independent/fresh-eyes/second-opinion reviews (invoke the review agent before inspecting the target; parent self-review is not independent) and multi-source external research needing freshness or source assessment — NEVER run web_search yourself when researcher is available; invoke researcher first.",
@@ -580,15 +487,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if ((args as { action?: string }).action === "run" || (args as { action?: string }).action === "start") {
         const typed = args as { action: "run" | "start"; agent: string; model?: string; thinking?: string };
         if (typed.agent && typed.model === undefined && typed.thinking === undefined) {
-          // Best-effort: resolve effective model/thinking from registry + settings overrides.
-          // renderCall has no ctx, so try global+project settings via process.cwd() as fallback.
-          let found = registry.agents.find((candidate) => candidate.name === typed.agent);
+          const found = registry.agents.find((candidate) => candidate.name === typed.agent);
           if (found) {
-            try {
-              const effective = getEffectiveDiscovery(registry, { cwd: process.cwd(), isProjectTrusted: () => true });
-              const overridden = effective.agents.find((candidate) => candidate.name === typed.agent);
-              if (overridden) found = overridden;
-            } catch { /* keep base registry */ }
             const enriched = {
               ...typed,
               ...(found.model ? { model: stripModel(found.model) } : {}),
@@ -603,8 +503,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (params.action === "list") {
-        const base = discoverUserAgents(agentDirectory);
-        registry = getEffectiveDiscovery(base, ctx as unknown as { cwd: string; isProjectTrusted(): boolean });
+        registry = discoverUserAgents(agentDirectory);
         const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
         return {
           content: [{ type: "text" as const, text: catalog }],
@@ -694,7 +593,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           if (!operation) {
             return response({ error: `Unknown operation ${params.operationId} for runtime ${runtime.runId}` }, true);
           }
-          if (operation.state === "running" || operation.state === "queued") {
+          if (operation.state === "running") {
             if (params.timeoutMs === undefined) {
               await operation.settled;
             } else {
@@ -713,30 +612,11 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }
 
         if (shuttingDown) return response({ error: "Subagent runtime is shutting down" }, true);
-        if (runtime.state === "running" && runtime.queuedOperationId === undefined) {
-          let settle!: () => void;
-          const operationId = idFactory();
-          const operation: OperationRecord = {
-            operationId,
-            state: "queued",
-            accepted: false,
-            task: params.message,
-            deadlineMs: params.deadlineMs ?? 600_000,
-            queuedAt: Date.now(),
-            notifyOnSettle: true,
-            settled: new Promise<void>((resolve) => { settle = resolve; }),
-            settle: () => settle(),
-          };
-          runtime.operations.set(operationId, operation);
-          runtime.queuedOperationId = operationId;
-          runtime.revision += 1;
-          return response({ ...runtimeSnapshot(runtime), operationId, queued: true });
-        }
         if (runtime.state !== "idle") {
           return response({
             accepted: false,
             conflict: true,
-            error: runtime.queuedOperationId ? "Runtime follow-up queue is full" : "Runtime cannot accept a follow-up",
+            error: "Runtime cannot accept a follow-up",
             snapshot: runtimeSnapshot(runtime),
           }, true);
         }
@@ -772,11 +652,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (shuttingDown) {
         return response({ error: "Subagent runtime is shutting down; new runs are rejected." }, true);
       }
-      const effectiveRegistry = getEffectiveDiscovery(registry, ctx as unknown as { cwd: string; isProjectTrusted(): boolean });
-      const agent = effectiveRegistry.agents.find((candidate) => candidate.name === params.agent);
+      const agent = registry.agents.find((candidate) => candidate.name === params.agent);
       if (!agent) {
-        const available = effectiveRegistry.agents.map((candidate) => candidate.name).join(", ") || "none";
-        const invalid = effectiveRegistry.errors.find((error) => error.filePath.endsWith(`/${params.agent}.md`));
+        const available = registry.agents.map((candidate) => candidate.name).join(", ") || "none";
+        const invalid = registry.errors.find((error) => error.filePath.endsWith(`/${params.agent}.md`));
         return {
           content: [{
             type: "text" as const,
@@ -784,7 +663,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               ? `Agent definition is invalid: ${invalid.error}`
               : `Unknown user agent: ${params.agent}. Available agents: ${available}.`,
           }],
-          details: { discoveryErrors: effectiveRegistry.errors },
+          details: { discoveryErrors: registry.errors },
           isError: true,
         };
       }

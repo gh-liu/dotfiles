@@ -64,39 +64,6 @@ function oneLine(text: string, maxCharacters = 160): string {
     : `${normalized.slice(0, maxCharacters - 1)}…`;
 }
 
-export function renderSubagentCompletion(
-  message: { content: unknown; details?: SubagentCompletionDetails },
-  { expanded, outputPad }: { expanded: boolean; outputPad: number },
-  theme: Theme,
-): Box {
-  const details = message.details;
-  const status = details?.status ?? "failed";
-  const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
-  const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
-  const agent = oneLine(formatAgentLabel(details?.agent ?? "subagent", details?.model, details?.thinking), 80);
-  const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""), 240);
-  let text = `${theme.fg(color, marker)} ${theme.bold(agent)} ${status}`;
-  if (!expanded && details?.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
-  if (!expanded && summary) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
-  if (expanded) {
-    if (details?.task) {
-      text += `\n${theme.fg("muted", `  task: ${oneLine(details.task, 240)}`)}`;
-    }
-    const expandedSummary = details?.summary ?? (typeof message.content === "string" ? message.content : "");
-    for (const line of boundedLines(expandedSummary, 4_000, 20)) {
-      if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    }
-    if (details) {
-      text += `\n${theme.fg("muted", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
-    }
-  }
-  const bg: "customMessageBg" | "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" =
-    status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : status === "interrupted" ? "toolPendingBg" : "customMessageBg";
-  const box = new Box(outputPad, 0, (value) => theme.bg(bg, value));
-  box.addChild(new Text(text, 0, 0));
-  return box;
-}
-
 function boundedLines(text: string, maxCharacters: number, maxLines: number): string[] {
   const lines = text.replace(/\r\n?/g, "\n").trim().split("\n");
   const selected = lines.slice(0, maxLines);
@@ -106,6 +73,35 @@ function boundedLines(text: string, maxCharacters: number, maxLines: number): st
   const result = bounded.split("\n");
   if (truncated) result[result.length - 1] = `${result[result.length - 1]}…`;
   return result;
+}
+
+// --- Completion notification (custom message) ---
+export function renderSubagentCompletion(
+  message: { content: unknown; details?: SubagentCompletionDetails },
+  { expanded, outputPad }: { expanded: boolean; outputPad: number },
+  theme: Theme,
+): Box {
+  const details = message.details;
+  const status = details?.status ?? "failed";
+  const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
+  const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
+  const agentLabel = oneLine(formatAgentLabel(details?.agent ?? "subagent", details?.model, details?.thinking), 80);
+  const summaryRaw = details?.summary ?? (typeof message.content === "string" ? message.content : "");
+  const summaryOneLine = oneLine(summaryRaw, 240);
+  let text = `${theme.fg(color, marker)} ${theme.bold(agentLabel)} ${theme.fg(color, status)}`;
+  if (!expanded && details?.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
+  if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
+  if (expanded) {
+    if (details?.task) text += `\n${theme.fg("muted", `  task: ${oneLine(details.task, 240)}`)}`;
+    const lines = boundedLines(summaryRaw, 4_000, 20);
+    for (const line of lines) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
+    if (details) text += `\n${theme.fg("muted", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
+  }
+  const bg: "customMessageBg" | "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" =
+    status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : status === "interrupted" ? "toolPendingBg" : "customMessageBg";
+  const box = new Box(outputPad, 0, (value) => theme.bg(bg, value));
+  box.addChild(new Text(text, 0, 0));
+  return box;
 }
 
 function resultText(result: SubagentRenderResult): string {
@@ -120,32 +116,47 @@ function shownId(value: string, expanded: boolean): string {
   return expanded ? value : shortId(value);
 }
 
+// --- Call rendering ---
 export function renderSubagentCall(
   args: SubagentRenderArgs,
   theme: Theme,
   context?: SubagentRenderContext,
 ): Text {
-  if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
+  if (args.action === "list") return new Text(theme.fg("accent", "↻ refresh agents"), 0, 0);
   const expanded = context?.expanded ?? false;
   if ((args.action === "close" || args.action === "status") && !expanded) return new Text("", 0, 0);
   if (args.action === "close") return new Text(theme.fg("accent", `close · ${shownId(args.id, expanded)}`), 0, 0);
   if (args.action === "send") {
-    let text = theme.fg("accent", `${args.mode === "steer" ? "steer" : "follow up"} · ${shownId(args.id, expanded)}`);
-    for (const line of boundedLines(args.message, expanded ? 8_000 : 1_200, expanded ? 40 : 6)) {
-      text += `\n${theme.fg("dim", `  ${line}`)}`;
+    const isSteer = args.mode === "steer";
+    const icon = isSteer ? "↪" : "↷";
+    const label = isSteer ? "steer" : "follow-up";
+    let text = `${theme.fg("accent", `${icon} ${label}`)} ${theme.fg("muted", `· ${shownId(args.id, expanded)}`)}`;
+    // Hint deadline when provided
+    if (!isSteer && (args as { deadlineMs?: number }).deadlineMs) {
+      text += theme.fg("dim", ` · ${Math.round(((args as { deadlineMs?: number }).deadlineMs ?? 0) / 1000)}s`);
     }
+    const previewLines = boundedLines(args.message, expanded ? 8_000 : 1_200, expanded ? 40 : 6);
+    for (const line of previewLines) text += `\n${theme.fg(isSteer ? "warning" : "dim", `  ${line}`)}`;
     return new Text(text, 0, 0);
   }
   if (args.action !== "run" && args.action !== "start") {
-    const operation = args.action === "wait" ? ` · operation ${shownId(args.operationId, expanded)}` : "";
-    return new Text(theme.fg("accent", `${args.action} · ${shownId(args.id, expanded)}${operation}`), 0, 0);
+    const operation = args.action === "wait" ? ` · op ${shownId(args.operationId, expanded)}` : "";
+    const icon = args.action === "wait" ? "◷" : args.action === "interrupt" ? "■" : "●";
+    return new Text(theme.fg("accent", `${icon} ${args.action} · ${shownId(args.id, expanded)}${operation}`), 0, 0);
   }
-  let text = theme.fg("accent", theme.bold(formatAgentLabel(args.agent || "unknown", args.model, args.thinking)));
-  if (args.action === "start") text += theme.fg("muted", " · background");
-  if (args.cwd) text += theme.fg("muted", ` · ${args.cwd}`);
+  // run / start
+  const label = formatAgentLabel(args.agent || "unknown", args.model, args.thinking);
+  let text = theme.fg("toolTitle", theme.bold(label));
+  if (args.action === "start") text += theme.fg("muted", " · bg");
+  if (args.cwd) text += theme.fg("dim", ` · ${args.cwd}`);
+  if (args.deadlineMs) text += theme.fg("dim", ` · ${Math.round(args.deadlineMs / 1000)}s`);
   if (args.task) {
     const lines = boundedLines(args.task, expanded ? 8_000 : 1_200, expanded ? 40 : 6);
+    // Show task with subtle numbering for collapsed readability
     for (const line of lines) text += `\n${theme.fg("dim", `  ${line}`)}`;
+    if (lines.length === 6 && !expanded && args.task.split("\n").length > 6) {
+      // already truncated marker in boundedLines
+    }
   }
   return new Text(text, 0, 0);
 }
@@ -222,12 +233,16 @@ function resultMetadata(
   const entries: string[] = [];
   if (runId) entries.push(`run ${shownId(runId, expanded)}`);
   if (operationId && operationId !== activeOperationId && operationId !== queuedId) {
-    entries.push(`operation ${shownId(operationId, expanded)}`);
+    entries.push(`op ${shownId(operationId, expanded)}`);
   }
   if (activeOperationId) entries.push(`active ${shownId(activeOperationId, expanded)}`);
   if (activeTask) entries.push(`task ${activeTask}`);
   if (queuedId) entries.push(`queued ${shownId(queuedId, expanded)}`);
   if (queuedTask) entries.push(`queued task ${queuedTask}`);
+  // Transcript hint in expanded metadata
+  const transcriptPath = (details.transcript as { sessionPath?: string } | undefined)?.sessionPath
+    ?? (snapshotFrom(details).transcript as { sessionPath?: string } | undefined)?.sessionPath;
+  if (expanded && transcriptPath) entries.push(`transcript ${shortId(transcriptPath)}`);
   return entries.join(" · ");
 }
 
@@ -337,7 +352,7 @@ export function renderSubagentResult(
     if (lines.length > 20) text += `\n${theme.fg("muted", "… output truncated in UI")}`;
   } else if (isPartial && preview) {
     const previewColor = /(?:^| )failed;/.test(preview) ? "error" : /(?:^| )completed;/.test(preview) ? "success" : "dim";
-    text += theme.fg(previewColor, ` — ${preview}`);
+    text += theme.fg(previewColor as never, ` — ${preview}`);
   } else if (showOutput && preview) {
     if (status === "completed") text += `\n${theme.fg("dim", preview)}`;
     else text += theme.fg("dim", ` — ${preview}`);
