@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, SettingsManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
+import { applyAgentOverrides, discoverUserAgents, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { boundText } from "./output.ts";
 import { assertSupportedPiVersion, createRpcSubagentController } from "./rpc-executor.ts";
@@ -117,6 +117,64 @@ const SubagentParameters = Type.Object({
   deadlineMs: deadline(),
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000, description: "Optional wait timeout" })),
 });
+
+function getEffectiveSettings(ctx: { cwd: string; isProjectTrusted(): boolean }): unknown {
+  try {
+    const manager: unknown = (SettingsManager as unknown as { create: (cwd: string, agentDir: string, opts: unknown) => unknown }).create(
+      ctx.cwd,
+      getAgentDir(),
+      { projectTrusted: ctx.isProjectTrusted() },
+    );
+    const m = manager as {
+      settings?: unknown;
+      getGlobalSettings?: () => unknown;
+      getProjectSettings?: () => unknown;
+    };
+    if (m.settings !== undefined) return m.settings;
+    const global = m.getGlobalSettings?.() ?? {};
+    const project = m.getProjectSettings?.() ?? {};
+    // Deep merge fallback: shallow merge objects with nested merge for subagents
+    if (
+      global &&
+      typeof global === "object" &&
+      project &&
+      typeof project === "object"
+    ) {
+      const g = global as Record<string, unknown>;
+      const p = project as Record<string, unknown>;
+      const merged: Record<string, unknown> = { ...g };
+      for (const [k, v] of Object.entries(p)) {
+        if (
+          v !== undefined &&
+          typeof v === "object" &&
+          !Array.isArray(v) &&
+          typeof g[k] === "object" &&
+          g[k] !== null &&
+          !Array.isArray(g[k])
+        ) {
+          merged[k] = { ...(g[k] as Record<string, unknown>), ...(v as Record<string, unknown>) };
+        } else if (v !== undefined) merged[k] = v;
+      }
+      return merged;
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+function getEffectiveDiscovery(
+  base: AgentDiscovery,
+  ctx: { cwd: string; isProjectTrusted(): boolean },
+): AgentDiscovery {
+  try {
+    const settings = getEffectiveSettings(ctx);
+    return applyAgentOverrides(base, settings);
+  } catch (error) {
+    console.warn(`[subagent] failed to apply settings overrides: ${error}`);
+    return base;
+  }
+}
 
 function formatAgentCatalog(discovery: AgentDiscovery): string {
   const agents = discovery.agents.length === 0
@@ -504,14 +562,17 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (params.action === "list") {
-        registry = discoverUserAgents(agentDirectory);
+        const base = discoverUserAgents(agentDirectory);
+        registry = getEffectiveDiscovery(base, ctx as unknown as { cwd: string; isProjectTrusted(): boolean });
         const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
         return {
           content: [{ type: "text" as const, text: catalog }],
           details: {
-            agents: registry.agents.map(({ name, description }) => ({
+            agents: registry.agents.map(({ name, description, model, thinking }) => ({
               name,
               description: boundText(description, { maxCharacters: 500, maxLines: 8 }),
+              ...(model !== undefined ? { model } : {}),
+              ...(thinking !== undefined ? { thinking } : {}),
             })),
             discoveryErrors: registry.errors.map(({ filePath, error }) => ({
               filePath,
@@ -663,10 +724,11 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (shuttingDown) {
         return response({ error: "Subagent runtime is shutting down; new runs are rejected." }, true);
       }
-      const agent = registry.agents.find((candidate) => candidate.name === params.agent);
+      const effectiveRegistry = getEffectiveDiscovery(registry, ctx as unknown as { cwd: string; isProjectTrusted(): boolean });
+      const agent = effectiveRegistry.agents.find((candidate) => candidate.name === params.agent);
       if (!agent) {
-        const available = registry.agents.map((candidate) => candidate.name).join(", ") || "none";
-        const invalid = registry.errors.find((error) => error.filePath.endsWith(`/${params.agent}.md`));
+        const available = effectiveRegistry.agents.map((candidate) => candidate.name).join(", ") || "none";
+        const invalid = effectiveRegistry.errors.find((error) => error.filePath.endsWith(`/${params.agent}.md`));
         return {
           content: [{
             type: "text" as const,
@@ -674,7 +736,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               ? `Agent definition is invalid: ${invalid.error}`
               : `Unknown user agent: ${params.agent}. Available agents: ${available}.`,
           }],
-          details: { discoveryErrors: registry.errors },
+          details: { discoveryErrors: effectiveRegistry.errors },
           isError: true,
         };
       }

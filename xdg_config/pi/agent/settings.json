@@ -9,5 +9,19 @@
     "showTerminalProgress": true
   },
   "packages": [],
+  "subagents": {
+    "worker": {
+      "model": "opencode-go/muse-spark-1.2",
+      "thinking": "high"
+    },
+    "scout": {
+      "model": "opencode-go/muse-spark-1.2",
+      "thinking": "high"
+    },
+    "reviewer": {
+      "model": "opencode-go/muse-spark-1.2",
+      "thinking": "high"
+    }
+  },
   "theme": "dark"
 }
