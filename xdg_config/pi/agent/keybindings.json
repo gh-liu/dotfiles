@@ -16,6 +16,8 @@
     "ctrl+n"
   ],
   "app.models.toggleProvider": [],
+  "app.models.cycleForward": [],
+  "app.models.cycleBackward": [],
   "app.tree.foldOrUp": [
     "ctrl+left"
   ],
