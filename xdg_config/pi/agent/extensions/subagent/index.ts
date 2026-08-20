@@ -204,6 +204,11 @@ function createWorkOrder(task: string, cwd: string, projectGuidance: string[]): 
   };
 }
 
+function stripModel(model: string): string {
+  const slash = model.lastIndexOf("/");
+  return slash === -1 ? model : model.slice(slash + 1);
+}
+
 function serializeSubagentResult(result: SubagentResult): string {
   const maxCharacters = 32_000;
   let low = 0;
@@ -285,6 +290,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     runId: runtime.runId,
     revision: runtime.revision,
     agent: runtime.agent.name,
+    ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
     status: runtime.state,
     ...(runtime.activeOperationId === undefined ? {} : {
       operationId: runtime.activeOperationId,
@@ -326,10 +333,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     const agent = runtime.agent.name.length <= 80
       ? runtime.agent.name
       : `${runtime.agent.name.slice(0, 79)}…`;
+    const model = runtime.agent.model ? stripModel(runtime.agent.model) : undefined;
+    const thinking = runtime.agent.thinking;
     const details: SubagentCompletionDetails = {
       runId: runtime.runId,
       operationId: operation.operationId,
       agent,
+      ...(model ? { model } : {}),
+      ...(thinking ? { thinking } : {}),
       task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
       status: result?.status ?? "failed",
       summary: boundText(
@@ -531,11 +542,18 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     return operation;
   };
 
-  const operationResponse = (operation: OperationRecord) => {
+  const operationResponse = (operation: OperationRecord, runtime?: RuntimeRecord) => {
     if (operation.result) {
+      const enriched = runtime
+        ? {
+            ...operation.result,
+            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+            ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+          }
+        : operation.result;
       return {
-        content: [{ type: "text" as const, text: serializeSubagentResult(operation.result) }],
-        details: operation.result,
+        content: [{ type: "text" as const, text: serializeSubagentResult(enriched) }],
+        details: enriched,
         isError: operation.result.status === "failed",
       };
     }
@@ -558,7 +576,30 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ],
     executionMode: "parallel",
     parameters: SubagentParameters,
-    renderCall: renderSubagentCall,
+    renderCall: (args, theme, context) => {
+      if ((args as { action?: string }).action === "run" || (args as { action?: string }).action === "start") {
+        const typed = args as { action: "run" | "start"; agent: string; model?: string; thinking?: string };
+        if (typed.agent && typed.model === undefined && typed.thinking === undefined) {
+          // Best-effort: resolve effective model/thinking from registry + settings overrides.
+          // renderCall has no ctx, so try global+project settings via process.cwd() as fallback.
+          let found = registry.agents.find((candidate) => candidate.name === typed.agent);
+          if (found) {
+            try {
+              const effective = getEffectiveDiscovery(registry, { cwd: process.cwd(), isProjectTrusted: () => true });
+              const overridden = effective.agents.find((candidate) => candidate.name === typed.agent);
+              if (overridden) found = overridden;
+            } catch { /* keep base registry */ }
+            const enriched = {
+              ...typed,
+              ...(found.model ? { model: stripModel(found.model) } : {}),
+              ...(found.thinking ? { thinking: found.thinking } : {}),
+            };
+            return renderSubagentCall(enriched as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
+          }
+        }
+      }
+      return renderSubagentCall(args as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
+    },
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (params.action === "list") {
@@ -668,7 +709,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               if (!settled) return response({ reason: "timeout", snapshot: runtimeSnapshot(runtime) });
             }
           }
-          return operationResponse(operation);
+          return operationResponse(operation, runtime);
         }
 
         if (shuttingDown) return response({ error: "Subagent runtime is shutting down" }, true);
@@ -711,7 +752,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             onUpdate
               ? (summary) => onUpdate({
                   content: [{ type: "text", text: summary }],
-                  details: { runId: runtime.runId, operationId, agent: runtime.agent.name, status: "running" },
+                  details: {
+                    runId: runtime.runId,
+                    operationId,
+                    agent: runtime.agent.name,
+                    ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+                    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+                    status: "running",
+                  },
                 })
               : undefined,
           );
@@ -789,7 +837,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       try {
         onUpdate?.({
           content: [{ type: "text", text: "Starting isolated child…" }],
-          details: { runId, operationId, agent: agent.name, status: "starting" },
+          details: {
+            runId,
+            operationId,
+            agent: agent.name,
+            ...(agent.model ? { model: stripModel(agent.model) } : {}),
+            ...(agent.thinking ? { thinking: agent.thinking } : {}),
+            status: "starting",
+          },
         });
         runtime.controller = await runtime.controllerReady;
         if (shuttingDown || runtime.state !== "starting") {
@@ -805,14 +860,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           onUpdate
             ? (summary) => onUpdate({
                 content: [{ type: "text", text: summary }],
-                details: { runId, operationId, agent: agent.name, status: "running" },
+                details: {
+                  runId,
+                  operationId,
+                  agent: agent.name,
+                  ...(agent.model ? { model: stripModel(agent.model) } : {}),
+                  ...(agent.thinking ? { thinking: agent.thinking } : {}),
+                  status: "running",
+                },
               })
             : undefined,
         );
         if (params.action === "start") return response({ ...runtimeSnapshot(runtime), operationId });
         await operation.settled;
         await closeRuntime(runtime);
-        return operationResponse(operation);
+        return operationResponse(operation, runtime);
       } catch (error) {
         if (!runtime.closePromise) transition(runtime, "crashed");
         try {
