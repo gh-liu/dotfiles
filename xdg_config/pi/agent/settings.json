@@ -10,17 +10,25 @@
   },
   "packages": [],
   "subagents": {
+    "oracle": {
+      "model": "openai-codex/gpt-5.6-sol",
+      "thinking": "high"
+    },
     "worker": {
       "model": "opencode-go/muse-spark-1.2",
-      "thinking": "high"
+      "thinking": "xhigh"
     },
     "scout": {
       "model": "opencode-go/muse-spark-1.2",
-      "thinking": "high"
+      "thinking": "xhigh"
+    },
+    "researcher": {
+      "model": "opencode-go/muse-spark-1.2",
+      "thinking": "xhigh"
     },
     "reviewer": {
       "model": "opencode-go/muse-spark-1.2",
-      "thinking": "high"
+      "thinking": "xhigh"
     }
   },
   "theme": "dark"
