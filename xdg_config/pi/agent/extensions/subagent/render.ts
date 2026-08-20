@@ -3,10 +3,24 @@ import { Box, Text } from "@earendil-works/pi-tui";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
+function stripModel(model: string): string {
+  const parts = model.split("/");
+  return parts.pop() || model;
+}
+
+function formatAgentLabel(agent: string, model?: string, thinking?: string): string {
+  const parts = [agent];
+  if (model) parts.push(stripModel(model));
+  if (thinking) parts.push(thinking);
+  return parts.join(" · ");
+}
+
 export interface SubagentCompletionDetails {
   runId: string;
   operationId: string;
   agent: string;
+  model?: string;
+  thinking?: string;
   task: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
@@ -15,7 +29,7 @@ export interface SubagentCompletionDetails {
 
 type SubagentRenderArgs =
   | { action: "list" }
-  | { action: "run" | "start"; agent: string; task: string; cwd?: string; deadlineMs?: number }
+  | { action: "run" | "start"; agent: string; task: string; cwd?: string; deadlineMs?: number; model?: string; thinking?: string }
   | { action: "status"; id: string }
   | { action: "send"; id: string; mode: "follow_up"; message: string; deadlineMs?: number }
   | { action: "send"; id: string; mode: "steer"; message: string; expectedOperationId: string }
@@ -59,7 +73,7 @@ export function renderSubagentCompletion(
   const status = details?.status ?? "failed";
   const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
-  const agent = oneLine(details?.agent ?? "subagent", 80);
+  const agent = oneLine(formatAgentLabel(details?.agent ?? "subagent", details?.model, details?.thinking), 80);
   const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""));
   let text = `${theme.fg(color, marker)} ${theme.bold(agent)} ${status}`;
   if (!expanded && details?.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
@@ -123,7 +137,7 @@ export function renderSubagentCall(
     const operation = args.action === "wait" ? ` · operation ${shownId(args.operationId, expanded)}` : "";
     return new Text(theme.fg("accent", `${args.action} · ${shownId(args.id, expanded)}${operation}`), 0, 0);
   }
-  let text = theme.fg("accent", theme.bold(args.agent || "unknown"));
+  let text = theme.fg("accent", theme.bold(formatAgentLabel(args.agent || "unknown", args.model, args.thinking)));
   if (args.action === "start") text += theme.fg("muted", " · background");
   if (args.cwd) text += theme.fg("muted", ` · ${args.cwd}`);
   if (args.task) {
@@ -230,7 +244,10 @@ export function renderSubagentResult(
   const status = statusFrom(details);
   const action = context.args.action;
   const agent = stringField(details, "agent");
-  const subject = agent ? `${agent} ` : "";
+  const model = stringField(details, "model");
+  const thinking = stringField(details, "thinking");
+  const label = agent ? formatAgentLabel(agent, model, thinking) : undefined;
+  const subject = label ? `${label} ` : "";
   const task = stringField(details, "task");
   let text: string;
   if (isPartial) {
