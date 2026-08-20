@@ -74,10 +74,10 @@ export function renderSubagentCompletion(
   const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
   const agent = oneLine(formatAgentLabel(details?.agent ?? "subagent", details?.model, details?.thinking), 80);
-  const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""));
+  const summary = oneLine(details?.summary ?? (typeof message.content === "string" ? message.content : ""), 240);
   let text = `${theme.fg(color, marker)} ${theme.bold(agent)} ${status}`;
   if (!expanded && details?.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
-  if (!expanded && summary) text += theme.fg("dim", ` — ${oneLine(summary, 120)}`);
+  if (!expanded && summary) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
   if (expanded) {
     if (details?.task) {
       text += `\n${theme.fg("muted", `  task: ${oneLine(details.task, 240)}`)}`;
@@ -90,7 +90,9 @@ export function renderSubagentCompletion(
       text += `\n${theme.fg("muted", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
     }
   }
-  const box = new Box(outputPad, 0, (value) => theme.bg("customMessageBg", value));
+  const bg: "customMessageBg" | "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" =
+    status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : status === "interrupted" ? "toolPendingBg" : "customMessageBg";
+  const box = new Box(outputPad, 0, (value) => theme.bg(bg, value));
   box.addChild(new Text(text, 0, 0));
   return box;
 }
@@ -125,6 +127,7 @@ export function renderSubagentCall(
 ): Text {
   if (args.action === "list") return new Text(theme.fg("accent", "refresh agents"), 0, 0);
   const expanded = context?.expanded ?? false;
+  if ((args.action === "close" || args.action === "status") && !expanded) return new Text("", 0, 0);
   if (args.action === "close") return new Text(theme.fg("accent", `close · ${shownId(args.id, expanded)}`), 0, 0);
   if (args.action === "send") {
     let text = theme.fg("accent", `${args.mode === "steer" ? "steer" : "follow up"} · ${shownId(args.id, expanded)}`);
@@ -239,7 +242,7 @@ export function renderSubagentResult(
     : {};
   const detailOutput = typeof details.summary === "string" ? details.summary : errorFrom(details);
   const output = detailOutput ?? resultText(result);
-  const preview = oneLine(output, 160);
+  const preview = oneLine(output, 240);
   const state = context.state;
   const status = statusFrom(details);
   const action = context.args.action;
@@ -249,6 +252,10 @@ export function renderSubagentResult(
   const label = agent ? formatAgentLabel(agent, model, thinking) : undefined;
   const subject = label ? `${label} ` : "";
   const task = stringField(details, "task");
+  if (!expanded && status === "closed" && (action === "close" || action === "status")) {
+    stopSpinner(state);
+    return new Text("", 0, 0);
+  }
   let text: string;
   if (isPartial) {
     state.spinnerFrame ??= 0;
@@ -328,8 +335,12 @@ export function renderSubagentResult(
     const lines = output.split("\n");
     for (const line of lines.slice(0, 20)) text += `\n${theme.fg("dim", line)}`;
     if (lines.length > 20) text += `\n${theme.fg("muted", "… output truncated in UI")}`;
+  } else if (isPartial && preview) {
+    const previewColor = /(?:^| )failed;/.test(preview) ? "error" : /(?:^| )completed;/.test(preview) ? "success" : "dim";
+    text += theme.fg(previewColor, ` — ${preview}`);
   } else if (showOutput && preview) {
-    text += theme.fg("dim", ` — ${preview}`);
+    if (status === "completed") text += `\n${theme.fg("dim", preview)}`;
+    else text += theme.fg("dim", ` — ${preview}`);
   }
   return new Text(text, 0, 0);
 }

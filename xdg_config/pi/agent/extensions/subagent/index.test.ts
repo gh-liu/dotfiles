@@ -233,7 +233,7 @@ describe("subagent tool", () => {
     expect(env.extension.getTool().description).toContain("before loading a parent research workflow or making parent web searches");
     expect(env.extension.getTool().description).toContain("without repeating the same searches or reads");
     expect(env.extension.getTool().description).toContain("parent self-review cannot satisfy independence");
-    expect(env.extension.getTool().promptSnippet).toContain("MANDATORY BEFORE reading target");
+    expect(env.extension.getTool().promptSnippet).toContain("MANDATORY BEFORE any read/bash");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
       expect.stringContaining("Mandatory delegation before direct work"),
       expect.stringContaining("Default to delegation for implementation-class work"),
@@ -321,7 +321,7 @@ describe("subagent tool", () => {
       { expanded: false, isPartial: true }, theme,
       { args: { action: "run", agent: "scout", task: "Inspect" }, isError: false, state: partialState, invalidate: vi.fn() },
     ).render(200).join("\n");
-    expect(partial.trim()).toBe("⠋ — grep completed; continuing…");
+    expect(partial.split("\n").map((l) => l.trimEnd()).join("\n").trim()).toBe("⠋ — grep completed; continuing…");
     expect(partial.match(/grep completed; continuing…/g)).toHaveLength(1);
     expect(partial).not.toContain("Running");
     tool.renderResult!(
@@ -338,7 +338,7 @@ describe("subagent tool", () => {
     })).toContain("scout running · follow-up queued");
     expect(render({ action: "run" }, {
       runId: "runtime-123456789", operationId: "operation-123456789", agent: "scout", status: "completed", summary: "Done",
-    }).trimEnd()).toBe("✓ scout completed — Done");
+    }).split("\n").map((l) => l.trimEnd()).join("\n").trimEnd()).toBe("✓ scout completed\nDone");
     const expandedStatus = tool.renderResult!(
       { content: [{ type: "text", text: "" }], details: {
         runId: "runtime-123456789",
@@ -911,7 +911,7 @@ describe("subagent tool", () => {
       { expanded: false, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(500).map((line) => line.trimEnd()).join("\n");
-    expect(collapsed.length).toBeLessThanOrEqual(280);
+    expect(collapsed.length).toBeLessThanOrEqual(380);
     expect(collapsed).not.toContain("run runtime");
   });
 
