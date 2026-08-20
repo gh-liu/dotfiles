@@ -28,6 +28,14 @@ network access, takes several minutes, and incurs real model/search cost.
 | `three-way-parallel` | `scout` + `researcher` + `reviewer` use all three safe read-only slots before synthesis | 1 |
 | `combo-evidence-decision` | `scout` + `researcher` evidence before `oracle` | 1 |
 | `persistent-follow-up` | `start → wait → send(follow_up) → wait → close` | 1 |
+| `capacity-exhaustion` | `scout`+`researcher`+`reviewer` fill capacity; fourth fails fast | 1 |
+| `steer-active-operation` | `start → send(steer) → wait → close` without new operation | 1 |
+| `interrupt-and-reuse` | `start → interrupt → send(follow_up) → wait → close` reuses runtime | 1 |
+| `scout-write-attempt` | `scout` stays read-only despite write temptation | 1 |
+| `constraint-conflict-oracle` | `oracle` keeps epoch-millisecond against ISO request | 3 |
+| `researcher-workorder-completeness` | `researcher` receives complete 8-field work order | 1 |
+| `unexpected-path-modification` | `worker` only changes allowed paths; parent diff-checks | 1 |
+| `handoff-missing-risks` | `scout` handoff must contain Risks; parent consumes cited result | 1 |
 
 The fixture contains an intentional seconds-versus-milliseconds bug and a
 `plan.md`. Every run gets its own copy, so concurrent writing scenarios cannot
