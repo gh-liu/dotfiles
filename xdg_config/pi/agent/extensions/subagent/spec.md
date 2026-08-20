@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-12
+- Updated: 2026-08-20 — closed spec gaps: runtime snapshot model/thinking + activeOperation, result envelope enrichment, spawn env/args pinning, truncation markers, settings overrides
 
 ## 1. Background
 
@@ -235,9 +235,12 @@ interface RuntimeSnapshot {
   runId: string;
   revision: number;
   agent: string;
+  model?: string;
+  thinking?: string;
   status: RuntimeState;
   operationId?: string;
   activeOperationId?: string;
+  activeOperation?: OperationSnapshot;
   queuedOperation?: OperationSnapshot;
   lastSettledOperation?: OperationSnapshot;
   processInstanceId?: string;
@@ -246,6 +249,8 @@ interface RuntimeSnapshot {
     sessionPath?: string;
   };
 }
+
+`model` is the provider-stripped model id and `thinking` is the effective thinking level when the agent definition provides them; both are bounded and exposed in `runtimeSnapshot` and in the serialized `SubagentResult` envelope for routing diagnostics.
 
 interface OperationSnapshot {
   operationId: string;
@@ -290,6 +295,8 @@ interface SubagentResult {
   operationId: string;
   processInstanceId?: string;
   agent: string;
+  model?: string;
+  thinking?: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
   transcript: {
@@ -297,6 +304,8 @@ interface SubagentResult {
     sessionPath?: string;
   };
 }
+
+The control plane enriches the envelope with `model`/`thinking` when the effective agent definition provides them (provider prefix stripped) before parent serialization; the child never fabricates these fields.
 ```
 
 `SubagentResult` is a controller-created envelope. The controller, never child
@@ -526,7 +535,7 @@ The child process must be started with:
 - A child marker containing run ID, parent session ID, and depth.
 
 The current implementation is pinned to Pi 0.84.1. The RPC controller starts Pi
-with `--no-context-files` and `--no-extensions`. The parent resolves applicable
+with `--mode rpc --session-dir <managed-dir> --no-context-files --no-extensions --no-skills --no-prompt-templates --no-themes --no-approve` plus `--tools`, `--system-prompt`, `--extension` (only for the `web_search` provider mapping), `--model`, and `--thinking` when the effective definition provides them. The parent resolves applicable
 project guidance and materializes the selected text into the work-order envelope,
 so the child never relies on implicit AGENTS.md inheritance. No extension is
 inherited by default; each executable extension path must be explicitly trusted
@@ -534,14 +543,14 @@ and passed. The implementation pins and integration-tests a supported Pi version
 before relying on CLI flags, event names, or shutdown behavior.
 
 The child environment starts from a documented base allowlist (`HOME`, `PATH`,
-`SHELL`, `TMPDIR`, `USER`, `LOGNAME`, `TERM`, and locale variables). Additional
-provider credential variables are inherited only through a configured
+`SHELL`, `TMPDIR`, `USER`, `LOGNAME`, `TERM`, `LANG`, `LANGUAGE`, and any
+`LC_*` variables). Additional provider credential variables are inherited only through a configured
 authentication allowlist, which defaults to empty. A controller-owned
 tool-provider mapping may also declare the exact environment variables and
-extension paths required by one declared tool, such as `web_search`; wildcard
-prefixes are not accepted. Arbitrary parent environment variables are not
+extension paths required by one declared tool, such as `web_search` (`EXA_API_KEY` + `websearch/index.ts`); wildcard
+prefixes are not accepted. Allowlisted names are validated against `^[A-Z_][A-Z0-9_]*$` and must not contain newlines. Arbitrary parent environment variables are not
 copied. User agent definitions are enabled by default; project-local definitions
-remain disabled.
+remain disabled. Effective agent `model`/`thinking`/`description` may be overridden via `settings.json` `subagents[agent]` after file discovery; the startup catalog and `list` discovery both reflect the effective merged view.
 
 This is environment filtering, not file-level credential isolation. V1 shares
 the user's Pi agent directory and auth store; keeping `HOME` and exposing file
@@ -633,7 +642,8 @@ Implemented today:
 - Fresh child context, explicit tools, filtered environment, and process cleanup.
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
-- Bounded in-memory runtime and operation tracking.
+- Bounded in-memory runtime and operation tracking enriched with effective `model`/`thinking` (stripped) in snapshots and serialized results.
+- Effective discovery merges `settings.json` `subagents[agent].{model,thinking,description}` overrides after `agents/*.md` file discovery; `list` and `run`/`start` both resolve the merged view and `startupCatalog` is bounded (16k/200).
 - Bounded parent completion notifications for each submitted persistent operation;
   queued operations cancelled by close or shutdown do not notify.
 - Compact runtime UI with bounded task previews, reduced live progress, short
@@ -846,7 +856,7 @@ The controller continuously drains stdout and stderr; limits bound retained
 memory, not pipe consumption. It decodes split UTF-8 and partial LF-delimited
 records incrementally. An oversized record or non-empty malformed JSON line is a
 protocol failure and closes the child. Ring buffers and reduced output are
-truncated with an explicit marker. Exact configured credential values and common
+truncated with an explicit marker (`[truncated]` for text, `[truncated]\n` for stderr ring, `[truncated oversized stderr line]\n` for oversized stderr lines, and `[truncated: additional project guidance omitted]` for guidance materialization). Exact configured credential values and common
 credential patterns are redacted on a best-effort basis before retention and
 serialization. These limits are fixed implementation constants; a future
 configuration surface may lower them but must not disable them.
