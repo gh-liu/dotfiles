@@ -233,13 +233,13 @@ describe("subagent tool", () => {
     expect(env.extension.getTool().description).toContain("before loading a parent research workflow or making parent web searches");
     expect(env.extension.getTool().description).toContain("without repeating the same searches or reads");
     expect(env.extension.getTool().description).toContain("parent self-review cannot satisfy independence");
-    expect(env.extension.getTool().promptSnippet).toContain("Default to delegation");
+    expect(env.extension.getTool().promptSnippet).toContain("MANDATORY BEFORE reading target");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
       expect.stringContaining("Mandatory delegation before direct work"),
       expect.stringContaining("Default to delegation for implementation-class work"),
       expect.stringContaining("catalog description and declared capabilities"),
       expect.stringContaining("multi-source external research"),
-      expect.stringContaining("parent web searches"),
+      expect.stringContaining("web_search"),
       expect.stringContaining("parent self-review is not independent"),
       expect.stringContaining("decompose the bounded work instead of forwarding the raw user prompt"),
       expect.stringContaining("the child has fresh context"),
