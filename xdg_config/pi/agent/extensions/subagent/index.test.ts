@@ -297,7 +297,9 @@ describe("subagent tool", () => {
       },
     });
     env.fake.controllers[0].settle(0, "completed", "Located auth.");
-    expect((await running).details).toMatchObject({ status: "completed", summary: "Located auth." });
+    const settledRun = await running;
+    expect(settledRun.details).toMatchObject({ status: "completed", summary: "Located auth." });
+    expect((settledRun.details as { elapsedMs?: unknown }).elapsedMs).toBeTypeOf("number");
     expect(env.fake.controllers[0].closeCalls).toBe(1);
   });
 
@@ -426,6 +428,13 @@ describe("subagent tool", () => {
       { args: { action: "run", agent: "scout", task: "Inspect", deadlineMs: 90_000 }, isError: false, state: expiredState, invalidate: vi.fn() },
     ).render(200).join("\n");
     expect(expired).toContain("⠋ 0s");
+    const authoritativeState: Record<string, unknown> = {};
+    const authoritative = tool.renderResult!(
+      { content: [{ type: "text", text: "working" }], details: { status: "running", startedAt: Date.now() - 120_000 } },
+      { expanded: false, isPartial: true }, theme,
+      { args: { action: "run", agent: "scout", task: "Inspect", deadlineMs: 90_000 }, isError: false, state: authoritativeState, invalidate: vi.fn() },
+    ).render(200).join("\n");
+    expect(authoritative).toContain("⠋ 0s");
     const terminalState: Record<string, unknown> = {};
     tool.renderResult!(
       { content: [], details: { status: "running" } },
@@ -453,6 +462,7 @@ describe("subagent tool", () => {
     expect(render({ action: "run" }, {
       runId: "runtime-123456789", operationId: "operation-123456789", agent: "scout", status: "completed", summary: "Done",
     }).split("\n").map((l) => l.trimEnd()).join("\n").trimEnd()).toBe("✓ completed\nDone");
+    expect(render({ action: "run" }, { status: "completed", summary: "Done", elapsedMs: 45_000 })).toContain("✓ completed · 45s");
     const expandedStatus = tool.renderResult!(
       { content: [{ type: "text", text: "" }], details: {
         runId: "runtime-123456789",

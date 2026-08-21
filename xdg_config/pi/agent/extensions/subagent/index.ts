@@ -295,12 +295,16 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       : `${runtime.agent.name.slice(0, 79)}…`;
     const model = runtime.agent.model ? stripModel(runtime.agent.model) : undefined;
     const thinking = runtime.agent.thinking;
+    const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
+      ? operation.finishedAt - operation.startedAt
+      : undefined;
     const details: SubagentCompletionDetails = {
       runId: runtime.runId,
       operationId: operation.operationId,
       agent,
       ...(model ? { model } : {}),
       ...(thinking ? { thinking } : {}),
+      ...(elapsedMs === undefined ? {} : { elapsedMs }),
       task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
       status: result?.status ?? "failed",
       summary: boundText(
@@ -414,7 +418,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     deadlineMs: number,
     notifyOnSettle: boolean,
     signal?: AbortSignal,
-    onProgress?: (summary: string) => void,
+    onUpdate?: (update: { content: Array<{ type: "text"; text: string }>; details: Record<string, unknown> }) => void,
   ): Promise<OperationRecord> => {
     let settle!: () => void;
     const operation: OperationRecord = {
@@ -432,6 +436,23 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
     transition(runtime, "running");
+    // Wrap raw progress summaries with operation identity plus authoritative timing
+    // so the UI can anchor countdowns and report elapsed time without guessing.
+    const onProgress = onUpdate
+      ? (summary: string) => onUpdate({
+          content: [{ type: "text", text: summary }],
+          details: {
+            runId: runtime.runId,
+            operationId,
+            agent: runtime.agent.name,
+            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+            ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+            status: "running",
+            startedAt: operation.startedAt,
+            deadlineMs,
+          },
+        })
+      : undefined;
     const runOptions: SubagentRunOptions = {
       cwd: runtime.cwd,
       agent: runtime.agent,
@@ -475,13 +496,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
 
   const operationResponse = (operation: OperationRecord, runtime?: RuntimeRecord) => {
     if (operation.result) {
-      const enriched = runtime
-        ? {
-            ...operation.result,
-            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-            ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-          }
-        : operation.result;
+      const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
+        ? operation.finishedAt - operation.startedAt
+        : undefined;
+      const enriched = {
+        ...operation.result,
+        ...(runtime?.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+        ...(runtime?.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+        ...(elapsedMs === undefined ? {} : { elapsedMs }),
+      };
       return {
         content: [{ type: "text" as const, text: serializeSubagentResult(enriched) }],
         details: enriched,
@@ -653,19 +676,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             params.deadlineMs ?? 600_000,
             true,
             signal,
-            onUpdate
-              ? (summary) => onUpdate({
-                  content: [{ type: "text", text: summary }],
-                  details: {
-                    runId: runtime.runId,
-                    operationId,
-                    agent: runtime.agent.name,
-                    ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-                    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-                    status: "running",
-                  },
-                })
-              : undefined,
+            onUpdate,
           );
           return response({ ...runtimeSnapshot(runtime), operationId });
         } catch (error) {
@@ -760,19 +771,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           params.deadlineMs!,
           params.action === "start",
           signal,
-          onUpdate
-            ? (summary) => onUpdate({
-                content: [{ type: "text", text: summary }],
-                details: {
-                  runId,
-                  operationId,
-                  agent: agent.name,
-                  ...(agent.model ? { model: stripModel(agent.model) } : {}),
-                  ...(agent.thinking ? { thinking: agent.thinking } : {}),
-                  status: "running",
-                },
-              })
-            : undefined,
+          onUpdate,
         );
         if (params.action === "start") return response({ ...runtimeSnapshot(runtime), operationId });
         await operation.settled;

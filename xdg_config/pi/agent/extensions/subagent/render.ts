@@ -25,6 +25,8 @@ export interface SubagentCompletionDetails {
   status: "completed" | "failed" | "interrupted";
   summary: string;
   runtimeStatus: "running" | "idle" | "crashed";
+  /** Wall-clock duration of the settled operation in milliseconds, when known. */
+  elapsedMs?: number;
 }
 
 type SubagentRenderArgs =
@@ -109,7 +111,10 @@ export function renderSubagentCompletion(
     if (details?.task) text += `\n${theme.fg("muted", `  task: ${oneLine(details.task, 240)}`)}`;
     const lines = boundedLines(summaryRaw, 4_000, 20);
     for (const line of lines) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    if (details) text += `\n${theme.fg("muted", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}`)}`;
+    if (details) {
+      const elapsed = typeof details.elapsedMs === "number" ? ` · ${formatCountdown(details.elapsedMs)}` : "";
+      text += `\n${theme.fg("muted", `  run ${details.runId} · operation ${details.operationId} · runtime ${details.runtimeStatus}${elapsed}`)}`;
+    }
   }
   const bg: "customMessageBg" | "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" =
     status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : status === "interrupted" ? "toolPendingBg" : "customMessageBg";
@@ -282,8 +287,10 @@ export function renderSubagentResult(
     text = theme.fg("warning", SPINNER_FRAMES[state.spinnerFrame]);
     const deadlineMs = deadlineFrom(context.args);
     if (deadlineMs !== undefined) {
-      state.startedAt ??= Date.now();
-      text += theme.fg("dim", ` ${formatCountdown(deadlineMs - (Date.now() - state.startedAt))}`);
+      // Prefer the authoritative operation start time plumbed from the control plane.
+      state.startedAt ??= typeof details.startedAt === "number" ? details.startedAt : Date.now();
+      const startedAt = typeof details.startedAt === "number" ? details.startedAt : state.startedAt;
+      text += theme.fg("dim", ` ${formatCountdown(deadlineMs - (Date.now() - startedAt))}`);
     }
   } else if (status === "interrupted" || details.controllerCancellation === true) {
     stopSpinner(state);
@@ -331,6 +338,12 @@ export function renderSubagentResult(
   }
 
   const metadata = isPartial || action === "list" ? "" : resultMetadata(details, context.args, expanded);
+  const elapsedMs = !isPartial && typeof details.elapsedMs === "number" ? details.elapsedMs : undefined;
+  if (elapsedMs !== undefined
+    && (action === "run" || action === "wait" || (action === "send" && context.args.mode === "follow_up"))
+    && !context.isError) {
+    text += theme.fg("dim", ` · ${formatCountdown(elapsedMs)}`);
+  }
   if (metadata) {
     text += expanded
       ? `\n${theme.fg("muted", `  ${metadata}`)}`
