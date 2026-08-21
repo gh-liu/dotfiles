@@ -183,3 +183,40 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
 
   return { agents, errors };
 }
+
+/**
+ * Loads `subagents[agent]` overrides from settings.json. Missing files are not
+ * errors; malformed JSON surfaces as a single collected error.
+ */
+export function loadSubagentOverrides(settingsPath: string): { overrides?: unknown; errors: AgentDefinitionError[] } {
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
+    if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return { errors: [] };
+    const subagents = (settings as Record<string, unknown>).subagents;
+    if (subagents === undefined || subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
+      return { errors: [] };
+    }
+    return { overrides: subagents, errors: [] };
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
+      return { errors: [] };
+    }
+    return {
+      errors: [{
+        filePath: "settings.json:subagents",
+        error: `settings.json:subagents: ${error instanceof Error ? error.message : String(error)}`,
+      }],
+    };
+  }
+}
+
+/** Renders the bounded one-line-per-agent catalog shown in the tool description. */
+export function formatAgentCatalog(discovery: AgentDiscovery): string {
+  const agents = discovery.agents.length === 0
+    ? ["none"]
+    : discovery.agents.map((agent) => `${agent.name}: ${agent.description.replace(/\s+/g, " ").trim()}`);
+  const invalid = discovery.errors.length === 0
+    ? []
+    : ["", "Invalid agent definitions:", ...discovery.errors.map((error) => `- ${error.error}`)];
+  return [...agents, ...invalid].join("\n");
+}

@@ -1,12 +1,9 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
-export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
+import { stripModel } from "./protocol.ts";
 
-function stripModel(model: string): string {
-  const parts = model.split("/");
-  return parts.pop() || model;
-}
+export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
 function formatAgentLabel(agent: string, model?: string, thinking?: string): string {
   const parts = [agent];

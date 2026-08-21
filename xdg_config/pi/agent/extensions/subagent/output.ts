@@ -1,3 +1,5 @@
+import type { SubagentResult } from "./protocol.ts";
+
 interface TextLimits {
   maxCharacters: number;
   maxLines: number;
@@ -67,4 +69,27 @@ export function boundText(text: string, limits: TextLimits, exactSecretValues: s
     .slice(0, prefixLimit)
     .replace(/\n+$/g, "");
   return prefix === "" ? TRUNCATION_MARKER : `${prefix}\n${TRUNCATION_MARKER}`;
+}
+
+/** Serializes the parent-visible result envelope under a hard character budget. */
+export function serializeSubagentResult(result: SubagentResult): string {
+  const maxCharacters = 32_000;
+  let low = 0;
+  let high = Math.min(result.summary.length, maxCharacters);
+  let best: string | undefined;
+  while (low <= high) {
+    const summaryLimit = Math.floor((low + high) / 2);
+    const summary = summaryLimit === 0
+      ? ""
+      : boundText(result.summary, { maxCharacters: summaryLimit, maxLines: 400 });
+    const serialized = JSON.stringify({ ...result, summary });
+    if (serialized.length <= maxCharacters) {
+      best = serialized;
+      low = summaryLimit + 1;
+    } else {
+      high = summaryLimit - 1;
+    }
+  }
+  if (best !== undefined) return best;
+  throw new Error("Subagent result envelope exceeds the parent serialization limit");
 }
