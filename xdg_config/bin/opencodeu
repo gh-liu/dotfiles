@@ -47,13 +47,15 @@ usage = payload.get("usage")
 if not usage:
     raise SystemExit(f"unexpected response: {payload}")
 
-print("# opencode Go plan usage")
-for window in ("rolling", "weekly", "monthly"):
+print("# opencode usage")
+# API window -> short label ("rolling" is the 5-hour window)
+for window, label in (("rolling", "5h"), ("weekly", "1w"), ("monthly", "1m")):
     entry = usage.get(window)
     if not entry:
         continue
+    status = entry.get("status", "unknown")
+    flag = f"  ({status})" if status != "ok" else ""
     print(
-        f"{window:<9} used {entry.get('percent', '?'):>3}%"
-        f"  ({entry.get('status', 'unknown')})"
+        f"{label:<2} used {entry.get('percent', '?'):>3}%{flag}"
         f"  resets {fmt_reset(entry['resetsAt'])}"
     )
