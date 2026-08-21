@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-21 — restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`; catalog and `list` reflect the merged view
+- Updated: 2026-08-21 — transport swapped from `pi --mode rpc` subprocess to in-process SDK sessions (`sdk-executor.ts` via `createAgentSession`); `rpc-executor.ts` retired. Same-day earlier: restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`; catalog and `list` reflect the merged view
 
 ## 1. Background
 
@@ -396,15 +396,15 @@ index.ts: in-memory control plane
   |
   | SubagentRunOptions / SubagentOperation / SubagentResult
   v
-rpc-executor.ts: one RpcSubagentController per process
-  |-- spawn arguments and filtered environment
-  |-- bounded JSONL and stderr decoding
-  |-- RPC request correlation
+sdk-executor.ts: one SdkSubagentController per in-process session
+  |-- session construction (cwd, tools allowlist, model/thinking, custom tools)
+  |-- isolated DefaultResourceLoader (noExtensions, noSkills, no context files, explicit systemPrompt)
+  |-- durable SessionManager under <agent-dir>/subagent-sessions/<runId>/
   |-- operation-local event/progress reduction
-  |-- prompt acceptance and agent_settled completion
-  |-- RPC abort, watchdogs, fatal notification, and process-group cleanup
+  |-- prompt preflight acceptance and agent_settled completion
+  |-- abort/deadline watchdogs, fatal notification, session disposal
   v
-pi --mode rpc --session-dir <managed-dir>
+in-process AgentSession (createAgentSession)
   |
   +--> child session JSONL (durable transcript evidence)
 ```
@@ -412,7 +412,7 @@ pi --mode rpc --session-dir <managed-dir>
 `protocol.ts` is the contract boundary between the control plane and controller.
 `output.ts` provides shared bounding and redaction. The registry, concurrency,
 operation registry, and result reducer in the conceptual diagram above are
-currently cohesive responsibilities inside `index.ts` or `rpc-executor.ts`, not
+currently cohesive responsibilities inside `index.ts` or `sdk-executor.ts`, not
 separate runtime services.
 
 Ownership is split as follows:
@@ -420,14 +420,14 @@ Ownership is split as follows:
 | Component | Owns | Does not own |
 | --- | --- | --- |
 | Tool/control plane (`index.ts`) | Model-facing actions, runtime/operation IDs, state transitions, revisions, capacity slots, waiters, result retention, shutdown coordination | RPC framing, child listeners, process signals |
-| RPC controller (`rpc-executor.ts`) | Exactly one child process, one Pi session, stdin/stdout/stderr, RPC requests, event reduction, operation deadline/abort, fatal signal, teardown | Multi-runtime scheduling, model-facing status policy |
+| SDK controller (`sdk-executor.ts`) | Exactly one in-process Pi session, session construction and isolation flags, event reduction, operation deadline/abort watchdogs, fatal notification, session disposal | Multi-runtime scheduling, model-facing status policy |
 | Pi child | Model turns, tool execution, session transcript | Parent integration decisions, runtime registry |
 | Renderer (`render.ts`) | Bounded visual presentation and spinner lifecycle | Authoritative state or completion decisions |
 
 The controller exposes two distinct operation promises:
 
-- `accepted`: Pi session identity is known and the `prompt` RPC command has been
-  accepted. `start` and `send` return after this boundary.
+- `accepted`: Pi session identity is known and the session `prompt` preflight has
+  been accepted. `start` and `send` return after this boundary.
 - `result`: the operation has reached authoritative `agent_settled` and the
   controller has reduced the final assistant message into `SubagentResult`.
 
@@ -449,10 +449,10 @@ noise.
 ```text
 run
  -> resolve agent, cwd, guidance, work order
- -> reserve runtime slot and create controller
- -> get_state -> prompt accepted
+ -> reserve runtime slot and create controller (in-process session)
+ -> prompt preflight accepted
  -> wait for agent_settled -> reduce result
- -> close controller/process tree -> release slot
+ -> close controller/dispose session -> release slot
  -> return bounded SubagentResult
 ```
 
@@ -532,29 +532,32 @@ The child process must be started with:
   parent secrets.
 - A child marker containing run ID, parent session ID, and depth.
 
-The current implementation is pinned to Pi 0.84.1. The RPC controller starts Pi
-with `--mode rpc --session-dir <managed-dir> --no-context-files --no-extensions --no-skills --no-prompt-templates --no-themes --no-approve` plus `--tools`, `--system-prompt`, `--extension` (only for the `web_search` provider mapping), `--model`, and `--thinking` when the effective definition provides them. The parent resolves applicable
-project guidance and materializes the selected text into the work-order envelope,
-so the child never relies on implicit AGENTS.md inheritance. No extension is
-inherited by default; each executable extension path must be explicitly trusted
-and passed. The implementation pins and integration-tests a supported Pi version
-before relying on CLI flags, event names, or shutdown behavior.
+The implementation runs children as in-process SDK sessions (`createAgentSession`)
+and therefore always shares the parent's Pi version — no cross-version pin is
+needed. Each child session is constructed with an isolated `DefaultResourceLoader`
+(`noExtensions`, `noSkills`, `noPromptTemplates`, `noThemes`, `noContextFiles`), an
+explicit `systemPrompt`, the agent's tool allowlist, per-session `model`/`thinkingLevel`,
+and a dedicated `SessionManager` under `<agent-dir>/subagent-sessions/<runId>/`.
+`web_search` is provided as a session-scoped custom tool when the effective tool
+allowlist declares it. The parent resolves applicable project guidance and
+materializes the selected text into the work-order envelope, so the child never
+relies on implicit AGENTS.md inheritance. No extension is inherited by default.
 
-The child environment starts from a documented base allowlist (`HOME`, `PATH`,
-`SHELL`, `TMPDIR`, `USER`, `LOGNAME`, `TERM`, `LANG`, `LANGUAGE`, and any
-`LC_*` variables). Additional provider credential variables are inherited only through a configured
-authentication allowlist, which defaults to empty. A controller-owned
-tool-provider mapping may also declare the exact environment variables and
-extension paths required by one declared tool, such as `web_search` (`EXA_API_KEY` + `websearch/index.ts`); wildcard
-prefixes are not accepted. Allowlisted names are validated against `^[A-Z_][A-Z0-9_]*$` and must not contain newlines. Arbitrary parent environment variables are not
-copied. User agent definitions are enabled by default; project-local definitions
+Because children run in-process, there is no child environment construction.
+Credential values that must never appear in child output (for example
+`EXA_API_KEY` when `web_search` is declared, plus names from
+`PI_SUBAGENT_AUTH_ENV_ALLOWLIST`) are redacted from progress and results instead.
+Names are validated against `^[A-Z_][A-Z0-9_]*$` and must not contain newlines.
+User agent definitions are enabled by default; project-local definitions
 remain disabled. Effective agent `model`/`thinking`/`description` may be overridden via `settings.json` `subagents[agent]` after file discovery; the startup catalog and `list` discovery both reflect the effective merged view.
 
-This is environment filtering, not file-level credential isolation. V1 shares
-the user's Pi agent directory and auth store; keeping `HOME` and exposing file
-read tools means a child may access user-readable credentials. A managed agent
-directory, filtered auth store, and filesystem sandbox are required before the
-extension may claim credential isolation.
+The in-process transport trades OS-process isolation for the platform-recommended
+embedding model (`docs/rpc.md` explicitly recommends `AgentSession` over spawning
+a subprocess for Node hosts). A runaway child can no longer be killed via process
+signals; containment relies on per-operation deadlines, abort watchdogs, and
+session disposal. V1 shares the user's Pi agent directory and auth store; a
+managed agent directory, filtered auth store, and filesystem sandbox are still
+required before the extension may claim credential isolation.
 
 ## 7. Tool surface
 
@@ -778,7 +781,7 @@ Required behavior:
 
 ## 11. Persistence and recovery
 
-Each RPC child uses a dedicated Pi session directory and JSONL transcript under
+Each child runs as a dedicated in-process Pi session with a JSONL transcript under
 `<agent-dir>/subagent-sessions`. Current persistence guarantees are limited to
 transcript evidence:
 
@@ -925,21 +928,26 @@ provides both one-shot `run` and persistent lifecycle behavior with durable
 transcripts. JSON-mode stdin and cancellation semantics are therefore historical
 design context, not current contracts or remaining implementation work.
 
-### Milestone 1: Persistent RPC runtime (partial)
+### Milestone 1: Persistent runtime (partial; transport renamed)
 
-The RPC executor, durable session references, basic lifecycle actions, identity
+Historical note: sections below were written for the retired `pi --mode rpc`
+subprocess transport; references to RPC framing, process trees, and queued
+follow-ups describe superseded designs. The in-process SDK executor
+(`sdk-executor.ts`) now provides the same lifecycle contract.
+
+The SDK executor, durable session references, basic lifecycle actions, identity
 separation, concurrency limit, and `agent_settled` completion are implemented.
 The remaining work is listed explicitly below.
 
 The current executor runs:
 
 ```text
-pi --mode rpc --session-dir <managed-dir>
+in-process createAgentSession (no subprocess)
 ```
 
 Implemented:
 
-- RPC-backed persistent execution with durable session references.
+- SDK-backed persistent execution with durable session references.
 - `start`, `status`, immediate or single-slot queued `send(..., mode:
   "follow_up")`, guarded active `send(..., mode: "steer")`, `wait`, guarded
   `interrupt`, and idempotent targeted `close` actions.
@@ -1032,8 +1040,8 @@ The following deployment-specific decisions remain. They do not change the
 runtime/operation contracts above, but each must be resolved before the milestone
 that consumes it:
 
-1. Before upgrading from Pi 0.84.1: compatibility policy and contract tests for
-   the new Pi version.
+1. Before tightening child isolation: decide whether in-process sessions are
+   sufficient or an OS-sandboxed transport is required for untrusted workloads.
 2. Before optional durable history: ledger location, retention, and unclean-
    restart reconciliation policy.
 3. Before enabling project agents: whether trusted-project status is sufficient
