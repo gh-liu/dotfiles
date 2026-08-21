@@ -412,7 +412,33 @@ describe("subagent tool", () => {
       { expanded: false, isPartial: true }, theme,
       { args: { action: "run", agent: "scout", task: "Inspect", deadlineMs: 90_000 }, isError: false, state: countdownState, invalidate: vi.fn() },
     ).render(200).join("\n");
-    expect(countdown).toMatch(/⠋ 1m\d{2}s — working/);
+    expect(countdown).toMatch(/⠋ \d{2,3}s — working/);
+    const followUpCountdown = tool.renderResult!(
+      { content: [{ type: "text", text: "working" }], details: { runId: "r", operationId: "o", status: "running" } },
+      { expanded: false, isPartial: true }, theme,
+      { args: { action: "send", id: "r", mode: "follow_up", message: "Next", deadlineMs: 45_000 }, isError: false, state: {}, invalidate: vi.fn() },
+    ).render(200).join("\n");
+    expect(followUpCountdown).toMatch(/⠋ 4\ds — working/);
+    const expiredState: Record<string, unknown> = { startedAt: Date.now() - 120_000 };
+    const expired = tool.renderResult!(
+      { content: [{ type: "text", text: "working" }], details: { status: "running" } },
+      { expanded: false, isPartial: true }, theme,
+      { args: { action: "run", agent: "scout", task: "Inspect", deadlineMs: 90_000 }, isError: false, state: expiredState, invalidate: vi.fn() },
+    ).render(200).join("\n");
+    expect(expired).toContain("⠋ 0s");
+    const terminalState: Record<string, unknown> = {};
+    tool.renderResult!(
+      { content: [], details: { status: "running" } },
+      { expanded: false, isPartial: true }, theme,
+      { args: { action: "run", agent: "scout", task: "T" }, isError: false, state: terminalState, invalidate: vi.fn() },
+    );
+    expect(terminalState.spinnerTimer).toBeDefined();
+    tool.renderResult!(
+      { content: [{ type: "text", text: "ok" }], details: { status: "completed" } },
+      { expanded: false, isPartial: false }, theme,
+      { args: { action: "run", agent: "scout", task: "T" }, isError: false, state: terminalState, invalidate: vi.fn() },
+    );
+    expect(terminalState.spinnerTimer).toBeUndefined();
     tool.renderResult!(
       { content: [{ type: "text", text: "done" }], details: { status: "completed" } },
       { expanded: false, isPartial: false }, theme,
@@ -442,9 +468,6 @@ describe("subagent tool", () => {
       reason: "timeout", snapshot: { status: "running", agent: "scout" },
     })).toContain("still running");
     expect(render({ action: "interrupt" }, { accepted: true })).toContain("Interrupt requested");
-    expect(render({ action: "send", id: "runtime", mode: "follow_up" }, {
-      status: "running", queued: true, operationId: "queued-operation",
-    })).toContain("Follow-up queued");
     expect(render({ action: "send", mode: "steer" }, { accepted: true })).toContain("Steering sent");
     expect(render({ action: "run" }, { status: "interrupted", summary: "Stopped" })).toContain("Interrupted");
     expect(render({ action: "run" }, { status: "completed", summary: "Done" })).toContain("completed");

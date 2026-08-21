@@ -43,13 +43,20 @@ function boundedOneLine(text: string, maxCharacters: number, secrets: string[]):
   return normalized.length <= maxCharacters ? normalized : `${normalized.slice(0, maxCharacters - 1)}…`;
 }
 
+/** Collapse the $HOME prefix to `~` so progress paths stay short and readable. */
+function collapseHome(value: string): string {
+  const home = process.env.HOME;
+  if (!home || home === "/") return value;
+  return value.startsWith(`${home}/`) ? `~${value.slice(home.length)}` : value;
+}
+
 function safeToolProgress(record: any, secrets: string[]): string {
   const toolName = typeof record.toolName === "string" ? record.toolName : "tool";
   const args = record.args && typeof record.args === "object" && !Array.isArray(record.args) ? (record.args as Record<string, unknown>) : {};
   const values = toolName === "grep" ? [args.pattern, args.path] : [args.path];
   const detail = values
     .filter((v): v is string => typeof v === "string" && v.trim() !== "")
-    .map((v) => boundedOneLine(v, 80, secrets))
+    .map((v) => boundedOneLine(collapseHome(v), 80, secrets))
     .join(" · ");
   return boundedOneLine(`${toolName}${detail ? ` ${detail}` : ""}`, 120, secrets);
 }
@@ -396,7 +403,7 @@ export async function createSdkSubagentController(
             } else if (event.type === "tool_execution_end") {
               const label = typeof event.toolCallId === "string" ? activeTools.get(event.toolCallId) ?? safeToolProgress(event, secrets) : safeToolProgress(event, secrets);
               if (typeof event.toolCallId === "string") activeTools.delete(event.toolCallId);
-              report(event.isError ? `${label} failed; reviewing result…` : `${label} completed; continuing…`);
+              report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`);
             } else if (event.type === "message_end" && event.message?.role === "assistant") {
               const text = (event.message.content ?? []).filter((p: any) => p.type === "text" && typeof p.text === "string").map((p: any) => p.text as string).join("\n");
               finalText = { text: boundText(text, { maxCharacters: 32_000, maxLines: 400 }, secrets), stopReason: event.message.stopReason, error: event.message.errorMessage };
