@@ -242,7 +242,6 @@ interface RuntimeSnapshot {
   operationId?: string;
   activeOperationId?: string;
   activeOperation?: OperationSnapshot;
-  queuedOperation?: OperationSnapshot;
   lastSettledOperation?: OperationSnapshot;
   processInstanceId?: string;
   transcript?: {
@@ -469,8 +468,7 @@ start
 
 send(follow_up)
  -> create a new operationId
- -> submit immediately while idle, or hold one queued operation while running
- -> submit queued prompt through the same controller after active settlement
+ -> submit immediately while idle; a running runtime returns a conflict
  -> prompt accepted -> return operationId
  -> agent_settled -> runtime becomes idle again -> notify parent
 
@@ -479,11 +477,9 @@ close
  -> close/reap process tree -> release slot -> closed
 ```
 
-The control plane accepts at most one follow-up while the runtime is `running`.
-It records that operation as `queued` and submits it to the controller only after
-the active operation settles. The RPC controller itself has no operation queue.
-A second running follow-up, or a `send` while `starting`, `closing`, `closed`, or
-`crashed`, returns a conflict/error rather than buffering more work.
+The control plane accepts follow-ups only while the runtime is `idle`. A `send`
+while `running`, `starting`, `closing`, `closed`, or `crashed` returns a
+conflict/error rather than buffering work.
 
 #### Interrupt and deadline
 
@@ -816,21 +812,22 @@ Parent model receives:
 
 Current UI/details additionally show:
 
-- Agent name and current or queued operation context.
-- Reduced tool activity while an operation is running.
+- Agent name and current operation context.
+- Reduced tool activity while an operation is running, with a live seconds-based
+  deadline countdown on the spinner line.
 - Full bounded diagnostic error.
 
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
-operation IDs, showing only user-relevant state such as a queued follow-up.
-Expanded calls and results show the bounded full task and full IDs. Persistent completion
-cards also show the task before the summary, so a delayed notification remains
-understandable without replaying the original call. While an operation is active, its
-partial-state branch contributes only an animated spinner; the common
-output-preview path appends the latest reduced, redacted progress summary once.
-It does not repeat the agent name or a generic `Running` label. Terminal and
-status lines include the agent and relevant active or queued operation context.
-Expanded completion notifications retain bounded multiline summaries instead
-of flattening them to one line.
+operation IDs and show only user-relevant state. Expanded calls and results show
+the bounded full task and full IDs. Persistent completion cards show the short
+agent name plus the task before the summary, so a delayed notification remains
+understandable without replaying the original call. While an operation is active,
+its partial-state branch contributes only an animated spinner with the countdown;
+the output-preview path appends the latest reduced, redacted progress summary once.
+It does not repeat the agent name or a generic `Running` label. Terminal result
+lines omit the agent label entirely because the call title above already carries
+the full `agent · model · thinking` identity. Expanded completion notifications
+retain bounded multiline summaries instead of flattening them to one line.
 
 Intermediate child reasoning must not be copied into the parent model context.
 JSONL parse failures and protocol violations must be surfaced as diagnostics,
@@ -948,8 +945,8 @@ in-process createAgentSession (no subprocess)
 Implemented:
 
 - SDK-backed persistent execution with durable session references.
-- `start`, `status`, immediate or single-slot queued `send(..., mode:
-  "follow_up")`, guarded active `send(..., mode: "steer")`, `wait`, guarded
+- `start`, `status`, idle-only `send(..., mode: "follow_up")` (running returns a
+  conflict), guarded active `send(..., mode: "steer")`, `wait`, guarded
   `interrupt`, and idempotent targeted `close` actions.
 - Sequential operations in one process/session, with prompt acceptance separate
   from authoritative operation settlement.
@@ -979,7 +976,7 @@ Acceptance:
 
 Implemented:
 
-- Active `steer` and control-plane-queued `follow_up` modes.
+- Active `steer` and idle-only `follow_up` modes.
 - Compact status/progress UI with collapsed and expanded presentations.
 
 Remaining:

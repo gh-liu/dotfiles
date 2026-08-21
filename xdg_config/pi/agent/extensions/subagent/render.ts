@@ -67,9 +67,8 @@ function oneLine(text: string, maxCharacters = 160): string {
 }
 
 function formatCountdown(ms: number): string {
-  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
-  if (totalSeconds < 60) return `${totalSeconds}s`;
-  return `${Math.floor(totalSeconds / 60)}m${String(totalSeconds % 60).padStart(2, "0")}s`;
+  // Seconds-only keeps the live view consistent with the title's `· 240s` deadline hint.
+  return `${Math.max(0, Math.ceil(ms / 1000))}s`;
 }
 
 function deadlineFrom(args: SubagentRenderArgs): number | undefined {
@@ -131,6 +130,12 @@ function shownId(value: string, expanded: boolean): string {
   return expanded ? value : shortId(value);
 }
 
+function collapseHome(value: string): string {
+  const home = process.env.HOME;
+  if (!home || home === "/") return value;
+  return value.startsWith(`${home}/`) ? `~${value.slice(home.length)}` : value;
+}
+
 // --- Call rendering ---
 export function renderSubagentCall(
   args: SubagentRenderArgs,
@@ -163,15 +168,11 @@ export function renderSubagentCall(
   const label = formatAgentLabel(args.agent || "unknown", args.model, args.thinking);
   let text = theme.fg("toolTitle", theme.bold(label));
   if (args.action === "start") text += theme.fg("muted", " · bg");
-  if (args.cwd) text += theme.fg("dim", ` · ${args.cwd}`);
+  if (args.cwd) text += theme.fg("dim", ` · ${collapseHome(args.cwd)}`);
   if (args.deadlineMs) text += theme.fg("dim", ` · ${Math.round(args.deadlineMs / 1000)}s`);
   if (args.task) {
     const lines = boundedLines(args.task, expanded ? 8_000 : 1_200, expanded ? 40 : 6);
-    // Show task with subtle numbering for collapsed readability
     for (const line of lines) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    if (lines.length === 6 && !expanded && args.task.split("\n").length > 6) {
-      // already truncated marker in boundedLines
-    }
   }
   return new Text(text, 0, 0);
 }
@@ -217,12 +218,6 @@ function operationFrom(details: Record<string, unknown>, name: string): Record<s
   return operation && typeof operation === "object" ? operation as Record<string, unknown> : undefined;
 }
 
-function queuedOperationId(details: Record<string, unknown>): string | undefined {
-  const operation = operationFrom(details, "queuedOperation");
-  const operationId = operation?.operationId;
-  return typeof operationId === "string" ? operationId : undefined;
-}
-
 function operationTask(details: Record<string, unknown>, name: string): string | undefined {
   const task = operationFrom(details, name)?.task;
   return typeof task === "string" ? oneLine(task, 120) : undefined;
@@ -233,13 +228,8 @@ function resultMetadata(
   args: SubagentRenderArgs,
   expanded: boolean,
 ): string {
-  const queuedId = queuedOperationId(details);
   const activeTask = args.action === "status" ? operationTask(details, "activeOperation") : undefined;
-  const queuedTask = args.action === "status" ? operationTask(details, "queuedOperation") : undefined;
-  if (!expanded) {
-    const queue = queuedId ? `follow-up queued${queuedTask ? `: ${queuedTask}` : ""}` : "";
-    return [activeTask, queue].filter(Boolean).join(" · ");
-  }
+  if (!expanded) return activeTask ?? "";
   const runId = stringField(details, "runId") ?? ("id" in args ? args.id : undefined);
   const operationId = stringField(details, "operationId")
     ?? ("operationId" in args ? args.operationId : undefined)
@@ -247,13 +237,11 @@ function resultMetadata(
   const activeOperationId = stringField(details, "activeOperationId");
   const entries: string[] = [];
   if (runId) entries.push(`run ${shownId(runId, expanded)}`);
-  if (operationId && operationId !== activeOperationId && operationId !== queuedId) {
+  if (operationId && operationId !== activeOperationId) {
     entries.push(`op ${shownId(operationId, expanded)}`);
   }
   if (activeOperationId) entries.push(`active ${shownId(activeOperationId, expanded)}`);
   if (activeTask) entries.push(`task ${activeTask}`);
-  if (queuedId) entries.push(`queued ${shownId(queuedId, expanded)}`);
-  if (queuedTask) entries.push(`queued task ${queuedTask}`);
   // Transcript hint in expanded metadata
   const transcriptPath = (details.transcript as { sessionPath?: string } | undefined)?.sessionPath
     ?? (snapshotFrom(details).transcript as { sessionPath?: string } | undefined)?.sessionPath;
@@ -325,9 +313,6 @@ export function renderSubagentResult(
     text = details.accepted === true
       ? theme.fg("accent", "↪ Steering sent")
       : theme.fg("muted", "• Steering not applied");
-  } else if (status === "queued" || details.queued === true) {
-    stopSpinner(state);
-    text = theme.fg("accent", "◷ Follow-up queued");
   } else if (status === "running") {
     stopSpinner(state);
     text = theme.fg("warning", "● running");

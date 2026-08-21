@@ -241,7 +241,7 @@ describe("one-shot SDK executor", () => {
       "Preparing tool call…",
     ]);
     expect(progress[3]).toMatch(/^read token=\[REDACTED\]-x+…$/);
-    expect(progress[4]).toContain("completed; continuing…");
+    expect(progress[4]).toContain("done · working…");
     expect(progress.slice(-2)).toEqual(["Writing response…", "Finalizing response…"]);
     expect(progress.join("\n")).not.toContain("sdk-secret");
     expect(progress.every((e) => e.length <= 161)).toBe(true);
