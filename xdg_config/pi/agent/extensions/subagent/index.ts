@@ -1,7 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
@@ -9,7 +8,7 @@ import { Type } from "typebox";
 import { applyAgentOverrides, discoverUserAgents, type AgentDefinitionError, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { boundText } from "./output.ts";
-import { assertSupportedPiVersion, createRpcSubagentController } from "./rpc-executor.ts";
+import { createSdkSubagentController } from "./sdk-executor.ts";
 import {
   renderSubagentCall,
   renderSubagentCompletion,
@@ -27,7 +26,6 @@ import type {
 
 interface SubagentExtensionOptions {
   agentDirectory?: string;
-  authEnvAllowlist?: string[];
   controllerFactory?: SubagentControllerFactory;
   idFactory?: () => string;
   settingsPath?: string;
@@ -196,7 +194,6 @@ function serializeSubagentResult(result: SubagentResult): string {
 }
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
-  assertSupportedPiVersion();
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
   const settingsPath = options.settingsPath ?? join(getAgentDir(), "settings.json");
   const loadedOverrides = loadSubagentOverrides(settingsPath);
@@ -209,21 +206,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   };
   let registry = discoverEffectiveAgents();
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
-  const authEnvAllowlist = options.authEnvAllowlist
+  const credentialEnvNames = options.authEnvAllowlist
     ?? process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
-  const rpcConfig = {
-    piAgentDirectory: getAgentDir(),
+  const sdkConfig = {
+    agentDir: getAgentDir(),
     sessionRoot: join(getAgentDir(), "subagent-sessions"),
-    authEnvAllowlist,
-    toolProviders: {
-      web_search: {
-        extensionPaths: [fileURLToPath(new URL("../websearch/index.ts", import.meta.url))],
-        environmentVariables: ["EXA_API_KEY"],
-      },
-    },
+    ...(credentialEnvNames && credentialEnvNames.length > 0 ? { credentialEnvNames } : {}),
   };
   const controllerFactory = options.controllerFactory
-    ?? ((initial: SubagentRunOptions) => createRpcSubagentController(initial, rpcConfig));
+    ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
   const runtimes = new Map<string, RuntimeRecord>();
   let occupiedSlots = 0;
