@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { discoverUserAgents, loadAgentDefinition, parseAgentDefinition } from "./agents.ts";
+import { applyAgentOverrides, discoverUserAgents, loadAgentDefinition, parseAgentDefinition } from "./agents.ts";
 
 const temporaryDirectories: string[] = [];
 
@@ -160,6 +160,117 @@ Inspect the repository.
 `,
       ),
     ).toThrow();
+  });
+
+  test("applies settings overrides for model thinking and description", () => {
+    const discovery = {
+      agents: [{
+        name: "scout",
+        description: "File description",
+        systemPrompt: "Prompt",
+        tools: ["read"],
+        contextPolicy: "fresh" as const,
+        maxDepth: 1 as const,
+        filePath: "/agents/scout.md",
+      }],
+      errors: [],
+    };
+
+    const overridden = applyAgentOverrides(discovery, {
+      scout: { model: "openai/gpt-5-mini", thinking: "high", description: "Settings description" },
+    });
+
+    expect(overridden.agents[0]).toMatchObject({
+      name: "scout",
+      model: "openai/gpt-5-mini",
+      thinking: "high",
+      description: "Settings description",
+    });
+    expect(overridden.errors).toEqual([]);
+    expect(discovery.agents[0]).not.toHaveProperty("model");
+  });
+
+  test("applies the configured overrides for every bundled subagent", () => {
+    const discovery = discoverUserAgents(fileURLToPath(new URL("../../agents", import.meta.url)));
+    const settings = JSON.parse(readFileSync(fileURLToPath(new URL("../../settings.json", import.meta.url)), "utf8")) as {
+      subagents: Record<string, { model: string; thinking: string }>;
+    };
+
+    const overridden = applyAgentOverrides(discovery, settings.subagents);
+
+    for (const name of ["oracle", "worker", "scout", "researcher", "reviewer"]) {
+      expect(overridden.agents.find((agent) => agent.name === name)).toMatchObject(settings.subagents[name]);
+    }
+  });
+
+  test("applies partial settings overrides without replacing absent fields", () => {
+    const overridden = applyAgentOverrides({
+      agents: [{
+        name: "scout",
+        description: "File description",
+        systemPrompt: "Prompt",
+        model: "file/model",
+        thinking: "low",
+        tools: ["read"],
+        contextPolicy: "fresh" as const,
+        maxDepth: 1 as const,
+        filePath: "/agents/scout.md",
+      }],
+      errors: [],
+    }, { scout: { thinking: "xhigh" } });
+
+    expect(overridden.agents[0]).toMatchObject({
+      description: "File description",
+      model: "file/model",
+      thinking: "xhigh",
+    });
+  });
+
+  test("reports unknown settings override names without changing discovered agents", () => {
+    const overridden = applyAgentOverrides({
+      agents: [{
+        name: "scout",
+        description: "File description",
+        systemPrompt: "Prompt",
+        tools: ["read"],
+        contextPolicy: "fresh" as const,
+        maxDepth: 1 as const,
+        filePath: "/agents/scout.md",
+      }],
+      errors: [],
+    }, { missing: { model: "openai/gpt-5" } });
+
+    expect(overridden.agents).toHaveLength(1);
+    expect(overridden.agents[0].name).toBe("scout");
+    expect(overridden.errors).toEqual([{ filePath: "settings.json:missing", error: "settings.json:missing: unknown agent override: missing" }]);
+  });
+
+  test("reports invalid settings override fields while keeping valid agents", () => {
+    const overridden = applyAgentOverrides({
+      agents: [{
+        name: "scout",
+        description: "File description",
+        systemPrompt: "Prompt",
+        tools: ["read"],
+        contextPolicy: "fresh" as const,
+        maxDepth: 1 as const,
+        filePath: "/agents/scout.md",
+      }],
+      errors: [],
+    }, {
+      scout: { thinking: "too-much", model: "", description: 3 },
+      other: null,
+    });
+
+    expect(overridden.agents[0]).toMatchObject({ name: "scout", description: "File description" });
+    expect(overridden.agents[0]).not.toHaveProperty("model");
+    expect(overridden.agents[0]).not.toHaveProperty("thinking");
+    expect(overridden.errors.map((entry) => entry.error)).toEqual([
+      "settings.json:scout: model must be a non-empty string",
+      "settings.json:scout: unsupported thinking level: too-much",
+      "settings.json:scout: description must be a non-empty string",
+      "settings.json:other: unknown agent override: other",
+    ]);
   });
 
   test("discovers markdown files deterministically and reports invalid definitions", () => {

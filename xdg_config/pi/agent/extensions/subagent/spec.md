@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-20 — closed spec gaps + idle-only follow_up: runtime snapshot model/thinking, result enrichment, spawn pinning, truncation markers, no settings overrides, no queue
+- Updated: 2026-08-21 — restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`; catalog and `list` reflect the merged view
 
 ## 1. Background
 
@@ -636,7 +636,7 @@ Implemented today:
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
 - Bounded in-memory runtime and operation tracking enriched with effective `model`/`thinking` (stripped) in snapshots and serialized results.
-- Discovery is file-based from `agents/*.md` (Markdown is the single source of truth; no `settings.json` overrides).
+- Discovery starts from `agents/*.md`; `settings.json` `subagents[agent]` may override `model`, `thinking`, and `description` per provided field, and catalog plus `list` reflect the effective merged view.
 - Bounded parent completion notifications for each submitted persistent operation.
 - Compact runtime UI with bounded task previews, reduced live progress, short
   collapsed identifiers, and full expanded completion summaries.
