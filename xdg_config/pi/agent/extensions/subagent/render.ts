@@ -40,6 +40,8 @@ type SubagentRenderArgs =
 interface SubagentRenderState {
   spinnerFrame?: number;
   spinnerTimer?: ReturnType<typeof setInterval>;
+  /** Wall-clock start of the current execution, captured on first partial render. */
+  startedAt?: number;
 }
 
 interface SubagentRenderResult {
@@ -64,6 +66,18 @@ function oneLine(text: string, maxCharacters = 160): string {
     : `${normalized.slice(0, maxCharacters - 1)}…`;
 }
 
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  return `${Math.floor(totalSeconds / 60)}m${String(totalSeconds % 60).padStart(2, "0")}s`;
+}
+
+function deadlineFrom(args: SubagentRenderArgs): number | undefined {
+  if (args.action === "run" || args.action === "start") return args.deadlineMs;
+  if (args.action === "send" && args.mode === "follow_up") return args.deadlineMs;
+  return undefined;
+}
+
 function boundedLines(text: string, maxCharacters: number, maxLines: number): string[] {
   const lines = text.replace(/\r\n?/g, "\n").trim().split("\n");
   const selected = lines.slice(0, maxLines);
@@ -85,10 +99,11 @@ export function renderSubagentCompletion(
   const status = details?.status ?? "failed";
   const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
-  const agentLabel = oneLine(formatAgentLabel(details?.agent ?? "subagent", details?.model, details?.thinking), 80);
   const summaryRaw = details?.summary ?? (typeof message.content === "string" ? message.content : "");
   const summaryOneLine = oneLine(summaryRaw, 240);
-  let text = `${theme.fg(color, marker)} ${theme.bold(agentLabel)} ${theme.fg(color, status)}`;
+  let text = `${theme.fg(color, marker)} ${theme.fg(color, status)}`;
+  // Short agent name only: the full label (model/thinking) already sits on the tool-call title.
+  if (details?.agent) text += theme.fg("muted", ` · ${details.agent}`);
   if (!expanded && details?.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
   if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
   if (expanded) {
@@ -261,11 +276,6 @@ export function renderSubagentResult(
   const state = context.state;
   const status = statusFrom(details);
   const action = context.args.action;
-  const agent = stringField(details, "agent");
-  const model = stringField(details, "model");
-  const thinking = stringField(details, "thinking");
-  const label = agent ? formatAgentLabel(agent, model, thinking) : undefined;
-  const subject = label ? `${label} ` : "";
   const task = stringField(details, "task");
   if (!expanded && status === "closed" && (action === "close" || action === "status")) {
     stopSpinner(state);
@@ -282,6 +292,11 @@ export function renderSubagentResult(
       state.spinnerTimer.unref?.();
     }
     text = theme.fg("warning", SPINNER_FRAMES[state.spinnerFrame]);
+    const deadlineMs = deadlineFrom(context.args);
+    if (deadlineMs !== undefined) {
+      state.startedAt ??= Date.now();
+      text += theme.fg("dim", ` ${formatCountdown(deadlineMs - (Date.now() - state.startedAt))}`);
+    }
   } else if (status === "interrupted" || details.controllerCancellation === true) {
     stopSpinner(state);
     text = theme.fg("warning", "■ Interrupted");
@@ -296,10 +311,10 @@ export function renderSubagentResult(
     text = theme.fg("success", "✓ Closed");
   } else if (action === "start" && (status === "running" || status === "idle")) {
     stopSpinner(state);
-    text = theme.fg("accent", `↗ ${subject}started`);
+    text = theme.fg("accent", "↗ started");
   } else if (action === "wait" && details.reason === "timeout") {
     stopSpinner(state);
-    text = theme.fg("warning", `◷ ${subject}still running`);
+    text = theme.fg("warning", "◷ still running");
   } else if (action === "interrupt") {
     stopSpinner(state);
     text = details.accepted === true
@@ -315,19 +330,19 @@ export function renderSubagentResult(
     text = theme.fg("accent", "◷ Follow-up queued");
   } else if (status === "running") {
     stopSpinner(state);
-    text = theme.fg("warning", `● ${subject}running`);
+    text = theme.fg("warning", "● running");
   } else if (status === "idle") {
     stopSpinner(state);
-    text = theme.fg("accent", `○ ${subject}idle`);
+    text = theme.fg("accent", "○ idle");
   } else if (status === "failed" || status === "crashed" || status === "cancelled") {
     stopSpinner(state);
-    text = theme.fg("error", `✗ ${subject}${status}`);
+    text = theme.fg("error", `✗ ${status}`);
   } else if (status === "closed") {
     stopSpinner(state);
-    text = theme.fg("muted", `• ${subject}closed`);
+    text = theme.fg("muted", "• closed");
   } else {
     stopSpinner(state);
-    text = theme.fg("success", `✓ ${subject}completed`);
+    text = theme.fg("success", "✓ completed");
   }
 
   const metadata = isPartial || action === "list" ? "" : resultMetadata(details, context.args, expanded);
