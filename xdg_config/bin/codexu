@@ -58,10 +58,10 @@ payload = json.loads(urllib.request.urlopen(request, timeout=30).read().decode()
 # print(json.dumps(payload))
 rate_limit = payload.get("rate_limit", {})
 used_percent_1w = rate_limit.get("primary_window", {})
-used_percent_remaining_1w = 100 - used_percent_1w.get("used_percent", 0)
-print("# Usage remaining")
+print("# codex usage")
 print(
-    f"1. 1w: {used_percent_remaining_1w}%; reset at: {fmt2(used_percent_1w.get('reset_at', 0))}"
+    f"{'1w':<2} used {used_percent_1w.get('used_percent', 0):>3}%"
+    f"  resets {fmt2(used_percent_1w.get('reset_at', 0))}"
 )
 available_count = payload.get("rate_limit_reset_credits", {}).get("available_count", 0)
 
