@@ -404,6 +404,15 @@ describe("subagent tool", () => {
     expect(partial.split("\n").map((l) => l.trimEnd()).join("\n").trim()).toBe("⠋ — grep completed; continuing…");
     expect(partial.match(/grep completed; continuing…/g)).toHaveLength(1);
     expect(partial).not.toContain("Running");
+    const countdownState = {};
+    const countdown = tool.renderResult!(
+      { content: [{ type: "text", text: "working" }], details: {
+        runId: "runtime", operationId: "operation", agent: "scout", status: "running",
+      } },
+      { expanded: false, isPartial: true }, theme,
+      { args: { action: "run", agent: "scout", task: "Inspect", deadlineMs: 90_000 }, isError: false, state: countdownState, invalidate: vi.fn() },
+    ).render(200).join("\n");
+    expect(countdown).toMatch(/⠋ 1m\d{2}s — working/);
     tool.renderResult!(
       { content: [{ type: "text", text: "done" }], details: { status: "completed" } },
       { expanded: false, isPartial: false }, theme,
@@ -414,10 +423,10 @@ describe("subagent tool", () => {
       agent: "scout",
       status: "running",
       activeOperationId: "operation-123456789",
-    })).toContain("scout running");
+    })).toContain("● running");
     expect(render({ action: "run" }, {
       runId: "runtime-123456789", operationId: "operation-123456789", agent: "scout", status: "completed", summary: "Done",
-    }).split("\n").map((l) => l.trimEnd()).join("\n").trimEnd()).toBe("✓ scout completed\nDone");
+    }).split("\n").map((l) => l.trimEnd()).join("\n").trimEnd()).toBe("✓ completed\nDone");
     const expandedStatus = tool.renderResult!(
       { content: [{ type: "text", text: "" }], details: {
         runId: "runtime-123456789",
@@ -431,7 +440,7 @@ describe("subagent tool", () => {
     expect(expandedStatus).toContain("run runtime-123456789 · active operation-123456789");
     expect(render({ action: "wait", id: "runtime", operationId: "operation" }, {
       reason: "timeout", snapshot: { status: "running", agent: "scout" },
-    })).toContain("scout still running");
+    })).toContain("still running");
     expect(render({ action: "interrupt" }, { accepted: true })).toContain("Interrupt requested");
     expect(render({ action: "send", id: "runtime", mode: "follow_up" }, {
       status: "running", queued: true, operationId: "queued-operation",
@@ -517,7 +526,7 @@ describe("subagent tool", () => {
       { expanded: true, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(240).map((line) => line.trimEnd()).join("\n");
-    expect(rendered).toContain("✓ scout completed\n  task: Initial\n  Located auth.\n  With supporting evidence.");
+    expect(rendered).toContain("✓ completed · scout\n  task: Initial\n  Located auth.\n  With supporting evidence.");
     expect(rendered).toContain("run runtime · operation initial · runtime idle");
   });
 
