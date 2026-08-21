@@ -3,6 +3,7 @@ import { closeSync, existsSync, fstatSync, openSync, readSync, realpathSync, sta
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import { boundText } from "./output.ts";
+import type { SubagentWorkOrder } from "./protocol.ts";
 
 const MAX_GUIDANCE_CHARACTERS = 32_000;
 const MAX_GUIDANCE_LINES = 400;
@@ -103,4 +104,23 @@ export function loadProjectGuidance(allowedRoot: string, childCwd: string): stri
     }
   }
   return guidance;
+}
+
+/** Materializes the delegated work-order envelope from context materials. */
+export function createWorkOrder(task: string, cwd: string, projectGuidance: string[]): SubagentWorkOrder {
+  return {
+    goal: task,
+    scope: [cwd],
+    constraints: [
+      "Use only the tools declared by the selected agent.",
+      "Preserve unrelated existing changes and do not perform destructive shared actions.",
+      "Do not delegate to another agent.",
+    ],
+    knownDecisions: [],
+    evidence: [],
+    validation: [],
+    returnFormat:
+      "Return a concise result with completed work or findings, evidence, validation, blockers, and residual risks.",
+    projectGuidance,
+  };
 }

@@ -75,3 +75,9 @@ export interface SubagentController {
 }
 
 export type SubagentControllerFactory = (initial: SubagentRunOptions) => Promise<SubagentController>;
+
+/** Provider-stripped model id for compact labels ("openai/gpt-5" -> "gpt-5"). */
+export function stripModel(model: string): string {
+  const slash = model.lastIndexOf("/");
+  return slash === -1 ? model : model.slice(slash + 1);
+}

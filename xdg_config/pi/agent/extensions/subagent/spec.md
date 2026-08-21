@@ -418,7 +418,8 @@ Ownership is split as follows:
 
 | Component | Owns | Does not own |
 | --- | --- | --- |
-| Tool/control plane (`index.ts`) | Model-facing actions, runtime/operation IDs, state transitions, revisions, capacity slots, waiters, result retention, shutdown coordination | Session construction, event reduction, disposal |
+| Tool/control plane (`runtime.ts`) | Runtime/operation records, state transitions, revisions, capacity slots, operation lifecycle (begin/close), settlement notifications data, bounded snapshots | Model-facing action dispatch, response envelopes, session construction |
+| Tool surface (`index.ts`) | Extension wiring, agent discovery + settings overrides, TypeBox schema, prompt guidance, action dispatch, response envelopes, completion delivery, shutdown hook | State transitions, slot accounting, session event reduction |
 | SDK controller (`sdk-executor.ts`) | Exactly one in-process Pi session, session construction and isolation flags, event reduction, operation deadline/abort watchdogs, fatal notification, session disposal | Multi-runtime scheduling, model-facing status policy |
 | Pi child | Model turns, tool execution, session transcript | Parent integration decisions, runtime registry |
 | Renderer (`render.ts`) | Bounded visual presentation and spinner lifecycle | Authoritative state or completion decisions |

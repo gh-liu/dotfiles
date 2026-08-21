@@ -1,0 +1,382 @@
+import { createWorkOrder } from "./context.ts";
+import { boundText } from "./output.ts";
+import { stripModel } from "./protocol.ts";
+import type { SubagentCompletionDetails } from "./render.ts";
+import type {
+  SubagentController,
+  SubagentControllerFactory,
+  SubagentResult,
+  SubagentRunOptions,
+} from "./protocol.ts";
+
+/** Control-plane ownership: runtime/operation records, slots, transitions, and settlement. */
+
+export type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
+export type OperationState = "running" | "completed" | "failed" | "interrupted" | "cancelled";
+
+export interface OperationRecord {
+  operationId: string;
+  state: OperationState;
+  accepted: boolean;
+  task: string;
+  deadlineMs: number;
+  startedAt?: number;
+  finishedAt?: number;
+  result?: SubagentResult;
+  error?: string;
+  notifyOnSettle: boolean;
+  settled: Promise<void>;
+  settle(): void;
+}
+
+export interface RuntimeRecord {
+  runId: string;
+  revision: number;
+  agent: SubagentRunOptions["agent"];
+  cwd: string;
+  parentSessionId: string;
+  projectGuidance: string[];
+  state: RuntimeState;
+  controller?: SubagentController;
+  controllerReady: Promise<SubagentController>;
+  activeOperationId?: string;
+  lastSettled?: OperationRecord;
+  operations: Map<string, OperationRecord>;
+  closePromise?: Promise<void>;
+  slotReserved: boolean;
+}
+
+function deferred<T>(): {
+  promise: Promise<T>;
+  resolve(value: T): void;
+  reject(error: unknown): void;
+} {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((next, fail) => { resolve = next; reject = fail; });
+  return { promise, resolve, reject };
+}
+
+export const operationSnapshot = (operation: OperationRecord) => ({
+  operationId: operation.operationId,
+  status: operation.state,
+  task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
+  ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
+  ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
+  ...(operation.result === undefined ? {} : {
+    result: {
+      ...operation.result,
+      summary: boundText(operation.result.summary, { maxCharacters: 2_000, maxLines: 20 }),
+    },
+  }),
+  ...(operation.error === undefined ? {} : {
+    error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }),
+  }),
+});
+
+export function runtimeSnapshot(runtime: RuntimeRecord) {
+  return {
+    runId: runtime.runId,
+    revision: runtime.revision,
+    agent: runtime.agent.name,
+    ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+    status: runtime.state,
+    ...(runtime.activeOperationId === undefined ? {} : {
+      operationId: runtime.activeOperationId,
+      activeOperationId: runtime.activeOperationId,
+      activeOperation: operationSnapshot(runtime.operations.get(runtime.activeOperationId)!),
+    }),
+    ...(runtime.lastSettled === undefined ? {} : {
+      lastSettledOperation: operationSnapshot(runtime.lastSettled),
+    }),
+    ...(runtime.controller === undefined ? {} : {
+      processInstanceId: runtime.controller.processInstanceId,
+      transcript: runtime.controller.transcript,
+    }),
+  };
+}
+
+export interface RuntimeHubDeps {
+  controllerFactory: SubagentControllerFactory;
+  idFactory: () => string;
+  /** Completion sink; the hub builds bounded details, the shell delivers them. */
+  notifySettled: (details: SubagentCompletionDetails) => void;
+}
+
+export interface CreateRuntimeInput {
+  agent: RuntimeRecord["agent"];
+  cwd: string;
+  parentSessionId: string;
+  projectGuidance: string[];
+  initialOptions: SubagentRunOptions;
+}
+
+export interface BeginOperationInput {
+  operationId: string;
+  task: string;
+  deadlineMs: number;
+  notifyOnSettle: boolean;
+  signal?: AbortSignal;
+  onUpdate?: (update: { content: Array<{ type: "text"; text: string }>; details: Record<string, unknown> }) => void;
+}
+
+export interface RuntimeHub {
+  readonly maxConcurrentRuns: number;
+  get(runtimeId: string): RuntimeRecord | undefined;
+  capacityAvailable(): boolean;
+  isShuttingDown(): boolean;
+  createRuntime(input: CreateRuntimeInput): RuntimeRecord;
+  snapshot(runtime: RuntimeRecord): ReturnType<typeof runtimeSnapshot>;
+  beginOperation(runtime: RuntimeRecord, input: BeginOperationInput): Promise<OperationRecord>;
+  /** Marks a runtime crashed before its close path exists (startup/acceptance failures). */
+  markCrashed(runtime: RuntimeRecord): void;
+  closeRuntime(runtime: RuntimeRecord, suppressNotification?: boolean): Promise<void>;
+  requestShutdown(): Promise<void>;
+}
+
+export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
+  const maxConcurrentRuns = deps.maxConcurrentRuns ?? 3;
+  const runtimes = new Map<string, RuntimeRecord>();
+  let occupiedSlots = 0;
+  let shuttingDown = false;
+
+  const transition = (runtime: RuntimeRecord, state: RuntimeState): void => {
+    runtime.state = state;
+    runtime.revision += 1;
+  };
+
+  const releaseSlot = (runtime: RuntimeRecord): void => {
+    if (!runtime.slotReserved) return;
+    runtime.slotReserved = false;
+    occupiedSlots -= 1;
+  };
+
+  const prune = (): void => {
+    for (const runtime of runtimes.values()) {
+      while (runtime.operations.size > 128) {
+        const stale = [...runtime.operations.values()].find(
+          (operation) => operation !== runtime.lastSettled
+            && operation.state !== "running",
+        );
+        if (!stale) break;
+        runtime.operations.delete(stale.operationId);
+      }
+    }
+  };
+
+  const notifyOperationSettled = (runtime: RuntimeRecord, operation: OperationRecord): void => {
+    if (
+      !operation.notifyOnSettle
+      || shuttingDown
+      || runtime.state === "closing"
+      || runtime.state === "closed"
+    ) return;
+    const result = operation.result;
+    const agent = runtime.agent.name.length <= 80
+      ? runtime.agent.name
+      : `${runtime.agent.name.slice(0, 79)}…`;
+    const model = runtime.agent.model ? stripModel(runtime.agent.model) : undefined;
+    const thinking = runtime.agent.thinking;
+    const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
+      ? operation.finishedAt - operation.startedAt
+      : undefined;
+    const details: SubagentCompletionDetails = {
+      runId: runtime.runId,
+      operationId: operation.operationId,
+      agent,
+      ...(model ? { model } : {}),
+      ...(thinking ? { thinking } : {}),
+      ...(elapsedMs === undefined ? {} : { elapsedMs }),
+      task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
+      status: result?.status ?? "failed",
+      summary: boundText(
+        result?.summary ?? operation.error ?? "Subagent operation failed without a result.",
+        { maxCharacters: 2_000, maxLines: 20 },
+      ),
+      runtimeStatus: runtime.state === "running" ? "running" : runtime.state === "idle" ? "idle" : "crashed",
+    };
+    deps.notifySettled(details);
+  };
+
+  const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> => {
+    if (suppressNotification && runtime.activeOperationId) {
+      const operation = runtime.operations.get(runtime.activeOperationId);
+      if (operation) operation.notifyOnSettle = false;
+    }
+    if (runtime.closePromise) return runtime.closePromise;
+    const wasCrashed = runtime.state === "crashed";
+    if (!wasCrashed) transition(runtime, "closing");
+    runtime.closePromise = (async () => {
+      let failure: unknown;
+      try {
+        await runtime.controllerReady;
+      } catch (error) {
+        failure = error;
+      }
+      const activeOperationId = runtime.activeOperationId;
+      const activeOperation = activeOperationId === undefined
+        ? undefined
+        : runtime.operations.get(activeOperationId);
+      if (activeOperationId && activeOperation?.accepted && runtime.controller && !wasCrashed) {
+        try {
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const stopped = await Promise.race([
+            (async () => {
+              await runtime.controller!.interrupt(activeOperationId);
+              await activeOperation.settled;
+              return true;
+            })(),
+            new Promise<false>((resolveTimeout) => {
+              timer = setTimeout(() => resolveTimeout(false), 5_000);
+            }),
+          ]);
+          if (timer) clearTimeout(timer);
+          if (!stopped) failure ??= new Error("Subagent operation did not settle after interrupt");
+        } catch (error) {
+          failure ??= error;
+        }
+      }
+      try {
+        await runtime.controller?.close();
+      } catch (error) {
+        failure ??= error;
+      }
+      if (failure) throw failure;
+      if (runtime.state !== "crashed") transition(runtime, "closed");
+    })().catch((error) => {
+      transition(runtime, "crashed");
+      throw error;
+    }).finally(() => {
+      releaseSlot(runtime);
+      prune();
+    });
+    return runtime.closePromise;
+  };
+
+  const beginOperation = async (
+    runtime: RuntimeRecord,
+    input: BeginOperationInput,
+  ): Promise<OperationRecord> => {
+    const { operationId, task, deadlineMs, notifyOnSettle, signal, onUpdate } = input;
+    let settle!: () => void;
+    const operation: OperationRecord = {
+      operationId,
+      state: "running",
+      accepted: false,
+      task,
+      deadlineMs,
+      notifyOnSettle,
+      settled: new Promise<void>((resolve) => { settle = resolve; }),
+      settle: () => settle(),
+    };
+    runtime.operations.set(operationId, operation);
+    operation.state = "running";
+    operation.startedAt = Date.now();
+    runtime.activeOperationId = operationId;
+    transition(runtime, "running");
+    // Wrap raw progress summaries with operation identity plus authoritative timing
+    // so the UI can anchor countdowns and report elapsed time without guessing.
+    const onProgress = onUpdate
+      ? (summary: string) => onUpdate({
+          content: [{ type: "text", text: summary }],
+          details: {
+            runId: runtime.runId,
+            operationId,
+            agent: runtime.agent.name,
+            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+            ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+            status: "running",
+            startedAt: operation.startedAt,
+            deadlineMs,
+          },
+        })
+      : undefined;
+    const runOptions: SubagentRunOptions = {
+      cwd: runtime.cwd,
+      agent: runtime.agent,
+      workOrder: createWorkOrder(task, runtime.cwd, runtime.projectGuidance),
+      runId: runtime.runId,
+      operationId,
+      parentSessionId: runtime.parentSessionId,
+      deadlineMs,
+      signal,
+      onProgress,
+    };
+    const started = runtime.controller!.start(runOptions);
+    started.result.then(
+      (result) => {
+        operation.result = result;
+        operation.state = result.status;
+      },
+      (error) => {
+        operation.error = error instanceof Error ? error.message : String(error);
+        operation.state = "failed";
+        if (runtime.state !== "closing" && runtime.state !== "closed") {
+          transition(runtime, "crashed");
+          void closeRuntime(runtime).catch(() => {});
+        }
+      },
+    ).finally(() => {
+      operation.finishedAt = Date.now();
+      if (runtime.activeOperationId === operationId) {
+        runtime.activeOperationId = undefined;
+        runtime.lastSettled = operation;
+        if (runtime.state === "running") transition(runtime, "idle");
+      }
+      operation.settle();
+      prune();
+      void started.accepted.then(() => notifyOperationSettled(runtime, operation)).catch(() => {});
+    });
+    await started.accepted;
+    operation.accepted = true;
+    return operation;
+  };
+
+  return {
+    maxConcurrentRuns,
+    get: (runtimeId) => runtimes.get(runtimeId),
+    capacityAvailable: () => occupiedSlots < maxConcurrentRuns,
+    isShuttingDown: () => shuttingDown,
+    createRuntime(input) {
+      const controllerReady = deferred<SubagentController>();
+      const runtime: RuntimeRecord = {
+        runId: input.initialOptions.runId,
+        revision: 0,
+        agent: input.agent,
+        cwd: input.cwd,
+        parentSessionId: input.parentSessionId,
+        projectGuidance: input.projectGuidance,
+        state: "starting",
+        controllerReady: controllerReady.promise,
+        operations: new Map(),
+        slotReserved: true,
+      };
+      occupiedSlots += 1;
+      runtimes.set(runtime.runId, runtime);
+      void Promise.resolve().then(() => deps.controllerFactory(input.initialOptions)).then(
+        (controller) => {
+          runtime.controller = controller;
+          void controller.failure.then((error) => {
+            if (runtime.state === "closed") return;
+            transition(runtime, "crashed");
+            void closeRuntime(runtime).catch(() => {});
+          });
+          controllerReady.resolve(controller);
+        },
+        (error) => controllerReady.reject(error),
+      );
+      return runtime;
+    },
+    snapshot: (runtime) => runtimeSnapshot(runtime),
+    beginOperation,
+    markCrashed: (runtime) => {
+      if (!runtime.closePromise) transition(runtime, "crashed");
+    },
+    closeRuntime,
+    async requestShutdown() {
+      shuttingDown = true;
+      await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));
+    },
+  };
+}

@@ -1,14 +1,21 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import { applyAgentOverrides, discoverUserAgents, type AgentDefinitionError, type AgentDiscovery } from "./agents.ts";
-import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
-import { boundText } from "./output.ts";
+import {
+  applyAgentOverrides,
+  discoverUserAgents,
+  formatAgentCatalog,
+  loadSubagentOverrides,
+  type AgentDiscovery,
+} from "./agents.ts";
+import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
+import { boundText, serializeSubagentResult } from "./output.ts";
+import { createRuntimeHub, operationSnapshot, type RuntimeRecord } from "./runtime.ts";
 import { createSdkSubagentController } from "./sdk-executor.ts";
+import { stripModel } from "./protocol.ts";
 import {
   renderSubagentCall,
   renderSubagentCompletion,
@@ -16,65 +23,13 @@ import {
   SUBAGENT_COMPLETION_MESSAGE,
   type SubagentCompletionDetails,
 } from "./render.ts";
-import type {
-  SubagentController,
-  SubagentControllerFactory,
-  SubagentResult,
-  SubagentRunOptions,
-  SubagentWorkOrder,
-} from "./protocol.ts";
+import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.ts";
 
 interface SubagentExtensionOptions {
   agentDirectory?: string;
   controllerFactory?: SubagentControllerFactory;
   idFactory?: () => string;
   settingsPath?: string;
-}
-
-type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
-type OperationState = "running" | "completed" | "failed" | "interrupted" | "cancelled";
-
-interface OperationRecord {
-  operationId: string;
-  state: OperationState;
-  accepted: boolean;
-  task: string;
-  deadlineMs: number;
-  startedAt?: number;
-  finishedAt?: number;
-  result?: SubagentResult;
-  error?: string;
-  notifyOnSettle: boolean;
-  settled: Promise<void>;
-  settle(): void;
-}
-
-interface RuntimeRecord {
-  runId: string;
-  revision: number;
-  agent: SubagentRunOptions["agent"];
-  cwd: string;
-  parentSessionId: string;
-  projectGuidance: string[];
-  state: RuntimeState;
-  controller?: SubagentController;
-  controllerReady: Promise<SubagentController>;
-  activeOperationId?: string;
-  lastSettled?: OperationRecord;
-  operations: Map<string, OperationRecord>;
-  closePromise?: Promise<void>;
-  slotReserved: boolean;
-}
-
-function deferred<T>(): {
-  promise: Promise<T>;
-  resolve(value: T): void;
-  reject(error: unknown): void;
-} {
-  let resolve!: (value: T) => void;
-  let reject!: (error: unknown) => void;
-  const promise = new Promise<T>((next, fail) => { resolve = next; reject = fail; });
-  return { promise, resolve, reject };
 }
 
 const deadline = () => Type.Optional(Type.Integer({
@@ -116,82 +71,7 @@ const SubagentParameters = Type.Object({
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000, description: "Optional wait timeout" })),
 });
 
-export function loadSubagentOverrides(settingsPath: string): { overrides?: unknown; errors: AgentDefinitionError[] } {
-  try {
-    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
-    if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return { errors: [] };
-    const subagents = (settings as Record<string, unknown>).subagents;
-    if (subagents === undefined || subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
-      return { errors: [] };
-    }
-    return { overrides: subagents, errors: [] };
-  } catch (error) {
-    if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
-      return { errors: [] };
-    }
-    return {
-      errors: [{
-        filePath: "settings.json:subagents",
-        error: `settings.json:subagents: ${error instanceof Error ? error.message : String(error)}`,
-      }],
-    };
-  }
-}
-
-function formatAgentCatalog(discovery: AgentDiscovery): string {
-  const agents = discovery.agents.length === 0
-    ? ["none"]
-    : discovery.agents.map((agent) => `${agent.name}: ${agent.description.replace(/\s+/g, " ").trim()}`);
-  const invalid = discovery.errors.length === 0
-    ? []
-    : ["", "Invalid agent definitions:", ...discovery.errors.map((error) => `- ${error.error}`)];
-  return [...agents, ...invalid].join("\n");
-}
-
-function createWorkOrder(task: string, cwd: string, projectGuidance: string[]): SubagentWorkOrder {
-  return {
-    goal: task,
-    scope: [cwd],
-    constraints: [
-      "Use only the tools declared by the selected agent.",
-      "Preserve unrelated existing changes and do not perform destructive shared actions.",
-      "Do not delegate to another agent.",
-    ],
-    knownDecisions: [],
-    evidence: [],
-    validation: [],
-    returnFormat:
-      "Return a concise result with completed work or findings, evidence, validation, blockers, and residual risks.",
-    projectGuidance,
-  };
-}
-
-function stripModel(model: string): string {
-  const slash = model.lastIndexOf("/");
-  return slash === -1 ? model : model.slice(slash + 1);
-}
-
-function serializeSubagentResult(result: SubagentResult): string {
-  const maxCharacters = 32_000;
-  let low = 0;
-  let high = Math.min(result.summary.length, maxCharacters);
-  let best: string | undefined;
-  while (low <= high) {
-    const summaryLimit = Math.floor((low + high) / 2);
-    const summary = summaryLimit === 0
-      ? ""
-      : boundText(result.summary, { maxCharacters: summaryLimit, maxLines: 400 });
-    const serialized = JSON.stringify({ ...result, summary });
-    if (serialized.length <= maxCharacters) {
-      best = serialized;
-      low = summaryLimit + 1;
-    } else {
-      high = summaryLimit - 1;
-    }
-  }
-  if (best !== undefined) return best;
-  throw new Error("Subagent result envelope exceeds the parent serialization limit");
-}
+export { loadSubagentOverrides };
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
@@ -216,103 +96,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const controllerFactory = options.controllerFactory
     ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
-  const runtimes = new Map<string, RuntimeRecord>();
-  let occupiedSlots = 0;
-  let shuttingDown = false;
-
-  const transition = (runtime: RuntimeRecord, state: RuntimeState): void => {
-    if (runtime.state === state) return;
-    runtime.state = state;
-    runtime.revision += 1;
-  };
-
-  const releaseSlot = (runtime: RuntimeRecord): void => {
-    if (!runtime.slotReserved) return;
-    runtime.slotReserved = false;
-    occupiedSlots -= 1;
-  };
-
-  const operationSnapshot = (operation: OperationRecord) => ({
-    operationId: operation.operationId,
-    status: operation.state,
-    task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
-    ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
-    ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
-    ...(operation.result === undefined ? {} : {
-      result: {
-        ...operation.result,
-        summary: boundText(operation.result.summary, { maxCharacters: 2_000, maxLines: 20 }),
-      },
-    }),
-    ...(operation.error === undefined ? {} : {
-      error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }),
-    }),
-  });
-
-  const runtimeSnapshot = (runtime: RuntimeRecord) => ({
-    runId: runtime.runId,
-    revision: runtime.revision,
-    agent: runtime.agent.name,
-    ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-    status: runtime.state,
-    ...(runtime.activeOperationId === undefined ? {} : {
-      operationId: runtime.activeOperationId,
-      activeOperationId: runtime.activeOperationId,
-      activeOperation: operationSnapshot(runtime.operations.get(runtime.activeOperationId)!),
-    }),
-    ...(runtime.lastSettled === undefined ? {} : {
-      lastSettledOperation: operationSnapshot(runtime.lastSettled),
-    }),
-    ...(runtime.controller === undefined ? {} : {
-      processInstanceId: runtime.controller.processInstanceId,
-      transcript: runtime.controller.transcript,
-    }),
-  });
-
-  const response = (details: unknown, isError = false) => {
-    const serialized = JSON.stringify(details);
-    const bounded = serialized.length <= 32_000
-      ? serialized
-      : JSON.stringify({ error: "Subagent response exceeded the parent serialization limit", truncated: true });
-    return {
-      content: [{ type: "text" as const, text: bounded }],
-      details,
-      ...(isError ? { isError: true } : {}),
-    };
-  };
-
-  const notifyOperationSettled = (runtime: RuntimeRecord, operation: OperationRecord): void => {
-    if (
-      !operation.notifyOnSettle
-      || shuttingDown
-      || runtime.state === "closing"
-      || runtime.state === "closed"
-    ) return;
-    const result = operation.result;
-    const agent = runtime.agent.name.length <= 80
-      ? runtime.agent.name
-      : `${runtime.agent.name.slice(0, 79)}…`;
-    const model = runtime.agent.model ? stripModel(runtime.agent.model) : undefined;
-    const thinking = runtime.agent.thinking;
-    const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
-      ? operation.finishedAt - operation.startedAt
-      : undefined;
-    const details: SubagentCompletionDetails = {
-      runId: runtime.runId,
-      operationId: operation.operationId,
-      agent,
-      ...(model ? { model } : {}),
-      ...(thinking ? { thinking } : {}),
-      ...(elapsedMs === undefined ? {} : { elapsedMs }),
-      task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
-      status: result?.status ?? "failed",
-      summary: boundText(
-        result?.summary ?? operation.error ?? "Subagent operation failed without a result.",
-        { maxCharacters: 2_000, maxLines: 20 },
-      ),
-      runtimeStatus: runtime.state === "running" ? "running" : runtime.state === "idle" ? "idle" : "crashed",
-    };
+  const notifySettled = (details: SubagentCompletionDetails): void => {
     const availability = details.runtimeStatus === "idle"
       ? "The runtime is idle and can accept a follow-up."
       : details.runtimeStatus === "running"
@@ -335,163 +119,20 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       // Notification delivery must not change authoritative operation state.
     }
   };
-
-  const prune = (): void => {
-    for (const runtime of runtimes.values()) {
-      while (runtime.operations.size > 128) {
-        const stale = [...runtime.operations.values()].find(
-          (operation) => operation !== runtime.lastSettled
-            && operation.state !== "running",
-        );
-        if (!stale) break;
-        runtime.operations.delete(stale.operationId);
-      }
-    }
-    while (runtimes.size > 128) {
-      const stale = [...runtimes.values()].find(
-        (runtime) => runtime.state === "closed" || runtime.state === "crashed",
-      );
-      if (!stale) break;
-      runtimes.delete(stale.runId);
-    }
-  };
-
-  const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> => {
-    if (suppressNotification && runtime.activeOperationId) {
-      const operation = runtime.operations.get(runtime.activeOperationId);
-      if (operation) operation.notifyOnSettle = false;
-    }
-    if (runtime.closePromise) return runtime.closePromise;
-    const wasCrashed = runtime.state === "crashed";
-    if (!wasCrashed) transition(runtime, "closing");
-    runtime.closePromise = (async () => {
-      let failure: unknown;
-      try {
-        await runtime.controllerReady;
-      } catch (error) {
-        failure = error;
-      }
-      const activeOperationId = runtime.activeOperationId;
-      const activeOperation = activeOperationId === undefined
-        ? undefined
-        : runtime.operations.get(activeOperationId);
-      if (activeOperationId && activeOperation?.accepted && runtime.controller && !wasCrashed) {
-        try {
-          let timer: ReturnType<typeof setTimeout> | undefined;
-          const stopped = await Promise.race([
-            (async () => {
-              await runtime.controller!.interrupt(activeOperationId);
-              await activeOperation.settled;
-              return true;
-            })(),
-            new Promise<false>((resolveTimeout) => {
-              timer = setTimeout(() => resolveTimeout(false), 5_000);
-            }),
-          ]);
-          if (timer) clearTimeout(timer);
-          if (!stopped) failure ??= new Error("Subagent operation did not settle after interrupt");
-        } catch (error) {
-          failure ??= error;
-        }
-      }
-      try {
-        await runtime.controller?.close();
-      } catch (error) {
-        failure ??= error;
-      }
-      if (failure) throw failure;
-      if (runtime.state !== "crashed") transition(runtime, "closed");
-    })().catch((error) => {
-      transition(runtime, "crashed");
-      throw error;
-    }).finally(() => {
-      releaseSlot(runtime);
-      prune();
-    });
-    return runtime.closePromise;
-  };
-
-  const beginOperation = async (
-    runtime: RuntimeRecord,
-    operationId: string,
-    task: string,
-    deadlineMs: number,
-    notifyOnSettle: boolean,
-    signal?: AbortSignal,
-    onUpdate?: (update: { content: Array<{ type: "text"; text: string }>; details: Record<string, unknown> }) => void,
-  ): Promise<OperationRecord> => {
-    let settle!: () => void;
-    const operation: OperationRecord = {
-      operationId,
-      state: "running",
-      accepted: false,
-      task,
-      deadlineMs,
-      notifyOnSettle,
-      settled: new Promise<void>((resolve) => { settle = resolve; }),
-      settle: () => settle(),
+  const hub = createRuntimeHub({ controllerFactory, idFactory, notifySettled });
+  const runtimeSnapshot = (runtime: RuntimeRecord) => hub.snapshot(runtime);
+  const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> =>
+    hub.closeRuntime(runtime, suppressNotification);
+  const response = (details: unknown, isError = false) => {
+    const serialized = JSON.stringify(details);
+    const bounded = serialized.length <= 32_000
+      ? serialized
+      : JSON.stringify({ error: "Subagent response exceeded the parent serialization limit", truncated: true });
+    return {
+      content: [{ type: "text" as const, text: bounded }],
+      details,
+      ...(isError ? { isError: true } : {}),
     };
-    runtime.operations.set(operationId, operation);
-    operation.state = "running";
-    operation.startedAt = Date.now();
-    runtime.activeOperationId = operationId;
-    transition(runtime, "running");
-    // Wrap raw progress summaries with operation identity plus authoritative timing
-    // so the UI can anchor countdowns and report elapsed time without guessing.
-    const onProgress = onUpdate
-      ? (summary: string) => onUpdate({
-          content: [{ type: "text", text: summary }],
-          details: {
-            runId: runtime.runId,
-            operationId,
-            agent: runtime.agent.name,
-            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-            ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-            status: "running",
-            startedAt: operation.startedAt,
-            deadlineMs,
-          },
-        })
-      : undefined;
-    const runOptions: SubagentRunOptions = {
-      cwd: runtime.cwd,
-      agent: runtime.agent,
-      workOrder: createWorkOrder(task, runtime.cwd, runtime.projectGuidance),
-      runId: runtime.runId,
-      operationId,
-      parentSessionId: runtime.parentSessionId,
-      deadlineMs,
-      signal,
-      onProgress,
-    };
-    const started = runtime.controller!.start(runOptions);
-    started.result.then(
-      (result) => {
-        operation.result = result;
-        operation.state = result.status;
-      },
-      (error) => {
-        operation.error = error instanceof Error ? error.message : String(error);
-        operation.state = "failed";
-        if (runtime.state !== "closing" && runtime.state !== "closed") {
-          transition(runtime, "crashed");
-          void closeRuntime(runtime).catch(() => {});
-        }
-      },
-    ).finally(() => {
-      operation.finishedAt = Date.now();
-      if (runtime.activeOperationId === operationId) {
-        runtime.activeOperationId = undefined;
-        runtime.lastSettled = operation;
-        if (runtime.state === "running") transition(runtime, "idle");
-      }
-      operation.settle();
-      prune();
-      void started.accepted.then(() => notifyOperationSettled(runtime, operation)).catch(() => {});
-    });
-    await started.accepted;
-    operation.accepted = true;
-    return operation;
   };
 
   const operationResponse = (operation: OperationRecord, runtime?: RuntimeRecord) => {
@@ -589,7 +230,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         || params.action === "interrupt"
         || params.action === "close"
       ) {
-        const runtime = runtimes.get(params.id);
+        const runtime = hub.get(params.id);
         if (!runtime) return response({ error: `Unknown subagent runtime: ${params.id}` }, true);
 
         if (params.action === "status") return response(runtimeSnapshot(runtime));
@@ -616,7 +257,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         if (params.action === "send" && params.mode === "steer") {
           const operation = runtime.operations.get(params.expectedOperationId);
           if (
-            shuttingDown
+            hub.isShuttingDown()
             || runtime.state !== "running"
             || runtime.activeOperationId !== params.expectedOperationId
             || !operation?.accepted
@@ -658,7 +299,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return operationResponse(operation, runtime);
         }
 
-        if (shuttingDown) return response({ error: "Subagent runtime is shutting down" }, true);
+        if (hub.isShuttingDown()) return response({ error: "Subagent runtime is shutting down" }, true);
         if (runtime.state !== "idle") {
           return response({
             accepted: false,
@@ -669,22 +310,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }
         const operationId = idFactory();
         try {
-          await beginOperation(
-            runtime,
+          await hub.beginOperation(runtime, {
             operationId,
-            params.message,
-            params.deadlineMs ?? 600_000,
-            true,
+            task: params.message,
+            deadlineMs: params.deadlineMs ?? 600_000,
+            notifyOnSettle: true,
             signal,
             onUpdate,
-          );
+          });
           return response({ ...runtimeSnapshot(runtime), operationId });
         } catch (error) {
           return response({ ...runtimeSnapshot(runtime), error: error instanceof Error ? error.message : String(error) }, true);
         }
       }
 
-      if (shuttingDown) {
+      if (hub.isShuttingDown()) {
         return response({ error: "Subagent runtime is shutting down; new runs are rejected." }, true);
       }
       const agent = registry.agents.find((candidate) => candidate.name === params.agent);
@@ -702,52 +342,27 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           isError: true,
         };
       }
-      if (occupiedSlots >= 3) {
+      if (!hub.capacityAvailable()) {
         return response({ error: "Subagent capacity unavailable: maxConcurrentRuns is 3." }, true);
       }
 
       const allowedRoot = findAllowedRoot(ctx.cwd);
       const cwd = resolveChildCwd(allowedRoot, resolve(ctx.cwd, params.cwd ?? "."));
+      const parentSessionId = ctx.sessionManager.getSessionId();
+      const projectGuidance = loadProjectGuidance(allowedRoot, cwd);
       const runId = idFactory();
       const operationId = idFactory();
-      const controllerReady = deferred<SubagentController>();
-      const runtime: RuntimeRecord = {
-        runId,
-        revision: 0,
-        agent,
-        cwd,
-        parentSessionId: ctx.sessionManager.getSessionId(),
-        projectGuidance: loadProjectGuidance(allowedRoot, cwd),
-        state: "starting",
-        controllerReady: controllerReady.promise,
-        operations: new Map(),
-        slotReserved: true,
-      };
-      occupiedSlots += 1;
-      runtimes.set(runId, runtime);
-
       const initialOptions: SubagentRunOptions = {
         cwd,
         agent,
-        workOrder: createWorkOrder(params.task, cwd, runtime.projectGuidance),
+        workOrder: createWorkOrder(params.task, cwd, projectGuidance),
         runId,
         operationId,
-        parentSessionId: runtime.parentSessionId,
+        parentSessionId,
         deadlineMs: params.deadlineMs!,
         signal,
       };
-      void Promise.resolve().then(() => controllerFactory(initialOptions)).then(
-        (controller) => {
-          runtime.controller = controller;
-          void controller.failure.then((error) => {
-            if (runtime.state === "closed") return;
-            transition(runtime, "crashed");
-            void closeRuntime(runtime).catch(() => {});
-          });
-          controllerReady.resolve(controller);
-        },
-        (error) => controllerReady.reject(error),
-      );
+      const runtime = hub.createRuntime({ agent, cwd, parentSessionId, projectGuidance, initialOptions });
       try {
         onUpdate?.({
           content: [{ type: "text", text: "Starting isolated child…" }],
@@ -761,24 +376,23 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           },
         });
         runtime.controller = await runtime.controllerReady;
-        if (shuttingDown || runtime.state !== "starting") {
+        if (hub.isShuttingDown() || runtime.state !== "starting") {
           throw new Error("Subagent runtime closed before its initial operation was accepted");
         }
-        const operation = await beginOperation(
-          runtime,
+        const operation = await hub.beginOperation(runtime, {
           operationId,
-          params.task,
-          params.deadlineMs!,
-          params.action === "start",
+          task: params.task,
+          deadlineMs: params.deadlineMs!,
+          notifyOnSettle: params.action === "start",
           signal,
           onUpdate,
-        );
+        });
         if (params.action === "start") return response({ ...runtimeSnapshot(runtime), operationId });
         await operation.settled;
         await closeRuntime(runtime);
         return operationResponse(operation, runtime);
       } catch (error) {
-        if (!runtime.closePromise) transition(runtime, "crashed");
+        hub.markCrashed(runtime);
         try {
           await closeRuntime(runtime, true);
         } catch {
@@ -797,10 +411,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderSubagentCompletion,
   );
 
-  pi.on("session_shutdown", async () => {
-    shuttingDown = true;
-    await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));
-  });
+  pi.on("session_shutdown", () => hub.requestShutdown());
 }
 
 export default function subagentExtension(pi: ExtensionAPI): void {
