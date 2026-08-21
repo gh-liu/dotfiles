@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import { discoverUserAgents, type AgentDiscovery } from "./agents.ts";
+import { applyAgentOverrides, discoverUserAgents, type AgentDefinitionError, type AgentDiscovery } from "./agents.ts";
 import { findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { boundText } from "./output.ts";
 import { assertSupportedPiVersion, createRpcSubagentController } from "./rpc-executor.ts";
@@ -29,6 +30,7 @@ interface SubagentExtensionOptions {
   authEnvAllowlist?: string[];
   controllerFactory?: SubagentControllerFactory;
   idFactory?: () => string;
+  settingsPath?: string;
 }
 
 type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
@@ -116,6 +118,28 @@ const SubagentParameters = Type.Object({
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000, description: "Optional wait timeout" })),
 });
 
+export function loadSubagentOverrides(settingsPath: string): { overrides?: unknown; errors: AgentDefinitionError[] } {
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
+    if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return { errors: [] };
+    const subagents = (settings as Record<string, unknown>).subagents;
+    if (subagents === undefined || subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
+      return { errors: [] };
+    }
+    return { overrides: subagents, errors: [] };
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
+      return { errors: [] };
+    }
+    return {
+      errors: [{
+        filePath: "settings.json:subagents",
+        error: `settings.json:subagents: ${error instanceof Error ? error.message : String(error)}`,
+      }],
+    };
+  }
+}
+
 function formatAgentCatalog(discovery: AgentDiscovery): string {
   const agents = discovery.agents.length === 0
     ? ["none"]
@@ -174,7 +198,16 @@ function serializeSubagentResult(result: SubagentResult): string {
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   assertSupportedPiVersion();
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
-  let registry = discoverUserAgents(agentDirectory);
+  const settingsPath = options.settingsPath ?? join(getAgentDir(), "settings.json");
+  const loadedOverrides = loadSubagentOverrides(settingsPath);
+  const discoverEffectiveAgents = () => {
+    const discovery = discoverUserAgents(agentDirectory);
+    return applyAgentOverrides({
+      agents: discovery.agents,
+      errors: [...discovery.errors, ...loadedOverrides.errors],
+    }, loadedOverrides.overrides);
+  };
+  let registry = discoverEffectiveAgents();
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
   const authEnvAllowlist = options.authEnvAllowlist
     ?? process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
@@ -503,7 +536,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (params.action === "list") {
-        registry = discoverUserAgents(agentDirectory);
+        registry = discoverEffectiveAgents();
         const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
         return {
           content: [{ type: "text" as const, text: catalog }],

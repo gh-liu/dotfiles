@@ -9,7 +9,7 @@ import type {
   MessageRenderer,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import { registerSubagentExtension } from "./index.ts";
+import { loadSubagentOverrides, registerSubagentExtension } from "./index.ts";
 import { SUBAGENT_COMPLETION_MESSAGE } from "./render.ts";
 import type {
   SubagentController,
@@ -20,6 +20,23 @@ import type {
 } from "./protocol.ts";
 
 const temporaryDirectories: string[] = [];
+
+if (!("waitFor" in vi)) {
+  (vi as typeof vi & { waitFor: (assertion: () => void | Promise<void>) => Promise<void> }).waitFor = async (assertion) => {
+    const deadline = Date.now() + 1_000;
+    let lastError: unknown;
+    while (Date.now() < deadline) {
+      try {
+        await assertion();
+        return;
+      } catch (error) {
+        lastError = error;
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+    }
+    if (lastError) throw lastError;
+  };
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -164,7 +181,7 @@ function context(cwd: string): ExtensionContext {
   return { cwd, sessionManager: { getSessionId: () => "parent-session" } } as unknown as ExtensionContext;
 }
 
-function setup(options: { autoAccept?: boolean; ids?: string[] } = {}) {
+function setup(options: { autoAccept?: boolean; ids?: string[]; settingsPath?: string } = {}) {
   const root = temporaryDirectory("pi-subagent-project-");
   const agents = temporaryDirectory("pi-subagent-agents-");
   writeAgent(agents);
@@ -175,6 +192,7 @@ function setup(options: { autoAccept?: boolean; ids?: string[] } = {}) {
     agentDirectory: agents,
     controllerFactory: fake.factory,
     idFactory: () => ids.shift()!,
+    settingsPath: options.settingsPath ?? join(temporaryDirectory("pi-subagent-settings-"), "missing.json"),
   });
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
     "tool-call",
@@ -193,6 +211,20 @@ async function startIdle(env: ReturnType<typeof setup>) {
   await env.invoke({ action: "wait", id: identity.runId, operationId: identity.operationId });
   return identity;
 }
+
+describe("subagent settings overrides", () => {
+  test("loads missing settings as no overrides and malformed JSON as a collected error", () => {
+    expect(loadSubagentOverrides(join(temporaryDirectory("pi-subagent-settings-"), "missing.json"))).toEqual({ errors: [] });
+
+    const settingsPath = join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
+    writeFileSync(settingsPath, "{");
+
+    const loaded = loadSubagentOverrides(settingsPath);
+    expect(loaded.overrides).toBeUndefined();
+    expect(loaded.errors).toHaveLength(1);
+    expect(loaded.errors[0].filePath).toBe("settings.json:subagents");
+  });
+});
 
 describe("subagent tool", () => {
   test("publishes a provider-compatible root object schema and validates action fields", async () => {
@@ -267,6 +299,54 @@ describe("subagent tool", () => {
     env.fake.controllers[0].settle(0, "completed", "Located auth.");
     expect((await running).details).toMatchObject({ status: "completed", summary: "Located auth." });
     expect(env.fake.controllers[0].closeCalls).toBe(1);
+  });
+
+  test("applies startup settings overrides to catalog list and spawn options", async () => {
+    const settingsPath = join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
+    writeFileSync(settingsPath, JSON.stringify({
+      subagents: {
+        scout: {
+          model: "settings/model",
+          thinking: "xhigh",
+          description: "Settings description",
+        },
+      },
+    }));
+    const env = setup({ ids: ["run-fixed", "operation-fixed"], settingsPath });
+
+    expect(env.extension.getTool().description).toContain("scout: Settings description");
+    const listed = await env.invoke({ action: "list" });
+    expect((listed.content[0] as { text: string }).text).toContain("scout: Settings description");
+    expect(listed.details).toMatchObject({
+      agents: [{ name: "scout", description: "Settings description", model: "settings/model", thinking: "xhigh" }],
+    });
+
+    const run = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    expect(env.fake.controllers[0].starts[0].options.agent).toMatchObject({
+      name: "scout",
+      model: "settings/model",
+      thinking: "xhigh",
+      description: "Settings description",
+    });
+    env.fake.controllers[0].settle();
+    await run;
+  });
+
+  test("reapplies startup settings overrides after list rediscovers agents", async () => {
+    const settingsPath = join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
+    writeFileSync(settingsPath, JSON.stringify({ subagents: { reviewer: { description: "Settings review", thinking: "high" } } }));
+    const env = setup({ settingsPath });
+    writeAgent(env.agents, "reviewer", "File review");
+
+    const listed = await env.invoke({ action: "list" });
+
+    expect((listed.content[0] as { text: string }).text).toContain("reviewer: Settings review");
+    expect(listed.details).toMatchObject({
+      agents: expect.arrayContaining([
+        expect.objectContaining({ name: "reviewer", description: "Settings review", thinking: "high" }),
+      ]),
+    });
   });
 
   test("refreshes registry only on list and reports unknown agents without creating a controller", async () => {

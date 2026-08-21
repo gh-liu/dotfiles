@@ -7,6 +7,10 @@ import { createRpcSubagentController, createRpcSubagentExecutor } from "./rpc-ex
 import type { SubagentExecutionProfile, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
 
 const temporaryDirectories: string[] = [];
+
+if (!("runIf" in test)) {
+  (test as typeof test & { runIf: (condition: boolean) => typeof test }).runIf = (condition) => condition ? test : test.skip;
+}
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
   delete process.env.SUBAGENT_RPC_TEST_SECRET;

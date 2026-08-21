@@ -36,6 +36,8 @@ export interface AgentDiscovery {
   errors: AgentDefinitionError[];
 }
 
+type AgentOverride = Pick<AgentDefinition, "model" | "thinking" | "description">;
+
 function requireString(value: unknown, field: string): string {
   if (typeof value !== "string" || value.trim() === "") {
     throw new Error(`${field} must be a non-empty string`);
@@ -113,6 +115,46 @@ export function loadAgentDefinition(filePath: string): AgentDefinition {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`${filePath}: ${message}`);
   }
+}
+
+export function applyAgentOverrides(discovery: AgentDiscovery, overrides: unknown): AgentDiscovery {
+  if (overrides === undefined || overrides === null) return discovery;
+  if (typeof overrides !== "object" || Array.isArray(overrides)) return discovery;
+
+  const agents = discovery.agents.map((agent) => ({ ...agent }));
+  const errors = [...discovery.errors];
+  const byName = new Map(agents.map((agent) => [agent.name, agent]));
+
+  for (const [name, rawOverride] of Object.entries(overrides)) {
+    const filePath = `settings.json:${name}`;
+    const agent = byName.get(name);
+    if (!agent) {
+      errors.push({ filePath, error: `${filePath}: unknown agent override: ${name}` });
+      continue;
+    }
+    if (typeof rawOverride !== "object" || rawOverride === null || Array.isArray(rawOverride)) {
+      errors.push({ filePath, error: `${filePath}: override must be an object` });
+      continue;
+    }
+
+    const override = rawOverride as Record<string, unknown>;
+    const validated: Partial<AgentOverride> = {};
+    for (const field of ["model", "thinking", "description"] as const) {
+      if (override[field] === undefined) continue;
+      try {
+        const value = requireString(override[field], field);
+        if (field === "thinking" && !THINKING_LEVELS.has(value)) {
+          throw new Error(`unsupported thinking level: ${value}`);
+        }
+        validated[field] = value;
+      } catch (error) {
+        errors.push({ filePath, error: `${filePath}: ${error instanceof Error ? error.message : String(error)}` });
+      }
+    }
+    Object.assign(agent, validated);
+  }
+
+  return { agents, errors };
 }
 
 export function discoverUserAgents(directory: string): AgentDiscovery {
