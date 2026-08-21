@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-21 — transport swapped from `pi --mode rpc` subprocess to in-process SDK sessions (`sdk-executor.ts` via `createAgentSession`); `rpc-executor.ts` retired. Same-day earlier: restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`; catalog and `list` reflect the merged view
+- Updated: 2026-08-21 — transport swapped from `pi --mode rpc` subprocess to in-process SDK sessions (`sdk-executor.ts` via `createAgentSession`); `rpc-executor.ts` retired. Same-day audit removed residual RPC-subprocess descriptions (executor rationale, component diagram, flows, cleanup, retention limits) and documented timing plumbing. Earlier: restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`
 
 ## 1. Background
 
@@ -20,7 +20,7 @@ surface wholesale:
 - Amp: orthogonal Agent, Thread, and Executor concepts; keep the full child
   transcript outside the parent context and return a bounded handoff.
 - Brian Kimball's Pi setup: star topology, self-contained work orders, persistent
-  RPC workers, and fresh-eyes review.
+  workers, and fresh-eyes review.
 
 ## 2. Goal
 
@@ -206,9 +206,8 @@ following distinct identities:
 
 - `runId`: a logical child runtime from `start` until `close`.
 - `operationId`: the initial work order or one later delegated operation.
-- `rpcRequestId`: correlation for one JSON/RPC command only.
-- `processInstanceId`: one local subprocess incarnation; a PID is only an
-  observed attribute of that instance.
+- `processInstanceId`: one executor incarnation of a runtime; an in-process SDK
+  session has no OS PID.
 - `sessionId`: Pi transcript identity, which may outlive a process.
 
 Runtime lifecycle and operation outcome are orthogonal. The current
@@ -280,7 +279,7 @@ Required invariants:
 - Only authoritative process exit/close events move `closing` to `closed`.
   Unexpected exit moves the runtime to `crashed` and releases all reservations.
 - `interrupt` targets an expected operation and does not close the runtime.
-- `interrupted` is reserved for an accepted RPC operation; `cancelled` is retained only for future use and currently has no producer.
+- `interrupted` is reserved for an accepted operation; `cancelled` is retained only for future use and currently has no producer.
 - Pi turn boundaries are observations used to reduce events; they do not replace
   operation identity.
 
@@ -330,18 +329,20 @@ model context.
 
 ### 6.1 Default executor
 
-The production target uses one `pi --mode rpc` subprocess per active child.
+The production target runs one in-process Pi SDK session (`createAgentSession`
+via `sdk-executor.ts`) per active child.
 
 Reasons:
 
 - Independent context and session transcript.
 - Steering, follow-up, abort, status, and persistent sessions are available.
-- A child crash is isolated from the parent extension process.
-- The runtime boundary is observable with ordinary process tooling.
-- It avoids premature dependence on shared in-process SDK state.
+- No subprocess startup latency; the platform recommends `AgentSession` over
+  spawning a subprocess for Node hosts (`docs/rpc.md`).
+- Simpler lifecycle: session disposal replaces process-tree reaping.
 
-The Pi SDK may be added later as an optional low-latency executor after the RPC
-contract is stable and process startup is demonstrated to be a bottleneck.
+Trade-off: OS-process isolation is traded away. Containment relies on
+per-operation deadlines, abort watchdogs, bounded output, and credential
+redaction rather than process signals.
 
 ### 6.2 Components
 
@@ -353,11 +354,10 @@ Parent Pi
   -> OperationRegistry
   -> ConcurrencyController
   -> ChildController
-       -> pi --mode rpc
-       -> JSONL codec
-       -> request correlation
+       -> createAgentSession (in-process)
        -> event reducer
-       -> process cleanup
+       -> deadline/abort watchdog
+       -> session disposal
   -> ResultReducer
   -> child session JSONL
 ```
@@ -368,8 +368,8 @@ Responsibilities:
 - `RuntimeRegistry`: own runtime, process, session, and revision state.
 - `OperationRegistry`: own operation IDs, tasks, deadlines, and outcomes.
 - `ConcurrencyController`: enforce total child limits.
-- `ChildController`: own exactly one process and all associated listeners,
-  timers, RPC requests, and teardown.
+- `ChildController`: own exactly one SDK session and all associated listeners,
+  timers, abort watchdogs, and disposal.
 - `ResultReducer`: turn events and the final child message into a bounded handoff.
 
 These names describe responsibilities. Implementation may keep them together
@@ -418,7 +418,7 @@ Ownership is split as follows:
 
 | Component | Owns | Does not own |
 | --- | --- | --- |
-| Tool/control plane (`index.ts`) | Model-facing actions, runtime/operation IDs, state transitions, revisions, capacity slots, waiters, result retention, shutdown coordination | RPC framing, child listeners, process signals |
+| Tool/control plane (`index.ts`) | Model-facing actions, runtime/operation IDs, state transitions, revisions, capacity slots, waiters, result retention, shutdown coordination | Session construction, event reduction, disposal |
 | SDK controller (`sdk-executor.ts`) | Exactly one in-process Pi session, session construction and isolation flags, event reduction, operation deadline/abort watchdogs, fatal notification, session disposal | Multi-runtime scheduling, model-facing status policy |
 | Pi child | Model turns, tool execution, session transcript | Parent integration decisions, runtime registry |
 | Renderer (`render.ts`) | Bounded visual presentation and spinner lifecycle | Authoritative state or completion decisions |
@@ -474,7 +474,7 @@ send(follow_up)
 
 close
  -> closing -> interrupt accepted active operation if necessary
- -> close/reap process tree -> release slot -> closed
+ -> dispose session -> release slot -> closed
 ```
 
 The control plane accepts follow-ups only while the runtime is `idle`. A `send`
@@ -485,16 +485,16 @@ conflict/error rather than buffering work.
 
 ```text
 expected operation still active and accepted
- -> RPC abort
- -> wait for both abort response and authoritative agent_settled
+ -> session.abort()
+ -> wait for authoritative agent_settled within the watchdog window
  -> operation interrupted
  -> healthy runtime returns to idle
 ```
 
-A stale operation ID is a no-op. Missing abort response or settlement trips a
-watchdog and crashes/cleans the controller rather than leaving shutdown blocked.
-Direct process termination is reserved for close, fatal process/protocol failure,
-or abort-watchdog escalation; it is not the normal operation-interrupt path.
+A stale operation ID is a no-op. Missing settlement within the watchdog window
+(default `terminationGraceMs` = 5 s) trips a watchdog and crashes/cleans the
+controller rather than leaving shutdown blocked. Direct disposal is reserved for
+close and fatal failures; it is not the normal operation-interrupt path.
 
 ### 6.5 Persistence and restart boundary
 
@@ -503,9 +503,9 @@ Current persistence is intentionally limited:
 - The Pi child session JSONL is durable transcript evidence.
 - Runtime records, operation records, revisions, retained results, and capacity
   reservations exist only in the extension process memory.
-- The RPC transport is the spawned child's stdin/stdout pair. After the parent Pi
-  or extension process exits, a new extension instance cannot reconnect to that
-  transport or safely continue, interrupt, or close the old logical runtime.
+- The transport is an in-process session object. After the parent Pi or extension
+  process exits, the session is gone; a new extension instance cannot reconnect
+  to it or safely continue, interrupt, or close the old logical runtime.
 
 Therefore the current design provides **persistent workers within one extension
 lifetime** and **durable transcripts**, but not crash-resumable or restart-durable
@@ -514,19 +514,15 @@ reconciliation only; it must not advertise the runtime as resumable. True runtim
 recovery requires a reconnectable transport or an independently durable
 supervisor with an explicit adoption protocol.
 
-### 6.6 Spawn contract
+### 6.6 Session construction contract
 
-The child process must be started with:
+Each child session must be constructed with:
 
-- `shell: false`.
 - A validated cwd under an allowed root.
 - An explicit model and thinking level when the agent definition provides them.
 - An explicit tool allowlist.
 - Explicit extension loading; inherited extensions must not be accidental.
-- A controlled child session directory for persistent/RPC execution.
-- A deliberately constructed environment rather than an unexplained copy of all
-  parent secrets.
-- A child marker containing run ID, parent session ID, and depth.
+- A dedicated session directory under `<agent-dir>/subagent-sessions/<runId>/`.
 
 The implementation runs children as in-process SDK sessions (`createAgentSession`)
 and therefore always shares the parent's Pi version — no cross-version pin is
@@ -585,18 +581,18 @@ Semantics:
   directory; specify it only for a project subdirectory, preferably as a
   relative path.
 - `start`: reserve capacity, start a persistent worker, submit its initial
-  operation, and return the run and operation IDs only after RPC readiness,
+  operation, and return the run and operation IDs only after session readiness,
   session identity, and prompt acceptance. Its task-specific `deadlineMs` is
   required. It does not wait for completion.
 - `status`: return a bounded snapshot containing a monotonic `revision`, runtime
   state, active operation ID, and last settled operation; never poll internally.
 - `send(..., mode: "follow_up")`: create a new operation. An idle runtime submits
-  it immediately; a running runtime returns `{ accepted:false, conflict:true }` (fail-fast, no queue). The execution deadline starts when the RPC prompt is submitted. Pi's native follow-up queue is not used because it lacks the
+  it immediately; a running runtime returns `{ accepted:false, conflict:true }` (fail-fast, no queue). The execution deadline starts when the prompt is submitted. Pi's native follow-up queue is not used because it lacks the
   per-turn correlation required by `wait`, deadlines, and stored results.
 - `send(..., mode: "steer")`: attach a control message to the active operation;
   it does not create a new operation or independent settlement. The caller must
   provide `expectedOperationId`; steering is accepted only after that operation's
-  prompt is accepted and while it remains active, then maps to RPC `steer`.
+  prompt is accepted and while it remains active, then maps to `session.steer`.
 - `wait`: wait for one specified operation. If it is already settled, return its
   stored result immediately. Timeout returns `{ reason: "timeout", snapshot }`
   without changing state or cancelling work. Multiple waiters may observe the
@@ -604,9 +600,9 @@ Semantics:
 - `interrupt`: request abort only when `expectedOperationId` is still active.
   A mismatch returns a conflict/no-op, preventing a late abort from targeting a
   later operation. The authoritative settle event determines final outcome.
-- `close`: idempotently enter `closing`, reject new input, terminate the process tree, release slots after authoritative
-  process exit, and retain transcript and operation results. Repeated calls
-  return the stored state.
+- `close`: idempotently enter `closing`, reject new input, dispose the session,
+  release slots after authoritative settlement, and retain transcript and
+  operation results. Repeated calls return the stored state.
 
 The extension registers the canonical `subagent` name. Any package-provided tool
 with the same name, such as `npm:pi-subagents`, must be removed or disabled in
@@ -619,19 +615,20 @@ validates each action's required fields before accessing runtime state.
 
 The current implementation exposes `list`, `run`, `start`, `status`, `send`,
 `wait`, `interrupt`, and `close`. Lifecycle actions identify a persistent
-runtime by `runId` and a turn by `operationId`. `start` keeps one RPC process,
-session, and transcript warm after its initial operation. A runtime accepts
+runtime by `runId` and a turn by `operationId`. `start` keeps one SDK session
+and transcript warm after its initial operation. A runtime accepts
 sequential idle follow-ups and guarded steering of its accepted active operation (running `follow_up` returns conflict, no queue). `run` remains a one-shot convenience
 action and closes its runtime after settlement.
 
 Implemented today:
 
-- Reusable RPC runtimes with prompt-acceptance and `agent_settled` boundaries.
+- Reusable in-process SDK runtimes with prompt-acceptance and `agent_settled` boundaries.
 - Idle follow-up operations in the same process and session (running returns conflict, no queue).
 - Active steering with an expected-operation guard and no extra operation result.
 - Runtime/operation identity, monotonic in-memory revisions, and guarded interrupts.
-- RPC `abort` for operation interrupt/deadline without closing a healthy runtime.
-- Fresh child context, explicit tools, filtered environment, and process cleanup.
+- `abort()` plus a settlement watchdog for operation interrupt/deadline without losing a healthy runtime.
+- Fresh child context, explicit tools, credential redaction, and session disposal.
+- Timing plumbing: partial updates carry `startedAt`/`deadlineMs`; settled results and completion notifications carry `elapsedMs`.
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
 - Bounded in-memory runtime and operation tracking enriched with effective `model`/`thinking` (stripped) in snapshots and serialized results.
@@ -729,32 +726,27 @@ for parent coordination.
   destructive/shared actions on behalf of the user.
 - The cwd must be canonicalized and checked against allowed roots, including
   symlink escape.
-- stdout, stderr, progress, and final result sizes must be bounded.
+- Progress lines, final result text, and parent serialization must be bounded.
 - Environment variables must be selected deliberately. Known credential values
   and common credential formats are redacted before retention and serialization,
   but this best-effort filter is not a credential-isolation guarantee.
 
 ### 9.3 Process cleanup
 
-RPC operation cancellation and process shutdown follow related but distinct
-idempotent paths:
+Operation cancellation and shutdown follow related but distinct idempotent paths:
 
-- `interrupt` sends RPC `abort` and waits for both the abort response and
-  authoritative `agent_settled`; a watchdog treats missing acknowledgement or
+- `interrupt` calls `session.abort()` and waits for authoritative
+  `agent_settled`; a watchdog (`terminationGraceMs`, default 5 s) treats missing
   settlement as a fatal controller failure.
-- Normal idle `close` ends stdin and waits for process exit.
-- Closing a still-active or unhealthy controller sends `SIGTERM` to the owned
-  process group, waits a bounded grace period, and escalates to `SIGKILL` only if
-  the process tree remains alive.
-- Every terminal path awaits authoritative process exit/tree cleanup, clears
-  timers, and removes listeners.
+- Normal idle `close` disposes the session; closing a still-active controller
+  aborts the active run first, races a bounded grace period, then disposes.
+- Every terminal path awaits settlement or disposal, clears timers, and removes
+  listeners.
 
-Parent `session_shutdown` must close all owned children. Cleanup must tolerate
-already-exited processes and partial startup failures. On platforms where child
-tools may create descendants, the controller starts the child in a process group
-or uses an equivalent tracked-process mechanism and applies escalation to the
-owned process tree, not only the Pi leader PID. Unexpected exit and failed spawn
-release concurrency reservations immediately.
+Parent shutdown must close all owned children. Cleanup must tolerate partial
+startup failures. There is no process tree to reap; containment comes from
+deadlines, watchdogs, and disposal. Unexpected session failure and failed session
+creation release concurrency reservations immediately.
 
 ## 10. Concurrency requirements
 
@@ -768,7 +760,7 @@ maxDepth = 1
 Required behavior:
 
 - Capacity is reserved before child creation to avoid partial fan-out.
-- Failed spawn releases its reservation.
+- Failed session creation releases its reservation.
 - Idle persistent workers retain their slot until closed.
 - Children may share cwd. The parent is responsible for avoiding conflicting
   writes and for reviewing the resulting workspace state.
@@ -814,7 +806,8 @@ Current UI/details additionally show:
 
 - Agent name and current operation context.
 - Reduced tool activity while an operation is running, with a live seconds-based
-  deadline countdown on the spinner line.
+  deadline countdown on the spinner line anchored at the operation's real start.
+- Elapsed duration appended to terminal result lines and expanded completion metadata.
 - Full bounded diagnostic error.
 
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
@@ -830,25 +823,23 @@ the full `agent · model · thinking` identity. Expanded completion notification
 retain bounded multiline summaries instead of flattening them to one line.
 
 Intermediate child reasoning must not be copied into the parent model context.
-JSONL parse failures and protocol violations must be surfaced as diagnostics,
-not silently discarded.
+Malformed session events must be surfaced as diagnostics, not silently discarded.
 
 Default V1 retention limits are:
 
 ```text
-maxJsonlRecordBytes = 1 MiB
-maxParserBufferBytes = 1 MiB
-maxRetainedStderrBytes = 64 KiB
-maxLiveProgress = 160 characters on one line
+maxToolArgDetailCharacters = 80 per progress detail value
+maxProgressLineCharacters = 120 per reduced progress line
+maxLivePreview = 160 characters on one line
 maxFinalChildText = 32,000 characters or 400 lines
 maxParentSerialization = 32,000 characters or 400 lines
 ```
 
-The controller continuously drains stdout and stderr; limits bound retained
-memory, not pipe consumption. It decodes split UTF-8 and partial LF-delimited
-records incrementally. An oversized record or non-empty malformed JSON line is a
-protocol failure and closes the child. Ring buffers and reduced output are
-truncated with an explicit marker (`[truncated]` for text, `[truncated]\n` for stderr ring, `[truncated oversized stderr line]\n` for oversized stderr lines, and `[truncated: additional project guidance omitted]` for guidance materialization). Exact configured credential values and common
+There are no stdout/stderr pipes to drain; the session event stream is reduced
+in place. Reduced progress one-liners use the wording `X done · working…` /
+`X failed · reviewing…`, collapse `$HOME` to `~` in tool paths, and are redacted
+before retention. Oversized text is truncated with an explicit marker
+(`[truncated]` for bounded text and `[truncated: additional project guidance omitted]` for guidance materialization). Exact configured credential values and common
 credential patterns are redacted on a best-effort basis before retention and
 serialization. These limits are fixed implementation constants; a future
 configuration surface may lower them but must not disable them.
@@ -865,14 +856,13 @@ configuration surface may lower them but must not disable them.
 - Provider-compatible root-object schema and action-specific validation.
 - Startup catalog and capability-driven routing guidance.
 - Native cwd canonicalization, project-root containment, and symlink escape.
-- Partial-line and split UTF-8 JSONL decoding.
 - Idempotent cleanup and timer/listener removal.
 - Result-envelope ownership and outcome mapping.
 - Fail-fast on running follow_up (no queue) without a fabricated result.
 
 ### Integration contracts
 
-- Spawn a read-only child and receive a final result.
+- Start a read-only child and receive a final result.
 - Stream child tool activity without polluting parent-visible output.
 - Abort a targeted operation and retain the child session.
 - Send an idle follow-up to a persistent worker (running returns conflict).
@@ -907,10 +897,10 @@ or Bun rather than through a package-script alias.
 
 - Invalid agent definition.
 - Missing model/provider authentication.
-- Child startup error before RPC ready.
-- Malformed or oversized JSONL/event output.
+- Child startup error before acceptance.
+- Malformed or oversized event output.
 - Provider failure after prompt acceptance.
-- Child process exits without a final response.
+- Session ends without a final response.
 - Abort during startup, active tool execution, and settled state.
 - Parent reload or exit while children are running.
 
@@ -950,7 +940,8 @@ Implemented:
   `interrupt`, and idempotent targeted `close` actions.
 - Sequential operations in one process/session, with prompt acceptance separate
   from authoritative operation settlement.
-- Operation interrupt and deadline through RPC `abort`, leaving a healthy runtime
+- Operation interrupt and deadline through `session.abort()` with a settlement
+  watchdog, leaving a healthy runtime reusable after `agent_settled`.
   reusable after `agent_settled`.
 - Separate run, operation, process-instance, and session identities.
 - Monotonic in-memory runtime revisions, concurrency limits, fatal-process
