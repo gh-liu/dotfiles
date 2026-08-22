@@ -2,6 +2,29 @@
 
 https://pi.dev/docs/latest/extensions
 
+## Archiving branches (native label workflow)
+
+A custom `archive` extension (branch archiving via physical session-file rewriting,
+~2,400 LOC) was removed on 2026-08-22: it had never been used on a real session, and
+its only advantage over native capabilities — hiding branches from `/tree` — did not
+justify rewriting the session JSONL behind pi's back.
+
+The replacement workflow uses native features only:
+
+- Mark a dead branch as archived: open `/tree`, select the branch root, press
+  Shift+L and enter `[archived]`.
+- Labels are persisted as append-only `label` entries in the session file with
+  latest-wins resolution; setting another label (or an empty one) on the same entry
+  supersedes or clears the mark, so archive/restore is fully reversible.
+- Ctrl+O filter modes apply as usual (`labeled-only` is a bookmarks view that shows
+  only labeled entries). Note there is no filter mode that *hides* labeled branches;
+  fold state is ephemeral UI state and not persisted.
+- If accidentally navigating into an archived branch becomes annoying, a ~50-line
+  extension can restore a guard: a `session_before_tree` handler that walks
+  `parentEntry.parentId` ancestry from `event.preparation.targetId`, checks for a
+  resolved `[archived]` label via `ctx.sessionManager.getLabel()`, and returns
+  `{ cancel: true }`.
+
 ## Web search
 
 `websearch` registers a local `web_search` tool backed by the Exa Search API. Export
