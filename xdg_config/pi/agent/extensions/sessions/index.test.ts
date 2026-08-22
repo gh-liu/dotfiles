@@ -9,7 +9,7 @@ import type {
   ActiveSessionSendOptions,
   ActiveSessionSendResult,
   ActiveSessionTransport,
-} from "./transport/index.ts";
+} from "./messaging/transport/index.ts";
 
 class FakeTransport implements ActiveSessionTransport {
   readonly sessionId = "self";

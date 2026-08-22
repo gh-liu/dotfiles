@@ -1,13 +1,6 @@
-export type ActiveSession = {
-  id: string;
-  name?: string;
-  cwd: string;
-  model: string;
-  pid: number;
-  startedAt: number;
-  lastActivity: number;
-  status?: string;
-};
+import type { ActiveSession } from "../../contracts.ts";
+
+export type { ActiveSession } from "../../contracts.ts";
 
 export type ActiveSessionRegistration = Omit<ActiveSession, "id">;
 

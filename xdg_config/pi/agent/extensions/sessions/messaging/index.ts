@@ -1,60 +1,12 @@
-import { SessionManager } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { randomUUID } from "node:crypto";
-import { ASK_TIMEOUT_MS, ErrorCodes, MAX_RESULTS, errorResult, sessionMessageParameters, sessionsParameters } from "./contracts.ts";
-import type { SessionsInput, SessionMessageInput } from "./contracts.ts";
-import { buildHistoryResults, formatActiveSession } from "./history.ts";
-import type { SessionRuntime } from "./session-runtime.ts";
+import { ErrorCodes, errorResult } from "../contracts.ts";
 import type { ActiveSessionSendResult } from "./transport/index.ts";
+import { ASK_TIMEOUT_MS, sessionMessageParameters } from "./contracts.ts";
+import type { SessionMessageInput } from "./contracts.ts";
+import type { SessionRuntime } from "./runtime.ts";
 
-export function registerSessionsTools(pi: ExtensionAPI, runtime: SessionRuntime): void {
-  pi.registerTool({
-    name: "sessions",
-    label: "Sessions",
-    description: "Search local Pi session history or list active Pi sessions reachable through local IPC.",
-    parameters: sessionsParameters,
-    async execute(_toolCallId, input: SessionsInput) {
-      const limit = Math.min(input.limit ?? 10, MAX_RESULTS);
-      const cwd = input.cwd?.trim();
-
-      if (input.action === "list") {
-        try {
-          const active = await runtime.ensureClient();
-          const currentId = active.sessionId;
-          const peers = (await active.listSessions())
-            .filter((session) => !cwd || session.cwd === cwd || session.cwd.startsWith(`${cwd}/`))
-            .slice(0, limit)
-            .map((session) => formatActiveSession(session, currentId));
-          return {
-            content: [{ type: "text" as const, text: peers.length ? JSON.stringify(peers, null, 2) : "No active sessions found." }],
-            details: { results: peers },
-          };
-        } catch (error) {
-          return errorResult(
-            `Active sessions unavailable: ${error instanceof Error ? error.message : String(error)}`,
-            ErrorCodes.INTERCOM_UNAVAILABLE,
-          );
-        }
-      }
-
-      const query = input.query?.trim() ?? "";
-      if (!query) return errorResult("query must not be empty", ErrorCodes.INVALID_QUERY);
-
-      const sessions = await SessionManager.listAll();
-      const results = buildHistoryResults(sessions as never, query, cwd, limit);
-
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: results.length ? JSON.stringify(results, null, 2) : `No sessions matched ${JSON.stringify(query)}.`,
-          },
-        ],
-        details: { query, results },
-      };
-    },
-  });
-
+export function registerSessionMessageTool(pi: ExtensionAPI, runtime: SessionRuntime): void {
   pi.registerTool({
     name: "session_message",
     label: "Session Message",

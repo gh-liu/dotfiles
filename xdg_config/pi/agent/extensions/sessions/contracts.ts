@@ -1,23 +1,18 @@
-import { Type } from "typebox";
+/**
+ * Cross-capability shared contracts only.
+ * Capability-specific input types / parameter schemas live in history/contracts.ts
+ * and messaging/contracts.ts so the two capabilities never depend on each other.
+ */
 
-export const MAX_RESULTS = 20;
-export const MAX_SNIPPET_LENGTH = 240;
-export const ASK_TIMEOUT_MS = 10 * 60 * 1000;
-
-export type SessionsInput = {
-  action: "search_history" | "list";
-  query?: string;
-  cwd?: string;
-  limit?: number;
-};
-
-export type SessionMessageInput = {
-  action: "send" | "ask" | "reply" | "pending" | "cancel";
-  to?: string;
-  message?: string;
-  replyTo?: string;
-  messageId?: string;
-  timeoutMs?: number;
+export type ActiveSession = {
+  id: string;
+  name?: string;
+  cwd: string;
+  model: string;
+  pid: number;
+  startedAt: number;
+  lastActivity: number;
+  status?: string;
 };
 
 export type ToolDetails = {
@@ -45,25 +40,3 @@ export function errorResult(message: string, code: string) {
     details: { error: true, code } as ToolDetails,
   };
 }
-
-export const sessionsParameters = Type.Object({
-  action: Type.Union([Type.Literal("search_history"), Type.Literal("list")]),
-  query: Type.Optional(Type.String({ description: "Text to search for (search_history only)" })),
-  cwd: Type.Optional(Type.String({ description: "Working-directory filter" })),
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS })),
-});
-
-export const sessionMessageParameters = Type.Object({
-  action: Type.Union([
-    Type.Literal("send"),
-    Type.Literal("ask"),
-    Type.Literal("reply"),
-    Type.Literal("pending"),
-    Type.Literal("cancel"),
-  ]),
-  to: Type.Optional(Type.String({ description: "Target active session name or id" })),
-  message: Type.Optional(Type.String({ description: "Message text" })),
-  replyTo: Type.Optional(Type.String({ description: "Inbound message id for reply" })),
-  messageId: Type.Optional(Type.String({ description: "Previously sent message id for cancellation" })),
-  timeoutMs: Type.Optional(Type.Integer({ minimum: 1000, maximum: ASK_TIMEOUT_MS })),
-});

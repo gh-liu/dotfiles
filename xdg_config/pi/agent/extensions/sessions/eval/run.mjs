@@ -400,9 +400,9 @@ function configHash() {
   const hash = createHash("sha256");
   for (const path of [
     extensionPath,
-    join(sessionsDirectory, "transport/index.ts"),
-    join(sessionsDirectory, "transport/local-ipc.ts"),
-    join(sessionsDirectory, "transport/local-ipc-broker.mjs"),
+    join(sessionsDirectory, "messaging/transport/index.ts"),
+    join(sessionsDirectory, "messaging/transport/local-ipc.ts"),
+    join(sessionsDirectory, "messaging/transport/local-ipc-broker.mjs"),
   ]) {
     hash.update(path.slice(sessionsDirectory.length));
     hash.update("\0");
