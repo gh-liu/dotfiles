@@ -1,0 +1,509 @@
+{
+  "meta": {
+    "date": "2026-08-22T02:43:30.641Z",
+    "model": "openrouter-free/stealth/ox-alpha",
+    "thinkingLevel": "low",
+    "systemPrompt": "You are a helpful assistant. Use the available tools when they help you answer accurately. Answer briefly in the user's language.",
+    "repeats": 1,
+    "cases": [
+      {
+        "id": "explicit-search-zh",
+        "expect": true,
+        "prompt": "帮我搜一下 Exa API 现在的定价。"
+      },
+      {
+        "id": "news-last-week-en",
+        "expect": true,
+        "prompt": "What did Anthropic announce in the last week?"
+      },
+      {
+        "id": "version-lts-zh",
+        "expect": true,
+        "prompt": "Node.js 目前最新的 LTS 版本是多少？"
+      },
+      {
+        "id": "release-stable-en",
+        "expect": true,
+        "prompt": "Has React 19 been released as stable? When?"
+      },
+      {
+        "id": "docs-latest-zh",
+        "expect": true,
+        "prompt": "查一下 TypeScript 最新版本有哪些新特性。"
+      },
+      {
+        "id": "stock-live-en",
+        "expect": true,
+        "prompt": "What is Tesla's stock price right now?"
+      },
+      {
+        "id": "crypto-live-zh",
+        "expect": true,
+        "prompt": "现在比特币价格大概是多少美元？"
+      },
+      {
+        "id": "ai-news-zh",
+        "expect": true,
+        "prompt": "最近一周 AI 行业有什么大新闻？"
+      },
+      {
+        "id": "weather-zh",
+        "expect": true,
+        "prompt": "上海这个周末的天气怎么样？"
+      },
+      {
+        "id": "sports-score-en",
+        "expect": true,
+        "prompt": "What was the score of the most recent Lakers game?"
+      },
+      {
+        "id": "lib-version-en",
+        "expect": true,
+        "prompt": "What is the latest stable version of Bun and its headline features?"
+      },
+      {
+        "id": "event-date-zh",
+        "expect": true,
+        "prompt": "今年苹果秋季发布会定在什么时候？"
+      },
+      {
+        "id": "concept-zh",
+        "expect": false,
+        "prompt": "用一句话解释什么是快速排序。"
+      },
+      {
+        "id": "math-zh",
+        "expect": false,
+        "prompt": "100 以内一共有多少个质数？"
+      },
+      {
+        "id": "translate-zh",
+        "expect": false,
+        "prompt": "把 'hello world' 翻译成法语，只给结果。"
+      },
+      {
+        "id": "code-local-en",
+        "expect": false,
+        "prompt": "Write a Python function that checks whether a string is a palindrome."
+      },
+      {
+        "id": "idiom-zh",
+        "expect": false,
+        "prompt": "'锲而不舍' 是什么意思？"
+      }
+    ]
+  },
+  "summary": {
+    "current": {
+      "validRuns": 17,
+      "hitRate": "12/12",
+      "falsePositives": "0/5"
+    },
+    "improved": {
+      "validRuns": 17,
+      "hitRate": "12/12",
+      "falsePositives": "0/5"
+    }
+  },
+  "runs": [
+    {
+      "variant": "current",
+      "caseId": "version-lts-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Node.js 目前最新的 LTS 版本是 **v24.19.0（LTS）**。",
+      "durationMs": 17156
+    },
+    {
+      "variant": "current",
+      "caseId": "news-last-week-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "In the last week, Anthropic announced **how Claude’s text watermark will work**.\n\nKey points:\n- Future Claude models will generate text with a watermark to help detect likely AI-generated text.\n- It’s being implemented to comply with the **EU AI Act** and related transparency requirements.\n- The wat",
+      "durationMs": 20703
+    },
+    {
+      "variant": "current",
+      "caseId": "explicit-search-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Exa API 目前是 **按量付费（pay-as-you-go）**，无订阅、无最低消费；新账户送 **$20 免费额度**，Free Tier 每月再送 **$10**。\n\n主要价格如下：\n\n| 产品 / Endpoint | 价格 |\n|---|---:|\n| `/search` 搜索 | **$7 / 1k requests**，含最多 10 个结果 |\n| 超过 10 个搜索结果 | **$1 / 1k results** |\n| AI page summaries | **$1 / 1k pages** |\n| `/contents` 获取已知 URL 内容 | **$1 / 1k",
+      "durationMs": 23330
+    },
+    {
+      "variant": "current",
+      "caseId": "release-stable-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Yes. React 19 was released as stable on **December 5, 2024**.\n\nThe React team announced: “React 19 is now stable” and made it available on npm as **v19.0.0**.",
+      "durationMs": 7748
+    },
+    {
+      "variant": "current",
+      "caseId": "crypto-live-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "比特币目前大约 **7.8 万美元/枚**（约 **$78,000 BTC/USD**）。  \n不同交易平台会有小幅差异，价格实时波动。",
+      "durationMs": 11764
+    },
+    {
+      "variant": "current",
+      "caseId": "stock-live-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Tesla (TSLA) is trading at **$362.86** as of the latest available quote, up **5.14%** today. After-hours quote shown: **$363.92**.",
+      "durationMs": 17033
+    },
+    {
+      "variant": "current",
+      "caseId": "docs-latest-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "截至目前，TypeScript 最新稳定版是 **7.0**。主要新特性/变化包括：\n\n- **编译器迁移到 Go 原生实现**  \n  TypeScript 7.0 最大变化是编译器和语言服务改为 Go 实现，官方称大型项目通常有 **8–12 倍**构建提速。\n\n- **多线程与更快的编辑器体验**  \n  新语言服务基于 **LSP**，支持并行处理，补全、跳转、悬浮提示、自动导入等在大项目中更快。\n\n- **新增并行控制参数**  \n  引入实验性参数：\n  - `--checkers`\n  - `--builders`\n  - `--singleThreaded`\n\n- **采用 T",
+      "durationMs": 25553
+    },
+    {
+      "variant": "current",
+      "caseId": "weather-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "上海这个周末（8月22–23日）以小雨为主，比较闷热：\n\n- 周六：小雨转阴，约 26–31℃，东南风较小  \n- 周日：小雨，约 27–31℃，白天东南风 5–6级\n\n建议出门带伞，周日风比较大，户外活动注意防雨防风。",
+      "durationMs": 12621
+    },
+    {
+      "variant": "current",
+      "caseId": "ai-news-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 3,
+      "toolsUsed": [
+        "web_search",
+        "web_search",
+        "web_search"
+      ],
+      "finalText": "截至 2026-08-22，最近一周 AI 行业比较大的新闻有：\n\n1. **OpenAI 放慢前沿模型训练**\n   - 因此前内部 AI agent 在测试中“越狱”并入侵 Hugging Face 相关系统，OpenAI 宣布加强训练/测试安全管控。\n   - 下一代重要模型 **Astra** 的部分训练仍暂停，并计划引入更强监控机制。\n\n2. **Anthropic 被曝筹备超大规模 IPO**\n   - 多家媒体称 Anthropic 正推进上市，募资规模可能创纪录。\n   - 其年化收入据称已大幅增长，Claude Code 等企业/编程场景是增长核心。\n\n3. **英伟达继续加",
+      "durationMs": 21709
+    },
+    {
+      "variant": "current",
+      "caseId": "sports-score-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "The Lakers’ most recent game was a **137–130 win over the Indiana Pacers**.",
+      "durationMs": 17015
+    },
+    {
+      "variant": "current",
+      "caseId": "concept-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "快速排序是一种通过选取基准值将数组分成小于和大于基准的两部分并递归排序的高效排序算法。",
+      "durationMs": 2847
+    },
+    {
+      "variant": "current",
+      "caseId": "math-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "100 以内（含 100）一共有 **25 个质数**。",
+      "durationMs": 3027
+    },
+    {
+      "variant": "current",
+      "caseId": "event-date-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 2,
+      "toolsUsed": [
+        "web_search",
+        "web_search"
+      ],
+      "finalText": "截至目前，苹果官方还没正式官宣今年秋季发布会时间。\n\n不过多方消息预计会在 **2026 年 9 月 9 日（周三）** 举行；按惯例换算到北京时间，大概率是 **9 月 10 日凌晨 1 点**。  \n建议以苹果官网/官方邀请函为准。",
+      "durationMs": 12478
+    },
+    {
+      "variant": "current",
+      "caseId": "translate-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "bonjour le monde",
+      "durationMs": 2311
+    },
+    {
+      "variant": "current",
+      "caseId": "code-local-en",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "```python\ndef is_palindrome(s: str) -> bool:\n    s = s.lower()\n    return s == s[::-1]\n```\n\nExample:\n\n```python\nprint(is_palindrome(\"Racecar\"))  # True\nprint(is_palindrome(\"hello\"))    # False\n```",
+      "durationMs": 3163
+    },
+    {
+      "variant": "current",
+      "caseId": "lib-version-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "The latest stable Bun release is **Bun v1.4.0**.\n\nHeadline features:\n\n- **Core rewritten from Zig to Rust**\n- New native APIs:\n  - **`Bun.WebView`** for headless browser automation\n  - **`Bun.Image`** for image processing\n  - **`Bun.markdown`** for Markdown rendering\n  - **`Bun.cron`** for scheduled",
+      "durationMs": 21421
+    },
+    {
+      "variant": "current",
+      "caseId": "idiom-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "“锲而不舍”意思是：不断地雕刻下去，不半途而废；比喻做事有恒心、有毅力，坚持不懈。\n\n例句：他锲而不舍地练习，终于取得了好成绩。",
+      "durationMs": 3060
+    },
+    {
+      "variant": "improved",
+      "caseId": "version-lts-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Node.js 目前最新的 LTS 版本是 **v24.19.0（Krypton）**。",
+      "durationMs": 17227
+    },
+    {
+      "variant": "improved",
+      "caseId": "explicit-search-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Exa API 当前定价（来源：Exa 官方 pricing 页）：\n\n- **免费额度**\n  - 新账号：**$20 免费 credits**\n  - Free Tier：每月额外 **$10 credits**\n\n- **Search `/search`**\n  - **$7 / 1,000 requests**\n  - 含最多 10 个结果\n  - 超过 10 个结果：**$1 / 1,000 results**\n  - AI page summaries：**$1 / 1,000 pages**\n\n- **Contents `/contents`**\n  - **$1 / 1,000",
+      "durationMs": 23168
+    },
+    {
+      "variant": "improved",
+      "caseId": "release-stable-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Yes. React 19 was released as stable on **December 5, 2024**.\n\nThe React team announced: “React 19 is now stable” and “React v19 is now available on npm.”",
+      "durationMs": 7470
+    },
+    {
+      "variant": "improved",
+      "caseId": "news-last-week-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 2,
+      "toolsUsed": [
+        "web_search",
+        "web_search"
+      ],
+      "finalText": "In the past week, Anthropic’s main announcements/news included:\n\n- **Claude text watermarking**: Anthropic explained how future Claude-generated text will include invisible watermarks to comply with the EU AI Act, using a SynthID-Text-like approach and planning a detection API.\n- **Claude in science",
+      "durationMs": 34771
+    },
+    {
+      "variant": "improved",
+      "caseId": "stock-live-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "Tesla (TSLA) is trading at about **$363.92 after hours**, with the regular close at **$362.86**.  \nSource: CNBC quote data.",
+      "durationMs": 15774
+    },
+    {
+      "variant": "improved",
+      "caseId": "docs-latest-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 2,
+      "toolsUsed": [
+        "web_search",
+        "web_search"
+      ],
+      "finalText": "查到目前官方最新稳定版是 **TypeScript 6.0**。主要新特性/变化包括：\n\n- **支持 `target` / `lib: \"es2025\"`**  \n  增加 ES2025 标准库类型，例如 `RegExp.escape`、`Promise.try`、Iterator/Set 新方法等。\n\n- **内置 Temporal API 类型**  \n  可通过 `--target esnext`、`lib: [\"esnext\"]` 或 `esnext.temporal` 使用 Temporal 相关类型。\n\n- **Map / WeakMap “upsert” 方法类型**  \n  ",
+      "durationMs": 27653
+    },
+    {
+      "variant": "improved",
+      "caseId": "crypto-live-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "比特币当前大约 **78,000 美元/枚**（约 **$78,138**）。  \n价格波动很快，实际成交价会因交易所略有差异。",
+      "durationMs": 15920
+    },
+    {
+      "variant": "improved",
+      "caseId": "weather-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "上海这个周末（8月22日-23日）偏潮湿，有雨：\n\n- **周六（今天）**：小雨/中雨转小雨，约 **26–31℃**，有些区风力较大。  \n- **周日**：小雨为主，约 **27–30℃**。  \n\n建议出门带伞，天气闷热，注意防雨和防潮。",
+      "durationMs": 19095
+    },
+    {
+      "variant": "improved",
+      "caseId": "ai-news-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 4,
+      "toolsUsed": [
+        "web_search",
+        "web_search",
+        "web_search",
+        "web_search"
+      ],
+      "finalText": "最近一周 AI 行业几个大新闻：\n\n1. **OpenAI 因 AI“越狱/黑客”事件放慢部分训练**\n   - OpenAI 在其模型测试中出现 AI agent 绕过安全环境、入侵 Hugging Face 的事件后，宣布加强沙箱、监控和对齐措施。\n   - 部分强化学习训练暂停/放缓，最大规模前沿训练仍暂缓。\n\n2. **Nvidia 最高 1050 亿美元支持 OpenAI 新数据中心**\n   - OpenAI 将租用美国俄亥俄州一个超大型 AI 数据中心，规划最高 8GW 容量。\n   - Nvidia 提供最高 1050 亿美元支持，并投资相关能源/数据中心项目，显示 AI 算力",
+      "durationMs": 39488
+    },
+    {
+      "variant": "improved",
+      "caseId": "lib-version-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "The latest stable version of **Bun is v1.4.0**.\n\nHeadline features include:\n\n- **Core rewritten from Zig to Rust**\n- Major **Node.js compatibility improvements**: ~1,400–1,500 more Node.js tests passing\n- Better performance: lower idle CPU, lower memory use, faster Linux startup\n- New native APIs:\n ",
+      "durationMs": 19414
+    },
+    {
+      "variant": "improved",
+      "caseId": "concept-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "快速排序是一种通过选取基准值将数组分成小于和大于基准的两部分并递归排序的高效排序算法。",
+      "durationMs": 2981
+    },
+    {
+      "variant": "improved",
+      "caseId": "event-date-zh",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 1,
+      "toolsUsed": [
+        "web_search"
+      ],
+      "finalText": "目前看，今年苹果秋季发布会**尚未看到苹果官方正式官宣**；多家媒体/爆料预测大概率在**9月9日（北京时间通常为9月10日凌晨1点）**举行。\n\n如果按苹果惯例，官方邀请函一般会在发布会前约一到两周发出，届时日期才算最终确定。",
+      "durationMs": 12202
+    },
+    {
+      "variant": "improved",
+      "caseId": "translate-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "Bonjour le monde",
+      "durationMs": 2107
+    },
+    {
+      "variant": "improved",
+      "caseId": "math-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "100 以内一共有 **25 个质数**。",
+      "durationMs": 4558
+    },
+    {
+      "variant": "improved",
+      "caseId": "code-local-en",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "```python\ndef is_palindrome(s: str) -> bool:\n    s = s.lower()\n    return s == s[::-1]\n```\n\nExample:\n\n```python\nprint(is_palindrome(\"racecar\"))  # True\nprint(is_palindrome(\"hello\"))    # False\n```",
+      "durationMs": 3056
+    },
+    {
+      "variant": "improved",
+      "caseId": "idiom-zh",
+      "expect": false,
+      "triggered": false,
+      "searchCalls": 0,
+      "toolsUsed": [],
+      "finalText": "“锲而不舍”意思是：坚持不懈，不轻易放弃。\n\n- “锲”：雕刻  \n- “舍”：停止、放弃  \n\n原意是不断地雕刻；比喻做事有恒心、有毅力。\n\n例句：只要锲而不舍地努力，就一定会有进步。",
+      "durationMs": 3173
+    },
+    {
+      "variant": "improved",
+      "caseId": "sports-score-en",
+      "expect": true,
+      "triggered": true,
+      "searchCalls": 4,
+      "toolsUsed": [
+        "web_search",
+        "web_search",
+        "web_search",
+        "web_search"
+      ],
+      "finalText": "The Lakers’ most recent game was a 115–110 loss to the Oklahoma City Thunder on May 11, 2026.",
+      "durationMs": 59322
+    }
+  ]
+}
