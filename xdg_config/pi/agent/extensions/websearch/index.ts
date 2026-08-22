@@ -3,7 +3,7 @@ import { Type } from "typebox";
 
 const EXA_SEARCH_URL = "https://api.exa.ai/search";
 
-const WebSearchParameters = Type.Object({
+export const WebSearchParameters = Type.Object({
   query: Type.String({ minLength: 1, description: "Natural-language web search query" }),
   numResults: Type.Optional(
     Type.Integer({
@@ -78,6 +78,10 @@ interface ExaResponse {
 interface WebSearchExtensionOptions {
   fetch?: typeof globalThis.fetch;
   apiKey?: () => string | undefined;
+  /** Override the tool description exposed to the model (for A/B trigger evaluation). */
+  description?: string;
+  /** Override the prompt snippet injected into the system prompt (for A/B trigger evaluation). */
+  promptSnippet?: string;
 }
 
 function formatResults(query: string, results: ExaResult[]): string {
@@ -127,8 +131,10 @@ export function registerWebSearchExtension(
     name: "web_search",
     label: "Web Search (Exa)",
     description:
+      options.description ??
       "Search the current web with Exa. Returns URLs and token-efficient highlights by default; use full text only for deeper source analysis.",
-    promptSnippet: "Search the current web with Exa and return cited results",
+    promptSnippet:
+      options.promptSnippet ?? "Search the current web with Exa and return cited results",
     executionMode: "parallel",
     parameters: WebSearchParameters,
     async execute(_toolCallId, params, signal) {
