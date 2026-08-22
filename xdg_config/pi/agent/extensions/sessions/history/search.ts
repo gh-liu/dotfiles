@@ -1,4 +1,4 @@
-import type { ActiveSession } from "./transport/index.ts";
+import type { ActiveSession } from "../contracts.ts";
 import { MAX_SNIPPET_LENGTH } from "./contracts.ts";
 
 export function snippet(text: string, query: string): string {
