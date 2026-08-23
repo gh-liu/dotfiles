@@ -111,14 +111,15 @@ function completionEntryText(
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
   const summaryRaw = details.summary ?? "";
   const summaryOneLine = oneLine(summaryRaw, 240);
+  const completionTitle = taskTitle(details.task, expanded ? 160 : 80);
   let text = `${theme.fg(color, marker)} ${theme.fg(color, status)}`;
   // Short agent name only: the full label (model/thinking) already sits on the tool-call title.
   const agentLabel = `${details.agent}${typeof details.index === "number" ? ` (#${details.index})` : ""}`;
   if (details.agent) text += theme.fg("muted", ` · ${agentLabel}`);
-  if (!expanded && details.task) text += theme.fg("muted", ` · ${oneLine(details.task, 80)}`);
+  if (!expanded && completionTitle) text += theme.fg("muted", ` · ${completionTitle}`);
   if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
   if (expanded) {
-    if (details.task) text += `\n${theme.fg("muted", `  task: ${oneLine(details.task, 240)}`)}`;
+    if (completionTitle) text += `\n${theme.fg("muted", `  task: ${completionTitle}`)}`;
     const lines = boundedLines(summaryRaw, 4_000, 20);
     for (const line of lines) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
     const elapsed = typeof details.elapsedMs === "number" ? ` · ${formatCountdown(details.elapsedMs)}` : "";
@@ -175,13 +176,13 @@ function elideMiddle(value: string, max: number): string {
 
 // --- Call rendering ---
 /** One-line human summary of the work order: strip labels/markdown, first meaningful text. */
-function taskTitle(task: string | undefined): string {
+function taskTitle(task: string | undefined, maxCharacters = 80): string {
   if (!task) return "";
   const firstLine = task
     .split("\n")
     .map((line) => line.trim())
     .find((line) => line.length > 0 && !line.startsWith("#")) ?? "";
-  return oneLine(firstLine.replace(/^outcome\s*[:：]\s*/i, ""), 80);
+  return oneLine(firstLine.replace(/^outcome\s*[:：]\s*/i, ""), maxCharacters);
 }
 
 export function renderSubagentCall(

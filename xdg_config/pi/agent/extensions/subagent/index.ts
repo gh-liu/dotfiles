@@ -40,6 +40,20 @@ const deadline = () => Type.Optional(Type.Integer({
   description: "Required by run/start: execution deadline chosen from the task's estimated duration (1,000-3,600,000 ms)",
 }));
 
+const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
+
+/** One compact model-facing title: the first task line, never the work-order body. */
+function completionWakeTitle(task: string): string {
+  const firstMeaningfulLine = task
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find((line) => line.length > 0 && !line.startsWith("#"));
+  return firstMeaningfulLine
+    ?.replace(/^outcome\s*[:：]\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim() ?? "";
+}
+
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
 const SubagentParameters = Type.Object({
@@ -102,21 +116,24 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     const entries = "batch" in payload ? payload.batch : [payload];
     const blocks = entries.map((details) => {
       const reference = typeof details.index === "number" ? `#${details.index}` : "#?";
-      const normalizedTask = details.task.replace(/\s+/g, " ").trim();
-      const taskPrefix = normalizedTask.length <= 120
-        ? normalizedTask
-        : `${normalizedTask.slice(0, 119)}…`;
       const elapsed = typeof details.elapsedMs === "number"
         ? ` · ${Math.max(0, Math.ceil(details.elapsedMs / 1000))}s`
         : "";
+      const firstLine = `${reference} ${details.agent} · ${details.status}${elapsed}`;
+      const rawTitle = completionWakeTitle(details.task);
+      const titleBudget = COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS - firstLine.length - " — ".length;
+      const title = !rawTitle || titleBudget < 2
+        ? ""
+        : rawTitle.length <= titleBudget
+          ? rawTitle
+          : `${rawTitle.slice(0, titleBudget - 1)}…`;
       const availability = details.runtimeStatus === "idle"
-        ? `Runtime idle; use status ${reference}, follow-up ${reference}, or close ${reference}.`
+        ? `  idle · status/follow-up/close ${reference}`
         : details.runtimeStatus === "running"
-          ? `Runtime running; use status ${reference}.`
-          : `Runtime crashed; use status ${reference} or close ${reference}.`;
+          ? `  running · status ${reference}`
+          : `  crashed · status/close ${reference}`;
       return [
-        `${reference} · ${details.agent} · ${details.status}${elapsed}`,
-        `Task: ${taskPrefix}`,
+        title ? `${firstLine} — ${title}` : firstLine,
         availability,
       ].join("\n");
     });

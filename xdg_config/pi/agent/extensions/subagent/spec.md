@@ -814,13 +814,14 @@ Current UI/details additionally show:
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
 operation IDs and show only user-relevant state. Expanded calls and results show
 the bounded full task and full IDs. Persistent completion wake-up text contains
-only the session-local `#N`, agent, status, optional elapsed seconds, a bounded
-single-line task prefix, and runtime guidance (`status #N`, `follow-up #N`, or
-`close #N`). It omits full run/operation IDs and the summary; those machine details
+exactly two lines per entry: the session-local `#N`, agent, status, optional
+elapsed seconds, and a bounded title derived only from the first meaningful task
+line (`Outcome:` stripped), followed by runtime guidance
+(`status`/`follow-up`/`close #N`). It omits full run/operation IDs and the summary; those machine details
 remain in the message `details` payload and in `status`/`wait` envelopes. The custom
-completion card still shows the short agent name plus the task before its bounded
-summary, so a delayed notification remains understandable without replaying the
-original call. While an operation is active, its partial-state branch contributes
+completion card still shows the short agent name plus the same stripped task title
+before its bounded summary; it never flattens `Scope` or the rest of the work order
+into the card, so a delayed notification stays concise without losing context. While an operation is active, its partial-state branch contributes
 only an animated spinner with the countdown;
 the output-preview path appends the latest reduced, redacted progress summary once.
 It does not repeat the agent name or a generic `Running` label. Terminal result
@@ -1117,9 +1118,10 @@ that consumes it:
      notify immediately and carry earlier pending entries along so each
      operation notifies exactly once. A single background task degenerates to
      an immediate card — no mode switch needed.
-   - Model-facing wake-up text is bounded and concise (`#N`, agent, status,
-     optional elapsed seconds, one single-line task prefix, and actionable runtime
-     guidance using `status`/`follow-up`/`close #N`). Full UUIDs and summaries stay
+   - Model-facing wake-up text uses exactly two bounded lines per entry: `#N`,
+     agent, status, optional elapsed seconds, and the first meaningful task title
+     (`Outcome:` stripped), then actionable runtime guidance using
+     `status`/`follow-up`/`close #N`. Full UUIDs and summaries stay
      in `details`; harvest through `status #N` (or `wait` when an operation ID is
      already available), with transcript metadata available through either path.
      `appendEntry("subagent-settle-log", …)` records every settle durably for humans

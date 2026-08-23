@@ -798,11 +798,17 @@ describe("subagent tool", () => {
     expect((await env.invoke({ action: "status", id: "runtime" })).details).toMatchObject({ status: "idle" });
   });
 
-  test("notifies the parent when persistent operations settle and renders a bounded status", async () => {
+  test("notifies the parent with compact structured and follow-up titles", async () => {
     const runId = "11111111-1111-4111-8111-111111111111";
     const operationId = "22222222-2222-4222-8222-222222222222";
+    const task = [
+      "# Delegated work",
+      "Outcome: Inspect the subagent runtime lifecycle",
+      "Scope: xdg_config/pi/agent/extensions/subagent",
+      "Starting evidence: the old wake included the full work order.",
+    ].join("\n");
     const env = setup({ ids: [runId, operationId, "follow-up", "interrupted"] });
-    const started = await env.invoke({ action: "start", agent: "scout", task: "Initial" });
+    const started = await env.invoke({ action: "start", agent: "scout", task });
     env.fake.controllers[0].settle(0, "completed", "Located auth.\nWith supporting evidence.");
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
     expect(env.extension.messages[0]).toMatchObject({
@@ -810,12 +816,13 @@ describe("subagent tool", () => {
         customType: SUBAGENT_COMPLETION_MESSAGE,
         display: true,
         content: expect.stringMatching(
-          /^#1 · scout · completed · \d+s\nTask: Initial\nRuntime idle; use status #1, follow-up #1, or close #1\.$/,
+          /^#1 scout · completed · \d+s — Inspect the subagent runtime lifecycle\n  idle · status\/follow-up\/close #1$/,
         ),
         details: {
           runId,
           operationId,
           agent: "scout",
+          task,
           status: "completed",
           summary: "Located auth.\nWith supporting evidence.",
           runtimeStatus: "idle",
@@ -824,6 +831,10 @@ describe("subagent tool", () => {
       options: { triggerTurn: true, deliverAs: "followUp" },
     });
     const wakeContent = env.extension.messages[0].message.content as string;
+    expect(wakeContent.split("\n")).toHaveLength(2);
+    expect(wakeContent).not.toContain("Outcome:");
+    expect(wakeContent).not.toContain("Scope:");
+    expect(wakeContent).not.toContain("Starting evidence:");
     expect(wakeContent).not.toContain(runId);
     expect(wakeContent).not.toContain(operationId);
     expect(wakeContent).not.toContain("Located auth.");
@@ -832,11 +843,14 @@ describe("subagent tool", () => {
       action: "send",
       id: (started.details as { runId: string }).runId,
       mode: "follow_up",
-      message: "Check tests",
+      message: "  Check   tests  \nScope: not part of the title",
     });
     env.fake.controllers[0].settle(1, "failed", "No complete final response.");
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(2));
     expect(env.extension.messages[1].message).toMatchObject({
+      content: expect.stringMatching(
+        /^#1 scout · failed · \d+s — Check tests\n  idle · status\/follow-up\/close #1$/,
+      ),
       details: { operationId: (follow.details as { operationId: string }).operationId, status: "failed" },
     });
 
@@ -847,22 +861,53 @@ describe("subagent tool", () => {
       expectedOperationId: (next.details as { operationId: string }).operationId,
     });
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(3));
-    expect(env.extension.messages[2].message).toMatchObject({ details: { status: "interrupted" } });
+    expect(env.extension.messages[2].message).toMatchObject({
+      content: expect.stringMatching(
+        /^#1 scout · interrupted · \d+s — Wait\n  idle · status\/follow-up\/close #1$/,
+      ),
+      details: { status: "interrupted" },
+    });
 
     const renderer = env.extension.messageRenderers.get(SUBAGENT_COMPLETION_MESSAGE)!;
+    const completionMessage = {
+      role: "custom" as const,
+      timestamp: Date.now(),
+      ...(env.extension.messages[0].message as never),
+    };
+    const collapsed = renderer(
+      completionMessage,
+      { expanded: false, outputPad: 0 },
+      { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
+    )!.render(240).map((line) => line.trimEnd()).join("\n");
+    expect(collapsed).toContain("✓ completed · scout (#1) · Inspect the subagent runtime lifecycle");
+    expect(collapsed).not.toContain("Outcome:");
+    expect(collapsed).not.toContain("Scope:");
+
     const rendered = renderer(
-      {
-        role: "custom",
-        timestamp: Date.now(),
-        ...(env.extension.messages[0].message as never),
-      },
+      completionMessage,
       { expanded: true, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(240).map((line) => line.trimEnd()).join("\n");
-    expect(rendered).toContain("✓ completed · scout (#1)\n  task: Initial\n  Located auth.\n  With supporting evidence.");
+    expect(rendered).toContain("✓ completed · scout (#1)");
+    expect(rendered).toContain("task: Inspect the subagent runtime lifecycle");
+    expect(rendered).not.toContain("Outcome:");
+    expect(rendered).not.toContain("Scope:");
+    expect(rendered).toContain("Located auth.\n  With supporting evidence.");
     expect(rendered).toMatch(/  runtime idle · \d+s/);
     expect(rendered).not.toContain(runId);
     expect(rendered).not.toContain(operationId);
+  });
+
+  test("omits the completion title when the task has no meaningful non-heading line", async () => {
+    const env = setup();
+    await env.invoke({ action: "start", agent: "scout", task: "\n# Work order\n   " });
+    env.fake.controllers[0].settle(0, "completed", "Done.");
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+
+    const wakeContent = env.extension.messages[0].message.content as string;
+    expect(wakeContent).toMatch(/^#1 scout · completed · \d+s\n  idle · status\/follow-up\/close #1$/);
+    expect(wakeContent).not.toContain("—");
+    expect(wakeContent.split("\n")).toHaveLength(2);
   });
 
   test("batches background settlements into one card when the last one finishes", async () => {
@@ -877,7 +922,11 @@ describe("subagent tool", () => {
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
     const payload = env.extension.messages[0].message.details as { batch?: unknown[] };
     expect(payload.batch).toHaveLength(2);
-    expect(env.extension.messages[0].message.content).toContain("2 background subagents settled");
+    const blocks = (env.extension.messages[0].message.content as string).split("\n\n");
+    expect(blocks).toHaveLength(3);
+    expect(blocks[0]).toBe("2 background subagents settled:");
+    expect(blocks[1]).toMatch(/^#1 scout · completed · \d+s — First\n  idle · status\/follow-up\/close #1$/);
+    expect(blocks[2]).toMatch(/^#2 scout · completed · \d+s — Second\n  idle · status\/follow-up\/close #2$/);
   });
 
   test("failures notify immediately while successful siblings stay pending", async () => {
@@ -1367,7 +1416,7 @@ describe("subagent tool", () => {
     });
     const started = await extension.getTool().execute(
       "tool-call",
-      { action: "start", agent: agentName, task: `Inspect\n${"t".repeat(400)}`, deadlineMs: 30_000 },
+      { action: "start", agent: agentName, task: `Inspect ${"t".repeat(400)}\nScope: ignored`, deadlineMs: 30_000 },
       undefined,
       undefined,
       context(root),
@@ -1377,9 +1426,11 @@ describe("subagent tool", () => {
     const sent = extension.messages[0].message;
     const wakeContent = sent.content as string;
     const wakeLines = wakeContent.split("\n");
-    expect(wakeLines).toHaveLength(3);
-    expect(wakeLines[1]).toMatch(/^Task: Inspect t+…$/);
-    expect(wakeLines[1].length).toBeLessThanOrEqual(126);
+    expect(wakeLines).toHaveLength(2);
+    expect(wakeLines[0]).toMatch(/^#1 ab+… · completed · \d+s — Inspect t+…$/);
+    expect(wakeLines[0].length).toBeLessThanOrEqual(160);
+    expect(wakeLines[1]).toBe("  idle · status/follow-up/close #1");
+    expect(wakeContent).not.toContain("Scope:");
     expect(wakeContent).not.toContain("x".repeat(20));
     expect(wakeContent).not.toContain("runtime");
     expect(wakeContent).not.toContain("operation");
