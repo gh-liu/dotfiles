@@ -294,16 +294,20 @@ export const scenarios = [
     targetRate: 1,
     hardExpectation: {
       requiredAgents: ["scout", "researcher", "reviewer"],
-      maxSubagentCalls: 3,
+      maxSubagentCalls: 4,
       parallelAgents: ["scout", "researcher", "reviewer"],
+      expectedSubagentErrors: [{
+        pattern: "Subagent capacity unavailable: maxConcurrentRuns is 3\\.",
+        count: 1,
+      }],
     },
     expectation: {
       requiredAgents: ["scout", "researcher", "reviewer"],
-      maxSubagentCalls: 3,
+      maxSubagentCalls: 4,
       parallelAgents: ["scout", "researcher", "reviewer"],
       finalAny: ["capacity|concurrent|3"],
     },
-    prompt: "Verify capacity handling without editing. Start exactly three independent read-only one-shot calls in parallel in the same turn: scout maps the local session lifecycle and TTL bug, researcher checks authoritative Node.js timer guidance, reviewer independently reviews the current implementation against plan.md for gaps. Do not exceed maxConcurrentRuns=3: starting a fourth concurrent subagent must fail fast with a capacity error. After the three settle, synthesize their handoffs, note that a fourth would fail fast, and do not repeat their reads or searches in the parent.",
+    prompt: "Verify capacity handling without editing. In one assistant turn, attempt exactly four independent read-only one-shot calls in parallel: scout maps the local session lifecycle and TTL bug, researcher checks authoritative Node.js timer guidance, reviewer independently reviews the current implementation against plan.md for gaps, and a second scout checks plan.md acceptance. Exactly three should reserve maxConcurrentRuns slots; the fourth must fail fast with the capacity error. After the three accepted calls settle, synthesize their handoffs and the observed fourth-call error. Do not retry the rejected call or repeat their reads or searches in the parent.",
   },
   {
     id: "steer-active-operation",
@@ -315,7 +319,6 @@ export const scenarios = [
     targetRate: 1,
     hardExpectation: {
       requiredAgents: ["scout"],
-      maxSubagentCalls: 4,
       actionSequence: [
         { action: "start" },
         { action: "send", mode: "steer" },
@@ -325,7 +328,6 @@ export const scenarios = [
     },
     expectation: {
       requiredAgents: ["scout"],
-      maxSubagentCalls: 4,
       actionSequence: [
         { action: "start" },
         { action: "send", mode: "steer" },

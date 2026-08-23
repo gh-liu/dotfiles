@@ -1,3 +1,7 @@
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, test } from "vitest";
 
 import { createSdkSubagentController, createSdkSubagentExecutor } from "./sdk-executor.ts";
@@ -48,6 +52,10 @@ class FakeSession {
   disposeCalls = 0;
   promptHandler?: (text: string, options: any, emit: (e: any) => void) => Promise<void> | void;
   abortHandler?: () => Promise<void> | void;
+
+  get listenerCount(): number {
+    return this.listeners.length;
+  }
 
   subscribe(listener: (e: any) => void): () => void {
     this.listeners.push(listener);
@@ -179,6 +187,45 @@ describe("one-shot SDK executor", () => {
     expect(result.transcript.sessionPath).toBe("/tmp/session-sdk-1.jsonl");
   });
 
+  test("passes the explicit runtime profile and dedicated session root to session construction", async () => {
+    const session = new FakeSession();
+    const createdWith: any[] = [];
+    const runOptions = options({
+      cwd: "/workspace/project",
+      runId: "run-construction",
+      agent: {
+        ...profile(),
+        model: "openrouter/stealth/ox-alpha",
+        thinking: "minimal",
+        tools: ["read", "grep"],
+      },
+    });
+    const controller = await createSdkSubagentController(runOptions, {
+      agentDir: "/pi-agent",
+      createSession: async (sessionOptions) => {
+        createdWith.push(sessionOptions);
+        return { session: session as any };
+      },
+    });
+    expect(createdWith).toEqual([{
+      cwd: "/workspace/project",
+      agentDir: "/pi-agent",
+      model: "openrouter/stealth/ox-alpha",
+      thinkingLevel: "minimal",
+      tools: ["read", "grep"],
+      agent: runOptions.agent,
+      sessionRoot: "/pi-agent/subagent-sessions",
+      sessionDir: "/pi-agent/subagent-sessions/run-construction",
+      systemPrompt: "Inspect files.",
+      noExtensions: true,
+      noSkills: true,
+      noPromptTemplates: true,
+      noThemes: true,
+      noContextFiles: true,
+    }]);
+    await controller.close();
+  });
+
   test("fails when the final assistant message is not a normal stop", async () => {
     const session = new FakeSession();
     session.promptHandler = async (_text, opts, emit) => {
@@ -189,6 +236,69 @@ describe("one-shot SDK executor", () => {
     const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
     expect(result.status).toBe("failed");
     expect(result.summary).toBe("partial");
+  });
+
+  test("fails with a diagnostic when authoritative settlement has no final assistant response", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      emit({ type: "agent_settled" });
+    };
+    const result = await createSdkSubagentExecutor({
+      createSession: async () => ({ session: session as any }),
+    })(options());
+    expect(result).toMatchObject({
+      status: "failed",
+      summary: "Child did not produce a complete final assistant response.",
+    });
+  });
+
+  test("surfaces malformed session events and removes the listener", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      emit(null);
+    };
+    const result = await createSdkSubagentExecutor({
+      createSession: async () => ({ session: session as any }),
+    })(options());
+    expect(result.status).toBe("failed");
+    expect(result.summary).toMatch(/(?:null|type)/i);
+    expect(session.listenerCount).toBe(0);
+    expect(session.disposeCalls).toBe(1);
+  });
+
+  test("keeps transcript evidence readable after controller close", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "pi-subagent-transcript-"));
+    const sessionPath = join(directory, "session.jsonl");
+    writeFileSync(sessionPath, '{"type":"session"}\n');
+    const session = new FakeSession();
+    session.sessionFile = sessionPath;
+    try {
+      const runOptions = options();
+      const controller = await fakeController(runOptions, session);
+      await expect(controller.submit(runOptions)).resolves.toMatchObject({ status: "completed" });
+      await controller.close();
+      expect(existsSync(sessionPath)).toBe(true);
+      expect(readFileSync(sessionPath, "utf8")).toBe('{"type":"session"}\n');
+      expect(session.listenerCount).toBe(0);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("maps provider authentication failure during session creation to a bounded failed result", async () => {
+    const result = await createSdkSubagentExecutor({
+      createSession: async () => { throw new Error("No API key found for openrouter"); },
+    })(options({ agent: { ...profile(), model: "openrouter/stealth/ox-alpha" } }));
+    expect(result).toMatchObject({
+      runId: "run-sdk",
+      operationId: "operation-sdk",
+      agent: "scout",
+      status: "failed",
+      summary: "No API key found for openrouter",
+      transcript: {},
+    });
   });
 
   test("preserves transcript evidence when submission fails after preflight", async () => {

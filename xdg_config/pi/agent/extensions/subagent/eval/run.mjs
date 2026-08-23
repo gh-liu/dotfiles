@@ -23,6 +23,7 @@ import {
   analyzeJsonl,
   compareSummaries,
   evaluateExpectation,
+  evaluateExpectedSubagentErrors,
 } from "./analyze.mjs";
 import {
   createFixture,
@@ -48,6 +49,8 @@ Selection and execution:
   --scenario <id[,id]>   Run only selected scenarios (repeatable)
   --repeat <n>           Override every selected scenario's repeat count
   --model <provider/id>  Parent Pi model (default: openai-codex/gpt-5.6-luna)
+  --subagent-model <id>  Override every child model in the isolated eval config
+  --subagent-thinking <level>  Override child thinking in the isolated eval config
   --thinking <level>     Parent Pi thinking level: off, minimal, low, medium, high, xhigh, max
   --jobs <n>             Concurrent isolated Pi processes (default: 1)
   --timeout <seconds>    Timeout per Pi process (default: 300)
@@ -68,6 +71,8 @@ function parseArguments(argv) {
     scenarioIds: [],
     repeat: null,
     model: process.env.PI_SUBAGENT_EVAL_MODEL ?? "openai-codex/gpt-5.6-luna",
+    subagentModel: process.env.PI_SUBAGENT_EVAL_SUBAGENT_MODEL ?? null,
+    subagentThinking: process.env.PI_SUBAGENT_EVAL_SUBAGENT_THINKING ?? null,
     thinking: null,
     jobs: 1,
     timeoutMs: 300_000,
@@ -95,6 +100,12 @@ function parseArguments(argv) {
       index += 1;
     } else if (argument === "--model") {
       options.model = value(argument, index);
+      index += 1;
+    } else if (argument === "--subagent-model") {
+      options.subagentModel = value(argument, index);
+      index += 1;
+    } else if (argument === "--subagent-thinking") {
+      options.subagentThinking = value(argument, index);
       index += 1;
     } else if (argument === "--thinking") {
       options.thinking = value(argument, index);
@@ -203,6 +214,26 @@ function createIsolatedAgentDirectory(runtimeDirectory) {
   return directory;
 }
 
+function overrideSubagents(directory, model, thinking) {
+  if (!model && !thinking) return;
+  const settingsPath = join(directory, "settings.json");
+  const settings = existsSync(settingsPath) ? JSON.parse(readFileSync(settingsPath, "utf8")) : {};
+  settings.subagents ??= {};
+  const agentsDirectory = join(agentRoot, "agents");
+  for (const entry of readdirSync(agentsDirectory, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const definition = readFileSync(join(agentsDirectory, entry.name), "utf8");
+    const name = definition.match(/^name:\s*([^\s]+)\s*$/mu)?.[1];
+    if (!name) continue;
+    settings.subagents[name] = {
+      ...(settings.subagents[name] ?? {}),
+      ...(model ? { model } : {}),
+      ...(thinking ? { thinking } : {}),
+    };
+  }
+  writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
+}
+
 function killChild(child, signal = "SIGTERM") {
   if (!child.pid) return;
   try {
@@ -281,9 +312,11 @@ function validateRun(scenario, fixture, beforeSnapshot, processResult, analysis)
   if (analysis.schemaErrors.length > 0) {
     hardFailures.push(`${analysis.schemaErrors.length} subagent schema/validation error(s)`);
   }
-  const runtimeErrors = analysis.subagentErrors.length - analysis.schemaErrors.length;
-  if (runtimeErrors > 0) {
-    hardFailures.push(`${runtimeErrors} subagent execution error(s)`);
+  const runtimeErrors = analysis.subagentErrors.filter((error) => !analysis.schemaErrors.includes(error));
+  const expectedErrors = scenario.hardExpectation?.expectedSubagentErrors ?? [];
+  const errorEvaluation = evaluateExpectedSubagentErrors(runtimeErrors, expectedErrors);
+  if (errorEvaluation.unexpected.length > 0) {
+    hardFailures.push(`${errorEvaluation.unexpected.length} unexpected subagent execution error(s)`);
   }
   if (scenario.hardExpectation) {
     hardFailures.push(...evaluateExpectation(analysis, scenario.hardExpectation).reasons);
@@ -456,7 +489,7 @@ async function main() {
   }
   const selected = selectedScenarios(options);
   const plan = executionPlan(options, selected);
-  console.log(`Mode: ${options.mode}; strict: ${options.strict}; model: ${options.model}${options.thinking ? `; thinking: ${options.thinking}` : ""}`);
+  console.log(`Mode: ${options.mode}; strict: ${options.strict}; model: ${options.model}${options.subagentModel ? `; subagent model: ${options.subagentModel}` : ""}${options.thinking ? `; thinking: ${options.thinking}` : ""}${options.subagentThinking ? `; subagent thinking: ${options.subagentThinking}` : ""}`);
   for (const scenario of selected) {
     const count = plan.filter((item) => item.scenario.id === scenario.id).length;
     console.log(`- ${scenario.id} x${count}: ${scenario.description}`);
@@ -467,6 +500,7 @@ async function main() {
   const reportDirectory = prepareReportDirectory(options.report);
   const runtimeDirectory = mkdtempSync(join(tmpdir(), "pi-subagent-eval-runtime-"));
   options.piAgentDirectory = createIsolatedAgentDirectory(runtimeDirectory);
+  overrideSubagents(options.piAgentDirectory, options.subagentModel, options.subagentThinking);
   const cleanup = (signal = "SIGTERM") => {
     for (const child of activeChildren) killChild(child, signal);
     if (!options.keep) rmSync(runtimeDirectory, { recursive: true, force: true });
@@ -482,6 +516,16 @@ async function main() {
   let cursor = 0;
   try {
     const piVersion = preflight(options);
+    if (options.subagentModel && options.subagentModel !== options.model) {
+      requireSuccess(
+        sync("pi", ["auth", "check", "--model", options.subagentModel], extensionsRoot, {
+          ...process.env,
+          PI_CODING_AGENT_DIR: options.piAgentDirectory,
+          XDG_CONFIG_HOME: xdgConfigRoot,
+        }),
+        `Pi authentication is not ready for ${options.subagentModel}`,
+      );
+    }
     const workers = Array.from({ length: Math.min(options.jobs, plan.length) }, async () => {
       while (cursor < plan.length) {
         const item = plan[cursor++];
@@ -500,6 +544,8 @@ async function main() {
         timestamp: new Date().toISOString(),
         piVersion,
         model: options.model,
+        subagentModel: options.subagentModel,
+        subagentThinking: options.subagentThinking,
         mode: options.mode,
         strict: options.strict,
         jobs: options.jobs,

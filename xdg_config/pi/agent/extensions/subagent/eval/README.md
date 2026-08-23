@@ -80,7 +80,9 @@ Useful controls:
 
 ```bash
 node subagent/eval/run.mjs \
-  --model openai-codex/gpt-5.6-luna \
+  --model opencode-go/muse-spark-1.2-contributor \
+  --subagent-model opencode-go/muse-spark-1.2-contributor \
+  --subagent-thinking minimal \
   --jobs 2 \
   --timeout 300 \
   --report /tmp/subagent-after
@@ -99,7 +101,28 @@ Use `--strict` to enforce behavioral thresholds in quick/custom runs,
 repositories for debugging. `--help` lists all options.
 
 Before invoking models the runner checks `pi --version` and
-`pi auth check --model <model>`.
+`pi auth check --model <model>`. When `--subagent-model` is supplied, it also
+checks that model and overrides every child only in the temporary isolated
+`settings.json`; `--subagent-thinking` does the same for child thinking. The
+user's settings remain unchanged.
+
+## UI state gallery
+
+Render the production call, progress, terminal-result, completion-card, and
+live-widget components with deterministic fixture states:
+
+```bash
+npx -y node@22 --experimental-strip-types subagent/eval/ui-gallery.mjs all
+npx -y node@22 --experimental-strip-types subagent/eval/ui-gallery.mjs calls
+npx -y node@22 --experimental-strip-types subagent/eval/ui-gallery.mjs progress
+npx -y node@22 --experimental-strip-types subagent/eval/ui-gallery.mjs terminal
+npx -y node@22 --experimental-strip-types subagent/eval/ui-gallery.mjs completions
+```
+
+The gallery is intentionally provider-free: deterministic fixtures make rare
+crash, cancellation, race, and mixed-batch states reviewable without spending
+tokens or waiting for a model to reproduce them. Real-Pi runs remain responsible
+for verifying the integrated interactive TUI and provider path.
 
 ## Assertions and reports
 
@@ -107,7 +130,9 @@ Deterministic invariants always fail the command:
 
 - Pi exits successfully before the timeout and emits valid JSONL.
 - Every subagent call includes `action`; no failed subagent invocation or schema
-  error is hidden by a successful retry.
+  error is hidden by a successful retry. A scenario may consume only an exact,
+  counted expected error (currently the fourth-call capacity rejection); every
+  unmatched error remains fatal.
 - Explicit delegation/composition and persistent lifecycle orders are honored.
 - Parent work orders include the outcome, scope, starting evidence, decisions,
   constraints, acceptance criteria, validation, and expected handoff when a

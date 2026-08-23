@@ -199,19 +199,27 @@ export async function createSdkSubagentController(
   const processInstanceId = randomUUID();
   const agentDir = config.agentDir ?? getAgentDir();
   const sessionRoot = config.sessionRoot ?? join(agentDir, "subagent-sessions");
+  const sessionDir = join(sessionRoot, initial.runId);
+  const sessionPlan = {
+    cwd: initial.cwd,
+    agentDir,
+    model: initial.agent.model,
+    thinkingLevel: initial.agent.thinking,
+    tools: initial.agent.tools,
+    agent: initial.agent,
+    sessionRoot,
+    sessionDir,
+    systemPrompt: initial.agent.systemPrompt,
+    noExtensions: true,
+    noSkills: true,
+    noPromptTemplates: true,
+    noThemes: true,
+    noContextFiles: true,
+  };
   let session: SessionLike;
   // Resolve session via injected factory or real SDK
   if (config.createSession) {
-    const created = await config.createSession({
-      cwd: initial.cwd,
-      agentDir,
-      model: initial.agent.model,
-      thinkingLevel: initial.agent.thinking,
-      tools: initial.agent.tools,
-      agent: initial.agent,
-      sessionRoot,
-      runId: initial.runId,
-    });
+    const created = await config.createSession(sessionPlan);
     session = created.session as SessionLike;
     if (initial.signal?.aborted) throw new SubagentCancellationError("Subagent run cancelled before process creation");
   } else {
@@ -243,16 +251,15 @@ export async function createSdkSubagentController(
       }
     }
     const { DefaultResourceLoader, SessionManager, createAgentSession } = await import("@earendil-works/pi-coding-agent");
-    const sessionDir = join(sessionRoot, initial.runId);
     const loader = new DefaultResourceLoader({
-      cwd: initial.cwd,
-      agentDir,
-      systemPrompt: initial.agent.systemPrompt,
-      noExtensions: true,
-      noSkills: true,
-      noPromptTemplates: true,
-      noThemes: true,
-      noContextFiles: true,
+      cwd: sessionPlan.cwd,
+      agentDir: sessionPlan.agentDir,
+      systemPrompt: sessionPlan.systemPrompt,
+      noExtensions: sessionPlan.noExtensions,
+      noSkills: sessionPlan.noSkills,
+      noPromptTemplates: sessionPlan.noPromptTemplates,
+      noThemes: sessionPlan.noThemes,
+      noContextFiles: sessionPlan.noContextFiles,
     } as any);
     await (loader as any).reload();
     let customTools: any[] | undefined;
@@ -262,14 +269,14 @@ export async function createSdkSubagentController(
     } else if (config.customTools) {
       customTools = [...config.customTools];
     }
-    const manager = (SessionManager as any).create(initial.cwd, sessionDir);
+    const manager = (SessionManager as any).create(sessionPlan.cwd, sessionPlan.sessionDir);
     if (initial.signal?.aborted) throw new SubagentCancellationError("Subagent run cancelled before process creation");
     const created = await (createAgentSession as any)({
-      cwd: initial.cwd,
-      agentDir,
+      cwd: sessionPlan.cwd,
+      agentDir: sessionPlan.agentDir,
       model: modelInstance,
       thinkingLevel,
-      tools: initial.agent.tools,
+      tools: sessionPlan.tools,
       customTools,
       resourceLoader: loader,
       sessionManager: manager,

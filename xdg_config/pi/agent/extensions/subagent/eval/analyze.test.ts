@@ -5,6 +5,7 @@ import {
   analyzeJsonl,
   compareSummaries,
   evaluateExpectation,
+  evaluateExpectedSubagentErrors,
   parseJsonl,
 } from "./analyze.mjs";
 
@@ -175,6 +176,27 @@ describe("live subagent evaluation analysis", () => {
       { name: "subagent", text: "Child cwd is outside the allowed root" },
     ]);
     expect(analysis.schemaErrors).toEqual([]);
+  });
+
+  test("consumes only an explicitly expected capacity error and leaves every other failure fatal", () => {
+    const capacity = { name: "subagent", text: "Subagent capacity unavailable: maxConcurrentRuns is 3." };
+    const provider = { name: "subagent", text: "Provider failed after acceptance" };
+    const expected = [{
+      pattern: "Subagent capacity unavailable: maxConcurrentRuns is 3\\.",
+      count: 1,
+    }];
+    expect(evaluateExpectedSubagentErrors([capacity], expected)).toEqual({
+      reasons: [],
+      unexpected: [],
+    });
+    expect(evaluateExpectedSubagentErrors([capacity, provider], expected)).toEqual({
+      reasons: [],
+      unexpected: [provider],
+    });
+    expect(evaluateExpectedSubagentErrors([], expected)).toEqual({
+      reasons: ["subagent errors matching /Subagent capacity unavailable: maxConcurrentRuns is 3\\./: 0 != 1"],
+      unexpected: [],
+    });
   });
 
   test("recognizes independent evidence starts before either child settles", () => {

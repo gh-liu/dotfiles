@@ -450,7 +450,9 @@ export function renderSubagentResult(
   const showOutput =
     ((action === "run" || action === "wait") && details.reason !== "timeout")
     || context.isError
-    || status === "failed";
+    || status === "failed"
+    || status === "crashed"
+    || status === "cancelled";
   if (action === "list" && output) {
     for (const line of output.split("\n")) text += `\n${theme.fg("dim", line)}`;
   } else if (showOutput && expanded && output) {

@@ -148,6 +148,9 @@ Return concise findings with file and line evidence.
     ["missing tools", "thinking: low"],
     ["unknown capability", "tools: [read, custom_tool]"],
     ["model fallback", "tools: [read]\nfallbackModels: [openai/gpt-5-mini]"],
+    ["executable extensions", "tools: [read]\nextensions: [unsafe.ts]"],
+    ["non-fresh context", "tools: [read]\ncontextPolicy: fork"],
+    ["nested delegation depth", "tools: [read]\nmaxDepth: 2"],
   ])("rejects unsupported %s", (_label, fields) => {
     expect(() =>
       parseAgentDefinition(

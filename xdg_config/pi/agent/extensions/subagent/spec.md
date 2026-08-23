@@ -624,7 +624,7 @@ action and closes its runtime after settlement.
 Implemented today:
 
 - Reusable in-process SDK runtimes with prompt-acceptance and `agent_settled` boundaries.
-- Idle follow-up operations in the same process and session (running returns conflict, no queue).
+- Idle follow-up operations in the same controller and session (running returns conflict, no queue).
 - Active steering with an expected-operation guard and no extra operation result.
 - Runtime/operation identity, monotonic in-memory revisions, and guarded interrupts.
 - `abort()` plus a settlement watchdog for operation interrupt/deadline without losing a healthy runtime.
@@ -918,13 +918,34 @@ a deferred idea.
 - Abort a targeted operation and retain the child session.
 - Send an idle follow-up to a persistent worker (running returns conflict).
 - Steer the expected active operation without creating a second operation.
-- Close a worker and verify its process exits and slot is released.
+- Close a worker and verify its session is disposed and slot is released.
 - Preserve transcript after close.
 - Parent shutdown cleans up all children.
 
-The default `npm test` suite uses protocol fixtures and does not call a model; the
-gated `subagent/live.test.ts` provider smoke remains skipped unless explicitly
-enabled. Paid-provider tests must stay outside routine validation.
+The default `npm test` suite uses protocol fixtures and does not call a model.
+Paid-provider coverage lives in `subagent/eval/` and must stay outside routine
+validation.
+
+Current capability-to-test map:
+
+| Capability contract | Deterministic coverage | Real-Pi coverage |
+| --- | --- | --- |
+| Agent parsing, explicit tools, fresh-only context, discovery, overrides, catalog | `agents.test.ts`, `index.test.ts` | role-selection and work-order scenarios |
+| Cwd/root containment, symlink escape, bounded project guidance | `context.test.ts` | isolated fixture workspaces |
+| Explicit SDK session profile, durable transcript reference, result ownership | `sdk-executor.test.ts` | all delegated scenarios |
+| One-shot run, persistent start/status/wait/follow-up/close | `index.test.ts`, `sdk-executor.test.ts` | `persistent-follow-up` |
+| Accepted-operation steering and guarded interrupt/reuse | `index.test.ts`, `sdk-executor.test.ts` | `steer-active-operation`, `interrupt-and-reuse` |
+| Idle-only input, wait timeout, late-control races, monotonic revisions | `index.test.ts` | persistent lifecycle scenarios |
+| Capacity reservation/release and fail-fast fourth run | `index.test.ts`, `eval/analyze.test.ts` | `capacity-exhaustion` |
+| Deadlines, abort watchdog, startup/provider/final-response failures | `sdk-executor.test.ts` | provider failures fail every eval run |
+| Transcript preservation, idempotent cleanup, shutdown | `sdk-executor.test.ts`, `index.test.ts` | persistent lifecycle scenarios |
+| Bounded/redacted progress, results, notifications | `output.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | JSONL report inspection |
+| Every call/result/completion renderer branch and live panel state | `render.test.ts`, `live-ui.test.ts` | `eval/ui-gallery.mjs` plus interactive runs |
+| Parent routing, parallel evidence, staged roles, handoff consumption and verification | `eval/analyze.test.ts` | `eval/scenarios.mjs` |
+
+The deterministic suite owns protocol, state, race, failure, and renderer
+contracts. The paid evaluator owns model behavior only; a probabilistic routing
+scenario is not a substitute for a deterministic lifecycle assertion.
 
 Routing quality is validated separately with the real-Pi behavioral evaluator:
 
@@ -961,7 +982,8 @@ or Bun rather than through a package-script alias.
 
 The initial design considered Pi JSON mode as a short-lived way to validate
 prompt shape, tool allowlists, bounded event parsing, deadlines, and process-tree
-cleanup. The current source tree has no JSON executor: the RPC controller now
+cleanup. The current source tree has no JSON executor: the in-process SDK
+controller now
 provides both one-shot `run` and persistent lifecycle behavior with durable
 transcripts. JSON-mode stdin and cancellation semantics are therefore historical
 design context, not current contracts or remaining implementation work.
@@ -989,13 +1011,12 @@ Implemented:
 - `start`, `status`, idle-only `send(..., mode: "follow_up")` (running returns a
   conflict), guarded active `send(..., mode: "steer")`, `wait`, guarded
   `interrupt`, and idempotent targeted `close` actions.
-- Sequential operations in one process/session, with prompt acceptance separate
+- Sequential operations in one controller/session, with prompt acceptance separate
   from authoritative operation settlement.
 - Operation interrupt and deadline through `session.abort()` with a settlement
   watchdog, leaving a healthy runtime reusable after `agent_settled`.
-  reusable after `agent_settled`.
 - Separate run, operation, process-instance, and session identities.
-- Monotonic in-memory runtime revisions, concurrency limits, fatal-process
+- Monotonic in-memory runtime revisions, concurrency limits, fatal-session
   observation, and `agent_settled`-based completion.
 
 Remaining:
@@ -1011,7 +1032,7 @@ Acceptance:
 - `wait` timeout leaves it running.
 - A late `interrupt` cannot stop a later operation.
 - `interrupt` stops the targeted operation without deleting the transcript.
-- `close` releases the slot and exits the process.
+- `close` releases the slot and disposes the SDK session.
 - A closed transcript can be inspected but is not advertised as resumable.
 
 ### Milestone 2: Steering and rich structured handoff (partial)

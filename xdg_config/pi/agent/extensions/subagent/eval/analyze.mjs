@@ -232,6 +232,24 @@ function containsOrdered(actual, expected, matches = (left, right) => left === r
   return false;
 }
 
+export function evaluateExpectedSubagentErrors(errors, expectations = []) {
+  const remaining = [...errors];
+  const reasons = [];
+  for (const expectation of expectations) {
+    const pattern = new RegExp(expectation.pattern, "isu");
+    const matches = remaining
+      .map((error, index) => ({ error, index }))
+      .filter(({ error }) => pattern.test(error.text));
+    if (matches.length !== expectation.count) {
+      reasons.push(
+        `subagent errors matching /${expectation.pattern}/: ${matches.length} != ${expectation.count}`,
+      );
+    }
+    for (const { index } of matches.slice(0, expectation.count).reverse()) remaining.splice(index, 1);
+  }
+  return { reasons, unexpected: remaining };
+}
+
 export function evaluateExpectation(analysis, expectation = {}) {
   const reasons = [];
   for (const agent of expectation.requiredAgents ?? []) {
@@ -332,6 +350,10 @@ export function evaluateExpectation(analysis, expectation = {}) {
       }
     }
   }
+  reasons.push(...evaluateExpectedSubagentErrors(
+    analysis.subagentErrors.filter((error) => !analysis.schemaErrors.includes(error)),
+    expectation.expectedSubagentErrors,
+  ).reasons);
   return { passed: reasons.length === 0, reasons };
 }
 

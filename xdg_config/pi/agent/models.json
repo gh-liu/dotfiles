@@ -45,6 +45,32 @@
         }
       ]
     },
+    "opencode-go": {
+      "models": [
+        {
+          "id": "muse-spark-1.2-contributor",
+          "name": "Muse Spark 1.2 Contributor",
+          "api": "openai-responses",
+          "baseUrl": "https://opencode.ai/zen/go/v1",
+          "reasoning": true,
+          "input": [
+            "text",
+            "image"
+          ],
+          "contextWindow": 1000000,
+          "maxTokens": 131072,
+          "cost": {
+            "input": 0.1,
+            "output": 0.2,
+            "cacheRead": 0.002,
+            "cacheWrite": 0
+          },
+          "compat": {
+            "sessionAffinityFormat": "openai-nosession"
+          }
+        }
+      ]
+    },
     "deepseek": {
       "modelOverrides": {
         "deepseek-v4-flash": {},
