@@ -1,4 +1,5 @@
 import { createWorkOrder } from "./context.ts";
+import type { LiveUiController } from "./live-ui.ts";
 import { boundText } from "./output.ts";
 import { stripModel } from "./protocol.ts";
 import type { SubagentCompletionDetails } from "./render.ts";
@@ -29,7 +30,11 @@ export interface OperationRecord {
   settle(): void;
 }
 
+export type RuntimeMode = "foreground" | "background";
+
 export interface RuntimeRecord {
+  /** Session-local short index (#N) for human/model-friendly targeting. */
+  index: number;
   runId: string;
   revision: number;
   agent: SubagentRunOptions["agent"];
@@ -37,6 +42,8 @@ export interface RuntimeRecord {
   parentSessionId: string;
   projectGuidance: string[];
   state: RuntimeState;
+  /** How the runtime was born: one-shot `run` vs background `start`. */
+  mode: RuntimeMode;
   controller?: SubagentController;
   controllerReady: Promise<SubagentController>;
   activeOperationId?: string;
@@ -78,6 +85,8 @@ export function runtimeSnapshot(runtime: RuntimeRecord) {
   return {
     runId: runtime.runId,
     revision: runtime.revision,
+    mode: runtime.mode,
+    index: runtime.index,
     agent: runtime.agent.name,
     ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
     ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
@@ -101,7 +110,11 @@ export interface RuntimeHubDeps {
   controllerFactory: SubagentControllerFactory;
   idFactory: () => string;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
-  notifySettled: (details: SubagentCompletionDetails) => void;
+  notifySettled: (details: SubagentCompletionDetails | { batch: SubagentCompletionDetails[] }) => void;
+  /** Optional durable human-visible settle log (appendEntry); never wakes the model. */
+  logSettled?: (details: SubagentCompletionDetails) => void;
+  /** Live UI controller observing runtime lifecycle for footer/widget display. */
+  live: LiveUiController;
 }
 
 export interface CreateRuntimeInput {
@@ -109,6 +122,7 @@ export interface CreateRuntimeInput {
   cwd: string;
   parentSessionId: string;
   projectGuidance: string[];
+  mode: RuntimeMode;
   initialOptions: SubagentRunOptions;
 }
 
@@ -128,6 +142,8 @@ export interface RuntimeHub {
   isShuttingDown(): boolean;
   createRuntime(input: CreateRuntimeInput): RuntimeRecord;
   snapshot(runtime: RuntimeRecord): ReturnType<typeof runtimeSnapshot>;
+  /** All tracked runtimes (active and idle). */
+  listRuntimes(): RuntimeRecord[];
   beginOperation(runtime: RuntimeRecord, input: BeginOperationInput): Promise<OperationRecord>;
   /** Marks a runtime crashed before its close path exists (startup/acceptance failures). */
   markCrashed(runtime: RuntimeRecord): void;
@@ -138,6 +154,7 @@ export interface RuntimeHub {
 export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
   const maxConcurrentRuns = deps.maxConcurrentRuns ?? 3;
   const runtimes = new Map<string, RuntimeRecord>();
+  let nextRuntimeIndex = 1;
   let occupiedSlots = 0;
   let shuttingDown = false;
 
@@ -165,6 +182,30 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     }
   };
 
+  const pendingSettlements: SubagentCompletionDetails[] = [];
+  let flushScheduled = false;
+  let flushTimer: ReturnType<typeof setTimeout> | undefined;
+  const flushPendingSettlements = (): void => {
+    if (flushTimer !== undefined) {
+      clearTimeout(flushTimer);
+      flushTimer = undefined;
+    }
+    flushScheduled = false;
+    if (pendingSettlements.length === 0) return;
+    const entries = pendingSettlements.splice(0);
+    deps.notifySettled(entries.length === 1 ? entries[0] : { batch: entries });
+  };
+  /** Coalesce settlements that land in the same event-loop turn into one card. */
+  const scheduleFlush = (): void => {
+    if (flushScheduled) return;
+    flushScheduled = true;
+    flushTimer = setTimeout(() => {
+      flushTimer = undefined;
+      flushScheduled = false;
+      flushPendingSettlements();
+    }, 0);
+  };
+
   const notifyOperationSettled = (runtime: RuntimeRecord, operation: OperationRecord): void => {
     if (
       !operation.notifyOnSettle
@@ -182,6 +223,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ? operation.finishedAt - operation.startedAt
       : undefined;
     const details: SubagentCompletionDetails = {
+      index: runtime.index,
       runId: runtime.runId,
       operationId: operation.operationId,
       agent,
@@ -196,7 +238,22 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ),
       runtimeStatus: runtime.state === "running" ? "running" : runtime.state === "idle" ? "idle" : "crashed",
     };
-    deps.notifySettled(details);
+    if (runtime.mode !== "background") {
+      deps.notifySettled(details);
+      return;
+    }
+    // Batched wake policy: successful background settlements coalesce within
+    // the same event-loop turn and flush as ONE aggregated card on the next
+    // macrotask (the widget is the ambient signal meanwhile). Failures,
+    // timeouts, and interruptions are actionable and notify immediately,
+    // carrying any earlier pending entries along so nothing notifies twice.
+    deps.logSettled?.(details);
+    pendingSettlements.push(details);
+    if (details.status !== "completed") {
+      flushPendingSettlements();
+      return;
+    }
+    scheduleFlush();
   };
 
   const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> => {
@@ -205,6 +262,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (operation) operation.notifyOnSettle = false;
     }
     if (runtime.closePromise) return runtime.closePromise;
+    deps.live.remove(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
     runtime.closePromise = (async () => {
@@ -275,23 +333,28 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
     transition(runtime, "running");
+    deps.live.track(runtime.runId, { index: runtime.index, agent: runtime.agent.name, startedAt: operation.startedAt, deadlineMs, mode: runtime.mode });
     // Wrap raw progress summaries with operation identity plus authoritative timing
     // so the UI can anchor countdowns and report elapsed time without guessing.
-    const onProgress = onUpdate
-      ? (summary: string) => onUpdate({
-          content: [{ type: "text", text: summary }],
-          details: {
-            runId: runtime.runId,
-            operationId,
-            agent: runtime.agent.name,
-            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-            ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-            status: "running",
-            startedAt: operation.startedAt,
-            deadlineMs,
-          },
-        })
-      : undefined;
+    // The live UI controller always observes progress; onUpdate is forwarded only
+    // when the tool caller provided a channel. Details shape is unchanged.
+    const onProgress = (summary: string) => {
+      deps.live.progress(runtime.runId, summary);
+      onUpdate?.({
+        content: [{ type: "text", text: summary }],
+        details: {
+          runId: runtime.runId,
+          operationId,
+          agent: runtime.agent.name,
+          ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+          ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+          status: "running",
+          startedAt: operation.startedAt,
+          deadlineMs,
+          index: runtime.index,
+        },
+      });
+    };
     const runOptions: SubagentRunOptions = {
       cwd: runtime.cwd,
       agent: runtime.agent,
@@ -308,10 +371,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       (result) => {
         operation.result = result;
         operation.state = result.status;
+        deps.live.settle(runtime.runId, result.status ?? "completed");
       },
       (error) => {
         operation.error = error instanceof Error ? error.message : String(error);
         operation.state = "failed";
+        deps.live.settle(runtime.runId, "failed");
         if (runtime.state !== "closing" && runtime.state !== "closed") {
           transition(runtime, "crashed");
           void closeRuntime(runtime).catch(() => {});
@@ -341,12 +406,14 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     createRuntime(input) {
       const controllerReady = deferred<SubagentController>();
       const runtime: RuntimeRecord = {
+        index: nextRuntimeIndex++,
         runId: input.initialOptions.runId,
         revision: 0,
         agent: input.agent,
         cwd: input.cwd,
         parentSessionId: input.parentSessionId,
         projectGuidance: input.projectGuidance,
+        mode: input.mode,
         state: "starting",
         controllerReady: controllerReady.promise,
         operations: new Map(),
@@ -374,6 +441,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (!runtime.closePromise) transition(runtime, "crashed");
     },
     closeRuntime,
+    listRuntimes: () => [...runtimes.values()],
     async requestShutdown() {
       shuttingDown = true;
       await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));

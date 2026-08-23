@@ -813,15 +813,21 @@ Current UI/details additionally show:
 
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
 operation IDs and show only user-relevant state. Expanded calls and results show
-the bounded full task and full IDs. Persistent completion cards show the short
-agent name plus the task before the summary, so a delayed notification remains
-understandable without replaying the original call. While an operation is active,
-its partial-state branch contributes only an animated spinner with the countdown;
+the bounded full task and full IDs. Persistent completion wake-up text contains
+only the session-local `#N`, agent, status, optional elapsed seconds, a bounded
+single-line task prefix, and runtime guidance (`status #N`, `follow-up #N`, or
+`close #N`). It omits full run/operation IDs and the summary; those machine details
+remain in the message `details` payload and in `status`/`wait` envelopes. The custom
+completion card still shows the short agent name plus the task before its bounded
+summary, so a delayed notification remains understandable without replaying the
+original call. While an operation is active, its partial-state branch contributes
+only an animated spinner with the countdown;
 the output-preview path appends the latest reduced, redacted progress summary once.
 It does not repeat the agent name or a generic `Running` label. Terminal result
 lines omit the agent label entirely because the call title above already carries
-the full `agent · model · thinking` identity. Expanded completion notifications
-retain bounded multiline summaries instead of flattening them to one line.
+the full `agent · model · thinking` identity. Expanded completion cards retain
+bounded multiline summaries instead of flattening them to one line; their metadata
+shows runtime status and optional elapsed time without full run/operation IDs.
 
 Intermediate child reasoning must not be copied into the parent model context.
 Malformed session events must be surfaced as diagnostics, not silently discarded.
@@ -844,6 +850,50 @@ before retention. Oversized text is truncated with an explicit marker
 credential patterns are redacted on a best-effort basis before retention and
 serialization. These limits are fixed implementation constants; a future
 configuration surface may lower them but must not disable them.
+
+### Live UI (widget)
+
+Active runtimes are surfaced to the human operator through one transient,
+display-only channel (`live-ui.ts`); it does not change what the parent model
+sees. A panel docked between the transcript and the editor
+(`ctx.ui.setWidget("subagent-live", …, { placement: "aboveEditor" })`) shows
+one compact overview line per runtime:
+
+`● #<index> <agent> · <elapsed> / <remaining> · <current activity>`
+
+Each runtime also carries a session-local short index (`#1`, `#2`, …) assigned
+at creation: it is shown in the live panel, completion cards, snapshots, and
+its `run`/`start` tool-call title once authoritative row details arrive; every
+id-taking action accepts it (e.g. `id: "#2"`) as a human/model-friendly
+alternative to the full runId. The collapsed tool-call box shows a
+one-line task summary title instead of the raw work-order body; expanding
+reveals the full bounded task.
+
+where the activity is the latest reduced progress summary (thinking /
+tool-call / streaming wording from the executor). It is deliberately an
+overview surface: no history lines, no footer status entries.
+
+Mode visibility: background (`start`) runtimes carry an `⟨bg⟩` badge while
+running and, after their operation settles, stay visible as a dim line
+`○ <agent> ⟨bg⟩ · idle · holds slot` until closed — making the capacity slot
+they continue to hold observable. Foreground (`run`) runtimes leave the panel
+as soon as they settle. The tool description documents both modes for the
+parent model: one-shot runs by default, plus the persistent lifecycle
+(start → wait/status/send → close), including the idle-holds-slot caveat and
+the follow-up completion card that announces settled background work.
+
+Data flow: sdk-executor `onProgress` summaries → the always-built wrapper in
+the hub's `beginOperation` (which feeds the live controller unconditionally and
+forwards to the tool's `onUpdate` only when provided) → the live controller →
+`setWidget`. Renders are throttled (leading + trailing 250 ms) with a 1 s
+heartbeat while any runtime is tracked so elapsed/countdown stay fresh; all
+timers stop when idle. `settle`/`remove` are idempotent and drop the runtime
+from the panel immediately (final state remains visible in the persistent tool
+result box, which survives replay). Every method is a no-op until
+`attach(ctx.ui)` runs under `ctx.hasUI`, keeping headless (-p) and RPC modes
+untouched. Footer status lines were tried and deliberately dropped in favor of
+this single overview surface; an overlay view for on-demand full logs remains
+a deferred idea.
 
 ## 13. Validation strategy
 
@@ -1036,6 +1086,41 @@ that consumes it:
 3. Before enabling project agents: whether trusted-project status is sufficient
    or a second extension-specific confirmation is required in interactive and
    non-interactive modes.
+4. Resolved — completion-notification policy and multi-runtime enumeration.
+   Former open question: per-operation immediate cards caused a card storm when
+   several background runtimes finished together, and live/idle runtimes were
+   not enumerable by the model. Adopted design:
+   - Batched wake: successful background settlements coalesce within the same
+     event-loop turn (microtask-drain via a zero-delay macrotask) and flush as
+     ONE aggregated card (`details.batch`); failures/timeouts/interruptions
+     notify immediately and carry earlier pending entries along so each
+     operation notifies exactly once. A single background task degenerates to
+     an immediate card — no mode switch needed.
+   - Model-facing wake-up text is bounded and concise (`#N`, agent, status,
+     optional elapsed seconds, one single-line task prefix, and actionable runtime
+     guidance using `status`/`follow-up`/`close #N`). Full UUIDs and summaries stay
+     in `details`; harvest through `status #N` (or `wait` when an operation ID is
+     already available), with transcript metadata available through either path.
+     `appendEntry("subagent-settle-log", …)` records every settle durably for humans
+     without entering model context.
+   - Enumeration/join primitives: `status` without an id returns snapshots of
+     ALL runtimes; `wait` without an operationId joins every outstanding
+     background operation (bounded by `timeoutMs`, partial results on timeout)
+     — restoring fork-join semantics for the background mode.
+   No time-based partial flush is used: only settlements arriving in the same
+   event-loop turn coalesce; staggered successes notify separately.
+5. Resolved — inter-subagent communication topology. Children are isolated
+   processes with no peer channels; the parent acts as the sole router
+   (hub-and-spoke): harvest an envelope, distill it, and feed the next hop via
+   a work order or `send`. Direct peer-to-peer (mailbox files or a local-socket
+   `message_peer` tool registered into child sessions) is rejected for now:
+   handoffs need intelligence (distill/filter), capacity is 3 slots so relay
+   cost is negligible, and P2P turns debugging into distributed-systems work.
+   Cheap relay optimization adopted: pass sibling transcript paths (already in
+   every envelope/card) instead of content when the next hop has Read access.
+   Declarative workflow formats are deferred until a genuinely repetitive
+   multi-stage pipeline emerges from manual orchestration; do not build a DAG
+   engine speculatively.
 
 ## 17. References
 

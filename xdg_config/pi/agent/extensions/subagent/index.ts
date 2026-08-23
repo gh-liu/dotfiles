@@ -12,8 +12,9 @@ import {
   type AgentDiscovery,
 } from "./agents.ts";
 import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
+import { createLiveUi } from "./live-ui.ts";
 import { boundText, serializeSubagentResult } from "./output.ts";
-import { createRuntimeHub, operationSnapshot, type RuntimeRecord } from "./runtime.ts";
+import { createRuntimeHub, operationSnapshot, type OperationRecord, type RuntimeRecord } from "./runtime.ts";
 import { createSdkSubagentController } from "./sdk-executor.ts";
 import { stripModel } from "./protocol.ts";
 import {
@@ -22,6 +23,7 @@ import {
   renderSubagentResult,
   SUBAGENT_COMPLETION_MESSAGE,
   type SubagentCompletionDetails,
+  type SubagentCompletionPayload,
 } from "./render.ts";
 import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.ts";
 
@@ -96,30 +98,65 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const controllerFactory = options.controllerFactory
     ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
-  const notifySettled = (details: SubagentCompletionDetails): void => {
-    const availability = details.runtimeStatus === "idle"
-      ? "The runtime is idle and can accept a follow-up."
-      : details.runtimeStatus === "running"
-        ? "The runtime is running another operation."
-        : "The runtime crashed and cannot accept more work.";
-    const content = boundText([
-      `Subagent ${details.agent} ${details.status} operation ${details.operationId} in runtime ${details.runId}.`,
-      `Task: ${details.task}`,
-      `Summary: ${details.summary}`,
-      availability,
-    ].join("\n"), { maxCharacters: 3_000, maxLines: 24 });
+  const notifySettled = (payload: SubagentCompletionPayload): void => {
+    const entries = "batch" in payload ? payload.batch : [payload];
+    const blocks = entries.map((details) => {
+      const reference = typeof details.index === "number" ? `#${details.index}` : "#?";
+      const normalizedTask = details.task.replace(/\s+/g, " ").trim();
+      const taskPrefix = normalizedTask.length <= 120
+        ? normalizedTask
+        : `${normalizedTask.slice(0, 119)}…`;
+      const elapsed = typeof details.elapsedMs === "number"
+        ? ` · ${Math.max(0, Math.ceil(details.elapsedMs / 1000))}s`
+        : "";
+      const availability = details.runtimeStatus === "idle"
+        ? `Runtime idle; use status ${reference}, follow-up ${reference}, or close ${reference}.`
+        : details.runtimeStatus === "running"
+          ? `Runtime running; use status ${reference}.`
+          : `Runtime crashed; use status ${reference} or close ${reference}.`;
+      return [
+        `${reference} · ${details.agent} · ${details.status}${elapsed}`,
+        `Task: ${taskPrefix}`,
+        availability,
+      ].join("\n");
+    });
+    const header = entries.length > 1 ? `${entries.length} background subagents settled:\n\n` : "";
+    const content = boundText(header + blocks.join("\n\n"), { maxCharacters: 16_000, maxLines: 96 });
     try {
-      pi.sendMessage<SubagentCompletionDetails>({
+      pi.sendMessage<SubagentCompletionPayload>({
         customType: SUBAGENT_COMPLETION_MESSAGE,
         content,
         display: true,
-        details,
+        details: payload,
       }, { triggerTurn: true, deliverAs: "followUp" });
     } catch {
       // Notification delivery must not change authoritative operation state.
     }
   };
-  const hub = createRuntimeHub({ controllerFactory, idFactory, notifySettled });
+  const logSettled = (details: SubagentCompletionDetails): void => {
+    try {
+      // Durable human-visible audit trail; never rendered into the model context.
+      pi.appendEntry("subagent-settle-log", {
+        runId: details.runId,
+        operationId: details.operationId,
+        agent: details.agent,
+        status: details.status,
+        elapsedMs: details.elapsedMs ?? null,
+        taskPrefix: boundText(details.task, { maxCharacters: 120, maxLines: 1 }),
+      });
+    } catch {
+      // The settle log is best-effort; never affect operation state.
+    }
+  };
+  const live = createLiveUi();
+  const hub = createRuntimeHub({ controllerFactory, idFactory, notifySettled, logSettled, live });
+  /** Accepts a full runId or a short session-local index ("#2" / "2"). */
+  const resolveRuntimeRef = (ref: string): RuntimeRecord | undefined => {
+    const exact = hub.get(ref);
+    if (exact) return exact;
+    const parsed = /^#?(\d+)$/.exec(ref.trim());
+    return parsed ? hub.listRuntimes().find((entry) => entry.index === Number(parsed[1])) : undefined;
+  };
   const runtimeSnapshot = (runtime: RuntimeRecord) => hub.snapshot(runtime);
   const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> =>
     hub.closeRuntime(runtime, suppressNotification);
@@ -135,16 +172,18 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     };
   };
 
-  const operationResponse = (operation: OperationRecord, runtime?: RuntimeRecord) => {
+  const operationResponse = (operation: OperationRecord, runtime: RuntimeRecord) => {
     if (operation.result) {
       const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
         ? operation.finishedAt - operation.startedAt
         : undefined;
       const enriched = {
         ...operation.result,
-        ...(runtime?.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-        ...(runtime?.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+        ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+        ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
         ...(elapsedMs === undefined ? {} : { elapsedMs }),
+        // The runtime, not child-provided result data, owns this session-local index.
+        index: runtime.index,
       };
       return {
         content: [{ type: "text" as const, text: serializeSubagentResult(enriched) }],
@@ -152,14 +191,50 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         isError: operation.result.status === "failed",
       };
     }
-    return response({ ...operationSnapshot(operation), error: operation.error ?? "Subagent operation failed" }, true);
+    return response({
+      ...operationSnapshot(operation),
+      error: operation.error ?? "Subagent operation failed",
+      index: runtime.index,
+    }, true);
+  };
+
+  /** Join every currently-running background operation; fork-join for the background mode. */
+  const joinOutstandingBackgroundOperations = async (timeoutMs?: number) => {
+    const targets: Array<{ runtime: RuntimeRecord; operation: OperationRecord }> = [];
+    for (const entry of hub.listRuntimes()) {
+      const op = entry.activeOperationId !== undefined ? entry.operations.get(entry.activeOperationId) : undefined;
+      if (entry.mode === "background" && op?.accepted && op.state === "running") {
+        targets.push({ runtime: entry, operation: op });
+      }
+    }
+    if (targets.length === 0) {
+      return response({ results: [], reason: "no outstanding background operations" });
+    }
+    let timedOut = false;
+    if (timeoutMs === undefined) {
+      await Promise.all(targets.map((target) => target.operation.settled));
+    } else {
+      timedOut = !(await Promise.race([
+        Promise.all(targets.map((target) => target.operation.settled)).then(() => true),
+        new Promise<false>((resolveTimeout) => {
+          setTimeout(() => resolveTimeout(false), timeoutMs);
+        }),
+      ]));
+    }
+    const results = targets
+      .filter((target) => target.operation.state !== "running")
+      .map((target) => operationResponse(target.operation, target.runtime).details);
+    return response({
+      results,
+      ...(timedOut ? { partial: true, reason: "timeout reached; still-running operations are omitted" } : {}),
+    });
   };
 
   pi.registerTool({
     name: "subagent",
     label: "Subagent",
     description:
-      `Delegate bounded work to a registered user-defined Pi child with fresh isolated context and only its declared tools. Mandatory routing exceptions to direct parent work: when the user asks for an independent, fresh-eyes, or second-opinion review and a matching agent is registered, invoke it before reading or reviewing the target; parent self-review cannot satisfy independence. Likewise, delegate external research requiring multiple searches, freshness checks, or source assessment before loading a parent research workflow or making parent web searches; use this instead of chaining multiple parent web searches. Other strong uses are multi-file discovery, one specific high-impact decision, and separately owned implementation; default to delegation for implementation-class work (multi-file reads, cross-file impact analysis, batch edits, test runs, refactors) and keep only simple lookups, localized single-file edits, and routine validation direct. After a successful cited read-only handoff, synthesize it without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. Use one-shot runs by default; persistent runtimes support background completion, context-preserving follow-ups while idle, and guarded steering. The parent owns task decomposition, decisions, conflict avoidance, result review, integration, and final verification.\n\n${startupCatalog}`,
+      `Delegate bounded work to a registered user-defined Pi child with fresh isolated context and only its declared tools. Mandatory routing exceptions to direct parent work: when the user asks for an independent, fresh-eyes, or second-opinion review and a matching agent is registered, invoke it before reading or reviewing the target; parent self-review cannot satisfy independence. Likewise, delegate external research requiring multiple searches, freshness checks, or source assessment before loading a parent research workflow or making parent web searches; use this instead of chaining multiple parent web searches. Other strong uses are multi-file discovery, one specific high-impact decision, and separately owned implementation; default to delegation for implementation-class work (multi-file reads, cross-file impact analysis, batch edits, test runs, refactors) and keep only simple lookups, localized single-file edits, and routine validation direct. After a successful cited read-only handoff, synthesize it without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. Use one-shot runs by default; persistent runtimes support background completion, context-preserving follow-ups while idle, and guarded steering. A background start returns an operationId immediately — harvest with wait, inspect with status, redirect with send, and close finished runtimes: an open runtime keeps its capacity slot even while idle, and settled background work announces itself via a follow-up completion card. status without an id lists every runtime; wait without an operationId joins all outstanding background work; successful settlements that finish in the same event-loop turn are batched into one card; staggered successes and failures notify immediately. Runtimes carry a short session-local index (#1, #2, ...) shown in the live panel and completion cards — target any action by passing that index (e.g. "#2") or the full runId as id. The parent owns task decomposition, decisions, conflict avoidance, result review, integration, and final verification.\n\n${startupCatalog}`,
     promptSnippet: "MANDATORY BEFORE any read/bash: explicitly independent/fresh-eyes/second-opinion review->reviewer (parent self-review is NOT independent); multi-source freshness/source assessment->researcher; multi-file discovery->scout; batch edits/test runs->worker; keep only single-file lookups direct; NEVER list, catalog is below",
     promptGuidelines: [
       "NEVER call subagent list — catalog is already in tool description below; use the agent name directly. Mandatory delegation before direct work: independent/fresh-eyes/second-opinion reviews (invoke the review agent before inspecting the target; parent self-review is not independent) and multi-source external research needing freshness or source assessment — NEVER run web_search yourself when researcher is available; invoke researcher first.",
@@ -190,6 +265,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     },
     renderResult: renderSubagentResult,
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
+      if (ctx.hasUI) live.attach(ctx.ui);
       if (params.action === "list") {
         registry = discoverEffectiveAgents();
         const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
@@ -212,15 +288,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
 
       const missing = params.action === "run" || params.action === "start"
         ? (!params.agent ? "agent" : !params.task ? "task" : params.deadlineMs === undefined ? "deadlineMs" : undefined)
-        : !params.id
+        : !params.id && params.action !== "status" && params.action !== "wait"
           ? "id"
           : params.action === "send"
             ? (!params.mode ? "mode" : !params.message ? "message" : params.mode === "steer" && !params.expectedOperationId ? "expectedOperationId" : undefined)
-            : params.action === "wait" && !params.operationId
-              ? "operationId"
-              : params.action === "interrupt" && !params.expectedOperationId
-                ? "expectedOperationId"
-                : undefined;
+            : params.action === "interrupt" && !params.expectedOperationId
+              ? "expectedOperationId"
+              : undefined;
       if (missing) return response({ error: `${missing} is required for subagent ${params.action}` }, true);
 
       if (
@@ -230,7 +304,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         || params.action === "interrupt"
         || params.action === "close"
       ) {
-        const runtime = hub.get(params.id);
+        if (!params.id) {
+          // id-less forms operate across every runtime: enumerate, or join all
+          // outstanding background work (fork-join for the background mode).
+          if (params.action === "status") {
+            return response({ runtimes: hub.listRuntimes().map((entry) => runtimeSnapshot(entry)) });
+          }
+          return joinOutstandingBackgroundOperations(params.timeoutMs);
+        }
+        const runtime = resolveRuntimeRef(params.id);
         if (!runtime) return response({ error: `Unknown subagent runtime: ${params.id}` }, true);
 
         if (params.action === "status") return response(runtimeSnapshot(runtime));
@@ -362,7 +444,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         deadlineMs: params.deadlineMs!,
         signal,
       };
-      const runtime = hub.createRuntime({ agent, cwd, parentSessionId, projectGuidance, initialOptions });
+      const runtime = hub.createRuntime({
+        agent,
+        cwd,
+        parentSessionId,
+        projectGuidance,
+        mode: params.action === "start" ? "background" : "foreground",
+        initialOptions,
+      });
       try {
         onUpdate?.({
           content: [{ type: "text", text: "Starting isolated child…" }],
@@ -373,6 +462,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             ...(agent.model ? { model: stripModel(agent.model) } : {}),
             ...(agent.thinking ? { thinking: agent.thinking } : {}),
             status: "starting",
+            index: runtime.index,
           },
         });
         runtime.controller = await runtime.controllerReady;
@@ -411,7 +501,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderSubagentCompletion,
   );
 
-  pi.on("session_shutdown", () => hub.requestShutdown());
+  pi.on("session_shutdown", () => {
+    live.dispose();
+    return hub.requestShutdown();
+  });
 }
 
 export default function subagentExtension(pi: ExtensionAPI): void {

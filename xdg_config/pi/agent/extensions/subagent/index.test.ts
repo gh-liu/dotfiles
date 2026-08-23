@@ -161,6 +161,7 @@ function harness() {
     registerMessageRenderer(customType: string, renderer: MessageRenderer) {
       messageRenderers.set(customType, renderer);
     },
+    appendEntry(_customType: string, _data?: unknown) {},
     sendMessage(message: Record<string, unknown>, options?: Record<string, unknown>) {
       messages.push({ message, options });
     },
@@ -227,6 +228,224 @@ describe("subagent settings overrides", () => {
 });
 
 describe("subagent tool", () => {
+  test("layout contract: call/result summaries stay one-line and transcript paths elide", async () => {
+    const env = setup();
+    const tool = env.extension.getTool();
+    const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
+    const renderCallLayout = (args: Record<string, unknown>, expanded: boolean) =>
+      tool.renderCall!(args as never, theme, { args: {}, isError: false, state: {}, expanded, invalidate: vi.fn() } as never)
+        .render(200).map((line) => line.trimEnd());
+    const renderResultLayout = (args: Record<string, unknown>, details: Record<string, unknown>, expanded: boolean) =>
+      tool.renderResult!(
+        { content: [{ type: "text", text: "" }], details },
+        { expanded, isPartial: false }, theme,
+        { args, isError: false, state: {}, invalidate: vi.fn() } as never,
+      ).render(200).map((line) => line.trimEnd());
+
+    const task = "Outcome: Summarize settings\n\nConstraints: read-only; skim only.";
+    const home = process.env.HOME ?? "";
+    const sessionPath = `${home}/tools/dotfiles/xdg_config/pi/agent/subagent-sessions/${"r".repeat(40)}/2026-08-22T02-33-38-543Z_deadbeef.jsonl`;
+    const resultDetails = {
+      runId: "r".repeat(40),
+      operationId: "o".repeat(40),
+      agent: "scout",
+      status: "completed",
+      summary: "ok",
+      elapsedMs: 12_000,
+      transcript: { sessionPath },
+    };
+
+    // Collapsed call: a single line — label, optional bg marker, one-line title.
+    const collapsedCall = renderCallLayout({ action: "start", agent: "scout", task }, false);
+    expect(collapsedCall).toHaveLength(1);
+    expect(collapsedCall[0]).toContain("scout");
+    expect(collapsedCall[0]).toContain("· bg");
+    expect(collapsedCall[0]).toContain("— Summarize settings");
+    expect(collapsedCall[0]).not.toContain("Constraints");
+
+    // Expanded call: title, cwd, and deadline share ONE bounded line; body follows.
+    const expandedCall = renderCallLayout(
+      { action: "start", agent: "scout", task, cwd: `${home}/tools/dotfiles`, deadlineMs: 240_000 }, true,
+    );
+    expect(expandedCall[0]).toContain("— Summarize settings");
+    expect(expandedCall[0]).toContain("~/tools/dotfiles");
+    expect(expandedCall[0]).toContain("240s");
+    expect(expandedCall[0].length).toBeLessThanOrEqual(140);
+    expect(expandedCall.slice(1).join("\n")).toContain("Constraints: read-only; skim only.");
+
+    // Expanded result: no run/operation UUIDs; transcript on its own elided line.
+    const expandedResult = renderResultLayout({ action: "close", id: "#1" }, resultDetails, true);
+    expect(expandedResult.join("\n")).not.toContain("run " + "r".repeat(8));
+    expect(expandedResult.join("\n")).not.toContain("/Users/");
+    const transcriptLines = expandedResult.filter((line) => line.trimStart().startsWith("transcript "));
+    expect(transcriptLines).toHaveLength(1);
+    // Head keeps the collapsed-home directory prefix, tail keeps the filename.
+    expect(transcriptLines[0]).toMatch(/^\s*transcript ~\/tools\/dotfiles\/.*….*deadbeef\.jsonl$/);
+    expect(transcriptLines[0].length).toBeLessThanOrEqual(120);
+
+    // Collapsed close result renders empty (the card carries the state).
+    const closedCollapsed = renderResultLayout({ action: "close", id: "#1" }, { ...resultDetails, status: "closed" }, false);
+    expect(closedCollapsed.filter((line) => line.length > 0)).toHaveLength(0);
+  });
+
+  test("hydrates run/start titles only after authoritative row-local index details", async () => {
+    const tool = setup().extension.getTool();
+    const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
+    const args = { action: "run", agent: "scout", task: "Inspect", cwd: "/workspace", deadlineMs: 60_000 };
+    const renderCall = (state: Record<string, unknown>, expanded = false) =>
+      tool.renderCall!(args as never, theme, {
+        args,
+        isError: false,
+        state,
+        expanded,
+        invalidate: vi.fn(),
+      } as never).render(200).map((line) => line.trimEnd()).join("\n");
+    const renderResult = (
+      state: Record<string, unknown>,
+      details: Record<string, unknown>,
+      isPartial: boolean,
+      invalidate: () => void,
+    ) => tool.renderResult!(
+      { content: [], details },
+      { expanded: false, isPartial },
+      theme,
+      { args, isError: false, state, invalidate } as never,
+    );
+
+    const state: Record<string, unknown> = {};
+    const invalidate = vi.fn();
+    // The first call render cannot reserve or invent an index.
+    expect(renderCall(state)).not.toContain("#1");
+    expect(state).not.toHaveProperty("runtimeIndex");
+
+    // Initial, partial, and final updates all share this row state, but schedule
+    // only the one repaint that makes the call title pick up its index.
+    renderResult(state, { index: 1, status: "starting" }, false, invalidate);
+    renderResult(state, { index: 1, status: "running" }, true, invalidate);
+    renderResult(state, { index: 1, status: "completed" }, false, invalidate);
+    expect(invalidate).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(invalidate).toHaveBeenCalledOnce();
+    expect(renderCall(state)).toContain("#1 scout");
+    expect(renderCall(state, true)).toContain("#1 scout");
+    expect(state).toMatchObject({ runtimeIndex: 1, runtimeIndexInvalidateQueued: false });
+
+    // Persisted final rows restore both a direct index and a snapshot-only index.
+    const directState: Record<string, unknown> = {};
+    const directInvalidate = vi.fn();
+    renderResult(directState, { index: 8, status: "completed", summary: "Done" }, false, directInvalidate);
+    await Promise.resolve();
+    expect(directInvalidate).toHaveBeenCalledOnce();
+    expect(renderCall(directState)).toContain("#8 scout");
+
+    const snapshotState: Record<string, unknown> = {};
+    const snapshotInvalidate = vi.fn();
+    renderResult(snapshotState, { snapshot: { index: 9, status: "completed", summary: "Done" } }, false, snapshotInvalidate);
+    await Promise.resolve();
+    expect(snapshotInvalidate).toHaveBeenCalledOnce();
+    expect(renderCall(snapshotState)).toContain("#9 scout");
+
+    const disposedState: Record<string, unknown> = {};
+    const disposedInvalidate = vi.fn(() => { throw new Error("row disposed"); });
+    renderResult(disposedState, { index: 10, status: "completed" }, false, disposedInvalidate);
+    await Promise.resolve();
+    expect(disposedInvalidate).toHaveBeenCalledOnce();
+  });
+
+  test("keeps rendered runtime indexes isolated, immutable, and valid", async () => {
+    const tool = setup().extension.getTool();
+    const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
+    const args = { action: "start", agent: "scout", task: "Inspect" };
+    const renderCall = (state: Record<string, unknown>) =>
+      tool.renderCall!(args as never, theme, {
+        args,
+        isError: false,
+        state,
+        invalidate: vi.fn(),
+      } as never).render(200).map((line) => line.trimEnd()).join("\n");
+    const renderResult = (
+      state: Record<string, unknown>,
+      details: Record<string, unknown>,
+      invalidate: () => void,
+    ) => tool.renderResult!(
+      { content: [], details },
+      { expanded: false, isPartial: false },
+      theme,
+      { args, isError: false, state, invalidate } as never,
+    );
+
+    const invalidState: Record<string, unknown> = {};
+    const invalidInvalidate = vi.fn();
+    for (const index of [0, -1, 1.5, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1, "2"]) {
+      renderResult(invalidState, { index, status: "completed" }, invalidInvalidate);
+    }
+    await Promise.resolve();
+    expect(invalidState).not.toHaveProperty("runtimeIndex");
+    expect(invalidInvalidate).not.toHaveBeenCalled();
+    expect(renderCall(invalidState)).not.toContain("#");
+
+    const firstState: Record<string, unknown> = {};
+    const secondState: Record<string, unknown> = {};
+    const firstInvalidate = vi.fn();
+    const secondInvalidate = vi.fn();
+    // Direct valid details win over a conflicting snapshot; an invalid direct
+    // field falls back to the persisted snapshot index for another row.
+    renderResult(firstState, { index: 3, snapshot: { index: 30, status: "completed" } }, firstInvalidate);
+    renderResult(secondState, { index: 0, snapshot: { index: 4, status: "completed" } }, secondInvalidate);
+    renderResult(firstState, { index: 5, status: "completed" }, firstInvalidate);
+    await Promise.resolve();
+    expect(firstInvalidate).toHaveBeenCalledOnce();
+    expect(secondInvalidate).toHaveBeenCalledOnce();
+    expect(firstState).toMatchObject({ runtimeIndex: 3, runtimeIndexInvalidateQueued: false });
+    expect(secondState).toMatchObject({ runtimeIndex: 4, runtimeIndexInvalidateQueued: false });
+    expect(renderCall(firstState)).toContain("#3 scout");
+    expect(renderCall(secondState)).toContain("#4 scout");
+
+    // Absent, invalid, and conflicting later values leave the established index
+    // untouched and cannot trigger another recursive repaint.
+    renderResult(firstState, { status: "completed" }, firstInvalidate);
+    renderResult(firstState, { index: -6, snapshot: { index: 6, status: "completed" } }, firstInvalidate);
+    renderResult(firstState, { index: 7, status: "completed" }, firstInvalidate);
+    await Promise.resolve();
+    expect(firstState).toMatchObject({ runtimeIndex: 3, runtimeIndexInvalidateQueued: false });
+    expect(firstInvalidate).toHaveBeenCalledOnce();
+  });
+
+  test("renders human-facing call targets without undefined or full UUIDs", () => {
+    const tool = setup().extension.getTool();
+    const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text };
+    const renderCall = (args: Record<string, unknown>, expanded = true) =>
+      tool.renderCall!(args as never, theme, { args: {}, isError: false, state: {}, expanded, invalidate: vi.fn() } as never)
+        .render(200).map((line) => line.trimEnd()).join("\n");
+    const runId = "12345678-1234-4123-8123-123456789abc";
+    const operationId = "abcdef12-1234-4123-8123-123456789abc";
+
+    expect(renderCall({ action: "wait", operationId })).toBe("◷ wait · all bg");
+    expect(renderCall({ action: "wait", id: "#7", operationId })).toBe("◷ wait · #7");
+    expect(renderCall({ action: "status" })).toBe("● status · all runtimes");
+    expect(renderCall({ action: "status", id: "#7" })).toBe("● status · #7");
+
+    const uuidBackedCalls = [
+      renderCall({ action: "wait", id: runId, operationId }),
+      renderCall({ action: "status", id: runId }),
+      renderCall({ action: "close", id: runId }),
+      renderCall({ action: "interrupt", id: runId, expectedOperationId: operationId }),
+      renderCall({ action: "send", id: runId, mode: "steer", message: "Redirect", expectedOperationId: operationId }),
+    ];
+    expect(uuidBackedCalls.map((rendered) => rendered.split("\n")[0])).toEqual([
+      "◷ wait · 12345678",
+      "● status · 12345678",
+      "close · 12345678",
+      "■ interrupt · 12345678",
+      "↪ steer · 12345678",
+    ]);
+    for (const rendered of uuidBackedCalls) {
+      expect(rendered).toContain("12345678");
+      expect(rendered).not.toContain(runId);
+      expect(rendered).not.toContain(operationId);
+    }
+  });
+
   test("publishes a provider-compatible root object schema and validates action fields", async () => {
     const env = setup();
     expect(env.extension.getTool().parameters).toMatchObject({ type: "object" });
@@ -392,9 +611,17 @@ describe("subagent tool", () => {
       { action: "run", agent: "scout", task: "one\ntwo\nthree\nfour\nfive\nsix\nseven" }, theme,
       { args: {}, isError: false, state: {}, invalidate: vi.fn() } as never,
     ).render(200).join("\n");
+    // Collapsed: one-line summary title only, no task body.
     expect(call).toContain("scout");
-    expect(call).toContain("…");
+    expect(call).toContain("— one");
+    expect(call).not.toContain("two");
     expect(call).not.toContain("seven");
+    const expandedCall = tool.renderCall!(
+      { action: "run", agent: "scout", task: "one\ntwo\nthree" }, theme,
+      { args: {}, isError: false, state: {}, expanded: true, invalidate: vi.fn() } as never,
+    ).render(200).join("\n");
+    expect(expandedCall).toContain("two");
+    expect(expandedCall).toContain("three");
     const partialState = {};
     const partial = tool.renderResult!(
       { content: [{ type: "text", text: "grep completed; continuing…" }], details: {
@@ -473,7 +700,10 @@ describe("subagent tool", () => {
       { expanded: true, isPartial: false }, theme,
       { args: { action: "status", id: "runtime-123456789" }, isError: false, state: {}, invalidate: vi.fn() },
     ).render(200).map((line) => line.trimEnd()).join("\n");
-    expect(expandedStatus).toContain("run runtime-123456789 · active operation-123456789");
+    // run/operation UUIDs are no longer displayed.
+    expect(expandedStatus).not.toContain("runtime-123456789");
+    expect(expandedStatus).not.toContain("operation-123456789");
+    expect(expandedStatus).toContain("● running");
     expect(render({ action: "wait", id: "runtime", operationId: "operation" }, {
       reason: "timeout", snapshot: { status: "running", agent: "scout" },
     })).toContain("still running");
@@ -485,6 +715,68 @@ describe("subagent tool", () => {
     expect(tool.renderResult!(listed, { expanded: false, isPartial: false }, theme, {
       args: { action: "list" }, isError: false, state: {}, invalidate: vi.fn(),
     }).render(200).join("\n")).toContain("Registered agents");
+  });
+
+  test("plumbs the authoritative runtime index through updates and final response branches", async () => {
+    const successEnv = setup({ ids: ["success-runtime", "success-operation"] });
+    const updates: unknown[] = [];
+    const success = successEnv.extension.getTool().execute(
+      "tool-call",
+      { action: "run", agent: "scout", task: "Inspect", deadlineMs: 60_000 } as never,
+      undefined,
+      (update) => { updates.push(update); },
+      context(successEnv.root),
+    );
+    await vi.waitFor(() => expect(successEnv.fake.controllers[0]?.starts).toHaveLength(1));
+    expect((updates[0] as { details: Record<string, unknown> }).details).toMatchObject({
+      index: 1,
+      status: "starting",
+    });
+    successEnv.fake.controllers[0].starts[0].options.onProgress?.("Inspecting files");
+    expect((updates.at(-1) as { details: Record<string, unknown> }).details).toMatchObject({
+      index: 1,
+      status: "running",
+    });
+    // A child result cannot replace the runtime-owned session-local index.
+    successEnv.fake.controllers[0].starts[0].result.resolve({
+      runId: "success-runtime",
+      operationId: "success-operation",
+      processInstanceId: "process-1",
+      agent: "scout",
+      status: "completed",
+      summary: "Done.",
+      transcript: { sessionId: "child-session", sessionPath: "/sessions/child.jsonl" },
+      index: 999,
+    } as SubagentResult & { index: number });
+    expect(await success).toMatchObject({
+      isError: false,
+      details: { index: 1, status: "completed" },
+    });
+
+    const failedEnv = setup({ ids: ["failed-runtime", "failed-operation"] });
+    const failed = failedEnv.invoke({ action: "run", agent: "scout", task: "Fail" });
+    await vi.waitFor(() => expect(failedEnv.fake.controllers[0]?.starts).toHaveLength(1));
+    failedEnv.fake.controllers[0].settle(0, "failed", "Child failed.");
+    expect(await failed).toMatchObject({
+      isError: true,
+      details: { index: 1, status: "failed" },
+    });
+
+    const crashEnv = setup({ ids: ["crash-runtime", "crash-operation"] });
+    const crashed = crashEnv.invoke({ action: "run", agent: "scout", task: "Crash" });
+    await vi.waitFor(() => expect(crashEnv.fake.controllers[0]?.starts).toHaveLength(1));
+    crashEnv.fake.controllers[0].starts[0].result.reject(new Error("Child crashed"));
+    expect(await crashed).toMatchObject({
+      isError: true,
+      details: { index: 1, status: "failed", error: "Child crashed" },
+    });
+
+    const startupEnv = setup({ ids: ["startup-runtime", "startup-operation"] });
+    startupEnv.fake.factory.mockRejectedValueOnce(new Error("Startup crashed"));
+    expect(await startupEnv.invoke({ action: "run", agent: "scout", task: "Start" })).toMatchObject({
+      isError: true,
+      details: { index: 1, status: "crashed", error: "Startup crashed" },
+    });
   });
 
   test("start resolves only after acceptance, independently of settlement, then becomes idle", async () => {
@@ -507,7 +799,9 @@ describe("subagent tool", () => {
   });
 
   test("notifies the parent when persistent operations settle and renders a bounded status", async () => {
-    const env = setup({ ids: ["runtime", "initial", "follow-up", "interrupted"] });
+    const runId = "11111111-1111-4111-8111-111111111111";
+    const operationId = "22222222-2222-4222-8222-222222222222";
+    const env = setup({ ids: [runId, operationId, "follow-up", "interrupted"] });
     const started = await env.invoke({ action: "start", agent: "scout", task: "Initial" });
     env.fake.controllers[0].settle(0, "completed", "Located auth.\nWith supporting evidence.");
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
@@ -515,10 +809,12 @@ describe("subagent tool", () => {
       message: {
         customType: SUBAGENT_COMPLETION_MESSAGE,
         display: true,
-        content: expect.stringContaining("Subagent scout completed operation initial in runtime runtime"),
+        content: expect.stringMatching(
+          /^#1 · scout · completed · \d+s\nTask: Initial\nRuntime idle; use status #1, follow-up #1, or close #1\.$/,
+        ),
         details: {
-          runId: "runtime",
-          operationId: "initial",
+          runId,
+          operationId,
           agent: "scout",
           status: "completed",
           summary: "Located auth.\nWith supporting evidence.",
@@ -527,6 +823,10 @@ describe("subagent tool", () => {
       },
       options: { triggerTurn: true, deliverAs: "followUp" },
     });
+    const wakeContent = env.extension.messages[0].message.content as string;
+    expect(wakeContent).not.toContain(runId);
+    expect(wakeContent).not.toContain(operationId);
+    expect(wakeContent).not.toContain("Located auth.");
 
     const follow = await env.invoke({
       action: "send",
@@ -540,10 +840,10 @@ describe("subagent tool", () => {
       details: { operationId: (follow.details as { operationId: string }).operationId, status: "failed" },
     });
 
-    const next = await env.invoke({ action: "send", id: "runtime", mode: "follow_up", message: "Wait" });
+    const next = await env.invoke({ action: "send", id: runId, mode: "follow_up", message: "Wait" });
     await env.invoke({
       action: "interrupt",
-      id: "runtime",
+      id: runId,
       expectedOperationId: (next.details as { operationId: string }).operationId,
     });
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(3));
@@ -559,8 +859,85 @@ describe("subagent tool", () => {
       { expanded: true, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(240).map((line) => line.trimEnd()).join("\n");
-    expect(rendered).toContain("✓ completed · scout\n  task: Initial\n  Located auth.\n  With supporting evidence.");
-    expect(rendered).toContain("run runtime · operation initial · runtime idle");
+    expect(rendered).toContain("✓ completed · scout (#1)\n  task: Initial\n  Located auth.\n  With supporting evidence.");
+    expect(rendered).toMatch(/  runtime idle · \d+s/);
+    expect(rendered).not.toContain(runId);
+    expect(rendered).not.toContain(operationId);
+  });
+
+  test("batches background settlements into one card when the last one finishes", async () => {
+    const env = setup({ ids: ["bg-a", "op-a", "bg-b", "op-b"] });
+    await env.invoke({ action: "start", agent: "scout", task: "First" });
+    await env.invoke({ action: "start", agent: "scout", task: "Second" });
+
+    env.fake.controllers[0].settle(0, "completed", "Alpha report.");
+    expect(env.extension.messages).toHaveLength(0); // sibling still running: stay silent
+
+    env.fake.controllers[1].settle(0, "completed", "Beta report.");
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    const payload = env.extension.messages[0].message.details as { batch?: unknown[] };
+    expect(payload.batch).toHaveLength(2);
+    expect(env.extension.messages[0].message.content).toContain("2 background subagents settled");
+  });
+
+  test("failures notify immediately while successful siblings stay pending", async () => {
+    const env = setup({ ids: ["bg-a", "op-a", "bg-b", "op-b"] });
+    await env.invoke({ action: "start", agent: "scout", task: "First" });
+    await env.invoke({ action: "start", agent: "scout", task: "Second" });
+
+    env.fake.controllers[1].settle(0, "failed", "Boom.");
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    expect(env.extension.messages[0].message.details).toMatchObject({ status: "failed" });
+
+    env.fake.controllers[0].settle(0, "completed", "Alpha.");
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(2));
+    expect(env.extension.messages[1].message.details).toMatchObject({ status: "completed" });
+  });
+
+  test("targets runtimes by short session-local index", async () => {
+    const env = setup({ ids: ["bg-a", "op-a"] });
+    await env.invoke({ action: "start", agent: "scout", task: "First" });
+
+    const listed = await env.invoke({ action: "status" });
+    expect((listed.details as { runtimes: Array<{ index: number }> }).runtimes[0].index).toBe(1);
+
+    const byHash = await env.invoke({ action: "status", id: "#1" });
+    expect((byHash.details as { runId: string }).runId).toBe("bg-a");
+    const byPlain = await env.invoke({ action: "status", id: "1" });
+    expect((byPlain.details as { runId: string }).runId).toBe("bg-a");
+
+    const closed = await env.invoke({ action: "close", id: "#1" });
+    expect(closed.details).toMatchObject({ index: 1, status: "closed" });
+  });
+
+  test("status without an id enumerates every runtime with its mode", async () => {
+    const env = setup({ ids: ["bg-a", "op-a", "bg-b", "op-b"] });
+    await env.invoke({ action: "start", agent: "scout", task: "First" });
+    await env.invoke({ action: "start", agent: "scout", task: "Second" });
+
+    const listed = await env.invoke({ action: "status" });
+    const runtimes = (listed.details as { runtimes: Array<{ mode: string; status: string }> }).runtimes;
+    expect(runtimes).toHaveLength(2);
+    expect(runtimes.every((entry) => entry.mode === "background" && entry.status === "running")).toBe(true);
+  });
+
+  test("wait without an operationId joins all outstanding background work", async () => {
+    const env = setup({ ids: ["bg-a", "op-a", "bg-b", "op-b"] });
+    await env.invoke({ action: "start", agent: "scout", task: "First" });
+    await env.invoke({ action: "start", agent: "scout", task: "Second" });
+
+    const join = env.invoke({ action: "wait", timeoutMs: 10_000 });
+    await new Promise((resolveSleep) => setTimeout(resolveSleep, 25));
+    env.fake.controllers[0].settle(0, "completed", "Alpha report.");
+    env.fake.controllers[1].settle(0, "completed", "Beta report.");
+    const joined = await join;
+    const results = (joined.details as { results: Array<{ status: string; summary: string }> }).results;
+    expect(results).toHaveLength(2);
+    expect(results.map((result) => result.summary)).toEqual(expect.arrayContaining(["Alpha report.", "Beta report."]));
+
+    // The last settle also flushed one aggregated completion card.
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    expect(env.extension.messages[0].message.content).toContain("2 background subagents settled");
   });
 
   test("does not notify for one-shot runs or operations settled by close and shutdown", async () => {
@@ -990,7 +1367,7 @@ describe("subagent tool", () => {
     });
     const started = await extension.getTool().execute(
       "tool-call",
-      { action: "start", agent: agentName, task: "Inspect", deadlineMs: 30_000 },
+      { action: "start", agent: agentName, task: `Inspect\n${"t".repeat(400)}`, deadlineMs: 30_000 },
       undefined,
       undefined,
       context(root),
@@ -998,7 +1375,14 @@ describe("subagent tool", () => {
     fake.controllers[0].settle(0, "completed", "x".repeat(10_000));
     await vi.waitFor(() => expect(extension.messages).toHaveLength(1));
     const sent = extension.messages[0].message;
-    expect((sent.content as string).length).toBeLessThanOrEqual(3_000);
+    const wakeContent = sent.content as string;
+    const wakeLines = wakeContent.split("\n");
+    expect(wakeLines).toHaveLength(3);
+    expect(wakeLines[1]).toMatch(/^Task: Inspect t+…$/);
+    expect(wakeLines[1].length).toBeLessThanOrEqual(126);
+    expect(wakeContent).not.toContain("x".repeat(20));
+    expect(wakeContent).not.toContain("runtime");
+    expect(wakeContent).not.toContain("operation");
     expect((sent.details as { agent: string }).agent.length).toBeLessThanOrEqual(80);
     expect(started.details).toMatchObject({ runId: "runtime", operationId: "operation" });
 
@@ -1008,8 +1392,19 @@ describe("subagent tool", () => {
       { expanded: false, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(500).map((line) => line.trimEnd()).join("\n");
-    expect(collapsed.length).toBeLessThanOrEqual(380);
+    expect(collapsed.length).toBeLessThanOrEqual(430);
     expect(collapsed).not.toContain("run runtime");
+
+    const expanded = renderer(
+      { role: "custom", timestamp: Date.now(), ...(sent as never) },
+      { expanded: true, outputPad: 0 },
+      { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
+    )!.render(500).map((line) => line.trimEnd()).join("\n");
+    expect(expanded).toContain("[truncated]");
+    expect(expanded.length).toBeLessThan(3_000);
+    expect(expanded).toContain("runtime idle");
+    expect(expanded).not.toContain("run runtime");
+    expect(expanded).not.toContain("operation operation");
   });
 
   test("one-shot cleanup failure is reported instead of ordinary completion", async () => {
