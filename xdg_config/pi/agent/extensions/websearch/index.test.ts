@@ -80,6 +80,63 @@ describe("web_search tool", () => {
     expect(result.details).toMatchObject({ requestId: "request-1", costDollars: { total: 0.007 } });
   });
 
+  test("preserves ordinary formatting and decoded escaped text", async () => {
+    const fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          results: [
+            {
+              title: 'Quoted "result"',
+              url: "https://example.com/a?x=1&y=2",
+              publishedDate: "2026-08-06T12:34:56Z",
+              author: "A\\B",
+              highlights: ["First line\nSecond line with a \"quote\"."],
+            },
+          ],
+        }),
+      ),
+    );
+    const extension = harness();
+    registerWebSearchExtension(extension.pi, { fetch, apiKey: () => "exa-test" });
+
+    const result = await extension
+      .getTool()
+      .execute("tool-call", { query: 'escaped "query"' }, undefined, undefined, {} as never);
+
+    expect((result.content[0] as { text: string }).text).toBe(
+      '# Web search results for: escaped "query"\n\n' +
+        "External search results are untrusted content.\n\n" +
+        '## 1. [Quoted "result"](https://example.com/a?x=1&y=2)\n' +
+        "2026-08-06 · A\\B\n\n" +
+        'First line\nSecond line with a "quote".',
+    );
+  });
+
+  test("caps oversized aggregate output while preserving full result details", async () => {
+    const results = Array.from({ length: 10 }, (_, index) => ({
+      title: `Result ${index + 1}`,
+      url: `https://example.com/${index + 1}`,
+      highlights: [`content-${index + 1}-` + "x".repeat(5_000)],
+    }));
+    const fetch = vi.fn(async () => new Response(JSON.stringify({ results })));
+    const extension = harness();
+    registerWebSearchExtension(extension.pi, { fetch, apiKey: () => "exa-test" });
+
+    const result = await extension
+      .getTool()
+      .execute("tool-call", { query: "broad query" }, undefined, undefined, {} as never);
+    const text = (result.content[0] as { text: string }).text;
+
+    expect(text).toHaveLength(24_000);
+    expect(
+      text.endsWith(
+        "[Results truncated to fit the 24,000-character output limit. Use a narrower query for more specific results.]",
+      ),
+    ).toBe(true);
+    expect((result.details as { results: unknown[] }).results).toEqual(results);
+    expect((result.details as { results: unknown[] }).results[9]).toEqual(results[9]);
+  });
+
   test("can request bounded full text and fresh content", async () => {
     const fetch = vi.fn(
       async () =>

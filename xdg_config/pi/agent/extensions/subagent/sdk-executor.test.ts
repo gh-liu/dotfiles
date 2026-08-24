@@ -549,7 +549,7 @@ describe("one-shot SDK executor", () => {
       emit({ type: "agent_settled" });
     };
     const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
-    expect(result.summary.length).toBeLessThanOrEqual(32_000 + 20);
+    expect(result.summary.length).toBeLessThanOrEqual(16_000);
     expect(result.status).toBe("completed");
   });
 });

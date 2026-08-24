@@ -13,7 +13,7 @@ import {
 } from "./agents.ts";
 import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { createLiveUi } from "./live-ui.ts";
-import { boundText, serializeSubagentResult } from "./output.ts";
+import { boundText, modelSubagentHandoff, serializeSubagentResult } from "./output.ts";
 import { createRuntimeHub, operationSnapshot, type OperationRecord, type RuntimeRecord } from "./runtime.ts";
 import { createSdkSubagentController } from "./sdk-executor.ts";
 import { stripModel } from "./protocol.ts";
@@ -209,8 +209,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const runtimeSnapshot = (runtime: RuntimeRecord) => hub.snapshot(runtime);
   const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> =>
     hub.closeRuntime(runtime, suppressNotification);
-  const response = (details: unknown, isError = false) => {
-    const serialized = JSON.stringify(details);
+  const response = (details: unknown, isError = false, modelDetails: unknown = details) => {
+    const serialized = JSON.stringify(modelDetails);
     const bounded = serialized.length <= 32_000
       ? serialized
       : JSON.stringify({ error: "Subagent response exceeded the parent serialization limit", truncated: true });
@@ -221,23 +221,28 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     };
   };
 
+  const settledOperationDetails = (operation: OperationRecord, runtime: RuntimeRecord) => {
+    if (!operation.result) return undefined;
+    const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
+      ? operation.finishedAt - operation.startedAt
+      : undefined;
+    return {
+      ...operation.result,
+      ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+      ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+      ...(elapsedMs === undefined ? {} : { elapsedMs }),
+      // The runtime, not child-provided result data, owns this session-local index.
+      index: runtime.index,
+    };
+  };
+
   const operationResponse = (operation: OperationRecord, runtime: RuntimeRecord) => {
-    if (operation.result) {
-      const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
-        ? operation.finishedAt - operation.startedAt
-        : undefined;
-      const enriched = {
-        ...operation.result,
-        ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-        ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-        ...(elapsedMs === undefined ? {} : { elapsedMs }),
-        // The runtime, not child-provided result data, owns this session-local index.
-        index: runtime.index,
-      };
+    const enriched = settledOperationDetails(operation, runtime);
+    if (enriched) {
       return {
         content: [{ type: "text" as const, text: serializeSubagentResult(enriched) }],
         details: enriched,
-        isError: operation.result.status === "failed",
+        isError: enriched.status === "failed",
       };
     }
     return response({
@@ -270,12 +275,23 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }),
       ]));
     }
-    const results = targets
+    const settledTargets = targets
       .filter((target) => target.operation.state !== "running")
-      .map((target) => operationResponse(target.operation, target.runtime).details);
+      .map((target) => ({
+        response: operationResponse(target.operation, target.runtime),
+        settled: settledOperationDetails(target.operation, target.runtime),
+      }));
+    const timeoutDetails = timedOut
+      ? { partial: true, reason: "timeout reached; still-running operations are omitted" }
+      : {};
     return response({
-      results,
-      ...(timedOut ? { partial: true, reason: "timeout reached; still-running operations are omitted" } : {}),
+      results: settledTargets.map((target) => target.response.details),
+      ...timeoutDetails,
+    }, false, {
+      results: settledTargets.map((target) => target.settled
+        ? modelSubagentHandoff(target.settled)
+        : target.response.details),
+      ...timeoutDetails,
     });
   };
 

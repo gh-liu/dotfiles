@@ -7,6 +7,7 @@ import type {
   ActiveSessionTransportFactory,
 } from "./transport/index.ts";
 import { AskRegistry } from "./ask-registry.ts";
+import { truncateModelText, truncateProjectionField } from "../output.ts";
 
 function sessionRegistration(ctx: ExtensionContext): ActiveSessionRegistration {
   return {
@@ -61,10 +62,13 @@ export class SessionRuntime {
     const replyHint = message.expectsReply
       ? `\n\nReply with session_message({ action: "reply", replyTo: ${JSON.stringify(message.id)}, message: "..." })`
       : "";
+    const sender = truncateProjectionField(from.name ?? from.id, 512).value;
+    const cwd = truncateProjectionField(from.cwd, 1_000).value;
+    const prefix = `**From ${sender}** (${cwd})${replyHint}\n\n`;
     this.pi.sendMessage(
       {
         customType: "session_message",
-        content: `**From ${from.name ?? from.id}** (${from.cwd})${replyHint}\n\n${message.content.text}`,
+        content: truncateModelText(`${prefix}${message.content.text}`),
         display: true,
         details: { from, message },
       },

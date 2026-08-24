@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
-import { boundText, redactSecrets } from "./output.ts";
+import { boundText, redactSecrets, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
 import type { SubagentController, SubagentOperation, SubagentResult, SubagentRunOptions } from "./protocol.ts";
 
@@ -90,7 +90,7 @@ function result(
   return {
     ...identity(options, processInstanceId),
     status,
-    summary: boundText(summary, { maxCharacters: 32_000, maxLines: 400 }, secrets),
+    summary: boundText(summary, { maxCharacters: SUBAGENT_HANDOFF_MAX_CHARACTERS, maxLines: 400 }, secrets),
     transcript: { ...transcript },
   };
 }
@@ -433,7 +433,7 @@ export async function createSdkSubagentController(
               report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`);
             } else if (event.type === "message_end" && event.message?.role === "assistant") {
               const text = (event.message.content ?? []).filter((p: any) => p.type === "text" && typeof p.text === "string").map((p: any) => p.text as string).join("\n");
-              finalText = { text: boundText(text, { maxCharacters: 32_000, maxLines: 400 }, secrets), stopReason: event.message.stopReason, error: event.message.errorMessage };
+              finalText = { text: boundText(text, { maxCharacters: SUBAGENT_HANDOFF_MAX_CHARACTERS, maxLines: 400 }, secrets), stopReason: event.message.stopReason, error: event.message.errorMessage };
               if (event.message.stopReason === "stop") report("Finalizing response…");
             } else if (event.type === "agent_settled") {
               authoritativeSettled = true;

@@ -609,15 +609,25 @@ describe("subagent tool", () => {
     expect(env.fake.factory).toHaveBeenCalledOnce();
   });
 
-  test("bounds escaped result serialization", async () => {
+  test("bounds and compacts model-facing result serialization while preserving authoritative details", async () => {
     const env = setup();
     const run = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0, "completed", "\\".repeat(32_000));
     const result = await run;
     const serialized = (result.content[0] as { text: string }).text;
-    expect(serialized.length).toBeLessThanOrEqual(32_000);
-    expect(JSON.parse(serialized)).toMatchObject({ status: "completed" });
+    expect(serialized.length).toBeLessThanOrEqual(16_000);
+    const modelHandoff = JSON.parse(serialized) as Record<string, unknown>;
+    expect(modelHandoff).toMatchObject({ index: 1, agent: "scout", status: "completed" });
+    expect(modelHandoff).not.toHaveProperty("runId");
+    expect(modelHandoff).not.toHaveProperty("operationId");
+    expect(modelHandoff).not.toHaveProperty("processInstanceId");
+    expect(result.details).toMatchObject({
+      runId: expect.any(String),
+      operationId: expect.any(String),
+      processInstanceId: "process-1",
+      status: "completed",
+    });
   });
 
   test("render UI distinguishes calls, running, timeout, interruption, completion, and registry", async () => {
@@ -1006,6 +1016,14 @@ describe("subagent tool", () => {
     const results = (joined.details as { results: Array<{ status: string; summary: string }> }).results;
     expect(results).toHaveLength(2);
     expect(results.map((result) => result.summary)).toEqual(expect.arrayContaining(["Alpha report.", "Beta report."]));
+    expect(results[0]).toHaveProperty("runId");
+    const modelResults = (JSON.parse((joined.content[0] as { text: string }).text) as {
+      results: Array<Record<string, unknown>>;
+    }).results;
+    expect(modelResults).toHaveLength(2);
+    expect(modelResults[0]).not.toHaveProperty("runId");
+    expect(modelResults[0]).not.toHaveProperty("operationId");
+    expect(modelResults[0]).not.toHaveProperty("processInstanceId");
 
     // The last settle also flushed one aggregated completion card.
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));

@@ -1,6 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { randomUUID } from "node:crypto";
 import { ErrorCodes, errorResult } from "../contracts.ts";
+import { compactJsonProjection, truncateModelText, truncateProjectionField } from "../output.ts";
 import type { ActiveSessionSendResult } from "./transport/index.ts";
 import { ASK_TIMEOUT_MS, sessionMessageParameters } from "./contracts.ts";
 import type { SessionMessageInput } from "./contracts.ts";
@@ -23,7 +24,16 @@ export function registerSessionMessageTool(pi: ExtensionAPI, runtime: SessionRun
             messageId: message.id,
             message: message.content.text,
           }));
-          return { content: [{ type: "text" as const, text: JSON.stringify(pending, null, 2) }], details: { pending } };
+          let truncated = 0;
+          const modelPending = pending.map((item) => {
+            const message = truncateProjectionField(item.message);
+            if (message.truncated) truncated += 1;
+            return { ...item, message: message.value, messageTruncated: message.truncated || undefined };
+          });
+          return {
+            content: [{ type: "text" as const, text: compactJsonProjection(modelPending, undefined, truncated) }],
+            details: { pending },
+          };
         }
 
         if (input.action === "cancel") {
@@ -102,8 +112,8 @@ export function registerSessionMessageTool(pi: ExtensionAPI, runtime: SessionRun
 
         const reply = await answer;
         return {
-          content: [{ type: "text" as const, text: reply.content.text }],
-          details: { messageId: result.id, replyTo: reply.replyTo } as Record<string, unknown>,
+          content: [{ type: "text" as const, text: truncateModelText(reply.content.text) }],
+          details: { messageId: result.id, replyTo: reply.replyTo, reply } as Record<string, unknown>,
         };
       } catch (error) {
         return errorResult(error instanceof Error ? error.message : String(error), ErrorCodes.SESSION_MESSAGE_FAILED);

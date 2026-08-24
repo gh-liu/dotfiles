@@ -2,6 +2,9 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 
 const EXA_SEARCH_URL = "https://api.exa.ai/search";
+const MODEL_OUTPUT_LIMIT = 24_000;
+const TRUNCATION_MARKER =
+  "\n\n[Results truncated to fit the 24,000-character output limit. Use a narrower query for more specific results.]";
 
 export const WebSearchParameters = Type.Object({
   query: Type.String({ minLength: 1, description: "Natural-language web search query" }),
@@ -32,10 +35,10 @@ export const WebSearchParameters = Type.Object({
     }),
   ),
   startPublishedDate: Type.Optional(
-    Type.String({ description: "Earliest publication date in ISO 8601 format" }),
+    Type.String({ description: "Earliest ISO 8601 publication date" }),
   ),
   endPublishedDate: Type.Optional(
-    Type.String({ description: "Latest publication date in ISO 8601 format" }),
+    Type.String({ description: "Latest ISO 8601 publication date" }),
   ),
   content: Type.Optional(
     Type.Union([Type.Literal("highlights"), Type.Literal("text")], {
@@ -48,7 +51,7 @@ export const WebSearchParameters = Type.Object({
       minimum: 1_000,
       maximum: 20_000,
       default: 4_000,
-      description: "Maximum content characters per result",
+      description: "Content character limit per result",
     }),
   ),
   fresh: Type.Optional(
@@ -109,7 +112,9 @@ function formatResults(query: string, results: ExaResult[]): string {
   }
 
   if (results.length === 0) lines.push("", "No results found.");
-  return lines.join("\n");
+  const output = lines.join("\n");
+  if (output.length <= MODEL_OUTPUT_LIMIT) return output;
+  return output.slice(0, MODEL_OUTPUT_LIMIT - TRUNCATION_MARKER.length) + TRUNCATION_MARKER;
 }
 
 async function readResponse(response: Response): Promise<ExaResponse> {

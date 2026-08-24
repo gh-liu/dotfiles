@@ -1,6 +1,11 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
+- Updated: 2026-08-24 — settled operation responses now separate authoritative
+  UI/control `details` from a compact parent-model handoff that omits machine
+  IDs and execution-profile metadata. Handoff summaries and their serialized
+  envelopes are capped at 16k characters; full evidence remains in the durable
+  child transcript.
 - Updated: 2026-08-24 — model-facing prompt contributions now have one source
   for each concern: the tool description owns the bounded `name` + `description`
   startup catalog, while `promptSnippet` carries only discovered names and a
@@ -331,15 +336,26 @@ interface SubagentResult {
   };
 }
 
-The control plane enriches the envelope with `model`/`thinking` when the effective agent definition provides them (provider prefix stripped) before parent serialization; the child never fabricates these fields.
+interface ModelSubagentHandoff {
+  index?: number;
+  agent: string;
+  status: "completed" | "failed" | "interrupted";
+  summary: string;
+  elapsedMs?: number;
+  transcript: SubagentResult["transcript"];
+}
 ```
 
 `SubagentResult` is a controller-created envelope. The controller, never child
 JSON, owns IDs, agent identity, status, and transcript references. The child's
-final assistant text is bounded and returned as `summary`; the controller does
-not currently parse files, findings, validation, blockers, or risks into
-separate fields. Structured claims and controller-observed provenance remain
-Milestone 2 work.
+final assistant text is bounded to 16k characters and returned as `summary`.
+The control plane enriches authoritative tool `details` with the session-local
+index and effective `model`/`thinking` when available. The parent model sees only
+`ModelSubagentHandoff`: machine IDs and execution-profile metadata remain in
+`details`, while the short index, result, elapsed time, and transcript provenance
+remain available for decisions and retries. The controller does not currently
+parse files, findings, validation, blockers, or risks into separate fields.
+Structured claims remain Milestone 2 work.
 
 `completed` requires an authoritative settled event and a complete final
 assistant response with a normal stop reason. Missing final responses and

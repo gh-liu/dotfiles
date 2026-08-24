@@ -1,5 +1,21 @@
 import type { SubagentResult } from "./protocol.ts";
 
+export const SUBAGENT_HANDOFF_MAX_CHARACTERS = 16_000;
+
+type ModelSubagentHandoffSource = SubagentResult & {
+  elapsedMs?: number;
+  index?: number;
+};
+
+export interface ModelSubagentHandoff {
+  index?: number;
+  agent: string;
+  status: SubagentResult["status"];
+  summary: string;
+  elapsedMs?: number;
+  transcript: SubagentResult["transcript"];
+}
+
 interface TextLimits {
   maxCharacters: number;
   maxLines: number;
@@ -71,19 +87,31 @@ export function boundText(text: string, limits: TextLimits, exactSecretValues: s
   return prefix === "" ? TRUNCATION_MARKER : `${prefix}\n${TRUNCATION_MARKER}`;
 }
 
-/** Serializes the parent-visible result envelope under a hard character budget. */
-export function serializeSubagentResult(result: SubagentResult): string {
-  const maxCharacters = 32_000;
+/** Projects authoritative details into the compact handoff needed by the parent model. */
+export function modelSubagentHandoff(result: ModelSubagentHandoffSource): ModelSubagentHandoff {
+  return {
+    ...(result.index === undefined ? {} : { index: result.index }),
+    agent: result.agent,
+    status: result.status,
+    summary: result.summary,
+    ...(result.elapsedMs === undefined ? {} : { elapsedMs: result.elapsedMs }),
+    transcript: result.transcript,
+  };
+}
+
+/** Serializes the model-facing handoff under a hard character budget. */
+export function serializeSubagentResult(result: ModelSubagentHandoffSource): string {
+  const handoff = modelSubagentHandoff(result);
   let low = 0;
-  let high = Math.min(result.summary.length, maxCharacters);
+  let high = Math.min(handoff.summary.length, SUBAGENT_HANDOFF_MAX_CHARACTERS);
   let best: string | undefined;
   while (low <= high) {
     const summaryLimit = Math.floor((low + high) / 2);
     const summary = summaryLimit === 0
       ? ""
-      : boundText(result.summary, { maxCharacters: summaryLimit, maxLines: 400 });
-    const serialized = JSON.stringify({ ...result, summary });
-    if (serialized.length <= maxCharacters) {
+      : boundText(handoff.summary, { maxCharacters: summaryLimit, maxLines: 400 });
+    const serialized = JSON.stringify({ ...handoff, summary });
+    if (serialized.length <= SUBAGENT_HANDOFF_MAX_CHARACTERS) {
       best = serialized;
       low = summaryLimit + 1;
     } else {

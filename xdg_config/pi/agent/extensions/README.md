@@ -28,7 +28,16 @@ The replacement workflow uses native features only:
 ## Web search
 
 `websearch` registers a local `web_search` tool backed by the Exa Search API. Export
-`EXA_API_KEY` in the environment that starts Pi.
+`EXA_API_KEY` in the environment that starts Pi. Per-result limits are sent to
+Exa, and the extension independently caps aggregate model-visible results at
+24,000 characters; complete provider results remain in tool details.
+
+## Continue after compaction
+
+`continue` resumes the active task after compaction. It treats Pi's compaction
+summary and the current worktree as primary context, consulting the persisted
+session JSONL only when a decision-critical detail is missing, contradictory, or
+ambiguous. This avoids routinely refilling the newly compacted context.
 
 ## Sessions
 
@@ -43,6 +52,9 @@ History search remains available when local IPC is unavailable. Active-session
 operations require the target session to have this extension loaded and connected.
 The active-session transport uses a private Unix-domain socket under
 `$PI_CODING_AGENT_DIR/runtime` on macOS and Linux; Windows is not supported.
+IPC still accepts messages up to 64 KiB, while model-visible messages and compact
+list/history projections are capped at 16,000 characters. Full transport records
+and session metadata remain in tool/message details.
 
 `node sessions/eval/run.mjs` starts real isolated Pi processes and validates
 history search plus active `list`, `send`, `ask`, `pending`, `reply`, and `cancel`

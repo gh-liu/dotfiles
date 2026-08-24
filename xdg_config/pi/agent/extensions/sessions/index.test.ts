@@ -166,6 +166,46 @@ describe("sessions transport boundary", () => {
     );
 
     expect(result.details).toMatchObject({ results: [{ sessionId: "peer-1", self: false }] });
+    const model = JSON.parse((result.content[0] as { text: string }).text);
+    expect(model.items[0]).toEqual({ sessionId: "peer-1", name: "worker", cwd: "/work", status: "idle", self: false });
+    expect(model.items[0]).not.toHaveProperty("model");
+    expect(model.items[0]).not.toHaveProperty("lastActivity");
+  });
+
+  test("bounds aggregate active-session model output while details stay complete", async () => {
+    const transport = new FakeTransport();
+    transport.sessions = Array.from({ length: 20 }, (_, index) => ({
+      ...transport.sessions[0], id: `peer-${index}`, name: `worker-${index}`, cwd: `/${"c".repeat(5_000)}-${index}`,
+    }));
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+    const result = await h.tools.get("sessions")!.execute("list", { action: "list", limit: 20 }, undefined, undefined, {} as never);
+    const text = (result.content[0] as { text: string }).text;
+    const model = JSON.parse(text);
+    expect(text.length).toBeLessThanOrEqual(16_000);
+    expect(model.total).toBe(20);
+    expect(model.omitted).toBeGreaterThan(0);
+    expect((result.details as any).results).toHaveLength(20);
+    expect((result.details as any).results[0].cwd).toHaveLength(5_003);
+  });
+
+  test("projects bounded history model fields while details retain full records", async () => {
+    const longPath = `/${"p".repeat(5_000)}`;
+    vi.spyOn(SessionManager, "listAll").mockResolvedValue([{
+      id: "history-1", name: "old", path: longPath, cwd: "/work", modified: new Date(1), messageCount: 3,
+      allMessagesText: `before ${"z".repeat(1_000)} needle after`,
+    }] as never);
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => new FakeTransport() });
+    const result = await h.tools.get("sessions")!.execute("history", { action: "search_history", query: "needle" }, undefined, undefined, {} as never);
+    const text = (result.content[0] as { text: string }).text;
+    const model = JSON.parse(text);
+    expect(text.length).toBeLessThanOrEqual(16_000);
+    expect(model.items[0]).not.toHaveProperty("messageCount");
+    expect(model.items[0].snippet.length).toBeLessThanOrEqual(242);
+    expect(model.items[0].path).toContain("[truncated:");
+    expect((result.details as any).results[0]).toMatchObject({ path: longPath, messageCount: 3 });
   });
 
   test("sends a message through the transport", async () => {
@@ -210,6 +250,60 @@ describe("sessions transport boundary", () => {
 
     const result = await send;
     expect((result.content[0] as { text: string }).text).toBe("Yes");
+    expect(result.details).toMatchObject({ reply: { content: { text: "Yes" } } });
+  });
+
+  test("caps ask replies while details retain the authoritative reply", async () => {
+    const transport = new FakeTransport();
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+    const ask = h.tools.get("session_message")!.execute("call", { action: "ask", to: "worker", message: "?" }, new AbortController().signal, undefined, {} as never);
+    await vi.waitFor(() => expect(transport.sent).toHaveLength(1));
+    const text = "x".repeat(64 * 1024);
+    transport.receive(transport.sessions[0], { id: "reply", timestamp: 1, replyTo: transport.sent[0].options.messageId, content: { text } });
+    const result = await ask;
+    const model = (result.content[0] as { text: string }).text;
+    expect(model.length).toBe(16_000);
+    expect(model).toMatch(/\[truncated: \d+ characters omitted\]$/);
+    expect((result.details as any).reply.content.text).toBe(text);
+  });
+
+  test("caps unsolicited follow-ups while retaining full message details", async () => {
+    const transport = new FakeTransport();
+    transport.sessions[0].name = "worker-" + "n".repeat(2_000);
+    transport.sessions[0].cwd = "/" + "c".repeat(5_000);
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+    const text = "message-start-" + "y".repeat(64 * 1024 - 14);
+    transport.receive(transport.sessions[0], { id: "inbound", timestamp: 1, content: { text } });
+    const injected = h.sendMessage.mock.calls[0][0];
+    expect(injected.content.length).toBe(16_000);
+    expect(injected.content).toContain("[truncated:");
+    expect(injected.content).toContain("message-start-");
+    expect(injected.details.message.content.text).toBe(text);
+    expect(injected.details.from.name).toBe(transport.sessions[0].name);
+    expect(injected.details.from.cwd).toBe(transport.sessions[0].cwd);
+  });
+
+  test("pending uses bounded valid JSON with omission metadata and full details", async () => {
+    const transport = new FakeTransport();
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => transport });
+    await start(h);
+    for (let index = 0; index < 40; index += 1) {
+      transport.receive(transport.sessions[0], { id: `ask-${index}`, timestamp: index, expectsReply: true, content: { text: String(index).repeat(64 * 1024) } });
+    }
+    const result = await h.tools.get("session_message")!.execute("pending", { action: "pending" }, new AbortController().signal, undefined, {} as never);
+    const text = (result.content[0] as { text: string }).text;
+    const model = JSON.parse(text);
+    expect(text.length).toBeLessThanOrEqual(16_000);
+    expect(model).toMatchObject({ total: 40, truncated: 40 });
+    expect(model.omitted).toBeGreaterThan(0);
+    expect(model.items[0].message).toContain("[truncated:");
+    expect((result.details as any).pending).toHaveLength(40);
+    expect((result.details as any).pending[0].message).toHaveLength(64 * 1024);
   });
 
   test("releases the ask waiter when sending throws", async () => {

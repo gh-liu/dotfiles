@@ -5,6 +5,11 @@ import type { ActiveSession } from "../contracts.ts";
 import { MAX_RESULTS, sessionsParameters } from "./contracts.ts";
 import type { SessionsInput } from "./contracts.ts";
 import { buildHistoryResults, formatActiveSession } from "./search.ts";
+import { compactJsonProjection, truncateProjectionField } from "../output.ts";
+
+function modelString(value: string | undefined): string | undefined {
+  return value === undefined ? undefined : truncateProjectionField(value, 1_000).value;
+}
 
 /**
  * Injected IPC dependency for the "list" action, so this capability never
@@ -29,8 +34,11 @@ export function registerSessionsTool(pi: ExtensionAPI, listActiveSessions: Activ
             .filter((session) => !cwd || session.cwd === cwd || session.cwd.startsWith(`${cwd}/`))
             .slice(0, limit)
             .map((session) => formatActiveSession(session, active.currentId));
+          const modelPeers = peers.map(({ sessionId, name, cwd, status, self }) => ({
+            sessionId: modelString(sessionId), name: modelString(name), cwd: modelString(cwd), status, self,
+          }));
           return {
-            content: [{ type: "text" as const, text: peers.length ? JSON.stringify(peers, null, 2) : "No active sessions found." }],
+            content: [{ type: "text" as const, text: peers.length ? compactJsonProjection(modelPeers) : "No active sessions found." }],
             details: { results: peers },
           };
         } catch (error) {
@@ -46,12 +54,22 @@ export function registerSessionsTool(pi: ExtensionAPI, listActiveSessions: Activ
 
       const sessions = await SessionManager.listAll();
       const results = buildHistoryResults(sessions as never, query, cwd, limit);
+      const modelResults = results.map(({ sessionId, name, path, cwd: resultCwd, modified, snippet }) => ({
+        sessionId: modelString(sessionId),
+        name: modelString(name),
+        path: modelString(path),
+        cwd: modelString(resultCwd),
+        modified,
+        snippet,
+      }));
 
       return {
         content: [
           {
             type: "text" as const,
-            text: results.length ? JSON.stringify(results, null, 2) : `No sessions matched ${JSON.stringify(query)}.`,
+            text: results.length
+              ? compactJsonProjection(modelResults)
+              : truncateProjectionField(`No sessions matched ${JSON.stringify(query)}.`, 16_000).value,
           },
         ],
         details: { query, results },

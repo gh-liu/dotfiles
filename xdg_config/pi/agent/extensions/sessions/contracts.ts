@@ -1,3 +1,5 @@
+import { truncateModelText } from "./output.ts";
+
 /**
  * Cross-capability shared contracts only.
  * Capability-specific input types / parameter schemas live in history/contracts.ts
@@ -36,7 +38,7 @@ export const ErrorCodes = {
 
 export function errorResult(message: string, code: string) {
   return {
-    content: [{ type: "text" as const, text: message }],
+    content: [{ type: "text" as const, text: truncateModelText(message) }],
     details: { error: true, code } as ToolDetails,
   };
 }
