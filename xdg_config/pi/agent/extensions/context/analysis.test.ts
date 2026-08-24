@@ -6,6 +6,7 @@ import {
   basename,
   classifyActiveTools,
   estimateTokens,
+  getBarSegments,
   getCompactionReserveTokens,
   safeStringify,
   scaleTokenGroups,
@@ -15,6 +16,12 @@ describe("context analysis", () => {
   test("uses Pi's default compaction reserve and clamps tiny windows", () => {
     expect(getCompactionReserveTokens(200_000)).toBe(16_384);
     expect(getCompactionReserveTokens(8_000)).toBe(8_000);
+  });
+
+  test("keeps low usage visible and bar segments within the available width", () => {
+    expect(getBarSegments(2_000, 1_000_000, 16_384, 60)).toEqual({ used: 1, free: 58, reserve: 1 });
+    expect(getBarSegments(50_000, 100_000, 16_384, 20)).toEqual({ used: 10, free: 7, reserve: 3 });
+    expect(getBarSegments(120_000, 100_000, 16_384, 20)).toEqual({ used: 20, free: 0, reserve: 0 });
   });
 
   test("classifies only active tools without trusting extension names over builtin ownership", () => {

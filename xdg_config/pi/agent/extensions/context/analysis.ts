@@ -62,12 +62,17 @@ export function getCompactionReserveTokens(contextWindow: number): number {
   return Math.min(DEFAULT_COMPACTION_RESERVE_TOKENS, Math.max(0, contextWindow));
 }
 
-export function getGridDimensions(contextWindow: number, renderWidth?: number) {
-  const isLarge = contextWindow >= 500_000;
-  let w = isLarge ? 20 : 10;
-  const h = 10;
-  if (renderWidth != null && renderWidth < 80) w = Math.max(5, Math.floor(w / 2));
-  return { w, h, total: w * h };
+export function getBarSegments(usedTokens: number, contextWindow: number, reserveTokens: number, width: number) {
+  if (width <= 0 || contextWindow <= 0) return { used: 0, free: 0, reserve: 0 };
+  const used = Math.min(
+    width,
+    usedTokens > 0 ? Math.max(1, Math.round((Math.min(usedTokens, contextWindow) / contextWindow) * width)) : 0,
+  );
+  const reserveTarget = reserveTokens > 0
+    ? Math.max(1, Math.round((Math.min(reserveTokens, contextWindow) / contextWindow) * width))
+    : 0;
+  const reserve = Math.min(reserveTarget, width - used);
+  return { used, free: width - used - reserve, reserve };
 }
 
 export function basename(path: string): string {
