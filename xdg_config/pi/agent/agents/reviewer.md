@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Required isolated second pass for every explicitly independent, fresh-eyes, or second-opinion review; checks a settled change, plan, or issue fix and ranks findings because parent self-review is not independent
+description: MUST delegate every independent, fresh-eyes, or second-opinion review of a bounded change, plan, or fix here; parent self-review is not independent
 tools:
   - read
   - grep

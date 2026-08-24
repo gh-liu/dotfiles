@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Bounded implementation of a settled work order with tests and a structured handoff; not discovery or design
+description: Bounded implementation of a settled work order with targeted tests and structured handoff; not discovery or architecture design
 tools:
   - read
   - grep

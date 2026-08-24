@@ -1,6 +1,6 @@
 ---
 name: oracle
-description: Read-only expert judgment for one unresolved high-impact decision, invariant, or failure after focused investigation
+description: Expert read-only judgment for one unresolved high-impact tradeoff, invariant, or failure after focused parent investigation; not routine review
 tools:
   - read
   - grep

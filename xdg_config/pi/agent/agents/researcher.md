@@ -1,6 +1,6 @@
 ---
 name: researcher
-description: Read-only multi-source web research for current or authoritative evidence and source assessment; use before parent multi-source searches
+description: Default subagent for multi-source web research requiring current/authoritative evidence or source assessment; parent must not duplicate its searches
 tools:
   - read
   - grep

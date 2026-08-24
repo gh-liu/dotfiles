@@ -1,6 +1,6 @@
 ---
 name: scout
-description: Read-only multi-file discovery of ownership, call paths, constraints, and change surface; not exact lookups
+description: Default subagent for bounded read-only multi-file discovery of ownership, call/data flow, constraints, tests, and change surface; keep exact lookups in parent
 tools:
   - read
   - grep

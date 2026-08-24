@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Fresh-context QA for exploratory testing, bug hunts, and agent-browser automation; use instead of parent browser driving
+description: Fresh-context exploratory QA, bug hunts, and agent-browser automation; use instead of parent-driven browser testing
 tools:
   - read
   - grep
