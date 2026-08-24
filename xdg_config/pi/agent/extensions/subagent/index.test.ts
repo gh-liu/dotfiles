@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { mkdtempSync, mkdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -594,6 +594,55 @@ describe("subagent tool", () => {
     });
   });
 
+  test("includes a bounded evolve log summary in list details when the log exists", async () => {
+    const env = setup();
+
+    const listed = await env.invoke({ action: "list" });
+
+    expect(listed.details).toMatchObject({
+      agents: [expect.objectContaining({ name: "scout" })],
+      evolveLog: {
+        iterations: expect.any(Number),
+        lastIteration: expect.stringContaining("Iteration"),
+        path: "xdg_config/pi/agent/extensions/subagent/EVOLVE_LOG.md",
+      },
+    });
+    const evolveLog = (listed.details as { evolveLog: { iterations: number; lastIteration: string } }).evolveLog;
+    expect(evolveLog.iterations).toBeGreaterThanOrEqual(9);
+    expect(evolveLog.lastIteration.length).toBeLessThanOrEqual(80);
+  });
+
+  test("treats malformed daemon heartbeat timestamps as inactive and counts iter headings loosely", async () => {
+    const env = setup();
+    const daemonLogPath = "/tmp/auto-evolve.log";
+    const previousLog = existsSync(daemonLogPath) ? readFileSync(daemonLogPath) : undefined;
+    vi.setSystemTime(new Date("2026-08-24T12:02:00.000Z"));
+    try {
+      writeFileSync(
+        daemonLogPath,
+        [
+          "[2026-08-24T12:00:00Z] === ITER 1 started",
+          "[2026-08-24T12:01:00Z]   ===   iter 2 skipped",
+          "daemon heartbeat without timestamp",
+        ].join("\n"),
+      );
+
+      const listed = await env.invoke({ action: "list" });
+
+      expect(listed.isError).not.toBe(true);
+      expect(listed.details).toMatchObject({
+        daemon: {
+          active: false,
+          lastHeartbeat: "daemon heartbeat without timestamp",
+          iterationsObserved: 2,
+        },
+      });
+    } finally {
+      if (previousLog) writeFileSync(daemonLogPath, previousLog);
+      else rmSync(daemonLogPath, { force: true });
+    }
+  });
+
   test("refreshes registry only on list and reports unknown agents without creating a controller", async () => {
     const env = setup();
     writeAgent(env.agents, "reviewer", "Review code");
@@ -913,7 +962,7 @@ describe("subagent tool", () => {
       { expanded: false, outputPad: 0 },
       { fg: (_color: string, text: string) => text, bold: (text: string) => text, bg: (_color: string, text: string) => text } as never,
     )!.render(240).map((line) => line.trimEnd()).join("\n");
-    expect(collapsed).toContain("✓ completed · scout (#1) · Inspect the subagent runtime lifecycle");
+    expect(collapsed).toMatch(/✓ completed · scout \(#1\) · \d+s · Inspect the subagent runtime lifecycle/);
     expect(collapsed).not.toContain("Outcome:");
     expect(collapsed).not.toContain("Scope:");
 
@@ -1527,7 +1576,21 @@ describe("subagent tool", () => {
       const identity = started.details as { runId: string; operationId: string };
       await env.invoke({ action: "wait", id: identity.runId, operationId: identity.operationId });
     }
-    expect((await env.invoke({ action: "start", agent: "scout", task: "Fourth" })).isError).toBe(true);
+    const capacityError = await env.invoke({ action: "start", agent: "scout", task: "Fourth" });
+    expect(capacityError).toMatchObject({
+      isError: true,
+      details: {
+        error: expect.stringContaining("maxConcurrentRuns is 3"),
+        maxConcurrentRuns: 3,
+        occupiedSlots: 3,
+        availableSlots: 0,
+        runtimes: [
+          { index: 1, agent: "scout", status: "idle" },
+          { index: 2, agent: "scout", status: "idle" },
+          { index: 3, agent: "scout", status: "idle" },
+        ],
+      },
+    });
     await env.invoke({ action: "close", id: (starts[0].details as { runId: string }).runId });
     const fourth = await env.invoke({ action: "start", agent: "scout", task: "Fourth" });
     expect(fourth.isError).not.toBe(true);

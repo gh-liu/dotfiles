@@ -145,6 +145,8 @@ export interface RuntimeHub {
   readonly maxConcurrentRuns: number;
   get(runtimeId: string): RuntimeRecord | undefined;
   capacityAvailable(): boolean;
+  occupiedSlots(): number;
+  availableSlots(): number;
   isShuttingDown(): boolean;
   createRuntime(input: CreateRuntimeInput): RuntimeRecord;
   snapshot(runtime: RuntimeRecord): ReturnType<typeof runtimeSnapshot>;
@@ -380,12 +382,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       (result) => {
         operation.result = result;
         operation.state = result.status;
-        deps.live.settle(runtime.runId, result.status ?? "completed");
+        deps.live.settle(runtime.runId, result.status ?? "completed", Date.now() - (operation.startedAt ?? Date.now()));
       },
       (error) => {
         operation.error = error instanceof Error ? error.message : String(error);
         operation.state = "failed";
-        deps.live.settle(runtime.runId, "failed");
+        deps.live.settle(runtime.runId, "failed", Date.now() - (operation.startedAt ?? Date.now()));
         if (runtime.state !== "closing" && runtime.state !== "closed") {
           transition(runtime, "crashed");
           void closeRuntime(runtime).catch(() => {});
@@ -411,6 +413,8 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     maxConcurrentRuns,
     get: (runtimeId) => runtimes.get(runtimeId),
     capacityAvailable: () => occupiedSlots < maxConcurrentRuns,
+    occupiedSlots: () => occupiedSlots,
+    availableSlots: () => Math.max(0, maxConcurrentRuns - occupiedSlots),
     isShuttingDown: () => shuttingDown,
     createRuntime(input) {
       const controllerReady = deferred<SubagentController>();

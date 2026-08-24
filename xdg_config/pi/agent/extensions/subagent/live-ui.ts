@@ -43,6 +43,8 @@ interface RuntimeDisplay {
   phase: "running" | "idle";
   /** Latest progress summary (thinking/toolcall/streaming wording from the executor). */
   activity?: string;
+  outcome?: "completed" | "failed" | "interrupted";
+  elapsedMs?: number;
 }
 
 /** Plain elapsed seconds count with unit suffix: `0s`, `42s`, `221s`. */
@@ -67,7 +69,12 @@ function renderLines(
     const badge = runtime.mode === "background" ? " ⟨bg⟩" : "";
     if (runtime.phase === "idle") {
       // Background runtime settled but still open: dim reminder that it holds a slot.
-      lines.push(truncateToWidth(theme.fg("dim", `○ ${ref} ${runtime.agent}${badge} · idle · holds slot`), width));
+      // Self-evolution: surface outcome + elapsed so the idle line is actionable, not just a slot reminder.
+      const marker = runtime.outcome === "completed" ? "✓" : runtime.outcome === "failed" ? "✗" : runtime.outcome === "interrupted" ? "■" : "";
+      const markerColor = runtime.outcome === "completed" ? "success" : runtime.outcome === "failed" ? "error" : runtime.outcome === "interrupted" ? "warning" : undefined;
+      const elapsed = typeof runtime.elapsedMs === "number" ? ` · ${formatDuration(runtime.elapsedMs)}` : "";
+      const outcomePart = marker && markerColor ? ` ${theme.fg(markerColor, marker)}` : "";
+      lines.push(truncateToWidth(`${theme.fg("dim", `○ ${ref} ${runtime.agent}${badge} · idle${elapsed}`)}${outcomePart}${theme.fg("dim", " · holds slot")}`, width));
       continue;
     }
     const elapsedMs = Math.max(0, now - runtime.startedAt);
@@ -192,14 +199,13 @@ export function createLiveUi(): LiveUiController {
       runtime.activity = summary;
       scheduleDraw();
     },
-    settle(runId, _outcome, _elapsedMs) {
-      // Outcome and elapsed are accepted for future polish. Foreground runtimes
-      // leave the panel immediately; background ones stay visible as a dim idle
-      // line because they keep holding a capacity slot until closed.
+    settle(runId, outcome, elapsedMs) {
       const runtime = runtimes.get(runId);
       if (disposed || !runtime) return;
       if (runtime.mode === "background") {
         runtime.phase = "idle";
+        runtime.outcome = outcome;
+        runtime.elapsedMs = elapsedMs;
         scheduleDraw();
         return;
       }

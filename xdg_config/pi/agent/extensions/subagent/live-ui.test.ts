@@ -30,12 +30,12 @@ function lastWidgetContent(ui: ReturnType<typeof createMockUi>): WidgetContent {
   return calls.length === 0 ? undefined : calls[calls.length - 1].content;
 }
 
-function renderWidget(ui: ReturnType<typeof createMockUi>, width = 120): string[] {
+function renderWidget(ui: ReturnType<typeof createMockUi>, width = 120, theme: typeof stubTheme = stubTheme): string[] {
   const content = lastWidgetContent(ui);
   if (typeof content !== "function") return [];
   const component = (content as (tui: unknown, theme: unknown) => { render(w: number): string[] })(
     undefined,
-    stubTheme,
+    theme,
   );
   return component.render(width);
 }
@@ -262,6 +262,37 @@ describe("live ui controller", () => {
     vi.advanceTimersByTime(250);
     lines = renderWidget(ui);
     expect(lines.find((line) => line.includes("worker"))).not.toContain("⟨bg⟩");
+  });
+
+  test("colors idle outcome markers and preserves elapsed fallback", () => {
+    const outcomes = [
+      ["completed", "success", "✓"],
+      ["failed", "error", "✗"],
+      ["interrupted", "warning", "■"],
+    ] as const;
+
+    for (const [outcome, color, marker] of outcomes) {
+      const ui = createMockUi();
+      const live = createLiveUi();
+      const colorTheme = {
+        fg: (name: string, text: string) => name === "dim" ? text : `<${name}>${text}</${name}>`,
+        bold: (text: string) => text,
+      };
+      live.attach(ui);
+      live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 1 });
+      live.settle("r1", outcome, 4_200);
+      vi.advanceTimersByTime(250);
+
+      expect(renderWidget(ui, 120, colorTheme)[0]).toBe(`○ #1 scout ⟨bg⟩ · idle · 4s <${color}>${marker}</${color}> · holds slot`);
+    }
+
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 1 });
+    live.settle("r1", "completed");
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toBe("○ #1 scout ⟨bg⟩ · idle ✓ · holds slot");
   });
 
   test("closing an idle background runtime removes its line immediately", () => {

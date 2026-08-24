@@ -142,7 +142,7 @@ describe("subagent render state matrix", () => {
     const expanded = rendered(renderSubagentCompletion(
       { content: "", details: details as never }, { expanded: true, outputPad: 0 }, theme,
     ));
-    expect(collapsed).toContain(`${status} · scout (#2) · Inspect lifecycle`);
+    expect(collapsed).toContain(`${status} · scout (#2) · 4s · Inspect lifecycle`);
     expect(expanded).toContain("task: Inspect lifecycle");
     expect(expanded).toContain("Evidence\n  Validation");
     expect(expanded).toContain("runtime idle · 4s");

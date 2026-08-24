@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -44,6 +45,75 @@ const deadline = () => Type.Optional(Type.Integer({
 
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
 const AUTH_ENV_NAME = /^[A-Z_][A-Z0-9_]*$/;
+const EVOLVE_LOG_RELATIVE_PATH = "xdg_config/pi/agent/extensions/subagent/EVOLVE_LOG.md";
+const AUTO_EVOLVE_DAEMON_LOG_PATH = "/tmp/auto-evolve.log";
+const AUTO_EVOLVE_DAEMON_ACTIVE_MS = 5 * 60 * 1_000;
+
+function readEvolveLogHead(maxLines = 200): string {
+  const fd = openSync(new URL("./EVOLVE_LOG.md", import.meta.url), "r");
+  try {
+    const chunks: string[] = [];
+    const buffer = Buffer.alloc(8_192);
+    let lines = 0;
+    while (lines <= maxLines) {
+      const bytesRead = readSync(fd, buffer, 0, buffer.length, null);
+      if (bytesRead === 0) break;
+      const chunk = buffer.subarray(0, bytesRead).toString("utf8");
+      chunks.push(chunk);
+      lines += chunk.match(/\n/g)?.length ?? 0;
+    }
+    return chunks.join("").split(/\r?\n/).slice(0, maxLines).join("\n");
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function summarizeEvolveLog(): { iterations: number; lastIteration: string; path: string } | undefined {
+  try {
+    const logHead = readEvolveLogHead();
+    const headings = [...logHead.matchAll(/^## .+$/gm)].map((match) => match[0].replace(/^##\s+/, ""));
+    const lastHeading = headings.at(-1);
+    if (!lastHeading) return undefined;
+    return {
+      iterations: headings.length,
+      lastIteration: boundText(lastHeading.replace(/\s+/g, " ").trim(), { maxCharacters: 80, maxLines: 1 }),
+      path: EVOLVE_LOG_RELATIVE_PATH,
+    };
+  } catch {
+    return undefined;
+  }
+}
+
+function readTextTail(path: string, maxBytes = 4_096, maxLines = 50): string {
+  const fd = openSync(path, "r");
+  try {
+    const size = fstatSync(fd).size;
+    if (size === 0) return "";
+    const bytesToRead = Math.min(size, maxBytes);
+    const buffer = Buffer.alloc(bytesToRead);
+    readSync(fd, buffer, 0, bytesToRead, size - bytesToRead);
+    return buffer.toString("utf8").split(/\r?\n/).slice(-maxLines).join("\n");
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function summarizeAutoEvolveDaemon(): { active: boolean; lastHeartbeat: string; iterationsObserved: number } | undefined {
+  try {
+    const logTail = readTextTail(AUTO_EVOLVE_DAEMON_LOG_PATH);
+    const lines = logTail.split(/\r?\n/).filter((line) => line.length > 0);
+    const lastLine = lines.at(-1) ?? "";
+    const timestampMatch = lastLine.match(/\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2}))\]/);
+    const lastTimestamp = timestampMatch ? Date.parse(timestampMatch[1]) : NaN;
+    return {
+      active: Number.isFinite(lastTimestamp) && Date.now() - lastTimestamp <= AUTO_EVOLVE_DAEMON_ACTIVE_MS,
+      lastHeartbeat: boundText(lastLine, { maxCharacters: 80, maxLines: 1 }),
+      iterationsObserved: (logTail.match(/===\s*iter\b/gi) ?? []).length,
+    };
+  } catch {
+    return undefined;
+  }
+}
 
 export function validateAuthEnvAllowlist(names: readonly string[] | undefined): string[] | undefined {
   if (names === undefined) return undefined;
@@ -336,6 +406,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (params.action === "list") {
         registry = discoverEffectiveAgents();
         const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
+        const evolveLog = summarizeEvolveLog();
+        const daemon = summarizeAutoEvolveDaemon();
         return {
           content: [{ type: "text" as const, text: catalog }],
           details: {
@@ -349,6 +421,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               filePath,
               error: boundText(error, { maxCharacters: 500, maxLines: 8 }),
             })),
+            ...(evolveLog ? { evolveLog } : {}),
+            ...(daemon ? { daemon } : {}),
           },
         };
       }
@@ -497,7 +571,17 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         };
       }
       if (!hub.capacityAvailable()) {
-        return response({ error: "Subagent capacity unavailable: maxConcurrentRuns is 3." }, true);
+        return response({
+          error: "Subagent capacity unavailable: maxConcurrentRuns is 3.",
+          maxConcurrentRuns: hub.maxConcurrentRuns,
+          occupiedSlots: hub.occupiedSlots(),
+          availableSlots: hub.availableSlots(),
+          runtimes: hub.listRuntimes().map((runtime) => ({
+            index: runtime.index,
+            agent: runtime.agent.name,
+            status: runtime.state,
+          })),
+        }, true);
       }
 
       const allowedRoot = findAllowedRoot(ctx.cwd);

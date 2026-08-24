@@ -116,6 +116,7 @@ function completionEntryText(
   // Short agent name only: the full label (model/thinking) already sits on the tool-call title.
   const agentLabel = `${details.agent}${typeof details.index === "number" ? ` (#${details.index})` : ""}`;
   if (details.agent) text += theme.fg("muted", ` · ${agentLabel}`);
+  if (!expanded && typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
   if (!expanded && completionTitle) text += theme.fg("muted", ` · ${completionTitle}`);
   if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
   if (expanded) {
