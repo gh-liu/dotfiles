@@ -1,7 +1,12 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-21 — transport swapped from `pi --mode rpc` subprocess to in-process SDK sessions (`sdk-executor.ts` via `createAgentSession`); `rpc-executor.ts` retired. Same-day audit removed residual RPC-subprocess descriptions (executor rationale, component diagram, flows, cleanup, retention limits) and documented timing plumbing. Earlier: restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`
+- Updated: 2026-08-24 — added catalog-driven routing for standalone exploratory
+  QA/browser testing: a `tester` agent definition (`agents/tester.md`, embedded
+  `agent-browser` CLI knowledge because children run with no skills) plus
+  parent-guidance bullets delegating such work instead of driving the parent
+  browser; "routine validation direct" now means rerunning existing checks,
+  not interactive app exploration. Earlier (2026-08-21): transport swapped from `pi --mode rpc` subprocess to in-process SDK sessions (`sdk-executor.ts` via `createAgentSession`); `rpc-executor.ts` retired. Same-day audit removed residual RPC-subprocess descriptions (executor rationale, component diagram, flows, cleanup, retention limits) and documented timing plumbing. Earlier: restored `settings.json` `subagents[agent]` overrides for effective `model`/`thinking`/`description`
 
 ## 1. Background
 
@@ -121,6 +126,10 @@ The parent classifies work before it starts equivalent reads or searches:
 - External research that requires multiple searches or sources, freshness
   checks, or source assessment is delegated to a matching registered read-only
   role before the parent starts its own web-research workflow.
+- Standalone exploratory testing, dogfooding, QA, bug hunts, and browser
+  automation of a running application are delegated to a matching registered
+  tester role before the parent drives any browser itself; children cannot load
+  skills, so only such a role carries embedded agent-browser knowledge.
 - Bounded multi-file discovery, one specific high-impact unresolved decision,
   and separately owned implementation are strong candidates when a matching
   registered role materially improves isolation, quality, or parallelism.
