@@ -75,6 +75,17 @@ export function getBarSegments(usedTokens: number, contextWindow: number, reserv
   return { used, free: width - used - reserve, reserve };
 }
 
+export function getScrollMetrics(contentHeight: number, viewportHeight: number, requestedOffset: number) {
+  const content = Math.max(0, Math.floor(contentHeight));
+  const viewport = Math.max(1, Math.floor(viewportHeight));
+  const maxOffset = Math.max(0, content - viewport);
+  const offset = Math.max(0, Math.min(maxOffset, Math.floor(requestedOffset)));
+  const thumbSize = content > viewport ? Math.max(1, Math.floor(viewport * viewport / content)) : viewport;
+  const thumbTravel = Math.max(0, viewport - thumbSize);
+  const thumbStart = maxOffset > 0 ? Math.round(offset / maxOffset * thumbTravel) : 0;
+  return { offset, maxOffset, thumbSize, thumbStart };
+}
+
 export function basename(path: string): string {
   const parts = path.split(/[\\/]/u);
   return parts.at(-1) || path;

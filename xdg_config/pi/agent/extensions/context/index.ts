@@ -2,7 +2,7 @@ import {
   type ExtensionAPI,
   sessionEntryToContextMessages,
 } from "@earendil-works/pi-coding-agent";
-import { Box, type Component, Container, Text, Spacer } from "@earendil-works/pi-tui";
+import { Box, type Component, Container, matchesKey, Text, Spacer } from "@earendil-works/pi-tui";
 import {
   analyzeMessages,
   attributeSystemPrompt,
@@ -12,6 +12,7 @@ import {
   estimateValueTokens,
   getBarSegments,
   getCompactionReserveTokens,
+  getScrollMetrics,
   scaleTokenGroups,
 } from "./analysis.js";
 import { formatTokens } from "./utils.js";
@@ -184,6 +185,9 @@ export default function (pi: ExtensionAPI) {
       await ctx.ui.custom((tui, theme, kb, done) => {
         let cachedWidth = 0;
         let cachedPanel: Component | null = null;
+        let scrollOffset = 0;
+        let viewportHeight = 1;
+        let maxScrollOffset = 0;
 
         const makeContainer = (w: number) => {
           const contentWidth = Math.max(28, w - 6);
@@ -264,16 +268,37 @@ export default function (pi: ExtensionAPI) {
 
           c.addChild(new Spacer(1));
           c.addChild(new Text(`  ${theme.fg("dim", w < 55 ? "* Reserve estimate: Pi default 16k" : "* Reserve estimate uses Pi default 16k; custom value unavailable")}`, 1, 0));
-          c.addChild(new Text(`  ${theme.fg("dim", showAll ? `Top ${MAX_DETAIL_ITEMS} per category · any key closes` : w < 55 ? "/context all · any key closes" : "/context all for details · any key closes")}`, 1, 0));
+          c.addChild(new Text(`  ${theme.fg("dim", showAll ? "↑↓/PgUp/PgDn scroll · Esc/q closes" : w < 55 ? "/context all · any key closes" : "/context all for details · any key closes")}`, 1, 0));
           const body = new Box(1, 0, (line) => theme.bg("customMessageBg", line));
           body.addChild(c);
           return {
             render: (width: number) => {
               const innerWidth = Math.max(1, width - 2);
               const border = (text: string) => theme.fg("borderAccent", text);
+              const maxBodyHeight = showAll
+                ? Math.max(3, Math.floor(tui.terminal.rows * 0.9) - 2)
+                : Number.POSITIVE_INFINITY;
+              let bodyLines = body.render(innerWidth);
+              const needsScroll = bodyLines.length > maxBodyHeight;
+              if (needsScroll && innerWidth > 1) bodyLines = body.render(innerWidth - 1);
+              viewportHeight = Math.min(bodyLines.length, maxBodyHeight);
+              const scroll = getScrollMetrics(bodyLines.length, viewportHeight, scrollOffset);
+              scrollOffset = scroll.offset;
+              maxScrollOffset = scroll.maxOffset;
+              const visibleLines = bodyLines.slice(scroll.offset, scroll.offset + viewportHeight);
+              const renderedLines = needsScroll
+                ? visibleLines.map((line, index) => {
+                    const inThumb = index >= scroll.thumbStart && index < scroll.thumbStart + scroll.thumbSize;
+                    const marker = theme.bg(
+                      "customMessageBg",
+                      theme.fg(inThumb ? "accent" : "borderMuted", inThumb ? "█" : "░"),
+                    );
+                    return `${line}${marker}`;
+                  })
+                : visibleLines;
               return [
                 border(`┌${"─".repeat(innerWidth)}┐`),
-                ...body.render(innerWidth).map((line) => `${border("│")}${line}${border("│")}`),
+                ...renderedLines.map((line) => `${border("│")}${line}${border("│")}`),
                 border(`└${"─".repeat(innerWidth)}┘`),
               ];
             },
@@ -292,11 +317,36 @@ export default function (pi: ExtensionAPI) {
           invalidate: () => {
             cachedPanel?.invalidate();
           },
-          handleInput: (_data: string) => done(undefined),
+          handleInput: (data: string) => {
+            if (!showAll) {
+              done(undefined);
+              return;
+            }
+            if (kb.matches(data, "tui.select.up") || data === "k") {
+              scrollOffset = Math.max(0, scrollOffset - 1);
+            } else if (kb.matches(data, "tui.select.down") || data === "j") {
+              scrollOffset = Math.min(maxScrollOffset, scrollOffset + 1);
+            } else if (kb.matches(data, "tui.select.pageUp")) {
+              scrollOffset = Math.max(0, scrollOffset - Math.max(1, viewportHeight - 2));
+            } else if (kb.matches(data, "tui.select.pageDown")) {
+              scrollOffset = Math.min(maxScrollOffset, scrollOffset + Math.max(1, viewportHeight - 2));
+            } else if (matchesKey(data, "home")) {
+              scrollOffset = 0;
+            } else if (matchesKey(data, "end")) {
+              scrollOffset = maxScrollOffset;
+            } else if (kb.matches(data, "tui.select.cancel") || data === "q" || data === "\r" || data === "\n") {
+              done(undefined);
+              return;
+            } else {
+              return;
+            }
+            cachedPanel?.invalidate?.();
+            tui.requestRender();
+          },
         };
       }, {
         overlay: true,
-        overlayOptions: { anchor: "center", margin: 1, width: 84 },
+        overlayOptions: { anchor: "center", margin: 1, maxHeight: "90%", width: 84 },
       });
     },
   });

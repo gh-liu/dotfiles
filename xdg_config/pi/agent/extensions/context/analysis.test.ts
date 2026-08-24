@@ -8,6 +8,7 @@ import {
   estimateTokens,
   getBarSegments,
   getCompactionReserveTokens,
+  getScrollMetrics,
   safeStringify,
   scaleTokenGroups,
 } from "./analysis.ts";
@@ -22,6 +23,12 @@ describe("context analysis", () => {
     expect(getBarSegments(2_000, 1_000_000, 16_384, 60)).toEqual({ used: 1, free: 58, reserve: 1 });
     expect(getBarSegments(50_000, 100_000, 16_384, 20)).toEqual({ used: 10, free: 7, reserve: 3 });
     expect(getBarSegments(120_000, 100_000, 16_384, 20)).toEqual({ used: 20, free: 0, reserve: 0 });
+  });
+
+  test("clamps scrolling and positions a proportional scrollbar thumb", () => {
+    expect(getScrollMetrics(10, 20, 5)).toEqual({ offset: 0, maxOffset: 0, thumbSize: 20, thumbStart: 0 });
+    expect(getScrollMetrics(100, 20, 40)).toEqual({ offset: 40, maxOffset: 80, thumbSize: 4, thumbStart: 8 });
+    expect(getScrollMetrics(100, 20, 999)).toEqual({ offset: 80, maxOffset: 80, thumbSize: 4, thumbStart: 16 });
   });
 
   test("classifies only active tools without trusting extension names over builtin ownership", () => {
