@@ -13,6 +13,7 @@ import {
   getBarSegments,
   getCompactionReserveTokens,
   getScrollMetrics,
+  parseWheelDirection,
   scaleTokenGroups,
 } from "./analysis.js";
 import { formatTokens } from "./utils.js";
@@ -183,6 +184,8 @@ export default function (pi: ExtensionAPI) {
         .sort((left, right) => right.value - left.value);
 
       await ctx.ui.custom((tui, theme, kb, done) => {
+        const ownsMouseTracking = tui.mode === "regular";
+        if (ownsMouseTracking) tui.terminal.write("\x1b[?1000h\x1b[?1006h");
         let cachedWidth = 0;
         let cachedPanel: Component | null = null;
         let scrollOffset = 0;
@@ -268,16 +271,16 @@ export default function (pi: ExtensionAPI) {
 
           c.addChild(new Spacer(1));
           c.addChild(new Text(`  ${theme.fg("dim", w < 55 ? "* Reserve estimate: Pi default 16k" : "* Reserve estimate uses Pi default 16k; custom value unavailable")}`, 1, 0));
-          c.addChild(new Text(`  ${theme.fg("dim", showAll ? "↑↓/PgUp/PgDn scroll · Esc/q closes" : w < 55 ? "/context all · any key closes" : "/context all for details · any key closes")}`, 1, 0));
+          c.addChild(new Text(`  ${theme.fg("dim", showAll
+            ? "Wheel/↑↓ scroll · PgUp/PgDn · Esc/q closes"
+            : w < 55 ? "Wheel/↑↓ · Esc/q closes · /context all" : "Wheel/↑↓ scroll · Esc/q closes · /context all for details")}`, 1, 0));
           const body = new Box(1, 0, (line) => theme.bg("customMessageBg", line));
           body.addChild(c);
           return {
             render: (width: number) => {
               const innerWidth = Math.max(1, width - 2);
               const border = (text: string) => theme.fg("borderAccent", text);
-              const maxBodyHeight = showAll
-                ? Math.max(3, Math.floor(tui.terminal.rows * 0.9) - 2)
-                : Number.POSITIVE_INFINITY;
+              const maxBodyHeight = Math.max(3, Math.floor(tui.terminal.rows * 0.9) - 2);
               let bodyLines = body.render(innerWidth);
               const needsScroll = bodyLines.length > maxBodyHeight;
               if (needsScroll && innerWidth > 1) bodyLines = body.render(innerWidth - 1);
@@ -318,11 +321,10 @@ export default function (pi: ExtensionAPI) {
             cachedPanel?.invalidate();
           },
           handleInput: (data: string) => {
-            if (!showAll) {
-              done(undefined);
-              return;
-            }
-            if (kb.matches(data, "tui.select.up") || data === "k") {
+            const wheelDirection = parseWheelDirection(data);
+            if (wheelDirection !== undefined) {
+              scrollOffset = Math.max(0, Math.min(maxScrollOffset, scrollOffset + wheelDirection * 3));
+            } else if (kb.matches(data, "tui.select.up") || data === "k") {
               scrollOffset = Math.max(0, scrollOffset - 1);
             } else if (kb.matches(data, "tui.select.down") || data === "j") {
               scrollOffset = Math.min(maxScrollOffset, scrollOffset + 1);
@@ -337,11 +339,17 @@ export default function (pi: ExtensionAPI) {
             } else if (kb.matches(data, "tui.select.cancel") || data === "q" || data === "\r" || data === "\n") {
               done(undefined);
               return;
+            } else if (!showAll) {
+              done(undefined);
+              return;
             } else {
               return;
             }
             cachedPanel?.invalidate?.();
             tui.requestRender();
+          },
+          dispose: () => {
+            if (ownsMouseTracking) tui.terminal.write("\x1b[?1006l\x1b[?1000l");
           },
         };
       }, {

@@ -9,6 +9,7 @@ import {
   getBarSegments,
   getCompactionReserveTokens,
   getScrollMetrics,
+  parseWheelDirection,
   safeStringify,
   scaleTokenGroups,
 } from "./analysis.ts";
@@ -29,6 +30,13 @@ describe("context analysis", () => {
     expect(getScrollMetrics(10, 20, 5)).toEqual({ offset: 0, maxOffset: 0, thumbSize: 20, thumbStart: 0 });
     expect(getScrollMetrics(100, 20, 40)).toEqual({ offset: 40, maxOffset: 80, thumbSize: 4, thumbStart: 8 });
     expect(getScrollMetrics(100, 20, 999)).toEqual({ offset: 80, maxOffset: 80, thumbSize: 4, thumbStart: 16 });
+  });
+
+  test("parses SGR and legacy mouse wheel events", () => {
+    expect(parseWheelDirection("\x1b[<64;20;5M")).toBe(-1);
+    expect(parseWheelDirection("\x1b[<65;20;5M")).toBe(1);
+    expect(parseWheelDirection(`\x1b[M${String.fromCharCode(96, 40, 36)}`)).toBe(-1);
+    expect(parseWheelDirection("\x1b[<0;20;5M")).toBeUndefined();
   });
 
   test("classifies only active tools without trusting extension names over builtin ownership", () => {

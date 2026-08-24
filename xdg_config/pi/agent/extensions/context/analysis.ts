@@ -86,6 +86,23 @@ export function getScrollMetrics(contentHeight: number, viewportHeight: number, 
   return { offset, maxOffset, thumbSize, thumbStart };
 }
 
+export function parseWheelDirection(data: string): -1 | 1 | undefined {
+  const sgr = /^\x1b\[<(\d+);\d+;\d+[Mm]$/u.exec(data);
+  if (sgr) {
+    const button = Number.parseInt(sgr[1], 10);
+    if ((button & 64) === 0) return undefined;
+    const direction = button & 3;
+    return direction === 0 ? -1 : direction === 1 ? 1 : undefined;
+  }
+  if (data.length === 6 && data.startsWith("\x1b[M")) {
+    const button = data.charCodeAt(3) - 32;
+    if ((button & 64) === 0) return undefined;
+    const direction = button & 3;
+    return direction === 0 ? -1 : direction === 1 ? 1 : undefined;
+  }
+  return undefined;
+}
+
 export function basename(path: string): string {
   const parts = path.split(/[\\/]/u);
   return parts.at(-1) || path;
