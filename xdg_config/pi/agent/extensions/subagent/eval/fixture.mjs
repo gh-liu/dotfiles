@@ -67,6 +67,36 @@ test("requires a user ID", () => {
 
 Do not change the public session shape or handler behavior.
 `,
+  "qa/server.js": `import http from "node:http";
+
+const page = \`<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8"><title>Lantern QA</title></head>
+  <body>
+    <main>
+      <h1>Lantern session preview</h1>
+      <label>User ID <input id="user" value="qa-user"></label>
+      <button id="create">Create session</button>
+      <output id="result" aria-live="polite"></output>
+    </main>
+    <script>
+      document.querySelector('#create').addEventListener('click', () => {
+        const user = document.querySelector('#user').value.trim();
+        document.querySelector('#result').textContent = user ? 'Session ready for ' + user : 'User ID is required';
+      });
+    </script>
+  </body>
+</html>\`;
+
+const server = http.createServer((_request, response) => {
+  response.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+  response.end(page);
+});
+server.listen(0, "127.0.0.1", () => {
+  const address = server.address();
+  console.log(\`http://127.0.0.1:\${address.port}\`);
+});
+`,
 };
 
 function command(command, args, cwd) {

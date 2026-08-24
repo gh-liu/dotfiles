@@ -1,5 +1,5 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readdirSync, readFileSync, realpathSync } from "node:fs";
+import { isAbsolute, join, relative } from "node:path";
 
 import { parseFrontmatter } from "@earendil-works/pi-coding-agent";
 import type { SubagentExecutionProfile } from "./protocol.ts";
@@ -163,6 +163,7 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
   const agents: AgentDefinition[] = [];
   const errors: AgentDefinitionError[] = [];
   const names = new Set<string>();
+  const canonicalDirectory = realpathSync(directory);
   const entries = readdirSync(directory, { withFileTypes: true })
     .filter((entry) => entry.name.endsWith(".md") && (entry.isFile() || entry.isSymbolicLink()))
     .sort((left, right) => left.name.localeCompare(right.name));
@@ -170,6 +171,11 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
   for (const entry of entries) {
     const filePath = join(directory, entry.name);
     try {
+      const canonicalFile = realpathSync(filePath);
+      const relativeFile = relative(canonicalDirectory, canonicalFile);
+      if (relativeFile === ".." || relativeFile.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) || isAbsolute(relativeFile)) {
+        throw new Error(`${filePath}: agent definition symlink resolves outside the agent directory`);
+      }
       const agent = loadAgentDefinition(filePath);
       if (names.has(agent.name)) {
         throw new Error(`${filePath}: duplicate agent name: ${agent.name}`);

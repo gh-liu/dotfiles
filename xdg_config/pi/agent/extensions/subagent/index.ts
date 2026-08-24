@@ -27,8 +27,10 @@ import {
 } from "./render.ts";
 import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.ts";
 
-interface SubagentExtensionOptions {
+export interface SubagentExtensionOptions {
   agentDirectory?: string;
+  /** Additional environment variables whose values must be redacted from child output. */
+  authEnvAllowlist?: readonly string[];
   controllerFactory?: SubagentControllerFactory;
   idFactory?: () => string;
   settingsPath?: string;
@@ -41,23 +43,34 @@ const deadline = () => Type.Optional(Type.Integer({
 }));
 
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
+const AUTH_ENV_NAME = /^[A-Z_][A-Z0-9_]*$/;
 
-export const WAKE_BINDINGS = [
-  { role: "reviewer", hint: "independent/fresh-eyes/second-opinion review" },
-  { role: "researcher", hint: "multi-source freshness/source-assessment research" },
-  { role: "tester", hint: "exploratory QA/browser testing" },
-  { role: "scout", hint: "multi-file discovery" },
-  { role: "oracle", hint: "high-impact unresolved decision" },
-  { role: "worker", hint: "batch/settled-spec implementation" },
-] as const;
+export function validateAuthEnvAllowlist(names: readonly string[] | undefined): string[] | undefined {
+  if (names === undefined) return undefined;
+  const validated = names.map((rawName) => {
+    const name = rawName.trim();
+    if (!AUTH_ENV_NAME.test(name)) {
+      throw new Error(`Invalid subagent auth environment variable name: ${JSON.stringify(rawName)}`);
+    }
+    return name;
+  });
+  return [...new Set(validated)];
+}
 
 export function buildWakeWordSnippet(registry: AgentDiscovery): string {
-  const present = new Set(registry.agents.map((agent) => agent.name));
-  const parts = WAKE_BINDINGS.filter((binding) => present.has(binding.role)).map(
-    (binding) => `${binding.hint}->${binding.role}`,
+  const contracts = registry.agents.map((agent) => {
+    const description = typeof agent.description === "string"
+      ? boundText(agent.description.replace(/\s+/g, " ").trim(), { maxCharacters: 240, maxLines: 1 })
+      : "registered delegated role";
+    return `${agent.name}=${description}`;
+  });
+  const routing = contracts.length > 0
+    ? `registered routing contracts: ${contracts.join("; ")}; `
+    : "no registered routing contracts; ";
+  return boundText(
+    `Classify by task boundary before equivalent parent read/search/browser: ${routing}choose by the startup catalog, not a fixed roster; keep single-file lookups, localized single-file edits, routine re-runs of existing checks, and single-source factual checks direct; call list only if the catalog may be stale, no suitable role matches, or diagnosis is needed`,
+    { maxCharacters: 4_000, maxLines: 1 },
   );
-  const routing = parts.length > 0 ? `${parts.join("; ")}; ` : "";
-  return `Classify by task boundary before equivalent parent read/search/browser: ${routing}keep single-file lookups, localized single-file edits, routine re-runs of existing checks, single-source factual checks direct; default to startup catalog, call list only if catalog may be stale, no suitable role, or diagnosis needed`;
 }
 
 /** One compact model-facing title: the first task line, never the work-order body. */
@@ -96,7 +109,10 @@ const SubagentParameters = Type.Object({
     Type.Literal("steer"),
   ], { description: "Required by send" })),
   message: Type.Optional(Type.String({ minLength: 1, description: "Required by send" })),
-  operationId: Type.Optional(Type.String({ minLength: 1, description: "Required by wait" })),
+  operationId: Type.Optional(Type.String({
+    minLength: 1,
+    description: "Required by wait when id targets one runtime; omit id and operationId to join all outstanding background operations",
+  })),
   expectedOperationId: Type.Optional(Type.String({
     minLength: 1,
     description: "Required by interrupt and steer; guards against targeting a later operation",
@@ -121,8 +137,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   let registry = discoverEffectiveAgents();
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
   const wakeSnippet = buildWakeWordSnippet(registry);
-  const credentialEnvNames = options.authEnvAllowlist
-    ?? process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST?.split(",").map((name) => name.trim()).filter(Boolean);
+  const authEnvSetting = process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST;
+  const configuredAuthEnvNames = options.authEnvAllowlist
+    ?? (authEnvSetting?.trim()
+      ? authEnvSetting.split(",")
+      : undefined);
+  const credentialEnvNames = validateAuthEnvAllowlist(configuredAuthEnvNames);
   const sdkConfig = {
     agentDir: getAgentDir(),
     sessionRoot: join(getAgentDir(), "subagent-sessions"),
@@ -270,10 +290,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Delegate bounded work to a registered child with fresh isolated context and only its declared tools. Each agent's description in the catalog below is its routing contract; the wake snippet lists current delegations for the registry. Classify by task boundary before doing equivalent parent reads, searches, or browser work. Keep single-file lookups, localized single-file edits, routine re-runs of existing checks (not exploratory app testing), and single-source factual checks direct. After a successful cited read-only handoff, synthesize without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. The parent owns task decomposition, conflict avoidance, result review, integration, and final verification. Use one-shot run by default; use start for background, then status/wait/send/close — an open runtime retains its slot while idle and settled background work announces via a follow-up card. status without id lists all runtimes; wait without operationId joins outstanding background work. Default to the startup catalog; call list only when the catalog may be stale, no suitable role matches, or diagnosis is needed.\n\n${startupCatalog}`,
+      `Delegate bounded work to a registered child with fresh context and only its declared tools. Context isolation is not a filesystem, process, network, or credential sandbox. Each agent's description in the catalog below is its routing contract; the wake snippet lists current delegations for the registry. Classify by task boundary before doing equivalent parent reads, searches, or browser work. Keep single-file lookups, localized single-file edits, routine re-runs of existing checks (not exploratory app testing), and single-source factual checks direct. After a successful cited read-only handoff, synthesize without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. The parent owns task decomposition, conflict avoidance, result review, integration, and final verification. Use one-shot run by default; use start for background, then status/wait/send/close — an open runtime retains its slot while idle and settled background work announces via a follow-up card. status without id lists all runtimes; wait without operationId joins outstanding background work. Default to the startup catalog; call list only when the catalog may be stale, no suitable role matches, or diagnosis is needed.\n\n${startupCatalog}`,
     promptSnippet: wakeSnippet,
     promptGuidelines: [
-      "Default to the startup catalog in the tool description — the wake snippet reflects the current registry, not a fixed roster; call list only when the catalog may be stale, no suitable role matches, or you need to diagnose discovery.",
+      "Default to the startup catalog in the tool description — the wake snippet is generated from every registered agent's name and description, not a fixed roster; call list only when the catalog may be stale, no suitable role matches, or you need to diagnose discovery.",
       "Classify by task boundary before doing equivalent parent reads, searches, or browser automation: keep single-file lookups (use read, not bash), localized single-file edits, routine re-runs of existing checks or test suites, and single-source factual checks direct; otherwise consider delegation when a matching registered role materially improves quality, parallelism, fresh-context independence, or parent-context isolation.",
       "Before calling subagent, decompose the bounded work instead of forwarding the raw user prompt. Every task must be self-contained (the child has fresh context) and carry these labels: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff — never silently omit one. Do not delegate unresolved decomposition or synthesis that the parent still owns.",
       "Choose a registered agent whose catalog description and declared capabilities match the bounded task; treat the discovered definition as the source of truth. Use action:run for bounded one-shots with a task-appropriate deadlineMs (1,000-3,600,000 ms); use action:start only for background or follow-up work, steer only the guarded active operation, and close persistent runtimes when finished. Child sessions never load skills; when one needs a skill's knowledge, put the skill file path (e.g. ~/.pi/agent/skills/<name>/SKILL.md) or the needed excerpt directly in the task text.",
@@ -299,7 +319,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       }
       return renderSubagentCall(args as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
     },
-    renderResult: renderSubagentResult,
+    renderResult: (result, renderOptions, theme, context) => renderSubagentResult(
+      result as unknown as Parameters<typeof renderSubagentResult>[0],
+      renderOptions,
+      theme,
+      context as unknown as Parameters<typeof renderSubagentResult>[3],
+    ),
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (ctx.hasUI) live.attach(ctx.ui);
       if (params.action === "list") {
@@ -326,6 +351,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         ? (!params.agent ? "agent" : !params.task ? "task" : params.deadlineMs === undefined ? "deadlineMs" : undefined)
         : !params.id && params.action !== "status" && params.action !== "wait"
           ? "id"
+          : params.action === "wait" && params.id && !params.operationId
+            ? "operationId"
           : params.action === "send"
             ? (!params.mode ? "mode" : !params.message ? "message" : params.mode === "steer" && !params.expectedOperationId ? "expectedOperationId" : undefined)
             : params.action === "interrupt" && !params.expectedOperationId
@@ -361,29 +388,31 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           }
         }
         if (params.action === "interrupt") {
-          const operation = runtime.operations.get(params.expectedOperationId);
+          const expectedOperationId = params.expectedOperationId!;
+          const operation = runtime.operations.get(expectedOperationId);
           if (
             runtime.state !== "running"
-            || runtime.activeOperationId !== params.expectedOperationId
+            || runtime.activeOperationId !== expectedOperationId
             || !operation?.accepted
           ) {
             return response({ accepted: false, conflict: true, snapshot: runtimeSnapshot(runtime) });
           }
-          const accepted = await runtime.controller!.interrupt(params.expectedOperationId);
+          const accepted = await runtime.controller!.interrupt(expectedOperationId);
           return response({ accepted, snapshot: runtimeSnapshot(runtime) });
         }
         if (params.action === "send" && params.mode === "steer") {
-          const operation = runtime.operations.get(params.expectedOperationId);
+          const expectedOperationId = params.expectedOperationId!;
+          const operation = runtime.operations.get(expectedOperationId);
           if (
             hub.isShuttingDown()
             || runtime.state !== "running"
-            || runtime.activeOperationId !== params.expectedOperationId
+            || runtime.activeOperationId !== expectedOperationId
             || !operation?.accepted
           ) {
             return response({ accepted: false, conflict: true, snapshot: runtimeSnapshot(runtime) });
           }
           try {
-            const accepted = await runtime.controller!.steer(params.expectedOperationId, params.message);
+            const accepted = await runtime.controller!.steer(expectedOperationId, params.message!);
             if (accepted) runtime.revision += 1;
             return response({ accepted, conflict: !accepted, snapshot: runtimeSnapshot(runtime) });
           } catch (error) {
@@ -395,9 +424,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           }
         }
         if (params.action === "wait") {
-          const operation = runtime.operations.get(params.operationId);
+          const operationId = params.operationId!;
+          const operation = runtime.operations.get(operationId);
           if (!operation) {
-            return response({ error: `Unknown operation ${params.operationId} for runtime ${runtime.runId}` }, true);
+            return response({ error: `Unknown operation ${operationId} for runtime ${runtime.runId}` }, true);
           }
           if (operation.state === "running") {
             if (params.timeoutMs === undefined) {
@@ -430,7 +460,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         try {
           await hub.beginOperation(runtime, {
             operationId,
-            task: params.message,
+            task: params.message!,
             deadlineMs: params.deadlineMs ?? 600_000,
             notifyOnSettle: true,
             signal,
@@ -473,7 +503,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const initialOptions: SubagentRunOptions = {
         cwd,
         agent,
-        workOrder: createWorkOrder(params.task, cwd, projectGuidance),
+        workOrder: createWorkOrder(params.task!, cwd, projectGuidance),
         runId,
         operationId,
         parentSessionId,
@@ -507,7 +537,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }
         const operation = await hub.beginOperation(runtime, {
           operationId,
-          task: params.task,
+          task: params.task!,
           deadlineMs: params.deadlineMs!,
           notifyOnSettle: params.action === "start",
           signal,

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "vitest";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -114,6 +114,29 @@ describe("agent definitions", () => {
     expect(worker.systemPrompt).toContain("Do not assume every line in the final diff is yours");
   });
 
+  test("loads the bundled tester with fail-fast provisioning and explicit isolation limits", () => {
+    const tester = loadAgentDefinition(
+      fileURLToPath(new URL("../../agents/tester.md", import.meta.url)),
+    );
+
+    expect(tester).toMatchObject({
+      name: "tester",
+      thinking: "medium",
+      tools: ["read", "grep", "find", "ls", "bash"],
+      contextPolicy: "fresh",
+      maxDepth: 1,
+    });
+    expect(tester.description).toContain("Fresh-context QA");
+    expect(tester.systemPrompt).toContain("not a filesystem, process, network, or credential sandbox");
+    expect(tester.systemPrompt).toContain("report the missing prerequisite as a blocker");
+    expect(tester.systemPrompt).toContain("Never install packages, browsers, or system dependencies");
+    expect(tester.systemPrompt).toContain("never run it as a blocking foreground shell call");
+    expect(tester.systemPrompt).toContain("record the actual service PID rather than a wrapper-shell PID");
+    expect(tester.systemPrompt).toContain("verify the PID no longer exists");
+    expect(tester.systemPrompt).toContain("Do not create a patched copy, substitute server");
+    expect(tester.systemPrompt).not.toContain("npm i -g");
+  });
+
   test("parses a read-only user agent", () => {
     const definition = parseAgentDefinition(
       `---
@@ -201,7 +224,7 @@ Inspect the repository.
 
     const overridden = applyAgentOverrides(discovery, settings.subagents);
 
-    for (const name of ["oracle", "worker", "scout", "researcher", "reviewer"]) {
+    for (const name of ["oracle", "worker", "scout", "researcher", "reviewer", "tester"]) {
       expect(overridden.agents.find((agent) => agent.name === name)).toMatchObject(settings.subagents[name]);
     }
   });
@@ -302,5 +325,24 @@ Inspect the repository.
       filePath: join(directory, "broken.md"),
       error: `${join(directory, "broken.md")}: name must be a non-empty string`,
     });
+  });
+
+  test("accepts contained definition symlinks and rejects escapes", () => {
+    const directory = temporaryAgentDir();
+    const outside = temporaryAgentDir();
+    const containedTarget = join(directory, "contained.source");
+    const escapedTarget = join(outside, "escaped.source");
+    writeFileSync(containedTarget, "---\nname: contained\ndescription: Contained\ntools: [read]\n---\nInspect.\n");
+    writeFileSync(escapedTarget, "---\nname: escaped\ndescription: Escaped\ntools: [read]\n---\nInspect.\n");
+    symlinkSync(containedTarget, join(directory, "contained.md"));
+    symlinkSync(escapedTarget, join(directory, "escaped.md"));
+
+    const discovery = discoverUserAgents(directory);
+
+    expect(discovery.agents.map((agent) => agent.name)).toEqual(["contained"]);
+    expect(discovery.errors).toEqual([{
+      filePath: join(directory, "escaped.md"),
+      error: `${join(directory, "escaped.md")}: agent definition symlink resolves outside the agent directory`,
+    }]);
   });
 });

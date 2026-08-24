@@ -120,6 +120,27 @@ export const scenarios = [
     prompt: "Independently review the current uncommitted TTL fix against plan.md. Inspect the diff and tests, look for concrete correctness or regression gaps, and report findings with severity and file/line evidence. Do not modify files.",
   },
   {
+    id: "browser-qa",
+    description: "Explicit exploratory browser QA should route to tester, preserve source, and save evidence.",
+    quick: false,
+    repeats: 1,
+    fixture: "baseline",
+    workspace: "qa",
+    targetRate: 1,
+    hardExpectation: {
+      requiredAgents: ["tester"],
+      maxSubagentCalls: 1,
+      actionSequence: [{ action: "run" }],
+    },
+    expectation: {
+      requiredAgents: ["tester"],
+      maxSubagentCalls: 1,
+      actionSequence: [{ action: "run" }],
+      finalAny: ["Test Report|Coverage|QA|browser"],
+    },
+    prompt: "Delegate exactly one bounded one-shot tester for exploratory browser QA; do not drive the browser in the parent. Give it a complete fresh-context work order: Outcome launch and test the Lantern preview as a user, Scope qa/server.js and the rendered page, Starting evidence start `node qa/server.js` as a background process with stdout/stderr redirected under .artifacts, record its PID, and read its printed random loopback URL from the log, Known decisions use the preinstalled agent-browser CLI and save a screenshot to .artifacts/tester-home.png, Constraints never run the long-lived server as a blocking foreground command, do not install packages/browsers/dependencies, do not modify source/config/fixtures, write only under .artifacts, stop the exact server PID and browser session even on failure, Acceptance exercise valid and empty User ID flows with expected vs actual evidence and required screenshot, Validation inspect console/network failures, Handoff Test Report with Summary Environment Findings Coverage Artifacts. The tester must report a blocker if agent-browser is unavailable rather than installing it. Parent should synthesize the report without repeating browser work and must not commit.",
+  },
+  {
     id: "small-coherent-implementation",
     description: "A small coherent implementation should stay in the parent and pass tests.",
     quick: true,

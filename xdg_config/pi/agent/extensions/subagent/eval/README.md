@@ -19,6 +19,7 @@ network access, takes several minutes, and incurs real model/search cost.
 | `external-research` | `researcher`; no duplicate parent `web_search` | 3 |
 | `cited-discovery-consumption` | `scout` returns a structured handoff; parent synthesizes without duplicate reads/searches | 1 |
 | `independent-review` | `reviewer` finds the missing default-TTL regression | 1 |
+| `browser-qa` | `tester` launches the fixture app, exercises browser flows, preserves source, and saves screenshot evidence | 1 |
 | `small-coherent-implementation` | Parent implements directly; fixture tests pass | 1 |
 | `explicit-worker` | `worker` implements; fixture tests pass | 1 |
 | `delegated-verification` | Complete one-shot `worker` work order and structured handoff; parent inspects settled diff and reruns tests | 1 |
@@ -129,6 +130,8 @@ for verifying the integrated interactive TUI and provider path.
 Deterministic invariants always fail the command:
 
 - Pi exits successfully before the timeout and emits valid JSONL.
+- Pi leaves no child process group behind; the runner reports a hard failure and
+  terminates the group if a delegated temporary server or browser is orphaned.
 - Every subagent call includes `action`; no failed subagent invocation or schema
   error is hidden by a successful retry. A scenario may consume only an exact,
   counted expected error (currently the fourth-call capacity rejection); every
@@ -143,6 +146,8 @@ Deterministic invariants always fail the command:
 - Parent verification of writing handoffs happens after the worker settles and
   includes both complete-diff inspection and an integrated test rerun.
 - Read-only scenarios do not alter files or Git history.
+- Browser-QA scenarios may write only required evidence under `.artifacts/` and
+  must leave source, configuration, fixtures, and Git history unchanged.
 - Implementation changes are limited to `src/session.js` and
   `test/session.test.js`, produce a clean diff, and pass fixture tests.
 

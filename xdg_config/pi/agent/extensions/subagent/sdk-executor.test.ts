@@ -4,7 +4,11 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, test } from "vitest";
 
-import { createSdkSubagentController, createSdkSubagentExecutor } from "./sdk-executor.ts";
+import {
+  createSdkSubagentController,
+  createSdkSubagentExecutor,
+  filterDeclaredCustomTools,
+} from "./sdk-executor.ts";
 import type { SubagentExecutionProfile, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
 
 afterEach(() => {
@@ -52,6 +56,7 @@ class FakeSession {
   disposeCalls = 0;
   promptHandler?: (text: string, options: any, emit: (e: any) => void) => Promise<void> | void;
   abortHandler?: () => Promise<void> | void;
+  disposeHandler?: () => void;
 
   get listenerCount(): number {
     return this.listeners.length;
@@ -93,6 +98,7 @@ class FakeSession {
   }
   dispose(): void {
     this.disposeCalls++;
+    this.disposeHandler?.();
   }
 }
 
@@ -163,6 +169,46 @@ describe("one-shot SDK executor", () => {
     expect(controller.close()).toBe(firstClose);
     await expect(pending).rejects.toThrow("closed during active operation");
     await expect(firstClose).resolves.toBeUndefined();
+  });
+
+  test("bounds close when abort hangs before prompt acceptance and still disposes", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async () => {
+      // Never report preflight acceptance or authoritative settlement.
+      await new Promise(() => {});
+    };
+    session.abortHandler = async () => {
+      await new Promise(() => {});
+    };
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    const operation = controller.start(runOptions);
+    while (session.promptCalls.length === 0) await new Promise((resolve) => setTimeout(resolve, 1));
+
+    const close = controller.close();
+
+    await expect(operation.accepted).rejects.toThrow("closed during active operation");
+    await expect(operation.result).rejects.toThrow("closed during active operation");
+    await expect(close).rejects.toThrow("SDK abort did not finish during close");
+    expect(session.abortCalls).toBe(1);
+    expect(session.disposeCalls).toBe(1);
+  });
+
+  test("filters injected custom tools to names declared by the agent", () => {
+    const readOverride = { name: "read" };
+    const webSearch = { name: "web_search" };
+    const undeclared = { name: "shell_escape" };
+    expect(filterDeclaredCustomTools(["read", "web_search"], [undeclared, webSearch, {}, readOverride]))
+      .toEqual([webSearch, readOverride]);
+  });
+
+  test("surfaces session disposal failure", async () => {
+    const session = new FakeSession();
+    session.disposeHandler = () => { throw new Error("Dispose failed"); };
+    const controller = await fakeController(options(), session);
+
+    await expect(controller.close()).rejects.toThrow("Dispose failed");
+    expect(session.disposeCalls).toBe(1);
   });
 
   test("performs prompt and returns the session reference", async () => {

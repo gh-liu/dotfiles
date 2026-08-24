@@ -36,7 +36,6 @@ import { scenarios } from "./scenarios.mjs";
 const evalDirectory = dirname(fileURLToPath(import.meta.url));
 const extensionsRoot = resolve(evalDirectory, "../..");
 const agentRoot = resolve(evalDirectory, "../../..");
-const xdgConfigRoot = resolve(agentRoot, "../..");
 const activeChildren = new Set();
 
 const usage = `Usage: {node|bun} subagent/eval/run.mjs [options]
@@ -159,7 +158,7 @@ function preflight(options) {
     sync("pi", ["auth", "check", "--model", options.model], extensionsRoot, {
       ...process.env,
       PI_CODING_AGENT_DIR: options.piAgentDirectory,
-      XDG_CONFIG_HOME: xdgConfigRoot,
+      XDG_CONFIG_HOME: options.xdgConfigDirectory,
     }),
     `Pi authentication is not ready for ${options.model}`,
   );
@@ -244,6 +243,16 @@ function killChild(child, signal = "SIGTERM") {
   }
 }
 
+function processGroupExists(child) {
+  if (process.platform === "win32" || !child.pid) return false;
+  try {
+    process.kill(-child.pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function runPi(options, cwd, prompt) {
   return new Promise((resolvePromise) => {
     const startedAt = Date.now();
@@ -256,7 +265,7 @@ function runPi(options, cwd, prompt) {
         env: {
           ...process.env,
           PI_CODING_AGENT_DIR: options.piAgentDirectory,
-          XDG_CONFIG_HOME: xdgConfigRoot,
+          XDG_CONFIG_HOME: options.xdgConfigDirectory,
         },
         detached: process.platform !== "win32",
         stdio: ["ignore", "pipe", "pipe"],
@@ -292,7 +301,16 @@ function runPi(options, cwd, prompt) {
       });
     };
     child.once("error", (error) => finish({ code: null, signal: null, spawnError: error.message }));
-    child.once("close", (code, signal) => finish({ code, signal, spawnError: null }));
+    child.once("close", (code, signal) => {
+      // A QA child may accidentally orphan a temporary app/browser after Pi
+      // exits. Detect that contract violation, then clean the whole run group so
+      // one evaluation cannot pollute later runs or the developer's machine.
+      setTimeout(() => {
+        const leakedProcessGroup = processGroupExists(child);
+        if (leakedProcessGroup) killChild(child);
+        finish({ code, signal, spawnError: null, leakedProcessGroup });
+      }, 100);
+    });
   });
 }
 
@@ -300,6 +318,7 @@ function validateRun(scenario, fixture, beforeSnapshot, processResult, analysis)
   const hardFailures = [];
   if (processResult.spawnError) hardFailures.push(`Pi spawn failed: ${processResult.spawnError}`);
   if (processResult.timedOut) hardFailures.push("Pi timed out");
+  if (processResult.leakedProcessGroup) hardFailures.push("Pi left child processes running after exit");
   if (processResult.code !== 0) {
     hardFailures.push(`Pi exited with ${processResult.code ?? processResult.signal ?? "unknown status"}`);
   }
@@ -341,6 +360,12 @@ function validateRun(scenario, fixture, beforeSnapshot, processResult, analysis)
     for (const required of allowed) {
       if (!repository.changedPaths.includes(required)) hardFailures.push(`required path was not changed: ${required}`);
     }
+  } else if (scenario.workspace === "qa") {
+    const unexpected = repository.changedPaths.filter((path) => !path.startsWith(".artifacts/"));
+    if (unexpected.length > 0) hardFailures.push(`QA changed path(s) outside .artifacts: ${unexpected.join(", ")}`);
+    if (!repository.changedPaths.includes(".artifacts/tester-home.png")) {
+      hardFailures.push("tester did not save the required screenshot artifact");
+    }
   }
   return { hardFailures, repository, tests };
 }
@@ -374,6 +399,7 @@ async function runOne(options, reportDirectory, runtimeDirectory, item) {
       signal: processResult.signal,
       timedOut: processResult.timedOut,
       spawnError: processResult.spawnError,
+      leakedProcessGroup: processResult.leakedProcessGroup ?? false,
     },
     hardFailures: validation.hardFailures,
     behavioral,
@@ -499,6 +525,8 @@ async function main() {
 
   const reportDirectory = prepareReportDirectory(options.report);
   const runtimeDirectory = mkdtempSync(join(tmpdir(), "pi-subagent-eval-runtime-"));
+  options.xdgConfigDirectory = join(runtimeDirectory, "xdg-config");
+  mkdirSync(options.xdgConfigDirectory);
   options.piAgentDirectory = createIsolatedAgentDirectory(runtimeDirectory);
   overrideSubagents(options.piAgentDirectory, options.subagentModel, options.subagentThinking);
   const cleanup = (signal = "SIGTERM") => {
@@ -521,7 +549,7 @@ async function main() {
         sync("pi", ["auth", "check", "--model", options.subagentModel], extensionsRoot, {
           ...process.env,
           PI_CODING_AGENT_DIR: options.piAgentDirectory,
-          XDG_CONFIG_HOME: xdgConfigRoot,
+          XDG_CONFIG_HOME: options.xdgConfigDirectory,
         }),
         `Pi authentication is not ready for ${options.subagentModel}`,
       );

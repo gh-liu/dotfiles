@@ -186,6 +186,14 @@ function makeWebSearchTool(): any {
   };
 }
 
+/** Keep injected implementations inside the agent definition's declared tool boundary. */
+export function filterDeclaredCustomTools(declaredTools: readonly string[], customTools: readonly any[] = []): any[] {
+  const declared = new Set(declaredTools);
+  return customTools.filter(
+    (tool) => tool && typeof tool === "object" && typeof tool.name === "string" && declared.has(tool.name),
+  );
+}
+
 export type SdkSubagentController = SubagentController;
 
 export async function createSdkSubagentController(
@@ -262,12 +270,9 @@ export async function createSdkSubagentController(
       noContextFiles: sessionPlan.noContextFiles,
     } as any);
     await (loader as any).reload();
-    let customTools: any[] | undefined;
-    if (initial.agent.tools.includes("web_search")) {
-      customTools = [makeWebSearchTool()];
-      if (config.customTools) customTools.push(...config.customTools);
-    } else if (config.customTools) {
-      customTools = [...config.customTools];
+    const customTools = filterDeclaredCustomTools(initial.agent.tools, config.customTools);
+    if (initial.agent.tools.includes("web_search") && !customTools.some((tool) => tool.name === "web_search")) {
+      customTools.unshift(makeWebSearchTool());
     }
     const manager = (SessionManager as any).create(sessionPlan.cwd, sessionPlan.sessionDir);
     if (initial.signal?.aborted) throw new SubagentCancellationError("Subagent run cancelled before process creation");
@@ -333,16 +338,31 @@ export async function createSdkSubagentController(
       activeTerminal?.reject(error);
     }
     closing = (async () => {
+      let closeFailure: unknown;
       if (active && activeOperationId) {
-        try { await session.abort(); } catch {}
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          const aborted = await Promise.race([
+            session.abort().then(() => true),
+            new Promise<false>((resolveTimeout) => {
+              timer = setTimeout(() => resolveTimeout(false), config.terminationGraceMs ?? 5_000);
+            }),
+          ]);
+          if (!aborted) closeFailure = new Error("SDK abort did not finish during close");
+        } catch (error) {
+          closeFailure = error;
+        } finally {
+          if (timer) clearTimeout(timer);
+        }
         // Wait briefly for settlement if watchdog allows
         if (activeTerminal) {
           try { await Promise.race([activeTerminal.promise.catch(() => {}), new Promise((r) => setTimeout(r, 500))]); } catch {}
         }
       }
-      try { session.dispose(); } catch {}
+      try { session.dispose(); } catch (error) { closeFailure ??= error; }
       finalize();
       if (fatal) throw fatal;
+      if (closeFailure) throw closeFailure;
     })().finally(finalize);
     return closing;
   };
@@ -553,7 +573,9 @@ export async function createSdkSubagentController(
       await activeCancellation?.catch(() => {});
       return true;
     },
-    submit(options: SubagentRunOptions): Promise<SubagentResult> { return this.start(options).result; },
+    submit(this: SubagentController, options: SubagentRunOptions): Promise<SubagentResult> {
+      return this.start(options).result;
+    },
     close,
   };
 }

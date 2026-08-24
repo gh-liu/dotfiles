@@ -109,6 +109,8 @@ export function runtimeSnapshot(runtime: RuntimeRecord) {
 export interface RuntimeHubDeps {
   controllerFactory: SubagentControllerFactory;
   idFactory: () => string;
+  /** Maximum foreground plus persistent runtime slots. */
+  maxConcurrentRuns?: number;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
   notifySettled: (details: SubagentCompletionDetails | { batch: SubagentCompletionDetails[] }) => void;
   /** Optional durable human-visible settle log (appendEntry); never wakes the model. */

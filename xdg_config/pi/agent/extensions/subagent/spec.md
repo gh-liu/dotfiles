@@ -2,10 +2,14 @@
 
 - Status: Active (Milestones 1 and 2 partial)
 - Updated: 2026-08-24 — the Available-tools wake-word `promptSnippet` is now
-  generated at registration time from the agent registry via an ordered
-  class→role binding table inside the extension (`buildWakeWordSnippet`);
-  roles absent from the registry silently drop their arrows, so dangling wake
-  words are impossible, and an oracle decision-class wake word was added.
+  generated at registration time from every discovered agent's bounded
+  `name` + `description` routing contract (`buildWakeWordSnippet`), so custom or
+  renamed agents participate without a fixed extension-owned role table.
+- Updated: 2026-08-24 — bounded pre-accept close, auth-environment validation,
+  exact custom-tool filtering, contained definition symlinks, action-specific
+  wait validation, and tester provisioning/isolation contracts now have
+  deterministic coverage; a real-Pi browser-QA scenario covers tester routing,
+  source preservation, and evidence output.
 - Updated: 2026-08-24 — declarative skills frontmatter (`skills:` lists) was
   prototyped and removed the same day; child sessions return to unconditional
   zero-skill construction, skill provisioning is now open decision §16 item 6,
@@ -39,9 +43,9 @@ surface wholesale:
 
 ## 2. Goal
 
-Provide a Pi extension that lets a parent agent delegate bounded work to isolated
-Pi child sessions while retaining responsibility for decomposition, decisions,
-integration, verification, and the final user-facing result.
+Provide a Pi extension that lets a parent agent delegate bounded work to
+fresh-context Pi child sessions while retaining responsibility for decomposition,
+decisions, integration, verification, and the final user-facing result.
 
 The extension must:
 
@@ -125,12 +129,11 @@ a fixed roster. Each registered definition's `description` is its model-facing
 routing contract. The tool description contains a bounded startup catalog built
 from those definitions, and `list` refreshes discovery when definitions change
 or a requested name is absent. The Available-tools wake-word `promptSnippet` is
-likewise derived from the registry at registration through an ordered class→role
-binding table inside the extension (`buildWakeWordSnippet`), so absent roles
-silently drop their arrows and the "must not duplicate agent names / fixed
-count" rule holds by construction. Prompt guidelines must select from that
-catalog; they must not duplicate agent names, assume a fixed count, or become a
-second source of truth for role capabilities.
+likewise derived from every effective registry entry at registration
+(`buildWakeWordSnippet`): each bounded `name=description` contract participates
+in discovery, including custom and renamed roles. Prompt guidelines must select
+from that catalog; they must not duplicate agent names, assume a fixed count, or
+become a second source of truth for role capabilities.
 
 The parent classifies work before it starts equivalent reads or searches:
 
@@ -298,9 +301,10 @@ Required invariants:
   A runtime may alternate between `idle` and `running` by creating new
   operations; an operation's state is monotonic and it never runs twice.
 - `waiting` is an observer action, not runtime or operation state.
-- `close` atomically enters `closing`, rejects new operations, and starts process cleanup.
-- Only authoritative process exit/close events move `closing` to `closed`.
-  Unexpected exit moves the runtime to `crashed` and releases all reservations.
+- `close` atomically enters `closing`, rejects new operations, and starts session cleanup.
+- Authoritative operation settlement followed by successful session disposal
+  moves `closing` to `closed`. A failed or timed-out abort/disposal moves the
+  runtime to `crashed` and still releases its reservation.
 - `interrupt` targets an expected operation and does not close the runtime.
 - `interrupted` is reserved for an accepted operation; `cancelled` is retained only for future use and currently has no producer.
 - Pi turn boundaries are observations used to reduce events; they do not replace
@@ -557,7 +561,9 @@ and a dedicated `SessionManager` under `<agent-dir>/subagent-sessions/<runId>/`.
 Children never load skills; skill knowledge reaches a child only through its role
 prompt or parent-composed work-order references (path or excerpt) — see §16 item 6.
 `web_search` is provided as a session-scoped custom tool when the effective tool
-allowlist declares it. The parent resolves applicable project guidance and
+allowlist declares it. Any injected custom implementation is filtered by tool
+name against that same effective allowlist; undeclared custom tools are never
+registered. The parent resolves applicable project guidance and
 materializes the selected text into the work-order envelope, so the child never
 relies on implicit AGENTS.md inheritance. No extension is inherited by default.
 
@@ -619,9 +625,11 @@ Semantics:
   it does not create a new operation or independent settlement. The caller must
   provide `expectedOperationId`; steering is accepted only after that operation's
   prompt is accepted and while it remains active, then maps to `session.steer`.
-- `wait`: wait for one specified operation. If it is already settled, return its
-  stored result immediately. Timeout returns `{ reason: "timeout", snapshot }`
-  without changing state or cancelling work. Multiple waiters may observe the
+- `wait`: with `id` and required `operationId`, wait for one specified operation.
+  If it is already settled, return its stored result immediately. With neither
+  field, join all outstanding background operations. Timeout returns
+  `{ reason: "timeout", snapshot }` (or partial joined results) without changing
+  state or cancelling work. Multiple waiters may observe the
   same stored result.
 - `interrupt`: request abort only when `expectedOperationId` is still active.
   A mismatch returns a conflict/no-op, preventing a late abort from targeting a
@@ -752,6 +760,8 @@ for parent coordination.
   destructive/shared actions on behalf of the user.
 - The cwd must be canonicalized and checked against allowed roots, including
   symlink escape.
+- User agent definition symlinks are accepted only when their canonical target
+  remains inside the configured user agent directory.
 - Progress lines, final result text, and parent serialization must be bounded.
 - Environment variables must be selected deliberately. Known credential values
   and common credential formats are redacted before retention and serialization,
@@ -765,7 +775,9 @@ Operation cancellation and shutdown follow related but distinct idempotent paths
   `agent_settled`; a watchdog (`terminationGraceMs`, default 5 s) treats missing
   settlement as a fatal controller failure.
 - Normal idle `close` disposes the session; closing a still-active controller
-  aborts the active run first, races a bounded grace period, then disposes.
+  aborts the active run first, including before prompt acceptance. Abort dispatch
+  is bounded by `terminationGraceMs`; timeout still disposes the session and
+  surfaces cleanup failure instead of blocking the runtime slot indefinitely.
 - Every terminal path awaits settlement or disposal, clears timers, and removes
   listeners.
 
@@ -837,8 +849,9 @@ Current UI/details additionally show:
 - Full bounded diagnostic error.
 
 Collapsed calls show up to six task lines. Collapsed results hide runtime and
-operation IDs and show only user-relevant state. Expanded calls and results show
-the bounded full task and full IDs. Persistent completion wake-up text contains
+operation IDs and show only user-relevant state. Expanded calls show the bounded
+full task; expanded results retain bounded diagnostics and metadata but continue
+to omit full runtime/operation IDs. Persistent completion wake-up text contains
 exactly two lines per entry: the session-local `#N`, agent, status, optional
 elapsed seconds, and a bounded title derived only from the first meaningful task
 line (`Outcome:` stripped), followed by runtime guidance
@@ -931,7 +944,7 @@ a deferred idea.
 - Concurrency reservation/release.
 - Bounded output and redaction.
 - Provider-compatible root-object schema and action-specific validation.
-- Startup catalog, registry-generated wake-word snippet, and capability-driven
+- Startup catalog, all-registry wake-word snippet, and capability-driven
   routing guidance.
 - Native cwd canonicalization, project-root containment, and symlink escape.
 - Idempotent cleanup and timer/listener removal.
@@ -949,7 +962,8 @@ a deferred idea.
 - Preserve transcript after close.
 - Parent shutdown cleans up all children.
 
-The default `npm test` suite uses protocol fixtures and does not call a model.
+The default `npm test` first runs strict TypeScript checking for production
+subagent sources, then uses protocol fixtures without calling a model.
 Paid-provider coverage lives in `subagent/eval/` and must stay outside routine
 validation.
 
@@ -957,18 +971,19 @@ Current capability-to-test map:
 
 | Capability contract | Deterministic coverage | Real-Pi coverage |
 | --- | --- | --- |
-| Agent parsing, explicit tools, fresh-only context, discovery, overrides, catalog, wake-word generation | `agents.test.ts`, `index.test.ts` (incl. wake-word snippet generation cases) | role-selection and work-order scenarios |
+| Agent parsing, explicit/custom tools, fresh-only context, contained definition symlinks, discovery, overrides, catalog, all-registry wake-word generation | `agents.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | role-selection and work-order scenarios |
 | Cwd/root containment, symlink escape, bounded project guidance | `context.test.ts` | isolated fixture workspaces |
 | Explicit SDK session profile, durable transcript reference, result ownership | `sdk-executor.test.ts` | all delegated scenarios |
 | One-shot run, persistent start/status/wait/follow-up/close | `index.test.ts`, `sdk-executor.test.ts` | `persistent-follow-up` |
 | Accepted-operation steering and guarded interrupt/reuse | `index.test.ts`, `sdk-executor.test.ts` | `steer-active-operation`, `interrupt-and-reuse` |
 | Idle-only input, wait timeout, late-control races, monotonic revisions | `index.test.ts` | persistent lifecycle scenarios |
 | Capacity reservation/release and fail-fast fourth run | `index.test.ts`, `eval/analyze.test.ts` | `capacity-exhaustion` |
-| Deadlines, abort watchdog, startup/provider/final-response failures | `sdk-executor.test.ts` | provider failures fail every eval run |
+| Deadlines, interrupt and pre-accept close watchdogs, startup/provider/final-response failures | `sdk-executor.test.ts` | provider failures fail every eval run |
 | Transcript preservation, idempotent cleanup, shutdown | `sdk-executor.test.ts`, `index.test.ts` | persistent lifecycle scenarios |
 | Bounded/redacted progress, results, notifications | `output.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | JSONL report inspection |
 | Every call/result/completion renderer branch and live panel state | `render.test.ts`, `live-ui.test.ts` | `eval/ui-gallery.mjs` plus interactive runs |
 | Parent routing, parallel evidence, staged roles, handoff consumption and verification | `eval/analyze.test.ts` | `eval/scenarios.mjs` |
+| Tester provisioning policy, context-isolation wording, browser routing, source preservation, evidence artifacts | `agents.test.ts` | `browser-qa` |
 
 The deterministic suite owns protocol, state, race, failure, and renderer
 contracts. The paid evaluator owns model behavior only; a probabilistic routing
@@ -1158,8 +1173,8 @@ that consumes it:
      — restoring fork-join semantics for the background mode.
    No time-based partial flush is used: only settlements arriving in the same
    event-loop turn coalesce; staggered successes notify separately.
-5. Resolved — inter-subagent communication topology. Children are isolated
-   processes with no peer channels; the parent acts as the sole router
+5. Resolved — inter-subagent communication topology. Children are fresh-context
+   in-process sessions with no peer channels; the parent acts as the sole router
    (hub-and-spoke): harvest an envelope, distill it, and feed the next hop via
    a work order or `send`. Direct peer-to-peer (mailbox files or a local-socket
    `message_peer` tool registered into child sessions) is rejected for now:

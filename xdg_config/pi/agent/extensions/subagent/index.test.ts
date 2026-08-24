@@ -9,7 +9,12 @@ import type {
   MessageRenderer,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import { buildWakeWordSnippet, loadSubagentOverrides, registerSubagentExtension, WAKE_BINDINGS } from "./index.ts";
+import {
+  buildWakeWordSnippet,
+  loadSubagentOverrides,
+  registerSubagentExtension,
+  validateAuthEnvAllowlist,
+} from "./index.ts";
 import { SUBAGENT_COMPLETION_MESSAGE } from "./render.ts";
 import type {
   SubagentController,
@@ -470,6 +475,21 @@ describe("subagent tool", () => {
       isError: true,
       details: { error: "expectedOperationId is required for subagent send" },
     });
+    expect(await env.invoke({ action: "wait", id: "runtime" })).toMatchObject({
+      isError: true,
+      details: { error: "operationId is required for subagent wait" },
+    });
+  });
+
+  test("validates and deduplicates credential environment names", () => {
+    expect(validateAuthEnvAllowlist([" OPENROUTER_API_KEY ", "OPENROUTER_API_KEY", "_PRIVATE"])).toEqual([
+      "OPENROUTER_API_KEY",
+      "_PRIVATE",
+    ]);
+    expect(validateAuthEnvAllowlist(undefined)).toBeUndefined();
+    for (const invalid of ["", "lowercase", "9KEY", "API-KEY", "API_KEY\nOTHER"]) {
+      expect(() => validateAuthEnvAllowlist([invalid])).toThrow("Invalid subagent auth environment variable name");
+    }
   });
 
   test("discovers agents and builds a canonical, guided work order with declared tools", async () => {
@@ -489,8 +509,8 @@ describe("subagent tool", () => {
     expect(env.extension.getTool().promptSnippet).toContain("Classify by task boundary");
     expect(env.extension.getTool().promptSnippet).toContain("single-file lookups");
     expect(env.extension.getTool().promptSnippet).toContain("routine re-runs");
-    expect(env.extension.getTool().promptSnippet).toContain("default to startup catalog");
-    expect(env.extension.getTool().promptSnippet).toContain("multi-file discovery->scout");
+    expect(env.extension.getTool().promptSnippet).toContain("choose by the startup catalog");
+    expect(env.extension.getTool().promptSnippet).toContain("scout=Inspect files");
     expect(env.extension.getTool().promptSnippet).not.toContain("NEVER list");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
       expect.stringContaining("startup catalog"),
@@ -1507,50 +1527,35 @@ describe("subagent tool", () => {
     expect(new Set(revisions).size).toBe(revisions.length);
   });
 
-  test("buildWakeWordSnippet omits absent roles when only scout is present", () => {
-    const registry = { agents: [{ name: "scout" } as never], errors: [] };
-    const snippet = buildWakeWordSnippet(registry);
-    expect(snippet).toContain("multi-file discovery->scout");
-    expect(snippet).not.toContain("->reviewer");
-    expect(snippet).not.toContain("->researcher");
-    expect(snippet).not.toContain("->tester");
-    expect(snippet).not.toContain("->oracle");
-    expect(snippet).not.toContain("->worker");
-    expect(snippet).toContain("single-file lookups");
-    expect(snippet).toContain("startup catalog");
-  });
-
-  test("buildWakeWordSnippet includes oracle when present and keeps stable order", () => {
+  test("buildWakeWordSnippet includes every registered routing contract", () => {
     const registry = {
       agents: [
-        { name: "worker" },
-        { name: "oracle" },
-        { name: "scout" },
-        { name: "reviewer" },
-        { name: "researcher" },
-        { name: "tester" },
+        { name: "scout", description: "Map multiple files" },
+        { name: "custom-auditor", description: "Audit bespoke invariants" },
       ] as never[],
       errors: [],
     };
     const snippet = buildWakeWordSnippet(registry);
-    expect(snippet).toContain("->oracle");
-    expect(snippet).toContain("high-impact unresolved decision->oracle");
-    const order = WAKE_BINDINGS.map((binding) => binding.role).filter((role) => snippet.includes(`->${role}`));
-    expect(order).toEqual(["reviewer", "researcher", "tester", "scout", "oracle", "worker"]);
+    expect(snippet).toContain("scout=Map multiple files");
+    expect(snippet).toContain("custom-auditor=Audit bespoke invariants");
+    expect(snippet).not.toContain("reviewer");
+    expect(snippet).toContain("not a fixed roster");
+    expect(snippet).toContain("single-file lookups");
+    expect(snippet).toContain("startup catalog");
   });
 
-  test("dynamic snippet contains no unknown role names", () => {
+  test("buildWakeWordSnippet preserves registry order and bounds descriptions", () => {
     const registry = {
-      agents: [{ name: "scout" }, { name: "worker" }] as never[],
+      agents: [
+        { name: "zeta", description: "Z".repeat(500) },
+        { name: "alpha", description: "Alpha role" },
+      ] as never[],
       errors: [],
     };
     const snippet = buildWakeWordSnippet(registry);
-    const arrowRoles = [...snippet.matchAll(/->([a-z-]+)/g)].map((m) => m[1]);
-    const allowed = new Set(WAKE_BINDINGS.map((b) => b.role));
-    for (const role of arrowRoles) {
-      expect(allowed.has(role as never)).toBe(true);
-    }
-    expect(arrowRoles).toEqual(expect.arrayContaining(["scout", "worker"]));
+    expect(snippet.indexOf("zeta=")).toBeLessThan(snippet.indexOf("alpha="));
+    expect(snippet.length).toBeLessThanOrEqual(4_000);
+    expect(snippet).not.toContain("Z".repeat(241));
   });
 
   test("registered tool snippet and guidelines reflect list and direct-exception contract", async () => {
@@ -1565,9 +1570,9 @@ describe("subagent tool", () => {
       settingsPath: join(temporaryDirectory("pi-subagent-settings-"), "missing.json"),
     });
     const tool = extension.getTool();
-    expect(tool.promptSnippet).toContain("->scout");
-    expect(tool.promptSnippet).toContain("->oracle");
-    expect(tool.promptSnippet).toContain("call list only if catalog may be stale");
+    expect(tool.promptSnippet).toContain("scout=Scout");
+    expect(tool.promptSnippet).toContain("oracle=Oracle");
+    expect(tool.promptSnippet).toContain("call list only if the catalog may be stale");
     expect(tool.promptSnippet).toContain("single-source factual checks direct");
     expect(tool.promptSnippet).not.toContain("NEVER list");
     expect(tool.promptSnippet).not.toContain("BEFORE any read/bash");
