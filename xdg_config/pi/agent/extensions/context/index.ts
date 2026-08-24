@@ -1,25 +1,21 @@
 import {
   type ExtensionAPI,
-  type SessionManager,
   DynamicBorder,
+  sessionEntryToContextMessages,
 } from "@earendil-works/pi-coding-agent";
 import { Container, Text, Spacer } from "@earendil-works/pi-tui";
+import {
+  analyzeMessages,
+  attributeSystemPrompt,
+  basename,
+  classifyActiveTools,
+  estimateTokens,
+  estimateValueTokens,
+  getCompactionReserveTokens,
+  getGridDimensions,
+  scaleTokenGroups,
+} from "./analysis.js";
 import { formatTokens } from "./utils.js";
-
-// Built-in tool names heuristic – primary split is via sourceInfo.source === "builtin"
-// but we keep a name set as fallback for older data.
-const BUILTIN_TOOL_NAMES = new Set([
-  "read",
-  "write",
-  "edit",
-  "bash",
-  "grep",
-  "find",
-  "ls",
-  "exec",
-  "todo",
-  "ask",
-]);
 
 // Four-symbol grid: used (<70% / >=70%), buffer, empty
 const SYMBOL_USED_LOW = "⛀";
@@ -30,32 +26,6 @@ const SYMBOL_EMPTY = "⛶";
 const MAX_DETAIL_ITEMS = 5;
 // Only expand per-item details for categories that actually matter (>= 0.5% of window)
 const DETAIL_MIN_PCT = 0.5;
-
-function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 4);
-}
-
-function getBufferTokens(contextWindow: number): number {
-  if (contextWindow >= 1_000_000) return 45_000;
-  if (contextWindow >= 200_000) return 33_000;
-  return Math.min(Math.round(contextWindow * 0.15), 32_000);
-}
-
-function getGridDimensions(contextWindow: number, renderWidth?: number) {
-  const isLarge = contextWindow >= 500_000;
-  let w = isLarge ? 20 : 10;
-  const h = 10;
-  if (renderWidth != null && renderWidth < 80) {
-    w = Math.max(5, Math.floor(w / 2));
-  }
-  return { w, h, total: w * h };
-}
-
-function basename(path: string): string {
-  const parts = path.split("/");
-  const base = parts[parts.length - 1] ?? path;
-  return base || path;
-}
 
 const ROLE_LABELS: Record<string, string> = {
   user: "User messages",
@@ -80,11 +50,7 @@ export default function (pi: ExtensionAPI) {
     handler: async (args, ctx) => {
       const showAll = args.trim() === "all";
 
-      const usageRaw: any = await (ctx as any).getContextUsage?.();
-      const usage = usageRaw as
-        | { tokens: number | null; contextWindow: number; percent: number | null }
-        | undefined;
-
+      const usage = ctx.getContextUsage();
       if (!usage) {
         ctx.ui.notify("Context usage info not available.", "warning");
         return;
@@ -99,185 +65,81 @@ export default function (pi: ExtensionAPI) {
         return;
       }
 
-      const model: any = (ctx as any).model;
+      const model = ctx.model;
       const modelName: string = model?.id ?? model?.name ?? "unknown";
       const headerModel = modelName && modelName !== "undefined" ? modelName : "unknown";
 
-      const sm = ctx.sessionManager as SessionManager;
-      const branch = sm.getBranch();
-      const systemPrompt: string = ctx.getSystemPrompt() ?? "";
-      const sysPromptOptions: any = (ctx as any).getSystemPromptOptions?.();
-      const contextFiles: Array<{ path: string; content: string }> =
-        sysPromptOptions?.contextFiles ?? [];
-      const skills: Array<{ name: string; description?: string; filePath?: string; path?: string }> =
-        sysPromptOptions?.skills ?? [];
+      const systemPrompt = ctx.getSystemPrompt();
+      const sysPromptOptions = ctx.getSystemPromptOptions();
+      const contextFiles = sysPromptOptions.contextFiles ?? [];
+      const skills = sysPromptOptions.skills ?? [];
+      const messages = ctx.sessionManager
+        .buildContextEntries()
+        .flatMap(sessionEntryToContextMessages);
 
-      const activeToolNames: string[] = pi.getActiveTools() ?? [];
-      const allTools: Array<{
-        name: string;
-        description?: string;
-        parameters?: unknown;
-        sourceInfo?: { source: string; path: string };
-      }> = (pi.getAllTools() ?? []) as any;
-
-      const activeToolInfos = allTools.filter((t) => activeToolNames.includes(t.name));
-
-      const systemTools: typeof activeToolInfos = [];
-      const extensionTools: typeof activeToolInfos = [];
-      for (const t of activeToolInfos) {
-        const src = (t.sourceInfo as any)?.source ?? "";
-        if (src === "builtin" || src === "sdk" || BUILTIN_TOOL_NAMES.has(t.name)) {
-          systemTools.push(t);
-        } else if (src === "builtin") {
-          systemTools.push(t);
-        } else {
-          const p = (t.sourceInfo as any)?.path ?? "";
-          if (p.includes("pi-coding-agent") || p.includes("pi-ai") || p.startsWith("<builtin")) {
-            systemTools.push(t);
-          } else {
-            extensionTools.push(t);
-          }
-        }
-      }
-
-      const systemPromptRaw = estimateTokens(systemPrompt);
-      const memoryFilesRaw = contextFiles.reduce(
-        (s: number, f: any) => s + estimateTokens(f.content ?? ""),
-        0,
+      const { systemTools, extensionTools } = classifyActiveTools(
+        pi.getAllTools(),
+        pi.getActiveTools(),
       );
-      const skillsRaw = skills.reduce((s: number, sk: any) => {
-        const text = sk.description ?? sk.name ?? sk.filePath ?? "";
-        try {
-          return s + estimateTokens(JSON.stringify(sk));
-        } catch {
-          return s + estimateTokens(String(text));
-        }
-      }, 0);
+      const promptParts = attributeSystemPrompt(systemPrompt, contextFiles, skills);
+      const systemToolsRaw = systemTools.length > 0 ? estimateValueTokens(systemTools) : 0;
+      const extensionToolsRaw = extensionTools.length > 0 ? estimateValueTokens(extensionTools) : 0;
+      const messageAnalysis = analyzeMessages(messages);
 
-      const systemToolsRaw = systemTools.length
-        ? estimateTokens(JSON.stringify(systemTools))
-        : 0;
-      const extensionToolsRaw = extensionTools.length
-        ? estimateTokens(JSON.stringify(extensionTools))
-        : 0;
-
-      let msgTokensRaw = 0;
-      const msgByRoleRaw: Record<string, number> = {
-        user: 0,
-        assistant: 0,
-        toolResult: 0,
-        bashExecution: 0,
-        other: 0,
-      };
-      for (const entry of branch as any[]) {
-        if (entry.type === "message") {
-          const m = entry.message;
-          if (m.role === "user") {
-            let t = 0;
-            if (typeof m.content === "string") t = estimateTokens(m.content);
-            else if (Array.isArray(m.content)) {
-              for (const p of m.content as any[]) if (p.type === "text") t += estimateTokens(p.text ?? "");
-            }
-            msgTokensRaw += t;
-            msgByRoleRaw.user += t;
-          } else if (m.role === "assistant") {
-            let t = 0;
-            let toolT = 0;
-            if (typeof m.content === "string") t = estimateTokens(m.content);
-            else if (Array.isArray(m.content)) {
-              for (const p of m.content as any[]) {
-                if (p.type === "text") t += estimateTokens(p.text ?? "");
-                if (p.type === "toolCall") toolT += estimateTokens(JSON.stringify(p));
-              }
-            }
-            msgTokensRaw += t + toolT;
-            msgByRoleRaw.assistant += t + toolT;
-          } else if (m.role === "toolResult") {
-            let t = 0;
-            if (Array.isArray(m.content)) {
-              for (const p of m.content as any[]) if (p.type === "text") t += estimateTokens(p.text ?? "");
-            }
-            msgTokensRaw += t;
-            msgByRoleRaw.toolResult += t;
-          } else if (m.role === "bashExecution") {
-            const t = estimateTokens((m as any).command ?? "");
-            msgTokensRaw += t;
-            msgByRoleRaw.bashExecution += t;
-          } else {
-            const t = estimateTokens(JSON.stringify(m));
-            msgTokensRaw += t;
-            msgByRoleRaw.other += t;
-          }
-        } else if (entry.type === "branch_summary" || entry.type === "compaction") {
-          const t = estimateTokens((entry as any).summary ?? "");
-          msgTokensRaw += t;
-          msgByRoleRaw.other += t;
-        }
-      }
-
-      let effectiveSystemPromptRaw = systemPromptRaw;
-      if (memoryFilesRaw > 0 || skillsRaw > 0) {
-        effectiveSystemPromptRaw = Math.max(0, systemPromptRaw - memoryFilesRaw - skillsRaw);
-        if (effectiveSystemPromptRaw < systemPromptRaw * 0.2) {
-          effectiveSystemPromptRaw = Math.round(systemPromptRaw * 0.5);
-        }
-      }
-
-      const totalRaw =
-        effectiveSystemPromptRaw +
-        memoryFilesRaw +
-        skillsRaw +
-        systemToolsRaw +
-        extensionToolsRaw +
-        msgTokensRaw;
-
+      const tokenGroups = scaleTokenGroups({
+        systemPrompt: promptParts.systemPromptRaw,
+        memoryFiles: promptParts.memoryFilesRaw,
+        skills: promptParts.skillsRaw,
+        systemTools: systemToolsRaw,
+        extensionTools: extensionToolsRaw,
+        messages: messageAnalysis.total,
+      }, totalActual);
+      const systemPromptTokens = tokenGroups.systemPrompt;
+      const memoryTokens = tokenGroups.memoryFiles;
+      const skillsTokens = tokenGroups.skills;
+      const systemToolsTokens = tokenGroups.systemTools;
+      const extensionToolsTokens = tokenGroups.extensionTools;
+      const messagesTokens = tokenGroups.messages;
+      const messagesByRole = scaleTokenGroups(messageAnalysis.byRole, messagesTokens);
+      const totalRaw = promptParts.systemPromptRaw + promptParts.memoryFilesRaw + promptParts.skillsRaw
+        + systemToolsRaw + extensionToolsRaw + messageAnalysis.total;
       const ratio = totalRaw > 0 ? totalActual / totalRaw : 1;
-
-      const systemPromptTokens = Math.round(effectiveSystemPromptRaw * ratio);
-      const memoryTokens = Math.round(memoryFilesRaw * ratio);
-      const skillsTokens = Math.round(skillsRaw * ratio);
-      const systemToolsTokens = Math.round(systemToolsRaw * ratio);
-      const extensionToolsTokens = Math.round(extensionToolsRaw * ratio);
-      const messagesTokens = Math.round(msgTokensRaw * ratio);
-      const messagesByRole: Record<string, number> = {};
-      for (const [k, v] of Object.entries(msgByRoleRaw)) {
-        messagesByRole[k] = Math.round(v * ratio);
-      }
 
       // Sorted by token count so the heaviest items surface first
       const systemToolsDetail = systemTools
         .map((t) => ({
           name: t.name,
-          tokens: Math.round(estimateTokens(JSON.stringify(t)) * ratio),
+          tokens: Math.round(estimateValueTokens(t) * ratio),
         }))
         .sort((a, b) => b.tokens - a.tokens);
       const extensionToolsDetail = extensionTools
         .map((t) => ({
           name: t.name,
-          tokens: Math.round(estimateTokens(JSON.stringify(t)) * ratio),
+          tokens: Math.round(estimateValueTokens(t) * ratio),
         }))
         .sort((a, b) => b.tokens - a.tokens);
       const memoryFilesDetail = contextFiles
-        .map((f: any) => ({
+        .filter((file) => systemPrompt.includes(file.path))
+        .map((f) => ({
           path: f.path,
           base: basename(f.path),
-          tokens: Math.round(estimateTokens(f.content ?? "") * ratio),
+          tokens: Math.round((estimateTokens(f.content) + estimateTokens(f.path) + 12) * ratio),
         }))
         .sort((a, b) => b.tokens - a.tokens);
       const skillsDetail = skills
-        .map((s: any) => ({
-          label: s.name ?? s.filePath ?? s.path ?? "unknown",
-          tokens: (() => {
-            try {
-              return Math.round(estimateTokens(JSON.stringify(s)) * ratio);
-            } catch {
-              return Math.round(estimateTokens(String(s.name ?? "")) * ratio);
-            }
-          })(),
+        .filter((skill) => !skill.disableModelInvocation && systemPrompt.includes(skill.filePath))
+        .map((skill) => ({
+          label: skill.name,
+          tokens: Math.round((
+            estimateTokens(skill.name)
+            + estimateTokens(skill.description)
+            + estimateTokens(skill.filePath)
+            + 20
+          ) * ratio),
         }))
         .sort((a, b) => b.tokens - a.tokens);
 
-      const bufferTokens = getBufferTokens(limit);
+      const bufferTokens = getCompactionReserveTokens(limit);
       const freeTokens = Math.max(0, limit - totalActual - bufferTokens);
       const overflowTokens = totalActual > limit ? totalActual - limit : 0;
 
@@ -293,16 +155,14 @@ export default function (pi: ExtensionAPI) {
         { label: "System prompt", value: systemPromptTokens, color: "muted" },
         { label: "System tools", value: systemToolsTokens, color: "success" },
         { label: "Extension tools", value: extensionToolsTokens, color: "accent" },
-        { label: "Custom agents", value: 0, color: "dim" },
         { label: "Memory files", value: memoryTokens, color: "dim" },
         { label: "Skills", value: skillsTokens, color: "dim" },
         { label: "Messages", value: messagesTokens, color: "accent" },
         { label: "Free space", value: freeTokens, color: "borderMuted", isFree: true },
-        { label: "Autocompact buffer", value: bufferTokens, color: "warning", isBuffer: true },
+        { label: "Compact reserve*", value: bufferTokens, color: "warning", isBuffer: true },
       ];
 
       const visibleCategories = categories.filter((c) => {
-        if (c.label === "Custom agents" && c.value === 0 && !showAll) return false;
         if (c.label === "Extension tools" && c.value === 0 && !showAll) return false;
         return true;
       });
@@ -533,6 +393,7 @@ export default function (pi: ExtensionAPI) {
           for (const cl of catLines) {
             c.addChild(new Text(`  ${cl}`, 1, 0));
           }
+          c.addChild(new Text(theme.fg("dim", "  * Pi default: 16,384 tokens; custom setting unavailable here"), 1, 0));
 
           // Height guard: if showAll truncated items, hint
           const truncated =
@@ -545,7 +406,7 @@ export default function (pi: ExtensionAPI) {
 
           if (truncated) {
             c.addChild(new Spacer(1));
-            c.addChild(new Text(theme.fg("dim", "  ↕ showing first 8 per category — narrow filter if needed"), 1, 0));
+            c.addChild(new Text(theme.fg("dim", `  ↕ showing first ${MAX_DETAIL_ITEMS} per category`), 1, 0));
           } else if (showAll && catLines.length > 28) {
             c.addChild(new Spacer(1));
             c.addChild(new Text(theme.fg("dim", "  ↕ long list — ↑/↓ scroll if content exceeds view"), 1, 0));
@@ -559,7 +420,7 @@ export default function (pi: ExtensionAPI) {
               theme.fg("error", theme.bold(`⚠ Context overflow: ${formatTokens(overflowTokens)} over limit`)) +
                 ` ${theme.fg("dim", `(${formatTokens(totalActual)}/${formatTokens(limit)})`)}`,
             );
-            warnings.push(theme.fg("warning", "  → Run /compact or /context to compact the conversation"));
+            warnings.push(theme.fg("warning", "  → Run /compact to compact the conversation"));
           } else if (usagePercent >= 90) {
             warnings.push(theme.fg("error", `⚠ High usage: ${usagePercent.toFixed(1)}% – near limit`));
             warnings.push(theme.fg("warning", "  → Consider /compact with a handoff summary"));

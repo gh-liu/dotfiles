@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run typecheck:subagent && vitest run",
+    "test": "npm run typecheck:subagent && npm run typecheck:context && vitest run",
+    "typecheck:context": "tsc -p context/tsconfig.json",
     "typecheck:subagent": "tsc -p subagent/tsconfig.json"
   },
   "dependencies": {
