@@ -39,7 +39,7 @@ export interface SubagentExtensionOptions {
 const deadline = () => Type.Optional(Type.Integer({
   minimum: 1_000,
   maximum: 3_600_000,
-  description: "Required by run/start: execution deadline chosen from the task's estimated duration (1,000-3,600,000 ms)",
+  description: "Required for run/start: execution deadline (1,000-3,600,000 ms)",
 }));
 
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
@@ -58,18 +58,11 @@ export function validateAuthEnvAllowlist(names: readonly string[] | undefined): 
 }
 
 export function buildWakeWordSnippet(registry: AgentDiscovery): string {
-  const contracts = registry.agents.map((agent) => {
-    const description = typeof agent.description === "string"
-      ? boundText(agent.description.replace(/\s+/g, " ").trim(), { maxCharacters: 240, maxLines: 1 })
-      : "registered delegated role";
-    return `${agent.name}=${description}`;
-  });
-  const routing = contracts.length > 0
-    ? `registered routing contracts: ${contracts.join("; ")}; `
-    : "no registered routing contracts; ";
+  const names = registry.agents.map((agent) => agent.name);
+  const registered = names.length > 0 ? names.join(", ") : "none";
   return boundText(
-    `Classify by task boundary before equivalent parent read/search/browser: ${routing}choose by the startup catalog, not a fixed roster; keep single-file lookups, localized single-file edits, routine re-runs of existing checks, and single-source factual checks direct; call list only if the catalog may be stale, no suitable role matches, or diagnosis is needed`,
-    { maxCharacters: 4_000, maxLines: 1 },
+    `Delegate suitable bounded work to registered agents (${registered}); choose by the tool catalog. Keep simple lookups, localized edits, routine check reruns, and single-source fact checks in the parent.`,
+    { maxCharacters: 1_000, maxLines: 1 },
   );
 }
 
@@ -97,13 +90,13 @@ const SubagentParameters = Type.Object({
     Type.Literal("wait"),
     Type.Literal("interrupt"),
     Type.Literal("close"),
-  ], { description: "Subagent lifecycle action" }),
-  agent: Type.Optional(Type.String({ description: "Required by run/start: canonical user agent name" })),
-  task: Type.Optional(Type.String({ minLength: 1, description: "Required by run/start: self-contained delegated task" })),
+  ], { description: "Lifecycle action" }),
+  agent: Type.Optional(Type.String({ description: "run/start agent name" })),
+  task: Type.Optional(Type.String({ minLength: 1, description: "run/start self-contained task" })),
   cwd: Type.Optional(Type.String({
-    description: "Optional run/start relative child directory under the project root; omit to use the parent cwd",
+    description: "run/start child cwd under the project root; defaults to parent cwd",
   })),
-  id: Type.Optional(Type.String({ minLength: 1, description: "Required by runtime lifecycle actions: runtime ID" })),
+  id: Type.Optional(Type.String({ minLength: 1, description: "Runtime ID for lifecycle actions" })),
   mode: Type.Optional(Type.Union([
     Type.Literal("follow_up"),
     Type.Literal("steer"),
@@ -111,11 +104,11 @@ const SubagentParameters = Type.Object({
   message: Type.Optional(Type.String({ minLength: 1, description: "Required by send" })),
   operationId: Type.Optional(Type.String({
     minLength: 1,
-    description: "Required by wait when id targets one runtime; omit id and operationId to join all outstanding background operations",
+    description: "wait operation ID; omit id and operationId to join all background work",
   })),
   expectedOperationId: Type.Optional(Type.String({
     minLength: 1,
-    description: "Required by interrupt and steer; guards against targeting a later operation",
+    description: "interrupt/steer operation guard",
   })),
   deadlineMs: deadline(),
   timeoutMs: Type.Optional(Type.Integer({ minimum: 1, maximum: 3_600_000, description: "Optional wait timeout" })),
@@ -290,15 +283,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Delegate bounded work to a registered child with fresh context and only its declared tools. Context isolation is not a filesystem, process, network, or credential sandbox. Each agent's description in the catalog below is its routing contract; the wake snippet lists current delegations for the registry. Classify by task boundary before doing equivalent parent reads, searches, or browser work. Keep single-file lookups, localized single-file edits, routine re-runs of existing checks (not exploratory app testing), and single-source factual checks direct. After a successful cited read-only handoff, synthesize without repeating the same searches or reads; verify only decision-critical uncertainty or contradictions. The parent owns task decomposition, conflict avoidance, result review, integration, and final verification. Use one-shot run by default; use start for background, then status/wait/send/close — an open runtime retains its slot while idle and settled background work announces via a follow-up card. status without id lists all runtimes; wait without operationId joins outstanding background work. Default to the startup catalog; call list only when the catalog may be stale, no suitable role matches, or diagnosis is needed.\n\n${startupCatalog}`,
+      `Delegate bounded work to fresh-context registered agents; context isolation is not a security sandbox. Select by the startup catalog and call list only to refresh or diagnose it. run is one-shot; start creates a persistent runtime controlled by status/wait/send/interrupt/close, and idle runtimes retain a slot. The parent owns decomposition, write coordination, handoff review, integration, and final verification.\n\nStartup catalog:\n${startupCatalog}`,
     promptSnippet: wakeSnippet,
     promptGuidelines: [
-      "Default to the startup catalog in the tool description — the wake snippet is generated from every registered agent's name and description, not a fixed roster; call list only when the catalog may be stale, no suitable role matches, or you need to diagnose discovery.",
-      "Classify by task boundary before doing equivalent parent reads, searches, or browser automation: keep single-file lookups (use read, not bash), localized single-file edits, routine re-runs of existing checks or test suites, and single-source factual checks direct; otherwise consider delegation when a matching registered role materially improves quality, parallelism, fresh-context independence, or parent-context isolation.",
-      "Before calling subagent, decompose the bounded work instead of forwarding the raw user prompt. Every task must be self-contained (the child has fresh context) and carry these labels: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff — never silently omit one. Do not delegate unresolved decomposition or synthesis that the parent still owns.",
-      "Choose a registered agent whose catalog description and declared capabilities match the bounded task; treat the discovered definition as the source of truth. Use action:run for bounded one-shots with a task-appropriate deadlineMs (1,000-3,600,000 ms); use action:start only for background or follow-up work, steer only the guarded active operation, and close persistent runtimes when finished. Child sessions never load skills; when one needs a skill's knowledge, put the skill file path (e.g. ~/.pi/agent/skills/<name>/SKILL.md) or the needed excerpt directly in the task text.",
-      "Run at most three truly independent subagents in parallel: separate action:run calls in the same turn, never persistent runtimes merely for concurrency. Never let the parent and a write-capable subagent, or multiple write-capable subagents, edit the same files concurrently. Start dependent review or decision work only after prerequisite evidence and writes settle.",
-      "Treat a subagent result as a handoff, not proof: for read-only cited work do not repeat the same searches or re-read every file — verify only decision-critical uncertainty; write-capable work requires inspecting the complete settled diff and rerunning relevant integrated validation; when a subagent did not complete normally (failed/crashed/interrupted), the parent must call subagent status to inspect the bounded error/summary of the active/last-settled operation and whether transcript.sessionPath is present, must NOT read the session file in the parent context, and if a retry is needed must pass transcript.sessionPath as Starting evidence into the retry subagent so that the retry subagent's first step reads that session file to locate the last completed step, failure point, and remaining work before continuing; produce the final synthesis yourself.",
+      "Before delegating, decompose the bounded work rather than forwarding the raw user prompt. Because the child has fresh context, every task must include: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff. The parent retains unresolved decomposition and synthesis.",
+      "Choose by the catalog's capabilities. Use run for one-shots and always supply a required task-appropriate deadlineMs; use start only for background or follow-up work, guard steer/interrupt with the active operation ID, and close persistent runtimes. Children load no skills, so include any needed skill path or excerpt. Run at most three independent one-shots in parallel, with no overlapping parent/child or child/child writes; wait for prerequisites before dependent work.",
+      "Treat results as handoffs, not proof. For cited read-only work, verify only decision-critical uncertainty instead of repeating the same reads/searches. For writes, inspect the complete settled diff and run integrated validation. After failed/crashed/interrupted work, call status; the parent MUST NOT read transcript.sessionPath. If retrying, pass that path as Starting evidence and require the child to read it first. Produce the final synthesis yourself.",
     ],
     executionMode: "parallel",
     parameters: SubagentParameters,

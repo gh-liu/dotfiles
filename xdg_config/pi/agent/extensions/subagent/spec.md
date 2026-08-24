@@ -1,10 +1,12 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
-- Updated: 2026-08-24 — the Available-tools wake-word `promptSnippet` is now
-  generated at registration time from every discovered agent's bounded
-  `name` + `description` routing contract (`buildWakeWordSnippet`), so custom or
-  renamed agents participate without a fixed extension-owned role table.
+- Updated: 2026-08-24 — model-facing prompt contributions now have one source
+  for each concern: the tool description owns the bounded `name` + `description`
+  startup catalog, while `promptSnippet` carries only discovered names and a
+  compact delegation reminder. Guidelines retain work-order, lifecycle,
+  concurrency, and handoff contracts without repeating the catalog. A character
+  budget test guards this fixed context cost.
 - Updated: 2026-08-24 — bounded pre-accept close, auth-environment validation,
   exact custom-tool filtering, contained definition symlinks, action-specific
   wait validation, and tester provisioning/isolation contracts now have
@@ -129,11 +131,12 @@ a fixed roster. Each registered definition's `description` is its model-facing
 routing contract. The tool description contains a bounded startup catalog built
 from those definitions, and `list` refreshes discovery when definitions change
 or a requested name is absent. The Available-tools wake-word `promptSnippet` is
-likewise derived from every effective registry entry at registration
-(`buildWakeWordSnippet`): each bounded `name=description` contract participates
-in discovery, including custom and renamed roles. Prompt guidelines must select
-from that catalog; they must not duplicate agent names, assume a fixed count, or
-become a second source of truth for role capabilities.
+derived from every effective registry entry at registration
+(`buildWakeWordSnippet`), but includes names only. This keeps custom and renamed
+roles visible without paying for every routing description twice. Prompt
+guidelines select from the catalog; they must not duplicate agent names or
+descriptions, assume a fixed count, or become a second source of truth for role
+capabilities.
 
 The parent classifies work before it starts equivalent reads or searches:
 
@@ -944,8 +947,8 @@ a deferred idea.
 - Concurrency reservation/release.
 - Bounded output and redaction.
 - Provider-compatible root-object schema and action-specific validation.
-- Startup catalog, all-registry wake-word snippet, and capability-driven
-  routing guidance.
+- Single startup catalog, all-registry name wake word, model-facing context
+  budget, and capability-driven routing guidance.
 - Native cwd canonicalization, project-root containment, and symlink escape.
 - Idempotent cleanup and timer/listener removal.
 - Result-envelope ownership and outcome mapping.
@@ -971,7 +974,7 @@ Current capability-to-test map:
 
 | Capability contract | Deterministic coverage | Real-Pi coverage |
 | --- | --- | --- |
-| Agent parsing, explicit/custom tools, fresh-only context, contained definition symlinks, discovery, overrides, catalog, all-registry wake-word generation | `agents.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | role-selection and work-order scenarios |
+| Agent parsing, explicit/custom tools, fresh-only context, contained definition symlinks, discovery, overrides, single catalog, all-registry name wake word, model-facing context budget | `agents.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | role-selection and work-order scenarios |
 | Cwd/root containment, symlink escape, bounded project guidance | `context.test.ts` | isolated fixture workspaces |
 | Explicit SDK session profile, durable transcript reference, result ownership | `sdk-executor.test.ts` | all delegated scenarios |
 | One-shot run, persistent start/status/wait/follow-up/close | `index.test.ts`, `sdk-executor.test.ts` | `persistent-follow-up` |

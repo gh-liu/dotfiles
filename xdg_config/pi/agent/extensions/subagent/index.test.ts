@@ -455,8 +455,11 @@ describe("subagent tool", () => {
     const env = setup();
     expect(env.extension.getTool().parameters).toMatchObject({ type: "object" });
     expect(env.extension.getTool().parameters).not.toHaveProperty("anyOf");
-    expect((env.extension.getTool().parameters as { properties: { deadlineMs: object } }).properties.deadlineMs)
-      .not.toHaveProperty("default");
+    const deadlineSchema = (env.extension.getTool().parameters as {
+      properties: { deadlineMs: { description?: string } };
+    }).properties.deadlineMs;
+    expect(deadlineSchema).not.toHaveProperty("default");
+    expect(deadlineSchema.description).toContain("Required for run/start");
     expect(await env.invoke({ action: "run" })).toMatchObject({
       isError: true,
       details: { error: "agent is required for subagent run" },
@@ -501,31 +504,25 @@ describe("subagent tool", () => {
     const canonicalRoot = realpathSync(env.root);
     expect(env.extension.getTool().description).toContain("scout: Inspect files");
     expect(env.extension.getTool().description).toContain("startup catalog");
-    expect(env.extension.getTool().description).toContain("call list only when the catalog may be stale");
-    expect(env.extension.getTool().description).toContain("parent owns task decomposition");
-    expect(env.extension.getTool().description).toContain("without repeating the same searches or reads");
+    expect(env.extension.getTool().description).toContain("call list only to refresh or diagnose it");
+    expect(env.extension.getTool().description).toContain("parent owns decomposition");
     expect(env.extension.getTool().description).not.toContain("NEVER list");
     expect(env.extension.getTool().description).not.toContain("MANDATORY BEFORE any read/bash");
-    expect(env.extension.getTool().promptSnippet).toContain("Classify by task boundary");
-    expect(env.extension.getTool().promptSnippet).toContain("single-file lookups");
-    expect(env.extension.getTool().promptSnippet).toContain("routine re-runs");
-    expect(env.extension.getTool().promptSnippet).toContain("choose by the startup catalog");
-    expect(env.extension.getTool().promptSnippet).toContain("scout=Inspect files");
+    expect(env.extension.getTool().promptSnippet).toContain("registered agents (scout)");
+    expect(env.extension.getTool().promptSnippet).toContain("simple lookups");
+    expect(env.extension.getTool().promptSnippet).toContain("routine check reruns");
+    expect(env.extension.getTool().promptSnippet).toContain("choose by the tool catalog");
+    expect(env.extension.getTool().promptSnippet).not.toContain("Inspect files");
     expect(env.extension.getTool().promptSnippet).not.toContain("NEVER list");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
-      expect.stringContaining("startup catalog"),
-      expect.stringContaining("call list only when the catalog may be stale"),
-      expect.stringContaining("Classify by task boundary"),
-      expect.stringContaining("single-file lookups"),
-      expect.stringContaining("catalog description and declared capabilities"),
-      expect.stringContaining("decompose the bounded work instead of forwarding the raw user prompt"),
-      expect.stringContaining("the child has fresh context"),
+      expect.stringContaining("decompose the bounded work rather than forwarding the raw user prompt"),
+      expect.stringContaining("child has fresh context"),
       expect.stringContaining("Outcome, Scope, Starting evidence"),
-      expect.stringContaining("action:run for bounded one-shots"),
+      expect.stringContaining("Use run for one-shots"),
       expect.stringContaining("deadlineMs"),
-      expect.stringContaining("separate action:run calls in the same turn"),
-      expect.stringContaining("Treat a subagent result as a handoff, not proof"),
-      expect.stringContaining("do not repeat the same searches"),
+      expect.stringContaining("at most three independent one-shots"),
+      expect.stringContaining("Treat results as handoffs, not proof"),
+      expect.stringContaining("instead of repeating the same reads/searches"),
     ]));
     expect(options).toMatchObject({
       cwd: canonicalRoot,
@@ -1527,7 +1524,7 @@ describe("subagent tool", () => {
     expect(new Set(revisions).size).toBe(revisions.length);
   });
 
-  test("buildWakeWordSnippet includes every registered routing contract", () => {
+  test("buildWakeWordSnippet includes every registered name without duplicating catalog descriptions", () => {
     const registry = {
       agents: [
         { name: "scout", description: "Map multiple files" },
@@ -1536,15 +1533,15 @@ describe("subagent tool", () => {
       errors: [],
     };
     const snippet = buildWakeWordSnippet(registry);
-    expect(snippet).toContain("scout=Map multiple files");
-    expect(snippet).toContain("custom-auditor=Audit bespoke invariants");
+    expect(snippet).toContain("registered agents (scout, custom-auditor)");
+    expect(snippet).not.toContain("Map multiple files");
+    expect(snippet).not.toContain("Audit bespoke invariants");
     expect(snippet).not.toContain("reviewer");
-    expect(snippet).toContain("not a fixed roster");
-    expect(snippet).toContain("single-file lookups");
-    expect(snippet).toContain("startup catalog");
+    expect(snippet).toContain("simple lookups");
+    expect(snippet).toContain("tool catalog");
   });
 
-  test("buildWakeWordSnippet preserves registry order and bounds descriptions", () => {
+  test("buildWakeWordSnippet preserves registry order and has a fixed upper bound", () => {
     const registry = {
       agents: [
         { name: "zeta", description: "Z".repeat(500) },
@@ -1553,12 +1550,12 @@ describe("subagent tool", () => {
       errors: [],
     };
     const snippet = buildWakeWordSnippet(registry);
-    expect(snippet.indexOf("zeta=")).toBeLessThan(snippet.indexOf("alpha="));
-    expect(snippet.length).toBeLessThanOrEqual(4_000);
-    expect(snippet).not.toContain("Z".repeat(241));
+    expect(snippet.indexOf("zeta")).toBeLessThan(snippet.indexOf("alpha"));
+    expect(snippet.length).toBeLessThanOrEqual(1_000);
+    expect(snippet).not.toContain("Z".repeat(500));
   });
 
-  test("registered tool snippet and guidelines reflect list and direct-exception contract", async () => {
+  test("registered tool keeps one catalog and a bounded model-facing contract", async () => {
     const agents = temporaryDirectory("pi-subagent-agents-");
     writeAgent(agents, "scout", "Scout", "read, grep");
     writeAgent(agents, "oracle", "Oracle", "read, grep");
@@ -1570,20 +1567,33 @@ describe("subagent tool", () => {
       settingsPath: join(temporaryDirectory("pi-subagent-settings-"), "missing.json"),
     });
     const tool = extension.getTool();
-    expect(tool.promptSnippet).toContain("scout=Scout");
-    expect(tool.promptSnippet).toContain("oracle=Oracle");
-    expect(tool.promptSnippet).toContain("call list only if the catalog may be stale");
-    expect(tool.promptSnippet).toContain("single-source factual checks direct");
+    expect(tool.promptSnippet).toContain("registered agents (oracle, scout)");
+    expect(tool.promptSnippet).not.toContain("Scout");
+    expect(tool.promptSnippet).not.toContain("Oracle");
+    expect(tool.promptSnippet).toContain("single-source fact checks in the parent");
     expect(tool.promptSnippet).not.toContain("NEVER list");
     expect(tool.promptSnippet).not.toContain("BEFORE any read/bash");
     expect(tool.description).toContain("startup catalog");
-    expect(tool.description).toContain("call list only when the catalog may be stale");
-    expect(tool.description).toContain("single-file lookups");
+    expect(tool.description).toContain("scout: Scout");
+    expect(tool.description).toContain("oracle: Oracle");
+    expect(tool.description).toContain("call list only to refresh or diagnose it");
     expect(tool.description).not.toContain("NEVER list");
-    expect(tool.promptGuidelines.join("\n")).toContain("startup catalog");
-    expect(tool.promptGuidelines.join("\n")).toContain("Classify by task boundary");
-    expect(tool.promptGuidelines.join("\n")).toContain("single-source factual");
-    expect(tool.promptGuidelines.join("\n")).not.toContain("NEVER call subagent list");
-    expect(tool.promptGuidelines.join("\n")).not.toContain("BEFORE any read/bash");
+    const guidelines = tool.promptGuidelines.join("\n");
+    expect(guidelines).not.toContain("scout");
+    expect(guidelines).not.toContain("oracle");
+    expect(guidelines).toContain("at most three independent one-shots");
+    expect(guidelines).toContain("no overlapping parent/child or child/child writes");
+    expect(guidelines).toContain("always supply a required task-appropriate deadlineMs");
+    expect(guidelines).toContain("failed/crashed/interrupted");
+    expect(guidelines).toContain("parent MUST NOT read transcript.sessionPath");
+    expect(guidelines).toContain("transcript.sessionPath");
+    expect(tool.promptSnippet.length).toBeLessThanOrEqual(320);
+    expect(guidelines.length).toBeLessThanOrEqual(1_500);
+    expect(JSON.stringify({
+      description: tool.description,
+      parameters: tool.parameters,
+      promptSnippet: tool.promptSnippet,
+      promptGuidelines: tool.promptGuidelines,
+    }).length).toBeLessThanOrEqual(5_000);
   });
 });
