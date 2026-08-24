@@ -1,6 +1,16 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
+- Updated: 2026-08-24 — the Available-tools wake-word `promptSnippet` is now
+  generated at registration time from the agent registry via an ordered
+  class→role binding table inside the extension (`buildWakeWordSnippet`);
+  roles absent from the registry silently drop their arrows, so dangling wake
+  words are impossible, and an oracle decision-class wake word was added.
+- Updated: 2026-08-24 — declarative skills frontmatter (`skills:` lists) was
+  prototyped and removed the same day; child sessions return to unconditional
+  zero-skill construction, skill provisioning is now open decision §16 item 6,
+  parents compose skill references (paths or excerpts) into work orders, and
+  roles embed their tool workflows in their prompts.
 - Updated: 2026-08-24 — added catalog-driven routing for standalone exploratory
   QA/browser testing: a `tester` agent definition (`agents/tester.md`, embedded
   `agent-browser` CLI knowledge because children run with no skills) plus
@@ -114,9 +124,13 @@ Delegation policy is expressed in terms of task boundaries and capabilities, not
 a fixed roster. Each registered definition's `description` is its model-facing
 routing contract. The tool description contains a bounded startup catalog built
 from those definitions, and `list` refreshes discovery when definitions change
-or a requested name is absent. Prompt guidelines must select from that catalog;
-they must not duplicate agent names, assume a fixed count, or become a second
-source of truth for role capabilities.
+or a requested name is absent. The Available-tools wake-word `promptSnippet` is
+likewise derived from the registry at registration through an ordered class→role
+binding table inside the extension (`buildWakeWordSnippet`), so absent roles
+silently drop their arrows and the "must not duplicate agent names / fixed
+count" rule holds by construction. Prompt guidelines must select from that
+catalog; they must not duplicate agent names, assume a fixed count, or become a
+second source of truth for role capabilities.
 
 The parent classifies work before it starts equivalent reads or searches:
 
@@ -128,8 +142,8 @@ The parent classifies work before it starts equivalent reads or searches:
   role before the parent starts its own web-research workflow.
 - Standalone exploratory testing, dogfooding, QA, bug hunts, and browser
   automation of a running application are delegated to a matching registered
-  tester role before the parent drives any browser itself; children cannot load
-  skills, so only such a role carries embedded agent-browser knowledge.
+  tester role before the parent drives any browser itself; child sessions load
+  no skills, so such a role embeds its tool workflow in its definition prompt.
 - Bounded multi-file discovery, one specific high-impact unresolved decision,
   and separately owned implementation are strong candidates when a matching
   registered role materially improves isolation, quality, or parallelism.
@@ -540,6 +554,8 @@ needed. Each child session is constructed with an isolated `DefaultResourceLoade
 (`noExtensions`, `noSkills`, `noPromptTemplates`, `noThemes`, `noContextFiles`), an
 explicit `systemPrompt`, the agent's tool allowlist, per-session `model`/`thinkingLevel`,
 and a dedicated `SessionManager` under `<agent-dir>/subagent-sessions/<runId>/`.
+Children never load skills; skill knowledge reaches a child only through its role
+prompt or parent-composed work-order references (path or excerpt) — see §16 item 6.
 `web_search` is provided as a session-scoped custom tool when the effective tool
 allowlist declares it. The parent resolves applicable project guidance and
 materializes the selected text into the work-order envelope, so the child never
@@ -915,7 +931,8 @@ a deferred idea.
 - Concurrency reservation/release.
 - Bounded output and redaction.
 - Provider-compatible root-object schema and action-specific validation.
-- Startup catalog and capability-driven routing guidance.
+- Startup catalog, registry-generated wake-word snippet, and capability-driven
+  routing guidance.
 - Native cwd canonicalization, project-root containment, and symlink escape.
 - Idempotent cleanup and timer/listener removal.
 - Result-envelope ownership and outcome mapping.
@@ -940,7 +957,7 @@ Current capability-to-test map:
 
 | Capability contract | Deterministic coverage | Real-Pi coverage |
 | --- | --- | --- |
-| Agent parsing, explicit tools, fresh-only context, discovery, overrides, catalog | `agents.test.ts`, `index.test.ts` | role-selection and work-order scenarios |
+| Agent parsing, explicit tools, fresh-only context, discovery, overrides, catalog, wake-word generation | `agents.test.ts`, `index.test.ts` (incl. wake-word snippet generation cases) | role-selection and work-order scenarios |
 | Cwd/root containment, symlink escape, bounded project guidance | `context.test.ts` | isolated fixture workspaces |
 | Explicit SDK session profile, durable transcript reference, result ownership | `sdk-executor.test.ts` | all delegated scenarios |
 | One-shot run, persistent start/status/wait/follow-up/close | `index.test.ts`, `sdk-executor.test.ts` | `persistent-follow-up` |
@@ -1153,6 +1170,21 @@ that consumes it:
    Declarative workflow formats are deferred until a genuinely repetitive
    multi-stage pipeline emerges from manual orchestration; do not build a DAG
    engine speculatively.
+6. Open — declarative skill provisioning for child sessions (frontmatter
+   `skills:` lists). Rejected three shapes: a `*` wildcard element (effective
+   capability silently tracks ambient `skills/` directory contents, breaking
+   fail-fast, dedupe/limit validation, and auditability), a `skills: all`
+   scalar (same drift behind explicit syntax), and a dynamic parent-to-child
+   skill grant unioned with definition-time declarations (a second capability
+   source competing with the definition). Adopted baseline: child sessions are
+   built unconditionally zero-skill (`noSkills`); role prompts embed their tool
+   workflows, and parents compose undeclared skill knowledge into work orders
+   as path references or excerpts (children hold read tools; skill bodies are
+   user-dir input, same trust tier per §9.2). A minimal explicit-list
+   frontmatter was prototyped and removed on 2026-08-24 for lack of
+   demonstrated demand. Reconsider when a second role needs a non-stub skill
+   body or embedded-prompt duplication starts drifting from canonical SKILL.md
+   files.
 
 ## 17. References
 

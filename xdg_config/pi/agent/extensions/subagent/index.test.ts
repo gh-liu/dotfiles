@@ -9,7 +9,7 @@ import type {
   MessageRenderer,
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import { loadSubagentOverrides, registerSubagentExtension } from "./index.ts";
+import { buildWakeWordSnippet, loadSubagentOverrides, registerSubagentExtension, WAKE_BINDINGS } from "./index.ts";
 import { SUBAGENT_COMPLETION_MESSAGE } from "./render.ts";
 import type {
   SubagentController,
@@ -480,18 +480,24 @@ describe("subagent tool", () => {
     const options = env.fake.controllers[0].starts[0].options;
     const canonicalRoot = realpathSync(env.root);
     expect(env.extension.getTool().description).toContain("scout: Inspect files");
-    expect(env.extension.getTool().description).toContain("instead of chaining multiple parent web searches");
-    expect(env.extension.getTool().description).toContain("before loading a parent research workflow or making parent web searches");
+    expect(env.extension.getTool().description).toContain("startup catalog");
+    expect(env.extension.getTool().description).toContain("call list only when the catalog may be stale");
+    expect(env.extension.getTool().description).toContain("parent owns task decomposition");
     expect(env.extension.getTool().description).toContain("without repeating the same searches or reads");
-    expect(env.extension.getTool().description).toContain("parent self-review cannot satisfy independence");
-    expect(env.extension.getTool().promptSnippet).toContain("MANDATORY BEFORE any read/bash");
+    expect(env.extension.getTool().description).not.toContain("NEVER list");
+    expect(env.extension.getTool().description).not.toContain("MANDATORY BEFORE any read/bash");
+    expect(env.extension.getTool().promptSnippet).toContain("Classify by task boundary");
+    expect(env.extension.getTool().promptSnippet).toContain("single-file lookups");
+    expect(env.extension.getTool().promptSnippet).toContain("routine re-runs");
+    expect(env.extension.getTool().promptSnippet).toContain("default to startup catalog");
+    expect(env.extension.getTool().promptSnippet).toContain("multi-file discovery->scout");
+    expect(env.extension.getTool().promptSnippet).not.toContain("NEVER list");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
-      expect.stringContaining("Mandatory delegation before direct work"),
-      expect.stringContaining("Default to delegation for implementation-class work"),
+      expect.stringContaining("startup catalog"),
+      expect.stringContaining("call list only when the catalog may be stale"),
+      expect.stringContaining("Classify by task boundary"),
+      expect.stringContaining("single-file lookups"),
       expect.stringContaining("catalog description and declared capabilities"),
-      expect.stringContaining("multi-source external research"),
-      expect.stringContaining("web_search"),
-      expect.stringContaining("parent self-review is not independent"),
       expect.stringContaining("decompose the bounded work instead of forwarding the raw user prompt"),
       expect.stringContaining("the child has fresh context"),
       expect.stringContaining("Outcome, Scope, Starting evidence"),
@@ -1499,5 +1505,80 @@ describe("subagent tool", () => {
     revisions.push(((await env.invoke({ action: "close", id: identity.runId })).details as { revision: number }).revision);
     expect(revisions).toEqual([...revisions].sort((a, b) => a - b));
     expect(new Set(revisions).size).toBe(revisions.length);
+  });
+
+  test("buildWakeWordSnippet omits absent roles when only scout is present", () => {
+    const registry = { agents: [{ name: "scout" } as never], errors: [] };
+    const snippet = buildWakeWordSnippet(registry);
+    expect(snippet).toContain("multi-file discovery->scout");
+    expect(snippet).not.toContain("->reviewer");
+    expect(snippet).not.toContain("->researcher");
+    expect(snippet).not.toContain("->tester");
+    expect(snippet).not.toContain("->oracle");
+    expect(snippet).not.toContain("->worker");
+    expect(snippet).toContain("single-file lookups");
+    expect(snippet).toContain("startup catalog");
+  });
+
+  test("buildWakeWordSnippet includes oracle when present and keeps stable order", () => {
+    const registry = {
+      agents: [
+        { name: "worker" },
+        { name: "oracle" },
+        { name: "scout" },
+        { name: "reviewer" },
+        { name: "researcher" },
+        { name: "tester" },
+      ] as never[],
+      errors: [],
+    };
+    const snippet = buildWakeWordSnippet(registry);
+    expect(snippet).toContain("->oracle");
+    expect(snippet).toContain("high-impact unresolved decision->oracle");
+    const order = WAKE_BINDINGS.map((binding) => binding.role).filter((role) => snippet.includes(`->${role}`));
+    expect(order).toEqual(["reviewer", "researcher", "tester", "scout", "oracle", "worker"]);
+  });
+
+  test("dynamic snippet contains no unknown role names", () => {
+    const registry = {
+      agents: [{ name: "scout" }, { name: "worker" }] as never[],
+      errors: [],
+    };
+    const snippet = buildWakeWordSnippet(registry);
+    const arrowRoles = [...snippet.matchAll(/->([a-z-]+)/g)].map((m) => m[1]);
+    const allowed = new Set(WAKE_BINDINGS.map((b) => b.role));
+    for (const role of arrowRoles) {
+      expect(allowed.has(role as never)).toBe(true);
+    }
+    expect(arrowRoles).toEqual(expect.arrayContaining(["scout", "worker"]));
+  });
+
+  test("registered tool snippet and guidelines reflect list and direct-exception contract", async () => {
+    const agents = temporaryDirectory("pi-subagent-agents-");
+    writeAgent(agents, "scout", "Scout", "read, grep");
+    writeAgent(agents, "oracle", "Oracle", "read, grep");
+    const extension = harness();
+    registerSubagentExtension(extension.pi, {
+      agentDirectory: agents,
+      controllerFactory: fakeFactory().factory,
+      idFactory: () => "id",
+      settingsPath: join(temporaryDirectory("pi-subagent-settings-"), "missing.json"),
+    });
+    const tool = extension.getTool();
+    expect(tool.promptSnippet).toContain("->scout");
+    expect(tool.promptSnippet).toContain("->oracle");
+    expect(tool.promptSnippet).toContain("call list only if catalog may be stale");
+    expect(tool.promptSnippet).toContain("single-source factual checks direct");
+    expect(tool.promptSnippet).not.toContain("NEVER list");
+    expect(tool.promptSnippet).not.toContain("BEFORE any read/bash");
+    expect(tool.description).toContain("startup catalog");
+    expect(tool.description).toContain("call list only when the catalog may be stale");
+    expect(tool.description).toContain("single-file lookups");
+    expect(tool.description).not.toContain("NEVER list");
+    expect(tool.promptGuidelines.join("\n")).toContain("startup catalog");
+    expect(tool.promptGuidelines.join("\n")).toContain("Classify by task boundary");
+    expect(tool.promptGuidelines.join("\n")).toContain("single-source factual");
+    expect(tool.promptGuidelines.join("\n")).not.toContain("NEVER call subagent list");
+    expect(tool.promptGuidelines.join("\n")).not.toContain("BEFORE any read/bash");
   });
 });

@@ -29,6 +29,10 @@
     "reviewer": {
       "model": "opencode-go/muse-spark-1.2",
       "thinking": "xhigh"
+    },
+    "tester": {
+      "model": "opencode-go/muse-spark-1.2",
+      "thinking": "xhigh"
     }
   },
   "theme": "nord"
