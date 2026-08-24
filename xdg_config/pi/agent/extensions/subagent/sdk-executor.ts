@@ -487,7 +487,7 @@ export async function createSdkSubagentController(
           // Register abort listener before prompt
           options.signal?.addEventListener("abort", onAbort, { once: true });
           // Prepare prompt with preflight
-          const promptText = ["Execute this work order exactly as provided. Return only the requested handoff.", JSON.stringify(options.workOrder, null, 2)].join("\n\n");
+          const promptText = ["Execute this work order exactly as provided. Return only the requested handoff.", JSON.stringify(options.workOrder)].join("\n\n");
           let preflightResolved = false;
           const promptPromise = session.prompt(promptText, {
             preflightResult: (success: boolean) => {

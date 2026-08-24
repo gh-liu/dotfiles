@@ -1107,6 +1107,7 @@ describe("subagent tool", () => {
 
   test("two follow-ups reuse one controller, process, runtime, and transcript session", async () => {
     const env = setup();
+    writeFileSync(join(env.root, "AGENTS.md"), "Initial project guidance");
     const initial = await startIdle(env);
     const first = await env.invoke({ action: "send", id: initial.runId, mode: "follow_up", message: "First" });
     const firstId = (first.details as { operationId: string }).operationId;
@@ -1117,6 +1118,15 @@ describe("subagent tool", () => {
     expect(env.fake.factory).toHaveBeenCalledOnce();
     expect(env.fake.controllers[0].starts.map((call) => call.options.runId)).toEqual([initial.runId, initial.runId, initial.runId]);
     expect(env.fake.controllers[0].starts.map((call) => call.options.workOrder.goal)).toEqual(["Initial", "First", "Second"]);
+    const [initialGuidance, firstGuidance, secondGuidance] = env.fake.controllers[0].starts
+      .map((call) => call.options.workOrder.projectGuidance);
+    expect(initialGuidance).toEqual([
+      `Guidance from ${join(realpathSync(env.root), "AGENTS.md")}:\nInitial project guidance`,
+    ]);
+    expect(firstGuidance).toEqual([
+      "Project guidance is unchanged; continue applying the guidance from the initial work order.",
+    ]);
+    expect(secondGuidance).toEqual(firstGuidance);
     expect(second.details).toMatchObject({ processInstanceId: "process-1", transcript: { sessionId: "child-session" } });
     env.fake.controllers[0].settle(2);
     await env.invoke({ action: "wait", id: initial.runId, operationId: secondId });

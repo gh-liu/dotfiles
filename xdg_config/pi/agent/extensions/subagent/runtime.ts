@@ -10,6 +10,10 @@ import type {
   SubagentRunOptions,
 } from "./protocol.ts";
 
+const CONTINUING_PROJECT_GUIDANCE = [
+  "Project guidance is unchanged; continue applying the guidance from the initial work order.",
+];
+
 /** Control-plane ownership: runtime/operation records, slots, transitions, and settlement. */
 
 export type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
@@ -331,6 +335,9 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       settle: () => settle(),
     };
     runtime.operations.set(operationId, operation);
+    const projectGuidance = runtime.operations.size === 1
+      ? runtime.projectGuidance
+      : CONTINUING_PROJECT_GUIDANCE;
     operation.state = "running";
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
@@ -360,7 +367,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     const runOptions: SubagentRunOptions = {
       cwd: runtime.cwd,
       agent: runtime.agent,
-      workOrder: createWorkOrder(task, runtime.cwd, runtime.projectGuidance),
+      workOrder: createWorkOrder(task, runtime.cwd, projectGuidance),
       runId: runtime.runId,
       operationId,
       parentSessionId: runtime.parentSessionId,

@@ -231,7 +231,11 @@ places it in `goal`, sets `scope` to the canonical child cwd, adds fixed runtime
 constraints and applicable project guidance, and currently leaves
 `knownDecisions`, `evidence`, and `validation` empty. The parent therefore encodes
 task-specific decisions, evidence, validation, and return requirements directly
-in `task`; independently populated structured fields are future work.
+in `task`; independently populated structured fields are future work. The envelope
+is serialized as compact JSON. A persistent runtime receives full applicable
+project guidance on its initial operation; later operations in that child session
+receive only a continuity marker because they retain the initial guidance. A
+fresh runtime always receives full guidance again.
 
 ### 5.3 Runtime and operation identity
 
@@ -593,6 +597,9 @@ Credential values that must never appear in child output (for example
 Names are validated against `^[A-Z_][A-Z0-9_]*$` and must not contain newlines.
 User agent definitions are enabled by default; project-local definitions
 remain disabled. Effective agent `model`/`thinking`/`description` may be overridden via `settings.json` `subagents[agent]` after file discovery; the startup catalog and `list` discovery both reflect the effective merged view.
+Bundled settings override models only, leaving role definitions as the source of
+truth for thinking: `minimal` for scout, `medium` for worker/researcher/tester,
+and `high` for reviewer/oracle.
 
 The in-process transport trades OS-process isolation for the platform-recommended
 embedding model (`docs/rpc.md` explicitly recommends `AgentSession` over spawning

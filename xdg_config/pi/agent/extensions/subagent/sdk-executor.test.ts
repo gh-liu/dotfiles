@@ -221,13 +221,17 @@ describe("one-shot SDK executor", () => {
       emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: JSON.stringify({ goal: text }) }], stopReason: "stop" } });
       emit({ type: "agent_settled" });
     };
+    const runOptions = options();
     const result = await createSdkSubagentExecutor({
       createSession: async () => ({ session: session as any }),
-    })(options());
+    })(runOptions);
     expect(result.status).toBe("completed");
     expect(result.processInstanceId).toMatch(/^[0-9a-f-]{36}$/);
     const summary = JSON.parse(result.summary);
-    const delegatedWorkOrder = JSON.parse(summary.goal.split("\n\n", 2)[1]);
+    const serializedWorkOrder = summary.goal.split("\n\n", 2)[1];
+    expect(serializedWorkOrder).toBe(JSON.stringify(runOptions.workOrder));
+    expect(serializedWorkOrder).not.toContain("\n");
+    const delegatedWorkOrder = JSON.parse(serializedWorkOrder);
     expect(delegatedWorkOrder.goal).toBe("Inspect the fixture");
     expect(result.transcript.sessionId).toBe("session-sdk-1");
     expect(result.transcript.sessionPath).toBe("/tmp/session-sdk-1.jsonl");
