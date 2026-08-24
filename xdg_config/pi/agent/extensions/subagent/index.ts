@@ -61,7 +61,7 @@ export function buildWakeWordSnippet(registry: AgentDiscovery): string {
   const names = registry.agents.map((agent) => agent.name);
   const registered = names.length > 0 ? names.join(", ") : "none";
   return boundText(
-    `Delegate suitable bounded work to registered agents (${registered}); choose by the tool catalog. Keep simple lookups, localized edits, routine check reruns, and single-source fact checks in the parent.`,
+    `Delegate suitable bounded work to registered agents (${registered}); use the startup catalog directly and do not call list before a known agent. Keep simple lookups, localized edits, routine check reruns, and single-source fact checks in the parent.`,
     { maxCharacters: 1_000, maxLines: 1 },
   );
 }

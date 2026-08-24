@@ -76,9 +76,9 @@ describe("agent definitions", () => {
     expect(reviewer.systemPrompt).toContain("Review intent first and implementation second");
     expect(reviewer.systemPrompt).toContain("severity");
     expect(reviewer.systemPrompt).toContain("Do not modify files");
-    expect(reviewer.description).toContain("MUST delegate every independent");
-    expect(reviewer.description).toContain("fresh-eyes, or second-opinion review");
-    expect(reviewer.description).toContain("parent self-review is not independent");
+    expect(reviewer.description).toContain("Separate read-only reviewer");
+    expect(reviewer.description).toContain("independent reviews, fresh eyes, second opinions");
+    expect(reviewer.description).toContain("correctness gaps, and regressions");
   });
 
   test("loads the bundled oracle as a fresh-context read-only expert advisor", () => {
@@ -103,7 +103,7 @@ describe("agent definitions", () => {
     expect(oracle.systemPrompt).toContain("recommendation or default");
     expect(oracle.systemPrompt).toContain("Do not modify files");
     expect(oracle.description).toContain("after focused parent investigation");
-    expect(oracle.description).toContain("not routine review");
+    expect(oracle.description).toContain("never for code review");
   });
 
   test("loads the bundled worker as a medium-thinking implementation profile", () => {

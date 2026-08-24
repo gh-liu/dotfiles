@@ -117,7 +117,7 @@ export const scenarios = [
     targetRate: 1,
     hardExpectation: { requiredAgents: ["reviewer"], maxSubagentCalls: 1 },
     expectation: { requiredAgents: ["reviewer"], maxSubagentCalls: 1, finalAny: reviewerOutcome },
-    prompt: "Independently review the current uncommitted TTL fix against plan.md. Inspect the diff and tests, look for concrete correctness or regression gaps, and report findings with severity and file/line evidence. Do not modify files.",
+    prompt: "Get a fresh-eyes independent review of the current uncommitted TTL fix against plan.md. The review must come from a separate reviewer rather than parent self-review. Inspect the diff and tests, look for concrete correctness or regression gaps, and report findings with severity and file/line evidence. Do not modify files.",
   },
   {
     id: "browser-qa",

@@ -511,7 +511,8 @@ describe("subagent tool", () => {
     expect(env.extension.getTool().promptSnippet).toContain("registered agents (scout)");
     expect(env.extension.getTool().promptSnippet).toContain("simple lookups");
     expect(env.extension.getTool().promptSnippet).toContain("routine check reruns");
-    expect(env.extension.getTool().promptSnippet).toContain("choose by the tool catalog");
+    expect(env.extension.getTool().promptSnippet).toContain("use the startup catalog directly");
+    expect(env.extension.getTool().promptSnippet).toContain("do not call list before a known agent");
     expect(env.extension.getTool().promptSnippet).not.toContain("Inspect files");
     expect(env.extension.getTool().promptSnippet).not.toContain("NEVER list");
     expect(env.extension.getTool().promptGuidelines).toEqual(expect.arrayContaining([
@@ -1566,7 +1567,8 @@ describe("subagent tool", () => {
     expect(snippet).not.toContain("Audit bespoke invariants");
     expect(snippet).not.toContain("reviewer");
     expect(snippet).toContain("simple lookups");
-    expect(snippet).toContain("tool catalog");
+    expect(snippet).toContain("use the startup catalog directly");
+    expect(snippet).toContain("do not call list before a known agent");
   });
 
   test("buildWakeWordSnippet preserves registry order and has a fixed upper bound", () => {

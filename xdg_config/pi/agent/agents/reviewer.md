@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: MUST delegate every independent, fresh-eyes, or second-opinion review of a bounded change, plan, or fix here; parent self-review is not independent
+description: Separate read-only reviewer for bounded changes, plans, or fixes; use for independent reviews, fresh eyes, second opinions, correctness gaps, and regressions
 tools:
   - read
   - grep
