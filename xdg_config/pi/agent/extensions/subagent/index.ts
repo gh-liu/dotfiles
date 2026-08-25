@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -30,8 +29,6 @@ import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.t
 
 export interface SubagentExtensionOptions {
   agentDirectory?: string;
-  /** Override the auto-evolve heartbeat log location, primarily for isolated tests. */
-  autoEvolveLogPath?: string;
   /** Additional environment variables whose values must be redacted from child output. */
   authEnvAllowlist?: readonly string[];
   controllerFactory?: SubagentControllerFactory;
@@ -47,78 +44,6 @@ const deadline = () => Type.Optional(Type.Integer({
 
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
 const AUTH_ENV_NAME = /^[A-Z_][A-Z0-9_]*$/;
-const EVOLVE_LOG_RELATIVE_PATH = "xdg_config/pi/agent/extensions/subagent/EVOLVE_LOG.md";
-const EVOLVE_LOG_MAX_BYTES = 1_048_576;
-const AUTO_EVOLVE_DAEMON_ACTIVE_MS = 5 * 60 * 1_000;
-
-function readEvolveLog(): string {
-  const fd = openSync(new URL("./EVOLVE_LOG.md", import.meta.url), "r");
-  try {
-    const size = fstatSync(fd).size;
-    if (size > EVOLVE_LOG_MAX_BYTES) {
-      throw new Error(`Evolve log exceeds ${EVOLVE_LOG_MAX_BYTES} bytes`);
-    }
-    const buffer = Buffer.alloc(size);
-    let offset = 0;
-    while (offset < size) {
-      const bytesRead = readSync(fd, buffer, offset, size - offset, offset);
-      if (bytesRead === 0) break;
-      offset += bytesRead;
-    }
-    return buffer.subarray(0, offset).toString("utf8");
-  } finally {
-    closeSync(fd);
-  }
-}
-
-function summarizeEvolveLog(): { iterations: number; lastIteration: string; path: string } | undefined {
-  try {
-    const log = readEvolveLog();
-    const headings = [...log.matchAll(/^##\s+.*\bIteration\s+\d+\b.*$/gim)]
-      .map((match) => match[0].replace(/^##\s+/, ""));
-    const lastHeading = headings.at(-1);
-    if (!lastHeading) return undefined;
-    return {
-      iterations: headings.length,
-      lastIteration: boundText(lastHeading.replace(/\s+/g, " ").trim(), { maxCharacters: 80, maxLines: 1 }),
-      path: EVOLVE_LOG_RELATIVE_PATH,
-    };
-  } catch {
-    return undefined;
-  }
-}
-
-function readTextTail(path: string, maxBytes = 4_096, maxLines = 50): string {
-  const fd = openSync(path, "r");
-  try {
-    const size = fstatSync(fd).size;
-    if (size === 0) return "";
-    const bytesToRead = Math.min(size, maxBytes);
-    const buffer = Buffer.alloc(bytesToRead);
-    readSync(fd, buffer, 0, bytesToRead, size - bytesToRead);
-    return buffer.toString("utf8").split(/\r?\n/).slice(-maxLines).join("\n");
-  } finally {
-    closeSync(fd);
-  }
-}
-
-function summarizeAutoEvolveDaemon(path: string): { active: boolean; lastHeartbeat: string; iterationsObserved: number } | undefined {
-  try {
-    const logTail = readTextTail(path);
-    const lines = logTail.split(/\r?\n/).filter((line) => line.length > 0);
-    const lastLine = lines.at(-1) ?? "";
-    const timestampMatch = lastLine.match(/\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2}))\]/);
-    const lastTimestamp = timestampMatch ? Date.parse(timestampMatch[1]) : NaN;
-    return {
-      active: Number.isFinite(lastTimestamp) && Date.now() - lastTimestamp <= AUTO_EVOLVE_DAEMON_ACTIVE_MS,
-      lastHeartbeat: boundText(lastLine, { maxCharacters: 80, maxLines: 1 }),
-      iterationsObserved: (logTail.match(/===\s*iter\b/gi) ?? []).length,
-    };
-  } catch {
-    return undefined;
-  }
-}
-
 export function validateAuthEnvAllowlist(names: readonly string[] | undefined): string[] | undefined {
   if (names === undefined) return undefined;
   const validated = names.map((rawName) => {
@@ -192,7 +117,6 @@ export { loadSubagentOverrides };
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
-  const autoEvolveLogPath = options.autoEvolveLogPath ?? join(getAgentDir(), "auto-evolve.log");
   const settingsPath = options.settingsPath ?? join(getAgentDir(), "settings.json");
   const loadedOverrides = loadSubagentOverrides(settingsPath);
   const discoverEffectiveAgents = () => {
@@ -410,24 +334,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (ctx.hasUI) live.attach(ctx.ui);
       if (params.action === "list") {
         registry = discoverEffectiveAgents();
-        const evolveLog = summarizeEvolveLog();
-        const daemon = summarizeAutoEvolveDaemon(autoEvolveLogPath);
-        const diagnostics = [
-          evolveLog
-            ? `Evolution: ${evolveLog.iterations} iterations; latest: ${evolveLog.lastIteration}; log: ${evolveLog.path}`
-            : undefined,
-          daemon
-            ? `Auto-evolve daemon: ${daemon.active ? "active" : "inactive"}; iterations observed: ${daemon.iterationsObserved}; last: ${daemon.lastHeartbeat}`
-            : undefined,
-        ].filter((line): line is string => line !== undefined);
-        const diagnosticText = boundText(diagnostics.join("\n"), { maxCharacters: 1_000, maxLines: 4 });
         const catalog = boundText(
           formatAgentCatalog(registry),
-          { maxCharacters: 16_000 - diagnosticText.length - (diagnosticText ? 2 : 0), maxLines: 196 },
+          { maxCharacters: 16_000, maxLines: 196 },
         );
-        const content = [catalog, diagnosticText].filter((section) => section.length > 0).join("\n\n");
         return {
-          content: [{ type: "text" as const, text: content }],
+          content: [{ type: "text" as const, text: catalog }],
           details: {
             agents: registry.agents.map(({ name, description, model, thinking }) => ({
               name,
@@ -439,8 +351,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               filePath,
               error: boundText(error, { maxCharacters: 500, maxLines: 8 }),
             })),
-            ...(evolveLog ? { evolveLog } : {}),
-            ...(daemon ? { daemon } : {}),
           },
         };
       }

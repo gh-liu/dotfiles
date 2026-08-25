@@ -189,7 +189,6 @@ function context(cwd: string): ExtensionContext {
 
 function setup(options: {
   autoAccept?: boolean;
-  autoEvolveLogPath?: string;
   ids?: string[];
   settingsPath?: string;
 } = {}) {
@@ -201,7 +200,6 @@ function setup(options: {
   const ids = options.ids ?? Array.from({ length: 30 }, (_, index) => `id-${index + 1}`);
   registerSubagentExtension(extension.pi, {
     agentDirectory: agents,
-    autoEvolveLogPath: options.autoEvolveLogPath,
     controllerFactory: fake.factory,
     idFactory: () => ids.shift()!,
     settingsPath: options.settingsPath ?? join(temporaryDirectory("pi-subagent-settings-"), "missing.json"),
@@ -597,56 +595,6 @@ describe("subagent tool", () => {
       agents: expect.arrayContaining([
         expect.objectContaining({ name: "reviewer", description: "Settings review", thinking: "high" }),
       ]),
-    });
-  });
-
-  test("includes the complete bounded evolve log summary in list content and details", async () => {
-    const env = setup();
-
-    const listed = await env.invoke({ action: "list" });
-    const content = (listed.content[0] as { text: string }).text;
-
-    expect(content).toContain("Evolution: 10 iterations");
-    expect(content).toContain("Iteration 10");
-    expect(listed.details).toMatchObject({
-      agents: [expect.objectContaining({ name: "scout" })],
-      evolveLog: {
-        iterations: expect.any(Number),
-        lastIteration: expect.stringContaining("Iteration"),
-        path: "xdg_config/pi/agent/extensions/subagent/EVOLVE_LOG.md",
-      },
-    });
-    const evolveLog = (listed.details as { evolveLog: { iterations: number; lastIteration: string } }).evolveLog;
-    expect(evolveLog.iterations).toBe(10);
-    expect(evolveLog.lastIteration).toContain("Iteration 10");
-    expect(evolveLog.lastIteration.length).toBeLessThanOrEqual(80);
-  });
-
-  test("uses an isolated daemon log and includes its summary in model-facing content", async () => {
-    const daemonLogPath = join(temporaryDirectory("pi-subagent-daemon-"), "auto-evolve.log");
-    const env = setup({ autoEvolveLogPath: daemonLogPath });
-    vi.setSystemTime(new Date("2026-08-24T12:02:00.000Z"));
-    writeFileSync(
-      daemonLogPath,
-      [
-        "[2026-08-24T12:00:00Z] === ITER 1 started",
-        "[2026-08-24T12:01:00Z]   ===   iter 2 skipped",
-        "daemon heartbeat without timestamp",
-      ].join("\n"),
-    );
-
-    const listed = await env.invoke({ action: "list" });
-    const content = (listed.content[0] as { text: string }).text;
-
-    expect(listed.isError).not.toBe(true);
-    expect(content).toContain("Auto-evolve daemon: inactive; iterations observed: 2");
-    expect(content).toContain("last: daemon heartbeat without timestamp");
-    expect(listed.details).toMatchObject({
-      daemon: {
-        active: false,
-        lastHeartbeat: "daemon heartbeat without timestamp",
-        iterationsObserved: 2,
-      },
     });
   });
 

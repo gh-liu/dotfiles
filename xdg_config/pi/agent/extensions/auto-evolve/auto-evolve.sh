@@ -3,7 +3,36 @@
 # Usage: bash auto-evolve.sh <pane-id> (or set PANE).
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# ---------------------------------------------------------------------------
+# Self-snapshot: resist concurrent modification of the running script.
+# bash streams the script file as it executes. When the driven evolution
+# target is this very daemon, the workspace auto-evolve.sh can be rewritten
+# mid-run, which crashes bash with "syntax error near unexpected token" and
+# silently kills the unattended loop (leaving the stop file stale). Before any
+# real work we copy ourselves to a stable snapshot under a per-run directory
+# and `exec bash <snapshot>` so we execute from a stable copy while the
+# workspace file is free to evolve. The snapshot keeps the basename
+# auto-evolve.sh so `pgrep -f "auto-evolve.sh <pane>"` daemon discovery still
+# matches. SCRIPT_DIR/AGENT_DIR are pinned via env so RUN_ID/STOP_FILE/LOG stay
+# anchored to the original process; the snapshot root is overridable with
+# AUTO_EVOLVE_SNAPSHOT_DIR, and the 90s/100-round/stop-file protocol is
+# unchanged. Set AUTO_EVOLVE_SNAPSHOTED=1 to skip the re-exec (e.g. shells
+# that already run from a stable copy).
+# ---------------------------------------------------------------------------
+if [[ -z "${AUTO_EVOLVE_SNAPSHOTED:-}" ]]; then
+  export AUTO_EVOLVE_SNAPSHOTED=1
+  export AUTO_EVOLVE_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  snapshot_root="${AUTO_EVOLVE_SNAPSHOT_DIR:-${TMPDIR:-/tmp}/auto-evolve-snapshot}"
+  snapshot_dir="$snapshot_root/$$"
+  mkdir -p "$snapshot_dir"
+  # Keep the basename so `pgrep -f "auto-evolve.sh <pane>"` still discovers us.
+  export AUTO_EVOLVE_SNAPSHOT_FILE="$snapshot_dir/auto-evolve.sh"
+  cp -- "${BASH_SOURCE[0]}" "$AUTO_EVOLVE_SNAPSHOT_FILE"
+  exec bash "$AUTO_EVOLVE_SNAPSHOT_FILE" "$@"
+fi
+trap 'if [[ -n "${AUTO_EVOLVE_SNAPSHOT_FILE:-}" ]]; then rm -rf "${AUTO_EVOLVE_SNAPSHOT_FILE%/auto-evolve.sh}" || true; fi' EXIT
+
+SCRIPT_DIR="${AUTO_EVOLVE_SCRIPT_DIR:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)}"
 REPO_DIR="${REPO_DIR:-$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)}"
 AGENT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LOG="${AUTO_EVOLVE_LOG:-$AGENT_DIR/auto-evolve.log}"
@@ -11,6 +40,7 @@ PANE="${PANE:-${1:-}}"
 INTERVAL_SEC="${INTERVAL_SEC:-90}"
 RELOAD_DELAY_SEC="${RELOAD_DELAY_SEC:-3}"
 SAFETY_MAX_ATTEMPTS="${SAFETY_MAX_ATTEMPTS:-100}"
+AUTO_EVOLVE_TARGET="${AUTO_EVOLVE_TARGET:-subagent}"
 RUN_ID="$(date +%s)-$$"
 STOP_FILE="${AUTO_EVOLVE_STOP_FILE:-$AGENT_DIR/auto-evolve.$RUN_ID.stop}"
 
@@ -75,7 +105,7 @@ trap 'handle_signal INT' INT
 
 validate_pane
 printf -v quoted_stop_file '%q' "$STOP_FILE"
-log "auto-evolve daemon started, interval=${INTERVAL_SEC}s, safety-max=${SAFETY_MAX_ATTEMPTS}, pane=${PANE}"
+log "auto-evolve daemon started, interval=${INTERVAL_SEC}s, safety-max=${SAFETY_MAX_ATTEMPTS}, target=${AUTO_EVOLVE_TARGET}, pane=${PANE}"
 log "the model controls completion via stop signal: $STOP_FILE"
 log "git diff --stat snapshot:"
 git_stat="$(git -C "$REPO_DIR" diff --stat 2>&1 || true)"
@@ -107,14 +137,17 @@ for ((attempt = 1; attempt <= SAFETY_MAX_ATTEMPTS; attempt++)); do
   log "sending /reload"
   send_text "/reload"
   sleep "$RELOAD_DELAY_SEC"
-  capture_pane | tail -n 30 >> "$LOG"
+  fresh_capture="$(capture_pane)"
+  printf '%s\n' "$fresh_capture" | tail -n 30 >> "$LOG"
   log "capture after reload:"
-  grep -E "Reloaded|idle|holds|✓|✗" "$LOG" | tail -n 5 | tee -a "$LOG" || true
+  # grep only this round's fresh capture, not the whole accumulated log, so the
+  # summary reflects the current pane state instead of stale lines from earlier rounds.
+  grep -E "Reloaded|idle|holds|✓|✗" <<< "$fresh_capture" | tail -n 5 | tee -a "$LOG" || true
 
   pane_snapshot="$(capture_pane)"
   if ! grep -qE "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot"; then
     log "asking model to continue or mark completion"
-    send_text "请评估 subagent 是否还有高价值、可验证的改进。若有则继续一轮；若已完成，请运行：touch $quoted_stop_file"
+    send_text "请评估 ${AUTO_EVOLVE_TARGET} 是否还有高价值、可验证的改进。若有则继续一轮；若已完成，请运行：touch $quoted_stop_file"
   else
     log "pi busy, skip model decision prompt; busy context:"
     grep -E "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot" | tail -n 5 | tee -a "$LOG" || true
@@ -123,8 +156,12 @@ for ((attempt = 1; attempt <= SAFETY_MAX_ATTEMPTS; attempt++)); do
   if ((attempt % 3 == 0)); then
     pane_snapshot="$(capture_pane)"
     if ! grep -qE "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot"; then
-      log "triggering demo subagent"
-      send_text "请启动一个 background scout 演示 widget（auto attempt $attempt）"
+      if [[ "$AUTO_EVOLVE_TARGET" == "subagent" ]]; then
+        log "triggering demo subagent"
+        send_text "请启动一个 background scout 演示 widget（auto attempt $attempt）"
+      else
+        log "skipping the subagent widget demo for target=${AUTO_EVOLVE_TARGET}"
+      fi
     else
       log "pi busy, skip demo subagent; busy context:"
       grep -E "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot" | tail -n 5 | tee -a "$LOG" || true
@@ -135,4 +172,4 @@ done
 rm -f "$STOP_FILE"
 log "daemon stopped: ${stop_reason}; attempts=${attempts_run}; git diff --stat snapshot before stop:"
 git -C "$REPO_DIR" diff --stat 2>&1 | tee -a "$LOG" || true
-log "restart explicitly with: bash xdg_config/pi/agent/extensions/subagent/auto-evolve.sh '$PANE'"
+log "restart explicitly with: bash $SCRIPT_DIR/auto-evolve.sh '$PANE'"

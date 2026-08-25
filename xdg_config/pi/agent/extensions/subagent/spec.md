@@ -630,9 +630,7 @@ object; the implementation enforces action-specific required fields at runtime.
 Semantics:
 
 - `list`: refresh discovery and return executable agent names and routing
-  descriptions. It also returns bounded evolution-log and auto-evolve-daemon
-  summaries when available, in both model-facing content and structured details.
-  The startup catalog already covers the normal selection path.
+  descriptions. The startup catalog already covers the normal selection path.
 - `run`: convenience operation equivalent to start, wait, and close for a
   one-shot task. `deadlineMs` is required: estimate the task duration and add
   reasonable headroom for model and tool latency instead of relying on a fixed
