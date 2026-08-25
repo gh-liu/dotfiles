@@ -24,6 +24,8 @@ import {
   SUBAGENT_COMPLETION_MESSAGE,
   type SubagentCompletionDetails,
   type SubagentCompletionPayload,
+  type SubagentRenderContext,
+  type SubagentRenderResult,
 } from "./render/index.ts";
 import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.ts";
 
@@ -34,6 +36,35 @@ export interface SubagentExtensionOptions {
   controllerFactory?: SubagentControllerFactory;
   idFactory?: () => string;
   settingsPath?: string;
+}
+
+function retainCallTitleDetails(
+  result: SubagentRenderResult,
+  context: SubagentRenderContext,
+): void {
+  if (context.args.action !== "run" && context.args.action !== "start") return;
+  const details = result.details && typeof result.details === "object"
+    ? result.details as Record<string, unknown>
+    : {};
+  const model = typeof details.model === "string" ? details.model : undefined;
+  const thinking = typeof details.thinking === "string" ? details.thinking : undefined;
+  let changed = false;
+  if (model !== undefined && context.state.model !== model) {
+    context.state.model = model;
+    changed = true;
+  }
+  if (thinking !== undefined && context.state.thinking !== thinking) {
+    context.state.thinking = thinking;
+    changed = true;
+  }
+  if (!changed) return;
+  queueMicrotask(() => {
+    try {
+      context.invalidate();
+    } catch {
+      // The row may have been disposed before its deferred repaint.
+    }
+  });
 }
 
 const deadline = () => Type.Optional(Type.Integer({
@@ -324,12 +355,17 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       }
       return renderSubagentCall(args as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
     },
-    renderResult: (result, renderOptions, theme, context) => renderSubagentResult(
-      result as unknown as Parameters<typeof renderSubagentResult>[0],
-      renderOptions,
-      theme,
-      context as unknown as Parameters<typeof renderSubagentResult>[3],
-    ),
+    renderResult: (result, renderOptions, theme, context) => {
+      const typedResult = result as unknown as Parameters<typeof renderSubagentResult>[0];
+      const typedContext = context as unknown as Parameters<typeof renderSubagentResult>[3];
+      retainCallTitleDetails(typedResult, typedContext);
+      return renderSubagentResult(
+        typedResult,
+        renderOptions,
+        theme,
+        typedContext,
+      );
+    },
     async execute(_toolCallId, params, signal, onUpdate, ctx) {
       if (ctx.hasUI) live.attach(ctx.ui);
       if (params.action === "list") {

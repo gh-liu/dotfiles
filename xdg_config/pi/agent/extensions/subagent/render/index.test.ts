@@ -26,6 +26,28 @@ function call(args: Record<string, unknown>, expanded = true): string {
   } as never));
 }
 
+function recordedCall(args: Record<string, unknown>, state: Record<string, unknown> = {}): { output: string; fgColors: string[] } {
+  const fgColors: string[] = [];
+  const recordingTheme = {
+    fg: (color: string, text: string) => {
+      fgColors.push(color);
+      return text;
+    },
+    bg: (_color: string, text: string) => text,
+    bold: (text: string) => text,
+  } as never;
+  return {
+    output: rendered(renderSubagentCall(args as never, recordingTheme, {
+      args,
+      expanded: true,
+      isError: false,
+      state,
+      invalidate: vi.fn(),
+    } as never)),
+    fgColors,
+  };
+}
+
 function result(
   args: Record<string, unknown>,
   details: Record<string, unknown>,
@@ -60,6 +82,31 @@ describe("subagent render state matrix", () => {
     ["close", { action: "close", id: "#2" }, "close · #2"],
   ])("renders the %s call", (_label, args, expected) => {
     expect(call(args as Record<string, unknown>)).toContain(expected);
+  });
+
+  test("colors call title identity segments and falls back to effective state model", () => {
+    const explicit = recordedCall({ action: "run", agent: "scout", task: "Inspect", model: "vendor/model-a", thinking: "high" });
+    expect(explicit.output).toContain("scout · model-a · high — Inspect");
+    expect(explicit.fgColors).toEqual(expect.arrayContaining(["toolTitle", "accent", "thinkingHigh", "dim"]));
+
+    for (const [thinking, color] of [
+      ["minimal", "thinkingMinimal"],
+      ["low", "thinkingLow"],
+      ["medium", "thinkingMedium"],
+      ["high", "thinkingHigh"],
+      ["xhigh", "thinkingXhigh"],
+      ["max", "thinkingMax"],
+      ["unknown", "thinkingText"],
+    ]) {
+      expect(recordedCall({ action: "run", agent: "scout", task: "Inspect", thinking }).fgColors).toContain(color);
+    }
+
+    const fallback = recordedCall(
+      { action: "run", agent: "scout", task: "Inspect" },
+      { model: "effective/model-b", thinking: "unknown" },
+    );
+    expect(fallback.output).toContain("scout · model-b · unknown — Inspect");
+    expect(fallback.fgColors).toEqual(expect.arrayContaining(["toolTitle", "accent", "thinkingText"]));
   });
 
   test("keeps status and close collapsed rows silent while expanded rows remain inspectable", () => {

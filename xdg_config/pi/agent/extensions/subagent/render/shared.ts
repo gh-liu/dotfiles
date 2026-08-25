@@ -15,6 +15,10 @@ interface SubagentRenderState {
   startedAt?: number;
   /** Immutable per-row runtime identity, learned only from authoritative result details. */
   runtimeIndex?: number;
+  /** Effective model learned from authoritative progress/update details. */
+  model?: string;
+  /** Effective thinking level learned from authoritative progress/update details. */
+  thinking?: string;
   /** Prevents the result-triggered repaint from recursively scheduling itself. */
   runtimeIndexInvalidateQueued?: boolean;
 }

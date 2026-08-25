@@ -4,11 +4,33 @@ import { Text } from "@earendil-works/pi-tui";
 import { stripModel } from "../protocol.ts";
 import { boundedLines, collapseHome, oneLine, positiveSafeRuntimeIndex, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./shared.ts";
 
-function formatAgentLabel(agent: string, model?: string, thinking?: string): string {
-  const parts = [agent];
-  if (model) parts.push(stripModel(model));
-  if (thinking) parts.push(thinking);
-  return parts.join(" · ");
+type ThemeFgColor = Parameters<Theme["fg"]>[0];
+
+function thinkingLevelColor(thinking: string): ThemeFgColor {
+  switch (thinking) {
+    case "minimal":
+      return "thinkingMinimal";
+    case "low":
+      return "thinkingLow";
+    case "medium":
+      return "thinkingMedium";
+    case "high":
+      return "thinkingHigh";
+    case "xhigh":
+      return "thinkingXhigh";
+    case "max":
+      return "thinkingMax";
+    default:
+      return "thinkingText";
+  }
+}
+
+function formatAgentLabel(agent: string, model: string | undefined, thinking: string | undefined, theme: Theme): string {
+  const separator = theme.fg("dim", " · ");
+  let label = theme.fg("toolTitle", theme.bold(agent));
+  if (model) label += `${separator}${theme.fg("accent", stripModel(model))}`;
+  if (thinking) label += `${separator}${theme.fg(thinkingLevelColor(thinking), thinking)}`;
+  return label;
 }
 
 function shortId(value: string): string {
@@ -54,9 +76,14 @@ export function renderSubagentCall(
   }
   // run / start
   const runtimeIndex = positiveSafeRuntimeIndex(context?.state.runtimeIndex);
-  const label = formatAgentLabel(args.agent || "unknown", args.model, args.thinking);
+  const label = formatAgentLabel(
+    args.agent || "unknown",
+    args.model ?? context?.state?.model,
+    args.thinking ?? context?.state?.thinking,
+    theme,
+  );
   const title = taskTitle(args.task);
-  let text = theme.fg("toolTitle", theme.bold(`${runtimeIndex === undefined ? "" : `#${runtimeIndex} `}${label}`));
+  let text = `${runtimeIndex === undefined ? "" : theme.fg("toolTitle", theme.bold(`#${runtimeIndex} `))}${label}`;
   if (args.action === "start") text += theme.fg("muted", " · bg");
   // One-line summary so the operator can tell at a glance what this child does.
   // Expanded uses a shorter title so cwd/deadline fit on the SAME line without wrapping.
