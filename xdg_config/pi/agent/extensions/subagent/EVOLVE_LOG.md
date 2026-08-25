@@ -104,3 +104,10 @@
 - **全局回滚点**：每轮按日志中列出的文件做单文件 revert；本轮只需 revert `EVOLVE_LOG.md` 追加段、`auto-evolve.sh` 收官日志块，以及可选测试断言调整。
 - **收官日志与重启**：`auto-evolve.sh` 达到 10 轮上限时会写入已完成 10 轮、当前 `git diff --stat` 摘要与重启命令；如需再次启动：`nohup bash xdg_config/pi/agent/extensions/subagent/auto-evolve.sh >/tmp/auto-evolve.out 2>&1 &`。
 - **风险与回滚**：仅日志/守护脚本收官提示/测试阈值，不改 live-ui/render/runtime 核心；失败回滚 = revert 本轮三个 bounded 文件改动。
+
+## Post-review hardening
+
+- `auto-evolve.sh` 现在要求显式 pane ID，动态发现仓库根目录，并在启动、capture 与每次 send 前校验 pane 仍由 Pi runtime（`pi`/`node`/`nodejs`/`bun`）占用且 cwd 位于目标仓库内；原先硬编码 `%0`、`/Users/liu/tools/dotfiles` 与危险的 `yes go` 文本不再使用。
+- 模型现在决定何时结束：每轮收到“继续改进或创建本次运行专属 stop signal”的提示；创建 signal 后脚本退出。`SAFETY_MAX_ATTEMPTS`（默认 100）仅是模型失联时的熔断，busy skip 也消耗 attempt。日志默认位于 Pi agent 目录的 `auto-evolve.log`，可通过 `AUTO_EVOLVE_LOG` 覆盖。
+- `subagent list` 在 model-facing content 与 structured details 中都返回 bounded evolve/daemon 摘要。Evolve 摘要读取完整但最大 1 MiB 的受控日志，只统计 `Iteration <number>` 标题，因此本文件的其他二级标题不会被误计为迭代。
+- 上述说明取代 Iteration 6、8、9、10 中关于固定 `/tmp/auto-evolve.log`、硬编码 pane/repo、`nohup` 重启以及宽松标题计数的历史实现描述。

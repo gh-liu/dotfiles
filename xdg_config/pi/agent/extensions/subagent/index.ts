@@ -30,6 +30,8 @@ import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.t
 
 export interface SubagentExtensionOptions {
   agentDirectory?: string;
+  /** Override the auto-evolve heartbeat log location, primarily for isolated tests. */
+  autoEvolveLogPath?: string;
   /** Additional environment variables whose values must be redacted from child output. */
   authEnvAllowlist?: readonly string[];
   controllerFactory?: SubagentControllerFactory;
@@ -46,23 +48,24 @@ const deadline = () => Type.Optional(Type.Integer({
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
 const AUTH_ENV_NAME = /^[A-Z_][A-Z0-9_]*$/;
 const EVOLVE_LOG_RELATIVE_PATH = "xdg_config/pi/agent/extensions/subagent/EVOLVE_LOG.md";
-const AUTO_EVOLVE_DAEMON_LOG_PATH = "/tmp/auto-evolve.log";
+const EVOLVE_LOG_MAX_BYTES = 1_048_576;
 const AUTO_EVOLVE_DAEMON_ACTIVE_MS = 5 * 60 * 1_000;
 
-function readEvolveLogHead(maxLines = 200): string {
+function readEvolveLog(): string {
   const fd = openSync(new URL("./EVOLVE_LOG.md", import.meta.url), "r");
   try {
-    const chunks: string[] = [];
-    const buffer = Buffer.alloc(8_192);
-    let lines = 0;
-    while (lines <= maxLines) {
-      const bytesRead = readSync(fd, buffer, 0, buffer.length, null);
-      if (bytesRead === 0) break;
-      const chunk = buffer.subarray(0, bytesRead).toString("utf8");
-      chunks.push(chunk);
-      lines += chunk.match(/\n/g)?.length ?? 0;
+    const size = fstatSync(fd).size;
+    if (size > EVOLVE_LOG_MAX_BYTES) {
+      throw new Error(`Evolve log exceeds ${EVOLVE_LOG_MAX_BYTES} bytes`);
     }
-    return chunks.join("").split(/\r?\n/).slice(0, maxLines).join("\n");
+    const buffer = Buffer.alloc(size);
+    let offset = 0;
+    while (offset < size) {
+      const bytesRead = readSync(fd, buffer, offset, size - offset, offset);
+      if (bytesRead === 0) break;
+      offset += bytesRead;
+    }
+    return buffer.subarray(0, offset).toString("utf8");
   } finally {
     closeSync(fd);
   }
@@ -70,8 +73,9 @@ function readEvolveLogHead(maxLines = 200): string {
 
 function summarizeEvolveLog(): { iterations: number; lastIteration: string; path: string } | undefined {
   try {
-    const logHead = readEvolveLogHead();
-    const headings = [...logHead.matchAll(/^## .+$/gm)].map((match) => match[0].replace(/^##\s+/, ""));
+    const log = readEvolveLog();
+    const headings = [...log.matchAll(/^##\s+.*\bIteration\s+\d+\b.*$/gim)]
+      .map((match) => match[0].replace(/^##\s+/, ""));
     const lastHeading = headings.at(-1);
     if (!lastHeading) return undefined;
     return {
@@ -98,9 +102,9 @@ function readTextTail(path: string, maxBytes = 4_096, maxLines = 50): string {
   }
 }
 
-function summarizeAutoEvolveDaemon(): { active: boolean; lastHeartbeat: string; iterationsObserved: number } | undefined {
+function summarizeAutoEvolveDaemon(path: string): { active: boolean; lastHeartbeat: string; iterationsObserved: number } | undefined {
   try {
-    const logTail = readTextTail(AUTO_EVOLVE_DAEMON_LOG_PATH);
+    const logTail = readTextTail(path);
     const lines = logTail.split(/\r?\n/).filter((line) => line.length > 0);
     const lastLine = lines.at(-1) ?? "";
     const timestampMatch = lastLine.match(/\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2}))\]/);
@@ -188,6 +192,7 @@ export { loadSubagentOverrides };
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
+  const autoEvolveLogPath = options.autoEvolveLogPath ?? join(getAgentDir(), "auto-evolve.log");
   const settingsPath = options.settingsPath ?? join(getAgentDir(), "settings.json");
   const loadedOverrides = loadSubagentOverrides(settingsPath);
   const discoverEffectiveAgents = () => {
@@ -405,11 +410,24 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (ctx.hasUI) live.attach(ctx.ui);
       if (params.action === "list") {
         registry = discoverEffectiveAgents();
-        const catalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
         const evolveLog = summarizeEvolveLog();
-        const daemon = summarizeAutoEvolveDaemon();
+        const daemon = summarizeAutoEvolveDaemon(autoEvolveLogPath);
+        const diagnostics = [
+          evolveLog
+            ? `Evolution: ${evolveLog.iterations} iterations; latest: ${evolveLog.lastIteration}; log: ${evolveLog.path}`
+            : undefined,
+          daemon
+            ? `Auto-evolve daemon: ${daemon.active ? "active" : "inactive"}; iterations observed: ${daemon.iterationsObserved}; last: ${daemon.lastHeartbeat}`
+            : undefined,
+        ].filter((line): line is string => line !== undefined);
+        const diagnosticText = boundText(diagnostics.join("\n"), { maxCharacters: 1_000, maxLines: 4 });
+        const catalog = boundText(
+          formatAgentCatalog(registry),
+          { maxCharacters: 16_000 - diagnosticText.length - (diagnosticText ? 2 : 0), maxLines: 196 },
+        );
+        const content = [catalog, diagnosticText].filter((section) => section.length > 0).join("\n\n");
         return {
-          content: [{ type: "text" as const, text: catalog }],
+          content: [{ type: "text" as const, text: content }],
           details: {
             agents: registry.agents.map(({ name, description, model, thinking }) => ({
               name,
