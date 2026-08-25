@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent notifications", () => {
   test("notifies the parent with compact structured and follow-up titles", async () => {

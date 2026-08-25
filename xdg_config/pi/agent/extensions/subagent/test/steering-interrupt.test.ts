@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent steering interrupt", () => {
   test("pre-acceptance interrupt conflicts and close finishes as closed", async () => {

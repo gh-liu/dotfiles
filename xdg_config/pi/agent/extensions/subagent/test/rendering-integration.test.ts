@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent rendering", () => {
   test("layout contract: call/result summaries stay one-line and transcript paths elide", async () => {

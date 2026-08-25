@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent lifecycle", () => {
   test("start resolves only after acceptance, independently of settlement, then becomes idle", async () => {

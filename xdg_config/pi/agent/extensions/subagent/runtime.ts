@@ -2,7 +2,7 @@ import { createWorkOrder } from "./context.ts";
 import type { LiveUiController } from "./live-ui.ts";
 import { boundText } from "./output.ts";
 import { stripModel } from "./protocol.ts";
-import type { SubagentCompletionDetails } from "./render.ts";
+import type { SubagentCompletionDetails } from "./render/index.ts";
 import type {
   SubagentController,
   SubagentControllerFactory,

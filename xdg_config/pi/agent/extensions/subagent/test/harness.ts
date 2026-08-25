@@ -14,15 +14,15 @@ import {
   loadSubagentOverrides,
   registerSubagentExtension,
   validateAuthEnvAllowlist,
-} from "./index.ts";
-import { SUBAGENT_COMPLETION_MESSAGE } from "./render.ts";
+} from "../index.ts";
+import { SUBAGENT_COMPLETION_MESSAGE } from "../render/index.ts";
 import type {
   SubagentController,
   SubagentControllerFactory,
   SubagentOperation,
   SubagentResult,
   SubagentRunOptions,
-} from "./protocol.ts";
+} from "../protocol.ts";
 
 const temporaryDirectories: string[] = [];
 

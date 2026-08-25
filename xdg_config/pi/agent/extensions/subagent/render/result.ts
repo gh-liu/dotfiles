@@ -1,7 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 
-import { collapseHome, formatCountdown, oneLine, type SubagentRenderArgs, type SubagentRenderContext, type SubagentRenderResult, type SubagentRenderState } from "./render-shared.ts";
+import { collapseHome, formatCountdown, oneLine, type SubagentRenderArgs, type SubagentRenderContext, type SubagentRenderResult, type SubagentRenderState } from "./shared.ts";
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 

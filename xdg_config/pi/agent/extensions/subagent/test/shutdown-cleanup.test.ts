@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent shutdown cleanup", () => {
   test("controller crash fails active work", async () => {

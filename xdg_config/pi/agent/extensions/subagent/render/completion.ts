@@ -1,7 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
-import { boundedLines, formatCountdown, oneLine, taskTitle } from "./render-shared.ts";
+import { boundedLines, formatCountdown, oneLine, taskTitle } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 

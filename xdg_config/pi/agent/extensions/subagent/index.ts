@@ -24,7 +24,7 @@ import {
   SUBAGENT_COMPLETION_MESSAGE,
   type SubagentCompletionDetails,
   type SubagentCompletionPayload,
-} from "./render.ts";
+} from "./render/index.ts";
 import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.ts";
 
 export interface SubagentExtensionOptions {

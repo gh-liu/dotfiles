@@ -1,8 +1,8 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 
-import { stripModel } from "./protocol.ts";
-import { boundedLines, collapseHome, oneLine, positiveSafeRuntimeIndex, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./render-shared.ts";
+import { stripModel } from "../protocol.ts";
+import { boundedLines, collapseHome, oneLine, positiveSafeRuntimeIndex, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./shared.ts";
 
 function formatAgentLabel(agent: string, model?: string, thinking?: string): string {
   const parts = [agent];

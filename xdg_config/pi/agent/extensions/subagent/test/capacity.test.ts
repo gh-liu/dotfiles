@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent capacity", () => {
   test("three warm runtimes consume capacity and close releases a slot", async () => {

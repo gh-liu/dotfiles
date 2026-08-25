@@ -4,7 +4,7 @@ import {
   renderSubagentCall,
   renderSubagentCompletion,
   renderSubagentResult,
-} from "./render.ts";
+} from "./index.ts";
 
 const theme = {
   fg: (_color: string, text: string) => text,

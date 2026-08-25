@@ -17,7 +17,7 @@ import {
   context,
   setup,
   startIdle,
-} from "./index-test-utils.ts";
+} from "./harness.ts";
 
 describe("subagent discovery", () => {
   test("loads missing settings as no overrides and malformed JSON as a collected error", () => {
