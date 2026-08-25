@@ -13,21 +13,11 @@
     "oracle": {
       "model": "openai-codex/gpt-5.6-sol"
     },
-    "worker": {
-      "model": "opencode-go/muse-spark-1.2"
-    },
-    "scout": {
-      "model": "opencode-go/muse-spark-1.2"
-    },
-    "researcher": {
-      "model": "opencode-go/muse-spark-1.2"
-    },
-    "reviewer": {
-      "model": "opencode-go/muse-spark-1.2"
-    },
-    "tester": {
-      "model": "opencode-go/muse-spark-1.2"
-    }
+    "worker": {},
+    "scout": {},
+    "researcher": {},
+    "reviewer": {},
+    "tester": {}
   },
   "theme": "nord"
 }
