@@ -150,6 +150,8 @@ export interface StartDaemonOptions {
     exec: ExecFn;
     agentDir?: string;
     logPath?: string;
+    /** Evolution target decided by the main agent; forwarded to the daemon via AUTO_EVOLVE_TARGET. */
+    target?: string;
 }
 
 export type StartDaemonResult =
@@ -168,8 +170,16 @@ export function startDaemon(options: StartDaemonOptions): StartDaemonResult {
     if (pgrepDaemonPid(exec, paneId) !== undefined) {
         return { ok: false, reason: "already-running" };
     }
+    const env: Record<string, string | undefined> = {
+        ...process.env,
+        AUTO_EVOLVE_LOG: logPath,
+        AUTO_EVOLVE_STOP_FILE: stopFile,
+    };
+    if (options.target !== undefined) {
+        env.AUTO_EVOLVE_TARGET = options.target;
+    }
     const child = spawn("bash", [scriptPath, paneId], {
-        env: { ...process.env, AUTO_EVOLVE_LOG: logPath, AUTO_EVOLVE_STOP_FILE: stopFile },
+        env,
         detached: true,
         stdio: "ignore",
     });

@@ -53,13 +53,17 @@ auto-discovered by pi (directory extension with `index.ts`).
 
 ## Usage
 
-In a Pi session that has a worker pane running Pi inside this repo:
+In a Pi session that has a worker pane running Pi inside this repo, the **main agent**
+decides what to evolve and passes it as `target` to `auto_evolve_start`; there is no default
+target (the daemon no longer hardcodes `subagent`).
 
 1. `auto_evolve_status` — candidate panes + per-pane daemon status + log path.
-2. `auto_evolve_start [pane]` — spawn the unattended daemon; returns
-   `{ runId (timestamp), paneId, pid, stopFile, logPath }`. Pane must be in the
+2. `auto_evolve_start [pane] target=<work-unit>` — spawn the unattended daemon; returns
+   `{ runId (timestamp), paneId, target, pid, stopFile, logPath }`. Pane must be in the
    probed whitelist; defaults to the first candidate; refuses duplicates
-   (`already-running`).
+   (`already-running`). `target` is **required** and decided by the main agent: it names the
+   bounded work unit the daemon tells the worker Pi to keep improving. There is no built-in
+   default target (previously it hardcoded `subagent`).
 3. `auto_evolve_stop [pane]` — touch the stable stop file + SIGTERM; returns
    the stopped pane and actions taken.
 

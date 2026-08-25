@@ -6,7 +6,7 @@ repository, supervised from an **independent Pi worker pane**.
 ## When to use
 
 Use this when the user asks you to keep improving a specific bounded work unit
-in this repository (for example the `subagent/` extension) over repeated
+in this repository over repeated
 improvement rounds, and an independent worker pane is available:
 
 - A separate tmux pane is already running Pi (`pi`, `node`, `nodejs`, or `bun`)
@@ -19,11 +19,13 @@ do not attempt to drive the daemon yourself with raw commands.
 
 ## Workflow (three steps)
 
-1. **Start**: call `auto_evolve_start` (optionally pass `pane` to select a
-   specific worker pane; it defaults to the first candidate). This spawns the
+1. **Start**: call `auto_evolve_start` and pass `target` — the bounded work unit
+to improve, which **you (the main agent) decide**; there is no default target.
+Optionally pass `pane` to select a
+   specific worker pane; it defaults to the first candidate. This spawns the
    unattended daemon `auto-evolve.sh` in the worker pane. The daemon
    periodically sends `/reload` to the worker Pi and asks it to continue
-   improving or to mark the run complete via the stop-file protocol.
+   improving the decided target or to mark the run complete via the stop-file protocol.
 2. **Observe**: call `auto_evolve_status` regularly and read the daemon log
    tail (`logPath`, reported by the status tool) to track progress. The daemon
    is unattended — monitor it rather than assuming it works forever.

@@ -260,9 +260,9 @@ describe("auto_evolve_start", () => {
         return { ...state, start, spawn, exec };
     }
 
-    test("spawns the daemon for an explicit whitelisted pane", async () => {
+    test("spawns the daemon for an explicit whitelisted pane with the decided target", async () => {
         const { start, spawn, ctx } = await registeredStartTool();
-        const result = await start.execute("c1", { pane: "%41" }, undefined, undefined, ctx);
+        const result = await start.execute("c1", { pane: "%41", target: "work-unit" }, undefined, undefined, ctx);
 
         const details = result.details as { runId: string; paneId: string; pid: number; stopFile: string };
         expect(details.paneId).toBe("%41");
@@ -273,28 +273,35 @@ describe("auto_evolve_start", () => {
             env: expect.objectContaining({
                 AUTO_EVOLVE_LOG: expect.stringContaining("auto-evolve.log"),
                 AUTO_EVOLVE_STOP_FILE: expect.stringContaining("auto-evolve._41.stop"),
+                AUTO_EVOLVE_TARGET: "work-unit",
             }),
             detached: true,
             stdio: "ignore",
         });
     });
 
+    test("surfaces the decided target in the start details", async () => {
+        const { start, ctx } = await registeredStartTool();
+        const result = await start.execute("c1", { target: "some-work-unit" }, undefined, undefined, ctx);
+        expect((result.details as { target: string }).target).toBe("some-work-unit");
+    });
+
     test("defaults to the first candidate when pane is omitted", async () => {
         const { start, ctx } = await registeredStartTool();
-        const result = await start.execute("c1", {}, undefined, undefined, ctx);
+        const result = await start.execute("c1", { target: "work-unit" }, undefined, undefined, ctx);
         expect((result.details as { paneId: string }).paneId).toBe("%41");
     });
 
     test("rejects a pane outside the probed whitelist", async () => {
         const { start, ctx } = await registeredStartTool();
         await expect(
-            start.execute("c1", { pane: "%999" }, undefined, undefined, ctx),
+            start.execute("c1", { pane: "%999", target: "work-unit" }, undefined, undefined, ctx),
         ).rejects.toThrow(/%999/);
     });
 
     test("reports already-running daemons instead of spawning twice", async () => {
         const { start, spawn, ctx } = await registeredStartTool({ pgrep: "9001\n" });
-        const result = await start.execute("c1", { pane: "%41" }, undefined, undefined, ctx);
+        const result = await start.execute("c1", { pane: "%41", target: "work-unit" }, undefined, undefined, ctx);
         expect(result.details).toEqual({ ok: false, reason: "already-running", paneId: "%41" });
         expect(spawn).not.toHaveBeenCalled();
     });

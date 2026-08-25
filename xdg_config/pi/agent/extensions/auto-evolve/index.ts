@@ -128,6 +128,10 @@ export function registerAutoEvolveExtension(pi: ExtensionAPI, options: AutoEvolv
         pane: Type.Optional(Type.String({
             description: "Worker pane id (e.g. %41) from the probed whitelist; defaults to the first candidate.",
         })),
+        target: Type.String({
+            description: "The evolution target: the bounded work unit the daemon tells the worker Pi to keep improving. "
+                + "The MAIN agent decides this explicitly on every start; there is no built-in default.",
+        }),
     });
     const stopParameters = Type.Object({
         pane: Type.Optional(Type.String({
@@ -189,16 +193,25 @@ export function registerAutoEvolveExtension(pi: ExtensionAPI, options: AutoEvolv
             description:
                 "Start the unattended auto-evolve daemon (auto-evolve.sh) for a probed worker pane. "
                 + "The pane must be in the session-provided candidate whitelist; refuses when a daemon for that "
-                + "pane is already running.",
+                + "pane is already running. The caller (main agent) must decide the `target` to evolve; there is "
+                + "no hardcoded default target.",
             promptSnippet: "Start the auto-evolve daemon for a worker pane.",
             promptGuidelines: [
                 "Only use pane ids reported by auto_evolve_status (or omit pane to use the first candidate).",
+                "Decide the evolution `target` yourself: name the bounded work unit the daemon should tell the worker Pi to keep improving. There is no default.",
                 "The daemon is unattended and keeps reloading the worker Pi; plan to stop it with auto_evolve_stop when the work is complete or out of scope.",
             ],
             parameters: startParameters,
             async execute(_toolCallId, params) {
                 const target = resolvePane(params.pane, currentCandidates());
-                const result = startDaemon({ paneId: target.paneId, spawn, exec, agentDir, logPath });
+                const result = startDaemon({
+                    paneId: target.paneId,
+                    spawn,
+                    exec,
+                    agentDir,
+                    logPath,
+                    target: params.target,
+                });
                 if (!result.ok) {
                     return toolResult(
                         { ok: false, reason: result.reason, paneId: target.paneId },
@@ -209,6 +222,7 @@ export function registerAutoEvolveExtension(pi: ExtensionAPI, options: AutoEvolv
                 const details = {
                     runId,
                     paneId: target.paneId,
+                    target: params.target,
                     pid: result.pid,
                     stopFile: result.stopFile,
                     logPath: result.logPath,

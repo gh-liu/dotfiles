@@ -162,6 +162,31 @@ describe("startDaemon", () => {
             stdio: "ignore",
         });
     });
+
+    test("forwards an explicit main-agent-decided evolution target through the env", () => {
+        const root = temporaryDirectory();
+        const spawn = vi.fn(() => ({ pid: 4242 }));
+        const result = startDaemon({
+            paneId: "%41",
+            spawn,
+            exec: pgrepExec(undefined),
+            agentDir: root,
+            target: "some-work-unit",
+        });
+        expect(result.ok).toBe(true);
+        expect(spawn).toHaveBeenCalledWith("bash", [scriptPath, "%41"], {
+            env: expect.objectContaining({ AUTO_EVOLVE_TARGET: "some-work-unit" }),
+            detached: true,
+            stdio: "ignore",
+        });
+    });
+
+    test("omits AUTO_EVOLVE_TARGET when no target is provided", () => {
+        const spawn = vi.fn(() => ({ pid: 4242 }));
+        startDaemon({ paneId: "%41", spawn, exec: pgrepExec(undefined) });
+        const env = spawn.mock.calls[0][2].env as Record<string, unknown>;
+        expect(env).not.toHaveProperty("AUTO_EVOLVE_TARGET");
+    });
 });
 
 describe("stopDaemon", () => {

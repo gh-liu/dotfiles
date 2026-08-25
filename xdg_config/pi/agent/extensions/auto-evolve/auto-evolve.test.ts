@@ -73,7 +73,7 @@ esac
       TMUX_TEST_CWD: options.cwd ?? root,
       TMUX_TEST_SEND_LOG: sendLogPath,
       TMUX_TEST_STOP_ON_CAPTURE: String(options.stopOnCapture ?? false),
-      AUTO_EVOLVE_TARGET: options.target ?? "subagent",
+      AUTO_EVOLVE_TARGET: options.target ?? "",
     },
   });
   return {
@@ -201,23 +201,26 @@ describe("auto-evolve daemon safety", () => {
     const result = runScript({ attempts: 1, target: "auto-evolve" });
 
     expect(result.status).toBe(0);
-    expect(result.sendLog).toContain("请评估 auto-evolve 是否还有高价值、可验证的改进");
-    expect(result.sendLog).not.toContain("请评估 subagent 是否还有高价值");
+    expect(result.sendLog).toContain("请评估演化目标 auto-evolve 是否还有高价值、可验证的改进");
+    expect(result.sendLog).not.toContain("请评估演化目标 subagent 是否还有高价值");
   });
 
-  test("keeps the subagent widget demo for the default subagent target", () => {
+  test("no longer defaults to subagent; falls back to the main-agent-decided target prompt", () => {
+    const result = runScript({ attempts: 1 });
+
+    expect(result.status).toBe(0);
+    // No hardcoded target and no subagent demo anywhere.
+    expect(result.sendLog).not.toContain("subagent");
+    expect(result.sendLog).not.toContain("background scout 演示 widget");
+    // With no target the daemon defers to the main agent's in-session decision.
+    expect(result.sendLog).toContain("请继续推进该目标");
+  });
+
+  test("never triggers a background-scout widget demo", () => {
     const result = runScript({ attempts: 3 });
 
     expect(result.status).toBe(0);
-    expect(result.sendLog).toContain("background scout 演示 widget");
-  });
-
-  test("skips the subagent widget demo for a non-subagent target", () => {
-    const result = runScript({ attempts: 3, target: "auto-evolve" });
-
-    expect(result.status).toBe(0);
     expect(result.sendLog).not.toContain("background scout 演示 widget");
-    expect(result.log).toContain("skipping the subagent widget demo");
   });
 });
 

@@ -40,7 +40,9 @@ PANE="${PANE:-${1:-}}"
 INTERVAL_SEC="${INTERVAL_SEC:-90}"
 RELOAD_DELAY_SEC="${RELOAD_DELAY_SEC:-3}"
 SAFETY_MAX_ATTEMPTS="${SAFETY_MAX_ATTEMPTS:-100}"
-AUTO_EVOLVE_TARGET="${AUTO_EVOLVE_TARGET:-subagent}"
+# Evolution target is decided by the MAIN agent (via auto_evolve_start target and
+# forwarded through AUTO_EVOLVE_TARGET); there is intentionally no hardcoded default.
+AUTO_EVOLVE_TARGET="${AUTO_EVOLVE_TARGET:-}"
 RUN_ID="$(date +%s)-$$"
 STOP_FILE="${AUTO_EVOLVE_STOP_FILE:-$AGENT_DIR/auto-evolve.$RUN_ID.stop}"
 
@@ -105,7 +107,8 @@ trap 'handle_signal INT' INT
 
 validate_pane
 printf -v quoted_stop_file '%q' "$STOP_FILE"
-log "auto-evolve daemon started, interval=${INTERVAL_SEC}s, safety-max=${SAFETY_MAX_ATTEMPTS}, target=${AUTO_EVOLVE_TARGET}, pane=${PANE}"
+target_desc="${AUTO_EVOLVE_TARGET:-<none: main agent decides the target>}"
+log "auto-evolve daemon started, interval=${INTERVAL_SEC}s, safety-max=${SAFETY_MAX_ATTEMPTS}, target=${target_desc}, pane=${PANE}"
 log "the model controls completion via stop signal: $STOP_FILE"
 log "git diff --stat snapshot:"
 git_stat="$(git -C "$REPO_DIR" diff --stat 2>&1 || true)"
@@ -147,25 +150,14 @@ for ((attempt = 1; attempt <= SAFETY_MAX_ATTEMPTS; attempt++)); do
   pane_snapshot="$(capture_pane)"
   if ! grep -qE "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot"; then
     log "asking model to continue or mark completion"
-    send_text "请评估 ${AUTO_EVOLVE_TARGET} 是否还有高价值、可验证的改进。若有则继续一轮；若已完成，请运行：touch $quoted_stop_file"
+    if [[ -n "$(printf '%s' "$AUTO_EVOLVE_TARGET" | tr -d '[:space:]')" ]]; then
+      send_text "请评估演化目标 ${AUTO_EVOLVE_TARGET} 是否还有高价值、可验证的改进。若有则继续一轮；若已完成，请运行：touch $quoted_stop_file"
+    else
+      send_text "演化目标由主 agent 在当前会话中指定；请继续推进该目标。若已无高价值、可验证的改进，请运行：touch $quoted_stop_file"
+    fi
   else
     log "pi busy, skip model decision prompt; busy context:"
     grep -E "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot" | tail -n 5 | tee -a "$LOG" || true
-  fi
-
-  if ((attempt % 3 == 0)); then
-    pane_snapshot="$(capture_pane)"
-    if ! grep -qE "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot"; then
-      if [[ "$AUTO_EVOLVE_TARGET" == "subagent" ]]; then
-        log "triggering demo subagent"
-        send_text "请启动一个 background scout 演示 widget（auto attempt $attempt）"
-      else
-        log "skipping the subagent widget demo for target=${AUTO_EVOLVE_TARGET}"
-      fi
-    else
-      log "pi busy, skip demo subagent; busy context:"
-      grep -E "RUNNING TOOLS|STREAMING" <<< "$pane_snapshot" | tail -n 5 | tee -a "$LOG" || true
-    fi
   fi
 done
 
