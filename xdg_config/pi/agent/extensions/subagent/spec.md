@@ -1,6 +1,14 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
+- Updated: 2026-08-25 — bundled role descriptions follow a declarative
+  capability convention: they state coverage plus when-to-use hints (e.g.
+  `Default subagent for …`, `use for …`, `never for code review`) instead of
+  imperative MUST-delegation mandates. Delegation pressure stays in the §4.7
+  routing guidelines; per-role selection hints stay inside each definition.
+  Also clarified that snapshots/results carry effective `model`/`thinking`
+  where the model id is provider-stripped and fields are omitted when
+  undefined.
 - Updated: 2026-08-24 — settled operation responses now separate authoritative
   UI/control `details` from a compact parent-model handoff that omits machine
   IDs and execution-profile metadata. Handoff summaries and their serialized
@@ -142,6 +150,11 @@ roles visible without paying for every routing description twice. Prompt
 guidelines select from the catalog; they must not duplicate agent names or
 descriptions, assume a fixed count, or become a second source of truth for role
 capabilities.
+
+Bundled role descriptions follow a declarative capability convention: each
+states what the role covers and when to use it (e.g. `Default subagent for …`,
+`use for …`, `never for code review`) rather than an imperative delegation
+mandate; the routing guidelines above carry the delegation pressure.
 
 The parent classifies work before it starts equivalent reads or searches:
 
@@ -691,7 +704,7 @@ Implemented today:
 - Timing plumbing: partial updates carry `startedAt`/`deadlineMs`; settled results and completion notifications carry `elapsedMs`.
 - Durable session paths under `<agent-dir>/subagent-sessions`.
 - `runId`, `operationId`, `processInstanceId`, `sessionId`, and transcript paths.
-- Bounded in-memory runtime and operation tracking enriched with effective `model`/`thinking` (stripped) in snapshots and serialized results.
+- Bounded in-memory runtime and operation tracking enriched with effective `model`/`thinking` in snapshots and serialized results; `model` is the provider-stripped model id and fields are omitted when undefined.
 - Discovery starts from `agents/*.md`; `settings.json` `subagents[agent]` may override `model`, `thinking`, and `description` per provided field, and catalog plus `list` reflect the effective merged view.
 - Bounded parent completion notifications for each submitted persistent operation.
 - Compact runtime UI with bounded task previews, reduced live progress, short
