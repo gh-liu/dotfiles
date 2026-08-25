@@ -1,6 +1,12 @@
 # Pi Subagent Extension Specification
 
 - Status: Active (Milestones 1 and 2 partial)
+- Updated: 2026-08-25 — render presentation split into `render-call.ts`,
+  `render-completion.ts`, `render-result.ts`, and shared helpers in
+  `render-shared.ts`, with `render.ts` kept as a pure barrel so import paths
+  are unchanged; `index.test.ts` split into per-contract-area
+  `index-*.test.ts` files plus `index-test-utils.ts` (move-only, same test
+  count). See `REFACTORING.md`.
 - Updated: 2026-08-25 — bundled role descriptions follow a declarative
   capability convention: they state coverage plus when-to-use hints (e.g.
   `Default subagent for …`, `use for …`, `never for code review`) instead of
@@ -454,7 +460,7 @@ index.ts: in-memory control plane
   |-- RuntimeRecord map: runtime state, revision, controller, capacity ownership
   |-- OperationRecord maps: accepted/settled state and retained results
   |-- completion message: wake the parent after persistent operation settlement
-  |-- render.ts: bounded call, progress, and terminal-state presentation
+  |-- render-* modules (barrel render.ts): bounded call, progress, and terminal-state presentation
   |
   | SubagentRunOptions / SubagentOperation / SubagentResult
   v
@@ -485,7 +491,7 @@ Ownership is split as follows:
 | Tool surface (`index.ts`) | Extension wiring, agent discovery + settings overrides, TypeBox schema, prompt guidance, action dispatch, response envelopes, completion delivery, shutdown hook | State transitions, slot accounting, session event reduction |
 | SDK controller (`sdk-executor.ts`) | Exactly one in-process Pi session, session construction and isolation flags, event reduction, operation deadline/abort watchdogs, fatal notification, session disposal | Multi-runtime scheduling, model-facing status policy |
 | Pi child | Model turns, tool execution, session transcript | Parent integration decisions, runtime registry |
-| Renderer (`render.ts`) | Bounded visual presentation and spinner lifecycle | Authoritative state or completion decisions |
+| Renderer (`render-*.ts` behind the `render.ts` barrel) | Bounded visual presentation and spinner lifecycle | Authoritative state or completion decisions |
 
 The controller exposes two distinct operation promises:
 
@@ -1010,16 +1016,16 @@ Current capability-to-test map:
 
 | Capability contract | Deterministic coverage | Real-Pi coverage |
 | --- | --- | --- |
-| Agent parsing, explicit/custom tools, fresh-only context, contained definition symlinks, discovery, overrides, single catalog, all-registry name wake word, model-facing context budget | `agents.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | role-selection and work-order scenarios |
+| Agent parsing, explicit/custom tools, fresh-only context, contained definition symlinks, discovery, overrides, single catalog, all-registry name wake word, model-facing context budget | `agents.test.ts`, `sdk-executor.test.ts`, `index-discovery.test.ts` | role-selection and work-order scenarios |
 | Cwd/root containment, symlink escape, bounded project guidance | `context.test.ts` | isolated fixture workspaces |
 | Explicit SDK session profile, durable transcript reference, result ownership | `sdk-executor.test.ts` | all delegated scenarios |
-| One-shot run, persistent start/status/wait/follow-up/close | `index.test.ts`, `sdk-executor.test.ts` | `persistent-follow-up` |
-| Accepted-operation steering and guarded interrupt/reuse | `index.test.ts`, `sdk-executor.test.ts` | `steer-active-operation`, `interrupt-and-reuse` |
-| Idle-only input, wait timeout, late-control races, monotonic revisions | `index.test.ts` | persistent lifecycle scenarios |
-| Capacity reservation/release and fail-fast fourth run | `index.test.ts`, `eval/analyze.test.ts` | `capacity-exhaustion` |
+| One-shot run, persistent start/status/wait/follow-up/close | `index-lifecycle.test.ts`, `index-shutdown-cleanup.test.ts`, `sdk-executor.test.ts` | `persistent-follow-up` |
+| Accepted-operation steering and guarded interrupt/reuse | `index-steering-interrupt.test.ts`, `sdk-executor.test.ts` | `steer-active-operation`, `interrupt-and-reuse` |
+| Idle-only input, wait timeout, late-control races, monotonic revisions | `index-lifecycle.test.ts`, `index-steering-interrupt.test.ts` | persistent lifecycle scenarios |
+| Capacity reservation/release and fail-fast fourth run | `index-capacity.test.ts`, `eval/analyze.test.ts` | `capacity-exhaustion` |
 | Deadlines, interrupt and pre-accept close watchdogs, startup/provider/final-response failures | `sdk-executor.test.ts` | provider failures fail every eval run |
-| Transcript preservation, idempotent cleanup, shutdown | `sdk-executor.test.ts`, `index.test.ts` | persistent lifecycle scenarios |
-| Bounded/redacted progress, results, notifications | `output.test.ts`, `sdk-executor.test.ts`, `index.test.ts` | JSONL report inspection |
+| Transcript preservation, idempotent cleanup, shutdown | `sdk-executor.test.ts`, `index-shutdown-cleanup.test.ts` | persistent lifecycle scenarios |
+| Bounded/redacted progress, results, notifications | `output.test.ts`, `sdk-executor.test.ts`, `index-notifications.test.ts`, `index-rendering.test.ts` | JSONL report inspection |
 | Every call/result/completion renderer branch and live panel state | `render.test.ts`, `live-ui.test.ts` | `eval/ui-gallery.mjs` plus interactive runs |
 | Parent routing, parallel evidence, staged roles, handoff consumption and verification | `eval/analyze.test.ts` | `eval/scenarios.mjs` |
 | Tester provisioning policy, context-isolation wording, browser routing, source preservation, evidence artifacts | `agents.test.ts` | `browser-qa` |
