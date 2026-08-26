@@ -6,6 +6,37 @@ import { boundedLines, collapseHome, oneLine, positiveSafeRuntimeIndex, taskTitl
 
 type ThemeFgColor = Parameters<Theme["fg"]>[0];
 
+/**
+ * Stable per-agent accent pool. These semantic theme keys resolve to distinct
+ * hues in the bundled themes (nord: blue/light-blue/green/magenta/teal/
+ * yellow/red), so names are differentiated without hardcoding RGB values.
+ */
+const AGENT_NAME_COLORS: readonly ThemeFgColor[] = [
+  "syntaxKeyword",
+  "syntaxFunction",
+  "syntaxString",
+  "syntaxNumber",
+  "syntaxType",
+  "warning",
+  "toolDiffRemoved",
+];
+
+/** FNV-1a 32-bit hash so the same agent name always maps to the same color. */
+function hashString(value: string): number {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < value.length; i++) {
+    hash ^= value.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return hash >>> 0;
+}
+
+/** Deterministic per-agent name color derived from the name hash. */
+export function agentNameColor(agent: string): ThemeFgColor {
+  const color = AGENT_NAME_COLORS[hashString(agent) % AGENT_NAME_COLORS.length];
+  return color ?? "syntaxKeyword";
+}
+
 function thinkingLevelColor(thinking: string): ThemeFgColor {
   switch (thinking) {
     case "minimal":
@@ -27,7 +58,7 @@ function thinkingLevelColor(thinking: string): ThemeFgColor {
 
 function formatAgentLabel(agent: string, model: string | undefined, thinking: string | undefined, theme: Theme): string {
   const separator = theme.fg("dim", " · ");
-  let label = theme.fg("toolTitle", theme.bold(agent));
+  let label = theme.fg(agentNameColor(agent), theme.bold(agent));
   if (model) label += `${separator}${theme.fg("accent", stripModel(model))}`;
   if (thinking) label += `${separator}${theme.fg(thinkingLevelColor(thinking), thinking)}`;
   return label;

@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 
 import {
+  agentNameColor,
   renderSubagentCall,
   renderSubagentCompletion,
   renderSubagentResult,
@@ -87,7 +88,7 @@ describe("subagent render state matrix", () => {
   test("colors call title identity segments and falls back to effective state model", () => {
     const explicit = recordedCall({ action: "run", agent: "scout", task: "Inspect", model: "vendor/model-a", thinking: "high" });
     expect(explicit.output).toContain("scout · model-a · high — Inspect");
-    expect(explicit.fgColors).toEqual(expect.arrayContaining(["toolTitle", "accent", "thinkingHigh", "dim"]));
+    expect(explicit.fgColors).toEqual(expect.arrayContaining([agentNameColor("scout"), "accent", "thinkingHigh", "dim"]));
 
     for (const [thinking, color] of [
       ["minimal", "thinkingMinimal"],
@@ -106,7 +107,25 @@ describe("subagent render state matrix", () => {
       { model: "effective/model-b", thinking: "unknown" },
     );
     expect(fallback.output).toContain("scout · model-b · unknown — Inspect");
-    expect(fallback.fgColors).toEqual(expect.arrayContaining(["toolTitle", "accent", "thinkingText"]));
+    expect(fallback.fgColors).toEqual(expect.arrayContaining([agentNameColor("scout"), "accent", "thinkingText"]));
+  });
+
+  test("hashes agent names to stable, distributed name colors", () => {
+    expect(agentNameColor("worker")).toBe(agentNameColor("worker"));
+    const bundled = ["scout", "worker", "oracle", "reviewer", "researcher", "tester"];
+    const distinct = new Set(bundled.map(agentNameColor));
+    expect(distinct.size).toBeGreaterThanOrEqual(4);
+    for (const color of bundled.map(agentNameColor)) {
+      expect([
+        "syntaxKeyword",
+        "syntaxFunction",
+        "syntaxString",
+        "syntaxNumber",
+        "syntaxType",
+        "warning",
+        "toolDiffRemoved",
+      ]).toContain(color);
+    }
   });
 
   test("keeps status and close collapsed rows silent while expanded rows remain inspectable", () => {

@@ -1,6 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
+import { agentNameColor } from "./call.ts";
 import { boundedLines, formatCountdown, oneLine, taskTitle } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
@@ -43,7 +44,7 @@ function completionEntryText(
   let text = `${theme.fg(color, marker)} ${theme.fg(color, status)}`;
   // Short agent name only: the full label (model/thinking) already sits on the tool-call title.
   const agentLabel = `${details.agent}${typeof details.index === "number" ? ` (#${details.index})` : ""}`;
-  if (details.agent) text += theme.fg("muted", ` · ${agentLabel}`);
+  if (details.agent) text += `${theme.fg("muted", " · ")}${theme.fg(agentNameColor(details.agent), agentLabel)}`;
   if (!expanded && typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
   if (!expanded && completionTitle) text += theme.fg("muted", ` · ${completionTitle}`);
   if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
