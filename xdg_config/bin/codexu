@@ -57,8 +57,13 @@ request = urllib.request.Request(API_URL_USAGE, headers=headers)
 payload = json.loads(urllib.request.urlopen(request, timeout=30).read().decode())
 # print(json.dumps(payload))
 rate_limit = payload.get("rate_limit", {})
-used_percent_1w = rate_limit.get("primary_window", {})
+used_percent_5h = rate_limit.get("primary_window", {})
+used_percent_1w = rate_limit.get("secondary_window", {})
 print("# codex usage")
+print(
+    f"{'5h':<2} used {used_percent_5h.get('used_percent', 0):>3}%"
+    f"  resets {fmt2(used_percent_5h.get('reset_at', 0))}"
+)
 print(
     f"{'1w':<2} used {used_percent_1w.get('used_percent', 0):>3}%"
     f"  resets {fmt2(used_percent_1w.get('reset_at', 0))}"
