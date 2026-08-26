@@ -216,6 +216,49 @@ export function loadSubagentOverrides(settingsPath: string): { overrides?: unkno
   }
 }
 
+export interface SettingsDefaults {
+  defaultProvider?: string;
+  defaultModel?: string;
+}
+
+/**
+ * Reads the top-level default provider/model from settings.json. Child
+ * sessions resolve their model via the SDK's findInitialModel, which feeds on
+ * these exact values, so they are the effective model whenever an agent
+ * definition omits one. Missing files and malformed values yield empty
+ * defaults rather than surfaced errors (overrides already own the error path).
+ */
+export function loadSettingsDefaults(settingsPath: string): SettingsDefaults {
+  try {
+    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
+    if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return {};
+    const provider = (settings as Record<string, unknown>).defaultProvider;
+    const model = (settings as Record<string, unknown>).defaultModel;
+    return {
+      ...(typeof provider === "string" && provider.trim() !== "" ? { defaultProvider: provider.trim() } : {}),
+      ...(typeof model === "string" && model.trim() !== "" ? { defaultModel: model.trim() } : {}),
+    };
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Fills the canonical `{provider}/{model}` default from settings into agents
+ * that declare no explicit model (frontmatter or `subagents[agent]` overlaps
+ * win), so every runtime carries a displayable, session-consistent model.
+ * Discovery errors pass through untouched.
+ */
+export function applyDefaultModels(discovery: AgentDiscovery, defaults: SettingsDefaults): AgentDiscovery {
+  const { defaultProvider, defaultModel } = defaults;
+  if (!defaultProvider || !defaultModel) return discovery;
+  const defaultModelRef = `${defaultProvider}/${defaultModel}`;
+  return {
+    agents: discovery.agents.map((agent) => (agent.model ? agent : { ...agent, model: defaultModelRef })),
+    errors: discovery.errors,
+  };
+}
+
 /** Renders the bounded one-line-per-agent catalog shown in the tool description. */
 export function formatAgentCatalog(discovery: AgentDiscovery): string {
   const agents = discovery.agents.length === 0

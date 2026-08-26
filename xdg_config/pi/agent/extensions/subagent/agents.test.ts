@@ -4,7 +4,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { applyAgentOverrides, discoverUserAgents, loadAgentDefinition, parseAgentDefinition } from "./agents.ts";
+import {
+  applyAgentOverrides,
+  applyDefaultModels,
+  discoverUserAgents,
+  loadAgentDefinition,
+  loadSettingsDefaults,
+  parseAgentDefinition,
+  type AgentDefinition,
+  type AgentDiscovery,
+} from "./agents.ts";
 
 const temporaryDirectories: string[] = [];
 
@@ -19,6 +28,73 @@ function temporaryAgentDir(): string {
   temporaryDirectories.push(directory);
   return directory;
 }
+
+describe("settings defaults", () => {
+  test("loads the default provider/model that child sessions resolve", () => {
+    const dir = temporaryAgentDir();
+    const settingsPath = join(dir, "settings.json");
+    writeFileSync(settingsPath, JSON.stringify({
+      defaultProvider: "opencode-go",
+      defaultModel: "deepseek-v4-flash",
+      subagents: {},
+    }));
+
+    expect(loadSettingsDefaults(settingsPath)).toEqual({
+      defaultProvider: "opencode-go",
+      defaultModel: "deepseek-v4-flash",
+    });
+  });
+
+  test("returns empty defaults when provider/model are absent", () => {
+    const dir = temporaryAgentDir();
+    const settingsPath = join(dir, "settings.json");
+    writeFileSync(settingsPath, JSON.stringify({ theme: "nord" }));
+    expect(loadSettingsDefaults(settingsPath)).toEqual({});
+  });
+
+  test("returns empty defaults when the settings file is missing", () => {
+    const dir = temporaryAgentDir();
+    expect(loadSettingsDefaults(join(dir, "missing.json"))).toEqual({});
+  });
+
+  test("returns empty defaults on malformed settings JSON", () => {
+    const dir = temporaryAgentDir();
+    const settingsPath = join(dir, "settings.json");
+    writeFileSync(settingsPath, "{ not json");
+    expect(loadSettingsDefaults(settingsPath)).toEqual({});
+  });
+});
+
+describe("default model application", () => {
+  function discoveryWith(agents: Array<Partial<AgentDefinition>>): AgentDiscovery {
+    return {
+      agents: agents as unknown as AgentDefinition[],
+      errors: [{ filePath: "broken.md", error: "boom" }],
+    };
+  }
+
+  test("fills the canonical default only for agents without an explicit model", () => {
+    const discovery = discoveryWith([
+      { name: "implicit" },
+      { name: "explicit", model: "openai-codex/gpt-5.6-sol" },
+    ]);
+    const filled = applyDefaultModels(discovery, {
+      defaultProvider: "opencode-go",
+      defaultModel: "deepseek-v4-flash",
+    });
+
+    expect(filled.agents[0]).toMatchObject({ name: "implicit", model: "opencode-go/deepseek-v4-flash" });
+    expect(filled.agents[1]).toMatchObject({ model: "openai-codex/gpt-5.6-sol" });
+    expect(filled.errors).toEqual([{ filePath: "broken.md", error: "boom" }]);
+  });
+
+  test("leaves agents untouched when the defaults are incomplete or absent", () => {
+    const discovery = discoveryWith([{ name: "implicit" }]);
+    expect(applyDefaultModels(discovery, {}).agents[0].model).toBeUndefined();
+    expect(applyDefaultModels(discovery, { defaultProvider: "opencode-go" }).agents[0].model).toBeUndefined();
+    expect(applyDefaultModels(discovery, { defaultModel: "deepseek-v4-flash" }).agents[0].model).toBeUndefined();
+  });
+});
 
 describe("agent definitions", () => {
   test("loads the bundled scout as a minimal-thinking read-only profile", () => {

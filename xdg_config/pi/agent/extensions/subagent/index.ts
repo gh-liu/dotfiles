@@ -6,8 +6,10 @@ import { Type } from "typebox";
 
 import {
   applyAgentOverrides,
+  applyDefaultModels,
   discoverUserAgents,
   formatAgentCatalog,
+  loadSettingsDefaults,
   loadSubagentOverrides,
   type AgentDiscovery,
 } from "./agents.ts";
@@ -150,12 +152,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
   const settingsPath = options.settingsPath ?? join(getAgentDir(), "settings.json");
   const loadedOverrides = loadSubagentOverrides(settingsPath);
+  const settingsDefaults = loadSettingsDefaults(settingsPath);
   const discoverEffectiveAgents = () => {
     const discovery = discoverUserAgents(agentDirectory);
-    return applyAgentOverrides({
+    return applyDefaultModels(applyAgentOverrides({
       agents: discovery.agents,
       errors: [...discovery.errors, ...loadedOverrides.errors],
-    }, loadedOverrides.overrides);
+    }, loadedOverrides.overrides), settingsDefaults);
   };
   let registry = discoverEffectiveAgents();
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
