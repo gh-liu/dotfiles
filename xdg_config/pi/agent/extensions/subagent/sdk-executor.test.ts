@@ -9,7 +9,7 @@ import {
   createSdkSubagentExecutor,
   filterDeclaredCustomTools,
 } from "./sdk-executor.ts";
-import type { SubagentExecutionProfile, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
+import type { SubagentExecutionProfile, SubagentProgress, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
 
 afterEach(() => {
   delete process.env.SUBAGENT_SDK_TEST_SECRET;
@@ -389,22 +389,51 @@ describe("one-shot SDK executor", () => {
       emit({ type: "agent_settled" });
     };
     process.env.SUBAGENT_SDK_TEST_SECRET = "sdk-secret";
-    const progress: string[] = [];
-    const runOptions = options({ onProgress: (s) => progress.push(s) });
+    const progress: SubagentProgress[] = [];
+    const runOptions = options({ onProgress: (value) => progress.push(typeof value === "string" ? { summary: value } : value) });
     const controller = await fakeController(runOptions, session, { credentialEnvNames: ["SUBAGENT_SDK_TEST_SECRET"] });
     const op = controller.start(runOptions);
     await op.accepted;
     await op.result;
-    expect(progress.slice(0, 3)).toEqual([
+    expect(progress.slice(0, 3).map((entry) => entry.summary)).toEqual([
       "Child started; waiting for model…",
       "Thinking…",
       "Preparing tool call…",
     ]);
-    expect(progress[3]).toMatch(/^read token=\[REDACTED\]-x+…$/);
-    expect(progress[4]).toContain("done · working…");
-    expect(progress.slice(-2)).toEqual(["Writing response…", "Finalizing response…"]);
-    expect(progress.join("\n")).not.toContain("sdk-secret");
-    expect(progress.every((e) => e.length <= 161)).toBe(true);
+    expect(progress[3].summary).toMatch(/^read token=\[REDACTED\]-x+…$/);
+    expect(progress[3].tools?.active).toHaveLength(1);
+    expect(progress[4].summary).toContain("done · working…");
+    expect(progress[4].tools).toMatchObject({ history: [{ status: "completed" }], active: [] });
+    expect(progress.slice(-2).map((entry) => entry.summary)).toEqual(["Writing response…", "Finalizing response…"]);
+    expect(JSON.stringify(progress)).not.toContain("sdk-secret");
+    expect(progress.every((entry) => entry.summary.length <= 161)).toBe(true);
+    await controller.close();
+  });
+
+  test("tracks bounded deduplicated tool lifecycle with failures and bash previews", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      for (let index = 0; index < 10; index++) {
+        const start = { type: "tool_execution_start", toolCallId: `tool-${index}`, toolName: index === 9 ? "bash" : "read", args: index === 9 ? { command: "printf 'recognizable command'" } : { path: `/tmp/${index}` } };
+        emit(start);
+        if (index === 0) emit(start); // repeated SDK update must not duplicate the active call
+        emit({ type: "tool_execution_update", toolCallId: `tool-${index}` });
+        emit({ ...start, type: "tool_execution_end", isError: index === 1 });
+      }
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    };
+    const progress: SubagentProgress[] = [];
+    const runOptions = options({ onProgress: (value) => progress.push(typeof value === "string" ? { summary: value } : value) });
+    const controller = await fakeController(runOptions, session);
+    await controller.submit(runOptions);
+    const tools = progress.at(-1)?.tools;
+    expect(tools).toMatchObject({ earlierCount: 2 });
+    expect(tools?.history).toHaveLength(8);
+    expect(progress.flatMap((entry) => entry.tools?.history ?? []).some((item) => item.status === "failed")).toBe(true);
+    expect(tools?.history.at(-1)?.summary).toContain("bash printf 'recognizable command'");
+    expect(progress.filter((entry) => entry.tools?.active.some((item) => item.id === "tool-0"))).toHaveLength(1);
     await controller.close();
   });
 

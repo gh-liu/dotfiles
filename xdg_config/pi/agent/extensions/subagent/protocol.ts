@@ -19,6 +19,22 @@ export interface SubagentWorkOrder {
   projectGuidance: string[];
 }
 
+export interface SubagentToolProgressItem {
+  id: string;
+  summary: string;
+  status: "running" | "completed" | "failed";
+}
+
+export interface SubagentProgress {
+  summary: string;
+  /** Bounded, operation-local tool lifecycle snapshot for renderer observability. */
+  tools?: {
+    earlierCount: number;
+    history: SubagentToolProgressItem[];
+    active: SubagentToolProgressItem[];
+  };
+}
+
 export interface SubagentRunOptions {
   cwd: string;
   agent: SubagentExecutionProfile;
@@ -28,7 +44,7 @@ export interface SubagentRunOptions {
   parentSessionId: string;
   deadlineMs: number;
   signal?: AbortSignal;
-  onProgress?: (summary: string) => void;
+  onProgress?: (progress: string | SubagentProgress) => void;
 }
 
 export interface SubagentResult {

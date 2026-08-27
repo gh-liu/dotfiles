@@ -93,7 +93,14 @@ describe("task-oriented subagent API", () => {
     const env = setup({ ids: ["a", "pa", "b", "pb", "c", "pc"] });
     const updates: unknown[] = [];
     await env.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "A", deadlineMs: 60_000, background: true }, undefined, (update) => updates.push(update), (await import("./harness.ts")).context(env.root));
-    env.fake.controllers[0].starts[0].options.onProgress?.("working");
+    env.fake.controllers[0].starts[0].options.onProgress?.({
+      summary: "working",
+      tools: { earlierCount: 0, history: [{ id: "t1", summary: "read a.ts", status: "completed" }], active: [] },
+    });
+    expect(updates.at(-1)).toMatchObject({
+      content: [{ type: "text", text: "working" }],
+      details: { toolProgress: { history: [{ summary: "read a.ts", status: "completed" }] } },
+    });
     await env.invoke({ action: "run", agent: "scout", objective: "B", background: true });
     await env.invoke({ action: "run", agent: "scout", objective: "C", background: true });
     const capacity = await env.invoke({ action: "run", agent: "scout", objective: "D", background: true });

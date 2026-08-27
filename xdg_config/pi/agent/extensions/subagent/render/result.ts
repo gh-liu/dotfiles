@@ -20,10 +20,29 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
       context.state.spinnerTimer = setInterval(() => { context.state.spinnerFrame = ((context.state.spinnerFrame ?? 0) + 1) % FRAMES.length; context.invalidate(); }, 80);
       context.state.spinnerTimer.unref?.();
     }
-    const deadline = context.args.action === "run" ? context.args.deadlineMs : undefined;
-    const countdown = deadline ? ` ${formatCountdown(deadline - (Date.now() - (typeof details.startedAt === "number" ? details.startedAt : (context.state.startedAt ??= Date.now()))))}` : "";
     const progress = result.content.find((part) => part.type === "text")?.text;
-    return new Text(theme.fg("warning", FRAMES[context.state.spinnerFrame]) + countdown + (progress ? theme.fg("dim", ` — ${oneLine(progress, 240)}`) : ""), 0, 0);
+    const toolProgress = details.toolProgress && typeof details.toolProgress === "object"
+      ? details.toolProgress as { earlierCount?: unknown; history?: unknown; active?: unknown }
+      : undefined;
+    const history = Array.isArray(toolProgress?.history) ? toolProgress.history : [];
+    const active = Array.isArray(toolProgress?.active) ? toolProgress.active : [];
+    const limit = options.expanded ? 12 : 8;
+    const visibleHistory = history.slice(-limit);
+    const omitted = (typeof toolProgress?.earlierCount === "number" ? toolProgress.earlierCount : 0) + Math.max(0, history.length - visibleHistory.length);
+    const lines: string[] = [];
+    if (omitted > 0) lines.push(theme.fg("dim", `… ${omitted} earlier calls`));
+    for (const item of visibleHistory) {
+      if (!item || typeof item !== "object") continue;
+      const typed = item as { summary?: unknown; status?: unknown };
+      if (typeof typed.summary !== "string") continue;
+      lines.push(theme.fg(typed.status === "failed" ? "error" : "success", `${typed.status === "failed" ? "✗" : "✓"} ${oneLine(typed.summary, 160)}`));
+    }
+    for (const item of active) {
+      if (!item || typeof item !== "object" || typeof (item as { summary?: unknown }).summary !== "string") continue;
+      lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} ${oneLine((item as { summary: string }).summary, 160)}…`));
+    }
+    if (lines.length === 0) lines.push(theme.fg("warning", FRAMES[context.state.spinnerFrame]) + (progress ? theme.fg("dim", ` — ${oneLine(progress, 240)}`) : ""));
+    return new Text(lines.join("\n"), 0, 0);
   }
   if (context.state.spinnerTimer) clearInterval(context.state.spinnerTimer);
   context.state.spinnerTimer = undefined;

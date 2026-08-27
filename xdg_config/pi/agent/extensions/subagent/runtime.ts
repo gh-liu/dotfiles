@@ -5,6 +5,7 @@ import type { SubagentCompletionDetails } from "./render/index.ts";
 import type {
   SubagentController,
   SubagentControllerFactory,
+  SubagentProgress,
   SubagentResult,
   SubagentRunOptions,
 } from "./protocol.ts";
@@ -351,11 +352,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       deadlineMs,
       mode: runtime.mode === "foreground" ? "foreground" : "background",
     });
-    // Wrap raw progress summaries with operation identity plus authoritative timing
-    // so the UI can anchor countdowns and report elapsed time without guessing.
+    // Wrap progress with operation identity and renderer-only tool lifecycle data.
     // The live UI controller always observes progress; onUpdate is forwarded only
-    // when the tool caller provided a channel. Details shape is unchanged.
-    const onProgress = (summary: string) => {
+    // when the tool caller provided a channel.
+    const onProgress = (value: string | SubagentProgress) => {
+      const progress = typeof value === "string" ? { summary: value } : value;
+      const summary = progress.summary;
       deps.live.progress(runtime.runId, summary);
       onUpdate?.({
         content: [{ type: "text", text: summary }],
@@ -366,8 +368,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
-          startedAt: operation.startedAt,
-          deadlineMs,
+          ...(progress.tools ? { toolProgress: progress.tools } : {}),
         },
       });
     };

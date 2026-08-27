@@ -6,8 +6,6 @@ type SubagentRenderArgs =
 interface SubagentRenderState {
   spinnerFrame?: number;
   spinnerTimer?: ReturnType<typeof setInterval>;
-  /** Wall-clock start of the current execution, captured on first partial render. */
-  startedAt?: number;
   /** Immutable per-row runtime identity, learned only from authoritative result details. */
   runtimeIndex?: number;
   /** Session-local public alias learned from authoritative result details. */

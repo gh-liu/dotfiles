@@ -6,7 +6,7 @@ import { Type } from "typebox";
 
 import { boundText, redactSecrets, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentController, SubagentOperation, SubagentResult, SubagentRunOptions } from "./protocol.ts";
+import type { SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentToolProgressItem } from "./protocol.ts";
 
 export interface SdkSubagentConfig {
   agentDir?: string;
@@ -53,7 +53,9 @@ function collapseHome(value: string): string {
 function safeToolProgress(record: any, secrets: string[]): string {
   const toolName = typeof record.toolName === "string" ? record.toolName : "tool";
   const args = record.args && typeof record.args === "object" && !Array.isArray(record.args) ? (record.args as Record<string, unknown>) : {};
-  const values = toolName === "grep" ? [args.pattern, args.path] : [args.path];
+  const values = toolName === "bash"
+    ? [args.command]
+    : toolName === "grep" ? [args.pattern, args.path] : [args.path];
   const detail = values
     .filter((v): v is string => typeof v === "string" && v.trim() !== "")
     .map((v) => boundedOneLine(collapseHome(v), 80, secrets))
@@ -409,11 +411,27 @@ export async function createSdkSubagentController(
         const clearAbortWatchdog = (): void => {
           if (abortWatchdog) { clearTimeout(abortWatchdog); abortWatchdog = undefined; }
         };
-        const activeTools = new Map<string, string>();
+        const activeTools = new Map<string, SubagentToolProgressItem>();
+        const toolHistory: SubagentToolProgressItem[] = [];
+        let earlierToolCount = 0;
         let lastProgress = "";
-        const report = (text: string): void => {
+        const report = (text: string, includeTools = false): void => {
           const bounded = boundedOneLine(text, 160, secrets);
-          if (bounded !== lastProgress) options.onProgress?.(lastProgress = bounded);
+          const progress: SubagentProgress = {
+            summary: bounded,
+            ...(includeTools || toolHistory.length > 0 || activeTools.size > 0 ? {
+              tools: {
+                earlierCount: earlierToolCount,
+                history: toolHistory.map((item) => ({ ...item })),
+                active: [...activeTools.values()].map((item) => ({ ...item })),
+              },
+            } : {}),
+          };
+          const key = JSON.stringify(progress);
+          if (key !== lastProgress) {
+            lastProgress = key;
+            options.onProgress?.(progress);
+          }
         };
         const listener = (event: any): void => {
           try {
@@ -425,12 +443,20 @@ export async function createSdkSubagentController(
               else if (type?.startsWith("text")) report("Writing response…");
             } else if (event.type === "tool_execution_start") {
               const label = safeToolProgress(event, secrets);
-              if (typeof event.toolCallId === "string") activeTools.set(event.toolCallId, label);
-              report(label.endsWith("…") ? label : `${label}…`);
+              const id = typeof event.toolCallId === "string" ? event.toolCallId : `anonymous-${activeTools.size}`;
+              activeTools.set(id, { id, summary: label, status: "running" });
+              report(label.endsWith("…") ? label : `${label}…`, true);
             } else if (event.type === "tool_execution_end") {
-              const label = typeof event.toolCallId === "string" ? activeTools.get(event.toolCallId) ?? safeToolProgress(event, secrets) : safeToolProgress(event, secrets);
-              if (typeof event.toolCallId === "string") activeTools.delete(event.toolCallId);
-              report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`);
+              const id = typeof event.toolCallId === "string" ? event.toolCallId : `ended-${toolHistory.length}`;
+              const activeItem = activeTools.get(id);
+              const label = activeItem?.summary ?? safeToolProgress(event, secrets);
+              activeTools.delete(id);
+              toolHistory.push({ id, summary: label, status: event.isError ? "failed" : "completed" });
+              if (toolHistory.length > 8) {
+                earlierToolCount += toolHistory.length - 8;
+                toolHistory.splice(0, toolHistory.length - 8);
+              }
+              report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`, true);
             } else if (event.type === "message_end" && event.message?.role === "assistant") {
               const text = (event.message.content ?? []).filter((p: any) => p.type === "text" && typeof p.text === "string").map((p: any) => p.text as string).join("\n");
               finalText = { text: boundText(text, { maxCharacters: SUBAGENT_HANDOFF_MAX_CHARACTERS, maxLines: 400 }, secrets), stopReason: event.message.stopReason, error: event.message.errorMessage };

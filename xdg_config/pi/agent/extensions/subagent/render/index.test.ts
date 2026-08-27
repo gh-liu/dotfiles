@@ -20,6 +20,35 @@ describe("task API rendering", () => {
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
+  test("renders bounded tool history, active and failed calls without a countdown", () => {
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const rendered = text(renderSubagentResult({
+      content: [{ type: "text", text: "bash running" }],
+      details: {
+        status: "running",
+        deadlineMs: 60_000,
+        toolProgress: {
+          earlierCount: 3,
+          history: [{ id: "1", summary: "read a.ts", status: "completed" }, { id: "2", summary: "grep missing src", status: "failed" }],
+          active: [{ id: "3", summary: "bash npm test", status: "running" }],
+        },
+      },
+    }, { expanded: false, isPartial: true }, theme, context));
+    expect(rendered).toContain("… 3 earlier calls");
+    expect(rendered).toContain("✓ read a.ts");
+    expect(rendered).toContain("✗ grep missing src");
+    expect(rendered).toContain("⠋ bash npm test…");
+    expect(rendered).not.toMatch(/\b60s\b/);
+
+    const other = { args: context.args, isError: false, state: {}, invalidate: vi.fn() } as never;
+    renderSubagentResult({ content: [{ type: "text", text: "other" }], details: { status: "running" } }, { expanded: false, isPartial: true }, theme, other);
+    expect((context as any).state.spinnerTimer).not.toBe((other as any).state.spinnerTimer);
+    renderSubagentResult({ content: [], details: { status: "completed", summary: "handoff" } }, { expanded: false, isPartial: false }, theme, context);
+    renderSubagentResult({ content: [], details: { status: "failed", error: "failed" } }, { expanded: false, isPartial: false }, theme, other);
+    expect((context as any).state.spinnerTimer).toBeUndefined();
+    expect((other as any).state.spinnerTimer).toBeUndefined();
+  });
+
   test("hydrates run and identity action titles from authoritative ref details", async () => {
     const env = (await import("../test/harness.ts")).setup();
     const tool = env.extension.getTool();
