@@ -480,6 +480,39 @@ describe("one-shot SDK executor", () => {
     await controller.close();
   });
 
+  test("emits phase at the thinking→tool boundary so renderers stop showing stale Thinking…", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      // Thinking streams, then is flushed before the tool; the tool runs and completes.
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "check the schema first", partial: {} } });
+      emit({ type: "tool_execution_start", toolCallId: "b", toolName: "grep", args: { pattern: "schema", path: "src" } });
+      emit({ type: "tool_execution_end", toolCallId: "b", toolName: "grep", isError: false });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    };
+    const progress: SubagentProgress[] = [];
+    const runOptions = options({ onProgress: (value) => progress.push(typeof value === "string" ? { summary: value } : value) });
+    const controller = await fakeController(runOptions, session);
+    await controller.submit(runOptions);
+    // Live thinking deltas carry the running phase.
+    const thinkingRunning = progress.find((entry) => entry.summary === "Thinking…");
+    expect(thinkingRunning?.phase).toEqual({ kind: "thinking", status: "running" });
+    // flushThinking (before the tool call) emits a settled phase AND a timeline entry,
+    // so the widget stops surfacing the stale "Thinking…" once the segment is done.
+    const thinkingFlushed = progress.find((entry) => entry.summary === "Thinking");
+    expect(thinkingFlushed).toBeDefined();
+    expect(thinkingFlushed!.phase).toEqual({ kind: "thinking", status: "completed" });
+    expect(thinkingFlushed!.timeline).toEqual([{ kind: "thinking", text: "check the schema first" }]);
+    // Tool start/end carry the running/completed tool phase for the current item.
+    expect(progress.find((entry) => entry.summary.startsWith("grep schema"))?.phase).toEqual({ kind: "tool", status: "running" });
+    expect(progress.find((entry) => entry.summary.includes("done · working…"))?.phase).toEqual({ kind: "tool", status: "completed" });
+    // No report after the flush re-emits "Thinking…" — the boundary is stable.
+    const afterFlush = progress.slice(progress.indexOf(thinkingFlushed!) + 1);
+    expect(afterFlush.some((entry) => entry.summary === "Thinking…")).toBe(false);
+    await controller.close();
+  });
+
   test("keeps the active tool in progress emitted after a thinking delta", async () => {
     const session = new FakeSession();
     session.promptHandler = async (_text, opts, emit) => {

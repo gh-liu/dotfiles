@@ -6,6 +6,7 @@ import {
   formatDuration,
   LIVE_WIDGET_ID,
 } from "./live-ui.ts";
+import { SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
 
 type WidgetContent = string[] | ((tui: unknown, theme: unknown) => unknown) | undefined;
 
@@ -96,6 +97,147 @@ describe("live ui controller", () => {
     expect(updated[0]).toContain("Thinking…");
   });
 
+  test("renders thinking/tool phase affordances consistent with the result renderer", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
+
+    // Thinking in progress: live spinner frame + Thinking…
+    live.progress("r1", "Thinking…", { kind: "thinking", status: "running" });
+    vi.advanceTimersByTime(250);
+    const thinkingLine = renderWidget(ui)[0];
+    expect(thinkingLine).toContain("Thinking…");
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => thinkingLine.includes(`${frame} Thinking…`))).toBe(true);
+
+    // Thinking flushed: completed marker matches the result's ✓ Thinking, no spinner.
+    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" });
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("✓ Thinking");
+    expect(renderWidget(ui)[0]).not.toContain("Thinking…");
+
+    // Tool lifecycle: running spinner, then completed/failed markers.
+    live.progress("r1", "grep schema · src…", { kind: "tool", status: "running" });
+    vi.advanceTimersByTime(250);
+    const toolLine = renderWidget(ui)[0];
+    expect(toolLine).toContain("grep schema · src…");
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => toolLine.includes(`${frame} grep schema · src…`))).toBe(true);
+
+    live.progress("r1", "grep schema · src done · working…", { kind: "tool", status: "completed" });
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("✓ grep schema · src done · working…");
+
+    live.progress("r1", "bash npm test failed · reviewing…", { kind: "tool", status: "failed" });
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("✗ bash npm test failed · reviewing…");
+
+    // Without a phase the summary renders verbatim, preserving prior behavior.
+    live.progress("r1", "Writing response…", undefined);
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("Writing response…");
+    expect(renderWidget(ui)[0]).not.toContain("Thinking…");
+  });
+
+  test("widget animates spinner frames while thinking or tool is running", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
+
+    live.progress("r1", "Thinking…", { kind: "thinking", status: "running" });
+    vi.advanceTimersByTime(250);
+    const seen: string[] = [];
+    for (let i = 0; i < SUBAGENT_SPINNER_FRAMES.length + 2; i++) {
+      const line = renderWidget(ui)[0];
+      const frame = SUBAGENT_SPINNER_FRAMES.find((candidate) => line.includes(`${candidate} Thinking…`));
+      expect(frame).toBeDefined();
+      seen.push(frame!);
+      vi.advanceTimersByTime(100);
+    }
+    // The glyph changes across consecutive renders and cycles through the shared set.
+    expect(new Set(seen).size).toBeGreaterThan(2);
+    for (const frame of seen) expect(SUBAGENT_SPINNER_FRAMES).toContain(frame);
+
+    // Tool running uses the same animated frame set.
+    live.progress("r1", "grep schema · src…", { kind: "tool", status: "running" });
+    vi.advanceTimersByTime(250);
+    const toolFrame = SUBAGENT_SPINNER_FRAMES.find((candidate) => renderWidget(ui)[0].includes(`${candidate} grep schema · src…`));
+    expect(toolFrame).toBeDefined();
+    vi.advanceTimersByTime(100);
+    const toolLine2 = renderWidget(ui)[0];
+    const toolFrame2 = SUBAGENT_SPINNER_FRAMES.find((candidate) => toolLine2.includes(`${candidate} grep schema · src…`));
+    expect(toolFrame2).toBeDefined();
+    expect(toolFrame2).not.toBe(toolFrame);
+  });
+
+  test("completed/failed phases use static markers and stop the spinner ticker", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
+
+    live.progress("r1", "Thinking…", { kind: "thinking", status: "running" });
+    vi.advanceTimersByTime(250);
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => renderWidget(ui)[0].includes(`${frame} Thinking…`))).toBe(true);
+
+    // Flushed thinking: static success marker and the spinner ticker stops.
+    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" });
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("✓ Thinking");
+    const callsAfterCompleted = ui.widgetCalls.length;
+    vi.advanceTimersByTime(300); // spinner tick (100ms) would repaint; heartbeat (1s) has not fired
+    expect(ui.widgetCalls.length).toBe(callsAfterCompleted);
+
+    // Tool running animates again, then a failure freezes to the static marker.
+    live.progress("r1", "grep schema · src…", { kind: "tool", status: "running" });
+    vi.advanceTimersByTime(250);
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => renderWidget(ui)[0].includes(`${frame} grep schema · src…`))).toBe(true);
+
+    live.progress("r1", "grep schema failed · reviewing…", { kind: "tool", status: "failed" });
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("✗ grep schema failed · reviewing…");
+    const callsAfterFailed = ui.widgetCalls.length;
+    vi.advanceTimersByTime(300);
+    expect(ui.widgetCalls.length).toBe(callsAfterFailed);
+  });
+
+  test("spinner ticker stops once no running runtime remains", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
+    live.progress("r1", "Thinking…", { kind: "thinking", status: "running" });
+    vi.advanceTimersByTime(250);
+
+    // Foreground settle detaches the runtime: heartbeat and spinner both stop.
+    live.settle("r1", "completed");
+    expect(lastWidgetContent(ui)).toBeUndefined();
+    const callsAfterSettle = ui.widgetCalls.length;
+    vi.advanceTimersByTime(5_000);
+    expect(ui.widgetCalls.length).toBe(callsAfterSettle);
+
+    // A background runtime that settles idle also stops the spinner ticker while
+    // the dim idle line stays visible.
+    live.track("r2", { agent: "worker", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 2 });
+    live.progress("r2", "Thinking…", { kind: "thinking", status: "running" });
+    vi.advanceTimersByTime(250);
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => renderWidget(ui)[0].includes(`${frame} Thinking…`))).toBe(true);
+
+    live.settle("r2", "completed");
+    vi.advanceTimersByTime(250); // idle transition goes through the throttle
+    expect(renderWidget(ui)[0]).toContain("idle");
+    const callsAfterIdle = ui.widgetCalls.length;
+    vi.advanceTimersByTime(300); // spinner tick (100ms) would repaint; heartbeat (1s) has not fired
+    expect(ui.widgetCalls.length).toBe(callsAfterIdle);
+
+    // dispose also stops every timer.
+    live.dispose();
+    expect(lastWidgetContent(ui)).toBeUndefined();
+    const callsAfterDispose = ui.widgetCalls.length;
+    vi.advanceTimersByTime(5_000);
+    expect(ui.widgetCalls.length).toBe(callsAfterDispose);
+  });
+
   test("floor-rounds elapsed and ceil-rounds remaining without early expiry", () => {
     const ui = createMockUi();
     const live = createLiveUi();
@@ -126,6 +268,42 @@ describe("live ui controller", () => {
     expect(lines).toHaveLength(1); // one compact line, no history lines
     expect(lines[0]).toContain("step 8");
     expect(lines[0]).not.toContain("step 7");
+  });
+
+  test("shows concurrent active tool count without claiming same-name parallelism", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
+
+    // Single active tool stays concise: no count suffix.
+    live.progress("r1", "web_search query…", { kind: "tool", status: "running" }, 1);
+    vi.advanceTimersByTime(250);
+    let line = renderWidget(ui)[0];
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => line.includes(`${frame} web_search query…`))).toBe(true);
+    expect(line).not.toContain("active");
+
+    // Multiple distinct tools: one summary plus the count, never "3× same-tool".
+    live.progress("r1", "read schema.ts…", { kind: "tool", status: "running" }, 3);
+    vi.advanceTimersByTime(250);
+    line = renderWidget(ui)[0];
+    expect(SUBAGENT_SPINNER_FRAMES.some((frame) => line.includes(`${frame} read schema.ts… · 3 active`))).toBe(true);
+    expect(line).not.toContain("3×");
+    expect(line).not.toMatch(/3\s+web_search/);
+
+    // All tools settled (0 active): suffix disappears.
+    live.progress("r1", "read schema.ts done · working…", { kind: "tool", status: "completed" }, 0);
+    vi.advanceTimersByTime(250);
+    line = renderWidget(ui)[0];
+    expect(line).toContain("✓ read schema.ts done · working…");
+    expect(line).not.toContain("active");
+
+    // An update without a tools payload leaves no stale count behind.
+    live.progress("r1", "Writing response…");
+    vi.advanceTimersByTime(250);
+    line = renderWidget(ui)[0];
+    expect(line).toContain("Writing response…");
+    expect(line).not.toContain("active");
   });
 
   test("throttles setWidget with leading plus trailing coalescing", () => {

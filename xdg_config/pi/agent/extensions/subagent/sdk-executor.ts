@@ -6,7 +6,7 @@ import { Type } from "typebox";
 
 import { boundText, redactSecrets, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem } from "./protocol.ts";
+import type { SubagentActivityPhase, SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem } from "./protocol.ts";
 
 export interface SdkSubagentConfig {
   agentDir?: string;
@@ -424,19 +424,25 @@ export async function createSdkSubagentController(
         };
         // Consecutive thinking deltas are merged into one segment and flushed only at
         // a boundary (next tool execution or message end) so the timeline preserves
-        // ordering without emitting a new entry per delta.
+        // ordering without emitting a new entry per delta. Flushing also emits a
+        // settled `phase` so the widget stops showing the stale "Thinking…".
         const flushThinking = (): void => {
           const content = thinkingBuffer.trim();
           if (content) {
             timeline.push({ kind: "thinking", text: boundedOneLine(content, 200, secrets) });
             boundTimeline();
+            // The segment is now a settled timeline entry: signal the boundary so
+            // both renderers move from the live spinner to the completed marker.
+            report("Thinking", { includeTools: true, phase: { kind: "thinking", status: "completed" } });
           }
           thinkingBuffer = "";
         };
-        const report = (text: string, includeTools = false): void => {
+        const report = (text: string, reportOptions: { includeTools?: boolean; phase?: SubagentActivityPhase } = {}): void => {
+          const { includeTools = false, phase } = reportOptions;
           const bounded = boundedOneLine(text, 160, secrets);
           const progress: SubagentProgress = {
             summary: bounded,
+            ...(phase ? { phase } : {}),
             ...(includeTools || toolHistory.length > 0 || activeTools.size > 0 ? {
               tools: {
                 earlierCount: earlierToolCount,
@@ -466,7 +472,7 @@ export async function createSdkSubagentController(
                 // is used when no deltas were surfaced by the SDK.
                 if (delta) thinkingBuffer += delta;
                 else if (content && !thinkingBuffer) thinkingBuffer = content;
-                report("Thinking…");
+                report("Thinking…", { phase: { kind: "thinking", status: "running" } });
               } else if (type?.startsWith("toolcall")) report("Preparing tool call…");
               else if (type?.startsWith("text")) report("Writing response…");
             } else if (event.type === "tool_execution_start") {
@@ -475,7 +481,7 @@ export async function createSdkSubagentController(
               const label = safeToolProgress(event, secrets);
               const id = typeof event.toolCallId === "string" ? event.toolCallId : `anonymous-${activeTools.size}`;
               activeTools.set(id, { id, summary: label, status: "running" });
-              report(label.endsWith("…") ? label : `${label}…`, true);
+              report(label.endsWith("…") ? label : `${label}…`, { includeTools: true, phase: { kind: "tool", status: "running" } });
             } else if (event.type === "tool_execution_end") {
               const id = typeof event.toolCallId === "string" ? event.toolCallId : `ended-${toolHistory.length}`;
               const activeItem = activeTools.get(id);
@@ -490,7 +496,7 @@ export async function createSdkSubagentController(
                 earlierToolCount += toolHistory.length - 8;
                 toolHistory.splice(0, toolHistory.length - 8);
               }
-              report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`, true);
+              report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`, { includeTools: true, phase: { kind: "tool", status: event.isError ? "failed" : "completed" } });
             } else if (event.type === "message_end" && event.message?.role === "assistant") {
               flushThinking();
               const text = (event.message.content ?? []).filter((p: any) => p.type === "text" && typeof p.text === "string").map((p: any) => p.text as string).join("\n");

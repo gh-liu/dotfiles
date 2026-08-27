@@ -35,6 +35,33 @@ export type SubagentTimelineEntry =
   | { kind: "tool"; id: string; summary: string; status: SubagentToolProgressItem["status"] }
   | { kind: "thinking"; text: string };
 
+/**
+ * Current live activity state emitted at thinking/tool boundaries so the widget
+ * and result renderers share one affordance vocabulary.
+ *
+ * - `thinking` "running" means reasoning deltas are still streaming (unflushed):
+ *   both renderers show a live spinner + `Thinking…`.
+ * - `thinking` "completed" means the segment was just flushed into a settled
+ *   timeline entry: the widget shows the same completed marker (`✓ Thinking`)
+ *   the result renders from the timeline.
+ * - `tool` reflects the active/last tool call lifecycle for the current item.
+ *   It is omitted outside these boundaries (e.g. while writing the response).
+ */
+export type SubagentActivityPhase =
+  | { kind: "thinking"; status: "running" | "completed" }
+  | { kind: "tool"; status: SubagentToolProgressItem["status"] };
+
+/** Shared live affordance glyphs so the widget and result renderers stay consistent. */
+export const SUBAGENT_SPINNER_GLYPH = "⠋";
+export const SUBAGENT_DONE_GLYPH = "✓";
+export const SUBAGENT_FAILED_GLYPH = "✗";
+
+/**
+ * Full spinner frame cycle shared by live renderers (first frame is
+ * SUBAGENT_SPINNER_GLYPH) so the widget and result animation stay consistent.
+ */
+export const SUBAGENT_SPINNER_FRAMES = [SUBAGENT_SPINNER_GLYPH, "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+
 /** A bounded decision request the child raises when it needs parent input to proceed. */
 export interface SubagentDecision {
   question: string;
@@ -43,6 +70,8 @@ export interface SubagentDecision {
 
 export interface SubagentProgress {
   summary: string;
+  /** Explicit thinking/tool boundary state for live renderers; omitted otherwise. */
+  phase?: SubagentActivityPhase;
   /** Bounded, operation-local tool lifecycle snapshot for renderer observability. */
   tools?: {
     earlierCount: number;

@@ -1,9 +1,10 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 
+import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_GLYPH } from "../protocol.ts";
 import { formatCountdown, oneLine, positiveSafeRuntimeIndex, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
-const FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+const FRAMES = [SUBAGENT_SPINNER_GLYPH, "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 /** Render one interleaved timeline entry (tool call or thinking segment) as lines. */
 function timelineEntryLines(entry: unknown, theme: Theme): string[] {
@@ -13,10 +14,14 @@ function timelineEntryLines(entry: unknown, theme: Theme): string[] {
     // Keep the timeline entry for ordering/observability, but never render the
     // reasoning text to the UI — show only a generic marker to avoid leaking/noise.
     if (typeof typed.text !== "string" || !typed.text.trim()) return [];
-    return [theme.fg("dim", "Thinking…")];
+    // Thinking only reaches the timeline once the executor flushes it (before a
+    // tool call or at message end), so a timeline thinking entry is always ended:
+    // show the static completed icon. In-progress, unflushed thinking has no
+    // timeline entry and is represented by the fallback spinner instead.
+    return [theme.fg("success", `${SUBAGENT_DONE_GLYPH} Thinking`)];
   }
   if (typed.kind === "tool" && typeof typed.summary === "string") {
-    return [theme.fg(typed.status === "failed" ? "error" : "success", `${typed.status === "failed" ? "✗" : "✓"} ${oneLine(typed.summary, 160)}`)];
+    return [theme.fg(typed.status === "failed" ? "error" : "success", `${typed.status === "failed" ? SUBAGENT_FAILED_GLYPH : SUBAGENT_DONE_GLYPH} ${oneLine(typed.summary, 160)}`)];
   }
   return [];
 }
@@ -44,6 +49,10 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
     const active = Array.isArray(toolProgress?.active) ? toolProgress.active : [];
     const rawTimeline = details.timeline;
     const timeline = Array.isArray(rawTimeline) ? rawTimeline : undefined;
+    const rawPhase = details.phase;
+    const phase = rawPhase && typeof rawPhase === "object"
+      ? rawPhase as { kind?: unknown; status?: unknown }
+      : undefined;
     const limit = options.expanded ? 12 : 8;
     const lines: string[] = [];
     if (timeline && timeline.length > 0) {
@@ -68,7 +77,12 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
       if (!item || typeof item !== "object" || typeof (item as { summary?: unknown }).summary !== "string") continue;
       lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} ${oneLine((item as { summary: string }).summary, 160)}…`));
     }
-    if (lines.length === 0) lines.push(theme.fg("warning", FRAMES[context.state.spinnerFrame]) + (progress ? theme.fg("dim", ` — ${oneLine(progress, 240)}`) : ""));
+    // Unflushed thinking (phase running) always carries the live spinner, even
+    // when earlier history is already present; flushed segments stay in the timeline.
+    if (phase && phase.kind === "thinking" && phase.status === "running") {
+      lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} Thinking…`));
+    }
+    if (lines.length === 0) lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} Thinking…`) + (progress ? theme.fg("dim", ` — ${oneLine(progress, 240)}`) : ""));
     return new Text(lines.join("\n"), 0, 0);
   }
   if (context.state.spinnerTimer) clearInterval(context.state.spinnerTimer);

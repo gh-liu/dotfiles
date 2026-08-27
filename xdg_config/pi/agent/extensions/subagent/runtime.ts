@@ -353,12 +353,13 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       mode: runtime.mode === "foreground" ? "foreground" : "background",
     });
     // Wrap progress with operation identity and renderer-only tool lifecycle data.
-    // The live UI controller always observes progress; onUpdate is forwarded only
-    // when the tool caller provided a channel.
+    // The live UI controller always observes progress, including the concurrent
+    // active-tool count from tools.active; onUpdate is forwarded only when the
+    // tool caller provided a channel.
     const onProgress = (value: string | SubagentProgress) => {
       const progress = typeof value === "string" ? { summary: value } : value;
       const summary = progress.summary;
-      deps.live.progress(runtime.runId, summary);
+      deps.live.progress(runtime.runId, summary, progress.phase, progress.tools?.active.length);
       // Forward a bounded decision only when the child explicitly signals
       // needsDecision with a non-empty question; empty/invalid payloads never
       // pollute public update details.
@@ -382,6 +383,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
+          ...(progress.phase ? { phase: progress.phase } : {}),
           ...(progress.tools ? { toolProgress: progress.tools } : {}),
           ...(progress.timeline ? { timeline: progress.timeline } : {}),
           ...(question && progress.decision

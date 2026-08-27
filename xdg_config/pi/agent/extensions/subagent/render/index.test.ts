@@ -38,13 +38,16 @@ describe("task API rendering", () => {
       },
     }, { expanded: false, isPartial: true }, theme, context));
     expect(partial).toContain("✓ read a.ts");
-    // Thinking renders as a generic marker only; the raw reasoning text never reaches the UI.
-    expect(partial).toContain("Thinking…");
+    // Thinking only enters the timeline once the executor flushes it (before a
+    // tool call), so it is already ended here: completed marker, never a spinner.
+    // The raw reasoning text still never reaches the UI.
+    expect(partial).toContain("✓ Thinking");
+    expect(partial).not.toContain("Thinking…");
     expect(partial).not.toContain("we should inspect the schema first.");
     expect(partial).toContain("✓ grep schema src");
     // Thinking must sit between the two tool calls, not after everything.
-    expect(partial.indexOf("✓ read a.ts") < partial.indexOf("Thinking…")).toBe(true);
-    expect(partial.indexOf("Thinking…") < partial.indexOf("✓ grep schema src")).toBe(true);
+    expect(partial.indexOf("✓ read a.ts") < partial.indexOf("✓ Thinking")).toBe(true);
+    expect(partial.indexOf("✓ Thinking") < partial.indexOf("✓ grep schema src")).toBe(true);
     // The active call row stays last, after every timeline entry.
     expect(partial.indexOf("✓ grep schema src") < partial.indexOf("⠋ bash npm test…")).toBe(true);
     expect(partial.endsWith("⠋ bash npm test…")).toBe(true);
@@ -55,9 +58,50 @@ describe("task API rendering", () => {
       details: { status: "completed", summary: "Done", timeline },
     }, { expanded: false, isPartial: false }, theme, finalContext));
     expect(final).toContain("✓ completed");
-    expect(final).toContain("Thinking…");
+    // Settled thinking rows show a static completed icon, not the live spinner.
+    expect(final).toContain("✓ Thinking");
+    expect(final).not.toContain("Thinking…");
     expect(final).not.toContain("we should inspect the schema first.");
     expect(final).toContain("✓ read a.ts");
+  });
+
+  test("flushed timeline thinking is settled; in-progress thinking uses the fallback spinner", () => {
+    const timeline = [{ kind: "thinking", text: "internal reasoning passes" }, { kind: "tool", id: "a", summary: "read a.ts", status: "completed" }];
+    const makeContext = () => ({ args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never);
+    // Timeline thinking was flushed by the executor before the tool call, so even the
+    // partial view marks it completed: static marker, no spinner, no raw reasoning text.
+    const partial = text(renderSubagentResult({ content: [], details: { status: "running", timeline } }, { expanded: false, isPartial: true }, theme, makeContext()));
+    expect(partial).toContain("✓ Thinking");
+    expect(partial).not.toContain("Thinking…");
+    expect(partial).not.toContain("internal reasoning passes");
+    // No timeline: thinking is still unflushed and is represented by the fallback
+    // spinner carrying the generic "Thinking…" label (frame-agnostic, spinner prefix).
+    const thinking = text(renderSubagentResult({ content: [], details: { status: "running" } }, { expanded: false, isPartial: true }, theme, makeContext()));
+    const thinkingLine = thinking.split("\n").find((line) => line.trim().endsWith("Thinking…"));
+    expect(thinkingLine).toBeDefined();
+    expect(thinkingLine!.trim()).toMatch(/^\S+ Thinking…$/);
+    expect(thinking).not.toContain("✓ Thinking");
+    // Settled: static completed icon, no spinner and no raw reasoning text.
+    const settled = text(renderSubagentResult({ content: [], details: { status: "completed", summary: "Done", timeline } }, { expanded: false, isPartial: false }, theme, makeContext()));
+    expect(settled).toContain("✓ Thinking");
+    expect(settled).not.toContain("Thinking…");
+    expect(settled).not.toContain("internal reasoning passes");
+  });
+
+  test("current unflushed thinking keeps the spinner even alongside settled history", () => {
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const rendered = text(renderSubagentResult({
+      content: [{ type: "text", text: "Thinking…" }],
+      details: {
+        status: "running",
+        phase: { kind: "thinking", status: "running" },
+        timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+      },
+    }, { expanded: false, isPartial: true }, theme, context));
+    // The flushed tool is settled; the CURRENT, still-unflushed thinking shows the spinner.
+    expect(rendered).toContain("✓ read a.ts");
+    expect(rendered).toContain("⠋ Thinking…");
+    expect(rendered.endsWith("⠋ Thinking…")).toBe(true);
   });
 
   test("renders bounded tool history, active and failed calls without a countdown", () => {
