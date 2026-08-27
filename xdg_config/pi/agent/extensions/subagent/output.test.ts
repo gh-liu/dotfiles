@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { boundText, redactSecrets } from "./output.ts";
+import { boundText, redactSecrets, serializeSubagentResult } from "./output.ts";
 
 describe("bounded output", () => {
   test("bounds lines and characters and redacts likely secrets", () => {
@@ -45,5 +45,34 @@ describe("bounded output", () => {
     expect(redacted).toContain("notasecret=public");
     expect(redacted).not.toContain("[[REDACTED]]");
     expect(redactSecrets(redacted, [shortSecret, spacedSecret, "REDACTED"])).toBe(redacted);
+  });
+
+  test("bounds oversized structured sections as one envelope", () => {
+    const large = "x".repeat(20_000);
+    const serialized = serializeSubagentResult({
+      runId: "job", operationId: "private", agent: "scout", status: "completed",
+      summary: `## Summary\n${large}\n## Changes\n${large}\n## Evidence\n${large}\n## Validation\n${large}\n## Risks\n${large}`,
+      transcript: {},
+    });
+    expect(serialized.length).toBeLessThanOrEqual(16_000);
+    expect(JSON.parse(serialized)).toMatchObject({ changes: expect.any(String), evidence: expect.any(String), validation: expect.any(String), risks: expect.any(String) });
+  });
+
+  test("terminates when non-text transcript metadata alone exceeds the envelope", () => {
+    expect(() => serializeSubagentResult({
+      runId: "job", operationId: "private", agent: "scout", status: "completed",
+      summary: "x",
+      transcript: { sessionId: "s".repeat(20_000), sessionPath: "/" + "p".repeat(20_000) },
+    })).toThrow("envelope exceeds");
+  });
+
+  test("fairly converges with several huge escaped sections", () => {
+    const huge = "\\\"\n".repeat(20_000);
+    const serialized = serializeSubagentResult({
+      runId: "job", operationId: "private", agent: "scout", status: "completed",
+      summary: `# Summary\n${huge}\n# Changes\n${huge}\n# Evidence\n${huge}`,
+      transcript: { sessionPath: "/sessions/result.jsonl" },
+    });
+    expect(serialized.length).toBeLessThanOrEqual(16_000);
   });
 });

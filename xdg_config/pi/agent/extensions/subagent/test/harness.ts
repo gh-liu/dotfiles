@@ -208,8 +208,8 @@ export function setup(options: {
   });
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
     "tool-call",
-    ((params.action === "run" || params.action === "start") && params.deadlineMs === undefined
-      ? { ...params, deadlineMs: 600_000 }
+    (params.action === "run"
+      ? { ...params, objective: params.objective ?? params.task, deadlineMs: params.deadlineMs ?? 600_000 }
       : params) as never,
     undefined, undefined, context(root),
   );
@@ -217,10 +217,10 @@ export function setup(options: {
 }
 
 export async function startIdle(env: ReturnType<typeof setup>) {
-  const started = await env.invoke({ action: "start", agent: "scout", task: "Initial" });
-  const identity = started.details as { runId: string; operationId: string; revision: number };
+  const started = await env.invoke({ action: "run", agent: "scout", objective: "Initial", background: true });
+  const identity = { runId: (started.details as { jobId: string }).jobId, operationId: env.fake.controllers[0].starts[0].options.operationId, revision: 0 };
   env.fake.controllers[0].settle(0);
-  await env.invoke({ action: "wait", id: identity.runId, operationId: identity.operationId });
+  await env.invoke({ action: "get", jobId: identity.runId, waitMs: 1_000 });
   return identity;
 }
 

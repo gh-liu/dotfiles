@@ -7,10 +7,8 @@ import { boundedLines, formatCountdown, oneLine, taskTitle } from "./shared.ts";
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
 export interface SubagentCompletionDetails {
-  /** Session-local short index (#N) assigned at runtime creation, for easy targeting. */
-  index?: number;
-  runId: string;
-  operationId: string;
+  jobId: string;
+  ref: string;
   agent: string;
   model?: string;
   thinking?: string;
@@ -41,9 +39,9 @@ function completionEntryText(
   const summaryRaw = details.summary ?? "";
   const summaryOneLine = oneLine(summaryRaw, 240);
   const completionTitle = taskTitle(details.task, expanded ? 160 : 80);
-  let text = `${theme.fg(color, marker)} ${theme.fg(color, status)}`;
+  let text = `${theme.fg(color, marker)} ${theme.fg("toolTitle", `${details.ref} `)}${theme.fg(color, status)}`;
   // Short agent name only: the full label (model/thinking) already sits on the tool-call title.
-  const agentLabel = `${details.agent}${typeof details.index === "number" ? ` (#${details.index})` : ""}`;
+  const agentLabel = details.agent;
   if (details.agent) text += `${theme.fg("muted", " · ")}${theme.fg(agentNameColor(details.agent), agentLabel)}`;
   if (!expanded && typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
   if (!expanded && completionTitle) text += theme.fg("muted", ` · ${completionTitle}`);

@@ -9,6 +9,7 @@ export interface SubagentExecutionProfile {
 export interface SubagentWorkOrder {
   goal: string;
   scope: string[];
+  context?: string;
   nonGoals?: string[];
   constraints: string[];
   knownDecisions: Array<{ statement: string; source: "user" | "parent" | "code" | "docs" }>;
@@ -67,7 +68,7 @@ export interface SubagentController {
   /** Resolves if the owned process or RPC protocol fails before explicit close. */
   readonly failure: Promise<Error>;
   start(options: SubagentRunOptions): SubagentOperation;
-  /** @deprecated use start().result — kept for test compatibility */
+  /** Convenience compatibility seam for direct controller callers. */
   submit?(options: SubagentRunOptions): Promise<SubagentResult>;
   steer(expectedOperationId: string, message: string): Promise<boolean>;
   interrupt(expectedOperationId: string): Promise<boolean>;

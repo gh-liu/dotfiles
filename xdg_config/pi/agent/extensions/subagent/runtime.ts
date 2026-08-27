@@ -1,4 +1,3 @@
-import { createWorkOrder } from "./context.ts";
 import type { LiveUiController } from "./live-ui.ts";
 import { boundText } from "./output.ts";
 import { stripModel } from "./protocol.ts";
@@ -9,10 +8,6 @@ import type {
   SubagentResult,
   SubagentRunOptions,
 } from "./protocol.ts";
-
-const CONTINUING_PROJECT_GUIDANCE = [
-  "Project guidance is unchanged; continue applying the guidance from the initial work order.",
-];
 
 /** Control-plane ownership: runtime/operation records, slots, transitions, and settlement. */
 
@@ -34,7 +29,7 @@ export interface OperationRecord {
   settle(): void;
 }
 
-export type RuntimeMode = "foreground" | "background";
+export type RuntimeMode = "foreground" | "background-one-shot";
 
 export interface RuntimeRecord {
   /** Session-local short index (#N) for human/model-friendly targeting. */
@@ -46,7 +41,7 @@ export interface RuntimeRecord {
   parentSessionId: string;
   projectGuidance: string[];
   state: RuntimeState;
-  /** How the runtime was born: one-shot `run` vs background `start`. */
+  /** Foreground or asynchronously observed one-shot execution. */
   mode: RuntimeMode;
   controller?: SubagentController;
   controllerReady: Promise<SubagentController>;
@@ -113,7 +108,7 @@ export function runtimeSnapshot(runtime: RuntimeRecord) {
 export interface RuntimeHubDeps {
   controllerFactory: SubagentControllerFactory;
   idFactory: () => string;
-  /** Maximum foreground plus persistent runtime slots. */
+  /** Maximum concurrent one-shot jobs. */
   maxConcurrentRuns?: number;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
   notifySettled: (details: SubagentCompletionDetails | { batch: SubagentCompletionDetails[] }) => void;
@@ -121,6 +116,8 @@ export interface RuntimeHubDeps {
   logSettled?: (details: SubagentCompletionDetails) => void;
   /** Live UI controller observing runtime lifecycle for footer/widget display. */
   live: LiveUiController;
+  controllerCreationTimeoutMs?: number;
+  maxRetainedRuntimes?: number;
 }
 
 export interface CreateRuntimeInput {
@@ -137,6 +134,7 @@ export interface BeginOperationInput {
   task: string;
   deadlineMs: number;
   notifyOnSettle: boolean;
+  workOrder: SubagentRunOptions["workOrder"];
   signal?: AbortSignal;
   onUpdate?: (update: { content: Array<{ type: "text"; text: string }>; details: Record<string, unknown> }) => void;
 }
@@ -144,6 +142,8 @@ export interface BeginOperationInput {
 export interface RuntimeHub {
   readonly maxConcurrentRuns: number;
   get(runtimeId: string): RuntimeRecord | undefined;
+  /** Resolve a canonical jobId first, then a session-local #N/N alias. */
+  resolve(reference: string): RuntimeRecord | undefined;
   capacityAvailable(): boolean;
   occupiedSlots(): number;
   availableSlots(): number;
@@ -161,6 +161,8 @@ export interface RuntimeHub {
 
 export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
   const maxConcurrentRuns = deps.maxConcurrentRuns ?? 3;
+  const controllerCreationTimeoutMs = deps.controllerCreationTimeoutMs ?? 10_000;
+  const maxRetainedRuntimes = deps.maxRetainedRuntimes ?? 100;
   const runtimes = new Map<string, RuntimeRecord>();
   let nextRuntimeIndex = 1;
   let occupiedSlots = 0;
@@ -187,6 +189,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         if (!stale) break;
         runtime.operations.delete(stale.operationId);
       }
+    }
+    const terminal = [...runtimes.values()].filter((runtime) =>
+      (runtime.state === "closed" || runtime.state === "crashed") && !runtime.slotReserved
+    );
+    for (const runtime of terminal.slice(0, Math.max(0, terminal.length - maxRetainedRuntimes))) {
+      runtimes.delete(runtime.runId);
     }
   };
 
@@ -231,9 +239,8 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ? operation.finishedAt - operation.startedAt
       : undefined;
     const details: SubagentCompletionDetails = {
-      index: runtime.index,
-      runId: runtime.runId,
-      operationId: operation.operationId,
+      jobId: runtime.runId,
+      ref: `#${runtime.index}`,
       agent,
       ...(model ? { model } : {}),
       ...(thinking ? { thinking } : {}),
@@ -246,10 +253,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ),
       runtimeStatus: runtime.state === "running" ? "running" : runtime.state === "idle" ? "idle" : "crashed",
     };
-    if (runtime.mode !== "background") {
-      deps.notifySettled(details);
-      return;
-    }
     // Batched wake policy: successful background settlements coalesce within
     // the same event-loop turn and flush as ONE aggregated card on the next
     // macrotask (the widget is the ambient signal meanwhile). Failures,
@@ -324,7 +327,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     runtime: RuntimeRecord,
     input: BeginOperationInput,
   ): Promise<OperationRecord> => {
-    const { operationId, task, deadlineMs, notifyOnSettle, signal, onUpdate } = input;
+    const { operationId, task, deadlineMs, notifyOnSettle, workOrder, signal, onUpdate } = input;
     let settle!: () => void;
     const operation: OperationRecord = {
       operationId,
@@ -337,14 +340,17 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       settle: () => settle(),
     };
     runtime.operations.set(operationId, operation);
-    const projectGuidance = runtime.operations.size === 1
-      ? runtime.projectGuidance
-      : CONTINUING_PROJECT_GUIDANCE;
     operation.state = "running";
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
     transition(runtime, "running");
-    deps.live.track(runtime.runId, { index: runtime.index, agent: runtime.agent.name, startedAt: operation.startedAt, deadlineMs, mode: runtime.mode });
+    deps.live.track(runtime.runId, {
+      index: runtime.index,
+      agent: runtime.agent.name,
+      startedAt: operation.startedAt,
+      deadlineMs,
+      mode: runtime.mode === "foreground" ? "foreground" : "background",
+    });
     // Wrap raw progress summaries with operation identity plus authoritative timing
     // so the UI can anchor countdowns and report elapsed time without guessing.
     // The live UI controller always observes progress; onUpdate is forwarded only
@@ -354,22 +360,21 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       onUpdate?.({
         content: [{ type: "text", text: summary }],
         details: {
-          runId: runtime.runId,
-          operationId,
+          jobId: runtime.runId,
+          ref: `#${runtime.index}`,
           agent: runtime.agent.name,
           ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
           startedAt: operation.startedAt,
           deadlineMs,
-          index: runtime.index,
         },
       });
     };
     const runOptions: SubagentRunOptions = {
       cwd: runtime.cwd,
       agent: runtime.agent,
-      workOrder: createWorkOrder(task, runtime.cwd, projectGuidance),
+      workOrder,
       runId: runtime.runId,
       operationId,
       parentSessionId: runtime.parentSessionId,
@@ -402,7 +407,10 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       }
       operation.settle();
       prune();
-      void started.accepted.then(() => notifyOperationSettled(runtime, operation)).catch(() => {});
+      void started.accepted.then(() => {
+        notifyOperationSettled(runtime, operation);
+        if (runtime.mode === "background-one-shot") void closeRuntime(runtime).catch(() => {});
+      }).catch(() => {});
     });
     await started.accepted;
     operation.accepted = true;
@@ -412,6 +420,16 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
   return {
     maxConcurrentRuns,
     get: (runtimeId) => runtimes.get(runtimeId),
+    resolve: (reference) => {
+      const exact = runtimes.get(reference);
+      if (exact) return exact;
+      const match = /^(?:#)?([1-9]\d*)$/.exec(reference);
+      if (!match) return undefined;
+      const index = Number(match[1]);
+      return Number.isSafeInteger(index)
+        ? [...runtimes.values()].find((runtime) => runtime.index === index)
+        : undefined;
+    },
     capacityAvailable: () => occupiedSlots < maxConcurrentRuns,
     occupiedSlots: () => occupiedSlots,
     availableSlots: () => Math.max(0, maxConcurrentRuns - occupiedSlots),
@@ -434,8 +452,30 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       };
       occupiedSlots += 1;
       runtimes.set(runtime.runId, runtime);
-      void Promise.resolve().then(() => deps.controllerFactory(input.initialOptions)).then(
+      let creationTimer: ReturnType<typeof setTimeout> | undefined;
+      let creationExpired = false;
+      const factoryPromise = Promise.resolve().then(() => deps.controllerFactory(input.initialOptions));
+      const timedFactory = Promise.race([
+        factoryPromise,
+        new Promise<never>((_resolve, reject) => {
+          creationTimer = setTimeout(() => {
+            creationExpired = true;
+            reject(new Error("Subagent controller creation timed out"));
+          }, controllerCreationTimeoutMs);
+        }),
+      ]).finally(() => { if (creationTimer) clearTimeout(creationTimer); });
+      void factoryPromise.then((controller) => {
+        if (creationExpired) {
+          void controller.close().catch(() => {});
+        }
+      }, () => {});
+      void timedFactory.then(
         (controller) => {
+          if (creationExpired) {
+            void controller.close().catch(() => {});
+            controllerReady.reject(new Error("Subagent controller creation timed out"));
+            return;
+          }
           runtime.controller = controller;
           void controller.failure.then((error) => {
             if (runtime.state === "closed") return;
@@ -457,6 +497,10 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     listRuntimes: () => [...runtimes.values()],
     async requestShutdown() {
       shuttingDown = true;
+      if (flushTimer !== undefined) clearTimeout(flushTimer);
+      flushTimer = undefined;
+      flushScheduled = false;
+      pendingSettlements.length = 0;
       await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));
     },
   };

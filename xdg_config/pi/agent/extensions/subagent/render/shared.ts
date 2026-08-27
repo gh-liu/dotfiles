@@ -1,12 +1,7 @@
 type SubagentRenderArgs =
-  | { action: "list" }
-  | { action: "run" | "start"; agent: string; task: string; cwd?: string; deadlineMs?: number; model?: string; thinking?: string }
-  | { action: "status"; id?: string }
-  | { action: "send"; id: string; mode: "follow_up"; message: string; deadlineMs?: number }
-  | { action: "send"; id: string; mode: "steer"; message: string; expectedOperationId: string }
-  | { action: "wait"; id?: string; operationId?: string; timeoutMs?: number }
-  | { action: "interrupt"; id: string; expectedOperationId: string }
-  | { action: "close"; id: string };
+  | { action: "run"; agent: string; objective: string; background?: boolean; cwd?: string; deadlineMs?: number; model?: string; thinking?: string }
+  | { action: "get"; jobId?: string; waitMs?: number }
+  | { action: "cancel"; jobId: string };
 
 interface SubagentRenderState {
   spinnerFrame?: number;
@@ -15,6 +10,8 @@ interface SubagentRenderState {
   startedAt?: number;
   /** Immutable per-row runtime identity, learned only from authoritative result details. */
   runtimeIndex?: number;
+  /** Session-local public alias learned from authoritative result details. */
+  ref?: string;
   /** Effective model learned from authoritative progress/update details. */
   model?: string;
   /** Effective thinking level learned from authoritative progress/update details. */

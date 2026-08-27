@@ -2,18 +2,41 @@ import type { SubagentResult } from "./protocol.ts";
 
 export const SUBAGENT_HANDOFF_MAX_CHARACTERS = 16_000;
 
-type ModelSubagentHandoffSource = SubagentResult & {
+type ModelSubagentHandoffSource = Pick<SubagentResult, "agent" | "status" | "summary" | "transcript"> & {
   elapsedMs?: number;
-  index?: number;
 };
 
 export interface ModelSubagentHandoff {
-  index?: number;
   agent: string;
   status: SubagentResult["status"];
   summary: string;
+  changes?: string;
+  evidence?: string;
+  validation?: string;
+  risks?: string;
   elapsedMs?: number;
   transcript: SubagentResult["transcript"];
+}
+
+export function extractStructuredHandoff(text: string): Pick<ModelSubagentHandoff, "summary" | "changes" | "evidence" | "validation" | "risks"> {
+  const sections = new Map<string, string>();
+  const heading = /^#{1,3}\s+(summary|changes|evidence|validation|risks)\s*$/gim;
+  const matches = [...text.matchAll(heading)];
+  for (const [index, match] of matches.entries()) {
+    const key = match[1]!.toLowerCase();
+    const start = match.index! + match[0].length;
+    const end = matches[index + 1]?.index ?? text.length;
+    const value = text.slice(start, end).trim();
+    if (value) sections.set(key, value);
+  }
+  if (sections.size === 0) return { summary: text };
+  return {
+    summary: sections.get("summary") ?? text,
+    ...(sections.get("changes") ? { changes: sections.get("changes") } : {}),
+    ...(sections.get("evidence") ? { evidence: sections.get("evidence") } : {}),
+    ...(sections.get("validation") ? { validation: sections.get("validation") } : {}),
+    ...(sections.get("risks") ? { risks: sections.get("risks") } : {}),
+  };
 }
 
 interface TextLimits {
@@ -89,11 +112,11 @@ export function boundText(text: string, limits: TextLimits, exactSecretValues: s
 
 /** Projects authoritative details into the compact handoff needed by the parent model. */
 export function modelSubagentHandoff(result: ModelSubagentHandoffSource): ModelSubagentHandoff {
+  const extracted = extractStructuredHandoff(result.summary);
   return {
-    ...(result.index === undefined ? {} : { index: result.index }),
     agent: result.agent,
     status: result.status,
-    summary: result.summary,
+    ...extracted,
     ...(result.elapsedMs === undefined ? {} : { elapsedMs: result.elapsedMs }),
     transcript: result.transcript,
   };
@@ -102,22 +125,28 @@ export function modelSubagentHandoff(result: ModelSubagentHandoffSource): ModelS
 /** Serializes the model-facing handoff under a hard character budget. */
 export function serializeSubagentResult(result: ModelSubagentHandoffSource): string {
   const handoff = modelSubagentHandoff(result);
-  let low = 0;
-  let high = Math.min(handoff.summary.length, SUBAGENT_HANDOFF_MAX_CHARACTERS);
-  let best: string | undefined;
-  while (low <= high) {
-    const summaryLimit = Math.floor((low + high) / 2);
-    const summary = summaryLimit === 0
-      ? ""
-      : boundText(handoff.summary, { maxCharacters: summaryLimit, maxLines: 400 });
-    const serialized = JSON.stringify({ ...handoff, summary });
-    if (serialized.length <= SUBAGENT_HANDOFF_MAX_CHARACTERS) {
-      best = serialized;
-      low = summaryLimit + 1;
+  const fields = ["summary", "changes", "evidence", "validation", "risks"] as const;
+  const bounded = { ...handoff };
+  let serialized = JSON.stringify(bounded);
+  while (serialized.length > SUBAGENT_HANDOFF_MAX_CHARACTERS) {
+    const field = fields.reduce<(typeof fields)[number] | undefined>((longest, candidate) => {
+      const value = bounded[candidate];
+      if (!value) return longest;
+      return !longest || value.length > (bounded[longest]?.length ?? 0) ? candidate : longest;
+    }, undefined);
+    if (!field) throw new Error("Subagent result envelope exceeds the parent serialization limit");
+    const value = bounded[field]!;
+    if (value.length <= 1) {
+      delete bounded[field];
     } else {
-      high = summaryLimit - 1;
+      const next = boundText(value, {
+        maxCharacters: Math.max(1, Math.floor(value.length / 2)),
+        maxLines: 400,
+      });
+      if (next.length >= value.length) delete bounded[field];
+      else bounded[field] = next;
     }
+    serialized = JSON.stringify(bounded);
   }
-  if (best !== undefined) return best;
-  throw new Error("Subagent result envelope exceeds the parent serialization limit");
+  return serialized;
 }

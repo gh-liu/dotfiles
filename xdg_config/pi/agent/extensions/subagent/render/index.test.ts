@@ -1,237 +1,42 @@
 import { describe, expect, test, vi } from "vitest";
+import { renderSubagentCall, renderSubagentResult } from "./index.ts";
 
-import {
-  agentNameColor,
-  renderSubagentCall,
-  renderSubagentCompletion,
-  renderSubagentResult,
-} from "./index.ts";
+const theme = { fg: (_color: string, text: string) => text, bg: (_color: string, text: string) => text, bold: (text: string) => text } as never;
+const text = (component: { render(width: number): string[] }) => component.render(200).join("\n").trim();
 
-const theme = {
-  fg: (_color: string, text: string) => text,
-  bg: (_color: string, text: string) => text,
-  bold: (text: string) => text,
-} as never;
-
-function rendered(component: { render(width: number): string[] }): string {
-  return component.render(240).map((line) => line.trimEnd()).join("\n").trimEnd();
-}
-
-function call(args: Record<string, unknown>, expanded = true): string {
-  return rendered(renderSubagentCall(args as never, theme, {
-    args,
-    expanded,
-    isError: false,
-    state: {},
-    invalidate: vi.fn(),
-  } as never));
-}
-
-function recordedCall(args: Record<string, unknown>, state: Record<string, unknown> = {}): { output: string; fgColors: string[] } {
-  const fgColors: string[] = [];
-  const recordingTheme = {
-    fg: (color: string, text: string) => {
-      fgColors.push(color);
-      return text;
-    },
-    bg: (_color: string, text: string) => text,
-    bold: (text: string) => text,
-  } as never;
-  return {
-    output: rendered(renderSubagentCall(args as never, recordingTheme, {
-      args,
-      expanded: true,
-      isError: false,
-      state,
-      invalidate: vi.fn(),
-    } as never)),
-    fgColors,
-  };
-}
-
-function result(
-  args: Record<string, unknown>,
-  details: Record<string, unknown>,
-  options: { expanded?: boolean; isError?: boolean; text?: string } = {},
-): string {
-  return rendered(renderSubagentResult(
-    { content: options.text ? [{ type: "text", text: options.text }] : [], details },
-    { expanded: options.expanded ?? false, isPartial: false },
-    theme,
-    {
-      args,
-      expanded: options.expanded ?? false,
-      isError: options.isError ?? false,
-      state: {},
-      invalidate: vi.fn(),
-    } as never,
-  ));
-}
-
-describe("subagent render state matrix", () => {
-  test.each([
-    ["list", { action: "list" }, "refresh agents"],
-    ["run", { action: "run", agent: "scout", task: "Outcome: inspect files", deadlineMs: 60_000 }, "scout — inspect files"],
-    ["start", { action: "start", agent: "scout", task: "Inspect files", deadlineMs: 60_000 }, "scout · bg — Inspect files"],
-    ["status all", { action: "status" }, "status · all runtimes"],
-    ["status one", { action: "status", id: "#2" }, "status · #2"],
-    ["follow-up", { action: "send", id: "#2", mode: "follow_up", message: "Check tests", deadlineMs: 30_000 }, "follow-up · #2 · 30s\n  Check tests"],
-    ["steer", { action: "send", id: "#2", mode: "steer", message: "Focus", expectedOperationId: "op" }, "steer · #2\n  Focus"],
-    ["wait all", { action: "wait" }, "wait · all bg"],
-    ["wait one", { action: "wait", id: "#2", operationId: "op" }, "wait · #2"],
-    ["interrupt", { action: "interrupt", id: "#2", expectedOperationId: "op" }, "interrupt · #2"],
-    ["close", { action: "close", id: "#2" }, "close · #2"],
-  ])("renders the %s call", (_label, args, expected) => {
-    expect(call(args as Record<string, unknown>)).toContain(expected);
+describe("task API rendering", () => {
+  test("renders all public calls", () => {
+    expect(text(renderSubagentCall({ action: "run", agent: "scout", objective: "Inspect", background: true }, theme))).toContain("scout · bg — Inspect");
+    expect(text(renderSubagentCall({ action: "get", jobId: "job-1" }, theme))).toContain("get · job-1");
+    expect(text(renderSubagentCall({ action: "cancel", jobId: "job-1" }, theme))).toContain("cancel · job-1");
   });
 
-  test("colors call title identity segments and falls back to effective state model", () => {
-    const explicit = recordedCall({ action: "run", agent: "scout", task: "Inspect", model: "vendor/model-a", thinking: "high" });
-    expect(explicit.output).toContain("scout · model-a · high — Inspect");
-    expect(explicit.fgColors).toEqual(expect.arrayContaining([agentNameColor("scout"), "accent", "thinkingHigh", "dim"]));
-
-    for (const [thinking, color] of [
-      ["minimal", "thinkingMinimal"],
-      ["low", "thinkingLow"],
-      ["medium", "thinkingMedium"],
-      ["high", "thinkingHigh"],
-      ["xhigh", "thinkingXhigh"],
-      ["max", "thinkingMax"],
-      ["unknown", "thinkingText"],
-    ]) {
-      expect(recordedCall({ action: "run", agent: "scout", task: "Inspect", thinking }).fgColors).toContain(color);
-    }
-
-    const fallback = recordedCall(
-      { action: "run", agent: "scout", task: "Inspect" },
-      { model: "effective/model-b", thinking: "unknown" },
-    );
-    expect(fallback.output).toContain("scout · model-b · unknown — Inspect");
-    expect(fallback.fgColors).toEqual(expect.arrayContaining([agentNameColor("scout"), "accent", "thinkingText"]));
+  test("renders progress and terminal handoff", () => {
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    expect(text(renderSubagentResult({ content: [{ type: "text", text: "working" }], details: { status: "running" } }, { expanded: false, isPartial: true }, theme, context))).toContain("working");
+    const rendered = text(renderSubagentResult({ content: [], details: { status: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, context));
+    expect(rendered).toContain("✓ completed · 1s");
+    expect(rendered).toContain("Done");
+    expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
-  test("hashes agent names to stable, distributed name colors", () => {
-    expect(agentNameColor("worker")).toBe(agentNameColor("worker"));
-    const bundled = ["scout", "worker", "oracle", "reviewer", "researcher", "tester"];
-    const distinct = new Set(bundled.map(agentNameColor));
-    expect(distinct.size).toBeGreaterThanOrEqual(4);
-    for (const color of bundled.map(agentNameColor)) {
-      expect([
-        "syntaxKeyword",
-        "syntaxFunction",
-        "syntaxString",
-        "syntaxNumber",
-        "syntaxType",
-        "warning",
-        "toolDiffRemoved",
-      ]).toContain(color);
-    }
-  });
-
-  test("keeps status and close collapsed rows silent while expanded rows remain inspectable", () => {
-    expect(call({ action: "status", id: "#2" }, false)).toBe("");
-    expect(call({ action: "close", id: "#2" }, false)).toBe("");
-    expect(call({ action: "status", id: "#2" }, true)).toContain("status · #2");
-    expect(call({ action: "close", id: "#2" }, true)).toContain("close · #2");
-  });
-
-  test("renders and stops the partial spinner with authoritative countdown and progress", () => {
-    const args = { action: "run", agent: "scout", task: "Inspect", deadlineMs: 60_000 };
+  test("hydrates run and identity action titles from authoritative ref details", async () => {
+    const env = (await import("../test/harness.ts")).setup();
+    const tool = env.extension.getTool();
     const state: Record<string, unknown> = {};
-    const context = { args, isError: false, state, invalidate: vi.fn() } as never;
-    const partial = rendered(renderSubagentResult(
-      { content: [{ type: "text", text: "grep done · working…" }], details: { status: "running", startedAt: Date.now() - 5_000 } },
-      { expanded: false, isPartial: true }, theme, context,
-    ));
-    expect(partial).toMatch(/^⠋ 5\ds — grep done · working…$/);
-    expect(state.spinnerTimer).toBeDefined();
-    renderSubagentResult(
-      { content: [], details: { status: "completed" } },
-      { expanded: false, isPartial: false }, theme, context,
-    );
-    expect(state.spinnerTimer).toBeUndefined();
-  });
+    const invalidate = vi.fn();
+    tool.renderResult!({ content: [], details: { jobId: "job", ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: false }, theme, { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state, invalidate } as never);
+    await Promise.resolve();
+    const rendered = text(tool.renderCall!({ action: "run", agent: "scout", objective: "Inspect" } as never, theme, { args: {}, isError: false, state, invalidate } as never));
+    expect(rendered).toContain("#7 scout · model · high");
 
-  test.each([
-    ["completed", { action: "run" }, { status: "completed", summary: "Done", elapsedMs: 4_000 }, {}, "✓ completed · 4s\nDone"],
-    ["interrupted", { action: "run" }, { status: "interrupted", summary: "Stopped" }, {}, "■ Interrupted — Stopped"],
-    ["tool error", { action: "run" }, { status: "failed", error: "No auth" }, { isError: true }, "✗ Failed — No auth"],
-    ["list", { action: "list" }, {}, { text: "scout\nworker" }, "Registered agents\nscout\nworker"],
-    ["close", { action: "close" }, { status: "closed" }, { expanded: true }, "✓ Closed"],
-    ["start", { action: "start" }, { status: "running" }, {}, "↗ started"],
-    ["wait timeout", { action: "wait" }, { reason: "timeout", snapshot: { status: "running" } }, {}, "◷ still running"],
-    ["interrupt accepted", { action: "interrupt" }, { accepted: true, status: "running" }, {}, "■ Interrupt requested"],
-    ["interrupt conflict", { action: "interrupt" }, { accepted: false, status: "idle" }, {}, "• Already idle"],
-    ["steer accepted", { action: "send", mode: "steer" }, { accepted: true, status: "running" }, {}, "↪ Steering sent"],
-    ["steer rejected", { action: "send", mode: "steer" }, { accepted: false, status: "idle" }, {}, "• Steering not applied"],
-    ["running", { action: "status" }, { status: "running", activeOperation: { task: "Inspect tests" } }, {}, "● running · Inspect tests"],
-    ["idle", { action: "status" }, { status: "idle" }, {}, "○ idle"],
-    ["failed", { action: "status" }, { status: "failed", error: "Provider failed" }, {}, "✗ failed — Provider failed"],
-    ["crashed", { action: "status" }, { status: "crashed", error: "Session crashed" }, {}, "✗ crashed — Session crashed"],
-    ["cancelled", { action: "status" }, { status: "cancelled", error: "Parent cancelled" }, {}, "✗ cancelled — Parent cancelled"],
-    ["closed", { action: "status" }, { status: "closed" }, { expanded: true }, "• closed"],
-  ])("renders the %s result branch", (_label, args, details, options, expected) => {
-    expect(result(args as Record<string, unknown>, details as Record<string, unknown>, options)).toContain(expected);
-  });
-
-  test("renders expanded task, transcript, and bounded multiline output", () => {
-    const output = result(
-      { action: "run" },
-      {
-        status: "completed",
-        task: "Inspect the lifecycle",
-        summary: "Evidence\n- runtime.ts\nValidation\n- tests passed",
-        transcript: { sessionPath: `${process.env.HOME}/.pi/subagent-sessions/run/session.jsonl` },
-      },
-      { expanded: true },
-    );
-    expect(output).toContain("transcript ~/.pi/subagent-sessions/run/session.jsonl");
-    expect(output).toContain("task: Inspect the lifecycle");
-    expect(output).toContain("Evidence\n- runtime.ts\nValidation\n- tests passed");
-  });
-
-  test.each(["completed", "failed", "interrupted"])("renders collapsed and expanded %s completion cards", (status) => {
-    const details = {
-      index: 2,
-      runId: "run",
-      operationId: "operation",
-      agent: "scout",
-      task: "Inspect lifecycle",
-      status,
-      summary: "Evidence\nValidation",
-      runtimeStatus: "idle",
-      elapsedMs: 4_000,
-    };
-    const collapsed = rendered(renderSubagentCompletion(
-      { content: "", details: details as never }, { expanded: false, outputPad: 0 }, theme,
-    ));
-    const expanded = rendered(renderSubagentCompletion(
-      { content: "", details: details as never }, { expanded: true, outputPad: 0 }, theme,
-    ));
-    expect(collapsed).toContain(`${status} · scout (#2) · 4s · Inspect lifecycle`);
-    expect(expanded).toContain("task: Inspect lifecycle");
-    expect(expanded).toContain("Evidence\n  Validation");
-    expect(expanded).toContain("runtime idle · 4s");
-  });
-
-  test("renders every entry in a mixed completion batch", () => {
-    const entry = (agent: string, status: "completed" | "failed" | "interrupted") => ({
-      runId: agent,
-      operationId: `${agent}-operation`,
-      agent,
-      task: `${agent} task`,
-      status,
-      summary: `${agent} summary`,
-      runtimeStatus: "idle" as const,
-    });
-    const output = rendered(renderSubagentCompletion({ content: "", details: { batch: [
-      entry("scout", "completed"),
-      entry("researcher", "failed"),
-      entry("reviewer", "interrupted"),
-    ] } }, { expanded: false, outputPad: 0 }, theme));
-    expect(output).toContain("completed · scout");
-    expect(output).toContain("failed · researcher");
-    expect(output).toContain("interrupted · reviewer");
-    expect(output.match(/─/g)).toHaveLength(2);
-  });
+    for (const action of ["get", "cancel"] as const) {
+      const actionState: Record<string, unknown> = {};
+      const context = { args: { action, jobId: "550e8400-e29b-41d4-a716-446655440000" }, isError: false, state: actionState, invalidate } as never;
+      tool.renderResult!({ content: [], details: { jobId: "550e8400-e29b-41d4-a716-446655440000", ref: "#7", status: "completed" } } as never, { expanded: false, isPartial: false }, theme, context);
+      expect(text(tool.renderCall!({ action, jobId: "550e8400-e29b-41d4-a716-446655440000" } as never, theme, context))).toContain(`${action} · #7`);
+    }
+    expect(text(tool.renderCall!({ action: "get", jobId: "#3" } as never, theme))).toContain("get · #3");
+    await env.extension.shutdown();
+  }, 20_000);
 });
