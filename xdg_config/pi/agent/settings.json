@@ -13,11 +13,17 @@
     "oracle": {
       "model": "openai-codex/gpt-5.6-sol"
     },
-    "worker": {},
-    "scout": {},
+    "worker": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
+    "scout": {
+      "model": "opencode-go/deepseek-v4-flash"
+    },
     "researcher": {},
     "reviewer": {},
-    "tester": {}
+    "tester": {
+      "model": "opencode-go/deepseek-v4-flash"
+    }
   },
   "theme": "nord"
 }
