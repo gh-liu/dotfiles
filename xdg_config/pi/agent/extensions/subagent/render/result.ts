@@ -10,8 +10,10 @@ function timelineEntryLines(entry: unknown, theme: Theme): string[] {
   if (!entry || typeof entry !== "object") return [];
   const typed = entry as { kind?: unknown; summary?: unknown; status?: unknown; text?: unknown };
   if (typed.kind === "thinking") {
+    // Keep the timeline entry for ordering/observability, but never render the
+    // reasoning text to the UI — show only a generic marker to avoid leaking/noise.
     if (typeof typed.text !== "string" || !typed.text.trim()) return [];
-    return [theme.fg("dim", `Thinking: ${oneLine(typed.text, 160)}`)];
+    return [theme.fg("dim", "Thinking…")];
   }
   if (typed.kind === "tool" && typeof typed.summary === "string") {
     return [theme.fg(typed.status === "failed" ? "error" : "success", `${typed.status === "failed" ? "✗" : "✓"} ${oneLine(typed.summary, 160)}`)];

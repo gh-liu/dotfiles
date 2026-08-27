@@ -31,14 +31,23 @@ describe("task API rendering", () => {
       content: [
         { type: "text", text: "working" },
       ],
-      details: { status: "running", timeline },
+      details: {
+        status: "running",
+        timeline,
+        toolProgress: { active: [{ id: "c", summary: "bash npm test", status: "running" }] },
+      },
     }, { expanded: false, isPartial: true }, theme, context));
     expect(partial).toContain("✓ read a.ts");
-    expect(partial).toContain("Thinking: we should inspect the schema first.");
+    // Thinking renders as a generic marker only; the raw reasoning text never reaches the UI.
+    expect(partial).toContain("Thinking…");
+    expect(partial).not.toContain("we should inspect the schema first.");
     expect(partial).toContain("✓ grep schema src");
     // Thinking must sit between the two tool calls, not after everything.
-    expect(partial.indexOf("✓ read a.ts") < partial.indexOf("Thinking:")).toBe(true);
-    expect(partial.indexOf("Thinking:") < partial.indexOf("✓ grep schema src")).toBe(true);
+    expect(partial.indexOf("✓ read a.ts") < partial.indexOf("Thinking…")).toBe(true);
+    expect(partial.indexOf("Thinking…") < partial.indexOf("✓ grep schema src")).toBe(true);
+    // The active call row stays last, after every timeline entry.
+    expect(partial.indexOf("✓ grep schema src") < partial.indexOf("⠋ bash npm test…")).toBe(true);
+    expect(partial.endsWith("⠋ bash npm test…")).toBe(true);
 
     const finalContext = { args: context.args, isError: false, state: {}, invalidate: vi.fn() } as never;
     const final = text(renderSubagentResult({
@@ -46,7 +55,8 @@ describe("task API rendering", () => {
       details: { status: "completed", summary: "Done", timeline },
     }, { expanded: false, isPartial: false }, theme, finalContext));
     expect(final).toContain("✓ completed");
-    expect(final).toContain("Thinking: we should inspect the schema first.");
+    expect(final).toContain("Thinking…");
+    expect(final).not.toContain("we should inspect the schema first.");
     expect(final).toContain("✓ read a.ts");
   });
 
@@ -68,6 +78,8 @@ describe("task API rendering", () => {
     expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("✗ grep missing src");
     expect(rendered).toContain("⠋ bash npm test…");
+    // The active call row is the last line of the partial view.
+    expect(rendered.endsWith("⠋ bash npm test…")).toBe(true);
     expect(rendered).not.toMatch(/\b60s\b/);
 
     const other = { args: context.args, isError: false, state: {}, invalidate: vi.fn() } as never;
