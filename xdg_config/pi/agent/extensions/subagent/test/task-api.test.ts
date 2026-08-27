@@ -112,6 +112,78 @@ describe("task-oriented subagent API", () => {
     await env.extension.shutdown();
   });
 
+  test("forwards a bounded needsDecision progress into update details and rejects empty payloads", async () => {
+    const env = setup({ ids: ["decision", "private-operation"] });
+    const updates: unknown[] = [];
+    await env.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Decide", deadlineMs: 60_000, background: true }, undefined, (update) => updates.push(update), (await import("./harness.ts")).context(env.root));
+    const onProgress = env.fake.controllers[0].starts[0].options.onProgress!;
+
+    // A valid decision request reaches the public onUpdate details.
+    onProgress({
+      summary: "needs a call",
+      needsDecision: true,
+      decision: { question: "Proceed?", options: ["yes", "no"] },
+    });
+    expect(updates.at(-1)).toMatchObject({
+      content: [{ type: "text", text: "needs a call" }],
+      details: { needsDecision: true, decision: { question: "Proceed?", options: ["yes", "no"] } },
+    });
+    expectPublic(updates);
+
+    // Empty or invalid payloads never pollute the details.
+    onProgress({ summary: "still working", needsDecision: false, decision: { question: "ignored" } });
+    expect((updates.at(-1) as { details: Record<string, unknown> }).details).not.toHaveProperty("needsDecision");
+    expect((updates.at(-1) as { details: Record<string, unknown> }).details).not.toHaveProperty("decision");
+
+    onProgress({ summary: "still working", needsDecision: true, decision: { question: "   " } });
+    expect((updates.at(-1) as { details: Record<string, unknown> }).details).not.toHaveProperty("needsDecision");
+    expect((updates.at(-1) as { details: Record<string, unknown> }).details).not.toHaveProperty("decision");
+
+    onProgress({ summary: "still working", needsDecision: true, decision: { question: "" } });
+    expect((updates.at(-1) as { details: Record<string, unknown> }).details).not.toHaveProperty("needsDecision");
+
+    // All-invalid options never produce an empty options array.
+    onProgress({
+      summary: "deciding",
+      needsDecision: true,
+      decision: { question: "Which?", options: ["", "  ", "\t", " "] },
+    });
+    const noOptions = (updates.at(-1) as { details: { decision: { question: string; options?: string[] } } }).details.decision;
+    expect(noOptions.question).toBe("Which?");
+    expect(noOptions).not.toHaveProperty("options");
+
+    // Non-string entries are filtered out, keeping only valid bounded options.
+    onProgress({
+      summary: "mixed",
+      needsDecision: true,
+      decision: { question: "Mixed?", options: ["keep", 42, null, ""] as unknown as string[] },
+    });
+    const mixed = (updates.at(-1) as { details: { decision: { question: string; options?: string[] } } }).details.decision;
+    expect(mixed.options).toEqual(["keep"]);
+
+    // More than eight options are truncated to eight.
+    onProgress({
+      summary: "many",
+      needsDecision: true,
+      decision: { question: "Pick?", options: Array.from({ length: 12 }, (_, index) => `opt-${index + 1}`) },
+    });
+    const many = (updates.at(-1) as { details: { decision: { options: string[] } } }).details.decision;
+    expect(many.options).toHaveLength(8);
+    expect(many.options[0]).toBe("opt-1");
+    expect(many.options.at(-1)).toBe("opt-8");
+
+    // A long question is bounded and never leaks as raw text.
+    onProgress({
+      summary: "asked",
+      needsDecision: true,
+      decision: { question: `"choose the option" `.repeat(200) },
+    });
+    const last = (updates.at(-1) as { details: { decision: { question: string } } }).details.decision;
+    expect(last.question.length).toBeLessThanOrEqual(241);
+    expect(last.question.endsWith("[truncated]")).toBe(true);
+    await env.extension.shutdown();
+  });
+
   test("cancel interrupt failure still closes and releases capacity", async () => {
     const env = setup();
     const jobs = await Promise.all([1, 2, 3].map((n) => env.invoke({ action: "run", agent: "scout", objective: `Job ${n}`, background: true })));

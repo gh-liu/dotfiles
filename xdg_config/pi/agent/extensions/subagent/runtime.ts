@@ -359,6 +359,20 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       const progress = typeof value === "string" ? { summary: value } : value;
       const summary = progress.summary;
       deps.live.progress(runtime.runId, summary);
+      // Forward a bounded decision only when the child explicitly signals
+      // needsDecision with a non-empty question; empty/invalid payloads never
+      // pollute public update details.
+      const question = progress.needsDecision === true && progress.decision
+        && typeof progress.decision.question === "string"
+        ? progress.decision.question.trim()
+        : "";
+      // Bounded, non-empty option list; all-invalid input yields no options key.
+      const decisionOptions = Array.isArray(progress.decision?.options)
+        ? progress.decision.options
+            .filter((option) => typeof option === "string" && option.trim() !== "")
+            .map((option) => boundText(option, { maxCharacters: 200, maxLines: 1 }))
+            .slice(0, 8)
+        : [];
       onUpdate?.({
         content: [{ type: "text", text: summary }],
         details: {
@@ -370,6 +384,15 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           status: "running",
           ...(progress.tools ? { toolProgress: progress.tools } : {}),
           ...(progress.timeline ? { timeline: progress.timeline } : {}),
+          ...(question && progress.decision
+            ? {
+                needsDecision: true,
+                decision: {
+                  question: boundText(question, { maxCharacters: 240, maxLines: 1 }),
+                  ...(decisionOptions.length > 0 ? { options: decisionOptions } : {}),
+                },
+              }
+            : {}),
         },
       });
     };

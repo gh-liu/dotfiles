@@ -35,6 +35,12 @@ export type SubagentTimelineEntry =
   | { kind: "tool"; id: string; summary: string; status: SubagentToolProgressItem["status"] }
   | { kind: "thinking"; text: string };
 
+/** A bounded decision request the child raises when it needs parent input to proceed. */
+export interface SubagentDecision {
+  question: string;
+  options?: string[];
+}
+
 export interface SubagentProgress {
   summary: string;
   /** Bounded, operation-local tool lifecycle snapshot for renderer observability. */
@@ -45,6 +51,10 @@ export interface SubagentProgress {
   };
   /** Bounded, event-ordered timeline interleaving tool calls and thinking segments. */
   timeline?: SubagentTimelineEntry[];
+  /** True only when this progress update carries a decision the parent must answer. */
+  needsDecision?: boolean;
+  /** Bounded decision payload surfaced alongside a needsDecision update. */
+  decision?: SubagentDecision;
 }
 
 export interface SubagentRunOptions {
