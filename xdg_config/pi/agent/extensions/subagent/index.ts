@@ -99,7 +99,7 @@ export function buildWakeWordSnippet(registry: AgentDiscovery): string {
   const names = registry.agents.map((agent) => agent.name);
   const registered = names.length > 0 ? names.join(", ") : "none";
   return boundText(
-    `Delegate suitable bounded work to registered agents (${registered}) using the startup catalog. Keep simple lookups, localized edits, routine check reruns, and single-source fact checks in the parent.`,
+    `Prefer delegation to registered agents (${registered}) using the startup catalog, especially for multi-file discovery, implementation, independent review, browser QA, and multi-source research. Keep only exact lookups, one-source fact checks, and command reruns requiring no investigation in the parent. The parent owns decomposition, coordination, integration, and final verification.`,
     { maxCharacters: 1_000, maxLines: 1 },
   );
 }

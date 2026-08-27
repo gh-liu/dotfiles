@@ -20,10 +20,10 @@ network access, takes several minutes, and incurs real model/search cost.
 | `cited-discovery-consumption` | `scout` returns a structured handoff; parent synthesizes without duplicate reads/searches | 1 |
 | `independent-review` | `reviewer` finds the missing default-TTL regression | 1 |
 | `browser-qa` | `tester` launches the fixture app, exercises browser flows, preserves source, and saves screenshot evidence | 1 |
-| `small-coherent-implementation` | Parent implements directly; fixture tests pass | 1 |
+| `small-coherent-implementation` | Exactly one `worker` implements; parent inspects the settled diff and reruns tests | 1 |
 | `explicit-worker` | `worker` implements; fixture tests pass | 1 |
 | `delegated-verification` | Complete one-shot `worker` work order and structured handoff; parent inspects settled diff and reruns tests | 1 |
-| `high-impact-decision` | `oracle` resolves a compatibility judgment | 3 |
+| `high-impact-decision` | Exactly one bounded `scout` gathers repository evidence before one `oracle` judgment | 3 |
 | `combo-implementation-review` | `scout → worker → reviewer`; tests pass | 1 |
 | `parallel-evidence` | Independent `scout` + `researcher` starts before either settles; no parent duplicate search | 1 |
 | `three-way-parallel` | `scout` + `researcher` + `reviewer` use all three safe read-only slots before synthesis | 1 |

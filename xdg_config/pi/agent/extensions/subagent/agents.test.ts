@@ -185,7 +185,7 @@ describe("agent definitions", () => {
     expect(oracle.systemPrompt).toContain("Return the shortest complete answer, conclusion first");
     expect(oracle.systemPrompt).toContain("recommendation or default");
     expect(oracle.systemPrompt).toContain("Do not modify files");
-    expect(oracle.description).toContain("after focused parent investigation");
+    expect(oracle.description).toContain("after parent-coordinated investigation");
     expect(oracle.description).toContain("never for code review");
   });
 

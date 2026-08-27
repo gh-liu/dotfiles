@@ -28,9 +28,14 @@ describe("subagent discovery", () => {
     await running;
   });
 
-  test("wake snippet is bounded and names registered agents", () => {
+  test("wake snippet prefers delegation while reserving orchestration for the parent", () => {
     const snippet = buildWakeWordSnippet({ agents: [{ name: "scout", description: "Inspect", tools: [], systemPrompt: "" }], errors: [] });
+    expect(snippet).toContain("Prefer delegation");
     expect(snippet).toContain("registered agents (scout)");
+    expect(snippet).toContain("multi-file discovery, implementation, independent review, browser QA, and multi-source research");
+    expect(snippet).toContain("exact lookups, one-source fact checks, and command reruns requiring no investigation");
+    expect(snippet).toContain("decomposition, coordination, integration, and final verification");
+    expect(snippet).not.toContain("localized edits");
     expect(snippet.length).toBeLessThanOrEqual(1_000);
   });
 

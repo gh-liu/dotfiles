@@ -142,14 +142,21 @@ export const scenarios = [
   },
   {
     id: "small-coherent-implementation",
-    description: "A small coherent implementation should stay in the parent and pass tests.",
+    description: "One worker should implement a small coherent change; the parent inspects the diff and reruns tests.",
     quick: true,
     repeats: 1,
     fixture: "baseline",
     workspace: "implementation",
     targetRate: 1,
-    expectation: { maxSubagentCalls: 0 },
-    prompt: "Implement plan.md completely. This is one small coherent change: fix TTL units, add the requested regression test, and run the tests. Work directly without delegation. Do not commit.",
+    expectation: {
+      requiredAgents: ["worker"],
+      maxSubagentCalls: 1,
+      parentToolCallsAfter: [
+        { agent: "worker", tool: "bash", argsMatch: "git\\s+diff" },
+        { agent: "worker", tool: "bash", argsMatch: "(?:npm\\s+test|node\\s+--test)" },
+      ],
+    },
+    prompt: "Implement plan.md completely by delegating exactly one bounded worker to fix TTL units, add the requested regression test, and run the tests. After the worker settles, the parent must only inspect the complete Git diff and rerun the repository tests; do not redo the implementation or commit.",
   },
   {
     id: "explicit-worker",
@@ -193,14 +200,19 @@ export const scenarios = [
   },
   {
     id: "high-impact-decision",
-    description: "An unresolved compatibility judgment should route to oracle.",
+    description: "A bounded scout should gather repository evidence before oracle resolves the compatibility judgment.",
     quick: false,
     repeats: 3,
     fixture: "baseline",
     workspace: "read-only",
     targetRate: 2 / 3,
-    expectation: { requiredAgents: ["oracle"], maxSubagentCalls: 1 },
-    prompt: "Do not edit. An unresolved high-impact compatibility decision remains: while fixing TTL, should expiresAt stay an epoch-millisecond number or become an ISO string? Inspect repository constraints, then delegate exactly one authoritative read-only judgment on this decision and synthesize it. This is not a general code review.",
+    expectation: {
+      requiredAgents: ["scout", "oracle"],
+      maxSubagentCalls: 2,
+      agentOrder: ["scout", "oracle"],
+      agentsBefore: { agents: ["scout"], before: "oracle" },
+    },
+    prompt: "Do not edit. An unresolved high-impact compatibility decision remains: while fixing TTL, should expiresAt stay an epoch-millisecond number or become an ISO string? First delegate exactly one bounded read-only scout to inspect repository constraints and return cited evidence. After that scout settles, delegate exactly one authoritative read-only oracle judgment using the evidence, then synthesize it. Make exactly these two subagent calls; this is not a general code review.",
   },
   {
     id: "combo-implementation-review",
