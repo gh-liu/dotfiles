@@ -6,11 +6,11 @@ import { Type } from "typebox";
 
 import {
   applyAgentOverrides,
-  applyDefaultModels,
   discoverUserAgents,
   formatAgentCatalog,
   loadSettingsDefaults,
   loadSubagentOverrides,
+  resolveAgentModel,
   type AgentDiscovery,
 } from "./agents.ts";
 import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
@@ -110,6 +110,12 @@ function completionWakeTitle(task: string): string {
     .trim() ?? "";
 }
 
+/** Formats the parent session's current model as `{provider}/{id}`, or undefined when unavailable or malformed. */
+const mainModelOf = (model: { provider?: unknown; id?: unknown } | undefined): string | undefined =>
+  model && typeof model.provider === "string" && typeof model.id === "string"
+    ? `${model.provider}/${model.id}`
+    : undefined;
+
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
 const SubagentParameters = Type.Object({
@@ -155,10 +161,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const settingsDefaults = loadSettingsDefaults(settingsPath);
   const discoverEffectiveAgents = () => {
     const discovery = discoverUserAgents(agentDirectory);
-    return applyDefaultModels(applyAgentOverrides({
+    return applyAgentOverrides({
       agents: discovery.agents,
       errors: [...discovery.errors, ...loadedOverrides.errors],
-    }, loadedOverrides.overrides), settingsDefaults);
+    }, loadedOverrides.overrides);
   };
   let registry = discoverEffectiveAgents();
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
@@ -377,15 +383,19 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           formatAgentCatalog(registry),
           { maxCharacters: 16_000, maxLines: 196 },
         );
+        const mainModel = mainModelOf(ctx.model);
         return {
           content: [{ type: "text" as const, text: catalog }],
           details: {
-            agents: registry.agents.map(({ name, description, model, thinking }) => ({
-              name,
-              description: boundText(description, { maxCharacters: 500, maxLines: 8 }),
-              ...(model !== undefined ? { model } : {}),
-              ...(thinking !== undefined ? { thinking } : {}),
-            })),
+            agents: registry.agents.map((agent) => {
+              const model = resolveAgentModel(agent, settingsDefaults, mainModel);
+              return {
+                name: agent.name,
+                description: boundText(agent.description, { maxCharacters: 500, maxLines: 8 }),
+                ...(model !== undefined ? { model } : {}),
+                ...(agent.thinking !== undefined ? { thinking: agent.thinking } : {}),
+              };
+            }),
             discoveryErrors: registry.errors.map(({ filePath, error }) => ({
               filePath,
               error: boundText(error, { maxCharacters: 500, maxLines: 8 }),
@@ -555,11 +565,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const cwd = resolveChildCwd(allowedRoot, resolve(ctx.cwd, params.cwd ?? "."));
       const parentSessionId = ctx.sessionManager.getSessionId();
       const projectGuidance = loadProjectGuidance(allowedRoot, cwd);
+      const runtimeAgent = agent.model ? agent : (() => {
+        const model = resolveAgentModel(agent, settingsDefaults, mainModelOf(ctx.model));
+        return model ? { ...agent, model } : agent;
+      })();
       const runId = idFactory();
       const operationId = idFactory();
       const initialOptions: SubagentRunOptions = {
         cwd,
-        agent,
+        agent: runtimeAgent,
         workOrder: createWorkOrder(params.task!, cwd, projectGuidance),
         runId,
         operationId,
@@ -568,7 +582,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         signal,
       };
       const runtime = hub.createRuntime({
-        agent,
+        agent: runtimeAgent,
         cwd,
         parentSessionId,
         projectGuidance,
@@ -581,9 +595,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           details: {
             runId,
             operationId,
-            agent: agent.name,
-            ...(agent.model ? { model: stripModel(agent.model) } : {}),
-            ...(agent.thinking ? { thinking: agent.thinking } : {}),
+            agent: runtimeAgent.name,
+            ...(runtimeAgent.model ? { model: stripModel(runtimeAgent.model) } : {}),
+            ...(runtimeAgent.thinking ? { thinking: runtimeAgent.thinking } : {}),
             status: "starting",
             index: runtime.index,
           },

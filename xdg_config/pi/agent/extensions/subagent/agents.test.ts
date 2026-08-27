@@ -6,13 +6,13 @@ import { fileURLToPath } from "node:url";
 
 import {
   applyAgentOverrides,
-  applyDefaultModels,
   discoverUserAgents,
   loadAgentDefinition,
   loadSettingsDefaults,
   parseAgentDefinition,
+  resolveAgentModel,
   type AgentDefinition,
-  type AgentDiscovery,
+  type SettingsDefaults,
 } from "./agents.ts";
 
 const temporaryDirectories: string[] = [];
@@ -65,34 +65,41 @@ describe("settings defaults", () => {
   });
 });
 
-describe("default model application", () => {
-  function discoveryWith(agents: Array<Partial<AgentDefinition>>): AgentDiscovery {
-    return {
-      agents: agents as unknown as AgentDefinition[],
-      errors: [{ filePath: "broken.md", error: "boom" }],
-    };
-  }
+describe("model resolution", () => {
+  const plainAgent: AgentDefinition = {
+    name: "scout",
+    description: "Inspect files",
+    systemPrompt: "Inspect the repository.",
+    tools: ["read"],
+    contextPolicy: "fresh",
+    maxDepth: 1,
+    filePath: "/agents/scout.md",
+  };
+  const explicitAgent: AgentDefinition = {
+    ...plainAgent,
+    model: "openai-codex/gpt-5.6-sol",
+  };
+  const defaults: SettingsDefaults = {
+    defaultProvider: "opencode-go",
+    defaultModel: "deepseek-v4-flash",
+  };
 
-  test("fills the canonical default only for agents without an explicit model", () => {
-    const discovery = discoveryWith([
-      { name: "implicit" },
-      { name: "explicit", model: "openai-codex/gpt-5.6-sol" },
-    ]);
-    const filled = applyDefaultModels(discovery, {
-      defaultProvider: "opencode-go",
-      defaultModel: "deepseek-v4-flash",
-    });
-
-    expect(filled.agents[0]).toMatchObject({ name: "implicit", model: "opencode-go/deepseek-v4-flash" });
-    expect(filled.agents[1]).toMatchObject({ model: "openai-codex/gpt-5.6-sol" });
-    expect(filled.errors).toEqual([{ filePath: "broken.md", error: "boom" }]);
+  test("an explicit model wins over the main model and settings defaults", () => {
+    expect(resolveAgentModel(explicitAgent, defaults, "opencode-go/deepseek-v4")).toBe("openai-codex/gpt-5.6-sol");
   });
 
-  test("leaves agents untouched when the defaults are incomplete or absent", () => {
-    const discovery = discoveryWith([{ name: "implicit" }]);
-    expect(applyDefaultModels(discovery, {}).agents[0].model).toBeUndefined();
-    expect(applyDefaultModels(discovery, { defaultProvider: "opencode-go" }).agents[0].model).toBeUndefined();
-    expect(applyDefaultModels(discovery, { defaultModel: "deepseek-v4-flash" }).agents[0].model).toBeUndefined();
+  test("the main model wins over settings defaults when the agent has no explicit model", () => {
+    expect(resolveAgentModel(plainAgent, defaults, "opencode-go/deepseek-v4")).toBe("opencode-go/deepseek-v4");
+  });
+
+  test("falls back to the canonical settings default when no explicit or main model exists", () => {
+    expect(resolveAgentModel(plainAgent, defaults)).toBe("opencode-go/deepseek-v4-flash");
+  });
+
+  test("returns undefined when explicit, main, and defaults are all absent", () => {
+    expect(resolveAgentModel(plainAgent, {})).toBeUndefined();
+    expect(resolveAgentModel(plainAgent, { defaultProvider: "opencode-go" })).toBeUndefined();
+    expect(resolveAgentModel(plainAgent, { defaultModel: "deepseek-v4-flash" })).toBeUndefined();
   });
 });
 

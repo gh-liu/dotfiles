@@ -222,11 +222,11 @@ export interface SettingsDefaults {
 }
 
 /**
- * Reads the top-level default provider/model from settings.json. Child
- * sessions resolve their model via the SDK's findInitialModel, which feeds on
- * these exact values, so they are the effective model whenever an agent
- * definition omits one. Missing files and malformed values yield empty
- * defaults rather than surfaced errors (overrides already own the error path).
+ * Reads the top-level default provider/model from settings.json. Resolved at
+ * spawn time as the last resort by resolveAgentModel, after the agent's
+ * explicit model and the parent session's current model. Missing files and
+ * malformed values yield empty defaults rather than surfaced errors
+ * (overrides already own the error path).
  */
 export function loadSettingsDefaults(settingsPath: string): SettingsDefaults {
   try {
@@ -244,19 +244,22 @@ export function loadSettingsDefaults(settingsPath: string): SettingsDefaults {
 }
 
 /**
- * Fills the canonical `{provider}/{model}` default from settings into agents
- * that declare no explicit model (frontmatter or `subagents[agent]` overlaps
- * win), so every runtime carries a displayable, session-consistent model.
- * Discovery errors pass through untouched.
+ * Resolves the runtime model for an agent at spawn time. An explicit model
+ * (frontmatter or a `subagents[agent]` settings override) wins, then the
+ * parent session's current model, then the top-level settings defaults.
+ * Returns undefined when none apply, leaving the agent's model unset.
  */
-export function applyDefaultModels(discovery: AgentDiscovery, defaults: SettingsDefaults): AgentDiscovery {
-  const { defaultProvider, defaultModel } = defaults;
-  if (!defaultProvider || !defaultModel) return discovery;
-  const defaultModelRef = `${defaultProvider}/${defaultModel}`;
-  return {
-    agents: discovery.agents.map((agent) => (agent.model ? agent : { ...agent, model: defaultModelRef })),
-    errors: discovery.errors,
-  };
+export function resolveAgentModel(
+  agent: AgentDefinition,
+  defaults: SettingsDefaults,
+  mainModel?: string,
+): string | undefined {
+  if (agent.model) return agent.model;
+  if (mainModel) return mainModel;
+  if (defaults.defaultProvider && defaults.defaultModel) {
+    return `${defaults.defaultProvider}/${defaults.defaultModel}`;
+  }
+  return undefined;
 }
 
 /** Renders the bounded one-line-per-agent catalog shown in the tool description. */

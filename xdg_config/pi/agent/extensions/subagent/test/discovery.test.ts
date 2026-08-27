@@ -126,6 +126,78 @@ describe("subagent discovery", () => {
     await run;
   });
 
+  test("inherits the parent session model for agents without an explicit model", async () => {
+    const env = setup({ ids: ["run-fixed", "operation-fixed"] });
+    const ctx = { ...context(env.root), model: { provider: "opencode-go", id: "deepseek-v4-flash" } };
+    const invoke = (params: Record<string, unknown>) => env.extension.getTool().execute(
+      "tool-call",
+      (params.action === "run" || params.action === "start") && params.deadlineMs === undefined
+        ? { ...params, deadlineMs: 600_000 }
+        : params,
+      undefined, undefined, ctx as never,
+    );
+
+    const run = invoke({ action: "run", agent: "scout", task: "Inspect" });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    expect(env.fake.controllers[0].starts[0].options.agent).toMatchObject({
+      name: "scout",
+      model: "opencode-go/deepseek-v4-flash",
+    });
+    env.fake.controllers[0].settle();
+    await run;
+
+    const listed = await invoke({ action: "list" });
+    expect(listed.details).toMatchObject({
+      agents: expect.arrayContaining([
+        expect.objectContaining({ name: "scout", model: "opencode-go/deepseek-v4-flash" }),
+      ]),
+    });
+  });
+
+  test("an explicit settings override wins over the parent session model", async () => {
+    const settingsPath = join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
+    writeFileSync(settingsPath, JSON.stringify({ subagents: { scout: { model: "settings/model" } } }));
+    const env = setup({ ids: ["run-fixed", "operation-fixed"], settingsPath });
+    const ctx = { ...context(env.root), model: { provider: "opencode-go", id: "deepseek-v4-flash" } };
+    const invoke = (params: Record<string, unknown>) => env.extension.getTool().execute(
+      "tool-call", params, undefined, undefined, ctx as never,
+    );
+
+    const run = invoke({ action: "run", agent: "scout", task: "Inspect", deadlineMs: 600_000 });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    expect(env.fake.controllers[0].starts[0].options.agent).toMatchObject({
+      name: "scout",
+      model: "settings/model",
+    });
+    env.fake.controllers[0].settle();
+    await run;
+  });
+
+  test("falls back to settings defaults when the parent session model is absent", async () => {
+    const settingsPath = join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
+    writeFileSync(settingsPath, JSON.stringify({
+      defaultProvider: "opencode-go",
+      defaultModel: "deepseek-v4-flash",
+    }));
+    const env = setup({ ids: ["run-fixed", "operation-fixed"], settingsPath });
+
+    const listed = await env.invoke({ action: "list" });
+    expect(listed.details).toMatchObject({
+      agents: expect.arrayContaining([
+        expect.objectContaining({ name: "scout", model: "opencode-go/deepseek-v4-flash" }),
+      ]),
+    });
+
+    const run = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    expect(env.fake.controllers[0].starts[0].options.agent).toMatchObject({
+      name: "scout",
+      model: "opencode-go/deepseek-v4-flash",
+    });
+    env.fake.controllers[0].settle();
+    await run;
+  });
+
   test("reapplies startup settings overrides after list rediscovers agents", async () => {
     const settingsPath = join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
     writeFileSync(settingsPath, JSON.stringify({ subagents: { reviewer: { description: "Settings review", thinking: "high" } } }));
