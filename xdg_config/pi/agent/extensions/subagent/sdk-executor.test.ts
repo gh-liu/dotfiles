@@ -480,6 +480,31 @@ describe("one-shot SDK executor", () => {
     await controller.close();
   });
 
+  test("keeps the active tool in progress emitted after a thinking delta", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      // Tool A is still running when a thinking delta lands; its active snapshot
+      // must survive the generic "Thinking…" progress that follows.
+      emit({ type: "tool_execution_start", toolCallId: "a", toolName: "grep", args: { pattern: "fix", path: "src" } });
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "scanning for the root cause…", partial: {} } });
+      emit({ type: "tool_execution_end", toolCallId: "a", toolName: "grep", isError: false });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    };
+    const progress: SubagentProgress[] = [];
+    const runOptions = options({ onProgress: (value) => progress.push(typeof value === "string" ? { summary: value } : value) });
+    const controller = await fakeController(runOptions, session);
+    await controller.submit(runOptions);
+    // The thinking report emitted while A is still active must still carry the active tool.
+    const thinkingWhileActive = progress.find(
+      (entry) => entry.summary === "Thinking…" && entry.tools?.active.some((item) => item.id === "a"),
+    );
+    expect(thinkingWhileActive).toBeDefined();
+    expect(thinkingWhileActive!.tools!.active.map((item) => item.id)).toEqual(["a"]);
+    await controller.close();
+  });
+
   test("aborts an accepted operation authoritatively and reuses the runtime", async () => {
     const session = new FakeSession();
     let operation = 0;
