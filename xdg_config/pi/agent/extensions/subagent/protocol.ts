@@ -25,6 +25,16 @@ export interface SubagentToolProgressItem {
   status: "running" | "completed" | "failed";
 }
 
+/** A bounded, redacted slice of assistant reasoning captured between tool calls. */
+export interface SubagentThinkingSegment {
+  text: string;
+}
+
+/** Ordered interleaving of tool calls and thinking segments for timeline rendering. */
+export type SubagentTimelineEntry =
+  | { kind: "tool"; id: string; summary: string; status: SubagentToolProgressItem["status"] }
+  | { kind: "thinking"; text: string };
+
 export interface SubagentProgress {
   summary: string;
   /** Bounded, operation-local tool lifecycle snapshot for renderer observability. */
@@ -33,6 +43,8 @@ export interface SubagentProgress {
     history: SubagentToolProgressItem[];
     active: SubagentToolProgressItem[];
   };
+  /** Bounded, event-ordered timeline interleaving tool calls and thinking segments. */
+  timeline?: SubagentTimelineEntry[];
 }
 
 export interface SubagentRunOptions {

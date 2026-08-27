@@ -437,6 +437,49 @@ describe("one-shot SDK executor", () => {
     await controller.close();
   });
 
+  test("preserves thinking as an ordered merged timeline between tool calls", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      // Tool call A
+      emit({ type: "tool_execution_start", toolCallId: "a", toolName: "read", args: { path: "a.ts" } });
+      emit({ type: "tool_execution_end", toolCallId: "a", toolName: "read", isError: false });
+      // Thinking between A and B: several consecutive deltas must merge into ONE segment
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "we should ", partial: {} } });
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "inspect the ", partial: {} } });
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "schema first.", partial: {} } });
+      // Tool call B
+      emit({ type: "tool_execution_start", toolCallId: "b", toolName: "grep", args: { pattern: "schema", path: "src" } });
+      emit({ type: "tool_execution_end", toolCallId: "b", toolName: "grep", isError: false });
+      // Trailing thinking after the last tool call, flushed at message end
+      emit({ type: "message_update", assistantMessageEvent: { type: "thinking_delta", delta: "the schema proves the fix.", partial: {} } });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Conclusion" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    };
+    const progress: SubagentProgress[] = [];
+    const runOptions = options({ onProgress: (value) => progress.push(typeof value === "string" ? { summary: value } : value) });
+    const controller = await fakeController(runOptions, session);
+    await controller.submit(runOptions);
+    const timeline = progress.at(-1)?.timeline;
+    expect(timeline).toEqual([
+      { kind: "tool", id: "a", summary: "read a.ts", status: "completed" },
+      { kind: "thinking", text: "we should inspect the schema first." },
+      { kind: "tool", id: "b", summary: "grep schema · src", status: "completed" },
+      { kind: "thinking", text: "the schema proves the fix." },
+    ]);
+    // The partial timeline (while B is active, before it finishes) already carries the
+    // merged thinking segment between A and B, merged into one entry rather than three.
+    const partialWhileB = progress.find((entry) =>
+      entry.tools?.active.some((item) => item.id === "b")
+      && entry.timeline?.some((item) => item.kind === "thinking"),
+    );
+    expect(partialWhileB).toBeDefined();
+    expect(partialWhileB!.timeline!.filter((entry) => entry.kind === "thinking")).toEqual([
+      { kind: "thinking", text: "we should inspect the schema first." },
+    ]);
+    await controller.close();
+  });
+
   test("aborts an accepted operation authoritatively and reuses the runtime", async () => {
     const session = new FakeSession();
     let operation = 0;

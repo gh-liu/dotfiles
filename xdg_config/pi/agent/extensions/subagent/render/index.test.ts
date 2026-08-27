@@ -20,6 +20,36 @@ describe("task API rendering", () => {
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
+  test("renders interleaved thinking timeline in partial and final views", () => {
+    const timeline = [
+      { kind: "tool", id: "a", summary: "read a.ts", status: "completed" },
+      { kind: "thinking", text: "we should inspect the schema first." },
+      { kind: "tool", id: "b", summary: "grep schema src", status: "completed" },
+    ];
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const partial = text(renderSubagentResult({
+      content: [
+        { type: "text", text: "working" },
+      ],
+      details: { status: "running", timeline },
+    }, { expanded: false, isPartial: true }, theme, context));
+    expect(partial).toContain("✓ read a.ts");
+    expect(partial).toContain("Thinking: we should inspect the schema first.");
+    expect(partial).toContain("✓ grep schema src");
+    // Thinking must sit between the two tool calls, not after everything.
+    expect(partial.indexOf("✓ read a.ts") < partial.indexOf("Thinking:")).toBe(true);
+    expect(partial.indexOf("Thinking:") < partial.indexOf("✓ grep schema src")).toBe(true);
+
+    const finalContext = { args: context.args, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const final = text(renderSubagentResult({
+      content: [],
+      details: { status: "completed", summary: "Done", timeline },
+    }, { expanded: false, isPartial: false }, theme, finalContext));
+    expect(final).toContain("✓ completed");
+    expect(final).toContain("Thinking: we should inspect the schema first.");
+    expect(final).toContain("✓ read a.ts");
+  });
+
   test("renders bounded tool history, active and failed calls without a countdown", () => {
     const context = { args: { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 }, isError: false, state: {}, invalidate: vi.fn() } as never;
     const rendered = text(renderSubagentResult({

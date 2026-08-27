@@ -6,7 +6,7 @@ import { Type } from "typebox";
 
 import { boundText, redactSecrets, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentToolProgressItem } from "./protocol.ts";
+import type { SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem } from "./protocol.ts";
 
 export interface SdkSubagentConfig {
   agentDir?: string;
@@ -413,8 +413,26 @@ export async function createSdkSubagentController(
         };
         const activeTools = new Map<string, SubagentToolProgressItem>();
         const toolHistory: SubagentToolProgressItem[] = [];
+        const timeline: SubagentTimelineEntry[] = [];
+        const MAX_TIMELINE = 24;
+        let thinkingBuffer = "";
         let earlierToolCount = 0;
         let lastProgress = "";
+        const boundTimeline = (): void => {
+          // Keep only the newest slice so the live view stays compact and bounded.
+          if (timeline.length > MAX_TIMELINE) timeline.splice(0, timeline.length - MAX_TIMELINE);
+        };
+        // Consecutive thinking deltas are merged into one segment and flushed only at
+        // a boundary (next tool execution or message end) so the timeline preserves
+        // ordering without emitting a new entry per delta.
+        const flushThinking = (): void => {
+          const content = thinkingBuffer.trim();
+          if (content) {
+            timeline.push({ kind: "thinking", text: boundedOneLine(content, 200, secrets) });
+            boundTimeline();
+          }
+          thinkingBuffer = "";
+        };
         const report = (text: string, includeTools = false): void => {
           const bounded = boundedOneLine(text, 160, secrets);
           const progress: SubagentProgress = {
@@ -426,6 +444,7 @@ export async function createSdkSubagentController(
                 active: [...activeTools.values()].map((item) => ({ ...item })),
               },
             } : {}),
+            ...(timeline.length > 0 ? { timeline: timeline.map((entry) => ({ ...entry })) } : {}),
           };
           const key = JSON.stringify(progress);
           if (key !== lastProgress) {
@@ -438,10 +457,21 @@ export async function createSdkSubagentController(
             if (event.type === "agent_start") report("Child started; waiting for model…");
             else if (event.type === "message_update") {
               const type = event.assistantMessageEvent?.type as string | undefined;
-              if (type?.startsWith("thinking")) report("Thinking…");
-              else if (type?.startsWith("toolcall")) report("Preparing tool call…");
+              if (type?.startsWith("thinking")) {
+                const assistantEvent = event.assistantMessageEvent as { delta?: unknown; content?: unknown } | undefined;
+                if (type === "thinking_start") thinkingBuffer = "";
+                const delta = typeof assistantEvent?.delta === "string" ? assistantEvent.delta : "";
+                const content = typeof assistantEvent?.content === "string" ? assistantEvent.content : "";
+                // Accumulate deltas into one segment; the authoritative endpoint content
+                // is used when no deltas were surfaced by the SDK.
+                if (delta) thinkingBuffer += delta;
+                else if (content && !thinkingBuffer) thinkingBuffer = content;
+                report("Thinking…");
+              } else if (type?.startsWith("toolcall")) report("Preparing tool call…");
               else if (type?.startsWith("text")) report("Writing response…");
             } else if (event.type === "tool_execution_start") {
+              // Any reasoning produced before this tool call becomes a timeline segment.
+              flushThinking();
               const label = safeToolProgress(event, secrets);
               const id = typeof event.toolCallId === "string" ? event.toolCallId : `anonymous-${activeTools.size}`;
               activeTools.set(id, { id, summary: label, status: "running" });
@@ -451,17 +481,23 @@ export async function createSdkSubagentController(
               const activeItem = activeTools.get(id);
               const label = activeItem?.summary ?? safeToolProgress(event, secrets);
               activeTools.delete(id);
-              toolHistory.push({ id, summary: label, status: event.isError ? "failed" : "completed" });
+              const status: SubagentToolProgressItem["status"] = event.isError ? "failed" : "completed";
+              const item = { id, summary: label, status };
+              toolHistory.push(item);
+              timeline.push({ kind: "tool", ...item });
+              boundTimeline();
               if (toolHistory.length > 8) {
                 earlierToolCount += toolHistory.length - 8;
                 toolHistory.splice(0, toolHistory.length - 8);
               }
               report(event.isError ? `${label} failed · reviewing…` : `${label} done · working…`, true);
             } else if (event.type === "message_end" && event.message?.role === "assistant") {
+              flushThinking();
               const text = (event.message.content ?? []).filter((p: any) => p.type === "text" && typeof p.text === "string").map((p: any) => p.text as string).join("\n");
               finalText = { text: boundText(text, { maxCharacters: SUBAGENT_HANDOFF_MAX_CHARACTERS, maxLines: 400 }, secrets), stopReason: event.message.stopReason, error: event.message.errorMessage };
               if (event.message.stopReason === "stop") report("Finalizing response…");
             } else if (event.type === "agent_settled") {
+              flushThinking();
               authoritativeSettled = true;
               settled.resolve();
               clearAbortWatchdog();

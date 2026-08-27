@@ -369,6 +369,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
           ...(progress.tools ? { toolProgress: progress.tools } : {}),
+          ...(progress.timeline ? { timeline: progress.timeline } : {}),
         },
       });
     };
