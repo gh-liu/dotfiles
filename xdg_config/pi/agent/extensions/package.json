@@ -3,14 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run typecheck:subagent && npm run typecheck:context && npm run typecheck:auto-evolve && vitest run",
-    "typecheck:auto-evolve": "tsc -p auto-evolve/tsconfig.json",
+    "test": "npm run typecheck:subagent && npm run typecheck:context && npm run typecheck:status && vitest run",
     "typecheck:context": "tsc -p context/tsconfig.json",
+    "typecheck:status": "tsc -p status/tsconfig.json",
     "typecheck:subagent": "tsc -p subagent/tsconfig.json"
   },
   "dependencies": {
-    "@earendil-works/pi-coding-agent": "0.84.2",
-    "@earendil-works/pi-tui": "0.84.2",
+    "@earendil-works/pi-coding-agent": "0.84.4",
+    "@earendil-works/pi-tui": "0.84.4",
     "typebox": "1.3.7"
   },
   "devDependencies": {

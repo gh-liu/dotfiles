@@ -11,6 +11,8 @@
  * toolcall_start, toolcall_delta                    TOOL CALLING
  * tool_execution_start, tool_execution_update       RUNNING TOOLS
  * last tool_execution_end                           WAITING
+ * session_before_compact                            COMPACTING
+ * ui_prompt_start                                   INPUT NEEDED
  * assistant provider error                          ERROR
  *
  * WAITING is the conservative fallback while the agent is active but Pi exposes no
@@ -34,6 +36,8 @@ type Activity =
   | "streaming"
   | "tool_calling"
   | "running_tools"
+  | "compacting"
+  | "awaiting_user"
   | "error";
 
 const ACTIVE_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
@@ -83,6 +87,8 @@ const ACTIVITY_DISPLAY = {
   streaming: { color: "amber", label: "STREAMING", spinner: ACTIVE_SPINNER_FRAMES },
   tool_calling: { color: "cyan", label: "TOOL CALLING", spinner: TOOL_SPINNER_FRAMES },
   running_tools: { color: "cyan", label: "RUNNING TOOLS", spinner: TOOL_SPINNER_FRAMES },
+  compacting: { color: "purple", label: "COMPACTING", spinner: THINKING_FRAMES },
+  awaiting_user: { color: "green", label: "◇ INPUT NEEDED", spinner: [] },
   error: { color: "red", label: "◌ ERROR", spinner: [] },
 } as const satisfies Record<
   Activity,
@@ -114,6 +120,14 @@ function formatTokens(value: number): string {
   if (safe < 1_000_000) return `${Math.round(safe / 1_000)}k`;
   if (safe < 10_000_000) return `${(safe / 1_000_000).toFixed(1)}M`;
   return `${Math.round(safe / 1_000_000)}M`;
+}
+
+function isUsingSubscription(ctx: ExtensionContext): boolean {
+  if (!ctx.model) return false;
+  // Kimi Coding is subscription-backed despite using API-key authentication.
+  if (ctx.model.provider === "kimi-coding") return true;
+  return ctx.modelRegistry.isUsingOAuth(ctx.model)
+    && ctx.modelRegistry.getProvider(ctx.model.provider)?.auth.oauth?.isSubscription === true;
 }
 
 function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
@@ -161,7 +175,7 @@ function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
     cost,
     usageAvailable,
     costAvailable,
-    subscription: ctx.model ? ctx.modelRegistry.isUsingOAuth(ctx.model) : false,
+    subscription: isUsingSubscription(ctx),
     contextPercent: context?.percent ?? undefined,
     contextWindow: context?.contextWindow ?? ctx.model?.contextWindow ?? 0,
     autoCompact: settings.getCompactionEnabled(),
@@ -328,6 +342,7 @@ export default function status(pi: ExtensionAPI) {
   let spinnerFrame = 0;
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let settingsWatcher: FSWatcher | undefined;
+  let uiPromptActive = false;
   const executingToolCalls = new Set<string>();
 
   const stopSpinner = () => {
@@ -345,8 +360,8 @@ export default function status(pi: ExtensionAPI) {
   };
 
   const setActivity = (next: Activity) => {
-    activity = next;
-    if (ACTIVITY_DISPLAY[next].spinner.length > 0) startSpinner();
+    activity = uiPromptActive ? "awaiting_user" : next;
+    if (ACTIVITY_DISPLAY[activity].spinner.length > 0) startSpinner();
     else stopSpinner();
     requestRender();
   };
@@ -367,6 +382,7 @@ export default function status(pi: ExtensionAPI) {
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();
+    uiPromptActive = false;
     currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "waiting";
     snapshot = readSnapshot(pi, ctx);
@@ -415,6 +431,18 @@ export default function status(pi: ExtensionAPI) {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     executingToolCalls.clear();
     setActivity("waiting");
+  });
+
+  pi.on("ui_prompt_start", (_event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    uiPromptActive = true;
+    setActivity("awaiting_user");
+  });
+
+  pi.on("ui_prompt_end", (_event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    uiPromptActive = false;
+    setActivity(ctx.isIdle() ? "ready" : "waiting");
   });
 
   pi.on("message_update", (event, ctx) => {
@@ -490,8 +518,18 @@ export default function status(pi: ExtensionAPI) {
   pi.on("thinking_level_select", (_event, ctx) => {
     if (isCurrentSession(ctx)) refresh(ctx);
   });
-  pi.on("session_compact", (_event, ctx) => {
-    if (isCurrentSession(ctx)) refresh(ctx);
+  pi.on("session_before_compact", (_event, ctx) => {
+    if (isCurrentSession(ctx) && ctx.mode === "tui") setActivity("compacting");
+  });
+  pi.on("session_compact", (event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    setActivity(event.willRetry || !ctx.isIdle() ? "waiting" : "ready");
+    refresh(ctx);
+  });
+  pi.on("session_compact_failed", (event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    setActivity(event.aborted ? (ctx.isIdle() ? "ready" : "waiting") : "error");
+    refresh(ctx);
   });
 
   pi.on("session_shutdown", (_event, ctx) => {
@@ -500,6 +538,7 @@ export default function status(pi: ExtensionAPI) {
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();
+    uiPromptActive = false;
     currentSessionManager = undefined;
     snapshot = undefined;
     requestRender = () => { };
