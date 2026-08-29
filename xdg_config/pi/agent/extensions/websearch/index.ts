@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
 const EXA_SEARCH_URL = "https://api.exa.ai/search";
@@ -17,7 +18,7 @@ export const WebSearchParameters = Type.Object({
     }),
   ),
   type: Type.Optional(
-    Type.Union([Type.Literal("auto"), Type.Literal("fast"), Type.Literal("instant")], {
+    StringEnum(["auto", "fast", "instant"] as const, {
       default: "auto",
       description: "Search mode; use auto unless latency matters",
     }),
@@ -41,7 +42,7 @@ export const WebSearchParameters = Type.Object({
     Type.String({ description: "Latest ISO 8601 publication date" }),
   ),
   content: Type.Optional(
-    Type.Union([Type.Literal("highlights"), Type.Literal("text")], {
+    StringEnum(["highlights", "text"] as const, {
       default: "highlights",
       description: "Return concise relevant excerpts or bounded full page text",
     }),

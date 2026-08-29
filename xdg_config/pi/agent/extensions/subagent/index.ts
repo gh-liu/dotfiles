@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { StringEnum } from "@earendil-works/pi-ai";
 import { Type, type Static } from "typebox";
 
 import {
@@ -125,11 +126,7 @@ const mainModelOf = (model: { provider?: unknown; id?: unknown } | undefined): s
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
 const SubagentParameters = Type.Object({
-  action: Type.Union([
-    Type.Literal("run"),
-    Type.Literal("get"),
-    Type.Literal("cancel"),
-  ], { description: "Task action" }),
+  action: StringEnum(["run", "get", "cancel"] as const, { description: "Task action" }),
   agent: Type.Optional(Type.String({ description: "run agent name" })),
   objective: Type.Optional(Type.String({ minLength: 1, description: "run objective" })),
   scope: Type.Optional(Type.Array(Type.String())),

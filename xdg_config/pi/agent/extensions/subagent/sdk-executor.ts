@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
+import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
 import { boundText, redactSecrets, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
@@ -101,12 +102,12 @@ function makeWebSearchTool(): any {
   const WebSearchParameters = Type.Object({
     query: Type.String({ minLength: 1, description: "Natural-language web search query" }),
     numResults: Type.Optional(Type.Integer({ minimum: 1, maximum: 10, description: "Number of results" })),
-    type: Type.Optional(Type.Union([Type.Literal("auto"), Type.Literal("fast"), Type.Literal("instant")])),
+    type: Type.Optional(StringEnum(["auto", "fast", "instant"] as const)),
     includeDomains: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 100 })),
     excludeDomains: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 100 })),
     startPublishedDate: Type.Optional(Type.String()),
     endPublishedDate: Type.Optional(Type.String()),
-    content: Type.Optional(Type.Union([Type.Literal("highlights"), Type.Literal("text")])),
+    content: Type.Optional(StringEnum(["highlights", "text"] as const)),
     maxCharacters: Type.Optional(Type.Integer({ minimum: 1000, maximum: 20000 })),
     fresh: Type.Optional(Type.Boolean()),
   });

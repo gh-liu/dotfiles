@@ -1,3 +1,4 @@
+import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
 export const ASK_TIMEOUT_MS = 10 * 60 * 1000;
@@ -12,13 +13,7 @@ export type SessionMessageInput = {
 };
 
 export const sessionMessageParameters = Type.Object({
-  action: Type.Union([
-    Type.Literal("send"),
-    Type.Literal("ask"),
-    Type.Literal("reply"),
-    Type.Literal("pending"),
-    Type.Literal("cancel"),
-  ]),
+  action: StringEnum(["send", "ask", "reply", "pending", "cancel"] as const),
   to: Type.Optional(Type.String({ description: "Target active session name or id" })),
   message: Type.Optional(Type.String({ description: "Message text" })),
   replyTo: Type.Optional(Type.String({ description: "Inbound message id for reply" })),
