@@ -24,6 +24,10 @@ export default function continueAfterCompaction(pi: ExtensionAPI): void {
   const pendingTimers = new Set<ReturnType<typeof setTimeout>>();
 
   pi.on("session_compact", (event, ctx) => {
+    // Pi retries overflow compactions itself when willRetry is true. Queuing an
+    // additional follow-up here would duplicate the recovery turn.
+    if (event.willRetry) return;
+
     const prompt = buildContinuationPrompt(
       ctx.sessionManager.getSessionFile(),
       event.compactionEntry.id,

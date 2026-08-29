@@ -43,6 +43,11 @@ export default function (pi: ExtensionAPI) {
     handler: async (args, ctx) => {
       const showAll = args.trim() === "all";
 
+      if (ctx.mode !== "tui") {
+        ctx.ui.notify("The /context visualization requires TUI mode.", "warning");
+        return;
+      }
+
       const usage = ctx.getContextUsage();
       if (!usage) {
         ctx.ui.notify("Context usage info not available.", "warning");
