@@ -591,6 +591,15 @@ install_nvimdep() {
 	fi
 }
 
+install_swift() {
+	curl -O https://download.swift.org/swiftly/darwin/swiftly.pkg
+	# export SWIFTLY_HOME_DIR=~/dev/swift
+	# export SWIFTLY_BIN_DIR=~/dev/swift/bin
+	# export SWIFTLY_TOOLCHAINS_DIR=~/dev/swift/toolchains
+	installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
+	~/.swiftly/bin/swiftly init
+}
+
 # ======= entrypoint
 if [[ -z "$1" ]]; then
 	install_bins

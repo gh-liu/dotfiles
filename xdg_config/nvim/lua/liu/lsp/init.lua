@@ -362,6 +362,8 @@ vim.lsp.enable("docker_language_server")
 
 vim.lsp.enable("terraformls")
 
+vim.lsp.enable("sourcekit")
+
 -- vim.lsp.enable("nushell")
 
 -- vim.lsp.enable({ "copilot" })

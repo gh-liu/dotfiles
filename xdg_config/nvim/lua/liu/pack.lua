@@ -1119,6 +1119,20 @@ vim.g.projectionist_heuristics = {
 			dispatch = "cargo test {}",
 		},
 	},
+	["Package.swift"] = {
+		["Package.swift"] = { type = "dep" },
+		["Sources/*.swift"] = {
+			type = "source",
+			alternate = "Sources/{}.swift",
+		},
+		["Sources/main.swift"] = {
+			type = "main",
+		},
+		["Tests/*.swift"] = {
+			type = "test",
+			alternate = "Sources/{}.swift",
+		},
+	},
 }
 -- vim.pack.add({ "https://github.com/tpope/vim-projectionist" })
 vim.pack.add({ "https://github.com/gh-liu/vim-projectionist" })

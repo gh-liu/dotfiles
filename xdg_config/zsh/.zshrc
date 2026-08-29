@@ -344,6 +344,12 @@ path=("$BUN_INSTALL/bin" $path)
 # bun completions
 # https://github.com/oven-sh/bun/issues/11179#issuecomment-2151457758
 # }}}
+# 7. lang: swift{{{
+export SWIFTLY_HOME_DIR=~/dev/swift
+export SWIFTLY_BIN_DIR=~/dev/swift/bin
+export SWIFTLY_TOOLCHAINS_DIR=~/dev/swift/toolchains
+path=("$SWIFTLY_BIN_DIR" $path)
+# }}}
 
 # 9. tools: AS many tools install by lang, so let it at BOTTOM{{{
 ## brew: all the bins installed by brew should put after
