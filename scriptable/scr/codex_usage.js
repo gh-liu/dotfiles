@@ -11,7 +11,7 @@ const SETTINGS = Object.freeze({
   resetsCreditsUrl: "https://chatgpt.com/backend-api/wham/rate-limit-reset-credits",
   authBaseUrl: "https://auth.openai.com",
   clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
-  credentialsKey: "com.liu.scriptable.codex.credentials",
+  credentialsKey: "com.liu.codex.credentials",
   notificationStateKey: "com.liu.scriptable.codex.usage-boundary",
   resetCountStateKey: "com.liu.scriptable.codex.reset-count",
   timeZone: "Asia/Shanghai",
