@@ -71,3 +71,23 @@ intentionally separate from `npm test`. There is no package-script alias so the
 runner is equally usable with Node.js or Bun. See
 [subagent/eval/README.md](subagent/eval/README.md) for the scenario matrix, full
 statistical run, report format, and baseline comparison workflow.
+
+## Complete extension list and composition
+
+- `auth`: syncs Codex OAuth credentials from macOS Keychain, falling back to `CODEX_HOME/auth.json`.
+- `context`: keeps `/context [all]` TUI visualization and adds bounded read-only `context_usage` JSON.
+- `continue`: resumes after compaction from the summary and worktree, consulting history only for decision-critical gaps.
+- `sessions`: `sessions_search` locates history; `sessions_read` reads summary first and bounded entries only as needed.
+- `status`: shows activity, model, token, cost, and context state.
+- `subagent`: runs independent subtasks and presents their results.
+- `websearch`: provides Exa `web_search` for current or external facts.
+
+Use `context_usage` to check capacity, `continue` for compaction recovery, and sessions only for missing decisions. `sessions_read` is a direct bounded low-level read, not a subagent operation, to avoid recursion, latency, and permission complexity.
+
+## Configuration, tests, and troubleshooting
+
+Set `EXA_API_KEY` in the environment that starts Pi. Codex uses `CODEX_HOME` (default `~/.codex`). Never document or log secrets or auth-file contents. Run `npm test` in this directory; focused checks are `npm run typecheck:context`, `npm run typecheck:status`, and `npm run typecheck:subagent`.
+
+If web search is unavailable, verify `EXA_API_KEY` and the API/network response. If Codex does not sync, verify Keychain access on macOS, then verify `CODEX_HOME/auth.json` contains OAuth fields and an access-token JWT with `exp`. If history is rejected, search first and pass the exact id/path within the allowed `cwd`; summary is the default first step.
+
+For current/external facts, web search prefers official/primary sources, preserves source URLs, and distinguishes snippets from verified facts.

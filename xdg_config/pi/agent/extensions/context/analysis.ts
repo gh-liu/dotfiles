@@ -222,3 +222,63 @@ export function scaleTokenGroups<T extends string>(values: Record<T, number>, to
   }
   return Object.fromEntries(scaled.map(({ key, value }) => [key, value])) as Record<T, number>;
 }
+
+export interface ContextUsageInput {
+  systemPrompt: string;
+  contextFiles: readonly ContextFileLike[];
+  skills: readonly SkillLike[];
+  messages: readonly unknown[];
+  allTools: ToolLike[];
+  activeToolNames: readonly string[];
+  totalActual: number;
+}
+
+export interface ContextUsageAnalysis {
+  categories: Array<{ label: string; value: number; color: string; details?: Array<{ label: string; tokens: number }> }>;
+  total: number;
+  limit: number;
+  messagesByRole: MessageBreakdown["byRole"];
+}
+
+/** Computes the bounded, shared source of truth for /context and context_usage. */
+export function calculateContextUsage(input: ContextUsageInput): ContextUsageAnalysis {
+  const { systemTools, extensionTools } = classifyActiveTools(input.allTools, input.activeToolNames);
+  const promptParts = attributeSystemPrompt(input.systemPrompt, input.contextFiles, input.skills);
+  const messageAnalysis = analyzeMessages(input.messages);
+  const systemToolsRaw = systemTools.length > 0 ? estimateValueTokens(systemTools) : 0;
+  const extensionToolsRaw = extensionTools.length > 0 ? estimateValueTokens(extensionTools) : 0;
+  const tokenGroups = scaleTokenGroups({
+    systemPrompt: promptParts.systemPromptRaw,
+    memoryFiles: promptParts.memoryFilesRaw,
+    skills: promptParts.skillsRaw,
+    systemTools: systemToolsRaw,
+    extensionTools: extensionToolsRaw,
+    messages: messageAnalysis.total,
+  }, input.totalActual);
+  const totalRaw = promptParts.systemPromptRaw + promptParts.memoryFilesRaw + promptParts.skillsRaw
+    + systemToolsRaw + extensionToolsRaw + messageAnalysis.total;
+  const ratio = totalRaw > 0 ? input.totalActual / totalRaw : 1;
+  const top = (items: Array<{ label: string; tokens: number }>) => items
+    .map((item) => ({ ...item, tokens: Math.max(0, Math.round(item.tokens * ratio)) }))
+    .sort((a, b) => b.tokens - a.tokens)
+    .slice(0, 5);
+  const toolDetails = (tools: ToolLike[]) => top(tools.map((tool) => ({ label: tool.name, tokens: estimateValueTokens(tool) })));
+  const memoryDetails = top(input.contextFiles.filter((file) => input.systemPrompt.includes(file.path))
+    .map((file) => ({ label: basename(file.path), tokens: estimateTokens(file.content) + estimateTokens(file.path) + 12 })));
+  const skillDetails = top(input.skills.filter((skill) => !skill.disableModelInvocation && skill.filePath && input.systemPrompt.includes(skill.filePath))
+    .map((skill) => ({ label: skill.name, tokens: estimateTokens(skill.name) + estimateTokens(skill.description ?? "") + estimateTokens(skill.filePath!) + 20 })));
+  const messagesByRole = scaleTokenGroups(messageAnalysis.byRole, tokenGroups.messages);
+  const roleDetails = Object.entries(messagesByRole)
+    .filter(([, tokens]) => tokens > 0)
+    .map(([label, tokens]) => ({ label, tokens }))
+    .sort((a, b) => b.tokens - a.tokens);
+  const categories = [
+    { label: "System prompt", value: tokenGroups.systemPrompt, color: "muted" },
+    { label: "System tools", value: tokenGroups.systemTools, color: "success", details: toolDetails(systemTools) },
+    { label: "Extension tools", value: tokenGroups.extensionTools, color: "accent", details: toolDetails(extensionTools) },
+    { label: "Memory files", value: tokenGroups.memoryFiles, color: "dim", details: memoryDetails },
+    { label: "Skills", value: tokenGroups.skills, color: "dim", details: skillDetails },
+    { label: "Messages", value: tokenGroups.messages, color: "accent", details: roleDetails },
+  ].filter((category) => category.value > 0).sort((a, b) => b.value - a.value);
+  return { categories, total: input.totalActual, limit: 0, messagesByRole };
+}

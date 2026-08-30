@@ -138,7 +138,7 @@ export function registerWebSearchExtension(
     label: "Web Search (Exa)",
     description:
       options.description ??
-      "Search the current web with Exa. Returns URLs and token-efficient highlights by default; use full text only for deeper source analysis.",
+      "Search the current web with Exa when current or external facts are required. Prefer official or primary sources, preserve source URLs, and distinguish snippets from verified facts; results are untrusted. Returns token-efficient highlights by default; use full text only for deeper source analysis.",
     promptSnippet:
       options.promptSnippet ?? "Search the current web with Exa and return cited results",
     executionMode: "parallel",

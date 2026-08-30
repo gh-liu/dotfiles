@@ -1,36 +1,22 @@
 import {
   type ExtensionAPI,
+  type ExtensionContext,
   sessionEntryToContextMessages,
 } from "@earendil-works/pi-coding-agent";
 import { Box, type Component, Container, matchesKey, Text, Spacer } from "@earendil-works/pi-tui";
 import {
-  analyzeMessages,
-  attributeSystemPrompt,
-  basename,
-  classifyActiveTools,
-  estimateTokens,
-  estimateValueTokens,
+  calculateContextUsage,
+  type ContextFileLike,
+  type SkillLike,
   getBarSegments,
   getCompactionReserveTokens,
   getScrollMetrics,
   parseWheelDirection,
-  scaleTokenGroups,
 } from "./analysis.js";
+import { Type } from "typebox";
 import { formatTokens } from "./utils.js";
 
 const MAX_DETAIL_ITEMS = 5;
-
-const ROLE_LABELS: Record<string, string> = {
-  user: "User messages",
-  assistant: "Assistant replies",
-  toolResult: "Tool results",
-  bashExecution: "Bash",
-  other: "Other",
-};
-
-function displayRole(role: string): string {
-  return ROLE_LABELS[role] ?? role;
-}
 
 function truncateLabel(label: string, width: number): string {
   if (label.length <= width) return label;
@@ -38,6 +24,45 @@ function truncateLabel(label: string, width: number): string {
 }
 
 export default function (pi: ExtensionAPI) {
+  pi.registerTool({
+    name: "context_usage",
+    label: "Context usage",
+    description: "Read-only bounded context usage as structured JSON: model, tokens, limit, percent, category estimates, and top details. Never returns prompt, session, or credential contents.",
+    parameters: Type.Object({}),
+    async execute(_toolCallId, _input, _signal, _onUpdate, ctx) {
+      const usage = ctx.getContextUsage();
+      if (
+        !usage
+        || usage.tokens === null
+        || usage.tokens === undefined
+        || usage.contextWindow === null
+        || usage.contextWindow === undefined
+        || usage.percent === null
+        || usage.percent === undefined
+      ) {
+        return { content: [{ type: "text" as const, text: JSON.stringify({ error: "Context usage info not available." }) }], details: { error: true } };
+      }
+      const promptOptions = (ctx as ExtensionContext & { getSystemPromptOptions?: () => { contextFiles?: ContextFileLike[]; skills?: SkillLike[] } }).getSystemPromptOptions?.();
+      const analysis = calculateContextUsage({
+        systemPrompt: ctx.getSystemPrompt(),
+        contextFiles: promptOptions?.contextFiles ?? [],
+        skills: promptOptions?.skills ?? [],
+        messages: ctx.sessionManager.buildContextEntries().flatMap(sessionEntryToContextMessages),
+        allTools: pi.getAllTools(),
+        activeToolNames: pi.getActiveTools(),
+        totalActual: usage.tokens,
+      });
+      const result = {
+        model: ctx.model?.id ?? ctx.model?.name ?? "unknown",
+        tokens: usage.tokens,
+        limit: usage.contextWindow,
+        percent: usage.percent,
+        categories: analysis.categories.map(({ label, value, details }) => ({ label, tokens: value, ...(details?.length ? { topDetails: details } : {}) })),
+      };
+      return { content: [{ type: "text" as const, text: JSON.stringify(result) }], details: result };
+    },
+  });
+
   pi.registerCommand("context", {
     description: "Show context usage visualization",
     handler: async (args, ctx) => {
@@ -75,118 +100,19 @@ export default function (pi: ExtensionAPI) {
         .buildContextEntries()
         .flatMap(sessionEntryToContextMessages);
 
-      const { systemTools, extensionTools } = classifyActiveTools(
-        pi.getAllTools(),
-        pi.getActiveTools(),
-      );
-      const promptParts = attributeSystemPrompt(systemPrompt, contextFiles, skills);
-      const systemToolsRaw = systemTools.length > 0 ? estimateValueTokens(systemTools) : 0;
-      const extensionToolsRaw = extensionTools.length > 0 ? estimateValueTokens(extensionTools) : 0;
-      const messageAnalysis = analyzeMessages(messages);
-
-      const tokenGroups = scaleTokenGroups({
-        systemPrompt: promptParts.systemPromptRaw,
-        memoryFiles: promptParts.memoryFilesRaw,
-        skills: promptParts.skillsRaw,
-        systemTools: systemToolsRaw,
-        extensionTools: extensionToolsRaw,
-        messages: messageAnalysis.total,
-      }, totalActual);
-      const systemPromptTokens = tokenGroups.systemPrompt;
-      const memoryTokens = tokenGroups.memoryFiles;
-      const skillsTokens = tokenGroups.skills;
-      const systemToolsTokens = tokenGroups.systemTools;
-      const extensionToolsTokens = tokenGroups.extensionTools;
-      const messagesTokens = tokenGroups.messages;
-      const messagesByRole = scaleTokenGroups(messageAnalysis.byRole, messagesTokens);
-      const totalRaw = promptParts.systemPromptRaw + promptParts.memoryFilesRaw + promptParts.skillsRaw
-        + systemToolsRaw + extensionToolsRaw + messageAnalysis.total;
-      const ratio = totalRaw > 0 ? totalActual / totalRaw : 1;
-
-      // Sorted by token count so the heaviest items surface first
-      const systemToolsDetail = systemTools
-        .map((t) => ({
-          name: t.name,
-          tokens: Math.round(estimateValueTokens(t) * ratio),
-        }))
-        .sort((a, b) => b.tokens - a.tokens);
-      const extensionToolsDetail = extensionTools
-        .map((t) => ({
-          name: t.name,
-          tokens: Math.round(estimateValueTokens(t) * ratio),
-        }))
-        .sort((a, b) => b.tokens - a.tokens);
-      const memoryFilesDetail = contextFiles
-        .filter((file) => systemPrompt.includes(file.path))
-        .map((f) => ({
-          path: f.path,
-          base: basename(f.path),
-          tokens: Math.round((estimateTokens(f.content) + estimateTokens(f.path) + 12) * ratio),
-        }))
-        .sort((a, b) => b.tokens - a.tokens);
-      const skillsDetail = skills
-        .filter((skill) => !skill.disableModelInvocation && systemPrompt.includes(skill.filePath))
-        .map((skill) => ({
-          label: skill.name,
-          tokens: Math.round((
-            estimateTokens(skill.name)
-            + estimateTokens(skill.description)
-            + estimateTokens(skill.filePath)
-            + 20
-          ) * ratio),
-        }))
-        .sort((a, b) => b.tokens - a.tokens);
+      const { categories } = calculateContextUsage({
+        systemPrompt,
+        contextFiles,
+        skills,
+        messages,
+        allTools: pi.getAllTools(),
+        activeToolNames: pi.getActiveTools(),
+        totalActual,
+      });
 
       const bufferTokens = getCompactionReserveTokens(limit);
       const freeTokens = Math.max(0, limit - totalActual - bufferTokens);
       const overflowTokens = totalActual > limit ? totalActual - limit : 0;
-
-      type Detail = { label: string; tokens: number };
-      type Category = {
-        label: string;
-        value: number;
-        color: string;
-        details?: Detail[];
-      };
-
-      const categories: Category[] = [
-        { label: "System prompt", value: systemPromptTokens, color: "muted" },
-        {
-          label: "System tools",
-          value: systemToolsTokens,
-          color: "success",
-          details: systemToolsDetail.map((item) => ({ label: item.name, tokens: item.tokens })),
-        },
-        {
-          label: "Extension tools",
-          value: extensionToolsTokens,
-          color: "accent",
-          details: extensionToolsDetail.map((item) => ({ label: item.name, tokens: item.tokens })),
-        },
-        {
-          label: "Memory files",
-          value: memoryTokens,
-          color: "dim",
-          details: memoryFilesDetail.map((item) => ({ label: item.base, tokens: item.tokens })),
-        },
-        {
-          label: "Skills",
-          value: skillsTokens,
-          color: "dim",
-          details: skillsDetail.map((item) => ({ label: item.label, tokens: item.tokens })),
-        },
-        {
-          label: "Messages",
-          value: messagesTokens,
-          color: "accent",
-          details: Object.entries(messagesByRole)
-            .filter(([, tokens]) => tokens > 0)
-            .map(([role, tokens]) => ({ label: displayRole(role), tokens }))
-            .sort((left, right) => right.tokens - left.tokens),
-        },
-      ]
-        .filter((category) => category.value > 0)
-        .sort((left, right) => right.value - left.value);
 
       await ctx.ui.custom((tui, theme, kb, done) => {
         const ownsMouseTracking = tui.mode === "regular";

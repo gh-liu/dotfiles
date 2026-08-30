@@ -65,13 +65,13 @@ function registerRead(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "sessions_read",
     label: "Sessions read",
-    description: "Read a bounded view of a session located by the exact sessionId or path returned by sessions_search. Use mode=summary for a bounded metadata/overview projection (not a full or generated summary), or mode=entries for branch-aware conversation entries. With entryId, entries follow that branch and may include direct children; cwd defaults to the current cwd and only allows that directory or descendants. Output is always bounded.",
+    description: "Read a bounded view of a session located by the exact sessionId or path returned by sessions_search. Prefer mode=summary first; use mode=entries only to fill a decision-critical gap. With entryId, entries follow that branch and may include direct children; entryLimit and childLimit are independent budgets. cwd defaults to the current cwd and only allows that directory or descendants. This is a direct low-level read, intentionally not delegated to a subagent; output is always bounded.",
     parameters: sessionsReadParameters,
     async execute(_toolCallId, input: SessionsReadInput, _signal, _onUpdate, ctx?: ExtensionContext) {
       const session = input.session?.trim();
       if (!session) return errorResult("session must not be empty", ErrorCodes.INVALID_ARGUMENT);
       const cwd = input.cwd?.trim() || ctx?.cwd;
-      const entryLimit = Math.min(input.entryLimit ?? 10, MAX_RESULTS);
+      const entryLimit = Math.min(input.entryLimit ?? 8, MAX_RESULTS);
       const childLimit = Math.min(input.childLimit ?? 0, MAX_RESULTS);
       try {
         const sessions = await SessionManager.listAll();

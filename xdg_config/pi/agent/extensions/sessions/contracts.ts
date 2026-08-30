@@ -50,6 +50,6 @@ export const sessionsReadParameters = Type.Object({
   mode: StringEnum(["summary", "entries"] as const, { description: "summary: bounded metadata/overview and latest entry; entries: branch-aware conversation entries" }),
   cwd: Type.Optional(Type.String({ description: "Security boundary: allow only this directory or descendants; defaults to the current cwd" })),
   entryId: Type.Optional(Type.String({ description: "Entry id whose resolved branch to read; also enables direct child entries in entries mode" })),
-  entryLimit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS, description: "Maximum branch entries to return; output remains bounded" })),
-  childLimit: Type.Optional(Type.Integer({ minimum: 0, maximum: MAX_RESULTS, description: "Maximum direct child entries to return independently of entryLimit" })),
+  entryLimit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS, description: "Maximum branch entries to return (default 8); output remains bounded" })),
+  childLimit: Type.Optional(Type.Integer({ minimum: 0, maximum: MAX_RESULTS, description: "Maximum direct child entries to return independently of entryLimit; read only when decision-critical" })),
 });

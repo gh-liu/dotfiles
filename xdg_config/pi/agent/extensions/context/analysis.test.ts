@@ -4,6 +4,7 @@ import {
   analyzeMessages,
   attributeSystemPrompt,
   basename,
+  calculateContextUsage,
   classifyActiveTools,
   estimateTokens,
   getBarSegments,
@@ -92,6 +93,18 @@ describe("context analysis", () => {
     expect(Object.values(scaled).reduce((sum, value) => sum + value, 0)).toBe(101);
     expect(scaled.system).toBeGreaterThan(scaled.tools);
     expect(scaleTokenGroups({ system: 0, messages: 0 }, 17)).toEqual({ system: 17, messages: 0 });
+  });
+
+  test("produces bounded structured category details", () => {
+    const result = calculateContextUsage({
+      systemPrompt: "prompt /memory.md",
+      contextFiles: [{ path: "/memory.md", content: "memory" }],
+      skills: [], messages: [{ role: "user", content: "hello" }],
+      allTools: Array.from({ length: 8 }, (_, index) => ({ name: `tool-${index}`, description: "x" })),
+      activeToolNames: Array.from({ length: 8 }, (_, index) => `tool-${index}`), totalActual: 100,
+    });
+    expect(result.total).toBe(100);
+    expect(result.categories.find((category) => category.label === "Extension tools")?.details).toHaveLength(5);
   });
 
   test("extracts POSIX and Windows basenames", () => {
