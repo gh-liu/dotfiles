@@ -5,7 +5,7 @@ export const MAX_RESULTS = 20;
 export const MAX_SNIPPET_LENGTH = 240;
 
 export type SessionsInput = {
-  action: "search_history" | "list" | "get_entries";
+  action: "search_history" | "get_entries";
   query?: string;
   cwd?: string;
   limit?: number;
@@ -17,7 +17,7 @@ export type SessionsInput = {
 };
 
 export const sessionsParameters = Type.Object({
-  action: StringEnum(["search_history", "list", "get_entries"] as const),
+  action: StringEnum(["search_history", "get_entries"] as const),
   query: Type.Optional(Type.String({ description: "Text to search for (search_history only)" })),
   cwd: Type.Optional(Type.String({ description: "Working-directory filter" })),
   limit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS })),

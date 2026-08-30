@@ -1,4 +1,3 @@
-import type { ActiveSession } from "../contracts.ts";
 import { MAX_SNIPPET_LENGTH } from "./contracts.ts";
 
 export function snippet(text: string, query: string): string {
@@ -9,25 +8,6 @@ export function snippet(text: string, query: string): string {
   const start = Math.max(0, position - 80);
   const end = Math.min(normalized.length, position + query.length + 160);
   return `${start > 0 ? "…" : ""}${normalized.slice(start, end)}${end < normalized.length ? "…" : ""}`;
-}
-
-export function formatActiveSession(session: ActiveSession, currentId: string | null) {
-  return {
-    kind: "active" as const,
-    instanceId: session.id,
-    sessionId: session.id,
-    name: session.name,
-    cwd: session.cwd,
-    model: session.model,
-    status: session.status ?? "unknown",
-    lastActivity: new Date(session.lastActivity).toISOString(),
-    self: session.id === currentId,
-  };
-}
-
-export function filterByCwd<T extends { cwd: string }>(items: T[], cwd?: string): T[] {
-  if (!cwd) return items;
-  return items.filter((item) => item.cwd === cwd || item.cwd.startsWith(`${cwd}/`));
 }
 
 export type HistorySession = {

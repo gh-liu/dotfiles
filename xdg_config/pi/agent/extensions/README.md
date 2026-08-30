@@ -41,32 +41,17 @@ ambiguous. This avoids routinely refilling the newly compacted context.
 
 ## Sessions
 
-The `sessions` extension registers two tools:
+The `sessions` extension registers one history-reading tool:
 
-- `sessions`: search local Pi session history with `search_history`, inspect a bounded
-  session summary or branch-aware entry excerpt with `get_entries`, or list active
-  Pi sessions connected through the local Unix-domain-socket transport with `list`.
+- `sessions`: search local Pi session history with `search_history`, or inspect a
+  bounded session summary or branch-aware entry excerpt with `get_entries`.
   `get_entries` accepts exactly one `sessionId` or `path`, and can select an
   `entryId`; without an explicit `cwd` it is restricted to the current cwd. Session
-  paths are resolved against the indexed history before opening, and model-visible
+  paths are resolved against indexed history before opening, and model-visible
   entry text is bounded (use `mode: "entries"` for local conversation content).
-- `session_message`: communicate with an active session using `send`, `ask`,
-  `reply`, `pending`, or `cancel`.
 
-History search remains available when local IPC is unavailable. Active-session
-operations require the target session to have this extension loaded and connected.
-The active-session transport uses a private Unix-domain socket under
-`$PI_CODING_AGENT_DIR/runtime` on macOS and Linux; Windows is not supported.
-IPC still accepts messages up to 64 KiB, while model-visible messages and compact
-list/history projections are capped at 16,000 characters. Full transport records
-and session metadata remain in tool/message details.
-
-`node sessions/eval/run.mjs` starts real isolated Pi processes and validates
-history search plus active `list`, `send`, `ask`, `pending`, `reply`, and `cancel`
-behavior.
-It uses provider credentials and model quota, so it is intentionally separate
-from `npm test`. See [sessions/eval/README.md](sessions/eval/README.md) for usage,
-assertions, and artifacts.
+History capabilities are independent of active-session IPC and remain available
+without any broker or runtime connection.
 
 ## Subagent live evaluation
 

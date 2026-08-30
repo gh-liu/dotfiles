@@ -1,22 +1,15 @@
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { ErrorCodes, errorResult } from "../contracts.ts";
-import type { ActiveSession } from "../contracts.ts";
 import { MAX_RESULTS, sessionsParameters } from "./contracts.ts";
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 import type { SessionsInput } from "./contracts.ts";
-import { buildHistoryResults, formatActiveSession } from "./search.ts";
+import { buildHistoryResults } from "./search.ts";
 import { compactJsonProjection, truncateProjectionField } from "../output.ts";
 
 function modelString(value: string | undefined): string | undefined {
   return value === undefined ? undefined : truncateProjectionField(value, 1_000).value;
 }
-
-/**
- * Injected IPC dependency for the "list" action, so this capability never
- * imports SessionRuntime or any internals of the session_message capability.
- */
-export type ActiveSessionsProvider = () => Promise<{ sessions: ActiveSession[]; currentId: string | null }>;
 
 const MAX_ENTRY_TEXT = 2_000;
 
@@ -45,38 +38,16 @@ function projectEntry(entry: SessionEntry) {
   };
 }
 
-export function registerSessionsTool(pi: ExtensionAPI, listActiveSessions: ActiveSessionsProvider): void {
+export function registerSessionsTool(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "sessions",
     label: "Sessions",
-    description: "Search local Pi session history or list active Pi sessions reachable through local IPC.",
+    description: "Search local Pi session history or read bounded session entries.",
     parameters: sessionsParameters,
     async execute(_toolCallId, input: SessionsInput, _signal, _onUpdate, ctx?: ExtensionContext) {
       const limit = Math.min(input.limit ?? 10, MAX_RESULTS);
       const requestedCwd = input.cwd?.trim();
       const cwd = requestedCwd || (input.action === "get_entries" ? ctx?.cwd : undefined);
-
-      if (input.action === "list") {
-        try {
-          const active = await listActiveSessions();
-          const peers = active.sessions
-            .filter((session) => !cwd || session.cwd === cwd || session.cwd.startsWith(`${cwd}/`))
-            .slice(0, limit)
-            .map((session) => formatActiveSession(session, active.currentId));
-          const modelPeers = peers.map(({ sessionId, name, cwd, status, self }) => ({
-            sessionId: modelString(sessionId), name: modelString(name), cwd: modelString(cwd), status, self,
-          }));
-          return {
-            content: [{ type: "text" as const, text: peers.length ? compactJsonProjection(modelPeers) : "No active sessions found." }],
-            details: { results: peers },
-          };
-        } catch (error) {
-          return errorResult(
-            `Active sessions unavailable: ${error instanceof Error ? error.message : String(error)}`,
-            ErrorCodes.INTERCOM_UNAVAILABLE,
-          );
-        }
-      }
 
       if (input.action === "get_entries") {
         if ((input.sessionId?.trim() ? 1 : 0) + (input.path?.trim() ? 1 : 0) !== 1) {
