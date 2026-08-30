@@ -41,7 +41,7 @@ function registerSearch(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "sessions_search",
     label: "Sessions search",
-    description: "Search local Pi session history.",
+    description: "Search local Pi session history to find a sessionId or path. Use this first, then pass that exact value to sessions_read. Returns bounded metadata and snippets, not a complete session; by default searches all sessions, or restricts matches to a cwd and its descendants.",
     parameters: sessionsSearchParameters,
     async execute(_toolCallId, input: SessionsSearchInput, _signal, _onUpdate, _ctx?: ExtensionContext) {
       const query = input.query?.trim() ?? "";
@@ -65,7 +65,7 @@ function registerRead(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "sessions_read",
     label: "Sessions read",
-    description: "Read a bounded session summary or branch entries.",
+    description: "Read a bounded view of a session located by the exact sessionId or path returned by sessions_search. Use mode=summary for a bounded metadata/overview projection (not a full or generated summary), or mode=entries for branch-aware conversation entries. With entryId, entries follow that branch and may include direct children; cwd defaults to the current cwd and only allows that directory or descendants. Output is always bounded.",
     parameters: sessionsReadParameters,
     async execute(_toolCallId, input: SessionsReadInput, _signal, _onUpdate, ctx?: ExtensionContext) {
       const session = input.session?.trim();

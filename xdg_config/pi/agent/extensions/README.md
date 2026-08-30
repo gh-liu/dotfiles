@@ -41,16 +41,23 @@ ambiguous. This avoids routinely refilling the newly compacted context.
 
 ## Sessions
 
-The `sessions` extension registers two history-reading tools:
+The `sessions` extension registers two history-reading tools. Call them in order:
 
-- `sessions_search({ query, cwd?, limit? })` searches local Pi session history. It
-  searches globally by default and can be restricted to a cwd.
+- `sessions_search({ query, cwd?, limit? })` searches local Pi session history for
+  matching messages. Use its exact `sessionId` or indexed `path` with
+  `sessions_read`. It searches globally by default; `cwd` restricts results to
+  that directory and its descendants. Results contain bounded metadata and
+  snippets, not complete sessions.
 - `sessions_read({ session, mode, cwd?, entryId?, entryLimit?, childLimit? })`
-  reads a bounded summary or branch entries. `session` must be an exact indexed
-  session id or path; without an explicit `cwd` it is restricted to the current
-  cwd. In `entries` mode, `entryLimit` budgets branch entries and `childLimit`
-  independently budgets direct child entries. Entry projections include `role`
-  when available and model-visible text is bounded.
+  reads a bounded view of the exact session id or path. `summary` is a bounded
+  metadata/overview projection and latest-entry view, not a generated or complete
+  summary. `entries` returns branch-aware conversation entries; with `entryId`,
+  it follows that entry's resolved branch and can include its direct children.
+  Without an explicit `cwd`, reads are restricted to the current cwd; a supplied
+  cwd permits only that directory or descendants. In `entries` mode, `entryLimit`
+  budgets branch entries and `childLimit` independently budgets direct child
+  entries. Entry projections include `role` when available and model-visible text
+  and overall output are bounded.
 
 History capabilities are independent of active-session IPC and remain available
 without any broker or runtime connection.

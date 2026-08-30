@@ -40,16 +40,16 @@ export type SessionsReadInput = {
 };
 
 export const sessionsSearchParameters = Type.Object({
-  query: Type.String({ minLength: 1, description: "Text to search for" }),
-  cwd: Type.Optional(Type.String({ description: "Working-directory filter (defaults to all sessions)" })),
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS })),
+  query: Type.String({ minLength: 1, description: "Text to find in session messages; search first to obtain a sessionId or path for sessions_read" }),
+  cwd: Type.Optional(Type.String({ description: "Restrict matches to this working directory and its descendants; defaults to all sessions" })),
+  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS, description: "Maximum number of bounded session metadata and snippet results" })),
 });
 
 export const sessionsReadParameters = Type.Object({
-  session: Type.String({ minLength: 1, description: "Exact session id or indexed session path" }),
-  mode: StringEnum(["summary", "entries"] as const),
-  cwd: Type.Optional(Type.String({ description: "Working-directory boundary (defaults to current cwd)" })),
-  entryId: Type.Optional(Type.String({ description: "Entry id; selects its resolved branch" })),
-  entryLimit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS })),
-  childLimit: Type.Optional(Type.Integer({ minimum: 0, maximum: MAX_RESULTS, description: "Direct children to include" })),
+  session: Type.String({ minLength: 1, description: "Exact sessionId or indexed session path returned by sessions_search" }),
+  mode: StringEnum(["summary", "entries"] as const, { description: "summary: bounded metadata/overview and latest entry; entries: branch-aware conversation entries" }),
+  cwd: Type.Optional(Type.String({ description: "Security boundary: allow only this directory or descendants; defaults to the current cwd" })),
+  entryId: Type.Optional(Type.String({ description: "Entry id whose resolved branch to read; also enables direct child entries in entries mode" })),
+  entryLimit: Type.Optional(Type.Integer({ minimum: 1, maximum: MAX_RESULTS, description: "Maximum branch entries to return; output remains bounded" })),
+  childLimit: Type.Optional(Type.Integer({ minimum: 0, maximum: MAX_RESULTS, description: "Maximum direct child entries to return independently of entryLimit" })),
 });
