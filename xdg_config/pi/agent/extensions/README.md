@@ -43,8 +43,13 @@ ambiguous. This avoids routinely refilling the newly compacted context.
 
 The `sessions` extension registers two tools:
 
-- `sessions`: search local Pi session history with `search_history`, or list active
+- `sessions`: search local Pi session history with `search_history`, inspect a bounded
+  session summary or branch-aware entry excerpt with `get_entries`, or list active
   Pi sessions connected through the local Unix-domain-socket transport with `list`.
+  `get_entries` accepts exactly one `sessionId` or `path`, and can select an
+  `entryId`; without an explicit `cwd` it is restricted to the current cwd. Session
+  paths are resolved against the indexed history before opening, and model-visible
+  entry text is bounded (use `mode: "entries"` for local conversation content).
 - `session_message`: communicate with an active session using `send`, `ask`,
   `reply`, `pending`, or `cancel`.
 

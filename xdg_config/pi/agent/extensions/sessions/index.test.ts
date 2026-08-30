@@ -151,6 +151,44 @@ describe("sessions transport boundary", () => {
     expect((result.content[0] as { text: string }).text).toContain("No sessions matched");
   });
 
+  test("reads a bounded branch-aware history excerpt by session id", async () => {
+    vi.spyOn(SessionManager, "listAll").mockResolvedValue([{
+      id: "history-1", name: "old", path: "/safe/session.jsonl", cwd: "/work", modified: new Date(1),
+      messageCount: 2, firstMessage: "first", allMessagesText: "first second",
+    }] as never);
+    const entries = [
+      { id: "root", parentId: null, type: "message", timestamp: "2020-01-01T00:00:00Z", message: { role: "user", content: "first" } },
+      { id: "reply", parentId: "root", type: "message", timestamp: "2020-01-01T00:00:01Z", message: { role: "assistant", content: "second" } },
+    ];
+    vi.spyOn(SessionManager, "open").mockReturnValue({
+      getEntries: () => entries,
+      getBranch: (id?: string) => entries.slice(0, id === "reply" ? 2 : 1),
+      getEntry: (id: string) => entries.find((entry) => entry.id === id),
+      getChildren: (id: string) => entries.filter((entry) => entry.parentId === id),
+      buildContextEntries: () => entries,
+    } as never);
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => new FakeTransport() });
+    const result = await h.tools.get("sessions")!.execute("read", {
+      action: "get_entries", sessionId: "history-1", mode: "entries", entryId: "reply", limit: 1,
+    }, undefined, undefined, context());
+    expect(result.details).toMatchObject({ result: { sessionId: "history-1", entries: [{ id: "reply", text: "second" }] } });
+    expect((result.content[0] as { text: string }).text).toContain("history_detail");
+  });
+
+  test("rejects history reads outside the current cwd and invalid locators", async () => {
+    vi.spyOn(SessionManager, "listAll").mockResolvedValue([{
+      id: "other", name: "other", path: "/other/session.jsonl", cwd: "/other", modified: new Date(1),
+      messageCount: 0, firstMessage: "", allMessagesText: "",
+    }] as never);
+    const h = harness();
+    sessionsExtension(h.pi, { createTransport: () => new FakeTransport() });
+    const outside = await h.tools.get("sessions")!.execute("read", { action: "get_entries", sessionId: "other" }, undefined, undefined, context());
+    expect(outside.details).toMatchObject({ error: true, code: "INVALID_ARGUMENT" });
+    const invalid = await h.tools.get("sessions")!.execute("read", { action: "get_entries", sessionId: "a", path: "/b" }, undefined, undefined, context());
+    expect(invalid.details).toMatchObject({ error: true, code: "INVALID_ARGUMENT" });
+  });
+
   test("lists active sessions through the transport", async () => {
     const transport = new FakeTransport();
     const h = harness();
