@@ -203,7 +203,8 @@ function update_zsh_plugins() {
 }
 # }}}
 # 6. plugin: zsh-vi-mode{{{
-WORDCHARS=${WORDCHARS//./} # ignore dot
+WORDCHARS=${WORDCHARS//./}  # treat dot as a word separator for Ctrl-W
+WORDCHARS=${WORDCHARS//\//} # treat slash as a word separator for path segments
 ## https://github.com/jeffreytse/zsh-vi-mode
 USERPLUGINS+=(https://github.com/jeffreytse/zsh-vi-mode)
 function zvm_config() {
