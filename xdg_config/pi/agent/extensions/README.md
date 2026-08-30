@@ -41,14 +41,16 @@ ambiguous. This avoids routinely refilling the newly compacted context.
 
 ## Sessions
 
-The `sessions` extension registers one history-reading tool:
+The `sessions` extension registers two history-reading tools:
 
-- `sessions`: search local Pi session history with `search_history`, or inspect a
-  bounded session summary or branch-aware entry excerpt with `get_entries`.
-  `get_entries` accepts exactly one `sessionId` or `path`, and can select an
-  `entryId`; without an explicit `cwd` it is restricted to the current cwd. Session
-  paths are resolved against indexed history before opening, and model-visible
-  entry text is bounded (use `mode: "entries"` for local conversation content).
+- `sessions_search({ query, cwd?, limit? })` searches local Pi session history. It
+  searches globally by default and can be restricted to a cwd.
+- `sessions_read({ session, mode, cwd?, entryId?, entryLimit?, childLimit? })`
+  reads a bounded summary or branch entries. `session` must be an exact indexed
+  session id or path; without an explicit `cwd` it is restricted to the current
+  cwd. In `entries` mode, `entryLimit` budgets branch entries and `childLimit`
+  independently budgets direct child entries. Entry projections include `role`
+  when available and model-visible text is bounded.
 
 History capabilities are independent of active-session IPC and remain available
 without any broker or runtime connection.

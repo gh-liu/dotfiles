@@ -20,16 +20,17 @@ function context(): ExtensionContext {
 afterEach(() => vi.restoreAllMocks());
 
 describe("sessions history extension", () => {
-  test("registers only history actions and does not construct IPC", () => {
+  test("registers only the separate history tools and does not construct IPC", () => {
     const { tools } = harness();
-    expect([...tools.keys()]).toEqual(["sessions"]);
+    expect([...tools.keys()]).toEqual(["sessions_search", "sessions_read"]);
+    expect(tools.get("sessions")).toBeUndefined();
     expect(tools.get("session_message")).toBeUndefined();
   });
 
   test("search history works independently of IPC", async () => {
     vi.spyOn(SessionManager, "listAll").mockResolvedValue([]);
     const { tools } = harness();
-    const result = await tools.get("sessions")!.execute("call", { action: "search_history", query: "old message" }, undefined, undefined, context());
+    const result = await tools.get("sessions_search")!.execute("call", { query: "old message" }, undefined, undefined, context());
     expect(SessionManager.listAll).toHaveBeenCalledOnce();
     expect((result.content[0] as { text: string }).text).toContain("No sessions matched");
   });
@@ -42,16 +43,29 @@ describe("sessions history extension", () => {
     const entries = [
       { id: "root", parentId: null, type: "message", timestamp: "2020-01-01T00:00:00Z", message: { role: "user", content: "first" } },
       { id: "reply", parentId: "root", type: "message", timestamp: "2020-01-01T00:00:01Z", message: { role: "assistant", content: "second" } },
+      { id: "child", parentId: "reply", type: "message", timestamp: "2020-01-01T00:00:02Z", message: { role: "toolResult", content: "third" } },
     ];
     vi.spyOn(SessionManager, "open").mockReturnValue({
-      getEntries: () => entries, getBranch: () => entries, getEntry: (id: string) => entries.find((entry) => entry.id === id),
+      getEntries: () => entries, getBranch: () => entries.slice(0, 2), getEntry: (id: string) => entries.find((entry) => entry.id === id),
       getChildren: (id: string) => entries.filter((entry) => entry.parentId === id), buildContextEntries: () => entries,
     } as never);
     const { tools } = harness();
-    const result = await tools.get("sessions")!.execute("read", {
-      action: "get_entries", sessionId: "history-1", mode: "entries", entryId: "reply", limit: 1,
+    const result = await tools.get("sessions_read")!.execute("read", {
+      session: "history-1", mode: "entries", entryId: "reply", entryLimit: 1, childLimit: 1,
     }, undefined, undefined, context());
-    expect(result.details).toMatchObject({ result: { sessionId: "history-1", entries: [{ id: "reply", text: "second" }] } });
+    expect(result.details).toMatchObject({ result: { sessionId: "history-1", entries: [{ id: "reply", role: "assistant", text: "second" }], childEntries: [{ id: "child", role: "toolResult", text: "third" }] } });
+  });
+
+  test("enforces the current cwd boundary for reads", async () => {
+    vi.spyOn(SessionManager, "listAll").mockResolvedValue([{
+      id: "outside", name: "old", path: "/other/session.jsonl", cwd: "/other", modified: new Date(1),
+      messageCount: 0, firstMessage: "", allMessagesText: "",
+    }] as never);
+    const open = vi.spyOn(SessionManager, "open");
+    const { tools } = harness();
+    const result = await tools.get("sessions_read")!.execute("call", { session: "outside", mode: "summary" }, undefined, undefined, context());
+    expect(result.details).toMatchObject({ error: true, code: "INVALID_ARGUMENT" });
+    expect(open).not.toHaveBeenCalled();
   });
 
 });

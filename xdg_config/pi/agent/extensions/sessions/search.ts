@@ -29,10 +29,7 @@ export function buildHistoryResults(
   const normalizedQuery = query.toLocaleLowerCase();
   return sessions
     .filter((session) => !cwd || session.cwd === cwd || session.cwd.startsWith(`${cwd}/`))
-    .map((session) => ({
-      session,
-      position: session.allMessagesText.toLocaleLowerCase().indexOf(normalizedQuery),
-    }))
+    .map((session) => ({ session, position: session.allMessagesText.toLocaleLowerCase().indexOf(normalizedQuery) }))
     .filter((item) => item.position >= 0)
     .sort((a, b) => b.session.modified.getTime() - a.session.modified.getTime())
     .slice(0, limit)
