@@ -217,15 +217,16 @@ function overrideSubagents(directory, model, thinking) {
   if (!model && !thinking) return;
   const settingsPath = join(directory, "settings.json");
   const settings = existsSync(settingsPath) ? JSON.parse(readFileSync(settingsPath, "utf8")) : {};
-  settings.subagents ??= {};
+  settings.subagent ??= {};
+  settings.subagent.subagents ??= {};
   const agentsDirectory = join(agentRoot, "agents");
   for (const entry of readdirSync(agentsDirectory, { withFileTypes: true })) {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
     const definition = readFileSync(join(agentsDirectory, entry.name), "utf8");
     const name = definition.match(/^name:\s*([^\s]+)\s*$/mu)?.[1];
     if (!name) continue;
-    settings.subagents[name] = {
-      ...(settings.subagents[name] ?? {}),
+    settings.subagent.subagents[name] = {
+      ...(settings.subagent.subagents[name] ?? {}),
       ...(model ? { model } : {}),
       ...(thinking ? { thinking } : {}),
     };

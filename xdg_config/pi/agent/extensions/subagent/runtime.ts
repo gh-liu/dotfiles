@@ -153,7 +153,7 @@ export interface BeginOperationInput {
 export interface RuntimeHub {
   readonly maxConcurrentRuns: number;
   get(runtimeId: string): RuntimeRecord | undefined;
-  /** Resolve a canonical jobId first, then a session-local #N/N alias. */
+  /** Resolve a canonical jobId first, then a runtime-local #N/N alias. */
   resolve(reference: string): RuntimeRecord | undefined;
   capacityAvailable(): boolean;
   occupiedSlots(): number;
@@ -417,15 +417,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
     transition(runtime, "running");
-    if (runtime.mode === "background-one-shot") {
-      deps.live.track(runtime.runId, {
-        index: runtime.index,
-        agent: runtime.agent.name,
-        startedAt: operation.startedAt,
-        deadlineMs,
-        mode: "background",
-      });
-    }
     // Wrap progress with operation identity and renderer-only tool lifecycle data.
     // The live UI controller always observes progress, including the concurrent
     // active-tool count from tools.active; onUpdate is forwarded only when the

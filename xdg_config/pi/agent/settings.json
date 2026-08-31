@@ -10,22 +10,22 @@
   },
   "packages": [],
   "subagent": {
-    "maxConcurrentRuns": 3
-  },
-  "subagents": {
-    "oracle": {
-      "model": "openai-codex/gpt-5.6-sol"
-    },
-    "worker": {
-      "model": "opencode-go/deepseek-v4-flash"
-    },
-    "scout": {
-      "model": "opencode-go/deepseek-v4-flash"
-    },
-    "researcher": {},
-    "reviewer": {},
-    "tester": {
-      "model": "opencode-go/deepseek-v4-flash"
+    "maxConcurrentRuns": 5,
+    "subagents": {
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol"
+      },
+      "worker": {
+        "model": "opencode-go/deepseek-v4-flash"
+      },
+      "scout": {
+        "model": "opencode-go/deepseek-v4-flash"
+      },
+      "researcher": {},
+      "reviewer": {},
+      "tester": {
+        "model": "opencode-go/deepseek-v4-flash"
+      }
     }
   },
   "theme": "nord"

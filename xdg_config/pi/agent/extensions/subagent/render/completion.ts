@@ -2,7 +2,7 @@ import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
 import { agentNameColor } from "./call.ts";
-import { boundedLines, formatCountdown, oneLine, taskTitle } from "./shared.ts";
+import { boundedLines, formatCountdown, oneLine } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
@@ -42,16 +42,18 @@ function completionEntryText(
   const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
   const summaryRaw = details.summary ?? "";
-  const summaryOneLine = oneLine(summaryRaw, 240);
-  const completionTitle = taskTitle(details.task, expanded ? 160 : 80);
-  let text = `${theme.fg(color, marker)} ${theme.fg("toolTitle", details.ref)} ${theme.fg(agentNameColor(details.agent), details.agent)}`;
-  text += theme.fg("muted", " · ") + theme.fg(color, status);
+  let text = `${theme.fg(color, marker)} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
+  if (status !== "completed") text += theme.fg(color, ` · ${status}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
-  if (completionTitle) text += theme.fg("muted", ` — ${completionTitle}`);
-  if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
+  if (!expanded && summaryRaw) {
+    for (const line of boundedLines(summaryRaw, 480, 2)) text += `\n${theme.fg("dim", `  ${line}`)}`;
+  }
+  const hasDetails = [details.task, summaryRaw, details.changes, details.evidence, details.validation, details.risks, ...(details.recentActivity ?? [])]
+    .some((value) => typeof value === "string" && value.trim());
+  if (!expanded) text += `\n${theme.fg("muted", `  ${details.ref}${hasDetails ? " · expand for details" : ""}`)}`;
   if (expanded) {
     const sections: Array<[string, string | undefined]> = [
-      ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
+      ["Objective", details.task], ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
       ["Validation", details.validation], ["Risks", details.risks],
     ];
     for (const [label, value] of sections) {
@@ -63,6 +65,7 @@ function completionEntryText(
       text += `\n${theme.fg("toolTitle", "Recent activity")}`;
       for (const line of details.recentActivity.slice(-8)) text += `\n${theme.fg("dim", `  ${oneLine(line, 200)}`)}`;
     }
+    text += `\n${theme.fg("muted", details.ref)}`;
   }
   return text;
 }

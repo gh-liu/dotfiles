@@ -77,35 +77,20 @@ function calls() {
   row("run expanded", renderCall(runArgs, true, { runtimeIndex: 1 }));
 }
 
-const settledTimeline = [
-  { kind: "tool", id: "a", summary: "read spec.md", status: "completed" },
-  { kind: "thinking", text: "private reasoning is intentionally hidden" },
-  { kind: "tool", id: "b", summary: "grep lifecycle runtime.ts", status: "completed" },
-];
-
 function progress() {
-  heading("PROGRESS · partial result timeline");
-  row("starting", renderResult(runArgs, { jobId: "job-1", ref: "#1", status: "starting" }, { partial: true, text: "Child started; waiting for model…" }));
-  row("thinking", renderResult(runArgs, { jobId: "job-1", ref: "#1", status: "running", phase: { kind: "thinking", status: "running" } }, { partial: true, text: "Thinking…" }));
-  row("tool running", renderResult(runArgs, {
-    jobId: "job-1", ref: "#1", status: "running", timeline: settledTimeline,
-    phase: { kind: "tool", status: "running" },
-    toolProgress: { earlierCount: 0, history: [], active: [{ id: "c", summary: "bash npm test", status: "running" }] },
-  }, { expanded: true, partial: true, text: "bash npm test…" }));
-  row("tool failed", renderResult(runArgs, {
-    jobId: "job-1", ref: "#1", status: "running", phase: { kind: "tool", status: "failed" },
-    timeline: [...settledTimeline, { kind: "tool", id: "c", summary: "bash npm test", status: "failed" }],
-  }, { expanded: true, partial: true, text: "bash npm test failed · reviewing…" }));
-  row("writing", renderResult(runArgs, { jobId: "job-1", ref: "#1", status: "running", timeline: settledTimeline }, { partial: true, text: "Writing response…" }));
+  heading("PROGRESS · tool-row receipt");
+  row("active", renderResult(runArgs, { jobId: "job-1", ref: "#1", status: "running" }, { partial: true, text: "Thinking…" }));
 
-  heading("PROGRESS · live panel");
+  heading("PROGRESS · unified activity center");
   let widgetFactory;
   const live = createLiveUi();
   live.attach({ setWidget(_id, content) { widgetFactory = content; } });
   const now = Date.now();
-  live.track("job-2", { index: 2, agent: "researcher", startedAt: now - 18_000, deadlineMs: 180_000, mode: "background" });
+  live.track("job-1", { index: 1, agent: "scout", objective, startedAt: now - 25_000, deadlineMs: 240_000, mode: "foreground" });
+  live.progress("job-1", "Thinking", { kind: "thinking", status: "completed" });
+  live.track("job-2", { index: 2, agent: "researcher", objective: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, deadlineMs: 180_000, mode: "background" });
   live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" });
-  live.track("job-3", { index: 3, agent: "reviewer", startedAt: now - 11_000, deadlineMs: 120_000, mode: "background" });
+  live.track("job-3", { index: 3, agent: "reviewer", objective: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, deadlineMs: 120_000, mode: "background" });
   live.progress("job-3", "waiting for a decision", undefined, undefined, "Choose compatibility policy");
   if (typeof widgetFactory === "function") {
     const widget = widgetFactory({}, theme);

@@ -36,14 +36,13 @@ export type SubagentTimelineEntry =
   | { kind: "thinking"; text: string };
 
 /**
- * Current live activity state emitted at thinking/tool boundaries so the widget
- * and result renderers share one affordance vocabulary.
+ * Current live activity state emitted at thinking/tool boundaries for the
+ * unified activity center and bounded diagnostics.
  *
  * - `thinking` "running" means reasoning deltas are still streaming (unflushed):
- *   both renderers show a live spinner + `Thinking…`.
+ *   the activity center shows `Thinking…` below the job-level spinner.
  * - `thinking` "completed" means the segment was just flushed into a settled
- *   timeline entry: the widget shows the same completed marker (`✓ Thinking`)
- *   the result renders from the timeline.
+ *   timeline entry: the activity center shows the completed `✓ Thinking` marker.
  * - `tool` reflects the active/last tool call lifecycle for the current item.
  *   It is omitted outside these boundaries (e.g. while writing the response).
  */
@@ -51,7 +50,7 @@ export type SubagentActivityPhase =
   | { kind: "thinking"; status: "running" | "completed" }
   | { kind: "tool"; status: SubagentToolProgressItem["status"] };
 
-/** Shared live affordance glyphs so the widget and result renderers stay consistent. */
+/** Shared live affordance glyphs for activity and terminal renderers. */
 export const SUBAGENT_SPINNER_GLYPH = "⠋";
 export const SUBAGENT_DONE_GLYPH = "✓";
 export const SUBAGENT_FAILED_GLYPH = "✗";

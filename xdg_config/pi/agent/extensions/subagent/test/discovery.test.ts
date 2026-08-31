@@ -7,8 +7,10 @@ describe("subagent discovery", () => {
   test("loads configurable capacity alongside agent overrides", () => {
     const path = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(path, JSON.stringify({
-      subagent: { maxConcurrentRuns: 8 },
-      subagents: { scout: { model: "vendor/model" } },
+      subagent: {
+        maxConcurrentRuns: 8,
+        subagents: { scout: { model: "vendor/model" } },
+      },
     }));
 
     expect(loadSubagentOverrides(path)).toEqual({
@@ -28,17 +30,25 @@ describe("subagent discovery", () => {
     expect(loaded.errors[0]?.error).toContain("integer from 1 to 8");
   });
 
-  test("reports a malformed runtime object without dropping agent overrides", () => {
+  test("reports malformed nested overrides without dropping valid capacity", () => {
     const path = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(path, JSON.stringify({
-      subagent: [],
-      subagents: { scout: { model: "vendor/model" } },
+      subagent: { maxConcurrentRuns: 5, subagents: [] },
     }));
 
     const loaded = loadSubagentOverrides(path);
-    expect(loaded.overrides).toEqual({ scout: { model: "vendor/model" } });
+    expect(loaded.maxConcurrentRuns).toBe(5);
+    expect(loaded.overrides).toBeUndefined();
     expect(loaded.errors).toHaveLength(1);
     expect(loaded.errors[0]?.error).toContain("must be an object");
+  });
+
+  test("reports the removed top-level override location", () => {
+    const path = join(temporaryDirectory("settings-"), "settings.json");
+    writeFileSync(path, JSON.stringify({ subagents: { scout: { model: "legacy/model" } } }));
+    const loaded = loadSubagentOverrides(path);
+    expect(loaded.overrides).toBeUndefined();
+    expect(loaded.errors[0]?.error).toContain("moved to settings.json:subagent.subagents");
   });
 
   test("collects malformed settings and validates credential names", () => {
@@ -51,7 +61,7 @@ describe("subagent discovery", () => {
 
   test("builds canonical guided work orders with effective agent settings", async () => {
     const settingsPath = join(temporaryDirectory("settings-"), "settings.json");
-    writeFileSync(settingsPath, JSON.stringify({ subagents: { scout: { model: "vendor/model", thinking: "high" } } }));
+    writeFileSync(settingsPath, JSON.stringify({ subagent: { subagents: { scout: { model: "vendor/model", thinking: "high" } } } }));
     const env = setup({ ids: ["job", "private"], settingsPath });
     writeFileSync(join(env.root, "AGENTS.md"), "Project guidance");
     const running = env.invoke({ action: "run", agent: "scout", objective: "Find auth" });
@@ -85,7 +95,7 @@ describe("subagent discovery", () => {
     await run;
 
     const settingsPath = join(temporaryDirectory("settings-"), "settings.json");
-    writeFileSync(settingsPath, JSON.stringify({ subagents: { scout: { model: "override/model" } } }));
+    writeFileSync(settingsPath, JSON.stringify({ subagent: { subagents: { scout: { model: "override/model" } } } }));
     const overridden = setup({ settingsPath });
     const overrideRun = overridden.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 } as never, undefined, undefined, { ...context(overridden.root), model: { provider: "parent", id: "model" } } as never);
     await vi.waitFor(() => expect(overridden.fake.controllers[0]?.starts).toHaveLength(1));

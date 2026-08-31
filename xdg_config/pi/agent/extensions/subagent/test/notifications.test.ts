@@ -54,7 +54,7 @@ describe("subagent notifications", () => {
           fg: (_color: string, text: string) => text,
           bold: (text: string) => text,
         });
-        expect(component.render(100).join("\n")).toContain("settled · reporting failed · use get");
+        expect(component.render(100).join("\n")).toContain("#1 scout · reporting failed · use get");
       });
       if (failDelivery) {
         await env.invoke({ action: "get", jobId: "#1" });

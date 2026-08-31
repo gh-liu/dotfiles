@@ -430,7 +430,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       }
       if (!hub.capacityAvailable()) {
         return response({
-          error: "Subagent capacity unavailable: maxConcurrentRuns is 3.",
+          error: `Subagent capacity unavailable: maxConcurrentRuns is ${hub.maxConcurrentRuns}.`,
           maxConcurrentRuns: hub.maxConcurrentRuns,
           occupiedSlots: hub.occupiedSlots(),
           availableSlots: hub.availableSlots(),
@@ -490,6 +490,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         projectGuidance,
         mode: request.background === true ? "background-one-shot" : "foreground",
         initialOptions,
+      });
+      live.track(runId, {
+        index: runtime.index,
+        agent: runtimeAgent.name,
+        startedAt: Date.now(),
+        deadlineMs: request.deadlineMs,
+        mode: request.background === true ? "background" : "foreground",
+        objective: request.objective,
       });
       try {
         onUpdate?.({

@@ -191,7 +191,7 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
 }
 
 /**
- * Loads runtime configuration and `subagents[agent]` overrides from
+ * Loads runtime configuration and `subagent.subagents[agent]` overrides from
  * settings.json. Missing files are not errors; malformed configuration
  * surfaces as a collected error.
  */
@@ -204,38 +204,58 @@ export function loadSubagentOverrides(settingsPath: string): {
     const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
     if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return { errors: [] };
     const root = settings as Record<string, unknown>;
-    const subagents = root.subagents;
-    const overrides = subagents !== null && typeof subagents === "object" && !Array.isArray(subagents)
-      ? subagents
-      : undefined;
     const runtime = root.subagent;
-    if (runtime === undefined) return { ...(overrides === undefined ? {} : { overrides }), errors: [] };
+    const errors: AgentDefinitionError[] = [];
+    if (root.subagents !== undefined) {
+      errors.push({
+        filePath: "settings.json:subagents",
+        error: "settings.json:subagents: moved to settings.json:subagent.subagents",
+      });
+    }
+    if (runtime === undefined) return { errors };
     if (runtime === null || typeof runtime !== "object" || Array.isArray(runtime)) {
       return {
-        ...(overrides === undefined ? {} : { overrides }),
-        errors: [{ filePath: "settings.json:subagent", error: "settings.json:subagent: must be an object" }],
+        errors: [...errors, { filePath: "settings.json:subagent", error: "settings.json:subagent: must be an object" }],
       };
     }
-    const maxConcurrentRuns = (runtime as Record<string, unknown>).maxConcurrentRuns;
-    if (maxConcurrentRuns === undefined) return { ...(overrides === undefined ? {} : { overrides }), errors: [] };
-    if (typeof maxConcurrentRuns !== "number" || !Number.isInteger(maxConcurrentRuns) || maxConcurrentRuns < 1 || maxConcurrentRuns > 8) {
-      return {
-        ...(overrides === undefined ? {} : { overrides }),
-        errors: [{
+    const runtimeSettings = runtime as Record<string, unknown>;
+    const subagents = runtimeSettings.subagents;
+    let overrides: unknown;
+    if (subagents !== undefined) {
+      if (subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
+        errors.push({
+          filePath: "settings.json:subagent.subagents",
+          error: "settings.json:subagent.subagents: must be an object",
+        });
+      } else {
+        overrides = subagents;
+      }
+    }
+    const maxConcurrentRuns = runtimeSettings.maxConcurrentRuns;
+    let capacity: number | undefined;
+    if (maxConcurrentRuns !== undefined) {
+      if (typeof maxConcurrentRuns !== "number" || !Number.isInteger(maxConcurrentRuns) || maxConcurrentRuns < 1 || maxConcurrentRuns > 8) {
+        errors.push({
           filePath: "settings.json:subagent.maxConcurrentRuns",
           error: "settings.json:subagent.maxConcurrentRuns: must be an integer from 1 to 8",
-        }],
-      };
+        });
+      } else {
+        capacity = maxConcurrentRuns;
+      }
     }
-    return { ...(overrides === undefined ? {} : { overrides }), maxConcurrentRuns, errors: [] };
+    return {
+      ...(overrides === undefined ? {} : { overrides }),
+      ...(capacity === undefined ? {} : { maxConcurrentRuns: capacity }),
+      errors,
+    };
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
       return { errors: [] };
     }
     return {
       errors: [{
-        filePath: "settings.json:subagents",
-        error: `settings.json:subagents: ${error instanceof Error ? error.message : String(error)}`,
+        filePath: "settings.json:subagent",
+        error: `settings.json:subagent: ${error instanceof Error ? error.message : String(error)}`,
       }],
     };
   }
@@ -270,7 +290,7 @@ export function loadSettingsDefaults(settingsPath: string): SettingsDefaults {
 
 /**
  * Resolves the runtime model for an agent at spawn time. An explicit model
- * (frontmatter or a `subagents[agent]` settings override) wins, then the
+ * (frontmatter or a `subagent.subagents[agent]` settings override) wins, then the
  * parent session's current model, then the top-level settings defaults.
  * Returns undefined when none apply, leaving the agent's model unset.
  */

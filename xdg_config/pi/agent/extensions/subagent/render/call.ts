@@ -2,7 +2,7 @@ import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 
 import { stripModel } from "../protocol.ts";
-import { boundedLines, collapseHome, oneLine, positiveSafeRuntimeIndex, publicRef, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./shared.ts";
+import { boundedLines, collapseHome, positiveSafeRuntimeIndex, publicRef, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./shared.ts";
 
 type ThemeFgColor = Parameters<Theme["fg"]>[0];
 const AGENT_NAME_COLORS: readonly ThemeFgColor[] = ["syntaxKeyword", "syntaxFunction", "syntaxString", "syntaxNumber", "syntaxType", "warning", "toolDiffRemoved"];
@@ -25,10 +25,9 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const index = positiveSafeRuntimeIndex(context?.state.runtimeIndex);
   const model = args.model ?? context?.state.model;
   const thinking = args.thinking ?? context?.state.thinking;
-  let text = `${args.background && index ? theme.fg("toolTitle", theme.bold(`#${index} `)) : ""}${theme.fg(agentNameColor(args.agent || "unknown"), theme.bold(args.agent || "unknown"))}`;
-  const title = taskTitle(args.objective);
-  if (title) text += theme.fg("dim", ` — ${oneLine(title, context?.expanded ? 70 : args.background ? 60 : 90)}`);
-  if (args.background) text += theme.fg("muted", " · tracking in Subagents");
+  let text = `${index ? theme.fg("toolTitle", theme.bold(`#${index} `)) : ""}${theme.fg(agentNameColor(args.agent || "unknown"), theme.bold(args.agent || "unknown"))}`;
+  const title = taskTitle(args.objective, context?.expanded ? 120 : 240);
+  if (title) text += theme.fg("dim", ` — ${title}`);
   if (!context?.expanded) return new Text(text, 0, 0);
   const meta = [model ? stripModel(model) : undefined, thinking, args.cwd ? collapseHome(args.cwd) : undefined, args.deadlineMs ? `${Math.round(args.deadlineMs / 1000)}s deadline` : undefined].filter(Boolean);
   if (meta.length) text += theme.fg("dim", ` · ${meta.join(" · ")}`);

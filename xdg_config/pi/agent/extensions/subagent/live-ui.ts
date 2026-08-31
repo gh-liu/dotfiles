@@ -2,22 +2,21 @@
  * Live UI layer for active subagent runtimes.
  *
  * Data flow: sdk-executor onProgress summaries -> hub beginOperation wrapper ->
- * this controller -> ctx.ui.setWidget (above-editor panel showing one compact
- * overview line per background runtime: actionable ref, agent, elapsed/deadline,
- * and current activity). Foreground activity belongs to its tool row.
+ * this controller -> ctx.ui.setWidget (a unified above-editor activity center
+ * for every foreground and background runtime). Tool rows remain durable call
+ * and result records; transient activity has exactly one visual owner here.
  * Settled background rows remain until Pi accepts the completion card; failed
  * delivery leaves a static recovery row rather than silently losing the result.
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
  * headless (-p) and RPC runs never touch terminal UI. Renders are throttled
  * (leading + trailing 250 ms), a 1 s heartbeat keeps elapsed/deadline fresh
- * while any runtime is tracked, and a 250 ms ticker advances the live spinner
- * while any runtime shows an active thinking/tool phase; all timers stop when
- * idle or disposed.
+ * while any runtime is tracked, and a 250 ms ticker advances the job-level
+ * spinner while any runtime is active; all timers stop when idle or disposed.
  */
 
 import type { ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, type Component, type TUI } from "@earendil-works/pi-tui";
+import { truncateToWidth, wrapTextWithAnsi, type Component, type TUI } from "@earendil-works/pi-tui";
 
 import type { SubagentActivityPhase } from "./protocol.ts";
 import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
@@ -32,7 +31,7 @@ export const LIVE_WIDGET_ID = "subagent-live";
 
 const THROTTLE_MS = 250;
 const HEARTBEAT_MS = 1_000;
-/** High-frequency repaint driving the live spinner while any phase is active. */
+/** Repaint cadence for the job-level spinner while any runtime is active. */
 const SPINNER_TICK_MS = 250;
 
 export type LiveRuntimeMode = "foreground" | "background";
@@ -44,6 +43,7 @@ export interface LiveRuntimeInfo {
   startedAt: number;
   deadlineMs: number;
   mode: LiveRuntimeMode;
+  objective: string;
 }
 
 interface RuntimeDisplay {
@@ -52,6 +52,7 @@ interface RuntimeDisplay {
   startedAt: number;
   deadlineMs: number;
   mode: LiveRuntimeMode;
+  objective: string;
   /** Latest progress summary (thinking/toolcall/streaming wording from the executor). */
   activity?: string;
   /** Explicit thinking/tool boundary state driving the live affordance glyph. */
@@ -68,33 +69,24 @@ export function formatDuration(ms: number): string {
   return `${Math.max(0, Math.floor(ms / 1000))}s`;
 }
 
-/** Render the current activity with the shared thinking/tool affordances. */
-function renderActivity(theme: Theme, runtime: RuntimeDisplay, spinnerFrame: number): string {
-  if (runtime.settlement === "report-failed") return theme.fg("error", "! settled · reporting failed · use get");
-  if (runtime.settlement === "reporting") {
-    const status = runtime.outcome ?? "completed";
-    const glyph = status === "completed" ? SUBAGENT_DONE_GLYPH : status === "failed" ? SUBAGENT_FAILED_GLYPH : "■";
-    return theme.fg(status === "completed" ? "success" : status === "failed" ? "error" : "warning", `${glyph} ${status} · reporting`);
-  }
-  if (runtime.decision) return theme.fg("warning", `! needs input: ${runtime.decision}`);
+/** Render current activity without duplicating the header's live spinner. */
+function renderActivity(theme: Theme, runtime: RuntimeDisplay): string {
   const summary = runtime.activity ?? "starting";
   const phase = runtime.activityPhase;
   let rendered: string;
   if (!phase) {
     rendered = summary;
   } else if (phase.kind === "thinking") {
-    // While reasoning streams show a live spinner frame; once flushed the segment
-    // is settled and matches the result renderer's completed `✓ Thinking` marker.
     rendered = phase.status === "completed"
       ? theme.fg("success", `${SUBAGENT_DONE_GLYPH} ${summary}`)
-      : theme.fg("warning", `${SUBAGENT_SPINNER_FRAMES[spinnerFrame]} ${summary}`);
+      : summary;
   } else {
     const glyph =
       phase.status === "failed" ? SUBAGENT_FAILED_GLYPH
       : phase.status === "completed" ? SUBAGENT_DONE_GLYPH
-      : SUBAGENT_SPINNER_FRAMES[spinnerFrame];
+      : undefined;
     const color = phase.status === "failed" ? "error" : phase.status === "completed" ? "success" : "warning";
-    rendered = theme.fg(color, `${glyph} ${summary}`);
+    rendered = glyph ? theme.fg(color, `${glyph} ${summary}`) : summary;
   }
   // Concurrent tools (distinct toolCallIds) surface as a plain count suffix instead
   // of repeating one summary N times; 0/1 active stays concise and thinking stays
@@ -105,6 +97,17 @@ function renderActivity(theme: Theme, runtime: RuntimeDisplay, spinnerFrame: num
   return rendered + activeSuffix;
 }
 
+function objectiveLines(objective: string, width: number, maximumLines: number): string[] {
+  const available = Math.max(1, width - 2);
+  const limit = Math.min(maximumLines, width >= 80 ? 2 : 1);
+  const wrapped = wrapTextWithAnsi(oneLine(objective, 500), available);
+  const visible = wrapped.slice(0, limit);
+  if (wrapped.length > visible.length && visible.length > 0) {
+    visible[visible.length - 1] = truncateToWidth(`${visible[visible.length - 1]}…`, available, "…");
+  }
+  return visible;
+}
+
 function renderLines(
   theme: Theme,
   width: number,
@@ -112,18 +115,53 @@ function renderLines(
   now: number,
   spinnerFrame: number,
 ): string[] {
-  const lines: string[] = [];
-  if (runtimes.size > 1) lines.push(theme.fg("toolTitle", `Subagents (${runtimes.size})`));
-  for (const runtime of runtimes.values()) {
+  const values = [...runtimes.values()];
+  const active = values.filter((runtime) => !runtime.settlement).length;
+  const reporting = runtimes.size - active;
+  const needsInput = values.filter((runtime) => runtime.decision && !runtime.settlement).length;
+  const counts = [`${active} active`, ...(needsInput ? [`${needsInput} needs input`] : []), ...(reporting ? [`${reporting} reporting`] : [])];
+  const lines: string[] = [truncateToWidth(theme.fg("toolTitle", `Subagents · ${counts.join(" · ")}`), width)];
+  const ordered = values.sort((first, second) => {
+    const priority = (runtime: RuntimeDisplay) => runtime.decision ? 0 : runtime.settlement ? 2 : 1;
+    return priority(first) - priority(second) || first.index - second.index;
+  });
+  const dense = ordered.length > 3;
+  const visible = ordered.slice(0, 5);
+  for (const runtime of visible) {
     const ref = `#${runtime.index}`;
     const elapsedMs = Math.max(0, now - runtime.startedAt);
-    const time = width >= 52 ? ` ${formatDuration(elapsedMs)}/${formatDuration(runtime.deadlineMs)}` : ` ${formatDuration(elapsedMs)}`;
-    const identity = `${theme.bold(oneLine(runtime.agent, width < 45 ? 10 : 20))}${theme.fg("muted", time)}`;
-    const activity = renderActivity(theme, runtime, spinnerFrame);
-    const line = runtime.decision || runtime.settlement
-      ? `${theme.fg("toolTitle", theme.bold(ref))} ${activity}${theme.fg("muted", ` · ${identity}`)}`
-      : `${theme.fg("toolTitle", theme.bold(ref))} ${identity}  ${activity}`;
-    lines.push(truncateToWidth(line, width));
+    const time = width >= 52 ? `${formatDuration(elapsedMs)}/${formatDuration(runtime.deadlineMs)}` : formatDuration(elapsedMs);
+    const identity = `${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}`;
+    let marker: string;
+    let suffix = theme.fg("muted", ` · ${time}`);
+    if (runtime.settlement === "report-failed") {
+      marker = theme.fg("error", "!");
+      suffix = theme.fg("error", " · reporting failed · use get");
+    } else if (runtime.settlement === "reporting") {
+      const outcome = runtime.outcome ?? "completed";
+      marker = theme.fg(outcome === "completed" ? "success" : outcome === "failed" ? "error" : "warning",
+        outcome === "completed" ? SUBAGENT_DONE_GLYPH : outcome === "failed" ? SUBAGENT_FAILED_GLYPH : "■");
+      suffix = theme.fg("muted", ` · ${outcome} · reporting`);
+    } else if (runtime.decision) {
+      marker = theme.fg("warning", "!");
+      suffix = theme.fg("warning", ` · needs input · ${formatDuration(elapsedMs)}`);
+    } else {
+      marker = theme.fg("warning", SUBAGENT_SPINNER_FRAMES[spinnerFrame] ?? SUBAGENT_SPINNER_FRAMES[0]);
+    }
+    lines.push(truncateToWidth(`${marker} ${identity}${suffix}`, width));
+    if (!runtime.settlement) {
+      for (const objective of objectiveLines(runtime.objective, width, dense ? 1 : 2)) {
+        lines.push(truncateToWidth(theme.fg("dim", `  ${objective}`), width));
+      }
+      if (runtime.decision) {
+        lines.push(truncateToWidth(theme.fg("warning", `  ! ${oneLine(runtime.decision, 500)}`), width));
+      } else if (width >= 50 && !dense) {
+        lines.push(truncateToWidth(`  ${theme.fg("muted", "↳")} ${renderActivity(theme, runtime)}`, width));
+      }
+    }
+  }
+  if (ordered.length > visible.length) {
+    lines.push(truncateToWidth(theme.fg("muted", `… ${ordered.length - visible.length} more jobs · use get for details`), width));
   }
   return lines;
 }
@@ -218,13 +256,10 @@ export function createLiveUi(): LiveUiController {
     }
   };
 
-  /** True while any tracked running runtime shows a live spinner phase. */
+  /** True while any tracked runtime is active, including startup and synthesis. */
   const spinnerActive = (): boolean => {
     for (const runtime of runtimes.values()) {
-      if (runtime.settlement) continue;
-      const phase = runtime.activityPhase;
-      if (phase?.kind === "thinking" && phase.status === "running") return true;
-      if (phase?.kind === "tool" && phase.status === "running") return true;
+      if (!runtime.settlement && !runtime.decision) return true;
     }
     return false;
   };
@@ -267,6 +302,7 @@ export function createLiveUi(): LiveUiController {
         startedAt: info.startedAt,
         deadlineMs: info.deadlineMs,
         mode: info.mode,
+        objective: info.objective,
       });
       ensureHeartbeat();
       syncSpinner();

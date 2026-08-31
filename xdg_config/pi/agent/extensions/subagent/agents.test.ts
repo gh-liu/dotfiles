@@ -36,7 +36,7 @@ describe("settings defaults", () => {
     writeFileSync(settingsPath, JSON.stringify({
       defaultProvider: "opencode-go",
       defaultModel: "deepseek-v4-flash",
-      subagents: {},
+      subagent: { subagents: {} },
     }));
 
     expect(loadSettingsDefaults(settingsPath)).toEqual({
@@ -323,7 +323,7 @@ Inspect the repository.
   test("applies configured model overrides while preserving role-specific thinking", () => {
     const discovery = discoverUserAgents(fileURLToPath(new URL("../../agents", import.meta.url)));
     const settings = JSON.parse(readFileSync(fileURLToPath(new URL("../../settings.json", import.meta.url)), "utf8")) as {
-      subagents: Record<string, { model: string; thinking?: string }>;
+      subagent: { subagents: Record<string, { model?: string; thinking?: string }> };
     };
     const expectedThinking = {
       oracle: "high",
@@ -334,12 +334,12 @@ Inspect the repository.
       tester: "medium",
     };
 
-    const overridden = applyAgentOverrides(discovery, settings.subagents);
+    const overridden = applyAgentOverrides(discovery, settings.subagent.subagents);
 
     for (const [name, thinking] of Object.entries(expectedThinking)) {
-      expect(settings.subagents[name]).not.toHaveProperty("thinking");
+      expect(settings.subagent.subagents[name]).not.toHaveProperty("thinking");
       expect(overridden.agents.find((agent) => agent.name === name)).toMatchObject({
-        model: settings.subagents[name].model,
+        ...(settings.subagent.subagents[name].model ? { model: settings.subagent.subagents[name].model } : {}),
         thinking,
       });
     }
