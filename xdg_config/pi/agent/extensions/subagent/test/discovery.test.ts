@@ -4,6 +4,43 @@ import { join } from "node:path";
 import { buildWakeWordSnippet, context, loadSubagentOverrides, setup, temporaryDirectory, validateAuthEnvAllowlist, writeAgent } from "./harness.ts";
 
 describe("subagent discovery", () => {
+  test("loads configurable capacity alongside agent overrides", () => {
+    const path = join(temporaryDirectory("settings-"), "settings.json");
+    writeFileSync(path, JSON.stringify({
+      subagent: { maxConcurrentRuns: 8 },
+      subagents: { scout: { model: "vendor/model" } },
+    }));
+
+    expect(loadSubagentOverrides(path)).toEqual({
+      maxConcurrentRuns: 8,
+      overrides: { scout: { model: "vendor/model" } },
+      errors: [],
+    });
+  });
+
+  test.each([0, 9, 1.5, "3", null])("rejects invalid capacity %j", (maxConcurrentRuns) => {
+    const path = join(temporaryDirectory("settings-"), "settings.json");
+    writeFileSync(path, JSON.stringify({ subagent: { maxConcurrentRuns } }));
+
+    const loaded = loadSubagentOverrides(path);
+    expect(loaded.maxConcurrentRuns).toBeUndefined();
+    expect(loaded.errors).toHaveLength(1);
+    expect(loaded.errors[0]?.error).toContain("integer from 1 to 8");
+  });
+
+  test("reports a malformed runtime object without dropping agent overrides", () => {
+    const path = join(temporaryDirectory("settings-"), "settings.json");
+    writeFileSync(path, JSON.stringify({
+      subagent: [],
+      subagents: { scout: { model: "vendor/model" } },
+    }));
+
+    const loaded = loadSubagentOverrides(path);
+    expect(loaded.overrides).toEqual({ scout: { model: "vendor/model" } });
+    expect(loaded.errors).toHaveLength(1);
+    expect(loaded.errors[0]?.error).toContain("must be an object");
+  });
+
   test("collects malformed settings and validates credential names", () => {
     const path = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(path, "{");

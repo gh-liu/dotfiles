@@ -9,6 +9,9 @@
     "showTerminalProgress": true
   },
   "packages": [],
+  "subagent": {
+    "maxConcurrentRuns": 3
+  },
   "subagents": {
     "oracle": {
       "model": "openai-codex/gpt-5.6-sol"

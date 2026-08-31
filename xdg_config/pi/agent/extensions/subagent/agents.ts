@@ -191,18 +191,43 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
 }
 
 /**
- * Loads `subagents[agent]` overrides from settings.json. Missing files are not
- * errors; malformed JSON surfaces as a single collected error.
+ * Loads runtime configuration and `subagents[agent]` overrides from
+ * settings.json. Missing files are not errors; malformed configuration
+ * surfaces as a collected error.
  */
-export function loadSubagentOverrides(settingsPath: string): { overrides?: unknown; errors: AgentDefinitionError[] } {
+export function loadSubagentOverrides(settingsPath: string): {
+  overrides?: unknown;
+  maxConcurrentRuns?: number;
+  errors: AgentDefinitionError[];
+} {
   try {
     const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
     if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return { errors: [] };
-    const subagents = (settings as Record<string, unknown>).subagents;
-    if (subagents === undefined || subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
-      return { errors: [] };
+    const root = settings as Record<string, unknown>;
+    const subagents = root.subagents;
+    const overrides = subagents !== null && typeof subagents === "object" && !Array.isArray(subagents)
+      ? subagents
+      : undefined;
+    const runtime = root.subagent;
+    if (runtime === undefined) return { ...(overrides === undefined ? {} : { overrides }), errors: [] };
+    if (runtime === null || typeof runtime !== "object" || Array.isArray(runtime)) {
+      return {
+        ...(overrides === undefined ? {} : { overrides }),
+        errors: [{ filePath: "settings.json:subagent", error: "settings.json:subagent: must be an object" }],
+      };
     }
-    return { overrides: subagents, errors: [] };
+    const maxConcurrentRuns = (runtime as Record<string, unknown>).maxConcurrentRuns;
+    if (maxConcurrentRuns === undefined) return { ...(overrides === undefined ? {} : { overrides }), errors: [] };
+    if (typeof maxConcurrentRuns !== "number" || !Number.isInteger(maxConcurrentRuns) || maxConcurrentRuns < 1 || maxConcurrentRuns > 8) {
+      return {
+        ...(overrides === undefined ? {} : { overrides }),
+        errors: [{
+          filePath: "settings.json:subagent.maxConcurrentRuns",
+          error: "settings.json:subagent.maxConcurrentRuns: must be an integer from 1 to 8",
+        }],
+      };
+    }
+    return { ...(overrides === undefined ? {} : { overrides }), maxConcurrentRuns, errors: [] };
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
       return { errors: [] };
