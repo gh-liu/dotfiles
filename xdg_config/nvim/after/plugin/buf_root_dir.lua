@@ -18,21 +18,21 @@ local buf_root_dir = function(buf)
 	local buf_root_dirs = {
 		vim.b[buf].buf_root_dirs or {
 			".git",
-			-- "Makefile",
-			-- "go.mod", -- go
+			"go.mod", -- go
 			-- "Cargo.toml", -- rust
 			-- "build.zig.zon", -- zig
 			-- "pyproject.toml", -- python
-			".nvimrc", -- :h exrc
+			-- "Makefile",
+			".nvimrc",  -- :h exrc
 			".nvim.lua", -- :h exrc
 			".projections.json", -- :h projectionist-setup
-		}, -- make those dirs same priority
+		},              -- make those dirs same priority
 	}
 	return vim.fs.root(buf, buf_root_dirs)
 end
 
 local chdir2root = function(root)
-	vim.fn.chdir(root, "tabpage")
+	vim.fn.chdir(root, "tabpage") -- buffer / window / tabpage / global
 	vim.api.nvim_echo({ { "chdir to " .. root, "WarningMsg" } }, true, {})
 end
 
