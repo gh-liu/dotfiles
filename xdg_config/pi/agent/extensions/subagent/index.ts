@@ -337,6 +337,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
       ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
       ...(elapsedMs === undefined ? {} : { elapsedMs }),
+      ...(operation.latestProgress?.timeline ? { timeline: operation.latestProgress.timeline } : {}),
     };
   };
 
@@ -346,7 +347,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const handoff = modelSubagentHandoff(enriched);
       return {
         content: [{ type: "text" as const, text: serializeSubagentResult(enriched) }],
-        details: handoff,
+        details: {
+          ...handoff,
+          ...("timeline" in enriched ? { timeline: enriched.timeline } : {}),
+        },
         isError: enriched.status === "failed",
       };
     }
@@ -424,6 +428,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             ...(operation.latestProgress ? {
               activity: operation.latestProgress.summary,
               recentActivity: operation.latestProgress.recentActivity,
+              ...(operation.latestProgress.timeline ? { timeline: operation.latestProgress.timeline } : {}),
               ...(operation.latestProgress.needsDecision ? {
                 needsDecision: true,
                 decision: operation.latestProgress.decision,

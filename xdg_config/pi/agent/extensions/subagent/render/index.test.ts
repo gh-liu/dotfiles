@@ -66,17 +66,19 @@ describe("task API rendering", () => {
 
   test("partial tool results point to the activity center and never duplicate activity", () => {
     const context = runContext();
-    const rendered = text(renderSubagentResult({
-      content: [{ type: "text", text: "Thinking…" }],
-      details: {
-        status: "running",
-        phase: { kind: "thinking", status: "running" },
-        timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
-      },
-    }, { expanded: true, isPartial: true }, theme, context));
-    expect(rendered).toBe("↗ active in Subagents");
-    expect(rendered).not.toContain("Thinking");
-    expect(rendered).not.toContain("read a.ts");
+    const details = {
+      status: "running",
+      activity: "read a.ts…",
+      phase: { kind: "thinking", status: "running" },
+      timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+    };
+    const rendered = text(renderSubagentResult({ content: [{ type: "text", text: "Thinking…" }], details }, { expanded: true, isPartial: true }, theme, context));
+    expect(rendered).toContain("● running");
+    expect(rendered).not.toContain("Timeline");
+    expect(rendered).toContain("✓ completed: read a.ts");
+    expect(rendered).not.toContain("Thinking…");
+    const collapsed = text(renderSubagentResult({ content: [], details }, { expanded: false, isPartial: true }, theme, context));
+    expect(collapsed).toBe("↗ active in Subagents");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
@@ -84,6 +86,17 @@ describe("task API rendering", () => {
     const foreground = text(renderSubagentResult({ content: [], details: { status: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
     expect(foreground).toContain("✓ completed · 1s");
     expect(foreground).toContain("Done");
+    const runExpanded = text(renderSubagentResult({ content: [], details: {
+      status: "completed",
+      summary: "Done",
+      timeline: [
+        { kind: "tool", id: "a", summary: "read auth.ts", status: "completed" },
+        { kind: "thinking", text: "private reasoning" },
+      ],
+    } }, { expanded: true, isPartial: false }, theme, runContext()));
+    expect(runExpanded).not.toContain("Timeline");
+    expect(runExpanded).toContain("✓ completed: read auth.ts");
+    expect(runExpanded).not.toContain("private reasoning");
 
     const recovered = text(renderSubagentResult({
       content: [], details: { status: "completed", handoff: { summary: "Recovered background result" }, elapsedMs: 2_000 },
@@ -98,11 +111,25 @@ describe("task API rendering", () => {
     const getContext = { args: { action: "get", jobId: "#2" }, isError: false, state: {}, invalidate: vi.fn() } as never;
     const expanded = text(renderSubagentResult({ content: [], details: {
       status: "running", activity: "reading auth.ts", recentActivity: ["Thinking", "completed: grep auth"],
+      timeline: [
+        { kind: "tool", id: "a", summary: "read auth.ts", status: "completed" },
+        { kind: "thinking", text: "private reasoning" },
+        { kind: "tool", id: "b", summary: "npm test", status: "failed" },
+      ],
       workOrder: { goal: "Map auth", scope: ["src"], constraints: ["Read only"], validation: ["Cite files"], returnFormat: "Summary" },
     } }, { expanded: true, isPartial: false }, theme, getContext));
     expect(expanded).toContain("Current");
     expect(expanded).toContain("Recent activity");
+    expect(expanded).not.toContain("Timeline");
+    expect(expanded).toContain("✓ completed: read auth.ts");
+    expect(expanded).toContain("✗ failed: npm test");
+    expect(expanded).toContain("Thinking");
+    expect(expanded).not.toContain("private reasoning");
     expect(expanded).toContain("Work order");
+    const collapsed = text(renderSubagentResult({ content: [], details: {
+      status: "running", timeline: [{ kind: "tool", id: "a", summary: "read auth.ts", status: "completed" }],
+    } }, { expanded: false, isPartial: false }, theme, getContext));
+    expect(collapsed).not.toContain("Timeline");
 
     const cancel = text(renderSubagentResult({ content: [], details: { ref: "#2", status: "interrupted", cancelled: true } }, { expanded: false, isPartial: false }, theme, {
       args: { action: "cancel", jobId: "#2" }, isError: false, state: {}, invalidate: vi.fn(),

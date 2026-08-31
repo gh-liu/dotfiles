@@ -12,6 +12,28 @@ describe("subagent rendering integration", () => {
     expect(rendered).not.toContain("tracking");
   });
 
+  test("foreground run result carries timeline details for expanded rendering", async () => {
+    const env = setup();
+    const running = env.extension.getTool().execute("call", {
+      action: "run", agent: "scout", objective: "Inspect timeline", deadlineMs: 60_000,
+    }, undefined, undefined, context(env.root));
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].starts[0].options.onProgress?.({
+      summary: "read result.ts done",
+      timeline: [
+        { kind: "tool", id: "tool-1", summary: "read result.ts", status: "completed" },
+        { kind: "thinking", text: "private reasoning" },
+      ],
+    });
+    env.fake.controllers[0].settle();
+    const result = await running;
+    expect((result.details as Record<string, unknown>).timeline).toEqual([
+      { kind: "tool", id: "tool-1", summary: "read result.ts", status: "completed" },
+      { kind: "thinking", text: "private reasoning" },
+    ]);
+    await env.extension.shutdown();
+  });
+
   test("foreground execution lives in the activity center until settlement", async () => {
     const env = setup();
     let widget: unknown;

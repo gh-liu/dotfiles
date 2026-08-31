@@ -3,6 +3,26 @@ import { Text } from "@earendil-works/pi-tui";
 
 import { boundedLines, formatCountdown, oneLine, positiveSafeRuntimeIndex, publicRef, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
+function renderTimeline(details: Record<string, unknown>, theme: Theme): string {
+  if (!Array.isArray(details.timeline) || details.timeline.length === 0) return "";
+  let text = "";
+  for (const entry of details.timeline.slice(-24)) {
+    if (!entry || typeof entry !== "object") continue;
+    const item = entry as Record<string, unknown>;
+    if (item.kind === "thinking") {
+      text += `\n${theme.fg("accent", "✓ Thinking")}`;
+    } else if (item.kind === "tool" && typeof item.summary === "string") {
+      const status = item.status === "failed"
+        ? { label: "✗ failed", color: "error" as const }
+        : item.status === "completed"
+          ? { label: "✓ completed", color: "success" as const }
+          : { label: "● running", color: "warning" as const };
+      text += `\n${theme.fg(status.color, status.label)}${theme.fg("muted", `: ${oneLine(item.summary, 200)}`)}`;
+    }
+  }
+  return text;
+}
+
 export function renderSubagentResult(result: SubagentRenderResult, options: { expanded: boolean; isPartial: boolean }, theme: Theme, context: SubagentRenderContext): Text {
   const details = result.details && typeof result.details === "object" ? result.details as Record<string, unknown> : {};
   const ref = typeof details.ref === "string" && /^#[1-9]\d*$/.test(details.ref) ? details.ref : undefined;
@@ -18,7 +38,13 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
       clearInterval(context.state.spinnerTimer);
       context.state.spinnerTimer = undefined;
     }
-    return new Text(theme.fg("muted", context.args.action === "workflow" ? "↗ active workflow in Subagents" : "↗ active in Subagents"), 0, 0);
+    if (!options.expanded) {
+      return new Text(theme.fg("muted", context.args.action === "workflow" ? "↗ active workflow in Subagents" : "↗ active in Subagents"), 0, 0);
+    }
+    const activity = typeof details.activity === "string" ? details.activity : undefined;
+    let text = `${theme.fg("accent", "● running")}${activity ? theme.fg("dim", ` · ${oneLine(activity, 240)}`) : ""}`;
+    text += renderTimeline(details, theme);
+    return new Text(text, 0, 0);
   }
   if (context.state.spinnerTimer) clearInterval(context.state.spinnerTimer);
   context.state.spinnerTimer = undefined;
@@ -123,6 +149,7 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
         }
       }
     }
+    text += renderTimeline(details, theme);
   }
   return new Text(text, 0, 0);
 }

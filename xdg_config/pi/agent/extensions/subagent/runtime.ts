@@ -31,6 +31,7 @@ export interface OperationRecord {
   latestProgress?: {
     summary: string;
     recentActivity: string[];
+    timeline?: NonNullable<SubagentProgress["timeline"]>;
     needsDecision?: true;
     decision?: { question: string; options?: string[] };
   };
@@ -446,6 +447,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       operation.latestProgress = {
         summary: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
         recentActivity,
+        ...(progress.timeline ? { timeline: progress.timeline.map((entry) => ({ ...entry })) } : {}),
         ...(question ? {
           needsDecision: true,
           decision: {
