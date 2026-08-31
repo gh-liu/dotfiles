@@ -52,6 +52,11 @@ describe("web_search tool", () => {
     );
 
     expect(extension.getTool().name).toBe("web_search");
+    expect(extension.getTool().promptSnippet).toContain("current or precise external facts");
+    expect(extension.getTool().promptGuidelines).toEqual([
+      expect.stringContaining("unavailable in the repository or supplied context"),
+    ]);
+    expect(extension.getTool().description).toContain("Do not use for general background knowledge");
     expect(fetch).toHaveBeenCalledWith(
       "https://api.exa.ai/search",
       expect.objectContaining({

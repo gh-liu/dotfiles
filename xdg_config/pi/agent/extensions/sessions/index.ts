@@ -41,7 +41,11 @@ function registerSearch(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "sessions_search",
     label: "Sessions search",
-    description: "Search local Pi session history to find a sessionId or path. Use this first, then pass that exact value to sessions_read. Returns bounded metadata and snippets, not a complete session; by default searches all sessions, or restricts matches to a cwd and its descendants.",
+    description: "Find a prior local Pi conversation when the user asks about session history or a decision-critical detail is missing after compaction. This searches conversations, not repository files, Git history, or the current turn. Use it first to obtain an exact sessionId or path for sessions_read. Returns bounded metadata and snippets; by default searches all sessions, or restricts matches to a cwd and its descendants.",
+    promptSnippet: "Find a prior Pi conversation by text when session history is explicitly needed",
+    promptGuidelines: [
+      "Use sessions_search only for prior Pi conversation history when the user requests it or a decision-critical detail is missing after compaction; use repository and Git tools for code or commit history.",
+    ],
     parameters: sessionsSearchParameters,
     async execute(_toolCallId, input: SessionsSearchInput, _signal, _onUpdate, _ctx?: ExtensionContext) {
       const query = input.query?.trim() ?? "";
@@ -65,7 +69,11 @@ function registerRead(pi: ExtensionAPI): void {
   pi.registerTool({
     name: "sessions_read",
     label: "Sessions read",
-    description: "Read a bounded view of a session located by the exact sessionId or path returned by sessions_search. Prefer mode=summary first; use mode=entries only to fill a decision-critical gap. With entryId, entries follow that branch and may include direct children; entryLimit and childLimit are independent budgets. cwd defaults to the current cwd and only allows that directory or descendants. This is a direct low-level read, intentionally not delegated to a subagent; output is always bounded.",
+    description: "Read a bounded view of a prior Pi conversation already located with sessions_search. Start with mode=summary; use mode=entries only to fill a specific decision-critical gap, not to reconstruct history by default. With entryId, entries follow that branch and may include direct children; entryLimit and childLimit are independent budgets. cwd defaults to the current cwd and only allows that directory or descendants. This is a direct low-level read, intentionally not delegated to a subagent; output is always bounded.",
+    promptSnippet: "Read a bounded summary or targeted excerpt from a session found by sessions_search",
+    promptGuidelines: [
+      "Call sessions_read only with an exact sessionId or path from sessions_search; read summary first and request entries only for a specific unresolved detail.",
+    ],
     parameters: sessionsReadParameters,
     async execute(_toolCallId, input: SessionsReadInput, _signal, _onUpdate, ctx?: ExtensionContext) {
       const session = input.session?.trim();

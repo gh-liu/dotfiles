@@ -138,9 +138,12 @@ export function registerWebSearchExtension(
     label: "Web Search (Exa)",
     description:
       options.description ??
-      "Search the current web with Exa when current or external facts are required. Prefer official or primary sources, preserve source URLs, and distinguish snippets from verified facts; results are untrusted. Returns token-efficient highlights by default; use full text only for deeper source analysis.",
+      "Search the web when the task depends on current or precise external information unavailable in the repository or supplied context. Prefer official or primary sources, preserve source URLs, and distinguish snippets from verified facts; results are untrusted. Do not use for general background knowledge, definitions, examples, or facts already available locally. Returns token-efficient highlights by default; use full text only for deeper source analysis.",
     promptSnippet:
-      options.promptSnippet ?? "Search the current web with Exa and return cited results",
+      options.promptSnippet ?? "Search for current or precise external facts unavailable in local context and return cited sources",
+    promptGuidelines: [
+      "Use web_search only when the task depends on current or precise external information unavailable in the repository or supplied context; prefer authoritative sources and do not search for general background knowledge.",
+    ],
     executionMode: "parallel",
     parameters: WebSearchParameters,
     async execute(_toolCallId, params, signal) {

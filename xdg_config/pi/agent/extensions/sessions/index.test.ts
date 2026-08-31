@@ -25,6 +25,14 @@ describe("sessions history extension", () => {
     expect([...tools.keys()]).toEqual(["sessions_search", "sessions_read"]);
     expect(tools.get("sessions")).toBeUndefined();
     expect(tools.get("session_message")).toBeUndefined();
+    expect(tools.get("sessions_search")?.promptSnippet).toContain("prior Pi conversation");
+    expect(tools.get("sessions_search")?.promptGuidelines).toEqual([
+      expect.stringContaining("repository and Git tools"),
+    ]);
+    expect(tools.get("sessions_read")?.promptSnippet).toContain("session found by sessions_search");
+    expect(tools.get("sessions_read")?.promptGuidelines).toEqual([
+      expect.stringContaining("read summary first"),
+    ]);
   });
 
   test("search history works independently of IPC", async () => {

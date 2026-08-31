@@ -100,7 +100,7 @@ export function buildWakeWordSnippet(registry: AgentDiscovery): string {
   const names = registry.agents.map((agent) => agent.name);
   const registered = names.length > 0 ? names.join(", ") : "none";
   return boundText(
-    `Prefer delegation to registered agents (${registered}) using the startup catalog, especially for multi-file discovery, implementation, independent review, browser QA, and multi-source research. Keep only exact lookups, one-source fact checks, and command reruns requiring no investigation in the parent. The parent owns decomposition, coordination, integration, and final verification.`,
+    `Delegate to registered agents (${registered}) when a bounded task benefits from fresh context, specialization, independent judgment, or parallel work; work directly when delegation would only add handoff overhead. The parent owns decomposition, coordination, integration, and final verification.`,
     { maxCharacters: 1_000, maxLines: 1 },
   );
 }
@@ -281,10 +281,11 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Delegate bounded work to fresh-context registered agents. Fresh context is not a security sandbox, and cwd is not a filesystem sandbox. run executes foreground or background; get reads/waits for jobs; cancel is idempotent. get/cancel accept canonical jobId, session-local #N, or numeric N (exact jobId wins). The parent owns decomposition, write coordination, handoff review, integration, and final verification.\n\nstartup catalog:\n${startupCatalog}`,
+      `Delegate a separately owned, bounded task to a fresh-context registered agent when specialization, independent judgment, context isolation, or parallel execution provides a concrete benefit. Work directly for exact lookups, small local changes, and tasks whose delegation overhead exceeds the work. Fresh context is not a security sandbox, and cwd is not a filesystem sandbox. run executes foreground or background; get reads/waits for jobs; cancel is idempotent. get/cancel accept canonical jobId, session-local #N, or numeric N (exact jobId wins). The parent owns decomposition, write coordination, handoff review, integration, and final verification.\n\nstartup catalog:\n${startupCatalog}`,
     promptSnippet: wakeSnippet,
     promptGuidelines: [
       "Before delegating, decompose the bounded work rather than forwarding the raw user prompt. Because the child has fresh context, every task must include: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff. The parent retains unresolved decomposition and synthesis.",
+      "Delegate only when the catalog offers a concrete advantage over doing the work directly: a separately owned discovery or implementation task, independent review or expert judgment, browser QA, multi-source research, or genuinely parallel work. Do not delegate exact lookups, trivial edits, or serial handoffs with no context-isolation benefit.",
       "Choose by the catalog's capabilities. Use run with a task-appropriate deadlineMs; set background only for independent work and recover its result with get. Children load no skills, so include any needed skill path or excerpt. Run at most three independent jobs in parallel, with no overlapping writes.",
       "Treat results as handoffs, not proof. For cited read-only work, verify only decision-critical uncertainty instead of repeating the same reads/searches. For writes, inspect the complete settled diff and run integrated validation. Recover completed/failed/crashed/interrupted background outcomes with get(\"#N\") (get/cancel also accept numeric N or canonical jobId; aliases are session-local). The parent MUST NOT read transcript.sessionPath. If retrying, pass that path as Starting evidence and require the child to read it first. Produce the final synthesis yourself.",
     ],

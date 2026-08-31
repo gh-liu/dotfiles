@@ -126,7 +126,11 @@ function makeWebSearchTool(): any {
   return {
     name: "web_search",
     label: "Web Search (Exa)",
-    description: "Search the current web with Exa. Returns URLs and token-efficient highlights by default.",
+    description: "Search the web for current or precise external facts unavailable in the repository or supplied context. Prefer authoritative sources and preserve URLs. Do not use for general background knowledge or facts already available locally. Returns token-efficient highlights by default.",
+    promptSnippet: "Search for current or precise external facts unavailable in local context and return cited sources",
+    promptGuidelines: [
+      "Use web_search only when the task depends on current or precise external information unavailable in the repository or supplied context; prefer authoritative sources and do not search for general background knowledge.",
+    ],
     parameters: WebSearchParameters,
     async execute(_toolCallId: string, params: any, signal?: AbortSignal) {
       const key = process.env.EXA_API_KEY?.trim();

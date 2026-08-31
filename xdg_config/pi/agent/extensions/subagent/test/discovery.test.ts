@@ -28,14 +28,13 @@ describe("subagent discovery", () => {
     await running;
   });
 
-  test("wake snippet prefers delegation while reserving orchestration for the parent", () => {
+  test("wake snippet delegates only when fresh context provides a concrete benefit", () => {
     const snippet = buildWakeWordSnippet({ agents: [{ name: "scout", description: "Inspect", tools: [], systemPrompt: "" }], errors: [] });
-    expect(snippet).toContain("Prefer delegation");
+    expect(snippet).toContain("Delegate to registered agents");
     expect(snippet).toContain("registered agents (scout)");
-    expect(snippet).toContain("multi-file discovery, implementation, independent review, browser QA, and multi-source research");
-    expect(snippet).toContain("exact lookups, one-source fact checks, and command reruns requiring no investigation");
+    expect(snippet).toContain("fresh context, specialization, independent judgment, or parallel work");
+    expect(snippet).toContain("delegation would only add handoff overhead");
     expect(snippet).toContain("decomposition, coordination, integration, and final verification");
-    expect(snippet).not.toContain("localized edits");
     expect(snippet.length).toBeLessThanOrEqual(1_000);
   });
 
