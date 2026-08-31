@@ -394,6 +394,8 @@ install_bins() {
 
 		go install github.com/sagernet/sing-box/cmd/sing-box@latest
 
+		# HTTP load testing tool
+		go install github.com/tsenart/vegeta/v12@latest
 	fi
 
 	# Bun
