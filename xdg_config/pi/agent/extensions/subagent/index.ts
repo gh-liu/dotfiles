@@ -139,6 +139,14 @@ const SubagentParameters = Type.Object({
   })),
   jobId: Type.Optional(Type.String({ minLength: 1, description: "Canonical jobId, session-local #N alias, or numeric N for get/cancel; omit for recent jobs" })),
   deadlineMs: deadline(),
+  exclusivePaths: Type.Optional(Type.Array(Type.String({ minLength: 1 }), {
+    maxItems: 50,
+    description: "run paths this job writes exclusively (relative to the child cwd); overlapping leases are rejected in-process",
+  })),
+  toolBudget: Type.Optional(Type.Integer({
+    minimum: 1,
+    description: "run hard worker-side tool budget: the job aborts once tool executions exceed this limit",
+  })),
   waitMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000, description: "Maximum get wait" })),
 });
 type SubagentParameters = Static<typeof SubagentParameters>;
@@ -449,6 +457,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         return model ? { ...agent, model } : agent;
       })();
       const runId = idFactory();
+      if (request.exclusivePaths && request.exclusivePaths.length > 0) {
+        const lease = hub.acquireLease(request.exclusivePaths, runId, cwd);
+        if (!lease.ok) {
+          return response({ error: lease.error }, true);
+        }
+      }
       const operationId = idFactory();
       const initialOptions: SubagentRunOptions = {
         cwd,
@@ -464,6 +478,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         operationId,
         parentSessionId,
         deadlineMs: request.deadlineMs,
+        ...(request.exclusivePaths && request.exclusivePaths.length > 0 ? { exclusivePaths: request.exclusivePaths } : {}),
+        ...(request.toolBudget !== undefined ? { toolBudget: request.toolBudget } : {}),
         signal,
       };
       const runtime = hub.createRuntime({

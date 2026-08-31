@@ -94,6 +94,14 @@ export interface SubagentRunOptions {
   operationId: string;
   parentSessionId: string;
   deadlineMs: number;
+  /**
+   * Paths this job writes exclusively (absolute, or relative to the child cwd).
+   * Overlapping leases (ancestor/descendant or identical) are rejected within the
+   * extension process; the lease is held until the job settles/terminates.
+   */
+  exclusivePaths?: string[];
+  /** Hard worker-side tool budget: exceeding this many tool_execution_start events aborts the operation once. */
+  toolBudget?: number;
   signal?: AbortSignal;
   onProgress?: (progress: string | SubagentProgress) => void;
 }

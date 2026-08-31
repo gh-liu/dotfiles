@@ -686,4 +686,48 @@ describe("one-shot SDK executor", () => {
     expect(result.summary.length).toBeLessThanOrEqual(16_000);
     expect(result.status).toBe("completed");
   });
+
+  test("aborts once when tool_execution_start exceeds toolBudget and keeps diagnostics", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      for (let index = 0; index < 6; index++) {
+        emit({ type: "tool_execution_start", toolCallId: `tool-${index}`, toolName: "read", args: { path: `/tmp/${index}` } });
+      }
+      await new Promise(() => {}); // never settle naturally; only the budget abort ends it
+    };
+    const runOptions = options({ toolBudget: 2 });
+    const controller = await fakeController(runOptions, session);
+    const operation = controller.start(runOptions);
+    await operation.accepted;
+    await expect(operation.result).resolves.toMatchObject({
+      status: "interrupted",
+      summary: "Subagent tool budget exceeded: 3 tool executions (limit 2)",
+    });
+    expect(session.abortCalls).toBe(1);
+    await controller.close();
+  });
+
+  test("does not abort when tool_execution_start stays within toolBudget", async () => {
+    const session = new FakeSession();
+    session.promptHandler = async (_text, opts, emit) => {
+      opts?.preflightResult?.(true);
+      emit({ type: "tool_execution_start", toolCallId: "tool-1", toolName: "read", args: { path: "/tmp/1" } });
+      emit({ type: "tool_execution_end", toolCallId: "tool-1", toolName: "read", isError: false });
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" } });
+      emit({ type: "agent_settled" });
+    };
+    const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options({ toolBudget: 3 }));
+    expect(result.status).toBe("completed");
+    expect(session.abortCalls).toBe(0);
+  });
+
+  test("rejects a non-positive toolBudget", async () => {
+    const session = new FakeSession();
+    const controller = await fakeController(options(), session);
+    const op = controller.start(options({ toolBudget: 0 }));
+    await expect(op.accepted).rejects.toThrow("toolBudget must be a positive integer");
+    await expect(op.result).rejects.toThrow("toolBudget must be a positive integer");
+    await controller.close();
+  });
 });

@@ -12,12 +12,13 @@ The extension delegates bounded tasks to fresh-context Pi SDK sessions and retur
 `subagent` has one provider-compatible root object schema and three actions:
 
 ```ts
-subagent({ action: "run", agent, objective, scope?, constraints?, acceptance?, context?, cwd?, deadlineMs, background? })
+subagent({ action: "run", agent, objective, scope?, constraints?, acceptance?, context?, cwd?, deadlineMs, background?, exclusivePaths?, toolBudget? })
 subagent({ action: "get", jobId?, waitMs? })
 subagent({ action: "cancel", jobId })
 ```
 
 - `run` requires `agent`, `objective`, and `deadlineMs` (1,000–3,600,000 ms). Structured fields are rendered into a self-contained work order. `background` defaults to false.
+- `exclusivePaths` (optional) lists at most 50 paths this job writes exclusively, absolute or relative to the child cwd; overlapping leases (identical, ancestor, or descendant) are rejected in-process before the run starts. `toolBudget` (optional) is a positive-integer worker-side hard tool budget; the operation aborts once its tool executions exceed the limit. Both are v1 and bounded by the parent model: the extension does not intercept parent tool calls and cannot stop `bash` (or any other writer) from touching leased paths, so single-writer still requires the parent to honor the fields.
 - Foreground `run` waits for authoritative `agent_settled`, disposes the SDK session, releases its slot, and returns a handoff.
 - Background `run` returns `{jobId,ref,status,agent}` after prompt acceptance. Settlement wakes the parent, then automatically disposes the session and releases its slot. Background does not imply persistence.
 - `get(jobId)` immediately returns current/terminal state plus a bounded diagnostic projection: effective work order, elapsed/deadline, latest activity, recent redacted activity, and any pending decision. `waitMs` waits at most that long. A running job whose wait expires returns `timedOut:true` without cancellation; otherwise that field is absent. `get()` lists up to 100 most-recent jobs. Missing retained records return `status:"unknown",expired:true` rather than pretending the job settled.
@@ -40,6 +41,8 @@ starting -> running -> completed | failed | interrupted
 
 Internal runtime states remain `starting/running/idle/closing/closed/crashed`; internal operation settlement is authoritative and monotonic. Foreground and background are both one-shot jobs. Slots are reserved before controller creation (maximum 3), and every terminal/error/shutdown path releases them after disposal. Children are leaves (`maxDepth=1`) and cannot message peers.
 
+Exclusive write leases (`exclusivePaths`) follow the same lifecycle as slots: normalized against the child cwd and acquired before controller creation, then released by the same terminal/error/shutdown close path (settle, cancel, crash, and shutdown all release). Any identical, ancestor, or descendant overlap with an active lease rejects the new run. Leases are v1 and in-process only: they are not OS file locks, they exist only for the current extension process, and they do not hard-block any writer, so a single writer still requires the parent to comply.
+
 ## 5. Notifications and recovery
 
 Background settlement sends a bounded follow-up wake and appends a best-effort human audit entry. The live panel first freezes the row in a reporting state; it removes the row only after Pi accepts the completion message. Delivery failure never changes authoritative state and leaves `#N · settled · reporting failed · use get` visible as a recovery affordance. Retrieving that terminal job clears the recovery row. `get("#N")` (or canonical jobId/numeric N) retains the handoff regardless of notification success. Same-turn successful settlements may be batched; actionable failures notify immediately. Pending notification timers are flushed/cleared during shutdown.
@@ -55,6 +58,8 @@ Child JSONL transcripts under `<agent-dir>/subagent-sessions/<jobId>/` are durab
 Production keeps the existing in-process `createAgentSession` executor, dedicated `SessionManager`, authoritative event reducer, deadlines/abort watchdogs, progress reduction, transcript, and `RuntimeHub`. Resource loading disables implicit extensions, skills, prompt templates, themes, and context files; tools are explicit per agent definition.
 
 Fresh context is conversation isolation, **not a security sandbox**. In-process children share OS credentials and filesystem permissions. Canonical cwd containment prevents selecting a cwd outside the project root, but cwd is **not a file-access sandbox**. Tool allowlists are capability controls, not OS permissions.
+
+`toolBudget` is a worker-side abort, not a CPU/time guarantee: the executor counts `tool_execution_start` events and aborts exactly once the count exceeds the budget, yielding an `interrupted` result whose diagnostic summary retains the exceeded count and the limit. A non-positive or non-integer `toolBudget` is rejected up front.
 
 `credentialRedactionEnvNames` names environment variables whose values are redacted from output; it does not allow, filter, or forward environment variables. The deprecated `authEnvAllowlist` option and `PI_SUBAGENT_AUTH_ENV_ALLOWLIST` setting remain low-cost compatibility aliases only. Redaction is best-effort and is not credential isolation.
 
@@ -74,4 +79,4 @@ The controller/runtime progress seam accepts an optional bounded decision reques
 
 Background notifications are at-most-once per settlement (same-turn successes may batch; failures flush immediately). Delivery is best-effort and `get(jobId)` always remains the authoritative recovery path. Controller ordering is create, accept, authoritative settle, then close/release; rejection, cancellation (including rejected interrupts), crashes, cleanup failures, and shutdown all best-effort close and release capacity.
 
-The deterministic test map covers discovery/model selection and context budgets; schema/work orders/public projection; foreground/background rendering and timer cleanup; handoff/output bounds; notification batching/recovery/suppression; capacity reservation/release/factory rejection; controller acceptance/settlement/close ordering; concurrent/reentrant shutdown, failures, transcript preservation, deadlines, and cancellation cleanup. Required gates are strict subagent typecheck and the complete subagent Vitest suite.
+The deterministic test map covers discovery/model selection and context budgets; schema/work orders/public projection; foreground/background rendering and timer cleanup; handoff/output bounds; notification batching/recovery/suppression; capacity reservation/release/factory rejection; controller acceptance/settlement/close ordering; concurrent/reentrant shutdown, failures, transcript preservation, deadlines, and cancellation cleanup; exclusivePaths lease acquisition, overlap rejection (identical/ancestor/descendant), sibling/absolute-path acceptance, and release on settle/cancel/crash; and toolBudget abort-once/within-budget/non-positive rejection. Required gates are strict subagent typecheck and the complete subagent Vitest suite.

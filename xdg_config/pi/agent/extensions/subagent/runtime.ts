@@ -1,3 +1,5 @@
+import { resolve, sep } from "node:path";
+
 import type { LiveUiController } from "./live-ui.ts";
 import { boundText, modelSubagentHandoff } from "./output.ts";
 import { stripModel } from "./protocol.ts";
@@ -157,6 +159,14 @@ export interface RuntimeHub {
   occupiedSlots(): number;
   availableSlots(): number;
   isShuttingDown(): boolean;
+  /**
+   * Acquire exclusive write leases for a job. Paths are normalized to absolute
+   * paths against `base`; identical, ancestor, or descendant overlaps with any
+   * active lease are rejected. The lease is released when the job terminates.
+   */
+  acquireLease(paths: string[], runId: string, base: string): { ok: true } | { ok: false; error: string };
+  /** Release the leases held by a run; idempotent. */
+  releaseLease(runId: string): void;
   createRuntime(input: CreateRuntimeInput): RuntimeRecord;
   snapshot(runtime: RuntimeRecord): ReturnType<typeof runtimeSnapshot>;
   /** All tracked runtimes (active and idle). */
@@ -186,6 +196,48 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     if (!runtime.slotReserved) return;
     runtime.slotReserved = false;
     occupiedSlots -= 1;
+  };
+
+  // In-process exclusive write leases: normalized absolute path -> holder runId.
+  const leasePathsByRunId = new Map<string, string[]>();
+  const leaseRunIdByPath = new Map<string, string>();
+
+  /** Two absolute paths overlap when one is an ancestor of (or identical to) the other. */
+  const pathsOverlap = (first: string, second: string): boolean =>
+    first === second
+    || first.startsWith(`${second}${sep}`)
+    || second.startsWith(`${first}${sep}`);
+
+  const acquireLease = (
+    paths: string[],
+    runId: string,
+    base: string,
+  ): { ok: true } | { ok: false; error: string } => {
+    const normalized = paths.map((value) => resolve(base, value));
+    for (const path of normalized) {
+      for (const [leased, holderRunId] of leaseRunIdByPath) {
+        if (pathsOverlap(path, leased)) {
+          return {
+            ok: false,
+            error: `exclusivePaths conflict: ${path} overlaps ${leased} already leased by job ${holderRunId}`,
+          };
+        }
+      }
+    }
+    for (const path of normalized) {
+      leaseRunIdByPath.set(path, runId);
+    }
+    leasePathsByRunId.set(runId, normalized);
+    return { ok: true };
+  };
+
+  const releaseLease = (runId: string): void => {
+    const paths = leasePathsByRunId.get(runId);
+    if (paths === undefined) return;
+    leasePathsByRunId.delete(runId);
+    for (const path of paths) {
+      if (leaseRunIdByPath.get(path) === runId) leaseRunIdByPath.delete(path);
+    }
   };
 
   const prune = (): void => {
@@ -337,6 +389,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       throw error;
     }).finally(() => {
       releaseSlot(runtime);
+      releaseLease(runtime.runId);
       prune();
     });
     return runtime.closePromise;
@@ -500,6 +553,8 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     occupiedSlots: () => occupiedSlots,
     availableSlots: () => Math.max(0, maxConcurrentRuns - occupiedSlots),
     isShuttingDown: () => shuttingDown,
+    acquireLease,
+    releaseLease,
     createRuntime(input) {
       const controllerReady = deferred<SubagentController>();
       const runtime: RuntimeRecord = {
