@@ -84,10 +84,10 @@ describe("live ui controller", () => {
     const lines = renderWidget(ui);
     expect(lines).toHaveLength(2);
     expect(lines[0]).toContain("scout");
-    expect(lines[0]).toContain("0s / 300s");
+    expect(lines[0]).toContain("0s elapsed · 300s left");
     expect(lines[0]).toContain("starting");
     expect(lines[1]).toContain("worker");
-    expect(lines[1]).toContain("0s / 60s");
+    expect(lines[1]).toContain("0s elapsed · 60s left");
 
     live.progress("r1", "Thinking…");
     vi.advanceTimersByTime(250);
@@ -216,19 +216,18 @@ describe("live ui controller", () => {
     vi.advanceTimersByTime(5_000);
     expect(ui.widgetCalls.length).toBe(callsAfterSettle);
 
-    // A background runtime that settles idle also stops the spinner ticker while
-    // the dim idle line stays visible.
+    // A background runtime also detaches on settlement; its terminal state is
+    // rendered by the background completion card instead of this live panel.
     live.track("r2", { agent: "worker", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 2 });
     live.progress("r2", "Thinking…", { kind: "thinking", status: "running" });
     vi.advanceTimersByTime(250);
     expect(SUBAGENT_SPINNER_FRAMES.some((frame) => renderWidget(ui)[0].includes(`${frame} Thinking…`))).toBe(true);
 
     live.settle("r2", "completed");
-    vi.advanceTimersByTime(250); // idle transition goes through the throttle
-    expect(renderWidget(ui)[0]).toContain("idle");
-    const callsAfterIdle = ui.widgetCalls.length;
+    expect(lastWidgetContent(ui)).toBeUndefined();
+    const callsAfterBackgroundSettle = ui.widgetCalls.length;
     vi.advanceTimersByTime(300); // spinner tick (100ms) would repaint; heartbeat (1s) has not fired
-    expect(ui.widgetCalls.length).toBe(callsAfterIdle);
+    expect(ui.widgetCalls.length).toBe(callsAfterBackgroundSettle);
 
     // dispose also stops every timer.
     live.dispose();
@@ -245,15 +244,15 @@ describe("live ui controller", () => {
     const startedAt = Date.now();
     live.track("r1", { agent: "scout", startedAt, deadlineMs: 300_000, mode: "foreground", index: 1 });
 
-    // At 191.6s, flooring both values previously rendered `191s / 108s`.
+    // At 191.6s, flooring both values previously rendered 108 seconds remaining.
     vi.advanceTimersByTime(191_600);
-    expect(renderWidget(ui)[0]).toContain("191s / 109s");
+    expect(renderWidget(ui)[0]).toContain("191s elapsed · 109s left");
 
     // Remaining time is clamped at zero both at and after the deadline.
     vi.advanceTimersByTime(108_400);
-    expect(renderWidget(ui)[0]).toContain("300s / 0s");
+    expect(renderWidget(ui)[0]).toContain("300s elapsed · 0s left");
     vi.advanceTimersByTime(1);
-    expect(renderWidget(ui)[0]).toContain("300s / 0s");
+    expect(renderWidget(ui)[0]).toContain("300s elapsed · 0s left");
   });
 
   test("shows only the latest activity per runtime", () => {
@@ -417,7 +416,7 @@ describe("live ui controller", () => {
     expect(LIVE_WIDGET_ID).toBe("subagent-live");
   });
 
-  test("background runtime shows a badge while running and an idle line after settle", () => {
+  test("background runtime shows a badge while running and leaves after settle", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
@@ -429,76 +428,12 @@ describe("live ui controller", () => {
     expect(lines[0]).toContain("scout");
 
     live.settle("r1", "completed");
-    vi.advanceTimersByTime(250); // idle transition goes through the throttle
-    lines = renderWidget(ui);
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toContain("idle");
-    expect(lines[0]).toContain("holds slot");
+    expect(lastWidgetContent(ui)).toBeUndefined();
 
     // Foreground runtimes carry no badge.
     live.track("r2", { agent: "worker", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
     vi.advanceTimersByTime(250);
     lines = renderWidget(ui);
     expect(lines.find((line) => line.includes("worker"))).not.toContain("⟨bg⟩");
-  });
-
-  test("colors idle outcome markers and preserves elapsed fallback", () => {
-    const outcomes = [
-      ["completed", "success", "✓"],
-      ["failed", "error", "✗"],
-      ["interrupted", "warning", "■"],
-    ] as const;
-
-    for (const [outcome, color, marker] of outcomes) {
-      const ui = createMockUi();
-      const live = createLiveUi();
-      const colorTheme = {
-        fg: (name: string, text: string) => name === "dim" ? text : `<${name}>${text}</${name}>`,
-        bold: (text: string) => text,
-      };
-      live.attach(ui);
-      live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 1 });
-      live.settle("r1", outcome, 4_200);
-      vi.advanceTimersByTime(250);
-
-      expect(renderWidget(ui, 120, colorTheme)[0]).toBe(`○ #1 scout ⟨bg⟩ · idle · 4s <${color}>${marker}</${color}> · holds slot`);
-    }
-
-    const ui = createMockUi();
-    const live = createLiveUi();
-    live.attach(ui);
-    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 1 });
-    live.settle("r1", "completed");
-    vi.advanceTimersByTime(250);
-    expect(renderWidget(ui)[0]).toBe("○ #1 scout ⟨bg⟩ · idle ✓ · holds slot");
-  });
-
-  test("closing an idle background runtime removes its line immediately", () => {
-    const ui = createMockUi();
-    const live = createLiveUi();
-    live.attach(ui);
-    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 1 });
-    live.settle("r1", "completed");
-
-    live.remove("r1");
-    expect(lastWidgetContent(ui)).toBeUndefined();
-    expect(renderWidget(ui)).toHaveLength(0);
-  });
-
-  test("a follow-up re-track returns an idle background runtime to running", () => {
-    const ui = createMockUi();
-    const live = createLiveUi();
-    live.attach(ui);
-    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 1 });
-    live.settle("r1", "completed");
-    vi.advanceTimersByTime(250);
-    expect(renderWidget(ui)[0]).toContain("idle");
-
-    live.track("r1", { agent: "scout", startedAt: Date.now(), deadlineMs: 120_000, mode: "background", index: 1 });
-    vi.advanceTimersByTime(250);
-    const lines = renderWidget(ui);
-    expect(lines).toHaveLength(1);
-    expect(lines[0]).toContain("●");
-    expect(lines[0]).not.toContain("idle");
   });
 });

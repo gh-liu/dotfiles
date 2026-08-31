@@ -4,8 +4,9 @@
  * Data flow: sdk-executor onProgress summaries -> hub beginOperation wrapper ->
  * this controller -> ctx.ui.setWidget (above-editor panel showing one compact
  * overview line per runtime: agent, elapsed/remaining budget, current activity).
- * Background (`start`) runtimes carry an ⟨bg⟩ badge and stay visible as a dim
- * idle line after their operation settles until they are closed.
+ * Background runtimes carry an ⟨bg⟩ badge while active. All runtimes leave the
+ * panel immediately on settlement; terminal feedback belongs to the tool row
+ * or background completion card.
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
  * headless (-p) and RPC runs never touch terminal UI. Renders are throttled
@@ -46,16 +47,12 @@ interface RuntimeDisplay {
   startedAt: number;
   deadlineMs: number;
   mode: LiveRuntimeMode;
-  /** "running" while an operation is active; background runtimes turn "idle" after settling. */
-  phase: "running" | "idle";
   /** Latest progress summary (thinking/toolcall/streaming wording from the executor). */
   activity?: string;
   /** Explicit thinking/tool boundary state driving the live affordance glyph. */
   activityPhase?: SubagentActivityPhase;
   /** Number of concurrently running tools in the latest progress update. */
   activeCount?: number;
-  outcome?: "completed" | "failed" | "interrupted";
-  elapsedMs?: number;
 }
 
 /** Plain elapsed seconds count with unit suffix: `0s`, `42s`, `221s`. */
@@ -109,21 +106,11 @@ function renderLines(
   for (const runtime of runtimes.values()) {
     const ref = `#${runtime.index}`;
     const badge = runtime.mode === "background" ? " ⟨bg⟩" : "";
-    if (runtime.phase === "idle") {
-      // Background runtime settled but still open: dim reminder that it holds a slot.
-      // Self-evolution: surface outcome + elapsed so the idle line is actionable, not just a slot reminder.
-      const marker = runtime.outcome === "completed" ? "✓" : runtime.outcome === "failed" ? "✗" : runtime.outcome === "interrupted" ? "■" : "";
-      const markerColor = runtime.outcome === "completed" ? "success" : runtime.outcome === "failed" ? "error" : runtime.outcome === "interrupted" ? "warning" : undefined;
-      const elapsed = typeof runtime.elapsedMs === "number" ? ` · ${formatDuration(runtime.elapsedMs)}` : "";
-      const outcomePart = marker && markerColor ? ` ${theme.fg(markerColor, marker)}` : "";
-      lines.push(truncateToWidth(`${theme.fg("dim", `○ ${ref} ${runtime.agent}${badge} · idle${elapsed}`)}${outcomePart}${theme.fg("dim", " · holds slot")}`, width));
-      continue;
-    }
     const elapsedMs = Math.max(0, now - runtime.startedAt);
     const remainingMs = runtime.startedAt + runtime.deadlineMs - now;
     const line =
       `${theme.fg("accent", "●")} ${theme.fg("muted", ref)} ${theme.bold(runtime.agent)}${theme.fg("muted", badge)} ` +
-      theme.fg("muted", `· ${formatDuration(elapsedMs)} / ${formatRemainingDuration(remainingMs)} ·`) +
+      theme.fg("muted", `· ${formatDuration(elapsedMs)} elapsed · ${formatRemainingDuration(remainingMs)} left ·`) +
       ` ${renderActivity(theme, runtime, spinnerFrame)}`;
     lines.push(truncateToWidth(line, width));
   }
@@ -221,7 +208,6 @@ export function createLiveUi(): LiveUiController {
   /** True while any tracked running runtime shows a live spinner phase. */
   const spinnerActive = (): boolean => {
     for (const runtime of runtimes.values()) {
-      if (runtime.phase !== "running") continue;
       const phase = runtime.activityPhase;
       if (phase?.kind === "thinking" && phase.status === "running") return true;
       if (phase?.kind === "tool" && phase.status === "running") return true;
@@ -267,7 +253,6 @@ export function createLiveUi(): LiveUiController {
         startedAt: info.startedAt,
         deadlineMs: info.deadlineMs,
         mode: info.mode,
-        phase: "running",
       });
       ensureHeartbeat();
       syncSpinner();
@@ -282,17 +267,7 @@ export function createLiveUi(): LiveUiController {
       syncSpinner();
       scheduleDraw();
     },
-    settle(runId, outcome, elapsedMs) {
-      const runtime = runtimes.get(runId);
-      if (disposed || !runtime) return;
-      if (runtime.mode === "background") {
-        runtime.phase = "idle";
-        runtime.outcome = outcome;
-        runtime.elapsedMs = elapsedMs;
-        syncSpinner();
-        scheduleDraw();
-        return;
-      }
+    settle(runId, _outcome, _elapsedMs) {
       detach(runId);
     },
     remove(runId) {

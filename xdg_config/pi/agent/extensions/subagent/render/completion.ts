@@ -50,14 +50,19 @@ function completionEntryText(
     if (completionTitle) text += `\n${theme.fg("muted", `  task: ${completionTitle}`)}`;
     const lines = boundedLines(summaryRaw, 4_000, 20);
     for (const line of lines) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    const elapsed = typeof details.elapsedMs === "number" ? ` · ${formatCountdown(details.elapsedMs)}` : "";
-    text += `\n${theme.fg("muted", `  runtime ${details.runtimeStatus}${elapsed}`)}`;
+    if (typeof details.elapsedMs === "number") {
+      text += `\n${theme.fg("muted", `  elapsed ${formatCountdown(details.elapsedMs)}`)}`;
+    }
   }
   return text;
 }
 
-const completionBg = (status: string | undefined): "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" =>
-  status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : "toolPendingBg";
+const completionBg = (entries: readonly SubagentCompletionDetails[]): "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" => {
+  const statuses = new Set(entries.map((entry) => entry.status));
+  if (statuses.size !== 1) return "toolPendingBg";
+  const status = entries[0]?.status;
+  return status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : "toolPendingBg";
+};
 
 export function renderSubagentCompletion(
   message: { content: unknown; details?: SubagentCompletionPayload },
@@ -68,7 +73,7 @@ export function renderSubagentCompletion(
   const entries: SubagentCompletionDetails[] = !raw
     ? [{ ...({} as SubagentCompletionDetails) }]
     : "batch" in raw ? raw.batch : [raw];
-  const box = new Box(outputPad, 0, (value) => theme.bg(completionBg(entries.at(-1)?.status), value));
+  const box = new Box(outputPad, 0, (value) => theme.bg(completionBg(entries), value));
   entries.forEach((entry, index) => {
     if (index > 0) box.addChild(new Text(theme.fg("muted", "─"), 0, 0));
     box.addChild(new Text(completionEntryText(entry, { expanded }, theme), 0, 0));

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { renderSubagentCall, renderSubagentResult } from "./index.ts";
+import { renderSubagentCall, renderSubagentCompletion, renderSubagentResult } from "./index.ts";
 
 const theme = { fg: (_color: string, text: string) => text, bg: (_color: string, text: string) => text, bold: (text: string) => text } as never;
 const text = (component: { render(width: number): string[] }) => component.render(200).join("\n").trim();
@@ -18,6 +18,16 @@ describe("task API rendering", () => {
     expect(rendered).toContain("✓ completed · 1s");
     expect(rendered).toContain("Done");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
+  });
+
+  test("renders the nested handoff returned by get", () => {
+    const context = { args: { action: "get", jobId: "#2" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const rendered = text(renderSubagentResult({
+      content: [],
+      details: { status: "completed", handoff: { summary: "Recovered background result" }, elapsedMs: 2_000 },
+    }, { expanded: false, isPartial: false }, theme, context));
+    expect(rendered).toContain("✓ completed · 2s");
+    expect(rendered).toContain("Recovered background result");
   });
 
   test("renders interleaved thinking timeline only in partial views", () => {
@@ -102,6 +112,34 @@ describe("task API rendering", () => {
     expect(rendered.endsWith("⠋ Thinking…")).toBe(true);
   });
 
+  test("shows current unphased activity after settled history", () => {
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const rendered = text(renderSubagentResult({
+      content: [{ type: "text", text: "Writing response…" }],
+      details: {
+        status: "running",
+        timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+      },
+    }, { expanded: false, isPartial: true }, theme, context));
+    expect(rendered).toContain("✓ read a.ts");
+    expect(rendered).toContain("⠋ Writing response…");
+    expect(rendered.endsWith("⠋ Writing response…")).toBe(true);
+  });
+
+  test("does not keep a spinner timer for static partial history", () => {
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const rendered = text(renderSubagentResult({
+      content: [{ type: "text", text: "tool completed" }],
+      details: {
+        status: "running",
+        phase: { kind: "tool", status: "completed" },
+      },
+    }, { expanded: false, isPartial: true }, theme, context));
+    expect(rendered).toContain("✓ tool completed");
+    expect(rendered).not.toContain("Thinking…");
+    expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
+  });
+
   test("renders bounded tool history, active and failed calls without a countdown", () => {
     const context = { args: { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 }, isError: false, state: {}, invalidate: vi.fn() } as never;
     const rendered = text(renderSubagentResult({
@@ -152,4 +190,26 @@ describe("task API rendering", () => {
     expect(text(tool.renderCall!({ action: "get", jobId: "#3" } as never, theme))).toContain("get · #3");
     await env.extension.shutdown();
   }, 20_000);
+
+  test("renders completion timing without stale runtime state and uses neutral mixed-batch background", () => {
+    const taggedTheme = {
+      ...theme,
+      bg: (color: string, value: string) => `<${color}>${value}</${color}>`,
+    } as never;
+    const completed = {
+      jobId: "job-1", ref: "#1", agent: "scout", task: "Inspect", status: "completed" as const,
+      summary: "Done", runtimeStatus: "idle" as const, elapsedMs: 2_000,
+    };
+    const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
+    expect(expanded).toContain("elapsed 2s");
+    expect(expanded).not.toContain("runtime idle");
+
+    const mixed = text(renderSubagentCompletion({ content: "", details: { batch: [
+      completed,
+      { ...completed, jobId: "job-2", ref: "#2", status: "failed" as const },
+    ] } }, { expanded: false, outputPad: 0 }, taggedTheme));
+    expect(mixed).toContain("<toolPendingBg>");
+    expect(mixed).not.toContain("<toolErrorBg>");
+    expect(mixed).not.toContain("<toolSuccessBg>");
+  });
 });

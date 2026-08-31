@@ -37,10 +37,6 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
   }
   if (options.isPartial) {
     context.state.spinnerFrame ??= 0;
-    if (!context.state.spinnerTimer) {
-      context.state.spinnerTimer = setInterval(() => { context.state.spinnerFrame = ((context.state.spinnerFrame ?? 0) + 1) % FRAMES.length; context.invalidate(); }, 80);
-      context.state.spinnerTimer.unref?.();
-    }
     const progress = result.content.find((part) => part.type === "text")?.text;
     const toolProgress = details.toolProgress && typeof details.toolProgress === "object"
       ? details.toolProgress as { earlierCount?: unknown; history?: unknown; active?: unknown }
@@ -55,6 +51,7 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
       : undefined;
     const limit = options.expanded ? 12 : 8;
     const lines: string[] = [];
+    let needsSpinner = false;
     if (timeline && timeline.length > 0) {
       const visibleTimeline = timeline.slice(-limit);
       const omitted = Math.max(0, timeline.length - visibleTimeline.length);
@@ -75,21 +72,53 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
     }
     for (const item of active) {
       if (!item || typeof item !== "object" || typeof (item as { summary?: unknown }).summary !== "string") continue;
+      needsSpinner = true;
       lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} ${oneLine((item as { summary: string }).summary, 160)}…`));
     }
     // Unflushed thinking (phase running) always carries the live spinner, even
     // when earlier history is already present; flushed segments stay in the timeline.
     if (phase && phase.kind === "thinking" && phase.status === "running") {
+      needsSpinner = true;
       lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} Thinking…`));
     }
-    if (lines.length === 0) lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} Thinking…`) + (progress ? theme.fg("dim", ` — ${oneLine(progress, 240)}`) : ""));
+    if (phase?.kind === "tool" && phase.status === "running" && active.length === 0 && progress) {
+      needsSpinner = true;
+      lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} ${oneLine(progress, 240)}`));
+    }
+    if (lines.length === 0 && phase?.status !== "running") {
+      if (phase?.kind === "thinking") {
+        lines.push(theme.fg("success", `${SUBAGENT_DONE_GLYPH} Thinking`));
+      } else if (phase?.kind === "tool" && progress) {
+        const failed = phase.status === "failed";
+        lines.push(theme.fg(failed ? "error" : "success", `${failed ? SUBAGENT_FAILED_GLYPH : SUBAGENT_DONE_GLYPH} ${oneLine(progress, 240)}`));
+      }
+    }
+    if (!phase && active.length === 0 && progress) {
+      needsSpinner = true;
+      lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} ${oneLine(progress, 240)}`));
+    } else if (lines.length === 0) {
+      needsSpinner = true;
+      lines.push(theme.fg("warning", `${FRAMES[context.state.spinnerFrame]} Thinking…`));
+    }
+    if (needsSpinner && !context.state.spinnerTimer) {
+      context.state.spinnerTimer = setInterval(() => { context.state.spinnerFrame = ((context.state.spinnerFrame ?? 0) + 1) % FRAMES.length; context.invalidate(); }, 80);
+      context.state.spinnerTimer.unref?.();
+    } else if (!needsSpinner && context.state.spinnerTimer) {
+      clearInterval(context.state.spinnerTimer);
+      context.state.spinnerTimer = undefined;
+    }
     return new Text(lines.join("\n"), 0, 0);
   }
   if (context.state.spinnerTimer) clearInterval(context.state.spinnerTimer);
   context.state.spinnerTimer = undefined;
   const status = typeof details.status === "string" ? details.status : undefined;
   const error = typeof details.error === "string" ? details.error : undefined;
-  const summary = typeof details.summary === "string" ? details.summary : error;
+  const handoff = details.handoff && typeof details.handoff === "object"
+    ? details.handoff as Record<string, unknown>
+    : undefined;
+  const summary = typeof details.summary === "string"
+    ? details.summary
+    : typeof handoff?.summary === "string" ? handoff.summary : error;
   let text = context.isError || status === "failed" ? theme.fg("error", "✗ failed")
     : status === "running" ? theme.fg("warning", "● running")
     : status === "interrupted" ? theme.fg("warning", "■ interrupted")
