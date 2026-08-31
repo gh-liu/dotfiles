@@ -40,6 +40,30 @@ describe("task API rendering", () => {
     }
   });
 
+  test("renders workflow graph calls and node status results", () => {
+    const args = {
+      action: "workflow" as const,
+      objective: "Ship auth",
+      nodes: [
+        { id: "inspect", agent: "scout", objective: "Inspect auth" },
+        { id: "change", agent: "worker", objective: "Implement auth", dependsOn: ["inspect"] },
+      ],
+    };
+    const call = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
+    expect(call).toContain("Workflow — Ship auth · 2 nodes");
+    expect(call).toContain("change worker ← inspect");
+
+    const result = text(renderSubagentResult({ content: [], details: {
+      ref: "W#2", status: "running", nodes: [
+        { id: "inspect", agent: "scout", objective: "Inspect auth", status: "completed" },
+        { id: "change", agent: "worker", objective: "Implement auth", status: "running" },
+      ],
+    } }, { expanded: true, isPartial: false }, theme, { args, isError: false, state: {}, invalidate: vi.fn() } as never));
+    expect(result).toContain("workflow running · W#2 · 1/2 nodes");
+    expect(result).toContain("✓ inspect · scout · completed");
+    expect(result).toContain("● change · worker · running");
+  });
+
   test("partial tool results point to the activity center and never duplicate activity", () => {
     const context = runContext();
     const rendered = text(renderSubagentResult({

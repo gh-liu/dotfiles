@@ -44,6 +44,8 @@ export interface LiveRuntimeInfo {
   deadlineMs: number;
   mode: LiveRuntimeMode;
   objective: string;
+  /** Owning workflow/node identity for coordinated DAG runs. */
+  workflow?: { ref: string; nodeId: string };
 }
 
 interface RuntimeDisplay {
@@ -53,6 +55,7 @@ interface RuntimeDisplay {
   deadlineMs: number;
   mode: LiveRuntimeMode;
   objective: string;
+  workflow?: { ref: string; nodeId: string };
   /** Latest progress summary (thinking/toolcall/streaming wording from the executor). */
   activity?: string;
   /** Explicit thinking/tool boundary state driving the live affordance glyph. */
@@ -131,7 +134,10 @@ function renderLines(
     const ref = `#${runtime.index}`;
     const elapsedMs = Math.max(0, now - runtime.startedAt);
     const time = width >= 52 ? `${formatDuration(elapsedMs)}/${formatDuration(runtime.deadlineMs)}` : formatDuration(elapsedMs);
-    const identity = `${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}`;
+    const workflowIdentity = runtime.workflow
+      ? `${theme.fg("accent", `${runtime.workflow.ref}/${oneLine(runtime.workflow.nodeId, 20)}`)} ${theme.fg("muted", "·")} `
+      : "";
+    const identity = `${workflowIdentity}${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}`;
     let marker: string;
     let suffix = theme.fg("muted", ` · ${time}`);
     if (runtime.settlement === "report-failed") {
@@ -303,6 +309,7 @@ export function createLiveUi(): LiveUiController {
         deadlineMs: info.deadlineMs,
         mode: info.mode,
         objective: info.objective,
+        ...(info.workflow ? { workflow: info.workflow } : {}),
       });
       ensureHeartbeat();
       syncSpinner();

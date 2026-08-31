@@ -86,6 +86,15 @@ describe("activity center", () => {
     expect(lines.join("\n")).toContain("↳ Thinking…");
   });
 
+  test("labels workflow runtimes with their graph and node identity", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", tracked({ agent: "oracle", workflow: { ref: "W#2", nodeId: "design" } }));
+
+    expect(renderWidget(ui).join("\n")).toContain("W#2/design · #1 oracle");
+  });
+
   test("keeps completed Thinking and tool phase markers without duplicating the spinner", () => {
     const ui = createMockUi();
     const live = createLiveUi();

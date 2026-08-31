@@ -3,6 +3,10 @@ type SubagentRenderArgs =
       action: "run"; agent: string; objective: string; background?: boolean; cwd?: string; deadlineMs?: number;
       model?: string; thinking?: string; scope?: string[]; constraints?: string[]; acceptance?: string[]; context?: string;
     }
+  | {
+      action: "workflow"; objective: string; background?: boolean; deadlineMs?: number;
+      nodes?: Array<{ id: string; agent: string; objective: string; dependsOn?: string[] }>;
+    }
   | { action: "get"; jobId?: string; waitMs?: number }
   | { action: "cancel"; jobId: string };
 
@@ -79,6 +83,7 @@ function positiveSafeRuntimeIndex(value: unknown): number | undefined {
 
 function publicRef(value: string | undefined): string | undefined {
   if (!value) return undefined;
+  if (/^W#[1-9]\d*$/.test(value)) return value;
   const match = /^(?:#)?([1-9]\d*)$/.exec(value);
   return match ? `#${match[1]}` : undefined;
 }

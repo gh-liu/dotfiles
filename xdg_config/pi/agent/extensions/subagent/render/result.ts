@@ -6,6 +6,7 @@ import { boundedLines, formatCountdown, oneLine, positiveSafeRuntimeIndex, publi
 export function renderSubagentResult(result: SubagentRenderResult, options: { expanded: boolean; isPartial: boolean }, theme: Theme, context: SubagentRenderContext): Text {
   const details = result.details && typeof result.details === "object" ? result.details as Record<string, unknown> : {};
   const ref = typeof details.ref === "string" && /^#[1-9]\d*$/.test(details.ref) ? details.ref : undefined;
+  const workflowRef = typeof details.ref === "string" && /^W#[1-9]\d*$/.test(details.ref) ? details.ref : undefined;
   const index = positiveSafeRuntimeIndex(ref ? Number(ref.slice(1)) : details.displayIndex);
   if (index && !context.state.runtimeIndex) {
     context.state.runtimeIndex = index;
@@ -17,7 +18,7 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
       clearInterval(context.state.spinnerTimer);
       context.state.spinnerTimer = undefined;
     }
-    return new Text(theme.fg("muted", "↗ active in Subagents"), 0, 0);
+    return new Text(theme.fg("muted", context.args.action === "workflow" ? "↗ active workflow in Subagents" : "↗ active in Subagents"), 0, 0);
   }
   if (context.state.spinnerTimer) clearInterval(context.state.spinnerTimer);
   context.state.spinnerTimer = undefined;
@@ -29,7 +30,7 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
   const summary = typeof details.summary === "string"
     ? details.summary
     : typeof handoff?.summary === "string" ? handoff.summary : error;
-  const displayRef = ref ?? publicRef(context.args.action === "run" ? undefined : context.args.jobId);
+  const displayRef = ref ?? workflowRef ?? publicRef(context.args.action === "run" || context.args.action === "workflow" ? undefined : context.args.jobId);
   if (context.args.action === "cancel") {
     const jobStatus = typeof details.status === "string" ? details.status : "unknown";
     const reference = displayRef ? ` · ${theme.fg("toolTitle", displayRef)}` : "";
@@ -52,7 +53,37 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
       return `${theme.fg("toolTitle", jobRef)} ${agent} · ${jobStatus}`;
     });
     if (jobs.length > lines.length) lines.push(theme.fg("dim", `… ${jobs.length - lines.length} more jobs`));
-    return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent jobs."), 0, 0);
+    if (Array.isArray(details.workflows)) {
+      for (const workflow of (details.workflows as Array<Record<string, unknown>>).slice(0, options.expanded ? 100 : 8)) {
+        const workflowRef = typeof workflow.ref === "string" ? workflow.ref : "?";
+        const workflowStatus = typeof workflow.status === "string" ? workflow.status : "unknown";
+        const nodeCount = Array.isArray(workflow.nodes) ? workflow.nodes.length : 0;
+        lines.push(`${theme.fg("toolTitle", workflowRef)} workflow · ${workflowStatus} · ${nodeCount} nodes`);
+      }
+    }
+    return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent jobs or workflows."), 0, 0);
+  }
+  if (context.args.action === "workflow" || workflowRef || Array.isArray(details.nodes)) {
+    const nodes = Array.isArray(details.nodes) ? details.nodes as Array<Record<string, unknown>> : [];
+    const completed = nodes.filter((node) => node.status === "completed").length;
+    let text = status === "running" ? theme.fg("accent", "↗ workflow running")
+      : status === "completed" ? theme.fg("success", "✓ workflow completed")
+      : status === "interrupted" ? theme.fg("warning", "■ workflow interrupted")
+      : theme.fg("error", "✗ workflow failed");
+    if (displayRef) text += theme.fg("toolTitle", ` · ${displayRef}`);
+    if (nodes.length) text += theme.fg("muted", ` · ${completed}/${nodes.length} nodes`);
+    const visible = options.expanded ? nodes.slice(0, 20) : nodes.filter((node) => node.status !== "completed").slice(0, 5);
+    for (const node of visible) {
+      const nodeStatus = typeof node.status === "string" ? node.status : "unknown";
+      const marker = nodeStatus === "completed" ? "✓" : nodeStatus === "running" ? "●" : nodeStatus === "pending" ? "○" : nodeStatus === "skipped" ? "−" : "✗";
+      const nodeId = typeof node.id === "string" ? node.id : "node";
+      const agent = typeof node.agent === "string" ? node.agent : "subagent";
+      text += `\n${theme.fg(nodeStatus === "completed" ? "success" : nodeStatus === "failed" ? "error" : "muted", `  ${marker}`)} ${theme.fg("toolTitle", nodeId)} ${theme.fg("dim", `· ${agent} · ${nodeStatus}`)}`;
+      if (options.expanded && typeof node.objective === "string") text += `\n${theme.fg("dim", `    ${oneLine(node.objective, 240)}`)}`;
+      if (options.expanded && typeof node.error === "string") text += `\n${theme.fg("error", `    ${oneLine(node.error, 240)}`)}`;
+    }
+    if (!options.expanded && completed === nodes.length && nodes.length > 0) text += `\n${theme.fg("dim", "  All nodes completed")}`;
+    return new Text(text, 0, 0);
   }
   let text = status === "unknown" ? theme.fg("warning", "? unknown/expired")
     : context.args.action === "run" && context.args.background && status === "running" ? theme.fg("accent", "↗ tracking in Subagents")

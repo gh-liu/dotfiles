@@ -16,7 +16,7 @@ import {
 } from "./agents.ts";
 import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { createLiveUi } from "./live-ui.ts";
-import { boundText, modelSubagentHandoff, serializeSubagentResult } from "./output.ts";
+import { boundText, modelSubagentHandoff, serializeSubagentResult, type ModelSubagentHandoff } from "./output.ts";
 import { createRuntimeHub, type OperationRecord, type RuntimeRecord } from "./runtime.ts";
 import { createSdkSubagentController } from "./sdk-executor.ts";
 import { stripModel } from "./protocol.ts";
@@ -31,6 +31,15 @@ import {
   type SubagentRenderResult,
 } from "./render/index.ts";
 import type { SubagentControllerFactory, SubagentRunOptions } from "./protocol.ts";
+import {
+  createWorkflowRecord,
+  executeWorkflow,
+  validateWorkflowNodes,
+  workflowSnapshot,
+  type WorkflowNodeRecord,
+  type WorkflowNodeSpec,
+  type WorkflowRecord,
+} from "./workflow.ts";
 
 export interface SubagentExtensionOptions {
   agentDirectory?: string;
@@ -76,7 +85,7 @@ function retainCallTitleDetails(
 const deadline = () => Type.Optional(Type.Integer({
   minimum: 1_000,
   maximum: 3_600_000,
-  description: "Required for run: execution deadline (1,000-3,600,000 ms)",
+  description: "Required for run/workflow: execution deadline (1,000-3,600,000 ms)",
 }));
 
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
@@ -125,19 +134,35 @@ const mainModelOf = (model: { provider?: unknown; id?: unknown } | undefined): s
 
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
-const SubagentParameters = Type.Object({
-  action: StringEnum(["run", "get", "cancel"] as const, { description: "Task action" }),
-  agent: Type.Optional(Type.String({ description: "run agent name" })),
-  objective: Type.Optional(Type.String({ minLength: 1, description: "run objective" })),
+const WorkflowNodeParameters = Type.Object({
+  id: Type.String({ minLength: 1, maxLength: 40, description: "Stable node id used by dependsOn" }),
+  agent: Type.String({ minLength: 1, description: "Registered agent name" }),
+  objective: Type.String({ minLength: 1, description: "Bounded node objective" }),
+  dependsOn: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 20 })),
+  runOnDependencyFailure: Type.Optional(Type.Boolean({ description: "Run after dependencies settle even if one failed; default false" })),
   scope: Type.Optional(Type.Array(Type.String())),
   constraints: Type.Optional(Type.Array(Type.String())),
   acceptance: Type.Optional(Type.Array(Type.String())),
   context: Type.Optional(Type.String()),
-  background: Type.Optional(Type.Boolean({ description: "Return a jobId immediately; default false" })),
+  cwd: Type.Optional(Type.String()),
+  deadlineMs: Type.Optional(Type.Integer({ minimum: 1_000, maximum: 3_600_000 })),
+  exclusivePaths: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 50 })),
+  toolBudget: Type.Optional(Type.Integer({ minimum: 1 })),
+});
+
+const SubagentParameters = Type.Object({
+  action: StringEnum(["run", "workflow", "get", "cancel"] as const, { description: "Task action" }),
+  agent: Type.Optional(Type.String({ description: "run agent name" })),
+  objective: Type.Optional(Type.String({ minLength: 1, description: "run/workflow objective" })),
+  scope: Type.Optional(Type.Array(Type.String())),
+  constraints: Type.Optional(Type.Array(Type.String())),
+  acceptance: Type.Optional(Type.Array(Type.String())),
+  context: Type.Optional(Type.String()),
+  background: Type.Optional(Type.Boolean({ description: "Return a job/workflow identity immediately; default false" })),
   cwd: Type.Optional(Type.String({
     description: "run child cwd under the project root; defaults to parent cwd",
   })),
-  jobId: Type.Optional(Type.String({ minLength: 1, description: "Canonical jobId, runtime-local #N alias, or numeric N for get/cancel; omit for recent jobs" })),
+  jobId: Type.Optional(Type.String({ minLength: 1, description: "Canonical job/workflow ID, runtime-local #N or W#N ref, or numeric N job ref for get/cancel; omit for recent records" })),
   deadlineMs: deadline(),
   exclusivePaths: Type.Optional(Type.Array(Type.String({ minLength: 1 }), {
     maxItems: 50,
@@ -148,6 +173,11 @@ const SubagentParameters = Type.Object({
     description: "run hard worker-side tool budget: the job aborts once tool executions exceed this limit",
   })),
   waitMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000, description: "Maximum get wait" })),
+  nodes: Type.Optional(Type.Array(WorkflowNodeParameters, {
+    minItems: 1,
+    maxItems: 20,
+    description: "workflow DAG nodes; dependencies define barriers and independent nodes run in parallel",
+  })),
 });
 type SubagentParameters = Static<typeof SubagentParameters>;
 
@@ -245,6 +275,41 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   });
   const closeRuntime = (runtime: RuntimeRecord, suppressNotification = false): Promise<void> =>
     hub.closeRuntime(runtime, suppressNotification);
+  const workflows = new Map<string, WorkflowRecord>();
+  let nextWorkflowIndex = 1;
+  const resolveWorkflow = (reference: string): WorkflowRecord | undefined => {
+    const trimmed = reference.trim();
+    if (/^W#[1-9]\d*$/.test(trimmed)) {
+      const index = Number.parseInt(trimmed.slice(2), 10);
+      return [...workflows.values()].find((workflow) => workflow.index === index);
+    }
+    return workflows.get(trimmed);
+  };
+  const retainWorkflow = (workflow: WorkflowRecord): void => {
+    workflows.set(workflow.workflowId, workflow);
+    const terminal = [...workflows.values()]
+      .filter((candidate) => candidate.status !== "running")
+      .sort((left, right) => right.createdAt - left.createdAt);
+    for (const expired of terminal.slice(100)) workflows.delete(expired.workflowId);
+  };
+  const interruptWorkflowRuntimes = async (workflow: WorkflowRecord): Promise<void> => {
+    const activeRuntimes = [...workflow.nodes.values()]
+      .map((node) => node.runtimeJobId ? hub.resolve(node.runtimeJobId) : undefined)
+      .filter((runtime): runtime is RuntimeRecord => runtime !== undefined);
+    await Promise.allSettled(activeRuntimes.map(async (runtime) => {
+      const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : undefined;
+      if (operation?.state === "running" && operation.accepted) {
+        try {
+          const accepted = await runtime.controller?.interrupt(operation.operationId);
+          if (!accepted) await closeRuntime(runtime, true);
+        } catch {
+          await closeRuntime(runtime, true).catch(() => {});
+        }
+      } else if (runtime.state === "starting" || runtime.state === "running") {
+        await closeRuntime(runtime, true);
+      }
+    }));
+  };
   const response = (details: unknown, isError = false, modelDetails: unknown = details) => {
     const serialized = JSON.stringify(modelDetails);
     const bounded = serialized.length <= 32_000
@@ -292,13 +357,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Delegate a separately owned, bounded task to a fresh-context registered agent when specialization, independent judgment, context isolation, or parallel execution provides a concrete benefit. Work directly for exact lookups, small local changes, and tasks whose delegation overhead exceeds the work. Fresh context is not a security sandbox, and cwd is not a filesystem sandbox. run executes foreground or background; get reads/waits for jobs; cancel is idempotent. get/cancel accept canonical jobId, runtime-local #N, or numeric N (exact jobId wins). At most ${hub.maxConcurrentRuns} jobs may run concurrently. The parent owns decomposition, write coordination, handoff review, integration, and final verification.\n\nstartup catalog:\n${startupCatalog}`,
+      `Delegate separately owned, bounded tasks to fresh-context registered agents when specialization, independent judgment, context isolation, or parallel execution provides a concrete benefit. Work directly for exact lookups, small local changes, and tasks whose delegation overhead exceeds the work. Fresh context is not a security sandbox, and cwd is not a filesystem sandbox. run executes one foreground/background job. workflow executes a declarative DAG: dependsOn creates barriers, independent nodes run in parallel, and bounded predecessor handoffs become downstream context. get reads/waits for jobs or W# workflow refs; cancel is idempotent. At most ${hub.maxConcurrentRuns} jobs may run concurrently. The parent owns decomposition, write coordination, handoff review, integration, and final verification.\n\nstartup catalog:\n${startupCatalog}`,
     promptSnippet: wakeSnippet,
     promptGuidelines: [
       "Before delegating, decompose the bounded work rather than forwarding the raw user prompt. Because the child has fresh context, every task must include: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff. The parent retains unresolved decomposition and synthesis.",
       "Delegate only when the catalog offers a concrete advantage over doing the work directly: a separately owned discovery or implementation task, independent review or expert judgment, browser QA, multi-source research, or genuinely parallel work. Do not delegate exact lookups, trivial edits, or serial handoffs with no context-isolation benefit.",
-      `Choose by the catalog's capabilities. Use run with a task-appropriate deadlineMs; set background only for independent work and recover its result with get. Children load no skills, so include any needed skill path or excerpt. Run at most ${hub.maxConcurrentRuns} independent jobs in parallel, with no overlapping writes.`,
-      "Treat results as handoffs, not proof. For cited read-only work, verify only decision-critical uncertainty instead of repeating the same reads/searches. For writes, inspect the complete settled diff and run integrated validation. Recover completed/failed/crashed/interrupted background outcomes with get(\"#N\") (get/cancel also accept numeric N or canonical jobId; aliases are runtime-local). The parent MUST NOT read transcript.sessionPath. If retrying, pass that path as Starting evidence and require the child to read it first. Produce the final synthesis yourself.",
+      `Choose by the catalog's capabilities. Use run for one task or workflow for a bounded acyclic graph (maximum 20 nodes). Dependencies receive only direct predecessors' structured handoffs, never raw transcripts. Use a task-appropriate deadlineMs; set background only when the parent can continue independently and recover the result with get. Children load no skills, so include any needed skill path or excerpt. At most ${hub.maxConcurrentRuns} nodes/jobs execute at once, with no overlapping writes.`,
+      "Treat results as handoffs, not proof. For cited read-only work, verify only decision-critical uncertainty instead of repeating the same reads/searches. For writes, inspect the complete settled diff and run integrated validation. Recover background jobs with get(\"#N\") and workflows with get(\"W#N\") (canonical IDs are also accepted; aliases are runtime-local). The parent MUST NOT read transcript.sessionPath. If retrying, pass that path as Starting evidence and require the child to read it first. Produce the final synthesis yourself.",
     ],
     executionMode: "parallel",
     parameters: SubagentParameters,
@@ -371,7 +436,24 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       };
       if (request.action === "get") {
         if (!request.jobId) {
-          return response({ jobs: hub.listRuntimes().slice(-100).reverse().map(publicJob) });
+          return response({
+            jobs: hub.listRuntimes().slice(-100).reverse().map(publicJob),
+            workflows: [...workflows.values()].slice(-100).reverse().map(workflowSnapshot),
+          });
+        }
+        const workflow = resolveWorkflow(request.jobId);
+        if (workflow) {
+          if (workflow.status === "running" && request.waitMs !== undefined && request.waitMs > 0) {
+            let timedOut = false;
+            let timer: ReturnType<typeof setTimeout> | undefined;
+            await Promise.race([
+              workflow.settled,
+              new Promise<void>((resolveTimeout) => { timer = setTimeout(() => { timedOut = true; resolveTimeout(); }, request.waitMs); }),
+            ]);
+            if (timer) clearTimeout(timer);
+            return response({ ...workflowSnapshot(workflow), ...(timedOut && workflow.status === "running" ? { timedOut: true } : {}) });
+          }
+          return response(workflowSnapshot(workflow));
         }
         const runtime = hub.resolve(request.jobId);
         if (!runtime) return response({ jobId: request.jobId, status: "unknown", expired: true, error: "Subagent job is unknown or expired." }, true);
@@ -391,6 +473,14 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       }
       if (request.action === "cancel") {
         if (!request.jobId) return response({ error: "jobId is required for subagent cancel" }, true);
+        const workflow = resolveWorkflow(request.jobId);
+        if (workflow) {
+          if (workflow.status !== "running") return response({ ...workflowSnapshot(workflow), cancelled: false, alreadyTerminal: true });
+          workflow.controller.abort(new Error("Workflow cancelled"));
+          await interruptWorkflowRuntimes(workflow);
+          await workflow.settled;
+          return response({ ...workflowSnapshot(workflow), cancelled: true });
+        }
         const runtime = hub.resolve(request.jobId);
         if (!runtime) return response({ jobId: request.jobId, status: "unknown", cancelled: false, unknown: true });
         const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : undefined;
@@ -407,6 +497,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return response({ jobId: runtime.runId, ref: `#${runtime.index}`, status: "failed", cancelled: false, error: boundText(error instanceof Error ? error.message : String(error), { maxCharacters: 2_000, maxLines: 20 }) }, true);
         }
       }
+      const runOne = async (
+        request: SubagentParameters,
+        runSignal: AbortSignal | undefined,
+        runOnUpdate: typeof onUpdate,
+        workflowNode?: { ref: string; nodeId: string },
+      ) => {
       if (!request.agent) return response({ error: "agent is required for subagent run" }, true);
       if (!request.objective) return response({ error: "objective is required for subagent run" }, true);
       if (request.deadlineMs === undefined) return response({ error: "deadlineMs is required for subagent run" }, true);
@@ -481,7 +577,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         deadlineMs: request.deadlineMs,
         ...(request.exclusivePaths && request.exclusivePaths.length > 0 ? { exclusivePaths: request.exclusivePaths } : {}),
         ...(request.toolBudget !== undefined ? { toolBudget: request.toolBudget } : {}),
-        signal,
+        signal: runSignal,
       };
       const runtime = hub.createRuntime({
         agent: runtimeAgent,
@@ -498,9 +594,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         deadlineMs: request.deadlineMs,
         mode: request.background === true ? "background" : "foreground",
         objective: request.objective,
+        ...(workflowNode ? { workflow: workflowNode } : {}),
       });
       try {
-        onUpdate?.({
+        runOnUpdate?.({
           content: [{ type: "text", text: "Starting isolated child…" }],
           details: {
             jobId: runId,
@@ -521,8 +618,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           deadlineMs: request.deadlineMs,
           notifyOnSettle: request.background === true,
           workOrder: initialOptions.workOrder,
-          signal,
-          onUpdate,
+          signal: runSignal,
+          onUpdate: runOnUpdate,
         });
         if (request.background === true) return response({ jobId: runId, ref: `#${runtime.index}`, status: "running", agent: runtimeAgent.name });
         await operation.settled;
@@ -545,6 +642,123 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           }),
         }, true);
       }
+      };
+      if (request.action === "workflow") {
+        if (!request.objective) return response({ error: "objective is required for subagent workflow" }, true);
+        if (request.deadlineMs === undefined) return response({ error: "deadlineMs is required for subagent workflow" }, true);
+        if (!request.nodes) return response({ error: "nodes are required for subagent workflow" }, true);
+        if (hub.isShuttingDown()) return response({ error: "Subagent runtime is shutting down; new workflows are rejected." }, true);
+        const nodes = request.nodes as WorkflowNodeSpec[];
+        const graphErrors = validateWorkflowNodes(nodes);
+        const unknownAgents = [...new Set(nodes.map((node) => node.agent).filter((name) => !registry.agents.some((agent) => agent.name === name)))];
+        if (unknownAgents.length > 0) graphErrors.push(`unknown workflow agents: ${unknownAgents.join(", ")}`);
+        if (graphErrors.length > 0) return response({ error: "Invalid subagent workflow", errors: graphErrors }, true);
+
+        const workflow = createWorkflowRecord({
+          workflowId: idFactory(),
+          index: nextWorkflowIndex++,
+          objective: request.objective,
+          background: request.background === true,
+          deadlineMs: request.deadlineMs,
+          nodes,
+        });
+        retainWorkflow(workflow);
+        const workflowRef = `W#${workflow.index}`;
+        const abortWorkflow = () => {
+          if (!workflow.controller.signal.aborted) workflow.controller.abort(signal?.reason ?? new Error("Workflow interrupted"));
+          void interruptWorkflowRuntimes(workflow);
+        };
+        if (signal?.aborted) abortWorkflow();
+        else signal?.addEventListener("abort", abortWorkflow, { once: true });
+        const workflowDeadline = setTimeout(() => {
+          if (!workflow.controller.signal.aborted) workflow.controller.abort(new Error("Workflow deadline exceeded"));
+          void interruptWorkflowRuntimes(workflow);
+        }, workflow.deadlineMs);
+        const publishWorkflowUpdate = () => {
+          const snapshot = workflowSnapshot(workflow);
+          onUpdate?.({
+            content: [{ type: "text", text: `${workflowRef} · ${snapshot.status} · ${snapshot.nodes.filter((node) => node.status === "completed").length}/${snapshot.nodes.length} nodes completed` }],
+            details: snapshot,
+          });
+        };
+        const runWorkflow = executeWorkflow(workflow, {
+          canStart: () => hub.capacityAvailable(),
+          async runNode(node: WorkflowNodeRecord, upstream: WorkflowNodeRecord[], workflowSignal: AbortSignal) {
+            const predecessorHandoffs = upstream.map((predecessor) => ({
+              nodeId: predecessor.spec.id,
+              status: predecessor.status,
+              ...(predecessor.result?.handoff ? { handoff: predecessor.result.handoff } : {}),
+              ...(predecessor.error ? { error: predecessor.error } : {}),
+            }));
+            const inheritedContext = boundText([
+              `Workflow objective: ${workflow.objective}`,
+              predecessorHandoffs.length > 0
+                ? `Direct predecessor handoffs (structured and bounded):\n${JSON.stringify(predecessorHandoffs)}`
+                : "",
+              node.spec.context?.trim() ? `Node context:\n${node.spec.context.trim()}` : "",
+            ].filter(Boolean).join("\n\n"), { maxCharacters: 14_000, maxLines: 240 });
+            const remainingMs = Math.max(1_000, workflow.createdAt + workflow.deadlineMs - Date.now());
+            const nodeRequest: SubagentParameters = {
+              action: "run",
+              agent: node.spec.agent,
+              objective: node.spec.objective,
+              scope: node.spec.scope,
+              constraints: node.spec.constraints,
+              acceptance: node.spec.acceptance,
+              context: inheritedContext,
+              background: false,
+              cwd: node.spec.cwd,
+              deadlineMs: Math.min(node.spec.deadlineMs ?? remainingMs, remainingMs),
+              exclusivePaths: node.spec.exclusivePaths,
+              toolBudget: node.spec.toolBudget,
+            };
+            const nodeUpdate: typeof onUpdate = (update) => {
+              const details = update.details as { jobId?: unknown; ref?: unknown } | undefined;
+              if (typeof details?.jobId === "string") node.runtimeJobId = details.jobId;
+              if (typeof details?.ref === "string") node.runtimeRef = details.ref;
+              publishWorkflowUpdate();
+            };
+            const result = await runOne(nodeRequest, workflowSignal, nodeUpdate, { ref: workflowRef, nodeId: node.spec.id });
+            const details = result.details as Partial<ModelSubagentHandoff> & { jobId?: string; ref?: string; status?: string; error?: string };
+            if (details.jobId) node.runtimeJobId = details.jobId;
+            if (details.ref) node.runtimeRef = details.ref;
+            const status = details.status === "completed" || details.status === "interrupted" ? details.status : "failed";
+            return {
+              jobId: details.jobId ?? node.runtimeJobId,
+              ref: details.ref ?? node.runtimeRef,
+              status,
+              ...(details.agent && details.summary && details.transcript ? { handoff: details as ModelSubagentHandoff } : {}),
+              ...(status === "failed" ? { error: typeof details.error === "string" ? details.error : "Subagent workflow node failed" } : {}),
+            };
+          },
+          onChange: publishWorkflowUpdate,
+        }).then(() => {
+          retainWorkflow(workflow);
+          if (workflow.background && !workflow.notificationDelivered) {
+            workflow.notificationDelivered = notifySettled({
+              jobId: workflow.workflowId,
+              ref: workflowRef,
+              agent: "workflow",
+              task: workflow.objective,
+              status: workflow.status === "completed" || workflow.status === "interrupted" ? workflow.status : "failed",
+              summary: `${[...workflow.nodes.values()].filter((node) => node.status === "completed").length}/${workflow.nodes.size} nodes completed`,
+              elapsedMs: (workflow.finishedAt ?? Date.now()) - workflow.createdAt,
+            });
+          }
+        }).finally(() => {
+          clearTimeout(workflowDeadline);
+          signal?.removeEventListener("abort", abortWorkflow);
+        });
+        publishWorkflowUpdate();
+        if (request.background === true) {
+          void runWorkflow.catch(() => {});
+          return response({ workflowId: workflow.workflowId, ref: workflowRef, status: "running", nodes: workflow.nodes.size });
+        }
+        await runWorkflow;
+        const snapshot = workflowSnapshot(workflow);
+        return response(snapshot, snapshot.status === "failed");
+      }
+      return runOne(request, signal, onUpdate);
     },
   });
 
@@ -553,9 +767,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderSubagentCompletion,
   );
 
-  pi.on("session_shutdown", () => {
+  pi.on("session_shutdown", async () => {
     live.dispose();
-    return hub.requestShutdown();
+    for (const workflow of workflows.values()) {
+      if (workflow.status === "running") workflow.controller.abort(new Error("Session shutting down"));
+    }
+    await hub.requestShutdown();
+    await Promise.allSettled([...workflows.values()].map((workflow) => workflow.settled));
   });
 }
 

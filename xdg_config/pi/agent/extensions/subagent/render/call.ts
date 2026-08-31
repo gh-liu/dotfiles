@@ -22,6 +22,19 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
     const ref = context?.state.ref ?? publicRef(args.jobId);
     return new Text(theme.fg("warning", `■ cancel · ${ref ?? "resolving job…"}`), 0, 0);
   }
+  if (args.action === "workflow") {
+    const count = args.nodes?.length ?? 0;
+    let text = `${theme.fg("toolTitle", theme.bold("Workflow"))}${theme.fg("dim", ` — ${taskTitle(args.objective, 200)}`)}`;
+    text += theme.fg("muted", ` · ${count} node${count === 1 ? "" : "s"}${args.background ? " · background" : ""}`);
+    if (context?.expanded && args.nodes?.length) {
+      for (const node of args.nodes.slice(0, 20)) {
+        const dependencies = node.dependsOn?.length ? ` ← ${node.dependsOn.join(", ")}` : "";
+        text += `\n${theme.fg("toolTitle", `  ${node.id}`)} ${theme.fg(agentNameColor(node.agent), node.agent)}${theme.fg("muted", dependencies)}`;
+        text += `\n${theme.fg("dim", `    ${taskTitle(node.objective, 200)}`)}`;
+      }
+    }
+    return new Text(text, 0, 0);
+  }
   const index = positiveSafeRuntimeIndex(context?.state.runtimeIndex);
   const model = args.model ?? context?.state.model;
   const thinking = args.thinking ?? context?.state.thinking;

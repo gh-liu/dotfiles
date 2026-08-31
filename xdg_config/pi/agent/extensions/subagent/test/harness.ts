@@ -193,10 +193,11 @@ export function setup(options: {
   autoAccept?: boolean;
   ids?: string[];
   settingsPath?: string;
+  agentNames?: string[];
 } = {}) {
   const root = temporaryDirectory("pi-subagent-project-");
   const agents = temporaryDirectory("pi-subagent-agents-");
-  writeAgent(agents);
+  for (const name of options.agentNames ?? ["scout"]) writeAgent(agents, name);
   const fake = fakeFactory(options.autoAccept);
   const extension = harness();
   const ids = options.ids ?? Array.from({ length: 30 }, (_, index) => `id-${index + 1}`);
