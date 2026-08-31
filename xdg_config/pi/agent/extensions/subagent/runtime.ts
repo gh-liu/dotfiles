@@ -1,5 +1,5 @@
 import type { LiveUiController } from "./live-ui.ts";
-import { boundText } from "./output.ts";
+import { boundText, modelSubagentHandoff } from "./output.ts";
 import { stripModel } from "./protocol.ts";
 import type { SubagentCompletionDetails } from "./render/index.ts";
 import type {
@@ -20,11 +20,18 @@ export interface OperationRecord {
   state: OperationState;
   accepted: boolean;
   task: string;
+  workOrder: SubagentRunOptions["workOrder"];
   deadlineMs: number;
   startedAt?: number;
   finishedAt?: number;
   result?: SubagentResult;
   error?: string;
+  latestProgress?: {
+    summary: string;
+    recentActivity: string[];
+    needsDecision?: true;
+    decision?: { question: string; options?: string[] };
+  };
   notifyOnSettle: boolean;
   settled: Promise<void>;
   settle(): void;
@@ -112,7 +119,8 @@ export interface RuntimeHubDeps {
   /** Maximum concurrent one-shot jobs. */
   maxConcurrentRuns?: number;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
-  notifySettled: (details: SubagentCompletionDetails | { batch: SubagentCompletionDetails[] }) => void;
+  /** Returns true once the completion message has been accepted by Pi. */
+  notifySettled: (details: SubagentCompletionDetails | { batch: SubagentCompletionDetails[] }) => boolean;
   /** Optional durable human-visible settle log (appendEntry); never wakes the model. */
   logSettled?: (details: SubagentCompletionDetails) => void;
   /** Live UI controller observing runtime lifecycle for footer/widget display. */
@@ -210,7 +218,11 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     flushScheduled = false;
     if (pendingSettlements.length === 0) return;
     const entries = pendingSettlements.splice(0);
-    deps.notifySettled(entries.length === 1 ? entries[0] : { batch: entries });
+    const delivered = deps.notifySettled(entries.length === 1 ? entries[0] : { batch: entries });
+    for (const entry of entries) {
+      if (delivered) deps.live.remove(entry.jobId);
+      else deps.live.reportFailed(entry.jobId);
+    }
   };
   /** Coalesce settlements that land in the same event-loop turn into one card. */
   const scheduleFlush = (): void => {
@@ -239,6 +251,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     const elapsedMs = operation.startedAt !== undefined && operation.finishedAt !== undefined
       ? operation.finishedAt - operation.startedAt
       : undefined;
+    const handoff = result ? modelSubagentHandoff(result) : undefined;
     const details: SubagentCompletionDetails = {
       jobId: runtime.runId,
       ref: `#${runtime.index}`,
@@ -248,11 +261,16 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ...(elapsedMs === undefined ? {} : { elapsedMs }),
       task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
       status: result?.status ?? "failed",
-      summary: boundText(
-        result?.summary ?? operation.error ?? "Subagent operation failed without a result.",
+      summary: boundText(handoff?.summary ?? operation.error ?? "Subagent operation failed without a result.",
         { maxCharacters: 2_000, maxLines: 20 },
       ),
-      runtimeStatus: runtime.state === "running" ? "running" : runtime.state === "idle" ? "idle" : "crashed",
+      ...(handoff?.changes ? { changes: boundText(handoff.changes, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+      ...(handoff?.evidence ? { evidence: boundText(handoff.evidence, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+      ...(handoff?.validation ? { validation: boundText(handoff.validation, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+      ...(handoff?.risks ? { risks: boundText(handoff.risks, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+      ...(result?.status !== "completed" && operation.latestProgress?.recentActivity.length
+        ? { recentActivity: operation.latestProgress.recentActivity }
+        : {}),
     };
     // Batched wake policy: successful background settlements coalesce within
     // the same event-loop turn and flush as ONE aggregated card on the next
@@ -274,7 +292,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (operation) operation.notifyOnSettle = false;
     }
     if (runtime.closePromise) return runtime.closePromise;
-    deps.live.remove(runtime.runId);
+    if (runtime.mode === "foreground" || suppressNotification) deps.live.remove(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
     runtime.closePromise = (async () => {
@@ -335,6 +353,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       state: "running",
       accepted: false,
       task,
+      workOrder,
       deadlineMs,
       notifyOnSettle,
       settled: new Promise<void>((resolve) => { settle = resolve; }),
@@ -345,13 +364,15 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     operation.startedAt = Date.now();
     runtime.activeOperationId = operationId;
     transition(runtime, "running");
-    deps.live.track(runtime.runId, {
-      index: runtime.index,
-      agent: runtime.agent.name,
-      startedAt: operation.startedAt,
-      deadlineMs,
-      mode: runtime.mode === "foreground" ? "foreground" : "background",
-    });
+    if (runtime.mode === "background-one-shot") {
+      deps.live.track(runtime.runId, {
+        index: runtime.index,
+        agent: runtime.agent.name,
+        startedAt: operation.startedAt,
+        deadlineMs,
+        mode: "background",
+      });
+    }
     // Wrap progress with operation identity and renderer-only tool lifecycle data.
     // The live UI controller always observes progress, including the concurrent
     // active-tool count from tools.active; onUpdate is forwarded only when the
@@ -359,7 +380,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     const onProgress = (value: string | SubagentProgress) => {
       const progress = typeof value === "string" ? { summary: value } : value;
       const summary = progress.summary;
-      deps.live.progress(runtime.runId, summary, progress.phase, progress.tools?.active.length);
       // Forward a bounded decision only when the child explicitly signals
       // needsDecision with a non-empty question; empty/invalid payloads never
       // pollute public update details.
@@ -374,6 +394,23 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
             .map((option) => boundText(option, { maxCharacters: 200, maxLines: 1 }))
             .slice(0, 8)
         : [];
+      const recentActivity = (progress.timeline ?? [])
+        .slice(-8)
+        .flatMap((entry) => entry.kind === "thinking"
+          ? ["Thinking"]
+          : [`${entry.status === "failed" ? "failed" : "completed"}: ${boundText(entry.summary, { maxCharacters: 160, maxLines: 1 })}`]);
+      operation.latestProgress = {
+        summary: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
+        recentActivity,
+        ...(question ? {
+          needsDecision: true,
+          decision: {
+            question: boundText(question, { maxCharacters: 240, maxLines: 1 }),
+            ...(decisionOptions.length > 0 ? { options: decisionOptions } : {}),
+          },
+        } : {}),
+      };
+      deps.live.progress(runtime.runId, summary, progress.phase, progress.tools?.active.length, question || undefined);
       onUpdate?.({
         content: [{ type: "text", text: summary }],
         details: {
@@ -383,6 +420,8 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
+          startedAt: operation.startedAt,
+          deadlineMs,
           ...(progress.phase ? { phase: progress.phase } : {}),
           ...(progress.tools ? { toolProgress: progress.tools } : {}),
           ...(progress.timeline ? { timeline: progress.timeline } : {}),
@@ -528,6 +567,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       flushTimer = undefined;
       flushScheduled = false;
       pendingSettlements.length = 0;
+      for (const runtime of runtimes.values()) deps.live.remove(runtime.runId);
       await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));
     },
   };

@@ -57,9 +57,11 @@ function renderResult(args, details, { expanded = false, partial = false, isErro
   );
 }
 
-const objective = "Outcome: map the subagent lifecycle and identify the safest change seam.\nScope: spec.md, runtime.ts, sdk-executor.ts.\nConstraints: read-only; cite exact files and lines.\nValidation: compare implementation with tests.";
+const objective = "Map the subagent lifecycle and identify the safest change seam.";
 const runArgs = {
   action: "run", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal", objective,
+  scope: ["spec.md", "runtime.ts", "sdk-executor.ts"], context: "The task API is run/get/cancel.",
+  constraints: ["Read only", "Cite exact files and lines"], acceptance: ["Compare implementation with tests"],
   cwd: `${process.env.HOME ?? "/home/user"}/dev/go-zero`, deadlineMs: 240_000,
 };
 
@@ -89,11 +91,11 @@ function progress() {
     jobId: "job-1", ref: "#1", status: "running", timeline: settledTimeline,
     phase: { kind: "tool", status: "running" },
     toolProgress: { earlierCount: 0, history: [], active: [{ id: "c", summary: "bash npm test", status: "running" }] },
-  }, { partial: true, text: "bash npm test…" }));
+  }, { expanded: true, partial: true, text: "bash npm test…" }));
   row("tool failed", renderResult(runArgs, {
     jobId: "job-1", ref: "#1", status: "running", phase: { kind: "tool", status: "failed" },
     timeline: [...settledTimeline, { kind: "tool", id: "c", summary: "bash npm test", status: "failed" }],
-  }, { partial: true, text: "bash npm test failed · reviewing…" }));
+  }, { expanded: true, partial: true, text: "bash npm test failed · reviewing…" }));
   row("writing", renderResult(runArgs, { jobId: "job-1", ref: "#1", status: "running", timeline: settledTimeline }, { partial: true, text: "Writing response…" }));
 
   heading("PROGRESS · live panel");
@@ -101,15 +103,24 @@ function progress() {
   const live = createLiveUi();
   live.attach({ setWidget(_id, content) { widgetFactory = content; } });
   const now = Date.now();
-  live.track("job-1", { index: 1, agent: "scout", startedAt: now - 31_000, deadlineMs: 240_000, mode: "foreground" });
-  live.progress("job-1", "grep lifecycle runtime.ts done · working…", { kind: "tool", status: "completed" });
   live.track("job-2", { index: 2, agent: "researcher", startedAt: now - 18_000, deadlineMs: 180_000, mode: "background" });
   live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" });
+  live.track("job-3", { index: 3, agent: "reviewer", startedAt: now - 11_000, deadlineMs: 120_000, mode: "background" });
+  live.progress("job-3", "waiting for a decision", undefined, undefined, "Choose compatibility policy");
   if (typeof widgetFactory === "function") {
     const widget = widgetFactory({}, theme);
     for (const [index, entry] of widget.render(width).entries()) row(`live ${index + 1}`, { render: () => [entry] });
   }
   live.settle("job-2", "completed", 21_000);
+  if (typeof widgetFactory === "function") {
+    const widget = widgetFactory({}, theme);
+    row("reporting", { render: () => [widget.render(width).find((entry) => entry.includes("#2")) ?? ""] });
+  }
+  live.reportFailed("job-2");
+  if (typeof widgetFactory === "function") {
+    const widget = widgetFactory({}, theme);
+    row("delivery failed", { render: () => [widget.render(width).find((entry) => entry.includes("#2")) ?? ""] });
+  }
   live.dispose();
 }
 
@@ -122,8 +133,10 @@ function terminal() {
     ["get running", { action: "get", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "running", agent: "researcher" }, {}],
     ["get timed out", { action: "get", jobId: "#2", waitMs: 30_000 }, { jobId: "job-2", ref: "#2", status: "running", agent: "researcher", timedOut: true }, {}],
     ["get completed", { action: "get", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "completed", agent: "researcher", handoff: { summary: "Recovered background result." } }, {}],
+    ["get unknown", { action: "get", jobId: "opaque-uuid" }, { jobId: "opaque-uuid", status: "unknown", expired: true, error: "Subagent job is unknown or expired." }, { isError: true }],
     ["cancel accepted", { action: "cancel", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "interrupted", cancelled: true }, {}],
     ["cancel terminal", { action: "cancel", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "completed", cancelled: false, alreadyTerminal: true }, {}],
+    ["cancel unknown", { action: "cancel", jobId: "opaque-uuid" }, { jobId: "opaque-uuid", status: "unknown", cancelled: false, unknown: true }, {}],
   ];
   for (const [label, args, details, options] of cases) row(label, renderResult(args, details, options));
 
@@ -140,7 +153,7 @@ function completions() {
     jobId: "job-2", ref: "#2", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal",
     task: "Map the runtime lifecycle and identify the safest change seam.",
     summary: "Evidence: runtime.ts owns transitions; sdk-executor.ts owns session events.",
-    runtimeStatus: "idle", elapsedMs: 41_000,
+    evidence: "runtime.ts owns transitions.", validation: "Targeted tests passed.", elapsedMs: 41_000,
   };
   for (const status of ["completed", "failed", "interrupted"]) {
     row(`${status} collapsed`, renderSubagentCompletion({ content: "", details: { ...base, status } }, { expanded: false, outputPad: 1 }, theme));

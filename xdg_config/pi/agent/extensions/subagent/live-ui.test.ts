@@ -82,19 +82,18 @@ describe("live ui controller", () => {
     vi.advanceTimersByTime(250);
 
     const lines = renderWidget(ui);
-    expect(lines).toHaveLength(2);
-    expect(lines[0]).toContain("scout");
-    expect(lines[0]).toContain("0s elapsed · 300s left");
-    expect(lines[0]).toContain("starting");
-    expect(lines[1]).toContain("worker");
-    expect(lines[1]).toContain("0s elapsed · 60s left");
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe("Subagents (2)");
+    expect(lines[1]).toContain("#1 scout 0s/300s");
+    expect(lines[1]).toContain("starting");
+    expect(lines[2]).toContain("#1 worker 0s/60s");
 
     live.progress("r1", "Thinking…");
     vi.advanceTimersByTime(250);
     const updated = renderWidget(ui);
-    expect(updated).toHaveLength(2);
-    expect(updated[0]).toContain("scout");
-    expect(updated[0]).toContain("Thinking…");
+    expect(updated).toHaveLength(3);
+    expect(updated[1]).toContain("scout");
+    expect(updated[1]).toContain("Thinking…");
   });
 
   test("renders thinking/tool phase affordances consistent with the result renderer", () => {
@@ -216,18 +215,22 @@ describe("live ui controller", () => {
     vi.advanceTimersByTime(5_000);
     expect(ui.widgetCalls.length).toBe(callsAfterSettle);
 
-    // A background runtime also detaches on settlement; its terminal state is
-    // rendered by the background completion card instead of this live panel.
+    // A background runtime freezes in reporting state until its completion card
+    // is accepted, then the runtime owner removes it.
     live.track("r2", { agent: "worker", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 2 });
     live.progress("r2", "Thinking…", { kind: "thinking", status: "running" });
     vi.advanceTimersByTime(250);
     expect(SUBAGENT_SPINNER_FRAMES.some((frame) => renderWidget(ui)[0].includes(`${frame} Thinking…`))).toBe(true);
 
     live.settle("r2", "completed");
-    expect(lastWidgetContent(ui)).toBeUndefined();
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("completed · reporting");
+    vi.advanceTimersByTime(300); // flush any trailing throttled repaint
     const callsAfterBackgroundSettle = ui.widgetCalls.length;
-    vi.advanceTimersByTime(300); // spinner tick (100ms) would repaint; heartbeat (1s) has not fired
+    vi.advanceTimersByTime(300); // a live spinner would repaint again
     expect(ui.widgetCalls.length).toBe(callsAfterBackgroundSettle);
+    live.remove("r2");
+    expect(lastWidgetContent(ui)).toBeUndefined();
 
     // dispose also stops every timer.
     live.dispose();
@@ -237,22 +240,22 @@ describe("live ui controller", () => {
     expect(ui.widgetCalls.length).toBe(callsAfterDispose);
   });
 
-  test("floor-rounds elapsed and ceil-rounds remaining without early expiry", () => {
+  test("floor-rounds elapsed and keeps the configured deadline visible", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     const startedAt = Date.now();
     live.track("r1", { agent: "scout", startedAt, deadlineMs: 300_000, mode: "foreground", index: 1 });
 
-    // At 191.6s, flooring both values previously rendered 108 seconds remaining.
+    // Compact panel time is elapsed/deadline, both stable and width efficient.
     vi.advanceTimersByTime(191_600);
-    expect(renderWidget(ui)[0]).toContain("191s elapsed · 109s left");
+    expect(renderWidget(ui)[0]).toContain("191s/300s");
 
-    // Remaining time is clamped at zero both at and after the deadline.
+    // Elapsed may exceed the deadline until authoritative settlement arrives.
     vi.advanceTimersByTime(108_400);
-    expect(renderWidget(ui)[0]).toContain("300s elapsed · 0s left");
+    expect(renderWidget(ui)[0]).toContain("300s/300s");
     vi.advanceTimersByTime(1);
-    expect(renderWidget(ui)[0]).toContain("300s elapsed · 0s left");
+    expect(renderWidget(ui)[0]).toContain("300s/300s");
   });
 
   test("shows only the latest activity per runtime", () => {
@@ -405,6 +408,19 @@ describe("live ui controller", () => {
     }
   });
 
+  test("narrow layouts retain the actionable ref and decision state", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", { agent: "an-exceptionally-long-agent", startedAt: Date.now(), deadlineMs: 60_000, mode: "background", index: 12 });
+    live.progress("r1", "working", undefined, undefined, "Choose API version");
+    vi.advanceTimersByTime(250);
+    const line = renderWidget(ui, 28)[0];
+    expect(line).toContain("#12");
+    expect(line).toContain("! needs input");
+    expect(visibleWidth(line)).toBeLessThanOrEqual(28);
+  });
+
   test("widget is registered with aboveEditor placement", () => {
     const ui = createMockUi();
     const live = createLiveUi();
@@ -416,7 +432,7 @@ describe("live ui controller", () => {
     expect(LIVE_WIDGET_ID).toBe("subagent-live");
   });
 
-  test("background runtime shows a badge while running and leaves after settle", () => {
+  test("background runtime keeps its actionable ref through completion delivery", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
@@ -424,16 +440,20 @@ describe("live ui controller", () => {
     vi.advanceTimersByTime(250);
 
     let lines = renderWidget(ui);
-    expect(lines[0]).toContain("⟨bg⟩");
+    expect(lines[0]).toContain("#1");
     expect(lines[0]).toContain("scout");
 
     live.settle("r1", "completed");
-    expect(lastWidgetContent(ui)).toBeUndefined();
-
-    // Foreground runtimes carry no badge.
-    live.track("r2", { agent: "worker", startedAt: Date.now(), deadlineMs: 60_000, mode: "foreground", index: 1 });
     vi.advanceTimersByTime(250);
     lines = renderWidget(ui);
-    expect(lines.find((line) => line.includes("worker"))).not.toContain("⟨bg⟩");
+    expect(lines[0]).toContain("#1");
+    expect(lines[0]).toContain("✓ completed · reporting");
+
+    live.reportFailed("r1");
+    vi.advanceTimersByTime(250);
+    expect(renderWidget(ui)[0]).toContain("settled · reporting failed · use get");
+
+    live.remove("r1");
+    expect(lastWidgetContent(ui)).toBeUndefined();
   });
 });

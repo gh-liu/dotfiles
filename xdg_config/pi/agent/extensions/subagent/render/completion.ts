@@ -15,7 +15,12 @@ export interface SubagentCompletionDetails {
   task: string;
   status: "completed" | "failed" | "interrupted";
   summary: string;
-  runtimeStatus: "running" | "idle" | "crashed";
+  changes?: string;
+  evidence?: string;
+  validation?: string;
+  risks?: string;
+  /** Last bounded, redacted activity rows retained for failed/interrupted diagnostics. */
+  recentActivity?: string[];
   /** Wall-clock duration of the settled operation in milliseconds, when known. */
   elapsedMs?: number;
 }
@@ -39,30 +44,28 @@ function completionEntryText(
   const summaryRaw = details.summary ?? "";
   const summaryOneLine = oneLine(summaryRaw, 240);
   const completionTitle = taskTitle(details.task, expanded ? 160 : 80);
-  let text = `${theme.fg(color, marker)} ${theme.fg("toolTitle", `${details.ref} `)}${theme.fg(color, status)}`;
-  // Short agent name only: the full label (model/thinking) already sits on the tool-call title.
-  const agentLabel = details.agent;
-  if (details.agent) text += `${theme.fg("muted", " · ")}${theme.fg(agentNameColor(details.agent), agentLabel)}`;
-  if (!expanded && typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
-  if (!expanded && completionTitle) text += theme.fg("muted", ` · ${completionTitle}`);
+  let text = `${theme.fg(color, marker)} ${theme.fg("toolTitle", details.ref)} ${theme.fg(agentNameColor(details.agent), details.agent)}`;
+  text += theme.fg("muted", " · ") + theme.fg(color, status);
+  if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
+  if (completionTitle) text += theme.fg("muted", ` — ${completionTitle}`);
   if (!expanded && summaryOneLine) text += `\n${theme.fg("dim", summaryOneLine)}`;
   if (expanded) {
-    if (completionTitle) text += `\n${theme.fg("muted", `  task: ${completionTitle}`)}`;
-    const lines = boundedLines(summaryRaw, 4_000, 20);
-    for (const line of lines) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    if (typeof details.elapsedMs === "number") {
-      text += `\n${theme.fg("muted", `  elapsed ${formatCountdown(details.elapsedMs)}`)}`;
+    const sections: Array<[string, string | undefined]> = [
+      ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
+      ["Validation", details.validation], ["Risks", details.risks],
+    ];
+    for (const [label, value] of sections) {
+      if (!value?.trim()) continue;
+      text += `\n${theme.fg("toolTitle", label)}`;
+      for (const line of boundedLines(value, 4_000, 20)) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
+    }
+    if (details.recentActivity?.length) {
+      text += `\n${theme.fg("toolTitle", "Recent activity")}`;
+      for (const line of details.recentActivity.slice(-8)) text += `\n${theme.fg("dim", `  ${oneLine(line, 200)}`)}`;
     }
   }
   return text;
 }
-
-const completionBg = (entries: readonly SubagentCompletionDetails[]): "toolSuccessBg" | "toolErrorBg" | "toolPendingBg" => {
-  const statuses = new Set(entries.map((entry) => entry.status));
-  if (statuses.size !== 1) return "toolPendingBg";
-  const status = entries[0]?.status;
-  return status === "completed" ? "toolSuccessBg" : status === "failed" ? "toolErrorBg" : "toolPendingBg";
-};
 
 export function renderSubagentCompletion(
   message: { content: unknown; details?: SubagentCompletionPayload },
@@ -73,7 +76,7 @@ export function renderSubagentCompletion(
   const entries: SubagentCompletionDetails[] = !raw
     ? [{ ...({} as SubagentCompletionDetails) }]
     : "batch" in raw ? raw.batch : [raw];
-  const box = new Box(outputPad, 0, (value) => theme.bg(completionBg(entries), value));
+  const box = new Box(outputPad, 0);
   entries.forEach((entry, index) => {
     if (index > 0) box.addChild(new Text(theme.fg("muted", "─"), 0, 0));
     box.addChild(new Text(completionEntryText(entry, { expanded }, theme), 0, 0));

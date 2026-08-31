@@ -1,5 +1,8 @@
 type SubagentRenderArgs =
-  | { action: "run"; agent: string; objective: string; background?: boolean; cwd?: string; deadlineMs?: number; model?: string; thinking?: string }
+  | {
+      action: "run"; agent: string; objective: string; background?: boolean; cwd?: string; deadlineMs?: number;
+      model?: string; thinking?: string; scope?: string[]; constraints?: string[]; acceptance?: string[]; context?: string;
+    }
   | { action: "get"; jobId?: string; waitMs?: number }
   | { action: "cancel"; jobId: string };
 
@@ -74,5 +77,11 @@ function positiveSafeRuntimeIndex(value: unknown): number | undefined {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
 
-export { boundedLines, collapseHome, formatCountdown, oneLine, positiveSafeRuntimeIndex, taskTitle };
+function publicRef(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const match = /^(?:#)?([1-9]\d*)$/.exec(value);
+  return match ? `#${match[1]}` : undefined;
+}
+
+export { boundedLines, collapseHome, formatCountdown, oneLine, positiveSafeRuntimeIndex, publicRef, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };

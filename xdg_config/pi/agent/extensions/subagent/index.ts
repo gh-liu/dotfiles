@@ -174,7 +174,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const controllerFactory = options.controllerFactory
     ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
-  const notifySettled = (payload: SubagentCompletionPayload): void => {
+  const notifySettled = (payload: SubagentCompletionPayload): boolean => {
     const entries = "batch" in payload ? payload.batch : [payload];
     const blocks = entries.map((details) => {
       const reference = details.ref;
@@ -203,8 +203,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         display: true,
         details: payload,
       }, { triggerTurn: true, deliverAs: "followUp" });
+      return true;
     } catch {
       // Notification delivery must not change authoritative operation state.
+      return false;
     }
   };
   const logSettled = (details: SubagentCompletionDetails): void => {
@@ -325,11 +327,35 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const publicJob = (runtime: RuntimeRecord) => {
         const operation = runtime.lastSettled
           ?? (runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : undefined);
+        const elapsedMs = operation?.startedAt === undefined
+          ? undefined
+          : (operation.finishedAt ?? Date.now()) - operation.startedAt;
         return {
           jobId: runtime.runId,
           ref: `#${runtime.index}`,
           status: operation?.state ?? (runtime.state === "crashed" ? "failed" : "running"),
           agent: runtime.agent.name,
+          ...(operation ? {
+            objective: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }),
+            deadlineMs: operation.deadlineMs,
+            ...(elapsedMs === undefined ? {} : { elapsedMs }),
+            workOrder: {
+              goal: boundText(operation.workOrder.goal, { maxCharacters: 2_000, maxLines: 20 }),
+              scope: operation.workOrder.scope.slice(0, 20).map((item) => boundText(item, { maxCharacters: 240, maxLines: 1 })),
+              ...(operation.workOrder.context ? { context: boundText(operation.workOrder.context, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+              constraints: operation.workOrder.constraints.slice(0, 20).map((item) => boundText(item, { maxCharacters: 240, maxLines: 1 })),
+              validation: operation.workOrder.validation.slice(0, 20).map((item) => boundText(item, { maxCharacters: 240, maxLines: 1 })),
+              returnFormat: boundText(operation.workOrder.returnFormat, { maxCharacters: 500, maxLines: 8 }),
+            },
+            ...(operation.latestProgress ? {
+              activity: operation.latestProgress.summary,
+              recentActivity: operation.latestProgress.recentActivity,
+              ...(operation.latestProgress.needsDecision ? {
+                needsDecision: true,
+                decision: operation.latestProgress.decision,
+              } : {}),
+            } : {}),
+          } : {}),
           ...(operation?.result ? { handoff: modelSubagentHandoff(operation.result) } : {}),
           ...(operation?.error ? { error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
         };
@@ -339,7 +365,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return response({ jobs: hub.listRuntimes().slice(-100).reverse().map(publicJob) });
         }
         const runtime = hub.resolve(request.jobId);
-        if (!runtime) return response({ error: `Unknown subagent job: ${request.jobId}` }, true);
+        if (!runtime) return response({ jobId: request.jobId, status: "unknown", expired: true, error: "Subagent job is unknown or expired." }, true);
         const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : runtime.lastSettled;
         if (operation?.state === "running" && request.waitMs !== undefined && request.waitMs > 0) {
           let timedOut = false;
@@ -351,12 +377,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           if (timer) clearTimeout(timer);
           if (timedOut && operation.state === "running") return response({ ...publicJob(runtime), timedOut: true });
         }
+        if (operation && operation.state !== "running") live.remove(runtime.runId);
         return response(publicJob(runtime));
       }
       if (request.action === "cancel") {
         if (!request.jobId) return response({ error: "jobId is required for subagent cancel" }, true);
         const runtime = hub.resolve(request.jobId);
-        if (!runtime) return response({ jobId: request.jobId, cancelled: false, alreadyTerminal: true });
+        if (!runtime) return response({ jobId: request.jobId, status: "unknown", cancelled: false, unknown: true });
         const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : undefined;
         if (!operation || operation.state !== "running" || !operation.accepted) {
           return response({ ...publicJob(runtime), cancelled: false, alreadyTerminal: true });

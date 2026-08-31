@@ -8,6 +8,6 @@ describe("subagent rendering integration", () => {
     const rendered = tool.renderCall!({ action: "run", agent: "scout", objective: "Inspect", background: true } as never, theme, {
       args: {}, isError: false, state: {}, invalidate: vi.fn(),
     } as never).render(200).join("\n");
-    expect(rendered).toContain("scout · bg — Inspect");
+    expect(rendered).toContain("scout — Inspect · tracking in Subagents");
   });
 });

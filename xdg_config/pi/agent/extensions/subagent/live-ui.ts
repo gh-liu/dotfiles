@@ -3,15 +3,15 @@
  *
  * Data flow: sdk-executor onProgress summaries -> hub beginOperation wrapper ->
  * this controller -> ctx.ui.setWidget (above-editor panel showing one compact
- * overview line per runtime: agent, elapsed/remaining budget, current activity).
- * Background runtimes carry an ⟨bg⟩ badge while active. All runtimes leave the
- * panel immediately on settlement; terminal feedback belongs to the tool row
- * or background completion card.
+ * overview line per background runtime: actionable ref, agent, elapsed/deadline,
+ * and current activity). Foreground activity belongs to its tool row.
+ * Settled background rows remain until Pi accepts the completion card; failed
+ * delivery leaves a static recovery row rather than silently losing the result.
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
  * headless (-p) and RPC runs never touch terminal UI. Renders are throttled
- * (leading + trailing 250 ms), a 1 s heartbeat keeps elapsed/countdown fresh
- * while any runtime is tracked, and a 100 ms ticker advances the live spinner
+ * (leading + trailing 250 ms), a 1 s heartbeat keeps elapsed/deadline fresh
+ * while any runtime is tracked, and a 250 ms ticker advances the live spinner
  * while any runtime shows an active thinking/tool phase; all timers stop when
  * idle or disposed.
  */
@@ -22,13 +22,18 @@ import { truncateToWidth, type Component, type TUI } from "@earendil-works/pi-tu
 import type { SubagentActivityPhase } from "./protocol.ts";
 import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
 
+const oneLine = (text: string, maxCharacters: number): string => {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  return normalized.length <= maxCharacters ? normalized : `${normalized.slice(0, Math.max(1, maxCharacters - 1))}…`;
+};
+
 /** Widget key used for the above-editor live panel. */
 export const LIVE_WIDGET_ID = "subagent-live";
 
 const THROTTLE_MS = 250;
 const HEARTBEAT_MS = 1_000;
 /** High-frequency repaint driving the live spinner while any phase is active. */
-const SPINNER_TICK_MS = 100;
+const SPINNER_TICK_MS = 250;
 
 export type LiveRuntimeMode = "foreground" | "background";
 
@@ -53,6 +58,9 @@ interface RuntimeDisplay {
   activityPhase?: SubagentActivityPhase;
   /** Number of concurrently running tools in the latest progress update. */
   activeCount?: number;
+  decision?: string;
+  settlement?: "reporting" | "report-failed";
+  outcome?: "completed" | "failed" | "interrupted";
 }
 
 /** Plain elapsed seconds count with unit suffix: `0s`, `42s`, `221s`. */
@@ -60,13 +68,15 @@ export function formatDuration(ms: number): string {
   return `${Math.max(0, Math.floor(ms / 1000))}s`;
 }
 
-/** Plain remaining seconds count, rounded up to avoid early expiry. */
-function formatRemainingDuration(ms: number): string {
-  return `${Math.max(0, Math.ceil(ms / 1000))}s`;
-}
-
 /** Render the current activity with the shared thinking/tool affordances. */
 function renderActivity(theme: Theme, runtime: RuntimeDisplay, spinnerFrame: number): string {
+  if (runtime.settlement === "report-failed") return theme.fg("error", "! settled · reporting failed · use get");
+  if (runtime.settlement === "reporting") {
+    const status = runtime.outcome ?? "completed";
+    const glyph = status === "completed" ? SUBAGENT_DONE_GLYPH : status === "failed" ? SUBAGENT_FAILED_GLYPH : "■";
+    return theme.fg(status === "completed" ? "success" : status === "failed" ? "error" : "warning", `${glyph} ${status} · reporting`);
+  }
+  if (runtime.decision) return theme.fg("warning", `! needs input: ${runtime.decision}`);
   const summary = runtime.activity ?? "starting";
   const phase = runtime.activityPhase;
   let rendered: string;
@@ -103,15 +113,16 @@ function renderLines(
   spinnerFrame: number,
 ): string[] {
   const lines: string[] = [];
+  if (runtimes.size > 1) lines.push(theme.fg("toolTitle", `Subagents (${runtimes.size})`));
   for (const runtime of runtimes.values()) {
     const ref = `#${runtime.index}`;
-    const badge = runtime.mode === "background" ? " ⟨bg⟩" : "";
     const elapsedMs = Math.max(0, now - runtime.startedAt);
-    const remainingMs = runtime.startedAt + runtime.deadlineMs - now;
-    const line =
-      `${theme.fg("accent", "●")} ${theme.fg("muted", ref)} ${theme.bold(runtime.agent)}${theme.fg("muted", badge)} ` +
-      theme.fg("muted", `· ${formatDuration(elapsedMs)} elapsed · ${formatRemainingDuration(remainingMs)} left ·`) +
-      ` ${renderActivity(theme, runtime, spinnerFrame)}`;
+    const time = width >= 52 ? ` ${formatDuration(elapsedMs)}/${formatDuration(runtime.deadlineMs)}` : ` ${formatDuration(elapsedMs)}`;
+    const identity = `${theme.bold(oneLine(runtime.agent, width < 45 ? 10 : 20))}${theme.fg("muted", time)}`;
+    const activity = renderActivity(theme, runtime, spinnerFrame);
+    const line = runtime.decision || runtime.settlement
+      ? `${theme.fg("toolTitle", theme.bold(ref))} ${activity}${theme.fg("muted", ` · ${identity}`)}`
+      : `${theme.fg("toolTitle", theme.bold(ref))} ${identity}  ${activity}`;
     lines.push(truncateToWidth(line, width));
   }
   return lines;
@@ -126,9 +137,11 @@ export interface LiveUiController {
    * Record a progress summary plus the optional live activity phase as the current
    * activity; activeCount is the number of concurrently running tools in this update.
    */
-  progress(runId: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number): void;
-  /** Idempotently remove a settled runtime from the panel. */
+  progress(runId: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number, decision?: string): void;
+  /** Mark settlement while its completion card is handed to Pi. */
   settle(runId: string, outcome: "completed" | "failed" | "interrupted", elapsedMs?: number): void;
+  /** Keep a settled recovery row when completion delivery fails. */
+  reportFailed(runId: string): void;
   /** Idempotently force-remove a runtime (close/crash/shutdown). */
   remove(runId: string): void;
   /** Clear the widget and stop all timers. */
@@ -194,12 +207,12 @@ export function createLiveUi(): LiveUiController {
   };
 
   const ensureHeartbeat = (): void => {
-    if (disposed || heartbeatTimer !== undefined || runtimes.size === 0) return;
+    if (disposed || heartbeatTimer !== undefined || ![...runtimes.values()].some((runtime) => !runtime.settlement)) return;
     heartbeatTimer = setInterval(drawNow, HEARTBEAT_MS);
   };
 
-  const stopHeartbeatIfIdle = (): void => {
-    if (runtimes.size === 0 && heartbeatTimer !== undefined) {
+  const syncHeartbeat = (): void => {
+    if (![...runtimes.values()].some((runtime) => !runtime.settlement) && heartbeatTimer !== undefined) {
       clearInterval(heartbeatTimer);
       heartbeatTimer = undefined;
     }
@@ -208,6 +221,7 @@ export function createLiveUi(): LiveUiController {
   /** True while any tracked running runtime shows a live spinner phase. */
   const spinnerActive = (): boolean => {
     for (const runtime of runtimes.values()) {
+      if (runtime.settlement) continue;
       const phase = runtime.activityPhase;
       if (phase?.kind === "thinking" && phase.status === "running") return true;
       if (phase?.kind === "tool" && phase.status === "running") return true;
@@ -233,7 +247,7 @@ export function createLiveUi(): LiveUiController {
 
   const detach = (runId: string): void => {
     if (disposed || !runtimes.delete(runId)) return;
-    stopHeartbeatIfIdle();
+    syncHeartbeat();
     syncSpinner();
     // Clear immediately when the panel becomes empty; otherwise coalesce.
     if (runtimes.size === 0) drawNow();
@@ -258,17 +272,38 @@ export function createLiveUi(): LiveUiController {
       syncSpinner();
       scheduleDraw();
     },
-    progress(runId, summary, phase, activeCount) {
+    progress(runId, summary, phase, activeCount, decision) {
       const runtime = runtimes.get(runId);
       if (disposed || !runtime) return;
       runtime.activity = summary;
       runtime.activityPhase = phase;
       runtime.activeCount = activeCount;
+      runtime.decision = decision;
       syncSpinner();
       scheduleDraw();
     },
-    settle(runId, _outcome, _elapsedMs) {
-      detach(runId);
+    settle(runId, outcome, _elapsedMs) {
+      const runtime = runtimes.get(runId);
+      if (disposed || !runtime) return;
+      if (runtime.mode === "foreground") {
+        detach(runId);
+        return;
+      }
+      runtime.settlement = "reporting";
+      runtime.outcome = outcome;
+      runtime.decision = undefined;
+      runtime.activeCount = undefined;
+      syncHeartbeat();
+      syncSpinner();
+      scheduleDraw();
+    },
+    reportFailed(runId) {
+      const runtime = runtimes.get(runId);
+      if (disposed || !runtime) return;
+      runtime.settlement = "report-failed";
+      syncHeartbeat();
+      syncSpinner();
+      scheduleDraw();
     },
     remove(runId) {
       detach(runId);

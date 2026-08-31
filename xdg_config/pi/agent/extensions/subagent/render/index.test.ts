@@ -6,9 +6,21 @@ const text = (component: { render(width: number): string[] }) => component.rende
 
 describe("task API rendering", () => {
   test("renders all public calls", () => {
-    expect(text(renderSubagentCall({ action: "run", agent: "scout", objective: "Inspect", background: true }, theme))).toContain("scout · bg — Inspect");
-    expect(text(renderSubagentCall({ action: "get", jobId: "job-1" }, theme))).toContain("get · job-1");
-    expect(text(renderSubagentCall({ action: "cancel", jobId: "job-1" }, theme))).toContain("cancel · job-1");
+    expect(text(renderSubagentCall({ action: "run", agent: "scout", objective: "Inspect", background: true }, theme))).toContain("scout — Inspect · tracking in Subagents");
+    expect(text(renderSubagentCall({ action: "get", jobId: "job-1" }, theme))).toContain("get · resolving job…");
+    expect(text(renderSubagentCall({ action: "cancel", jobId: "job-1" }, theme))).toContain("cancel · resolving job…");
+    expect(text(renderSubagentCall({ action: "get", jobId: "2", waitMs: 30_000 }, theme))).toContain("get · #2 · wait 30s");
+  });
+
+  test("expanded run shows the bounded delegation spec", () => {
+    const args = {
+      action: "run" as const, agent: "worker", objective: "Implement cache invalidation", scope: ["src/cache.ts"],
+      context: "TTL is authoritative", constraints: ["No API changes"], acceptance: ["Tests pass"], deadlineMs: 120_000,
+    };
+    const rendered = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
+    for (const expected of ["Outcome", "Implement cache invalidation", "Scope", "src/cache.ts", "Context", "TTL is authoritative", "Constraints", "No API changes", "Acceptance", "Tests pass"]) {
+      expect(rendered).toContain(expected);
+    }
   });
 
   test("renders progress and terminal handoff", () => {
@@ -46,7 +58,7 @@ describe("task API rendering", () => {
         timeline,
         toolProgress: { active: [{ id: "c", summary: "bash npm test", status: "running" }] },
       },
-    }, { expanded: false, isPartial: true }, theme, context));
+    }, { expanded: true, isPartial: true }, theme, context));
     expect(partial).toContain("✓ read a.ts");
     // Thinking only enters the timeline once the executor flushes it (before a
     // tool call), so it is already ended here: completed marker, never a spinner.
@@ -78,7 +90,7 @@ describe("task API rendering", () => {
     const makeContext = () => ({ args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never);
     // Timeline thinking was flushed by the executor before the tool call, so even the
     // partial view marks it completed: static marker, no spinner, no raw reasoning text.
-    const partial = text(renderSubagentResult({ content: [], details: { status: "running", timeline } }, { expanded: false, isPartial: true }, theme, makeContext()));
+    const partial = text(renderSubagentResult({ content: [], details: { status: "running", timeline } }, { expanded: true, isPartial: true }, theme, makeContext()));
     expect(partial).toContain("✓ Thinking");
     expect(partial).not.toContain("Thinking…");
     expect(partial).not.toContain("internal reasoning passes");
@@ -105,7 +117,7 @@ describe("task API rendering", () => {
         phase: { kind: "thinking", status: "running" },
         timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
       },
-    }, { expanded: false, isPartial: true }, theme, context));
+    }, { expanded: true, isPartial: true }, theme, context));
     // The flushed tool is settled; the CURRENT, still-unflushed thinking shows the spinner.
     expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("⠋ Thinking…");
@@ -121,9 +133,37 @@ describe("task API rendering", () => {
         timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
       },
     }, { expanded: false, isPartial: true }, theme, context));
-    expect(rendered).toContain("✓ read a.ts");
-    expect(rendered).toContain("⠋ Writing response…");
-    expect(rendered.endsWith("⠋ Writing response…")).toBe(true);
+    expect(rendered).not.toContain("✓ read a.ts");
+    expect(rendered).toBe("⠋ Writing response…");
+
+    const expandedContext = { ...context, state: {}, invalidate: vi.fn() } as never;
+    const expanded = text(renderSubagentResult({
+      content: [{ type: "text", text: "Writing response…" }],
+      details: {
+        status: "running",
+        timeline: [{ kind: "thinking", text: "hidden" }, { kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+      },
+    }, { expanded: true, isPartial: true }, theme, expandedContext));
+    expect(expanded).toContain("✓ Thinking");
+    expect(expanded).toContain("✓ read a.ts");
+    expect(expanded.endsWith("⠋ Writing response…")).toBe(true);
+  });
+
+  test("shows foreground elapsed time and lets decisions override ordinary collapsed activity", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-31T00:00:31Z"));
+    const context = { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const rendered = text(renderSubagentResult({
+      content: [{ type: "text", text: "still working" }],
+      details: {
+        status: "running", startedAt: Date.now() - 31_000,
+        timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+        needsDecision: true, decision: { question: "Choose API version" },
+      },
+    }, { expanded: false, isPartial: true }, theme, context));
+    expect(rendered).toBe("! needs input: Choose API version · 31s");
+    expect((context as any).state.spinnerTimer).toBeUndefined();
+    vi.useRealTimers();
   });
 
   test("does not keep a spinner timer for static partial history", () => {
@@ -153,7 +193,7 @@ describe("task API rendering", () => {
           active: [{ id: "3", summary: "bash npm test", status: "running" }],
         },
       },
-    }, { expanded: false, isPartial: true }, theme, context));
+    }, { expanded: true, isPartial: true }, theme, context));
     expect(rendered).toContain("… 3 earlier calls");
     expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("✗ grep missing src");
@@ -176,10 +216,10 @@ describe("task API rendering", () => {
     const tool = env.extension.getTool();
     const state: Record<string, unknown> = {};
     const invalidate = vi.fn();
-    tool.renderResult!({ content: [], details: { jobId: "job", ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: false }, theme, { args: { action: "run", agent: "scout", objective: "Inspect" }, isError: false, state, invalidate } as never);
+    tool.renderResult!({ content: [], details: { jobId: "job", ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: false }, theme, { args: { action: "run", agent: "scout", objective: "Inspect", background: true }, isError: false, state, invalidate } as never);
     await Promise.resolve();
-    const rendered = text(tool.renderCall!({ action: "run", agent: "scout", objective: "Inspect" } as never, theme, { args: {}, isError: false, state, invalidate } as never));
-    expect(rendered).toContain("#7 scout · model · high");
+    const rendered = text(tool.renderCall!({ action: "run", agent: "scout", objective: "Inspect", background: true } as never, theme, { args: {}, isError: false, state, invalidate } as never));
+    expect(rendered).toContain("#7 scout — Inspect · tracking in Subagents");
 
     for (const action of ["get", "cancel"] as const) {
       const actionState: Record<string, unknown> = {};
@@ -191,24 +231,28 @@ describe("task API rendering", () => {
     await env.extension.shutdown();
   }, 20_000);
 
-  test("renders completion timing without stale runtime state and uses neutral mixed-batch background", () => {
+  test("renders structured completions without status backgrounds", () => {
     const taggedTheme = {
       ...theme,
       bg: (color: string, value: string) => `<${color}>${value}</${color}>`,
     } as never;
     const completed = {
       jobId: "job-1", ref: "#1", agent: "scout", task: "Inspect", status: "completed" as const,
-      summary: "Done", runtimeStatus: "idle" as const, elapsedMs: 2_000,
+      summary: "Done", evidence: "diff", validation: "tests pass", elapsedMs: 2_000,
     };
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
-    expect(expanded).toContain("elapsed 2s");
+    expect(expanded).toContain("#1 scout · completed · 2s — Inspect");
+    expect(expanded).toContain("Evidence");
+    expect(expanded).toContain("  diff");
+    expect(expanded).toContain("Validation");
+    expect(expanded).toContain("  tests pass");
     expect(expanded).not.toContain("runtime idle");
 
     const mixed = text(renderSubagentCompletion({ content: "", details: { batch: [
       completed,
       { ...completed, jobId: "job-2", ref: "#2", status: "failed" as const },
     ] } }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(mixed).toContain("<toolPendingBg>");
+    expect(mixed).not.toContain("<toolPendingBg>");
     expect(mixed).not.toContain("<toolErrorBg>");
     expect(mixed).not.toContain("<toolSuccessBg>");
   });

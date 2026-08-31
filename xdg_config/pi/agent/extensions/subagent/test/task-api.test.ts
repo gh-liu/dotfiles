@@ -77,7 +77,7 @@ describe("task-oriented subagent API", () => {
     expect((await env.invoke({ action: "cancel", jobId: "job" })).details)
       .toMatchObject({ alreadyTerminal: true, cancelled: false });
     expect((await env.invoke({ action: "cancel", jobId: "missing" })).details)
-      .toEqual({ jobId: "missing", cancelled: false, alreadyTerminal: true });
+      .toEqual({ jobId: "missing", status: "unknown", cancelled: false, unknown: true });
   });
 
   test("get marks only an expired running wait as timed out", async () => {
@@ -86,6 +86,33 @@ describe("task-oriented subagent API", () => {
     expect((await env.invoke({ action: "get", jobId: "job" })).details).not.toHaveProperty("timedOut");
     expect((await env.invoke({ action: "get", jobId: "job", waitMs: 1 })).details)
       .toMatchObject({ jobId: "job", status: "running", timedOut: true });
+    await env.extension.shutdown();
+  });
+
+  test("get provides bounded running diagnostics and distinguishes unknown jobs", async () => {
+    const env = setup({ ids: ["job", "private"] });
+    await env.invoke({
+      action: "run", agent: "scout", objective: "Inspect lifecycle", scope: ["runtime.ts"],
+      constraints: ["Read only"], acceptance: ["Cite evidence"], background: true,
+    });
+    env.fake.controllers[0].starts[0].options.onProgress?.({
+      summary: "needs a decision",
+      timeline: [
+        { kind: "thinking", text: "hidden" },
+        { kind: "tool", id: "read", summary: "read runtime.ts", status: "completed" },
+      ],
+      needsDecision: true,
+      decision: { question: "Inspect cleanup too?", options: ["yes", "no"] },
+    });
+    const fetched = await env.invoke({ action: "get", jobId: "#1" });
+    expect(fetched.details).toMatchObject({
+      ref: "#1", status: "running", objective: "Inspect lifecycle", deadlineMs: 600_000,
+      activity: "needs a decision", recentActivity: ["Thinking", "completed: read runtime.ts"],
+      needsDecision: true, decision: { question: "Inspect cleanup too?", options: ["yes", "no"] },
+      workOrder: { goal: "Inspect lifecycle", constraints: expect.arrayContaining(["Read only"]), validation: ["Cite evidence"] },
+    });
+    const unknown = await env.invoke({ action: "get", jobId: "gone" });
+    expect(unknown).toMatchObject({ isError: true, details: { status: "unknown", expired: true } });
     await env.extension.shutdown();
   });
 
