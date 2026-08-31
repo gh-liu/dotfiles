@@ -206,12 +206,6 @@ export function loadSubagentOverrides(settingsPath: string): {
     const root = settings as Record<string, unknown>;
     const runtime = root.subagent;
     const errors: AgentDefinitionError[] = [];
-    if (root.subagents !== undefined) {
-      errors.push({
-        filePath: "settings.json:subagents",
-        error: "settings.json:subagents: moved to settings.json:subagent.subagents",
-      });
-    }
     if (runtime === undefined) return { errors };
     if (runtime === null || typeof runtime !== "object" || Array.isArray(runtime)) {
       return {

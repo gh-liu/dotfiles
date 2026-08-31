@@ -43,14 +43,6 @@ describe("subagent discovery", () => {
     expect(loaded.errors[0]?.error).toContain("must be an object");
   });
 
-  test("reports the removed top-level override location", () => {
-    const path = join(temporaryDirectory("settings-"), "settings.json");
-    writeFileSync(path, JSON.stringify({ subagents: { scout: { model: "legacy/model" } } }));
-    const loaded = loadSubagentOverrides(path);
-    expect(loaded.overrides).toBeUndefined();
-    expect(loaded.errors[0]?.error).toContain("moved to settings.json:subagent.subagents");
-  });
-
   test("collects malformed settings and validates credential names", () => {
     const path = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(path, "{");
