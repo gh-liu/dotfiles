@@ -252,6 +252,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ? operation.finishedAt - operation.startedAt
       : undefined;
     return {
+      jobId: runtime.runId,
+      ref: `#${runtime.index}`,
       agent: operation.result.agent,
       status: operation.result.status,
       summary: operation.result.summary,
@@ -268,7 +270,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const handoff = modelSubagentHandoff(enriched);
       return {
         content: [{ type: "text" as const, text: serializeSubagentResult(enriched) }],
-        details: { ...handoff, ref: `#${runtime.index}` },
+        details: handoff,
         isError: enriched.status === "failed",
       };
     }
@@ -399,10 +401,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }, true);
       }
 
-      const allowedRoot = findAllowedRoot(ctx.cwd);
-      const cwd = resolveChildCwd(allowedRoot, resolve(ctx.cwd, request.cwd ?? "."));
+      let executionContext: { allowedRoot: string; cwd: string; projectGuidance: string[] };
+      try {
+        const allowedRoot = findAllowedRoot(ctx.cwd);
+        const cwd = resolveChildCwd(allowedRoot, resolve(ctx.cwd, request.cwd ?? "."));
+        executionContext = { allowedRoot, cwd, projectGuidance: loadProjectGuidance(allowedRoot, cwd) };
+      } catch (error) {
+        return response({
+          error: boundText(error instanceof Error ? error.message : String(error), {
+            maxCharacters: 2_000,
+            maxLines: 20,
+          }),
+        }, true);
+      }
+      const { cwd, projectGuidance } = executionContext;
       const parentSessionId = ctx.sessionManager.getSessionId();
-      const projectGuidance = loadProjectGuidance(allowedRoot, cwd);
       const runtimeAgent = agent.model ? agent : (() => {
         const model = resolveAgentModel(agent, settingsDefaults, mainModelOf(ctx.model));
         return model ? { ...agent, model } : agent;
@@ -469,7 +482,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         } catch {
           // The original startup/operation failure is the actionable error.
         }
-        return response({ jobId: runId, status: "failed", error: error instanceof Error ? error.message : String(error) }, true);
+        return response({
+          jobId: runId,
+          ref: `#${runtime.index}`,
+          status: "failed",
+          error: boundText(error instanceof Error ? error.message : String(error), {
+            maxCharacters: 2_000,
+            maxLines: 20,
+          }),
+        }, true);
       }
     },
   });

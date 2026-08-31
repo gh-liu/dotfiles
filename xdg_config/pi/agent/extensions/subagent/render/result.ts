@@ -97,12 +97,5 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
     : theme.fg("success", "✓ completed");
   if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatCountdown(details.elapsedMs)}`);
   if (summary) text += options.expanded ? `\n${summary.split("\n").slice(0, 20).map((line) => theme.fg("dim", line)).join("\n")}` : `\n${theme.fg("dim", oneLine(summary, 240))}`;
-  const finalTimeline = Array.isArray(details.timeline) ? details.timeline : undefined;
-  if (finalTimeline && finalTimeline.length > 0) {
-    const limit = options.expanded ? 12 : 8;
-    for (const entry of finalTimeline.slice(-limit)) {
-      for (const line of timelineEntryLines(entry, theme)) text += `\n${line}`;
-    }
-  }
   return new Text(text, 0, 0);
 }

@@ -20,7 +20,7 @@ describe("task API rendering", () => {
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
-  test("renders interleaved thinking timeline in partial and final views", () => {
+  test("renders interleaved thinking timeline only in partial views", () => {
     const timeline = [
       { kind: "tool", id: "a", summary: "read a.ts", status: "completed" },
       { kind: "thinking", text: "we should inspect the schema first." },
@@ -58,11 +58,9 @@ describe("task API rendering", () => {
       details: { status: "completed", summary: "Done", timeline },
     }, { expanded: false, isPartial: false }, theme, finalContext));
     expect(final).toContain("✓ completed");
-    // Settled thinking rows show a static completed icon, not the live spinner.
-    expect(final).toContain("✓ Thinking");
-    expect(final).not.toContain("Thinking…");
+    expect(final).not.toContain("✓ Thinking");
     expect(final).not.toContain("we should inspect the schema first.");
-    expect(final).toContain("✓ read a.ts");
+    expect(final).not.toContain("✓ read a.ts");
   });
 
   test("flushed timeline thinking is settled; in-progress thinking uses the fallback spinner", () => {
@@ -81,9 +79,9 @@ describe("task API rendering", () => {
     expect(thinkingLine).toBeDefined();
     expect(thinkingLine!.trim()).toMatch(/^\S+ Thinking…$/);
     expect(thinking).not.toContain("✓ Thinking");
-    // Settled: static completed icon, no spinner and no raw reasoning text.
+    // Terminal handoffs discard renderer-only timeline activity.
     const settled = text(renderSubagentResult({ content: [], details: { status: "completed", summary: "Done", timeline } }, { expanded: false, isPartial: false }, theme, makeContext()));
-    expect(settled).toContain("✓ Thinking");
+    expect(settled).not.toContain("✓ Thinking");
     expect(settled).not.toContain("Thinking…");
     expect(settled).not.toContain("internal reasoning passes");
   });

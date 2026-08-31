@@ -3,10 +3,14 @@ import type { SubagentResult } from "./protocol.ts";
 export const SUBAGENT_HANDOFF_MAX_CHARACTERS = 16_000;
 
 type ModelSubagentHandoffSource = Pick<SubagentResult, "agent" | "status" | "summary" | "transcript"> & {
+  jobId?: string;
+  ref?: string;
   elapsedMs?: number;
 };
 
 export interface ModelSubagentHandoff {
+  jobId?: string;
+  ref?: string;
   agent: string;
   status: SubagentResult["status"];
   summary: string;
@@ -114,6 +118,8 @@ export function boundText(text: string, limits: TextLimits, exactSecretValues: s
 export function modelSubagentHandoff(result: ModelSubagentHandoffSource): ModelSubagentHandoff {
   const extracted = extractStructuredHandoff(result.summary);
   return {
+    ...(result.jobId === undefined ? {} : { jobId: result.jobId }),
+    ...(result.ref === undefined ? {} : { ref: result.ref }),
     agent: result.agent,
     status: result.status,
     ...extracted,

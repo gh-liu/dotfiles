@@ -200,12 +200,30 @@ describe("task-oriented subagent API", () => {
     const run = structured.invoke({ action: "run", agent: "scout", objective: "Report" });
     await vi.waitFor(() => expect(structured.fake.controllers[0]?.starts).toHaveLength(1));
     structured.fake.controllers[0].settle(0, "completed", "## Summary\nDone\n## Changes\nEdited a.ts\n## Evidence\ndiff\n## Validation\ntests pass\n## Risks\nNone");
-    expect((await run).content[0].text).toContain('"changes":"Edited a.ts"');
+    const structuredResult = await run;
+    expect(JSON.parse(structuredResult.content[0].text)).toMatchObject({
+      jobId: "structured",
+      ref: "#1",
+      changes: "Edited a.ts",
+    });
+    expect(structuredResult.details).toMatchObject({ jobId: "structured", ref: "#1" });
 
     const plain = setup({ ids: ["plain", "private"] });
     const fallback = plain.invoke({ action: "run", agent: "scout", objective: "Report" });
     await vi.waitFor(() => expect(plain.fake.controllers[0]?.starts).toHaveLength(1));
     plain.fake.controllers[0].settle(0, "completed", "ordinary text");
     expect((await fallback).content[0].text).toContain('"summary":"ordinary text"');
+  });
+
+  test("returns an ordinary bounded tool error when cwd escapes the project root", async () => {
+    const env = setup();
+    const escaped = await env.invoke({ action: "run", agent: "scout", objective: "Escape", cwd: ".." });
+
+    expect(escaped).toMatchObject({
+      isError: true,
+      details: { error: expect.stringContaining("outside the allowed root") },
+    });
+    expect(escaped.content[0].text.length).toBeLessThan(2_100);
+    expect(env.fake.factory).not.toHaveBeenCalled();
   });
 });
