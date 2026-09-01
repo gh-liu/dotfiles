@@ -7,7 +7,6 @@ tools:
   - find
   - ls
 thinking: high
-model: openai-codex/gpt-5.6-sol
 contextPolicy: fresh
 maxDepth: 1
 ---

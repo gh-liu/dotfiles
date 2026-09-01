@@ -21,8 +21,12 @@
       "scout": {
         "model": "opencode-go/deepseek-v4-flash"
       },
-      "researcher": {},
-      "reviewer": {},
+      "researcher": {
+        "model": "opencode-go/deepseek-v4-flash"
+      },
+      "reviewer": {
+        "model": "opencode-go/deepseek-v4-flash"
+      },
       "tester": {
         "model": "opencode-go/deepseek-v4-flash"
       }
