@@ -49,6 +49,19 @@ describe("task API rendering", () => {
     expect(call).toContain("Now compare the tests");
   });
 
+  test("renders input errors as errors rather than unknown sessions", () => {
+    const rendered = text(renderSubagentResult(
+      { content: [], details: { error: "task is required for subagent run" } },
+      { expanded: true, isPartial: false },
+      theme,
+      { ...runContext(), isError: true } as never,
+    ));
+    expect(rendered).toContain("✗ subagent error");
+    expect(rendered).toContain("task is required for subagent run");
+    expect(rendered).not.toContain("unknown session");
+    expect(rendered).not.toContain("Summary");
+  });
+
   test("partial tool results point to the activity center and never duplicate activity", () => {
     const context = runContext();
     const details = {

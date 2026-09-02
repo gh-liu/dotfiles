@@ -44,6 +44,13 @@ export function renderSubagentResult(
   const summary = typeof details.summary === "string" ? details.summary : error;
   const displayRef = ref ?? ("ref" in context.args ? publicRef(context.args.ref) : undefined);
 
+  if (status === "unknown" && error) {
+    let text = theme.fg("error", "✗ subagent error");
+    if (displayRef) text += theme.fg("toolTitle", ` · ${displayRef}`);
+    text += `\n${theme.fg("dim", oneLine(error, 240))}`;
+    return new Text(text, 0, 0);
+  }
+
   if (context.args.action === "cancel" || context.args.action === "close") {
     const succeeded = context.args.action === "cancel" ? details.cancelled === true : details.closed === true;
     const label = succeeded ? `✓ ${context.args.action} acknowledged` : `• ${context.args.action} not applied`;
