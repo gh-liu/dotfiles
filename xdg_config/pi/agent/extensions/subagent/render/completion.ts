@@ -2,7 +2,7 @@ import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
 import { agentNameColor } from "./call.ts";
-import { boundedLines, formatCountdown, oneLine } from "./shared.ts";
+import { boundedLines, formatDuration, oneLine } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
@@ -44,7 +44,7 @@ function completionEntryText(
   const summaryRaw = details.summary ?? "";
   let text = `${theme.fg(color, marker)} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
   if (status !== "completed") text += theme.fg(color, ` · ${status}`);
-  if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatCountdown(details.elapsedMs)}`);
+  if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatDuration(details.elapsedMs)}`);
   if (!expanded && summaryRaw) {
     for (const line of boundedLines(summaryRaw, 480, 2)) text += `\n${theme.fg("dim", `  ${line}`)}`;
   }

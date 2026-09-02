@@ -1,10 +1,10 @@
 type SubagentRenderArgs =
   | {
-      action: "run"; agent: string; objective: string; background?: boolean; cwd?: string; deadlineMs?: number;
+      action: "run"; agent: string; objective: string; background?: boolean; cwd?: string;
       model?: string; thinking?: string; scope?: string[]; constraints?: string[]; acceptance?: string[]; context?: string;
     }
   | {
-      action: "workflow"; objective: string; background?: boolean; deadlineMs?: number;
+      action: "workflow"; objective: string; background?: boolean;
       nodes?: Array<{ id: string; agent: string; objective: string; dependsOn?: string[] }>;
     }
   | { action: "get"; jobId?: string; waitMs?: number }
@@ -45,8 +45,8 @@ function oneLine(text: string, maxCharacters = 160): string {
     : `${normalized.slice(0, maxCharacters - 1)}…`;
 }
 
-function formatCountdown(ms: number): string {
-  // Seconds-only keeps the live view consistent with the title's `· 240s` deadline hint.
+function formatDuration(ms: number): string {
+  // Seconds-only keeps the live view compact and stable between heartbeat updates.
   return `${Math.max(0, Math.ceil(ms / 1000))}s`;
 }
 
@@ -88,5 +88,5 @@ function publicRef(value: string | undefined): string | undefined {
   return match ? `#${match[1]}` : undefined;
 }
 
-export { boundedLines, collapseHome, formatCountdown, oneLine, positiveSafeRuntimeIndex, publicRef, taskTitle };
+export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };

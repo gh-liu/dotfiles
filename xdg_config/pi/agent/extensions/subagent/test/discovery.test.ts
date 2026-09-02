@@ -80,7 +80,7 @@ describe("subagent discovery", () => {
   test("inherits the parent model, while an explicit override wins", async () => {
     const inherited = setup({ ids: ["job", "private"] });
     const inheritedContext = { ...context(inherited.root), model: { provider: "parent", id: "model" } };
-    const run = inherited.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 } as never, undefined, undefined, inheritedContext as never);
+    const run = inherited.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect" } as never, undefined, undefined, inheritedContext as never);
     await vi.waitFor(() => expect(inherited.fake.controllers[0]?.starts).toHaveLength(1));
     expect(inherited.fake.controllers[0].starts[0].options.agent.model).toBe("parent/model");
     inherited.fake.controllers[0].settle();
@@ -89,7 +89,7 @@ describe("subagent discovery", () => {
     const settingsPath = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(settingsPath, JSON.stringify({ subagent: { subagents: { scout: { model: "override/model" } } } }));
     const overridden = setup({ settingsPath });
-    const overrideRun = overridden.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000 } as never, undefined, undefined, { ...context(overridden.root), model: { provider: "parent", id: "model" } } as never);
+    const overrideRun = overridden.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect" } as never, undefined, undefined, { ...context(overridden.root), model: { provider: "parent", id: "model" } } as never);
     await vi.waitFor(() => expect(overridden.fake.controllers[0]?.starts).toHaveLength(1));
     expect(overridden.fake.controllers[0].starts[0].options.agent.model).toBe("override/model");
     overridden.fake.controllers[0].settle();

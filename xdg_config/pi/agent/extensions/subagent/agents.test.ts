@@ -143,14 +143,14 @@ describe("agent definitions", () => {
     expect(researcher.description).toContain("parent must not duplicate its searches");
   });
 
-  test("loads the bundled reviewer as a high-thinking read-only review profile", () => {
+  test("loads the bundled reviewer as a medium-thinking read-only review profile", () => {
     const reviewer = loadAgentDefinition(
       fileURLToPath(new URL("../../agents/reviewer.md", import.meta.url)),
     );
 
     expect(reviewer).toMatchObject({
       name: "reviewer",
-      thinking: "high",
+      thinking: "medium",
       tools: ["read", "grep", "find", "ls"],
       contextPolicy: "fresh",
       maxDepth: 1,
@@ -172,7 +172,7 @@ describe("agent definitions", () => {
     expect(oracle).toMatchObject({
       name: "oracle",
       thinking: "high",
-      model: "openai-codex/gpt-5.6-sol",
+      model: undefined,
       tools: ["read", "grep", "find", "ls"],
       contextPolicy: "fresh",
       maxDepth: 1,
@@ -330,7 +330,7 @@ Inspect the repository.
       worker: "medium",
       scout: "minimal",
       researcher: "medium",
-      reviewer: "high",
+      reviewer: "medium",
       tester: "medium",
     };
 

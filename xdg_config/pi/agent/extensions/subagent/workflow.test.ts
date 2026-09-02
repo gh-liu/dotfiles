@@ -26,7 +26,7 @@ describe("workflow DAG", () => {
   });
 
   test("runs independent nodes in parallel and passes settled dependencies to barriers", async () => {
-    const record = createWorkflowRecord({ workflowId: "wf", index: 1, objective: "Ship", background: false, deadlineMs: 60_000, nodes });
+    const record = createWorkflowRecord({ workflowId: "wf", index: 1, objective: "Ship", background: false, nodes });
     const starts: string[] = [];
     const upstream = new Map<string, string[]>();
     const gates = new Map<string, () => void>();
@@ -56,7 +56,7 @@ describe("workflow DAG", () => {
 
   test("skips blocked descendants but allows explicit failure consumers", async () => {
     const record = createWorkflowRecord({
-      workflowId: "wf", index: 1, objective: "Ship", background: false, deadlineMs: 60_000,
+      workflowId: "wf", index: 1, objective: "Ship", background: false,
       nodes: [
         { id: "first", agent: "scout", objective: "Fail" },
         { id: "blocked", agent: "worker", objective: "Blocked", dependsOn: ["first"] },
@@ -77,7 +77,7 @@ describe("workflow DAG", () => {
   });
 
   test("interrupts pending work", async () => {
-    const record = createWorkflowRecord({ workflowId: "wf", index: 1, objective: "Stop", background: false, deadlineMs: 60_000, nodes: [nodes[0]!] });
+    const record = createWorkflowRecord({ workflowId: "wf", index: 1, objective: "Stop", background: false, nodes: [nodes[0]!] });
     const running = executeWorkflow(record, {
       canStart: () => false,
       async runNode() { return { status: "completed" }; },
@@ -90,7 +90,7 @@ describe("workflow DAG", () => {
 
   test("bounds the complete twenty-node snapshot", () => {
     const record = createWorkflowRecord({
-      workflowId: "wf", index: 1, objective: "x".repeat(20_000), background: false, deadlineMs: 60_000,
+      workflowId: "wf", index: 1, objective: "x".repeat(20_000), background: false,
       nodes: Array.from({ length: 20 }, (_, index) => ({ id: `node${index}`, agent: "scout", objective: "o".repeat(10_000) })),
     });
     for (const node of record.nodes.values()) {

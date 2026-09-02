@@ -399,7 +399,6 @@ export async function createSdkSubagentController(
           options.agent.tools.length !== initialProfile.tools.length ||
           options.agent.tools.some((tool, index) => tool !== initialProfile.tools[index]);
         if (identityMismatch) throw new Error("SDK subagent runtime identity does not match controller");
-        if (!Number.isSafeInteger(options.deadlineMs) || options.deadlineMs <= 0) throw new Error("deadlineMs must be a positive integer");
         if (options.toolBudget !== undefined && (!Number.isSafeInteger(options.toolBudget) || options.toolBudget <= 0)) {
           throw new Error("toolBudget must be a positive integer");
         }
@@ -563,7 +562,6 @@ export async function createSdkSubagentController(
         const onAbort = (): void => {
           void cancel(new SubagentCancellationError("Subagent run cancelled by controller")).catch(() => {});
         };
-        let deadline: NodeJS.Timeout | undefined;
         // Prepare abort handling before prompt
         // Also need to handle session failure during prompt via terminal
         try {
@@ -589,9 +587,6 @@ export async function createSdkSubagentController(
                 activeAccepted = true;
                 accepted.resolve();
                 abortActive = (message) => cancel(new SubagentCancellationError(message));
-                deadline = setTimeout(() => {
-                  void cancel(new SubagentCancellationError(`Subagent execution deadline exceeded (${options.deadlineMs} ms)`)).catch(() => {});
-                }, options.deadlineMs);
                 if (options.signal?.aborted) onAbort();
               } else {
                 accepted.reject(new Error("SDK prompt preflight failed"));
@@ -624,7 +619,6 @@ export async function createSdkSubagentController(
           }
           throw failure;
         } finally {
-          if (deadline) clearTimeout(deadline);
           if (abortWatchdog) clearTimeout(abortWatchdog);
           options.signal?.removeEventListener("abort", onAbort);
           try { currentUnsubscribe?.(); } catch {}

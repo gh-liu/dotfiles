@@ -23,7 +23,6 @@ export interface OperationRecord {
   accepted: boolean;
   task: string;
   workOrder: SubagentRunOptions["workOrder"];
-  deadlineMs: number;
   startedAt?: number;
   finishedAt?: number;
   result?: SubagentResult;
@@ -144,7 +143,6 @@ export interface CreateRuntimeInput {
 export interface BeginOperationInput {
   operationId: string;
   task: string;
-  deadlineMs: number;
   notifyOnSettle: boolean;
   workOrder: SubagentRunOptions["workOrder"];
   signal?: AbortSignal;
@@ -400,7 +398,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     runtime: RuntimeRecord,
     input: BeginOperationInput,
   ): Promise<OperationRecord> => {
-    const { operationId, task, deadlineMs, notifyOnSettle, workOrder, signal, onUpdate } = input;
+    const { operationId, task, notifyOnSettle, workOrder, signal, onUpdate } = input;
     let settle!: () => void;
     const operation: OperationRecord = {
       operationId,
@@ -408,7 +406,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       accepted: false,
       task,
       workOrder,
-      deadlineMs,
       notifyOnSettle,
       settled: new Promise<void>((resolve) => { settle = resolve; }),
       settle: () => settle(),
@@ -467,7 +464,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
           startedAt: operation.startedAt,
-          deadlineMs,
           ...(progress.phase ? { phase: progress.phase } : {}),
           ...(progress.tools ? { toolProgress: progress.tools } : {}),
           ...(progress.timeline ? { timeline: progress.timeline } : {}),
@@ -490,7 +486,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       runId: runtime.runId,
       operationId,
       parentSessionId: runtime.parentSessionId,
-      deadlineMs,
       signal,
       onProgress,
     };

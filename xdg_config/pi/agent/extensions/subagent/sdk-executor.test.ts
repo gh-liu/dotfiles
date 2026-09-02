@@ -40,7 +40,6 @@ function options(overrides: Partial<SubagentRunOptions> = {}): SubagentRunOption
     runId: "run-sdk",
     operationId: "operation-sdk",
     parentSessionId: "parent-sdk",
-    deadlineMs: 5_000,
     ...overrides,
   };
 }
@@ -602,29 +601,23 @@ describe("one-shot SDK executor", () => {
     await controller.close();
   });
 
-  test("deadline aborts the operation without killing the reusable runtime", async () => {
+  test("does not abort an accepted operation based on elapsed time", async () => {
     const session = new FakeSession();
-    let operation = 0;
-    session.promptHandler = async (_text, opts, emit) => {
-      operation++;
-      if (opts?.preflightResult) opts.preflightResult(true);
-      if (operation === 2) {
-        emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "After deadline" }], stopReason: "stop" } });
-        emit({ type: "agent_settled" });
-      } else {
-        await new Promise(() => {});
-      }
+    session.promptHandler = async (_text, opts) => {
+      opts?.preflightResult?.(true);
+      await new Promise(() => {});
     };
     session.abortHandler = async () => {
       session.emit({ type: "agent_settled" });
     };
-    const firstOptions = options({ operationId: "operation-deadline", deadlineMs: 20 });
-    const controller = await fakeController(firstOptions, session);
-    await expect(controller.submit(firstOptions)).resolves.toMatchObject({
-      status: "interrupted",
-      summary: "Subagent execution deadline exceeded (20 ms)",
-    });
-    await expect(controller.submit({ ...firstOptions, operationId: "operation-after-deadline", deadlineMs: 1000 })).resolves.toMatchObject({ status: "completed", summary: "After deadline" });
+    const runOptions = options({ operationId: "operation-without-elapsed-limit" });
+    const controller = await fakeController(runOptions, session);
+    const operation = controller.start(runOptions);
+    await operation.accepted;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    expect(session.abortCalls).toBe(0);
+    expect(await controller.interrupt(runOptions.operationId)).toBe(true);
+    await expect(operation.result).resolves.toMatchObject({ status: "interrupted" });
     await controller.close();
   });
 

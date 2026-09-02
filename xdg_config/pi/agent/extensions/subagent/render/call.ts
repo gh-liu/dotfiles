@@ -42,7 +42,7 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const title = taskTitle(args.objective, context?.expanded ? 120 : 240);
   if (title) text += theme.fg("dim", ` — ${title}`);
   if (!context?.expanded) return new Text(text, 0, 0);
-  const meta = [model ? stripModel(model) : undefined, thinking, args.cwd ? collapseHome(args.cwd) : undefined, args.deadlineMs ? `${Math.round(args.deadlineMs / 1000)}s deadline` : undefined].filter(Boolean);
+  const meta = [model ? stripModel(model) : undefined, thinking, args.cwd ? collapseHome(args.cwd) : undefined].filter(Boolean);
   if (meta.length) text += theme.fg("dim", ` · ${meta.join(" · ")}`);
   const sections: Array<[string, string | string[] | undefined]> = [
     ["Outcome", args.objective], ["Scope", args.scope], ["Context", args.context],

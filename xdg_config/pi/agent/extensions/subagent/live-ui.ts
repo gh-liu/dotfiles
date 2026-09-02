@@ -10,7 +10,7 @@
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
  * headless (-p) and RPC runs never touch terminal UI. Renders are throttled
- * (leading + trailing 250 ms), a 1 s heartbeat keeps elapsed/deadline fresh
+ * (leading + trailing 250 ms), a 1 s heartbeat keeps elapsed time fresh
  * while any runtime is tracked, and a 250 ms ticker advances the job-level
  * spinner while any runtime is active; all timers stop when idle or disposed.
  */
@@ -41,7 +41,6 @@ export interface LiveRuntimeInfo {
   index: number;
   agent: string;
   startedAt: number;
-  deadlineMs: number;
   mode: LiveRuntimeMode;
   objective: string;
   /** Owning workflow/node identity for coordinated DAG runs. */
@@ -52,7 +51,6 @@ interface RuntimeDisplay {
   index: number;
   agent: string;
   startedAt: number;
-  deadlineMs: number;
   mode: LiveRuntimeMode;
   objective: string;
   workflow?: { ref: string; nodeId: string };
@@ -133,7 +131,7 @@ function renderLines(
   for (const runtime of visible) {
     const ref = `#${runtime.index}`;
     const elapsedMs = Math.max(0, now - runtime.startedAt);
-    const time = width >= 52 ? `${formatDuration(elapsedMs)}/${formatDuration(runtime.deadlineMs)}` : formatDuration(elapsedMs);
+    const time = formatDuration(elapsedMs);
     const workflowIdentity = runtime.workflow
       ? `${theme.fg("accent", `${runtime.workflow.ref}/${oneLine(runtime.workflow.nodeId, 20)}`)} ${theme.fg("muted", "·")} `
       : "";
@@ -306,7 +304,6 @@ export function createLiveUi(): LiveUiController {
         index: info.index,
         agent: info.agent,
         startedAt: info.startedAt,
-        deadlineMs: info.deadlineMs,
         mode: info.mode,
         objective: info.objective,
         ...(info.workflow ? { workflow: info.workflow } : {}),

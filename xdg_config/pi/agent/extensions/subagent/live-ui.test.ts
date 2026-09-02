@@ -38,7 +38,6 @@ const tracked = (overrides: Partial<Parameters<ReturnType<typeof createLiveUi>["
   agent: "scout",
   objective: "Map the authentication lifecycle and identify the safest implementation seam.",
   startedAt: Date.now(),
-  deadlineMs: 60_000,
   mode: "foreground" as const,
   ...overrides,
 });
@@ -78,8 +77,8 @@ describe("activity center", () => {
 
     const lines = renderWidget(ui);
     expect(lines[0]).toBe("Subagents · 2 active");
-    expect(lines.join("\n")).toContain("#1 scout · 0s/60s");
-    expect(lines.join("\n")).toContain("#2 reviewer · 0s/60s");
+    expect(lines.join("\n")).toContain("#1 scout · 0s");
+    expect(lines.join("\n")).toContain("#2 reviewer · 0s");
     expect(lines.join("\n")).toContain("Map the authentication lifecycle");
     expect(lines.join("\n")).toContain("Review the patch for lifecycle races.");
     expect(lines.join("\n")).toContain("↳ grep auth middleware…");
@@ -219,7 +218,7 @@ describe("activity center", () => {
     vi.advanceTimersByTime(250);
     expect(ui.widgetCalls.length).toBeGreaterThan(1);
     vi.advanceTimersByTime(1_000);
-    expect(renderWidget(ui).find((line) => line.includes("#1"))).toContain("1s/60s");
+    expect(renderWidget(ui).find((line) => line.includes("#1"))).toContain("1s");
   });
 
   test("registers above the editor and dispose clears timers and widget", () => {

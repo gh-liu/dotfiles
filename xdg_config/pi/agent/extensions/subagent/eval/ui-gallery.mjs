@@ -62,7 +62,7 @@ const runArgs = {
   action: "run", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal", objective,
   scope: ["spec.md", "runtime.ts", "sdk-executor.ts"], context: "The task API is run/get/cancel.",
   constraints: ["Read only", "Cite exact files and lines"], acceptance: ["Compare implementation with tests"],
-  cwd: `${process.env.HOME ?? "/home/user"}/dev/go-zero`, deadlineMs: 240_000,
+  cwd: `${process.env.HOME ?? "/home/user"}/dev/go-zero`,
 };
 
 function calls() {
@@ -86,11 +86,11 @@ function progress() {
   const live = createLiveUi();
   live.attach({ setWidget(_id, content) { widgetFactory = content; } });
   const now = Date.now();
-  live.track("job-1", { index: 1, agent: "scout", objective, startedAt: now - 25_000, deadlineMs: 240_000, mode: "foreground" });
+  live.track("job-1", { index: 1, agent: "scout", objective, startedAt: now - 25_000, mode: "foreground" });
   live.progress("job-1", "Thinking", { kind: "thinking", status: "completed" });
-  live.track("job-2", { index: 2, agent: "researcher", objective: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, deadlineMs: 180_000, mode: "background" });
+  live.track("job-2", { index: 2, agent: "researcher", objective: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, mode: "background" });
   live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" });
-  live.track("job-3", { index: 3, agent: "reviewer", objective: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, deadlineMs: 120_000, mode: "background" });
+  live.track("job-3", { index: 3, agent: "reviewer", objective: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, mode: "background" });
   live.progress("job-3", "waiting for a decision", undefined, undefined, "Choose compatibility policy");
   if (typeof widgetFactory === "function") {
     const widget = widgetFactory({}, theme);

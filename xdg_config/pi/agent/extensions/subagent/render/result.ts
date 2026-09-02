@@ -1,7 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 
-import { boundedLines, formatCountdown, oneLine, positiveSafeRuntimeIndex, publicRef, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
+import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
 function renderTimeline(details: Record<string, unknown>, theme: Theme): string {
   if (!Array.isArray(details.timeline) || details.timeline.length === 0) return "";
@@ -117,7 +117,7 @@ export function renderSubagentResult(result: SubagentRenderResult, options: { ex
     : status === "running" ? theme.fg("warning", details.timedOut === true ? "● still running · wait expired" : "● running")
     : status === "interrupted" ? theme.fg("warning", "■ interrupted")
     : theme.fg("success", "✓ completed");
-  if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatCountdown(details.elapsedMs)}`);
+  if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatDuration(details.elapsedMs)}`);
   if (summary && !options.expanded) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
   if (options.expanded) {
     if (summary) {

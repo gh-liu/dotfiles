@@ -15,7 +15,7 @@ const graph = [
 describe("subagent workflow integration", () => {
   test("runs a generic DAG through RuntimeHub and passes bounded predecessor handoffs", async () => {
     const env = setup({ agentNames: agents });
-    const execution = env.invoke({ action: "workflow", objective: "Ship the feature", deadlineMs: 60_000, nodes: graph });
+    const execution = env.invoke({ action: "workflow", objective: "Ship the feature", nodes: graph });
 
     await vi.waitFor(() => expect(env.fake.controllers).toHaveLength(2));
     expect(env.fake.controllers.map((controller) => controller.starts[0].options.agent.name).sort()).toEqual(["researcher", "scout"]);
@@ -55,7 +55,6 @@ describe("subagent workflow integration", () => {
     const started = await env.invoke({
       action: "workflow",
       objective: "Background flow",
-      deadlineMs: 60_000,
       background: true,
       nodes: [
         { id: "inspect", agent: "scout", objective: "Inspect" },
@@ -75,7 +74,7 @@ describe("subagent workflow integration", () => {
     expect(env.extension.messages).toHaveLength(1);
 
     const second = await env.invoke({
-      action: "workflow", objective: "Cancel flow", deadlineMs: 60_000, background: true,
+      action: "workflow", objective: "Cancel flow", background: true,
       nodes: [{ id: "work", agent: "worker", objective: "Work" }],
     });
     await vi.waitFor(() => expect(env.fake.controllers[2]?.starts).toHaveLength(1));
@@ -87,7 +86,7 @@ describe("subagent workflow integration", () => {
   test("skips descendants after failure and can run an explicit failure consumer", async () => {
     const env = setup({ agentNames: ["scout", "worker", "reviewer"] });
     const execution = env.invoke({
-      action: "workflow", objective: "Recover", deadlineMs: 60_000,
+      action: "workflow", objective: "Recover",
       nodes: [
         { id: "inspect", agent: "scout", objective: "Inspect" },
         { id: "change", agent: "worker", objective: "Change", dependsOn: ["inspect"] },
@@ -114,7 +113,7 @@ describe("subagent workflow integration", () => {
   test("rejects malformed graphs and unknown agents before reserving capacity", async () => {
     const env = setup();
     const result = await env.invoke({
-      action: "workflow", objective: "Bad", deadlineMs: 60_000,
+      action: "workflow", objective: "Bad",
       nodes: [
         { id: "a", agent: "missing", objective: "A", dependsOn: ["b"] },
         { id: "b", agent: "scout", objective: "B", dependsOn: ["a"] },
@@ -133,7 +132,7 @@ describe("subagent workflow integration", () => {
     expect(env.fake.controllers).toHaveLength(3);
 
     const started = await env.invoke({
-      action: "workflow", objective: "Wait for capacity", deadlineMs: 60_000, background: true,
+      action: "workflow", objective: "Wait for capacity", background: true,
       nodes: [{ id: "inspect", agent: "scout", objective: "Inspect after a slot opens" }],
     });
     expect(started.details).toMatchObject({ ref: "W#1", status: "running" });

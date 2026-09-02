@@ -82,12 +82,6 @@ function retainCallTitleDetails(
   });
 }
 
-const deadline = () => Type.Optional(Type.Integer({
-  minimum: 1_000,
-  maximum: 3_600_000,
-  description: "Required for run/workflow: execution deadline (1,000-3,600,000 ms)",
-}));
-
 const COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS = 160;
 const AUTH_ENV_NAME = /^[A-Z_][A-Z0-9_]*$/;
 export function validateCredentialRedactionEnvNames(names: readonly string[] | undefined): string[] | undefined {
@@ -145,7 +139,6 @@ const WorkflowNodeParameters = Type.Object({
   acceptance: Type.Optional(Type.Array(Type.String())),
   context: Type.Optional(Type.String()),
   cwd: Type.Optional(Type.String()),
-  deadlineMs: Type.Optional(Type.Integer({ minimum: 1_000, maximum: 3_600_000 })),
   exclusivePaths: Type.Optional(Type.Array(Type.String({ minLength: 1 }), { maxItems: 50 })),
   toolBudget: Type.Optional(Type.Integer({ minimum: 1 })),
 });
@@ -163,7 +156,6 @@ const SubagentParameters = Type.Object({
     description: "run child cwd under the project root; defaults to parent cwd",
   })),
   jobId: Type.Optional(Type.String({ minLength: 1, description: "Canonical job/workflow ID, runtime-local #N or W#N ref, or numeric N job ref for get/cancel; omit for recent records" })),
-  deadlineMs: deadline(),
   exclusivePaths: Type.Optional(Type.Array(Type.String({ minLength: 1 }), {
     maxItems: 50,
     description: "run paths this job writes exclusively (relative to the child cwd); overlapping leases are rejected in-process",
@@ -366,7 +358,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     promptGuidelines: [
       "Before delegating, decompose the bounded work rather than forwarding the raw user prompt. Because the child has fresh context, every task must include: Outcome, Scope, Starting evidence, Known decisions, Constraints and non-goals, Acceptance criteria, Validation, and Handoff. The parent retains unresolved decomposition and synthesis.",
       "Delegate only when the catalog offers a concrete advantage over doing the work directly: a separately owned discovery or implementation task, independent review or expert judgment, browser QA, multi-source research, or genuinely parallel work. Do not delegate exact lookups, trivial edits, or serial handoffs with no context-isolation benefit.",
-      `Choose by the catalog's capabilities. Use run for one task or workflow for a bounded acyclic graph (maximum 20 nodes). Dependencies receive only direct predecessors' structured handoffs, never raw transcripts. Use a task-appropriate deadlineMs; set background only when the parent can continue independently and recover the result with get. Children load no skills, so include any needed skill path or excerpt. At most ${hub.maxConcurrentRuns} nodes/jobs execute at once, with no overlapping writes.`,
+      `Choose by the catalog's capabilities. Use run for one task or workflow for a bounded acyclic graph (maximum 20 nodes). Dependencies receive only direct predecessors' structured handoffs, never raw transcripts. Runs have no execution deadline; use cancel explicitly when work should stop. Set background only when the parent can continue independently and recover the result with get. Children load no skills, so include any needed skill path or excerpt. At most ${hub.maxConcurrentRuns} nodes/jobs execute at once, with no overlapping writes.`,
       "Treat results as handoffs, not proof. For cited read-only work, verify only decision-critical uncertainty instead of repeating the same reads/searches. For writes, inspect the complete settled diff and run integrated validation. Recover background jobs with get(\"#N\") and workflows with get(\"W#N\") (canonical IDs are also accepted; aliases are runtime-local). The parent MUST NOT read transcript.sessionPath. If retrying, pass that path as Starting evidence and require the child to read it first. Produce the final synthesis yourself.",
     ],
     executionMode: "parallel",
@@ -415,7 +407,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           agent: runtime.agent.name,
           ...(operation ? {
             objective: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }),
-            deadlineMs: operation.deadlineMs,
             ...(elapsedMs === undefined ? {} : { elapsedMs }),
             workOrder: {
               goal: boundText(operation.workOrder.goal, { maxCharacters: 2_000, maxLines: 20 }),
@@ -510,7 +501,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ) => {
       if (!request.agent) return response({ error: "agent is required for subagent run" }, true);
       if (!request.objective) return response({ error: "objective is required for subagent run" }, true);
-      if (request.deadlineMs === undefined) return response({ error: "deadlineMs is required for subagent run" }, true);
       if (hub.isShuttingDown()) {
         return response({ error: "Subagent runtime is shutting down; new runs are rejected." }, true);
       }
@@ -579,7 +569,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         runId,
         operationId,
         parentSessionId,
-        deadlineMs: request.deadlineMs,
         ...(request.exclusivePaths && request.exclusivePaths.length > 0 ? { exclusivePaths: request.exclusivePaths } : {}),
         ...(request.toolBudget !== undefined ? { toolBudget: request.toolBudget } : {}),
         signal: runSignal,
@@ -596,7 +585,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         index: runtime.index,
         agent: runtimeAgent.name,
         startedAt: Date.now(),
-        deadlineMs: request.deadlineMs,
         mode: request.background === true ? "background" : "foreground",
         objective: request.objective,
         ...(workflowNode ? { workflow: workflowNode } : {}),
@@ -620,7 +608,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         const operation = await hub.beginOperation(runtime, {
           operationId,
           task: request.objective,
-          deadlineMs: request.deadlineMs,
           notifyOnSettle: request.background === true,
           workOrder: initialOptions.workOrder,
           signal: runSignal,
@@ -650,7 +637,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       };
       if (request.action === "workflow") {
         if (!request.objective) return response({ error: "objective is required for subagent workflow" }, true);
-        if (request.deadlineMs === undefined) return response({ error: "deadlineMs is required for subagent workflow" }, true);
         if (!request.nodes) return response({ error: "nodes are required for subagent workflow" }, true);
         if (hub.isShuttingDown()) return response({ error: "Subagent runtime is shutting down; new workflows are rejected." }, true);
         const nodes = request.nodes as WorkflowNodeSpec[];
@@ -664,7 +650,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           index: nextWorkflowIndex++,
           objective: request.objective,
           background: request.background === true,
-          deadlineMs: request.deadlineMs,
           nodes,
         });
         retainWorkflow(workflow);
@@ -675,10 +660,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         };
         if (signal?.aborted) abortWorkflow();
         else signal?.addEventListener("abort", abortWorkflow, { once: true });
-        const workflowDeadline = setTimeout(() => {
-          if (!workflow.controller.signal.aborted) workflow.controller.abort(new Error("Workflow deadline exceeded"));
-          void interruptWorkflowRuntimes(workflow);
-        }, workflow.deadlineMs);
         const publishWorkflowUpdate = () => {
           const snapshot = workflowSnapshot(workflow);
           onUpdate?.({
@@ -702,7 +683,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
                 : "",
               node.spec.context?.trim() ? `Node context:\n${node.spec.context.trim()}` : "",
             ].filter(Boolean).join("\n\n"), { maxCharacters: 14_000, maxLines: 240 });
-            const remainingMs = Math.max(1_000, workflow.createdAt + workflow.deadlineMs - Date.now());
             const nodeRequest: SubagentParameters = {
               action: "run",
               agent: node.spec.agent,
@@ -713,7 +693,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               context: inheritedContext,
               background: false,
               cwd: node.spec.cwd,
-              deadlineMs: Math.min(node.spec.deadlineMs ?? remainingMs, remainingMs),
               exclusivePaths: node.spec.exclusivePaths,
               toolBudget: node.spec.toolBudget,
             };
@@ -751,7 +730,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             });
           }
         }).finally(() => {
-          clearTimeout(workflowDeadline);
           signal?.removeEventListener("abort", abortWorkflow);
         });
         publishWorkflowUpdate();

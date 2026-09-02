@@ -40,7 +40,7 @@ describe("subagent notifications", () => {
       });
 
       await env.extension.getTool().execute("call", {
-        action: "run", agent: "scout", objective: "Inspect", deadlineMs: 60_000, background: true,
+        action: "run", agent: "scout", objective: "Inspect", background: true,
       }, undefined, undefined, ctx);
       expect(typeof widget).toBe("function");
       env.fake.controllers[0].settle();

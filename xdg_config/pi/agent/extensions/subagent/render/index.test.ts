@@ -5,7 +5,7 @@ const theme = { fg: (_color: string, value: string) => value, bg: (_color: strin
 const text = (component: { render(width: number): string[] }) => component.render(200).join("\n").trim();
 
 const runContext = (state: Record<string, unknown> = {}) => ({
-  args: { action: "run", agent: "scout", objective: "Inspect auth", deadlineMs: 60_000 },
+  args: { action: "run", agent: "scout", objective: "Inspect auth" },
   isError: false,
   state,
   invalidate: vi.fn(),
@@ -32,7 +32,7 @@ describe("task API rendering", () => {
   test("expanded invocation shows the bounded delegation spec", () => {
     const args = {
       action: "run" as const, agent: "worker", objective: "Implement cache invalidation", scope: ["src/cache.ts"],
-      context: "TTL is authoritative", constraints: ["No API changes"], acceptance: ["Tests pass"], deadlineMs: 120_000,
+      context: "TTL is authoritative", constraints: ["No API changes"], acceptance: ["Tests pass"],
     };
     const rendered = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
     for (const expected of ["Outcome", "Implement cache invalidation", "Scope", "src/cache.ts", "Context", "TTL is authoritative", "Constraints", "No API changes", "Acceptance", "Tests pass"]) {

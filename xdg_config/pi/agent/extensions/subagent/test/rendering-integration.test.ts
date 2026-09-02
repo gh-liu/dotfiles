@@ -15,7 +15,7 @@ describe("subagent rendering integration", () => {
   test("foreground run result carries timeline details for expanded rendering", async () => {
     const env = setup();
     const running = env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", objective: "Inspect timeline", deadlineMs: 60_000,
+      action: "run", agent: "scout", objective: "Inspect timeline",
     }, undefined, undefined, context(env.root));
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].starts[0].options.onProgress?.({
@@ -46,7 +46,7 @@ describe("subagent rendering integration", () => {
       },
     } as never;
     const running = env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", objective: "Inspect the complete authentication flow", deadlineMs: 60_000,
+      action: "run", agent: "scout", objective: "Inspect the complete authentication flow",
     }, undefined, undefined, ctx);
     await vi.waitFor(() => expect(typeof widget).toBe("function"));
     const component = (widget as (tui: unknown, theme: unknown) => { render(width: number): string[] })(undefined, {

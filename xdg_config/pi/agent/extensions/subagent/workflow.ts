@@ -14,7 +14,6 @@ export interface WorkflowNodeSpec {
   acceptance?: string[];
   context?: string;
   cwd?: string;
-  deadlineMs?: number;
   exclusivePaths?: string[];
   toolBudget?: number;
 }
@@ -45,7 +44,6 @@ export interface WorkflowRecord {
   status: WorkflowStatus;
   background: boolean;
   createdAt: number;
-  deadlineMs: number;
   nodes: Map<string, WorkflowNodeRecord>;
   controller: AbortController;
   settled: Promise<void>;
@@ -92,7 +90,6 @@ export function createWorkflowRecord(input: {
   index: number;
   objective: string;
   background: boolean;
-  deadlineMs: number;
   nodes: WorkflowNodeSpec[];
 }): WorkflowRecord {
   let settle!: () => void;
@@ -103,7 +100,6 @@ export function createWorkflowRecord(input: {
     status: "running",
     background: input.background,
     createdAt: Date.now(),
-    deadlineMs: input.deadlineMs,
     nodes: new Map(input.nodes.map((spec) => [spec.id, { spec, status: "pending" }])),
     controller: new AbortController(),
     settled: new Promise<void>((resolve) => { settle = resolve; }),
@@ -132,7 +128,6 @@ export async function executeWorkflow(
   },
 ): Promise<void> {
   const running = new Map<string, Promise<void>>();
-  const deadlineAt = record.createdAt + record.deadlineMs;
   const update = () => deps.onChange?.();
 
   const start = (node: WorkflowNodeRecord): void => {
@@ -157,7 +152,6 @@ export async function executeWorkflow(
 
   try {
     while ([...record.nodes.values()].some((node) => node.status === "pending" || node.status === "running")) {
-      if (Date.now() >= deadlineAt) record.controller.abort(new Error("Workflow deadline exceeded"));
       if (record.controller.signal.aborted) {
         for (const node of record.nodes.values()) {
           if (node.status === "pending") {
@@ -187,7 +181,7 @@ export async function executeWorkflow(
       if (running.size > 0) {
         await Promise.race([
           ...running.values(),
-          new Promise<void>((resolve) => setTimeout(resolve, Math.min(50, Math.max(1, deadlineAt - Date.now())))),
+          new Promise<void>((resolve) => setTimeout(resolve, 50)),
         ]);
       } else if (!started && [...record.nodes.values()].some((node) => node.status === "pending")) {
         await new Promise((resolve) => setTimeout(resolve, 50));

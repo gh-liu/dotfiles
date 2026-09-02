@@ -92,7 +92,6 @@ export interface SubagentRunOptions {
   runId: string;
   operationId: string;
   parentSessionId: string;
-  deadlineMs: number;
   /**
    * Paths this job writes exclusively (absolute, or relative to the child cwd).
    * Overlapping leases (ancestor/descendant or identical) are rejected within the

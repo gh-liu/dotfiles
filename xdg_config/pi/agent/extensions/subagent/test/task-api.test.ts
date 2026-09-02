@@ -106,7 +106,7 @@ describe("task-oriented subagent API", () => {
     });
     const fetched = await env.invoke({ action: "get", jobId: "#1" });
     expect(fetched.details).toMatchObject({
-      ref: "#1", status: "running", objective: "Inspect lifecycle", deadlineMs: 600_000,
+      ref: "#1", status: "running", objective: "Inspect lifecycle",
       activity: "needs a decision", recentActivity: ["Thinking", "completed: read runtime.ts"],
       needsDecision: true, decision: { question: "Inspect cleanup too?", options: ["yes", "no"] },
       workOrder: { goal: "Inspect lifecycle", constraints: expect.arrayContaining(["Read only"]), validation: ["Cite evidence"] },
@@ -119,7 +119,7 @@ describe("task-oriented subagent API", () => {
   test("public progress, completion and capacity payloads expose only jobId", async () => {
     const env = setup({ ids: ["a", "pa", "b", "pb", "c", "pc"] });
     const updates: unknown[] = [];
-    await env.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "A", deadlineMs: 60_000, background: true }, undefined, (update) => updates.push(update), (await import("./harness.ts")).context(env.root));
+    await env.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "A", background: true }, undefined, (update) => updates.push(update), (await import("./harness.ts")).context(env.root));
     env.fake.controllers[0].starts[0].options.onProgress?.({
       summary: "working",
       tools: { earlierCount: 0, history: [{ id: "t1", summary: "read a.ts", status: "completed" }], active: [] },
@@ -142,7 +142,7 @@ describe("task-oriented subagent API", () => {
   test("forwards a bounded needsDecision progress into update details and rejects empty payloads", async () => {
     const env = setup({ ids: ["decision", "private-operation"] });
     const updates: unknown[] = [];
-    await env.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Decide", deadlineMs: 60_000, background: true }, undefined, (update) => updates.push(update), (await import("./harness.ts")).context(env.root));
+    await env.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Decide", background: true }, undefined, (update) => updates.push(update), (await import("./harness.ts")).context(env.root));
     const onProgress = env.fake.controllers[0].starts[0].options.onProgress!;
 
     // A valid decision request reaches the public onUpdate details.

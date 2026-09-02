@@ -210,7 +210,7 @@ export function setup(options: {
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
     "tool-call",
     (params.action === "run"
-      ? { ...params, objective: params.objective ?? params.task, deadlineMs: params.deadlineMs ?? 600_000 }
+      ? { ...params, objective: params.objective ?? params.task }
       : params) as never,
     undefined, undefined, context(root),
   );
