@@ -38,7 +38,7 @@ const tracked = (overrides: Partial<Parameters<ReturnType<typeof createLiveUi>["
   agent: "scout",
   task: "Map the authentication lifecycle and identify the safest implementation seam.",
   startedAt: Date.now(),
-  mode: "foreground" as const,
+  runId: "session-1",
   ...overrides,
 });
 
@@ -65,18 +65,18 @@ describe("activity center", () => {
     }).not.toThrow();
   });
 
-  test("is the single live owner for foreground and background jobs", () => {
+  test("shows accepted background operations", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
-    live.track("r1", tracked({ mode: "foreground", index: 1 }));
-    live.track("r2", tracked({ mode: "background", index: 2, agent: "reviewer", task: "Review the patch for lifecycle races." }));
+    live.track("r1", tracked({ index: 1 }));
+    live.track("r2", tracked({ runId: "session-2", index: 2, agent: "reviewer", task: "Review the patch for lifecycle races." }));
     live.progress("r1", "grep auth middleware…", { kind: "tool", status: "running" });
     live.progress("r2", "Thinking…", { kind: "thinking", status: "running" });
     vi.advanceTimersByTime(250);
 
     const lines = renderWidget(ui);
-    expect(lines[0]).toBe("Subagents · 2 active");
+    expect(lines[0]).toBe("Background subagents · 2 active");
     expect(lines.join("\n")).toContain("#1 scout · 0s");
     expect(lines.join("\n")).toContain("#2 reviewer · 0s");
     expect(lines.join("\n")).toContain("Map the authentication lifecycle");
@@ -138,7 +138,7 @@ describe("activity center", () => {
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked({ index: 1 }));
-    live.track("r2", tracked({ index: 12, agent: "reviewer", mode: "background" }));
+    live.track("r2", tracked({ index: 12, agent: "reviewer" }));
     live.progress("r2", "waiting", undefined, undefined, "Choose API version");
     vi.advanceTimersByTime(250);
     const lines = renderWidget(ui, 32);
@@ -178,22 +178,39 @@ describe("activity center", () => {
     expect(lines.filter((line) => line.includes("↳"))).toHaveLength(0);
   });
 
-  test("removes foreground settlement and hands background settlement to reporting", () => {
+  test("keeps settlement until its card is acknowledged", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
-    live.track("r1", tracked({ index: 1, mode: "foreground" }));
-    live.track("r2", tracked({ index: 2, mode: "background" }));
+    live.track("r1", tracked({ index: 1 }));
+    live.track("r2", tracked({ index: 2 }));
     live.settle("r1", "completed");
+    expect(renderWidget(ui).join("\n")).toContain("✓ #1 scout · result ready · awaiting card · get #1");
+    live.remove("r1");
     expect(renderWidget(ui).join("\n")).not.toContain("#1");
 
     live.settle("r2", "completed");
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("✓ #2 scout · completed · reporting");
+    expect(renderWidget(ui).join("\n")).toContain("✓ #2 scout · result ready · awaiting card · get #2");
     live.reportFailed("r2");
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("! #2 scout · reporting failed · use get");
+    expect(renderWidget(ui).join("\n")).toContain("! #2 scout · card failed · get #2");
     live.remove("r2");
+    expect(lastWidgetContent(ui)).toBeUndefined();
+  });
+
+  test("operation keys isolate overlapping rows from the same session", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("old", tracked({ runId: "same", index: 1, task: "First turn" }));
+    live.settle("old", "completed");
+    live.track("new", tracked({ runId: "same", index: 1, task: "Followup turn" }));
+    live.remove("old");
+    const rendered = renderWidget(ui).join("\n");
+    expect(rendered).toContain("Followup turn");
+    expect(rendered).not.toContain("First turn");
+    live.removeSession("same");
     expect(lastWidgetContent(ui)).toBeUndefined();
   });
 

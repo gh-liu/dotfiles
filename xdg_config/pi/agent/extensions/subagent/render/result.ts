@@ -3,16 +3,32 @@ import { Text } from "@earendil-works/pi-tui";
 
 import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
-function renderTimeline(details: Record<string, unknown>, theme: Theme): string {
-  if (!Array.isArray(details.timeline) || details.timeline.length === 0) return "";
+function renderActivity(details: Record<string, unknown>, theme: Theme): string {
   let text = "";
-  for (const entry of details.timeline.slice(-24)) {
+  const tools = details.toolProgress && typeof details.toolProgress === "object"
+    ? details.toolProgress as Record<string, unknown>
+    : undefined;
+  const earlierCount = typeof tools?.earlierCount === "number" && tools.earlierCount > 0
+    ? Math.floor(tools.earlierCount)
+    : 0;
+  if (earlierCount) text += `\n${theme.fg("muted", `… ${earlierCount} earlier tool ${earlierCount === 1 ? "activity" : "activities"}`)}`;
+  const timeline = Array.isArray(details.timeline) ? details.timeline.slice(-24) : [];
+  for (const entry of timeline) {
     if (!entry || typeof entry !== "object") continue;
     const item = entry as Record<string, unknown>;
     if (item.kind === "thinking") text += `\n${theme.fg("accent", "✓ Thinking")}`;
     else if (item.kind === "tool" && typeof item.summary === "string") {
       const failed = item.status === "failed";
       text += `\n${theme.fg(failed ? "error" : "success", failed ? "✗ failed" : "✓ completed")}${theme.fg("muted", `: ${oneLine(item.summary, 200)}`)}`;
+    }
+  }
+  if (Array.isArray(tools?.active)) {
+    for (const entry of tools.active) {
+      if (!entry || typeof entry !== "object") continue;
+      const item = entry as Record<string, unknown>;
+      if (typeof item.summary === "string") {
+        text += `\n${theme.fg("warning", "◷ running")}${theme.fg("muted", `: ${oneLine(item.summary, 200)}`)}`;
+      }
     }
   }
   return text;
@@ -33,9 +49,8 @@ export function renderSubagentResult(
     queueMicrotask(() => { try { context.invalidate(); } catch {} });
   }
   if (options.isPartial) {
-    if (!options.expanded) return new Text(theme.fg("muted", "↗ active in Subagents"), 0, 0);
     const activity = typeof details.activity === "string" ? details.activity : undefined;
-    return new Text(`${theme.fg("accent", "● running")}${activity ? theme.fg("dim", ` · ${oneLine(activity, 240)}`) : ""}${renderTimeline(details, theme)}`, 0, 0);
+    return new Text(`${theme.fg("accent", "● running")}${activity ? theme.fg("dim", ` · ${oneLine(activity, 240)}`) : ""}${renderActivity(details, theme)}`, 0, 0);
   }
 
   const status = typeof details.status === "string" ? details.status : "unknown";
@@ -73,14 +88,17 @@ export function renderSubagentResult(
     return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent sessions."), 0, 0);
   }
 
+  const agent = typeof details.agent === "string" ? details.agent : undefined;
   let text = status === "starting" || status === "running"
     ? theme.fg("warning", details.timedOut === true ? "● still running · wait expired" : "● running")
-    : status === "idle"
-      ? theme.fg(turnStatus === "failed" ? "error" : turnStatus === "interrupted" ? "warning" : "success", `✓ turn ${turnStatus ?? "completed"} · session idle`)
+    : status === "idle" && turnStatus
+      ? theme.fg(turnStatus === "failed" ? "error" : turnStatus === "interrupted" ? "warning" : "success",
+          `${turnStatus === "completed" ? "✓" : turnStatus === "failed" ? "✗" : "■"}${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""}`)
+      : status === "idle" ? theme.fg("success", `✓${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · session idle`)
       : status === "closed" ? theme.fg("muted", "× session closed")
       : status === "crashed" ? theme.fg("error", "✗ session crashed")
       : theme.fg("warning", "? unknown session");
-  if (displayRef) text += theme.fg("toolTitle", ` · ${displayRef}`);
+  if (displayRef && !(status === "idle" && turnStatus)) text += theme.fg("toolTitle", ` · ${displayRef}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatDuration(details.elapsedMs)}`);
   if (summary && !options.expanded) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
   if (options.expanded) {
@@ -96,7 +114,10 @@ export function renderSubagentResult(
     if (context.args.action === "get" && typeof details.activity === "string") {
       text += `\n${theme.fg("toolTitle", "Current")}\n${theme.fg("dim", `  ${oneLine(details.activity, 240)}`)}`;
     }
-    text += renderTimeline(details, theme);
+    text += renderActivity(details, theme);
+  }
+  if (status === "idle" && displayRef) {
+    text += `\n${theme.fg("muted", `${displayRef} · session open · follow-up or close`)}`;
   }
   return new Text(text, 0, 0);
 }

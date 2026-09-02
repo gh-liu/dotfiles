@@ -29,6 +29,8 @@ export interface OperationRecord {
     summary: string;
     recentActivity: string[];
     timeline?: NonNullable<SubagentProgress["timeline"]>;
+    tools?: NonNullable<SubagentProgress["tools"]>;
+    phase?: SubagentProgress["phase"];
     needsDecision?: true;
     decision?: { question: string; options?: string[] };
   };
@@ -114,7 +116,7 @@ export interface RuntimeHubDeps {
   /** Maximum concurrently executing turns. Idle reusable sessions do not consume a slot. */
   maxConcurrentRuns?: number;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
-  /** Returns true once the completion message has been accepted by Pi. */
+  /** Returns true once Pi has queued the completion message. */
   notifySettled: (details: SubagentCompletionDetails | { batch: SubagentCompletionDetails[] }) => boolean;
   /** Optional durable human-visible settle log (appendEntry); never wakes the model. */
   logSettled?: (details: SubagentCompletionDetails) => void;
@@ -215,8 +217,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     const entries = pendingSettlements.splice(0);
     const delivered = deps.notifySettled(entries.length === 1 ? entries[0] : { batch: entries });
     for (const entry of entries) {
-      if (delivered) deps.live.remove(entry.jobId);
-      else deps.live.reportFailed(entry.jobId);
+      if (!delivered) deps.live.reportFailed(entry.operationId);
     }
   };
   /** Coalesce settlements that land in the same event-loop turn into one card. */
@@ -249,6 +250,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     const handoff = result ? modelSubagentHandoff(result) : undefined;
     const details: SubagentCompletionDetails = {
       jobId: runtime.runId,
+      operationId: operation.operationId,
       ref: `#${runtime.index}`,
       agent,
       ...(model ? { model } : {}),
@@ -256,6 +258,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ...(elapsedMs === undefined ? {} : { elapsedMs }),
       task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
       status: result?.status ?? "failed",
+      ...(runtime.state === "idle" ? { sessionOpen: true } : {}),
       summary: boundText(handoff?.summary ?? operation.error ?? "Subagent operation failed without a result.",
         { maxCharacters: 2_000, maxLines: 20 },
       ),
@@ -287,7 +290,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (operation) operation.notifyOnSettle = false;
     }
     if (runtime.closePromise) return runtime.closePromise;
-    deps.live.remove(runtime.runId);
+    deps.live.removeSession(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
     runtime.closePromise = (async () => {
@@ -388,6 +391,14 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         summary: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
         recentActivity,
         ...(progress.timeline ? { timeline: progress.timeline.map((entry) => ({ ...entry })) } : {}),
+        ...(progress.phase ? { phase: { ...progress.phase } } : {}),
+        ...(progress.tools ? {
+          tools: {
+            earlierCount: progress.tools.earlierCount,
+            history: progress.tools.history.map((entry) => ({ ...entry })),
+            active: progress.tools.active.map((entry) => ({ ...entry })),
+          },
+        } : {}),
         ...(question ? {
           needsDecision: true,
           decision: {
@@ -396,7 +407,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           },
         } : {}),
       };
-      deps.live.progress(runtime.runId, summary, progress.phase, progress.tools?.active.length, question || undefined);
+      deps.live.progress(operationId, summary, progress.phase, progress.tools?.active.length, question || undefined);
       onUpdate?.({
         content: [{ type: "text", text: summary }],
         details: {
@@ -406,6 +417,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
           startedAt: operation.startedAt,
+          activity: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
           ...(progress.phase ? { phase: progress.phase } : {}),
           ...(progress.tools ? { toolProgress: progress.tools } : {}),
           ...(progress.timeline ? { timeline: progress.timeline } : {}),
@@ -436,12 +448,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       (result) => {
         operation.result = result;
         operation.state = result.status;
-        deps.live.settle(runtime.runId, result.status ?? "completed", Date.now() - (operation.startedAt ?? Date.now()));
+        deps.live.settle(operationId, result.status ?? "completed", Date.now() - (operation.startedAt ?? Date.now()));
       },
       (error) => {
         operation.error = error instanceof Error ? error.message : String(error);
         operation.state = "failed";
-        deps.live.settle(runtime.runId, "failed", Date.now() - (operation.startedAt ?? Date.now()));
+        deps.live.settle(operationId, "failed", Date.now() - (operation.startedAt ?? Date.now()));
         if (runtime.state !== "closing" && runtime.state !== "closed") {
           transition(runtime, "crashed");
           void closeRuntime(runtime).catch(() => {});
@@ -555,7 +567,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       flushTimer = undefined;
       flushScheduled = false;
       pendingSettlements.length = 0;
-      for (const runtime of runtimes.values()) deps.live.remove(runtime.runId);
+      for (const runtime of runtimes.values()) deps.live.removeSession(runtime.runId);
       await Promise.allSettled([...runtimes.values()].map((runtime) => closeRuntime(runtime, true)));
     },
   };

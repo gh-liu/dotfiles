@@ -66,7 +66,7 @@ function calls() {
   heading("CALLS · reusable session API");
   row("run foreground", renderCall(runArgs, false, { runtimeIndex: 1 }));
   row("run background", renderCall({ ...runArgs, agent: "reviewer", background: true }, false, { runtimeIndex: 2 }));
-  row("followup", renderCall({ action: "followup", ref: "#1", task: "Compare the tests with the implementation." }));
+  row("followup", renderCall({ action: "followup", ref: "#1", agent: "scout", task: "Compare the tests with the implementation." }));
   row("get recent", renderCall({ action: "get" }));
   row("get session", renderCall({ action: "get", ref: "#2", waitMs: 30_000 }, false, { ref: "#2" }));
   row("cancel", renderCall({ action: "cancel", ref: "#2" }, false, { ref: "#2" }));
@@ -78,18 +78,22 @@ function calls() {
 
 function progress() {
   heading("PROGRESS · tool-row receipt");
-  row("active", renderResult(runArgs, { ref: "#1", status: "running" }, { partial: true, text: "Thinking…" }));
+  row("active", renderResult(runArgs, {
+    ref: "#1", status: "running", activity: "testing auth flow…",
+    timeline: [{ kind: "thinking", text: "hidden" }, { kind: "tool", id: "read", summary: "read auth.ts", status: "completed" }],
+    toolProgress: { earlierCount: 0, history: [], active: [{ id: "test", summary: "npm test auth" }] },
+  }, { partial: true, text: "Thinking…" }));
 
-  heading("PROGRESS · unified activity center");
+  heading("PROGRESS · background activity center");
   let widgetFactory;
   const live = createLiveUi();
   live.attach({ setWidget(_id, content) { widgetFactory = content; } });
   const now = Date.now();
-  live.track("job-1", { index: 1, agent: "scout", task, startedAt: now - 25_000, mode: "foreground" });
+  live.track("job-1", { index: 1, agent: "scout", task, startedAt: now - 25_000, runId: "session-1" });
   live.progress("job-1", "Thinking", { kind: "thinking", status: "completed" });
-  live.track("job-2", { index: 2, agent: "scout", task: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, mode: "background" });
+  live.track("job-2", { index: 2, agent: "scout", task: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, runId: "session-2" });
   live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" });
-  live.track("job-3", { index: 3, agent: "reviewer", task: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, mode: "background" });
+  live.track("job-3", { index: 3, agent: "reviewer", task: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, runId: "session-3" });
   live.progress("job-3", "waiting for a decision", undefined, undefined, "Choose compatibility policy");
   if (typeof widgetFactory === "function") {
     const widget = widgetFactory({}, theme);
@@ -111,8 +115,8 @@ function progress() {
 function terminal() {
   heading("TERMINAL RESULTS · session outcomes");
   const cases = [
-    ["run completed", runArgs, { ref: "#1", status: "idle", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
-    ["run interrupted", runArgs, { ref: "#1", status: "idle", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
+    ["run completed", runArgs, { ref: "#1", agent: "scout", status: "idle", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
+    ["run interrupted", runArgs, { ref: "#1", agent: "scout", status: "idle", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
     ["run crashed", runArgs, { ref: "#1", status: "crashed", error: "Provider authentication failed before generation." }, { isError: true }],
     ["get running", { action: "get", ref: "#2" }, { ref: "#2", status: "running", agent: "scout" }, {}],
     ["get timed out", { action: "get", ref: "#2", waitMs: 30_000 }, { ref: "#2", status: "running", agent: "scout", timedOut: true }, {}],
@@ -126,7 +130,7 @@ function terminal() {
 
   heading("TERMINAL RESULT · expanded handoff");
   row("expanded run", renderResult(runArgs, {
-    ref: "#1", status: "idle", turnStatus: "completed", elapsedMs: 54_000,
+    ref: "#1", agent: "scout", status: "idle", turnStatus: "completed", elapsedMs: 54_000,
     summary: "Evidence\n- sdk-executor.ts owns the child session.\n- runtime.ts owns lifecycle transitions.\n\nValidation\n- Targeted tests passed.\n\nRisks\n- Restart recovery remains intentionally unsupported.",
   }, { expanded: true }));
 }
@@ -134,7 +138,7 @@ function terminal() {
 function completions() {
   heading("BACKGROUND COMPLETION CARDS · single and batched");
   const base = {
-    jobId: "job-2", ref: "#2", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal",
+    jobId: "job-2", operationId: "operation-2", ref: "#2", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal", sessionOpen: true,
     task: "Map the runtime lifecycle and identify the safest change seam.",
     summary: "Evidence: runtime.ts owns transitions; sdk-executor.ts owns session events.",
     evidence: "runtime.ts owns transitions.", validation: "Targeted tests passed.", elapsedMs: 41_000,
@@ -144,9 +148,9 @@ function completions() {
     row(`${status} expanded`, renderSubagentCompletion({ content: "", details: { ...base, status } }, { expanded: true, outputPad: 1 }, theme));
   }
   row("mixed batch", renderSubagentCompletion({ content: "", details: { batch: [
-    { ...base, jobId: "job-1", ref: "#1", status: "completed", agent: "scout" },
+    { ...base, jobId: "job-1", operationId: "operation-1", ref: "#1", status: "completed", agent: "scout" },
     { ...base, jobId: "job-2", ref: "#2", status: "failed", agent: "scout", summary: "Provider request failed after acceptance." },
-    { ...base, jobId: "job-3", ref: "#3", status: "interrupted", agent: "reviewer", summary: "Review was interrupted by the parent." },
+    { ...base, jobId: "job-3", operationId: "operation-3", ref: "#3", status: "interrupted", agent: "reviewer", summary: "Review was interrupted by the parent." },
   ] } }, { expanded: false, outputPad: 1 }, theme));
 }
 

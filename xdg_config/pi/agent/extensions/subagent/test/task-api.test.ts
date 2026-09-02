@@ -104,10 +104,18 @@ describe("reusable subagent sessions", () => {
     await env.extension.getTool().execute("call", { action: "run", agent: "scout", task: "Inspect", background: true }, undefined, undefined, context(env.root));
     env.fake.controllers[0].starts[0].options.onProgress?.({
       summary: "reading runtime",
+      tools: {
+        earlierCount: 0,
+        history: [],
+        active: [{ id: "active-read", summary: "read runtime.ts" }],
+      },
       timeline: [{ kind: "tool", id: "read", summary: "read runtime.ts", status: "completed" }],
     });
     expect((await env.invoke({ action: "get", ref: "#1", waitMs: 1 })).details)
-      .toMatchObject({ status: "running", timedOut: true, activity: "reading runtime" });
+      .toMatchObject({
+        status: "running", timedOut: true, activity: "reading runtime",
+        toolProgress: { active: [{ id: "active-read", summary: "read runtime.ts" }] },
+      });
     expect(env.fake.controllers[0].interruptCalls).toHaveLength(0);
     await env.extension.shutdown();
   });

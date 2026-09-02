@@ -287,6 +287,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           activity: operation.latestProgress.summary,
           recentActivity: operation.latestProgress.recentActivity,
           ...(operation.latestProgress.timeline ? { timeline: operation.latestProgress.timeline } : {}),
+          ...(operation.latestProgress.tools ? { toolProgress: operation.latestProgress.tools } : {}),
           ...(operation.latestProgress.needsDecision ? {
             needsDecision: true,
             decision: operation.latestProgress.decision,
@@ -321,18 +322,20 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     executionMode: "parallel",
     parameters: SubagentParameters,
     renderCall: (args, theme, context) => {
-      if ((args as { action?: string }).action === "run") {
-        const typed = args as { action: "run"; agent: string; model?: string; thinking?: string };
-        if (typed.agent && typed.model === undefined && typed.thinking === undefined) {
-          const found = registry.agents.find((candidate) => candidate.name === typed.agent);
-          if (found) {
-            const enriched = {
-              ...typed,
-              ...(found.model ? { model: stripModel(found.model) } : {}),
-              ...(found.thinking ? { thinking: found.thinking } : {}),
-            };
-            return renderSubagentCall(enriched as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
-          }
+      const action = (args as { action?: string }).action;
+      if (action === "run" || action === "followup") {
+        const typed = args as { action: "run" | "followup"; agent?: string; ref?: string; model?: string; thinking?: string };
+        const found = action === "run"
+          ? registry.agents.find((candidate) => candidate.name === typed.agent)
+          : typed.ref ? hub.resolve(typed.ref)?.agent : undefined;
+        if (found) {
+          const enriched = {
+            ...typed,
+            agent: found.name,
+            ...(found.model ? { model: stripModel(found.model) } : {}),
+            ...(found.thinking ? { thinking: found.thinking } : {}),
+          };
+          return renderSubagentCall(enriched as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
         }
       }
       return renderSubagentCall(args as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
@@ -366,7 +369,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           if (timer) clearTimeout(timer);
           if (timedOut && operation.state === "running") return response({ ...publicSession(runtime), timedOut: true });
         }
-        if (operation && operation.state !== "running") live.remove(runtime.runId);
+        if (operation && operation.state !== "running") live.remove(operation.operationId);
         return response(publicSession(runtime));
       }
       if (request.action === "cancel") {
@@ -409,13 +412,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ) => {
         const operationId = initialOperationId ?? idFactory();
         const workOrder = createWorkOrder(task, runtime.cwd, initial ? runtime.projectGuidance : []);
-        live.track(runtime.runId, {
-          index: runtime.index,
-          agent: runtime.agent.name,
-          startedAt: Date.now(),
-          mode: background ? "background" : "foreground",
-          task,
-        });
         try {
         runOnUpdate?.({
           content: [{ type: "text", text: initial ? "Starting subagent session…" : "Continuing subagent session…" }],
@@ -441,7 +437,31 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           signal: runSignal,
           onUpdate: runOnUpdate,
         });
-        if (background) return response(publicSession(runtime));
+        if (background) {
+          // The widget starts only after prompt acceptance. Progress received
+          // during startup is retained on the operation and hydrated here.
+          // An operation that already settled is delivered only as a card.
+          if (operation.state === "running") {
+            live.track(operation.operationId, {
+              index: runtime.index,
+              agent: runtime.agent.name,
+              startedAt: operation.startedAt ?? Date.now(),
+              runId: runtime.runId,
+              task,
+            });
+            const latest = operation.latestProgress;
+            if (latest) {
+              live.progress(
+                operation.operationId,
+                latest.summary,
+                latest.phase,
+                latest.tools?.active.length,
+                latest.decision?.question,
+              );
+            }
+          }
+          return response(publicSession(runtime));
+        }
         await operation.settled;
         return operationResponse(operation, runtime);
       } catch (error) {
@@ -524,10 +544,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     },
   });
 
-  pi.registerMessageRenderer<SubagentCompletionDetails>(
+  pi.registerMessageRenderer<SubagentCompletionPayload>(
     SUBAGENT_COMPLETION_MESSAGE,
     renderSubagentCompletion,
   );
+
+  pi.on("message_start", (event) => {
+    const message = event.message;
+    if (message.role !== "custom" || message.customType !== SUBAGENT_COMPLETION_MESSAGE) return;
+    const payload = message.details as SubagentCompletionPayload | undefined;
+    if (!payload) return;
+    const entries = "batch" in payload ? payload.batch : [payload];
+    for (const entry of entries) {
+      if (typeof entry.operationId === "string") live.remove(entry.operationId);
+    }
+  });
 
   pi.on("session_shutdown", async () => {
     live.dispose();

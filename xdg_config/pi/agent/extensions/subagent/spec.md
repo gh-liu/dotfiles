@@ -66,11 +66,13 @@ All error, cancel, close, crash, and shutdown paths best-effort close owned reso
 
 ## 5. Notifications and UI
 
-The above-editor activity center is the single owner of transient foreground and background status. Each active row shows its `#N`, agent, elapsed time, bounded task text, and latest sanitized activity. Completed reasoning is shown only as `✓ Thinking`; raw reasoning is never rendered. Dense and narrow layouts prioritize refs, decisions, and recovery instructions.
+Foreground and background turns have separate visual owners. A foreground tool result shows the current bounded activity plus the complete retained lifecycle: completed thinking segments as `✓ Thinking`, completed/failed tools in chronological order, and every currently active tool. Raw reasoning, tool-call IDs, and tool output are never rendered.
 
-Foreground settlement removes its live row and returns the handoff in the tool result. A background settlement keeps a reporting row until Pi accepts its completion card. Delivery failure leaves `reporting failed · use get`; the session result remains recoverable through `get(#N)`. Completion cards show the result first and keep `#N` as a low-priority followup/recovery affordance.
+The above-editor activity center owns only accepted background turns after their tool call returns. Rows are keyed internally by operation, although only `#N` is displayed, so an older completion and a newer followup in the same session cannot overwrite each other. Each row shows its ref, agent, elapsed time, bounded task, and latest sanitized activity. A background settlement remains `result ready · awaiting card · get #N` until Pi emits `message_start` for that exact completion card; queuing `sendMessage` is not treated as delivery acknowledgement. Delivery failure leaves a recoverable `card failed · get #N` row. Dense and narrow layouts prioritize refs, decisions, and recovery instructions.
 
-Tool invocation rows are durable records. Collapsed rows show the agent or action plus task title; expanded rows show the bounded task. They do not duplicate the live activity timeline.
+Foreground settlement returns a result-first handoff in the tool result. Completion cards also show the result first. Both show `session open · follow-up or close` only when the runtime is truly idle; closed or crashed sessions are unavailable. A card acknowledgement removes only its operation row, never another turn sharing the same public ref.
+
+Tool invocation rows are durable records. Collapsed rows show the actual agent or action plus task title; expanded rows show the bounded task. A followup resolves and displays the session's registered agent rather than a generic action label.
 
 ## 6. Isolation and credentials
 

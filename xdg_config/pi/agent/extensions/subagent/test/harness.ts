@@ -153,6 +153,7 @@ export function fakeFactory(autoAccept = true) {
 export function harness() {
   let tool: ToolDefinition | undefined;
   let shutdown: (() => Promise<void> | void) | undefined;
+  let messageStart: ((event: { type: "message_start"; message: Record<string, unknown> }) => Promise<void> | void) | undefined;
   const messages: Array<{ message: Record<string, unknown>; options?: Record<string, unknown> }> = [];
   const messageRenderers = new Map<string, MessageRenderer>();
   const pi = {
@@ -164,15 +165,19 @@ export function harness() {
     sendMessage(message: Record<string, unknown>, options?: Record<string, unknown>) {
       messages.push({ message, options });
     },
-    on(event: string, handler: () => Promise<void> | void) {
+    on(event: string, handler: (...args: never[]) => Promise<void> | void) {
       if (event === "session_shutdown") shutdown = handler;
+      if (event === "message_start") messageStart = handler as typeof messageStart;
     },
-  } as ExtensionAPI;
+  } as unknown as ExtensionAPI;
   return {
     pi,
     messages,
     messageRenderers,
     getTool: () => tool!,
+    startMessage: async (message: Record<string, unknown>) => {
+      await messageStart?.({ type: "message_start", message });
+    },
     shutdown: async () => { await shutdown?.(); },
   };
 }

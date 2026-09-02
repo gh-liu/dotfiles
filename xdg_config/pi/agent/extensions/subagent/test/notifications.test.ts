@@ -2,6 +2,15 @@ import { describe, expect, test, vi } from "vitest";
 import { context, setup } from "./harness.ts";
 
 describe("subagent notifications", () => {
+  const renderWidget = (widget: unknown): string => {
+    if (typeof widget !== "function") return "";
+    const component = (widget as (tui: unknown, theme: unknown) => { render(width: number): string[] })(undefined, {
+      fg: (_color: string, text: string) => text,
+      bold: (text: string) => text,
+    });
+    return component.render(100).join("\n");
+  };
+
   test("batches successes and notification failure does not alter settled state", async () => {
     const env = setup({ ids: ["a", "pa", "b", "pb"] });
     await env.invoke({ action: "run", agent: "scout", task: "A", background: true });
@@ -22,6 +31,67 @@ describe("subagent notifications", () => {
     await failedDelivery.invoke({ action: "run", agent: "scout", task: "C", background: true });
     failedDelivery.fake.controllers[0].settle();
     await vi.waitFor(async () => expect((await failedDelivery.invoke({ action: "get", ref: "#1" })).details).toMatchObject({ status: "idle", turnStatus: "completed" }));
+  });
+
+  test("tracks background work only after acceptance and hydrates startup progress", async () => {
+    const env = setup({ autoAccept: false, ids: ["session", "operation"] });
+    let widget: unknown;
+    const ctx = {
+      ...context(env.root), hasUI: true,
+      ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
+    } as never;
+    const starting = env.extension.getTool().execute("call", {
+      action: "run", agent: "scout", task: "Inspect acceptance", background: true,
+    }, undefined, undefined, ctx);
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].starts[0].options.onProgress?.({ summary: "reading startup files" });
+    expect(widget).toBeUndefined();
+    env.fake.controllers[0].accept();
+    await starting;
+    expect(renderWidget(widget)).toContain("reading startup files");
+    await env.extension.shutdown();
+  });
+
+  test("does not create a stale row when work settles during acceptance", async () => {
+    const env = setup({ autoAccept: false, ids: ["session", "operation"] });
+    let widget: unknown;
+    const ctx = {
+      ...context(env.root), hasUI: true,
+      ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
+    } as never;
+    const starting = env.extension.getTool().execute("call", {
+      action: "run", agent: "scout", task: "Finish immediately", background: true,
+    }, undefined, undefined, ctx);
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].settle();
+    env.fake.controllers[0].accept();
+    await starting;
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    expect(widget).toBeUndefined();
+    await env.extension.shutdown();
+  });
+
+  test("acknowledging an old card preserves a newer turn on the same session", async () => {
+    const env = setup({ ids: ["session", "first", "second"] });
+    let widget: unknown;
+    const ctx = {
+      ...context(env.root), hasUI: true,
+      ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
+    } as never;
+    await env.extension.getTool().execute("call", {
+      action: "run", agent: "scout", task: "First turn", background: true,
+    }, undefined, undefined, ctx);
+    env.fake.controllers[0].settle();
+    await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
+    await env.extension.getTool().execute("call", {
+      action: "followup", ref: "#1", task: "New followup", background: true,
+    }, undefined, undefined, ctx);
+    expect(renderWidget(widget)).toContain("New followup");
+    await env.extension.startMessage({ role: "custom", ...env.extension.messages[0].message });
+    const rendered = renderWidget(widget);
+    expect(rendered).toContain("New followup");
+    expect(rendered).not.toContain("First turn");
+    await env.extension.shutdown();
   });
 
   test("keeps the live row until completion delivery succeeds and retains recovery UI on failure", async () => {
@@ -46,7 +116,8 @@ describe("subagent notifications", () => {
       env.fake.controllers[0].settle();
       await vi.waitFor(() => {
         if (!failDelivery) {
-          expect(widget).toBeUndefined();
+          expect(env.extension.messages).toHaveLength(1);
+          expect(typeof widget).toBe("function");
           return;
         }
         expect(typeof widget).toBe("function");
@@ -54,9 +125,15 @@ describe("subagent notifications", () => {
           fg: (_color: string, text: string) => text,
           bold: (text: string) => text,
         });
-        expect(component.render(100).join("\n")).toContain("#1 scout · reporting failed · use get");
+        expect(component.render(100).join("\n")).toContain("#1 scout · card failed · get #1");
       });
-      if (failDelivery) {
+      if (!failDelivery) {
+        await env.extension.startMessage({
+          role: "custom",
+          ...env.extension.messages[0].message,
+        });
+        expect(widget).toBeUndefined();
+      } else {
         await env.invoke({ action: "get", ref: "#1" });
         expect(widget).toBeUndefined();
       }

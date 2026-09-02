@@ -3,7 +3,7 @@ type SubagentRenderArgs =
       action: "run"; agent: string; task: string; background?: boolean;
       model?: string; thinking?: string;
     }
-  | { action: "followup"; ref: string; task: string; background?: boolean; model?: string; thinking?: string }
+  | { action: "followup"; ref: string; task: string; background?: boolean; agent?: string; model?: string; thinking?: string }
   | { action: "get"; ref?: string; waitMs?: number }
   | { action: "cancel"; ref: string }
   | { action: "close"; ref: string };

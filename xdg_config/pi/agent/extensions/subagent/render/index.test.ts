@@ -43,9 +43,9 @@ describe("task API rendering", () => {
   });
 
   test("renders a followup on the same session", () => {
-    const args = { action: "followup" as const, ref: "#2", task: "Now compare the tests with the implementation." };
+    const args = { action: "followup" as const, ref: "#2", agent: "scout", task: "Now compare the tests with the implementation." };
     const call = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
-    expect(call).toContain("#2 followup");
+    expect(call).toContain("#2 scout");
     expect(call).toContain("Now compare the tests");
   });
 
@@ -62,29 +62,38 @@ describe("task API rendering", () => {
     expect(rendered).not.toContain("Summary");
   });
 
-  test("partial tool results point to the activity center and never duplicate activity", () => {
+  test("partial tool results show the complete sanitized foreground activity", () => {
     const context = runContext();
     const details = {
       status: "running",
       activity: "read a.ts…",
       phase: { kind: "thinking", status: "running" },
       timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+      toolProgress: { earlierCount: 2, history: [], active: [{ id: "b", summary: "test auth.ts" }] },
     };
     const rendered = text(renderSubagentResult({ content: [{ type: "text", text: "Thinking…" }], details }, { expanded: true, isPartial: true }, theme, context));
     expect(rendered).toContain("● running");
     expect(rendered).not.toContain("Timeline");
     expect(rendered).toContain("✓ completed: read a.ts");
+    expect(rendered).toContain("… 2 earlier tool activities");
+    expect(rendered).toContain("◷ running: test auth.ts");
     expect(rendered).not.toContain("Thinking…");
+    expect(rendered).not.toContain("private reasoning");
+    expect(rendered).not.toContain("id: b");
     const collapsed = text(renderSubagentResult({ content: [], details }, { expanded: false, isPartial: true }, theme, context));
-    expect(collapsed).toBe("↗ active in Subagents");
+    expect(collapsed).toContain("● running · read a.ts…");
+    expect(collapsed).toContain("✓ completed: read a.ts");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
   test("renders terminal foreground and recovered background handoffs", () => {
-    const foreground = text(renderSubagentResult({ content: [], details: { status: "idle", turnStatus: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
-    expect(foreground).toContain("✓ turn completed · session idle · 1s");
+    const foreground = text(renderSubagentResult({ content: [], details: { ref: "#1", agent: "scout", status: "idle", turnStatus: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
+    expect(foreground).toContain("✓ #1 scout · 1s");
     expect(foreground).toContain("Done");
+    expect(foreground).toContain("#1 · session open · follow-up or close");
     const runExpanded = text(renderSubagentResult({ content: [], details: {
+      ref: "#1",
+      agent: "scout",
       status: "idle",
       turnStatus: "completed",
       summary: "Done",
@@ -98,11 +107,11 @@ describe("task API rendering", () => {
     expect(runExpanded).not.toContain("private reasoning");
 
     const recovered = text(renderSubagentResult({
-      content: [], details: { status: "idle", turnStatus: "completed", summary: "Recovered background result", elapsedMs: 2_000 },
+      content: [], details: { ref: "#2", agent: "scout", status: "idle", turnStatus: "completed", summary: "Recovered background result", elapsedMs: 2_000 },
     }, { expanded: false, isPartial: false }, theme, {
       args: { action: "get", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
     } as never));
-    expect(recovered).toContain("✓ turn completed · session idle · #2 · 2s");
+    expect(recovered).toContain("✓ #2 scout · 2s");
     expect(recovered).toContain("Recovered background result");
   });
 
@@ -151,13 +160,13 @@ describe("task API rendering", () => {
   test("renders result-first completion cards without status backgrounds", () => {
     const taggedTheme = { ...theme, bg: (color: string, value: string) => `<${color}>${value}</${color}>` } as never;
     const completed = {
-      jobId: "job-1", ref: "#1", agent: "scout", task: "Inspect auth", status: "completed" as const,
+      jobId: "job-1", operationId: "operation-1", ref: "#1", agent: "scout", task: "Inspect auth", status: "completed" as const, sessionOpen: true as const,
       summary: "Mapped the auth lifecycle.", evidence: "src/auth.ts", validation: "tests pass", elapsedMs: 2_000,
     };
     const collapsed = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: false, outputPad: 0 }, taggedTheme));
     expect(collapsed).toContain("✓ scout · 2s");
     expect(collapsed).toContain("Mapped the auth lifecycle.");
-    expect(collapsed).toContain("#1 · expand for details");
+    expect(collapsed).toContain("#1 · session open · follow-up or close · expand for details");
     expect(collapsed).not.toContain("· completed");
 
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
@@ -169,11 +178,28 @@ describe("task API rendering", () => {
 
     const mixed = text(renderSubagentCompletion({ content: "", details: { batch: [
       completed,
-      { ...completed, jobId: "job-2", ref: "#2", status: "failed" as const },
+      { ...completed, jobId: "job-2", operationId: "operation-2", ref: "#2", status: "failed" as const },
     ] } }, { expanded: false, outputPad: 0 }, taggedTheme));
     expect(mixed).toContain("✗ scout · failed · 2s");
     expect(mixed).not.toContain("<toolPendingBg>");
     expect(mixed).not.toContain("<toolErrorBg>");
     expect(mixed).not.toContain("<toolSuccessBg>");
+  });
+
+  test("shows reuse affordances only for genuinely open sessions", () => {
+    const unavailable = {
+      jobId: "job", operationId: "operation", ref: "#3", agent: "reviewer", task: "Review",
+      status: "failed" as const, summary: "Controller crashed.",
+    };
+    const card = text(renderSubagentCompletion({ content: "", details: unavailable }, { expanded: false, outputPad: 0 }, theme));
+    expect(card).toContain("#3 · session unavailable");
+    expect(card).not.toContain("session open");
+
+    const crashed = text(renderSubagentResult({
+      content: [], details: { ref: "#3", agent: "reviewer", status: "crashed", error: "Controller crashed." },
+    }, { expanded: false, isPartial: false }, theme, {
+      args: { action: "get", ref: "#3" }, isError: true, state: {}, invalidate: vi.fn(),
+    } as never));
+    expect(crashed).not.toContain("session open");
   });
 });

@@ -8,12 +8,16 @@ export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
 export interface SubagentCompletionDetails {
   jobId: string;
+  /** Internal operation/delivery identity; never rendered or exposed to the model. */
+  operationId: string;
   ref: string;
   agent: string;
   model?: string;
   thinking?: string;
   task: string;
   status: "completed" | "failed" | "interrupted";
+  /** True only when the session is idle and can accept a followup. */
+  sessionOpen?: true;
   summary: string;
   changes?: string;
   evidence?: string;
@@ -50,7 +54,10 @@ function completionEntryText(
   }
   const hasDetails = [details.task, summaryRaw, details.changes, details.evidence, details.validation, details.risks, ...(details.recentActivity ?? [])]
     .some((value) => typeof value === "string" && value.trim());
-  if (!expanded) text += `\n${theme.fg("muted", `  ${details.ref}${hasDetails ? " · expand for details" : ""}`)}`;
+  if (!expanded) {
+    const affordance = details.sessionOpen ? "session open · follow-up or close" : "session unavailable";
+    text += `\n${theme.fg("muted", `  ${details.ref} · ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
+  }
   if (expanded) {
     const sections: Array<[string, string | undefined]> = [
       ["Task", details.task], ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
@@ -65,7 +72,7 @@ function completionEntryText(
       text += `\n${theme.fg("toolTitle", "Recent activity")}`;
       for (const line of details.recentActivity.slice(-8)) text += `\n${theme.fg("dim", `  ${oneLine(line, 200)}`)}`;
     }
-    text += `\n${theme.fg("muted", details.ref)}`;
+    text += `\n${theme.fg("muted", `${details.ref} · ${details.sessionOpen ? "session open · follow-up or close" : "session unavailable"}`)}`;
   }
   return text;
 }

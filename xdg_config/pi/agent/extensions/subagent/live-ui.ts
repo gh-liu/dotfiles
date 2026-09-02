@@ -2,10 +2,10 @@
  * Live UI layer for active subagent runtimes.
  *
  * Data flow: sdk-executor onProgress summaries -> hub beginOperation wrapper ->
- * this controller -> ctx.ui.setWidget (a unified above-editor activity center
- * for every foreground and background runtime). Tool rows remain durable call
- * and result records; transient activity has exactly one visual owner here.
- * Settled background rows remain until Pi accepts the completion card; failed
+ * this controller -> ctx.ui.setWidget (an above-editor activity center for
+ * background operations whose tool call has already returned). Foreground
+ * activity stays in its tool result. Settled rows remain until the matching
+ * completion card starts rendering; failed
  * delivery leaves a static recovery row rather than silently losing the result.
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
@@ -34,14 +34,13 @@ const HEARTBEAT_MS = 1_000;
 /** Repaint cadence for the job-level spinner while any runtime is active. */
 const SPINNER_TICK_MS = 250;
 
-export type LiveRuntimeMode = "foreground" | "background";
-
 export interface LiveRuntimeInfo {
   /** Session-local short index (#N) for display. */
   index: number;
   agent: string;
   startedAt: number;
-  mode: LiveRuntimeMode;
+  /** Internal runtime identity, used only to remove all rows when a session closes. */
+  runId: string;
   task: string;
 }
 
@@ -49,7 +48,7 @@ interface RuntimeDisplay {
   index: number;
   agent: string;
   startedAt: number;
-  mode: LiveRuntimeMode;
+  runId: string;
   task: string;
   /** Latest progress summary (thinking/toolcall/streaming wording from the executor). */
   activity?: string;
@@ -118,7 +117,7 @@ function renderLines(
   const reporting = runtimes.size - active;
   const needsInput = values.filter((runtime) => runtime.decision && !runtime.settlement).length;
   const counts = [`${active} active`, ...(needsInput ? [`${needsInput} needs input`] : []), ...(reporting ? [`${reporting} reporting`] : [])];
-  const lines: string[] = [truncateToWidth(theme.fg("toolTitle", `Subagents · ${counts.join(" · ")}`), width)];
+  const lines: string[] = [truncateToWidth(theme.fg("toolTitle", `Background subagents · ${counts.join(" · ")}`), width)];
   const ordered = values.sort((first, second) => {
     const priority = (runtime: RuntimeDisplay) => runtime.decision ? 0 : runtime.settlement ? 2 : 1;
     return priority(first) - priority(second) || first.index - second.index;
@@ -134,12 +133,12 @@ function renderLines(
     let suffix = theme.fg("muted", ` · ${time}`);
     if (runtime.settlement === "report-failed") {
       marker = theme.fg("error", "!");
-      suffix = theme.fg("error", " · reporting failed · use get");
+      suffix = theme.fg("error", ` · card failed · get ${ref}`);
     } else if (runtime.settlement === "reporting") {
       const outcome = runtime.outcome ?? "completed";
       marker = theme.fg(outcome === "completed" ? "success" : outcome === "failed" ? "error" : "warning",
         outcome === "completed" ? SUBAGENT_DONE_GLYPH : outcome === "failed" ? SUBAGENT_FAILED_GLYPH : "■");
-      suffix = theme.fg("muted", ` · ${outcome} · reporting`);
+      suffix = theme.fg("muted", ` · result ready · awaiting card · get ${ref}`);
     } else if (runtime.decision) {
       marker = theme.fg("warning", "!");
       suffix = theme.fg("warning", ` · needs input · ${formatDuration(elapsedMs)}`);
@@ -167,19 +166,21 @@ function renderLines(
 export interface LiveUiController {
   /** Store the latest ctx.ui handle; all methods stay no-ops before this. */
   attach(ui: ExtensionUIContext): void;
-  /** Register a runtime for display in the live panel. */
-  track(runId: string, info: LiveRuntimeInfo): void;
+  /** Register an accepted background operation for display in the live panel. */
+  track(operationKey: string, info: LiveRuntimeInfo): void;
   /**
    * Record a progress summary plus the optional live activity phase as the current
    * activity; activeCount is the number of concurrently running tools in this update.
    */
-  progress(runId: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number, decision?: string): void;
+  progress(operationKey: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number, decision?: string): void;
   /** Mark settlement while its completion card is handed to Pi. */
-  settle(runId: string, outcome: "completed" | "failed" | "interrupted", elapsedMs?: number): void;
+  settle(operationKey: string, outcome: "completed" | "failed" | "interrupted", elapsedMs?: number): void;
   /** Keep a settled recovery row when completion delivery fails. */
-  reportFailed(runId: string): void;
-  /** Idempotently force-remove a runtime (close/crash/shutdown). */
-  remove(runId: string): void;
+  reportFailed(operationKey: string): void;
+  /** Remove one operation after its completion card starts rendering. */
+  remove(operationKey: string): void;
+  /** Idempotently remove every operation owned by a closed/crashed session. */
+  removeSession(runId: string): void;
   /** Clear the widget and stop all timers. */
   dispose(): void;
 }
@@ -278,8 +279,8 @@ export function createLiveUi(): LiveUiController {
     }
   };
 
-  const detach = (runId: string): void => {
-    if (disposed || !runtimes.delete(runId)) return;
+  const detach = (operationKey: string): void => {
+    if (disposed || !runtimes.delete(operationKey)) return;
     syncHeartbeat();
     syncSpinner();
     // Clear immediately when the panel becomes empty; otherwise coalesce.
@@ -292,21 +293,21 @@ export function createLiveUi(): LiveUiController {
       if (disposed) return;
       ui = nextUi;
     },
-    track(runId, info) {
+    track(operationKey, info) {
       if (disposed) return;
-      runtimes.set(runId, {
+      runtimes.set(operationKey, {
         index: info.index,
         agent: info.agent,
         startedAt: info.startedAt,
-        mode: info.mode,
+        runId: info.runId,
         task: info.task,
       });
       ensureHeartbeat();
       syncSpinner();
       scheduleDraw();
     },
-    progress(runId, summary, phase, activeCount, decision) {
-      const runtime = runtimes.get(runId);
+    progress(operationKey, summary, phase, activeCount, decision) {
+      const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
       runtime.activity = summary;
       runtime.activityPhase = phase;
@@ -315,13 +316,9 @@ export function createLiveUi(): LiveUiController {
       syncSpinner();
       scheduleDraw();
     },
-    settle(runId, outcome, _elapsedMs) {
-      const runtime = runtimes.get(runId);
+    settle(operationKey, outcome, _elapsedMs) {
+      const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
-      if (runtime.mode === "foreground") {
-        detach(runId);
-        return;
-      }
       runtime.settlement = "reporting";
       runtime.outcome = outcome;
       runtime.decision = undefined;
@@ -330,16 +327,28 @@ export function createLiveUi(): LiveUiController {
       syncSpinner();
       scheduleDraw();
     },
-    reportFailed(runId) {
-      const runtime = runtimes.get(runId);
+    reportFailed(operationKey) {
+      const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
       runtime.settlement = "report-failed";
       syncHeartbeat();
       syncSpinner();
       scheduleDraw();
     },
-    remove(runId) {
-      detach(runId);
+    remove(operationKey) {
+      detach(operationKey);
+    },
+    removeSession(runId) {
+      if (disposed) return;
+      const keys = [...runtimes.entries()]
+        .filter(([, runtime]) => runtime.runId === runId)
+        .map(([operationKey]) => operationKey);
+      for (const operationKey of keys) runtimes.delete(operationKey);
+      if (keys.length === 0) return;
+      syncHeartbeat();
+      syncSpinner();
+      if (runtimes.size === 0) drawNow();
+      else scheduleDraw();
     },
     dispose() {
       if (disposed) return;

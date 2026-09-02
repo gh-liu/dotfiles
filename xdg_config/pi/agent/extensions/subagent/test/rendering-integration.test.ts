@@ -34,7 +34,7 @@ describe("subagent rendering integration", () => {
     await env.extension.shutdown();
   });
 
-  test("foreground execution lives in the activity center until settlement", async () => {
+  test("foreground execution stays out of the background activity center", async () => {
     const env = setup();
     let widget: unknown;
     const ctx = {
@@ -48,18 +48,28 @@ describe("subagent rendering integration", () => {
     const running = env.extension.getTool().execute("call", {
       action: "run", agent: "scout", task: "Inspect the complete authentication flow",
     }, undefined, undefined, ctx);
-    await vi.waitFor(() => expect(typeof widget).toBe("function"));
-    const component = (widget as (tui: unknown, theme: unknown) => { render(width: number): string[] })(undefined, {
-      fg: (_color: string, value: string) => value,
-      bold: (value: string) => value,
-    });
-    const rendered = component.render(100).join("\n");
-    expect(rendered).toContain("#1 scout");
-    expect(rendered).toContain("Inspect the complete authentication flow");
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    expect(widget).toBeUndefined();
     env.fake.controllers[0].settle();
     await running;
     expect(widget).toBeUndefined();
+    await env.extension.shutdown();
+  });
+
+  test("followup invocation resolves the session's actual agent", async () => {
+    const env = setup();
+    const running = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].settle();
+    await running;
+    const tool = env.extension.getTool();
+    const args = { action: "followup", ref: "#1", task: "Check tests" } as const;
+    const rendered = tool.renderCall!(args as never, {
+      fg: (_color: string, value: string) => value,
+      bold: (value: string) => value,
+    } as never, { args, isError: false, state: {}, invalidate: vi.fn() } as never).render(100).join("\n");
+    expect(rendered).toContain("#1 scout — Check tests");
+    expect(rendered).not.toContain("followup");
     await env.extension.shutdown();
   });
 });
