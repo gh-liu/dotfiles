@@ -1,10 +1,9 @@
 # Pi subagent live evaluation
 
 This suite runs the real `pi` CLI against isolated temporary Git repositories.
-It measures whether the parent uses the subagent tool at the intended boundary,
-which role it selects, whether it writes a self-contained work order, how roles
-compose, how it consumes handoffs, and whether delegated implementation plus
-parent verification actually produces a valid result.
+It measures whether the parent delegates at the intended boundary, selects one
+of the four bundled roles, composes sessions visibly, reuses a session through
+followup, consumes handoffs, and verifies delegated implementation.
 
 It is deliberately **not** part of `npm test`: it needs provider credentials and
 network access, takes several minutes, and incurs real model/search cost.
@@ -15,28 +14,16 @@ network access, takes several minutes, and incurs real model/search cost.
 | --- | --- | ---: |
 | `simple-lookup` | Parent reads one file; no subagent | 3 |
 | `local-discovery` | `scout` maps the multi-file lifecycle | 3 |
-| `self-contained-work-order` | Parent gives one-shot `scout` a complete fresh-context work order, then synthesizes without duplicate reads | 1 |
-| `external-research` | `researcher`; no duplicate parent `web_search` | 3 |
-| `cited-discovery-consumption` | `scout` returns a structured handoff; parent synthesizes without duplicate reads/searches | 1 |
+| `external-research` | `scout` handles source-heavy web research; no duplicate parent `web_search` | 3 |
 | `independent-review` | `reviewer` finds the missing default-TTL regression | 1 |
+| `expert-judgment` | `reviewer` resolves a bounded compatibility tradeoff | 1 |
 | `browser-qa` | `tester` launches the fixture app, exercises browser flows, preserves source, and saves screenshot evidence | 1 |
-| `small-coherent-implementation` | Exactly one `worker` implements; parent inspects the settled diff and reruns tests | 1 |
-| `explicit-worker` | `worker` implements; fixture tests pass | 1 |
-| `delegated-verification` | Complete one-shot `worker` work order and structured handoff; parent inspects settled diff and reruns tests | 1 |
-| `high-impact-decision` | Exactly one bounded `scout` gathers repository evidence before one `oracle` judgment | 3 |
-| `combo-implementation-review` | `scout → worker → reviewer`; tests pass | 1 |
-| `parallel-evidence` | Independent `scout` + `researcher` starts before either settles; no parent duplicate search | 1 |
-| `three-way-parallel` | `scout` + `researcher` + `reviewer` use all three safe read-only slots before synthesis | 1 |
-| `combo-evidence-decision` | `scout` + `researcher` evidence before `oracle` | 1 |
-| `persistent-follow-up` | `start → wait → send(follow_up) → wait → close` | 1 |
-| `capacity-exhaustion` | `scout`+`researcher`+`reviewer` fill capacity; fourth fails fast | 1 |
-| `steer-active-operation` | `start → send(steer) → wait → close` without new operation | 1 |
-| `interrupt-and-reuse` | `start → interrupt → send(follow_up) → wait → close` reuses runtime | 1 |
-| `scout-write-attempt` | `scout` stays read-only despite write temptation | 1 |
-| `constraint-conflict-oracle` | `oracle` keeps epoch-millisecond against ISO request | 3 |
-| `researcher-workorder-completeness` | `researcher` receives complete 8-field work order | 1 |
-| `unexpected-path-modification` | `worker` only changes allowed paths; parent diff-checks | 1 |
-| `handoff-missing-risks` | `scout` handoff must contain Risks; parent consumes cited result | 1 |
+| `implementation` | `worker` implements; parent inspects the diff and reruns tests | 1 |
+| `parallel-investigation` | Independent `scout` + `reviewer` sessions start before either settles | 1 |
+| `staged-delivery` | Parent visibly composes `scout → worker → reviewer` | 1 |
+| `persistent-followup` | One `#N` supports `run → followup → get → close` | 1 |
+| `background-recovery` | Background result is recovered with `get` and then closed | 1 |
+| `capacity-exhaustion` | Five active turns fill configured capacity; the sixth fails fast | 1 |
 
 The fixture contains an intentional seconds-versus-milliseconds bug and a
 `plan.md`. Every run gets its own copy, so concurrent writing scenarios cannot
@@ -57,7 +44,7 @@ strict in this mode:
 node subagent/eval/run.mjs
 ```
 
-Run the six core scenarios once. Deterministic failures still fail the command;
+Run the core scenarios once. Deterministic failures still fail the command;
 single-sample routing misses are warnings:
 
 ```bash
@@ -68,7 +55,7 @@ Target one behavior while tuning a description or guideline:
 
 ```bash
 node subagent/eval/run.mjs --scenario external-research --repeat 3
-node subagent/eval/run.mjs --scenario combo-implementation-review
+node subagent/eval/run.mjs --scenario persistent-followup
 ```
 
 Inspect the plan without making provider calls:
@@ -134,15 +121,12 @@ Deterministic invariants always fail the command:
   terminates the group if a delegated temporary server or browser is orphaned.
 - Every subagent call includes `action`; no failed subagent invocation or schema
   error is hidden by a successful retry. A scenario may consume only an exact,
-  counted expected error (currently the fourth-call capacity rejection); every
+  counted expected error (currently the sixth-call capacity rejection); every
   unmatched error remains fatal.
-- Explicit delegation/composition and persistent lifecycle orders are honored.
-- Parent work orders include the outcome, scope, starting evidence, decisions,
-  constraints, acceptance criteria, validation, and expected handoff when a
-  scenario requires a complete fresh-context delegation.
-- Read-only handoffs expose Evidence, Validation, Blockers, and Risks sections;
-  the parent consumes the cited result without repeating equivalent reads or
-  searches.
+- Explicit delegation, parent-visible composition, parallel starts, and reusable
+  session action orders are honored.
+- Tasks contain enough plain-text context for fresh sessions without requiring a
+  public structured work-order schema.
 - Parent verification of writing handoffs happens after the worker settles and
   includes both complete-diff inspection and an integrated test rerun.
 - Read-only scenarios do not alter files or Git history.
@@ -153,10 +137,9 @@ Deterministic invariants always fail the command:
 
 Implicit model routing is probabilistic. Full mode enforces each scenario's
 target rate (normally 2/3 for positive implicit routing and 3/3 for avoiding a
-simple-task false positive). The `parallel-evidence` scenario additionally checks
-that both independent evidence calls begin before the first subagent settles,
-making the DAG scheduling optimization observable. Quick mode reports a miss as
-a warning unless `--strict` is set.
+simple-task false positive). The parallel scenario additionally checks that both
+calls begin before the first subagent settles. Quick mode reports a miss as a
+warning unless `--strict` is set.
 
 The artifact directory contains:
 

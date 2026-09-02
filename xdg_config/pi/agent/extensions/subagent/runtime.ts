@@ -1,5 +1,3 @@
-import { resolve, sep } from "node:path";
-
 import type { LiveUiController } from "./live-ui.ts";
 import { boundText, modelSubagentHandoff } from "./output.ts";
 import { stripModel } from "./protocol.ts";
@@ -39,8 +37,6 @@ export interface OperationRecord {
   settle(): void;
 }
 
-export type RuntimeMode = "foreground" | "background-one-shot";
-
 export interface RuntimeRecord {
   /** Session-local short index (#N) for human/model-friendly targeting. */
   index: number;
@@ -51,8 +47,6 @@ export interface RuntimeRecord {
   parentSessionId: string;
   projectGuidance: string[];
   state: RuntimeState;
-  /** Foreground or asynchronously observed one-shot execution. */
-  mode: RuntimeMode;
   controller?: SubagentController;
   controllerReady: Promise<SubagentController>;
   activeOperationId?: string;
@@ -94,7 +88,6 @@ export function runtimeSnapshot(runtime: RuntimeRecord) {
   return {
     runId: runtime.runId,
     revision: runtime.revision,
-    mode: runtime.mode,
     index: runtime.index,
     agent: runtime.agent.name,
     ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
@@ -118,7 +111,7 @@ export function runtimeSnapshot(runtime: RuntimeRecord) {
 export interface RuntimeHubDeps {
   controllerFactory: SubagentControllerFactory;
   idFactory: () => string;
-  /** Maximum concurrent one-shot jobs. */
+  /** Maximum concurrently executing turns. Idle reusable sessions do not consume a slot. */
   maxConcurrentRuns?: number;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
   /** Returns true once the completion message has been accepted by Pi. */
@@ -136,7 +129,6 @@ export interface CreateRuntimeInput {
   cwd: string;
   parentSessionId: string;
   projectGuidance: string[];
-  mode: RuntimeMode;
   initialOptions: SubagentRunOptions;
 }
 
@@ -152,20 +144,14 @@ export interface BeginOperationInput {
 export interface RuntimeHub {
   readonly maxConcurrentRuns: number;
   get(runtimeId: string): RuntimeRecord | undefined;
-  /** Resolve a canonical jobId first, then a runtime-local #N/N alias. */
+  /** Resolve an internal runtime ID or the public session-local #N/N alias. */
   resolve(reference: string): RuntimeRecord | undefined;
   capacityAvailable(): boolean;
   occupiedSlots(): number;
   availableSlots(): number;
   isShuttingDown(): boolean;
-  /**
-   * Acquire exclusive write leases for a job. Paths are normalized to absolute
-   * paths against `base`; identical, ancestor, or descendant overlaps with any
-   * active lease are rejected. The lease is released when the job terminates.
-   */
-  acquireLease(paths: string[], runId: string, base: string): { ok: true } | { ok: false; error: string };
-  /** Release the leases held by a run; idempotent. */
-  releaseLease(runId: string): void;
+  /** Reserve one execution slot for an idle reusable session. */
+  reserveSlot(runtime: RuntimeRecord): boolean;
   createRuntime(input: CreateRuntimeInput): RuntimeRecord;
   snapshot(runtime: RuntimeRecord): ReturnType<typeof runtimeSnapshot>;
   /** All tracked runtimes (active and idle). */
@@ -195,48 +181,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     if (!runtime.slotReserved) return;
     runtime.slotReserved = false;
     occupiedSlots -= 1;
-  };
-
-  // In-process exclusive write leases: normalized absolute path -> holder runId.
-  const leasePathsByRunId = new Map<string, string[]>();
-  const leaseRunIdByPath = new Map<string, string>();
-
-  /** Two absolute paths overlap when one is an ancestor of (or identical to) the other. */
-  const pathsOverlap = (first: string, second: string): boolean =>
-    first === second
-    || first.startsWith(`${second}${sep}`)
-    || second.startsWith(`${first}${sep}`);
-
-  const acquireLease = (
-    paths: string[],
-    runId: string,
-    base: string,
-  ): { ok: true } | { ok: false; error: string } => {
-    const normalized = paths.map((value) => resolve(base, value));
-    for (const path of normalized) {
-      for (const [leased, holderRunId] of leaseRunIdByPath) {
-        if (pathsOverlap(path, leased)) {
-          return {
-            ok: false,
-            error: `exclusivePaths conflict: ${path} overlaps ${leased} already leased by job ${holderRunId}`,
-          };
-        }
-      }
-    }
-    for (const path of normalized) {
-      leaseRunIdByPath.set(path, runId);
-    }
-    leasePathsByRunId.set(runId, normalized);
-    return { ok: true };
-  };
-
-  const releaseLease = (runId: string): void => {
-    const paths = leasePathsByRunId.get(runId);
-    if (paths === undefined) return;
-    leasePathsByRunId.delete(runId);
-    for (const path of paths) {
-      if (leaseRunIdByPath.get(path) === runId) leaseRunIdByPath.delete(path);
-    }
   };
 
   const prune = (): void => {
@@ -343,7 +287,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (operation) operation.notifyOnSettle = false;
     }
     if (runtime.closePromise) return runtime.closePromise;
-    if (runtime.mode === "foreground" || suppressNotification) deps.live.remove(runtime.runId);
+    deps.live.remove(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
     runtime.closePromise = (async () => {
@@ -388,7 +332,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       throw error;
     }).finally(() => {
       releaseSlot(runtime);
-      releaseLease(runtime.runId);
       prune();
     });
     return runtime.closePromise;
@@ -457,7 +400,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       onUpdate?.({
         content: [{ type: "text", text: summary }],
         details: {
-          jobId: runtime.runId,
           ref: `#${runtime.index}`,
           agent: runtime.agent.name,
           ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
@@ -513,10 +455,10 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         if (runtime.state === "running") transition(runtime, "idle");
       }
       operation.settle();
+      releaseSlot(runtime);
       prune();
       void started.accepted.then(() => {
         notifyOperationSettled(runtime, operation);
-        if (runtime.mode === "background-one-shot") void closeRuntime(runtime).catch(() => {});
       }).catch(() => {});
     });
     await started.accepted;
@@ -541,8 +483,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     occupiedSlots: () => occupiedSlots,
     availableSlots: () => Math.max(0, maxConcurrentRuns - occupiedSlots),
     isShuttingDown: () => shuttingDown,
-    acquireLease,
-    releaseLease,
+    reserveSlot: (runtime) => {
+      if (shuttingDown || runtime.slotReserved || runtime.state !== "idle" || occupiedSlots >= maxConcurrentRuns) return false;
+      runtime.slotReserved = true;
+      occupiedSlots += 1;
+      return true;
+    },
     createRuntime(input) {
       const controllerReady = deferred<SubagentController>();
       const runtime: RuntimeRecord = {
@@ -553,7 +499,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         cwd: input.cwd,
         parentSessionId: input.parentSessionId,
         projectGuidance: input.projectGuidance,
-        mode: input.mode,
         state: "starting",
         controllerReady: controllerReady.promise,
         operations: new Map(),

@@ -23,7 +23,6 @@ export interface SdkSubagentConfig {
 type SessionLike = {
   prompt(text: string, options?: any): Promise<void>;
   abort(): Promise<void>;
-  steer(text: string): Promise<void>;
   followUp?(text: string): Promise<void>;
   dispose(): void;
   subscribe(listener: (event: any) => void): () => void;
@@ -399,9 +398,6 @@ export async function createSdkSubagentController(
           options.agent.tools.length !== initialProfile.tools.length ||
           options.agent.tools.some((tool, index) => tool !== initialProfile.tools[index]);
         if (identityMismatch) throw new Error("SDK subagent runtime identity does not match controller");
-        if (options.toolBudget !== undefined && (!Number.isSafeInteger(options.toolBudget) || options.toolBudget <= 0)) {
-          throw new Error("toolBudget must be a positive integer");
-        }
         if (options.signal?.aborted) throw new SubagentCancellationError("Subagent run cancelled before submission");
         active = true;
         operationBegan = true;
@@ -425,8 +421,6 @@ export async function createSdkSubagentController(
         let thinkingBuffer = "";
         let earlierToolCount = 0;
         let lastProgress = "";
-        let toolExecutionCount = 0;
-        let budgetExceeded = false;
         const boundTimeline = (): void => {
           // Keep only the newest slice so the live view stays compact and bounded.
           if (timeline.length > MAX_TIMELINE) timeline.splice(0, timeline.length - MAX_TIMELINE);
@@ -487,20 +481,6 @@ export async function createSdkSubagentController(
             } else if (event.type === "tool_execution_start") {
               // Any reasoning produced before this tool call becomes a timeline segment.
               flushThinking();
-              toolExecutionCount += 1;
-              // Hard worker-side tool budget: abort once the limit is exceeded, and
-              // only once; the diagnostic limit stays in the interrupted result.
-              if (
-                !budgetExceeded
-                && options.toolBudget !== undefined
-                && options.toolBudget > 0
-                && toolExecutionCount > options.toolBudget
-              ) {
-                budgetExceeded = true;
-                void cancel(new SubagentCancellationError(
-                  `Subagent tool budget exceeded: ${toolExecutionCount} tool executions (limit ${options.toolBudget})`,
-                )).catch(() => {});
-              }
               const label = safeToolProgress(event, secrets);
               const id = typeof event.toolCallId === "string" ? event.toolCallId : `anonymous-${activeTools.size}`;
               activeTools.set(id, { id, summary: label, status: "running" });
@@ -635,15 +615,6 @@ export async function createSdkSubagentController(
       accepted.promise.catch(() => {});
       void resultPromise.catch((error) => { try { accepted.reject(error instanceof Error ? error : new Error(String(error))); } catch {} });
       return { accepted: accepted.promise, result: resultPromise };
-    },
-    async steer(expectedOperationId, message): Promise<boolean> {
-      if (activeOperationId !== expectedOperationId || !active || !activeAccepted) return false;
-      try {
-        await session.steer(message);
-        return true;
-      } catch {
-        return false;
-      }
     },
     async interrupt(expectedOperationId): Promise<boolean> {
       if (activeOperationId !== expectedOperationId || !abortActive) return false;

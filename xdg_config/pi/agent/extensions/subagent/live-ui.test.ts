@@ -36,7 +36,7 @@ function renderWidget(ui: ReturnType<typeof createMockUi>, width = 120): string[
 const tracked = (overrides: Partial<Parameters<ReturnType<typeof createLiveUi>["track"]>[1]> = {}) => ({
   index: 1,
   agent: "scout",
-  objective: "Map the authentication lifecycle and identify the safest implementation seam.",
+  task: "Map the authentication lifecycle and identify the safest implementation seam.",
   startedAt: Date.now(),
   mode: "foreground" as const,
   ...overrides,
@@ -70,7 +70,7 @@ describe("activity center", () => {
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked({ mode: "foreground", index: 1 }));
-    live.track("r2", tracked({ mode: "background", index: 2, agent: "reviewer", objective: "Review the patch for lifecycle races." }));
+    live.track("r2", tracked({ mode: "background", index: 2, agent: "reviewer", task: "Review the patch for lifecycle races." }));
     live.progress("r1", "grep auth middleware…", { kind: "tool", status: "running" });
     live.progress("r2", "Thinking…", { kind: "thinking", status: "running" });
     vi.advanceTimersByTime(250);
@@ -83,15 +83,6 @@ describe("activity center", () => {
     expect(lines.join("\n")).toContain("Review the patch for lifecycle races.");
     expect(lines.join("\n")).toContain("↳ grep auth middleware…");
     expect(lines.join("\n")).toContain("↳ Thinking…");
-  });
-
-  test("labels workflow runtimes with their graph and node identity", () => {
-    const ui = createMockUi();
-    const live = createLiveUi();
-    live.attach(ui);
-    live.track("r1", tracked({ agent: "oracle", workflow: { ref: "W#2", nodeId: "design" } }));
-
-    expect(renderWidget(ui).join("\n")).toContain("W#2/design · #1 oracle");
   });
 
   test("keeps completed Thinking and tool phase markers without duplicating the spinner", () => {
@@ -158,11 +149,11 @@ describe("activity center", () => {
     for (const line of lines) expect(visibleWidth(line)).toBeLessThanOrEqual(32);
   });
 
-  test("uses two objective lines when wide and one when compact", () => {
+  test("uses two task lines when wide and one when compact", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
-    live.track("r1", tracked({ objective: "A deliberately long objective that explains what the child should inspect, why the investigation matters, and what evidence it should return to the parent." }));
+    live.track("r1", tracked({ task: "A deliberately long task that explains what the child should inspect, why the investigation matters, and what evidence it should return to the parent." }));
     const wide = renderWidget(ui, 80).filter((line) => line.startsWith("  ") && !line.includes("↳"));
     const compact = renderWidget(ui, 48).filter((line) => line.startsWith("  ") && !line.includes("↳"));
     expect(wide).toHaveLength(2);
@@ -175,7 +166,7 @@ describe("activity center", () => {
     const live = createLiveUi();
     live.attach(ui);
     for (let index = 1; index <= 7; index += 1) {
-      live.track(`r${index}`, tracked({ index, objective: `Investigate bounded work stream ${index} and return evidence.` }));
+      live.track(`r${index}`, tracked({ index, task: `Investigate bounded work stream ${index} and return evidence.` }));
     }
     live.progress("r7", "waiting", undefined, undefined, "Resolve the release policy");
     vi.advanceTimersByTime(250);
@@ -183,7 +174,7 @@ describe("activity center", () => {
     expect(lines[0]).toContain("7 active");
     expect(lines.find((line) => line.includes("#7 scout"))).toBeDefined();
     expect(lines.find((line) => line.includes("#6 scout"))).toBeUndefined();
-    expect(lines.at(-1)).toContain("… 2 more jobs · use get for details");
+    expect(lines.at(-1)).toContain("… 2 more sessions · use get for details");
     expect(lines.filter((line) => line.includes("↳"))).toHaveLength(0);
   });
 

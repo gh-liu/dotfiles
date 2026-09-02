@@ -56,12 +56,12 @@ describe("subagent discovery", () => {
     writeFileSync(settingsPath, JSON.stringify({ subagent: { subagents: { scout: { model: "vendor/model", thinking: "high" } } } }));
     const env = setup({ ids: ["job", "private"], settingsPath });
     writeFileSync(join(env.root, "AGENTS.md"), "Project guidance");
-    const running = env.invoke({ action: "run", agent: "scout", objective: "Find auth" });
+    const running = env.invoke({ action: "run", agent: "scout", task: "Find auth" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     expect(env.fake.controllers[0].starts[0].options).toMatchObject({
       cwd: realpathSync(env.root),
       agent: { name: "scout", model: "vendor/model", thinking: "high", tools: ["read", "grep"] },
-      workOrder: { goal: "Find auth", projectGuidance: [expect.stringContaining("Project guidance")] },
+      workOrder: { task: "Find auth", projectGuidance: [expect.stringContaining("Project guidance")] },
     });
     env.fake.controllers[0].settle();
     await running;
@@ -80,7 +80,7 @@ describe("subagent discovery", () => {
   test("inherits the parent model, while an explicit override wins", async () => {
     const inherited = setup({ ids: ["job", "private"] });
     const inheritedContext = { ...context(inherited.root), model: { provider: "parent", id: "model" } };
-    const run = inherited.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect" } as never, undefined, undefined, inheritedContext as never);
+    const run = inherited.extension.getTool().execute("call", { action: "run", agent: "scout", task: "Inspect" } as never, undefined, undefined, inheritedContext as never);
     await vi.waitFor(() => expect(inherited.fake.controllers[0]?.starts).toHaveLength(1));
     expect(inherited.fake.controllers[0].starts[0].options.agent.model).toBe("parent/model");
     inherited.fake.controllers[0].settle();
@@ -89,7 +89,7 @@ describe("subagent discovery", () => {
     const settingsPath = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(settingsPath, JSON.stringify({ subagent: { subagents: { scout: { model: "override/model" } } } }));
     const overridden = setup({ settingsPath });
-    const overrideRun = overridden.extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Inspect" } as never, undefined, undefined, { ...context(overridden.root), model: { provider: "parent", id: "model" } } as never);
+    const overrideRun = overridden.extension.getTool().execute("call", { action: "run", agent: "scout", task: "Inspect" } as never, undefined, undefined, { ...context(overridden.root), model: { provider: "parent", id: "model" } } as never);
     await vi.waitFor(() => expect(overridden.fake.controllers[0]?.starts).toHaveLength(1));
     expect(overridden.fake.controllers[0].starts[0].options.agent.model).toBe("override/model");
     overridden.fake.controllers[0].settle();
@@ -100,7 +100,7 @@ describe("subagent discovery", () => {
     const settingsPath = join(temporaryDirectory("settings-"), "settings.json");
     writeFileSync(settingsPath, JSON.stringify({ defaultProvider: "default", defaultModel: "model" }));
     const env = setup({ settingsPath });
-    const running = env.invoke({ action: "run", agent: "scout", objective: "Inspect" });
+    const running = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     expect(env.fake.controllers[0].starts[0].options.agent.model).toBe("default/model");
     env.fake.controllers[0].settle();
@@ -108,7 +108,7 @@ describe("subagent discovery", () => {
 
     writeAgent(env.agents, "broken");
     writeFileSync(join(env.agents, "broken.md"), "---\nname: broken\ntools: nope\n---\n");
-    const invalid = await env.invoke({ action: "run", agent: "broken", objective: "Nope" });
+    const invalid = await env.invoke({ action: "run", agent: "broken", task: "Nope" });
     expect(invalid.isError).toBe(true);
     expect(env.fake.factory).toHaveBeenCalledOnce();
   });

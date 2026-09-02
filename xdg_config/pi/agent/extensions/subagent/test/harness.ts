@@ -79,7 +79,6 @@ export interface FakeStart {
 
 export class FakeController implements SubagentController {
   readonly starts: FakeStart[] = [];
-  readonly steerCalls: Array<{ operationId: string; message: string }> = [];
   readonly interruptCalls: string[] = [];
   private readonly failureEvent = deferred<Error>();
   readonly failure = this.failureEvent.promise;
@@ -99,13 +98,6 @@ export class FakeController implements SubagentController {
     const operation = this.start(options);
     await operation.accepted;
     return operation.result;
-  }
-
-  async steer(expectedOperationId: string, message: string): Promise<boolean> {
-    const current = this.starts.at(-1);
-    if (!current || current.options.operationId !== expectedOperationId) return false;
-    this.steerCalls.push({ operationId: expectedOperationId, message });
-    return true;
   }
 
   async interrupt(expectedOperationId: string): Promise<boolean> {
@@ -194,6 +186,7 @@ export function setup(options: {
   ids?: string[];
   settingsPath?: string;
   agentNames?: string[];
+  maxConcurrentRuns?: number;
 } = {}) {
   const root = temporaryDirectory("pi-subagent-project-");
   const agents = temporaryDirectory("pi-subagent-agents-");
@@ -201,27 +194,29 @@ export function setup(options: {
   const fake = fakeFactory(options.autoAccept);
   const extension = harness();
   const ids = options.ids ?? Array.from({ length: 30 }, (_, index) => `id-${index + 1}`);
+  const settingsPath = options.settingsPath ?? join(temporaryDirectory("pi-subagent-settings-"), "settings.json");
+  if (options.maxConcurrentRuns !== undefined) {
+    writeFileSync(settingsPath, JSON.stringify({ subagent: { maxConcurrentRuns: options.maxConcurrentRuns, subagents: {} } }));
+  }
   registerSubagentExtension(extension.pi, {
     agentDirectory: agents,
     controllerFactory: fake.factory,
     idFactory: () => ids.shift()!,
-    settingsPath: options.settingsPath ?? join(temporaryDirectory("pi-subagent-settings-"), "missing.json"),
+    settingsPath,
   });
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
     "tool-call",
-    (params.action === "run"
-      ? { ...params, objective: params.objective ?? params.task }
-      : params) as never,
+    params as never,
     undefined, undefined, context(root),
   );
   return { root, agents, fake, extension, invoke };
 }
 
 export async function startIdle(env: ReturnType<typeof setup>) {
-  const started = await env.invoke({ action: "run", agent: "scout", objective: "Initial", background: true });
-  const identity = { runId: (started.details as { jobId: string }).jobId, operationId: env.fake.controllers[0].starts[0].options.operationId, revision: 0 };
+  const started = await env.invoke({ action: "run", agent: "scout", task: "Initial", background: true });
+  const identity = { ref: (started.details as { ref: string }).ref, operationId: env.fake.controllers[0].starts[0].options.operationId, revision: 0 };
   env.fake.controllers[0].settle(0);
-  await env.invoke({ action: "get", jobId: identity.runId, waitMs: 1_000 });
+  await env.invoke({ action: "get", ref: identity.ref, waitMs: 1_000 });
   return identity;
 }
 

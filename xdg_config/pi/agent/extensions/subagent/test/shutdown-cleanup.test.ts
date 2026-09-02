@@ -15,7 +15,7 @@ describe("subagent shutdown cleanup", () => {
       controllerCreationTimeoutMs: 20,
       idFactory: (() => { const ids = ["job", "private"]; return () => ids.shift()!; })(),
     });
-    const run = extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Wait" }, undefined, undefined, context(root));
+    const run = extension.getTool().execute("call", { action: "run", agent: "scout", task: "Wait" }, undefined, undefined, context(root));
     await expect(extension.shutdown()).resolves.toBeUndefined();
     await expect(run).resolves.toMatchObject({ isError: true });
   });
@@ -33,7 +33,7 @@ describe("subagent shutdown cleanup", () => {
       controllerCreationTimeoutMs: 10,
       idFactory: (() => { const ids = ["job", "private"]; return () => ids.shift()!; })(),
     });
-    const run = extension.getTool().execute("call", { action: "run", agent: "scout", objective: "Wait" }, undefined, undefined, context(root));
+    const run = extension.getTool().execute("call", { action: "run", agent: "scout", task: "Wait" }, undefined, undefined, context(root));
     await expect(run).resolves.toMatchObject({ isError: true });
     ready.resolve(controller);
     await vi.waitFor(() => expect(controller.closeCalls).toBe(1));
@@ -42,7 +42,7 @@ describe("subagent shutdown cleanup", () => {
   test("shutdown suppresses a queued background wake", async () => {
     const { setup } = await import("./harness.ts");
     const env = setup({ ids: ["job", "private"] });
-    await env.invoke({ action: "run", agent: "scout", objective: "Finish", background: true });
+    await env.invoke({ action: "run", agent: "scout", task: "Finish", background: true });
     env.fake.controllers[0].settle();
     await env.extension.shutdown();
     await new Promise((resolve) => setTimeout(resolve, 5));

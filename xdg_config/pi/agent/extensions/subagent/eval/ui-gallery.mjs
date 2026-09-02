@@ -2,7 +2,7 @@
 
 // Deterministic visual inventory for every current subagent renderer branch.
 // This is a review tool, not a provider test: fixtures use the public
-// run/get/cancel contract and the details shapes produced by the extension.
+// run/followup/get/cancel/close contract and extension-produced details.
 
 import {
   renderSubagentCall,
@@ -57,40 +57,39 @@ function renderResult(args, details, { expanded = false, partial = false, isErro
   );
 }
 
-const objective = "Map the subagent lifecycle and identify the safest change seam.";
+const task = "Map the subagent lifecycle and identify the safest change seam.";
 const runArgs = {
-  action: "run", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal", objective,
-  scope: ["spec.md", "runtime.ts", "sdk-executor.ts"], context: "The task API is run/get/cancel.",
-  constraints: ["Read only", "Cite exact files and lines"], acceptance: ["Compare implementation with tests"],
-  cwd: `${process.env.HOME ?? "/home/user"}/dev/go-zero`,
+  action: "run", agent: "scout", model: "stealth/ox-alpha", thinking: "minimal", task,
 };
 
 function calls() {
-  heading("CALLS · current run/get/cancel API");
+  heading("CALLS · reusable session API");
   row("run foreground", renderCall(runArgs, false, { runtimeIndex: 1 }));
-  row("run background", renderCall({ ...runArgs, agent: "researcher", background: true }, false, { runtimeIndex: 2 }));
+  row("run background", renderCall({ ...runArgs, agent: "reviewer", background: true }, false, { runtimeIndex: 2 }));
+  row("followup", renderCall({ action: "followup", ref: "#1", task: "Compare the tests with the implementation." }));
   row("get recent", renderCall({ action: "get" }));
-  row("get job", renderCall({ action: "get", jobId: "#2", waitMs: 30_000 }, false, { ref: "#2" }));
-  row("cancel", renderCall({ action: "cancel", jobId: "#2" }, false, { ref: "#2" }));
+  row("get session", renderCall({ action: "get", ref: "#2", waitMs: 30_000 }, false, { ref: "#2" }));
+  row("cancel", renderCall({ action: "cancel", ref: "#2" }, false, { ref: "#2" }));
+  row("close", renderCall({ action: "close", ref: "#2" }, false, { ref: "#2" }));
 
-  heading("CALL · expanded work order");
+  heading("CALL · expanded task");
   row("run expanded", renderCall(runArgs, true, { runtimeIndex: 1 }));
 }
 
 function progress() {
   heading("PROGRESS · tool-row receipt");
-  row("active", renderResult(runArgs, { jobId: "job-1", ref: "#1", status: "running" }, { partial: true, text: "Thinking…" }));
+  row("active", renderResult(runArgs, { ref: "#1", status: "running" }, { partial: true, text: "Thinking…" }));
 
   heading("PROGRESS · unified activity center");
   let widgetFactory;
   const live = createLiveUi();
   live.attach({ setWidget(_id, content) { widgetFactory = content; } });
   const now = Date.now();
-  live.track("job-1", { index: 1, agent: "scout", objective, startedAt: now - 25_000, mode: "foreground" });
+  live.track("job-1", { index: 1, agent: "scout", task, startedAt: now - 25_000, mode: "foreground" });
   live.progress("job-1", "Thinking", { kind: "thinking", status: "completed" });
-  live.track("job-2", { index: 2, agent: "researcher", objective: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, mode: "background" });
+  live.track("job-2", { index: 2, agent: "scout", task: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, mode: "background" });
   live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" });
-  live.track("job-3", { index: 3, agent: "reviewer", objective: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, mode: "background" });
+  live.track("job-3", { index: 3, agent: "reviewer", task: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, mode: "background" });
   live.progress("job-3", "waiting for a decision", undefined, undefined, "Choose compatibility policy");
   if (typeof widgetFactory === "function") {
     const widget = widgetFactory({}, theme);
@@ -110,24 +109,24 @@ function progress() {
 }
 
 function terminal() {
-  heading("TERMINAL RESULTS · run/get/cancel outcomes");
+  heading("TERMINAL RESULTS · session outcomes");
   const cases = [
-    ["run completed", runArgs, { jobId: "job-1", ref: "#1", status: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
-    ["run interrupted", runArgs, { jobId: "job-1", ref: "#1", status: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
-    ["run failed", runArgs, { jobId: "job-1", ref: "#1", status: "failed", error: "Provider authentication failed before generation." }, { isError: true }],
-    ["get running", { action: "get", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "running", agent: "researcher" }, {}],
-    ["get timed out", { action: "get", jobId: "#2", waitMs: 30_000 }, { jobId: "job-2", ref: "#2", status: "running", agent: "researcher", timedOut: true }, {}],
-    ["get completed", { action: "get", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "completed", agent: "researcher", handoff: { summary: "Recovered background result." } }, {}],
-    ["get unknown", { action: "get", jobId: "opaque-uuid" }, { jobId: "opaque-uuid", status: "unknown", expired: true, error: "Subagent job is unknown or expired." }, { isError: true }],
-    ["cancel accepted", { action: "cancel", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "interrupted", cancelled: true }, {}],
-    ["cancel terminal", { action: "cancel", jobId: "#2" }, { jobId: "job-2", ref: "#2", status: "completed", cancelled: false, alreadyTerminal: true }, {}],
-    ["cancel unknown", { action: "cancel", jobId: "opaque-uuid" }, { jobId: "opaque-uuid", status: "unknown", cancelled: false, unknown: true }, {}],
+    ["run completed", runArgs, { ref: "#1", status: "idle", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
+    ["run interrupted", runArgs, { ref: "#1", status: "idle", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
+    ["run crashed", runArgs, { ref: "#1", status: "crashed", error: "Provider authentication failed before generation." }, { isError: true }],
+    ["get running", { action: "get", ref: "#2" }, { ref: "#2", status: "running", agent: "scout" }, {}],
+    ["get timed out", { action: "get", ref: "#2", waitMs: 30_000 }, { ref: "#2", status: "running", agent: "scout", timedOut: true }, {}],
+    ["get idle", { action: "get", ref: "#2" }, { ref: "#2", status: "idle", turnStatus: "completed", agent: "scout", summary: "Recovered background result." }, {}],
+    ["get unknown", { action: "get", ref: "#99" }, { ref: "#99", status: "unknown", error: "Subagent session is unknown or expired." }, { isError: true }],
+    ["cancel accepted", { action: "cancel", ref: "#2" }, { ref: "#2", status: "idle", turnStatus: "interrupted", cancelled: true }, {}],
+    ["cancel idle", { action: "cancel", ref: "#2" }, { ref: "#2", status: "idle", cancelled: false, alreadyIdle: true }, {}],
+    ["close", { action: "close", ref: "#2" }, { ref: "#2", status: "closed", closed: true }, {}],
   ];
   for (const [label, args, details, options] of cases) row(label, renderResult(args, details, options));
 
   heading("TERMINAL RESULT · expanded handoff");
   row("expanded run", renderResult(runArgs, {
-    jobId: "job-1", ref: "#1", status: "completed", elapsedMs: 54_000,
+    ref: "#1", status: "idle", turnStatus: "completed", elapsedMs: 54_000,
     summary: "Evidence\n- sdk-executor.ts owns the child session.\n- runtime.ts owns lifecycle transitions.\n\nValidation\n- Targeted tests passed.\n\nRisks\n- Restart recovery remains intentionally unsupported.",
   }, { expanded: true }));
 }
@@ -146,7 +145,7 @@ function completions() {
   }
   row("mixed batch", renderSubagentCompletion({ content: "", details: { batch: [
     { ...base, jobId: "job-1", ref: "#1", status: "completed", agent: "scout" },
-    { ...base, jobId: "job-2", ref: "#2", status: "failed", agent: "researcher", summary: "Provider request failed after acceptance." },
+    { ...base, jobId: "job-2", ref: "#2", status: "failed", agent: "scout", summary: "Provider request failed after acceptance." },
     { ...base, jobId: "job-3", ref: "#3", status: "interrupted", agent: "reviewer", summary: "Review was interrupted by the parent." },
   ] } }, { expanded: false, outputPad: 1 }, theme));
 }

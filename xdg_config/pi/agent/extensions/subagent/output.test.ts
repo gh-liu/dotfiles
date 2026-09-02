@@ -58,14 +58,6 @@ describe("bounded output", () => {
     expect(JSON.parse(serialized)).toMatchObject({ changes: expect.any(String), evidence: expect.any(String), validation: expect.any(String), risks: expect.any(String) });
   });
 
-  test("terminates when non-text transcript metadata alone exceeds the envelope", () => {
-    expect(() => serializeSubagentResult({
-      runId: "job", operationId: "private", agent: "scout", status: "completed",
-      summary: "x",
-      transcript: { sessionId: "s".repeat(20_000), sessionPath: "/" + "p".repeat(20_000) },
-    })).toThrow("envelope exceeds");
-  });
-
   test("fairly converges with several huge escaped sections", () => {
     const huge = "\\\"\n".repeat(20_000);
     const serialized = serializeSubagentResult({

@@ -28,23 +28,21 @@ describe("live subagent evaluation analysis", () => {
   test("extracts parent tool calls, subagent roles and lifecycle actions", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "read", args: { path: "plan.md" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "start", agent: "scout", task: "Map" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "wait", id: "run" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "send", id: "run", mode: "follow_up" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "wait", id: "run" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "close", id: "run" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout", task: "Map" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "followup", ref: "#1", task: "Compare tests" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "get", ref: "#1" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "close", ref: "#1" } }),
     ].join("\n"));
 
-    expect(analysis.parentToolCounts).toEqual({ read: 1, subagent: 5 });
+    expect(analysis.parentToolCounts).toEqual({ read: 1, subagent: 4 });
     expect(analysis.subagentRoles).toEqual(["scout"]);
-    expect(analysis.subagentActions).toEqual(["start", "wait", "send", "wait", "close"]);
+    expect(analysis.subagentActions).toEqual(["run", "followup", "get", "close"]);
     expect(evaluateExpectation(analysis, {
       requiredAgents: ["scout"],
       actionSequence: [
-        { action: "start" },
-        { action: "wait" },
-        { action: "send", mode: "follow_up" },
-        { action: "wait" },
+        { action: "run" },
+        { action: "followup" },
+        { action: "get" },
         { action: "close" },
       ],
     })).toEqual({ passed: true, reasons: [] });
@@ -52,7 +50,7 @@ describe("live subagent evaluation analysis", () => {
 
   test("does not count child tool text embedded in a tool result as parent activity", () => {
     const analysis = analyzeJsonl([
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "researcher" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
       line({
         type: "tool_execution_end",
         toolName: "subagent",
@@ -72,7 +70,7 @@ describe("live subagent evaluation analysis", () => {
     expect(analysis.finalText).toBe("Synthesis");
     expect(analysis.usage).toMatchObject({ inputTokens: 10, outputTokens: 5, totalTokens: 15, cost: 0.02 });
     expect(evaluateExpectation(analysis, {
-      requiredAgents: ["researcher"],
+      requiredAgents: ["scout"],
       parentToolCounts: { web_search: { max: 0 } },
     }).passed).toBe(true);
   });
@@ -95,48 +93,6 @@ describe("live subagent evaluation analysis", () => {
     expect(analysis.schemaErrors).toHaveLength(1);
     expect(result.passed).toBe(false);
     expect(result.reasons).toHaveLength(2);
-  });
-
-  test("checks that delegated work orders are self-contained", () => {
-    const completeTask = [
-      "Goal: fix TTL conversion.",
-      "Scope: src/session.js and test/session.test.js.",
-      "Starting evidence: plan.md describes the bug.",
-      "Known decision: preserve the public epoch-millisecond shape.",
-      "Constraints and non-goals: do not commit or change handler behavior.",
-      "Acceptance criteria: the default and explicit TTL cases pass.",
-      "Validation: run npm test.",
-      "Handoff: return changed files, evidence, blockers, and risks.",
-    ].join("\n");
-    const complete = analyzeJsonl(line({
-      type: "tool_execution_start",
-      toolName: "subagent",
-      args: { action: "run", agent: "worker", task: completeTask },
-    }));
-    const incomplete = analyzeJsonl(line({
-      type: "tool_execution_start",
-      toolName: "subagent",
-      args: { action: "run", agent: "worker", task: "Fix the TTL bug." },
-    }));
-    const expectation = {
-      workOrderFields: {
-        worker: ["outcome", "scope", "startingEvidence", "decisions", "constraints", "acceptance", "validation", "handoff"],
-      },
-    };
-
-    expect(evaluateExpectation(complete, expectation)).toEqual({ passed: true, reasons: [] });
-    expect(evaluateExpectation(incomplete, expectation)).toEqual({
-      passed: false,
-      reasons: [
-        "worker work order missing scope",
-        "worker work order missing startingEvidence",
-        "worker work order missing decisions",
-        "worker work order missing constraints",
-        "worker work order missing acceptance",
-        "worker work order missing validation",
-        "worker work order missing handoff",
-      ],
-    });
   });
 
   test("requires parent verification after a writing subagent settles", () => {
@@ -202,13 +158,13 @@ describe("live subagent evaluation analysis", () => {
   test("recognizes independent evidence starts before either child settles", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "researcher" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "reviewer" } }),
       line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
       line({ type: "tool_execution_end", toolName: "subagent", isError: false }),
     ].join("\n"));
 
-    expect(analysis.parallelSubagentStarts).toEqual(["scout", "researcher"]);
-    expect(evaluateExpectation(analysis, { parallelAgents: ["scout", "researcher"] })).toEqual({
+    expect(analysis.parallelSubagentStarts).toEqual(["scout", "reviewer"]);
+    expect(evaluateExpectation(analysis, { parallelAgents: ["scout", "reviewer"] })).toEqual({
       passed: true,
       reasons: [],
     });
@@ -217,27 +173,27 @@ describe("live subagent evaluation analysis", () => {
   test("rejects a decision that starts before evidence settles", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "scout" } }),
-      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
+      line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "reviewer" } }),
       line({ type: "tool_execution_end", toolName: "subagent", result: { content: [{ type: "text", text: "# Evidence\\nlocal" }] } }),
     ].join("\n"));
     expect(evaluateExpectation(analysis, {
-      agentsBefore: { agents: ["scout"], before: "oracle" },
+      agentsBefore: { agents: ["scout"], before: "reviewer" },
     }).passed).toBe(false);
   });
 
   test("requires every prerequisite subagent to settle before a dependent decision", () => {
     const analysis = analyzeJsonl([
       line({ type: "tool_execution_start", toolCallId: "scout-call", toolName: "subagent", args: { action: "run", agent: "scout" } }),
-      line({ type: "tool_execution_start", toolCallId: "research-call", toolName: "subagent", args: { action: "run", agent: "researcher" } }),
+      line({ type: "tool_execution_start", toolCallId: "test-call", toolName: "subagent", args: { action: "run", agent: "tester" } }),
       line({ type: "tool_execution_end", toolCallId: "scout-call", toolName: "subagent", isError: false }),
-      line({ type: "tool_execution_start", toolCallId: "oracle-call", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
+      line({ type: "tool_execution_start", toolCallId: "review-call", toolName: "subagent", args: { action: "run", agent: "reviewer" } }),
     ].join("\n"));
 
     expect(evaluateExpectation(analysis, {
-      agentsBefore: { agents: ["scout", "researcher"], before: "oracle" },
+      agentsBefore: { agents: ["scout", "tester"], before: "reviewer" },
     })).toEqual({
       passed: false,
-      reasons: ["researcher did not settle before oracle started"],
+      reasons: ["tester did not settle before reviewer started"],
     });
   });
 
@@ -273,16 +229,16 @@ describe("live subagent evaluation analysis", () => {
 
   test("allows independent evidence agents in either order before a decision agent", () => {
     const analysis = analyzeJsonl([
-      line({ type: "tool_execution_start", toolCallId: "research", toolName: "subagent", args: { action: "start", agent: "researcher" } }),
-      line({ type: "tool_execution_start", toolCallId: "scout", toolName: "subagent", args: { action: "start", agent: "scout" } }),
-      line({ type: "tool_execution_end", toolCallId: "research", toolName: "subagent", isError: false }),
+      line({ type: "tool_execution_start", toolCallId: "test", toolName: "subagent", args: { action: "run", agent: "tester" } }),
+      line({ type: "tool_execution_start", toolCallId: "scout", toolName: "subagent", args: { action: "run", agent: "scout" } }),
+      line({ type: "tool_execution_end", toolCallId: "test", toolName: "subagent", isError: false }),
       line({ type: "tool_execution_end", toolCallId: "scout", toolName: "subagent", isError: false }),
-      line({ type: "tool_execution_start", toolCallId: "oracle", toolName: "subagent", args: { action: "run", agent: "oracle" } }),
+      line({ type: "tool_execution_start", toolCallId: "review", toolName: "subagent", args: { action: "run", agent: "reviewer" } }),
     ].join("\n"));
 
     expect(evaluateExpectation(analysis, {
-      requiredAgents: ["scout", "researcher", "oracle"],
-      agentsBefore: { agents: ["scout", "researcher"], before: "oracle" },
+      requiredAgents: ["scout", "tester", "reviewer"],
+      agentsBefore: { agents: ["scout", "tester"], before: "reviewer" },
     })).toEqual({ passed: true, reasons: [] });
   });
 

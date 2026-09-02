@@ -7,15 +7,9 @@ export interface SubagentExecutionProfile {
 }
 
 export interface SubagentWorkOrder {
-  goal: string;
-  scope: string[];
-  context?: string;
-  nonGoals?: string[];
-  constraints: string[];
-  knownDecisions: Array<{ statement: string; source: "user" | "parent" | "code" | "docs" }>;
-  evidence: Array<{ kind: "file" | "command" | "url"; value: string }>;
-  validation: string[];
-  returnFormat: string;
+  task: string;
+  cwd: string;
+  instructions: string[];
   projectGuidance: string[];
 }
 
@@ -92,14 +86,6 @@ export interface SubagentRunOptions {
   runId: string;
   operationId: string;
   parentSessionId: string;
-  /**
-   * Paths this job writes exclusively (absolute, or relative to the child cwd).
-   * Overlapping leases (ancestor/descendant or identical) are rejected within the
-   * extension process; the lease is held until the job settles/terminates.
-   */
-  exclusivePaths?: string[];
-  /** Hard worker-side tool budget: exceeding this many tool_execution_start events aborts the operation once. */
-  toolBudget?: number;
   signal?: AbortSignal;
   onProgress?: (progress: string | SubagentProgress) => void;
 }
@@ -143,7 +129,6 @@ export interface SubagentController {
   start(options: SubagentRunOptions): SubagentOperation;
   /** Convenience compatibility seam for direct controller callers. */
   submit?(options: SubagentRunOptions): Promise<SubagentResult>;
-  steer(expectedOperationId: string, message: string): Promise<boolean>;
   interrupt(expectedOperationId: string): Promise<boolean>;
   close(): Promise<void>;
 }

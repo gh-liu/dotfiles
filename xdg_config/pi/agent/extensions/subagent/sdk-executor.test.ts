@@ -15,15 +15,11 @@ afterEach(() => {
   delete process.env.SUBAGENT_SDK_TEST_SECRET;
 });
 
-function workOrder(goal: string): SubagentWorkOrder {
+function workOrder(task: string): SubagentWorkOrder {
   return {
-    goal,
-    scope: [process.cwd()],
-    constraints: [],
-    knownDecisions: [],
-    evidence: [],
-    validation: [],
-    returnFormat: "Return findings.",
+    task,
+    cwd: process.cwd(),
+    instructions: ["Return findings."],
     projectGuidance: [],
   };
 }
@@ -51,7 +47,6 @@ class FakeSession {
   private listeners: Array<(e: any) => void> = [];
   promptCalls: Array<{ text: string; options: any }> = [];
   abortCalls = 0;
-  steerCalls: string[] = [];
   disposeCalls = 0;
   promptHandler?: (text: string, options: any, emit: (e: any) => void) => Promise<void> | void;
   abortHandler?: () => Promise<void> | void;
@@ -92,9 +87,6 @@ class FakeSession {
     }
     this.emit({ type: "agent_settled" });
   }
-  async steer(text: string): Promise<void> {
-    this.steerCalls.push(text);
-  }
   dispose(): void {
     this.disposeCalls++;
     this.disposeHandler?.();
@@ -109,7 +101,7 @@ function fakeController(initial: SubagentRunOptions, session: FakeSession, confi
   });
 }
 
-describe("one-shot SDK executor", () => {
+describe("reusable-session SDK executor", () => {
   test("reuses one controller sequentially and rejects invalid submit timing", async () => {
     const session = new FakeSession();
     session.sessionId = "reused-session";
@@ -118,8 +110,8 @@ describe("one-shot SDK executor", () => {
     session.promptHandler = async (_text, opts, emit) => {
       promptCount++;
       if (opts?.preflightResult) opts.preflightResult(true);
-      const goal = JSON.parse(_text.split("\n\n")[1]).goal;
-      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: goal }], stopReason: "stop" } });
+      const task = JSON.parse(_text.split("\n\n")[1]).task;
+      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: task }], stopReason: "stop" } });
       emit({ type: "agent_settled" });
     };
     const firstOptions = options({ operationId: "operation-1", workOrder: workOrder("first") });
@@ -231,7 +223,7 @@ describe("one-shot SDK executor", () => {
     expect(serializedWorkOrder).toBe(JSON.stringify(runOptions.workOrder));
     expect(serializedWorkOrder).not.toContain("\n");
     const delegatedWorkOrder = JSON.parse(serializedWorkOrder);
-    expect(delegatedWorkOrder.goal).toBe("Inspect the fixture");
+    expect(delegatedWorkOrder.task).toBe("Inspect the fixture");
     expect(result.transcript.sessionId).toBe("session-sdk-1");
     expect(result.transcript.sessionPath).toBe("/tmp/session-sdk-1.jsonl");
   });
@@ -576,31 +568,6 @@ describe("one-shot SDK executor", () => {
     await controller.close();
   });
 
-  test("steers only the expected accepted active operation", async () => {
-    const session = new FakeSession();
-    session.promptHandler = async (_text, opts, emit) => {
-      // Delay preflight so the "too early" steer below lands before acceptance.
-      await new Promise((r) => setTimeout(r, 10));
-      if (opts?.preflightResult) opts.preflightResult(true);
-      // keep pending for steer
-      await new Promise(() => {});
-    };
-    const runOptions = options({ operationId: "operation-steered" });
-    const controller = await fakeController(runOptions, session);
-    const operation = controller.start(runOptions);
-    expect(await controller.steer(runOptions.operationId, "too early")).toBe(false);
-    await operation.accepted;
-    expect(await controller.steer("stale-operation", "wrong turn")).toBe(false);
-    expect(await controller.steer(runOptions.operationId, "Focus on tests")).toBe(true);
-    expect(session.steerCalls).toEqual(["Focus on tests"]);
-    // Make it settle with steered text
-    session.emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Focus on tests" }], stopReason: "stop" } });
-    session.emit({ type: "agent_settled" });
-    await expect(operation.result).resolves.toMatchObject({ status: "completed", summary: "Focus on tests" });
-    expect(await controller.steer(runOptions.operationId, "too late")).toBe(false);
-    await controller.close();
-  });
-
   test("does not abort an accepted operation based on elapsed time", async () => {
     const session = new FakeSession();
     session.promptHandler = async (_text, opts) => {
@@ -678,49 +645,5 @@ describe("one-shot SDK executor", () => {
     const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
     expect(result.summary.length).toBeLessThanOrEqual(16_000);
     expect(result.status).toBe("completed");
-  });
-
-  test("aborts once when tool_execution_start exceeds toolBudget and keeps diagnostics", async () => {
-    const session = new FakeSession();
-    session.promptHandler = async (_text, opts, emit) => {
-      opts?.preflightResult?.(true);
-      for (let index = 0; index < 6; index++) {
-        emit({ type: "tool_execution_start", toolCallId: `tool-${index}`, toolName: "read", args: { path: `/tmp/${index}` } });
-      }
-      await new Promise(() => {}); // never settle naturally; only the budget abort ends it
-    };
-    const runOptions = options({ toolBudget: 2 });
-    const controller = await fakeController(runOptions, session);
-    const operation = controller.start(runOptions);
-    await operation.accepted;
-    await expect(operation.result).resolves.toMatchObject({
-      status: "interrupted",
-      summary: "Subagent tool budget exceeded: 3 tool executions (limit 2)",
-    });
-    expect(session.abortCalls).toBe(1);
-    await controller.close();
-  });
-
-  test("does not abort when tool_execution_start stays within toolBudget", async () => {
-    const session = new FakeSession();
-    session.promptHandler = async (_text, opts, emit) => {
-      opts?.preflightResult?.(true);
-      emit({ type: "tool_execution_start", toolCallId: "tool-1", toolName: "read", args: { path: "/tmp/1" } });
-      emit({ type: "tool_execution_end", toolCallId: "tool-1", toolName: "read", isError: false });
-      emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "Done" }], stopReason: "stop" } });
-      emit({ type: "agent_settled" });
-    };
-    const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options({ toolBudget: 3 }));
-    expect(result.status).toBe("completed");
-    expect(session.abortCalls).toBe(0);
-  });
-
-  test("rejects a non-positive toolBudget", async () => {
-    const session = new FakeSession();
-    const controller = await fakeController(options(), session);
-    const op = controller.start(options({ toolBudget: 0 }));
-    await expect(op.accepted).rejects.toThrow("toolBudget must be a positive integer");
-    await expect(op.result).rejects.toThrow("toolBudget must be a positive integer");
-    await controller.close();
   });
 });

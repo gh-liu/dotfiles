@@ -5,7 +5,7 @@ describe("subagent rendering integration", () => {
   test("tool renderer uses only task API fields", () => {
     const tool = setup().extension.getTool();
     const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text } as never;
-    const rendered = tool.renderCall!({ action: "run", agent: "scout", objective: "Inspect", background: true } as never, theme, {
+    const rendered = tool.renderCall!({ action: "run", agent: "scout", task: "Inspect", background: true } as never, theme, {
       args: {}, isError: false, state: {}, invalidate: vi.fn(),
     } as never).render(200).join("\n");
     expect(rendered).toContain("scout — Inspect");
@@ -15,7 +15,7 @@ describe("subagent rendering integration", () => {
   test("foreground run result carries timeline details for expanded rendering", async () => {
     const env = setup();
     const running = env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", objective: "Inspect timeline",
+      action: "run", agent: "scout", task: "Inspect timeline",
     }, undefined, undefined, context(env.root));
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].starts[0].options.onProgress?.({
@@ -46,7 +46,7 @@ describe("subagent rendering integration", () => {
       },
     } as never;
     const running = env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", objective: "Inspect the complete authentication flow",
+      action: "run", agent: "scout", task: "Inspect the complete authentication flow",
     }, undefined, undefined, ctx);
     await vi.waitFor(() => expect(typeof widget).toBe("function"));
     const component = (widget as (tui: unknown, theme: unknown) => { render(width: number): string[] })(undefined, {

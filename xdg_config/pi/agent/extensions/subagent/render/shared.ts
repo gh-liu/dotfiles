@@ -1,14 +1,12 @@
 type SubagentRenderArgs =
   | {
-      action: "run"; agent: string; objective: string; background?: boolean; cwd?: string;
-      model?: string; thinking?: string; scope?: string[]; constraints?: string[]; acceptance?: string[]; context?: string;
+      action: "run"; agent: string; task: string; background?: boolean;
+      model?: string; thinking?: string;
     }
-  | {
-      action: "workflow"; objective: string; background?: boolean;
-      nodes?: Array<{ id: string; agent: string; objective: string; dependsOn?: string[] }>;
-    }
-  | { action: "get"; jobId?: string; waitMs?: number }
-  | { action: "cancel"; jobId: string };
+  | { action: "followup"; ref: string; task: string; background?: boolean; model?: string; thinking?: string }
+  | { action: "get"; ref?: string; waitMs?: number }
+  | { action: "cancel"; ref: string }
+  | { action: "close"; ref: string };
 
 interface SubagentRenderState {
   spinnerFrame?: number;
@@ -83,7 +81,6 @@ function positiveSafeRuntimeIndex(value: unknown): number | undefined {
 
 function publicRef(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  if (/^W#[1-9]\d*$/.test(value)) return value;
   const match = /^(?:#)?([1-9]\d*)$/.exec(value);
   return match ? `#${match[1]}` : undefined;
 }

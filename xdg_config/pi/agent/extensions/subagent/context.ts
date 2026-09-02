@@ -5,14 +5,6 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { boundText } from "./output.ts";
 import type { SubagentWorkOrder } from "./protocol.ts";
 
-export interface StructuredSubagentTask {
-  objective: string;
-  scope?: string[];
-  constraints?: string[];
-  acceptance?: string[];
-  context?: string;
-}
-
 const MAX_GUIDANCE_CHARACTERS = 32_000;
 const MAX_GUIDANCE_LINES = 400;
 const MAX_GUIDANCE_FILE_BYTES = MAX_GUIDANCE_CHARACTERS * 4;
@@ -114,24 +106,17 @@ export function loadProjectGuidance(allowedRoot: string, childCwd: string): stri
   return guidance;
 }
 
-/** Materializes the delegated work-order envelope from context materials. */
-export function createWorkOrder(task: StructuredSubagentTask | string, cwd: string, projectGuidance: string[]): SubagentWorkOrder {
-  const structured = typeof task === "string" ? { objective: task } : task;
+/** Materializes the internal executor envelope from a public plain-text task. */
+export function createWorkOrder(task: string, cwd: string, projectGuidance: string[]): SubagentWorkOrder {
   return {
-    goal: structured.objective,
-    scope: [cwd, ...(structured.scope ?? [])],
-    ...(structured.context ? { context: structured.context } : {}),
-    constraints: [
-      ...(structured.constraints ?? []),
+    task,
+    cwd,
+    instructions: [
       "Use only the tools declared by the selected agent.",
       "Preserve unrelated existing changes and do not perform destructive shared actions.",
       "Do not delegate to another agent.",
+      "Return a concise result. When useful, use Markdown headings: Summary, Changes, Evidence, Validation, and Risks. Omit empty sections; plain text is accepted.",
     ],
-    knownDecisions: [],
-    evidence: [],
-    validation: structured.acceptance ?? [],
-    returnFormat:
-      "Return a concise result in Markdown. When applicable use headings: ## Summary, ## Changes, ## Evidence, ## Validation, and ## Risks. Omit empty sections; plain text is also accepted.",
     projectGuidance,
   };
 }

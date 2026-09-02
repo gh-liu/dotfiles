@@ -4,8 +4,8 @@ import { context, setup } from "./harness.ts";
 describe("subagent notifications", () => {
   test("batches successes and notification failure does not alter settled state", async () => {
     const env = setup({ ids: ["a", "pa", "b", "pb"] });
-    await env.invoke({ action: "run", agent: "scout", objective: "A", background: true });
-    await env.invoke({ action: "run", agent: "scout", objective: "B", background: true });
+    await env.invoke({ action: "run", agent: "scout", task: "A", background: true });
+    await env.invoke({ action: "run", agent: "scout", task: "B", background: true });
     env.fake.controllers[0].settle();
     env.fake.controllers[1].settle();
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
@@ -19,9 +19,9 @@ describe("subagent notifications", () => {
 
     const failedDelivery = setup({ ids: ["c", "pc"] });
     vi.spyOn(failedDelivery.extension.pi, "sendMessage").mockImplementation(() => { throw new Error("unavailable"); });
-    await failedDelivery.invoke({ action: "run", agent: "scout", objective: "C", background: true });
+    await failedDelivery.invoke({ action: "run", agent: "scout", task: "C", background: true });
     failedDelivery.fake.controllers[0].settle();
-    await vi.waitFor(async () => expect((await failedDelivery.invoke({ action: "get", jobId: "c" })).details).toMatchObject({ status: "completed" }));
+    await vi.waitFor(async () => expect((await failedDelivery.invoke({ action: "get", ref: "#1" })).details).toMatchObject({ status: "idle", turnStatus: "completed" }));
   });
 
   test("keeps the live row until completion delivery succeeds and retains recovery UI on failure", async () => {
@@ -40,7 +40,7 @@ describe("subagent notifications", () => {
       });
 
       await env.extension.getTool().execute("call", {
-        action: "run", agent: "scout", objective: "Inspect", background: true,
+        action: "run", agent: "scout", task: "Inspect", background: true,
       }, undefined, undefined, ctx);
       expect(typeof widget).toBe("function");
       env.fake.controllers[0].settle();
@@ -57,7 +57,7 @@ describe("subagent notifications", () => {
         expect(component.render(100).join("\n")).toContain("#1 scout · reporting failed · use get");
       });
       if (failDelivery) {
-        await env.invoke({ action: "get", jobId: "#1" });
+        await env.invoke({ action: "get", ref: "#1" });
         expect(widget).toBeUndefined();
       }
       await env.extension.shutdown();
@@ -69,7 +69,7 @@ describe("subagent notifications", () => {
 
   test("failed completion cards retain structured handoff fields and recent activity", async () => {
     const env = setup({ ids: ["job", "private"] });
-    await env.invoke({ action: "run", agent: "scout", objective: "Review", background: true });
+    await env.invoke({ action: "run", agent: "scout", task: "Review", background: true });
     env.fake.controllers[0].starts[0].options.onProgress?.({
       summary: "reviewing failure",
       timeline: [

@@ -42,9 +42,7 @@ export interface LiveRuntimeInfo {
   agent: string;
   startedAt: number;
   mode: LiveRuntimeMode;
-  objective: string;
-  /** Owning workflow/node identity for coordinated DAG runs. */
-  workflow?: { ref: string; nodeId: string };
+  task: string;
 }
 
 interface RuntimeDisplay {
@@ -52,8 +50,7 @@ interface RuntimeDisplay {
   agent: string;
   startedAt: number;
   mode: LiveRuntimeMode;
-  objective: string;
-  workflow?: { ref: string; nodeId: string };
+  task: string;
   /** Latest progress summary (thinking/toolcall/streaming wording from the executor). */
   activity?: string;
   /** Explicit thinking/tool boundary state driving the live affordance glyph. */
@@ -98,10 +95,10 @@ function renderActivity(theme: Theme, runtime: RuntimeDisplay): string {
   return rendered + activeSuffix;
 }
 
-function objectiveLines(objective: string, width: number, maximumLines: number): string[] {
+function taskLines(task: string, width: number, maximumLines: number): string[] {
   const available = Math.max(1, width - 2);
   const limit = Math.min(maximumLines, width >= 80 ? 2 : 1);
-  const wrapped = wrapTextWithAnsi(oneLine(objective, 500), available);
+  const wrapped = wrapTextWithAnsi(oneLine(task, 500), available);
   const visible = wrapped.slice(0, limit);
   if (wrapped.length > visible.length && visible.length > 0) {
     visible[visible.length - 1] = truncateToWidth(`${visible[visible.length - 1]}…`, available, "…");
@@ -132,10 +129,7 @@ function renderLines(
     const ref = `#${runtime.index}`;
     const elapsedMs = Math.max(0, now - runtime.startedAt);
     const time = formatDuration(elapsedMs);
-    const workflowIdentity = runtime.workflow
-      ? `${theme.fg("accent", `${runtime.workflow.ref}/${oneLine(runtime.workflow.nodeId, 20)}`)} ${theme.fg("muted", "·")} `
-      : "";
-    const identity = `${workflowIdentity}${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}`;
+    const identity = `${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}`;
     let marker: string;
     let suffix = theme.fg("muted", ` · ${time}`);
     if (runtime.settlement === "report-failed") {
@@ -154,8 +148,8 @@ function renderLines(
     }
     lines.push(truncateToWidth(`${marker} ${identity}${suffix}`, width));
     if (!runtime.settlement) {
-      for (const objective of objectiveLines(runtime.objective, width, dense ? 1 : 2)) {
-        lines.push(truncateToWidth(theme.fg("dim", `  ${objective}`), width));
+      for (const task of taskLines(runtime.task, width, dense ? 1 : 2)) {
+        lines.push(truncateToWidth(theme.fg("dim", `  ${task}`), width));
       }
       if (runtime.decision) {
         lines.push(truncateToWidth(theme.fg("warning", `  ! ${oneLine(runtime.decision, 500)}`), width));
@@ -165,7 +159,7 @@ function renderLines(
     }
   }
   if (ordered.length > visible.length) {
-    lines.push(truncateToWidth(theme.fg("muted", `… ${ordered.length - visible.length} more jobs · use get for details`), width));
+    lines.push(truncateToWidth(theme.fg("muted", `… ${ordered.length - visible.length} more sessions · use get for details`), width));
   }
   return lines;
 }
@@ -305,8 +299,7 @@ export function createLiveUi(): LiveUiController {
         agent: info.agent,
         startedAt: info.startedAt,
         mode: info.mode,
-        objective: info.objective,
-        ...(info.workflow ? { workflow: info.workflow } : {}),
+        task: info.task,
       });
       ensureHeartbeat();
       syncSpinner();

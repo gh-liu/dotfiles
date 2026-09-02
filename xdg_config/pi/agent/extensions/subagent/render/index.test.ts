@@ -5,7 +5,7 @@ const theme = { fg: (_color: string, value: string) => value, bg: (_color: strin
 const text = (component: { render(width: number): string[] }) => component.render(200).join("\n").trim();
 
 const runContext = (state: Record<string, unknown> = {}) => ({
-  args: { action: "run", agent: "scout", objective: "Inspect auth" },
+  args: { action: "run", agent: "scout", task: "Inspect auth" },
   isError: false,
   state,
   invalidate: vi.fn(),
@@ -13,55 +13,40 @@ const runContext = (state: Record<string, unknown> = {}) => ({
 
 describe("task API rendering", () => {
   test("renders durable invocation records without transient status", () => {
-    const call = text(renderSubagentCall({ action: "run", agent: "scout", objective: "Inspect auth", background: true }, theme));
+    const call = text(renderSubagentCall({ action: "run", agent: "scout", task: "Inspect auth", background: true }, theme));
     expect(call).toBe("scout — Inspect auth");
     expect(call).not.toContain("running");
     expect(call).not.toContain("tracking");
-    expect(text(renderSubagentCall({ action: "get", jobId: "2", waitMs: 30_000 }, theme))).toContain("get · #2 · wait 30s");
-    expect(text(renderSubagentCall({ action: "cancel", jobId: "#2" }, theme))).toContain("cancel · #2");
+    expect(text(renderSubagentCall({ action: "get", ref: "2", waitMs: 30_000 }, theme))).toContain("get · #2 · wait 30s");
+    expect(text(renderSubagentCall({ action: "cancel", ref: "#2" }, theme))).toContain("cancel · #2");
+    expect(text(renderSubagentCall({ action: "close", ref: "#2" }, theme))).toContain("close · #2");
   });
 
   test("retains a useful multi-line prompt budget in the invocation record", () => {
-    const objective = "Inspect the authentication lifecycle from middleware registration through token refresh, identify concurrency risks, and cite the exact implementation and test files that support every conclusion.";
-    const rendered = text(renderSubagentCall({ action: "run", agent: "scout", objective }, theme));
+    const task = "Inspect the authentication lifecycle from middleware registration through token refresh, identify concurrency risks, and cite the exact implementation and test files that support every conclusion.";
+    const rendered = text(renderSubagentCall({ action: "run", agent: "scout", task }, theme));
     const normalized = rendered.replace(/\s+/g, " ");
     expect(normalized).toContain("middleware registration through token refresh");
     expect(normalized).toContain("support every conclusion");
   });
 
-  test("expanded invocation shows the bounded delegation spec", () => {
+  test("expanded invocation shows the bounded task", () => {
     const args = {
-      action: "run" as const, agent: "worker", objective: "Implement cache invalidation", scope: ["src/cache.ts"],
-      context: "TTL is authoritative", constraints: ["No API changes"], acceptance: ["Tests pass"],
+      action: "run" as const,
+      agent: "worker",
+      task: "Implement cache invalidation in src/cache.ts. Keep the API stable and run the focused tests.",
     };
     const rendered = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
-    for (const expected of ["Outcome", "Implement cache invalidation", "Scope", "src/cache.ts", "Context", "TTL is authoritative", "Constraints", "No API changes", "Acceptance", "Tests pass"]) {
+    for (const expected of ["Task", "Implement cache invalidation", "src/cache.ts", "Keep the API stable"]) {
       expect(rendered).toContain(expected);
     }
   });
 
-  test("renders workflow graph calls and node status results", () => {
-    const args = {
-      action: "workflow" as const,
-      objective: "Ship auth",
-      nodes: [
-        { id: "inspect", agent: "scout", objective: "Inspect auth" },
-        { id: "change", agent: "worker", objective: "Implement auth", dependsOn: ["inspect"] },
-      ],
-    };
+  test("renders a followup on the same session", () => {
+    const args = { action: "followup" as const, ref: "#2", task: "Now compare the tests with the implementation." };
     const call = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
-    expect(call).toContain("Workflow — Ship auth · 2 nodes");
-    expect(call).toContain("change worker ← inspect");
-
-    const result = text(renderSubagentResult({ content: [], details: {
-      ref: "W#2", status: "running", nodes: [
-        { id: "inspect", agent: "scout", objective: "Inspect auth", status: "completed" },
-        { id: "change", agent: "worker", objective: "Implement auth", status: "running" },
-      ],
-    } }, { expanded: true, isPartial: false }, theme, { args, isError: false, state: {}, invalidate: vi.fn() } as never));
-    expect(result).toContain("workflow running · W#2 · 1/2 nodes");
-    expect(result).toContain("✓ inspect · scout · completed");
-    expect(result).toContain("● change · worker · running");
+    expect(call).toContain("#2 followup");
+    expect(call).toContain("Now compare the tests");
   });
 
   test("partial tool results point to the activity center and never duplicate activity", () => {
@@ -83,11 +68,12 @@ describe("task API rendering", () => {
   });
 
   test("renders terminal foreground and recovered background handoffs", () => {
-    const foreground = text(renderSubagentResult({ content: [], details: { status: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
-    expect(foreground).toContain("✓ completed · 1s");
+    const foreground = text(renderSubagentResult({ content: [], details: { status: "idle", turnStatus: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
+    expect(foreground).toContain("✓ turn completed · session idle · 1s");
     expect(foreground).toContain("Done");
     const runExpanded = text(renderSubagentResult({ content: [], details: {
-      status: "completed",
+      status: "idle",
+      turnStatus: "completed",
       summary: "Done",
       timeline: [
         { kind: "tool", id: "a", summary: "read auth.ts", status: "completed" },
@@ -99,16 +85,16 @@ describe("task API rendering", () => {
     expect(runExpanded).not.toContain("private reasoning");
 
     const recovered = text(renderSubagentResult({
-      content: [], details: { status: "completed", handoff: { summary: "Recovered background result" }, elapsedMs: 2_000 },
+      content: [], details: { status: "idle", turnStatus: "completed", summary: "Recovered background result", elapsedMs: 2_000 },
     }, { expanded: false, isPartial: false }, theme, {
-      args: { action: "get", jobId: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
+      args: { action: "get", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
     } as never));
-    expect(recovered).toContain("✓ completed · 2s");
+    expect(recovered).toContain("✓ turn completed · session idle · #2 · 2s");
     expect(recovered).toContain("Recovered background result");
   });
 
   test("renders get diagnostics and cancel semantics", () => {
-    const getContext = { args: { action: "get", jobId: "#2" }, isError: false, state: {}, invalidate: vi.fn() } as never;
+    const getContext = { args: { action: "get", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn() } as never;
     const expanded = text(renderSubagentResult({ content: [], details: {
       status: "running", activity: "reading auth.ts", recentActivity: ["Thinking", "completed: grep auth"],
       timeline: [
@@ -116,23 +102,20 @@ describe("task API rendering", () => {
         { kind: "thinking", text: "private reasoning" },
         { kind: "tool", id: "b", summary: "npm test", status: "failed" },
       ],
-      workOrder: { goal: "Map auth", scope: ["src"], constraints: ["Read only"], validation: ["Cite files"], returnFormat: "Summary" },
     } }, { expanded: true, isPartial: false }, theme, getContext));
     expect(expanded).toContain("Current");
-    expect(expanded).toContain("Recent activity");
     expect(expanded).not.toContain("Timeline");
     expect(expanded).toContain("✓ completed: read auth.ts");
     expect(expanded).toContain("✗ failed: npm test");
     expect(expanded).toContain("Thinking");
     expect(expanded).not.toContain("private reasoning");
-    expect(expanded).toContain("Work order");
     const collapsed = text(renderSubagentResult({ content: [], details: {
       status: "running", timeline: [{ kind: "tool", id: "a", summary: "read auth.ts", status: "completed" }],
     } }, { expanded: false, isPartial: false }, theme, getContext));
     expect(collapsed).not.toContain("Timeline");
 
     const cancel = text(renderSubagentResult({ content: [], details: { ref: "#2", status: "interrupted", cancelled: true } }, { expanded: false, isPartial: false }, theme, {
-      args: { action: "cancel", jobId: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
+      args: { action: "cancel", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
     } as never));
     expect(cancel).toContain("cancel acknowledged");
   });
@@ -142,11 +125,11 @@ describe("task API rendering", () => {
     const tool = env.extension.getTool();
     const state: Record<string, unknown> = {};
     const invalidate = vi.fn();
-    tool.renderResult!({ content: [], details: { jobId: "job", ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: true }, theme, {
-      args: { action: "run", agent: "scout", objective: "Inspect", background: false }, isError: false, state, invalidate,
+    tool.renderResult!({ content: [], details: { ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: true }, theme, {
+      args: { action: "run", agent: "scout", task: "Inspect", background: false }, isError: false, state, invalidate,
     } as never);
     await Promise.resolve();
-    const rendered = text(tool.renderCall!({ action: "run", agent: "scout", objective: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
+    const rendered = text(tool.renderCall!({ action: "run", agent: "scout", task: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
     expect(rendered).toContain("#7 scout — Inspect");
     expect(rendered).not.toContain("tracking");
     await env.extension.shutdown();
@@ -165,7 +148,7 @@ describe("task API rendering", () => {
     expect(collapsed).not.toContain("· completed");
 
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
-    expect(expanded).toContain("Objective");
+    expect(expanded).toContain("Task");
     expect(expanded).toContain("Inspect auth");
     expect(expanded).toContain("Evidence");
     expect(expanded).toContain("Validation");

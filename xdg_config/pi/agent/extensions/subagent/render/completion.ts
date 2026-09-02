@@ -53,7 +53,7 @@ function completionEntryText(
   if (!expanded) text += `\n${theme.fg("muted", `  ${details.ref}${hasDetails ? " · expand for details" : ""}`)}`;
   if (expanded) {
     const sections: Array<[string, string | undefined]> = [
-      ["Objective", details.task], ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
+      ["Task", details.task], ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
       ["Validation", details.validation], ["Risks", details.risks],
     ];
     for (const [label, value] of sections) {

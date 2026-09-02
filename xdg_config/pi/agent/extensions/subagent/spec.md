@@ -1,89 +1,85 @@
 # Pi Subagent Extension Specification
 
 - Status: Active
-- Updated: 2026-08-31
+- Updated: 2026-09-02
 
-## 1. Goal and non-goals
+## 1. Product model
 
-The extension delegates bounded tasks to fresh-context Pi SDK sessions and returns bounded handoffs. It also coordinates bounded declarative DAG workflows over those same one-shot runtimes. The parent owns graph decomposition, write coordination, handoff review, integration, final validation, and the user response. It is not a durable queue, restart-resumable supervisor, permission broker, autonomous team, or security sandbox.
+The extension provides reusable, isolated Pi sessions for bounded delegated work. Its public model is:
+
+> one agent, one task, one visible lifecycle, reusable conversation
+
+The parent decides whether to delegate, starts independent sessions in parallel when useful, supplies prior handoffs in later tasks when coordinating agents, inspects changes, integrates results, validates the whole outcome, and answers the user. The extension is not a workflow engine, durable queue, permission broker, autonomous team, or security sandbox.
+
+The bundled roles are intentionally small:
+
+- `scout`: read-only local and web investigation
+- `reviewer`: read-only review, expert judgment, and tradeoff resolution
+- `worker`: implementation and focused validation
+- `tester`: verification and browser QA
 
 ## 2. Public tool contract
 
-`subagent` has one provider-compatible root object schema and four actions:
+`subagent` has five actions and one public identity, the session-local `#N` ref:
 
 ```ts
-subagent({ action: "run", agent, objective, scope?, constraints?, acceptance?, context?, cwd?, background?, exclusivePaths?, toolBudget? })
-subagent({ action: "workflow", objective, nodes, background? })
-subagent({ action: "get", jobId?, waitMs? })
-subagent({ action: "cancel", jobId })
+subagent({ action: "run", agent, task, background? })
+subagent({ action: "followup", ref, task, background? })
+subagent({ action: "get", ref?, waitMs? })
+subagent({ action: "cancel", ref })
+subagent({ action: "close", ref })
 ```
 
-- `run` requires `agent` and `objective`. Structured fields are rendered into a self-contained work order. `background` defaults to false. Runs have no elapsed-time execution deadline; they settle naturally or through explicit cancellation, parent abort, tool-budget interruption, shutdown, or provider/controller failure.
-- `exclusivePaths` (optional) lists at most 50 paths this job writes exclusively, absolute or relative to the child cwd; overlapping leases (identical, ancestor, or descendant) are rejected in-process before the run starts. `toolBudget` (optional) is a positive-integer worker-side hard tool budget; the operation aborts once its tool executions exceed the limit. Both are v1 and bounded by the parent model: the extension does not intercept parent tool calls and cannot stop `bash` (or any other writer) from touching leased paths, so single-writer still requires the parent to honor the fields.
-- Foreground `run` waits for authoritative `agent_settled`, disposes the SDK session, releases its slot, and returns a handoff.
-- Background `run` returns `{jobId,ref,status,agent}` after prompt acceptance. Settlement wakes the parent, then automatically disposes the session and releases its slot. Background does not imply persistence.
-- `workflow` requires a workflow `objective` and 1–20 nodes. Each node requires a stable lowercase `id`, registered `agent`, and bounded `objective`; optional fields mirror structured `run` inputs plus `dependsOn` and `runOnDependencyFailure`. Workflows and nodes have no elapsed-time execution deadline. The graph must be acyclic, all dependencies must exist, and node IDs must be unique. Independent ready nodes run in parallel subject to shared runtime capacity. `dependsOn` is a barrier: a node starts only after all direct dependencies settle.
-- A downstream node receives the workflow objective, its own context, and bounded structured handoffs from direct predecessors. It never receives raw child transcripts or the parent transcript. The common `scout/researcher → oracle → worker → tester/reviewer` pattern is one ordinary graph, not hard-coded coordinator behavior.
-- Dependency failure skips downstream nodes by default. `runOnDependencyFailure:true` allows an explicit diagnostic/recovery node to run after failed, interrupted, or skipped dependencies settle. There are no loops, retries, dynamic node creation, recursive child delegation, peer messages, or model-authored graph mutation during execution.
-- Foreground `workflow` waits for all reachable nodes and returns a bounded node snapshot. Background `workflow` returns `{workflowId,ref,status,nodes}` after graph validation and scheduler start, then emits exactly one workflow-level completion wake; internal nodes never emit background wakes. Workflow refs use a distinct monotonic `W#N` namespace.
-- `get(jobId)` immediately returns current/terminal job or workflow state. Job diagnostics include effective work order, elapsed time, latest activity, recent redacted activity, and pending decision. Workflow diagnostics include every node's dependency/status/ref and terminal handoff/error. `waitMs` waits at most that long. A running record whose wait expires returns `timedOut:true` without cancellation; otherwise that field is absent. `get()` lists up to 100 most-recent jobs and workflows. Missing retained records return `status:"unknown",expired:true` rather than pretending the work settled.
-- `cancel(jobId)` is idempotent for both jobs and workflows. Job cancellation derives and guards the active internal operation. Workflow cancellation aborts pending scheduling, interrupts active node runtimes, waits for graph settlement, and skips nodes that never started. Responses separate command outcome (`cancelled`) from authoritative status; unknown records return `status:"unknown",unknown:true`, while already-terminal records preserve their real status.
+- `run` creates a fresh session for a registered agent and starts its first turn.
+- `followup` starts another turn in an idle session, preserving its conversation and controller.
+- Foreground turns wait for authoritative settlement. Background turns return after acceptance and send an at-most-once completion wake after settlement.
+- `get(ref)` returns the current session and latest-turn projection. `get()` lists only each retained session's ref, agent, and state so a large catalog cannot flood model context. `waitMs` is observational: expiry returns `timedOut:true` and never interrupts work.
+- `cancel` stops only an accepted active turn. The session becomes idle and can receive another followup.
+- `close` interrupts active work if necessary, destroys the controller, removes live UI, releases the session, and returns only its ref, agent, and terminal state. It is idempotent for a resolved session.
+- Turns have no elapsed execution deadline. They settle naturally, through explicit cancel/close, parent abort, shutdown, or provider/controller failure.
+- Independent work is expressed as parallel `run` calls. Sequencing and handoff composition remain visible in the parent rather than hidden in a DAG API.
 
-`jobId` is the canonical one-shot execution identity. Every runtime also receives an ergonomic runtime-local `ref` (`#N`); every workflow receives a canonical `workflowId` and `W#N` ref. Both ref sequences increase monotonically and are never reused within the loaded extension instance. `get` and `cancel` accept canonical IDs or refs; one-shot jobs additionally accept numeric `N`. Aliases are memory-only and cannot be recovered after restart. Responses include public identities when resolved, while operation IDs, process instance IDs, revisions, run IDs, and a bare `index` are implementation details absent from model-facing responses. UUID-like input is never echoed in terminal labels while resolution is pending. The registered-agent catalog is included in the tool description; there is no public list action.
+Only `#N` crosses the model-facing boundary. UUIDs, operation IDs, tool-call IDs, transcript paths, revisions, process IDs, renderer timelines, and bare indexes are internal. Refs increase monotonically and are never reused while the extension instance is loaded; they are memory-only and cannot reconnect after restart.
 
-## 3. Work order and handoff
+## 3. Task, context, and result
 
-The child receives objective, scope, constraints, acceptance criteria, optional context, canonical cwd, fixed runtime constraints, and applicable `AGENTS.md` guidance. It does not inherit the parent transcript or skills.
+`task` is plain text. It should contain only information the fresh child needs: desired outcome, relevant paths/evidence, constraints, and expected result. There are no public structured prompt fields. Applicable project guidance is appended internally on the initial turn; followups rely on the preserved conversation and current task.
 
-The authoritative controller result owns status and transcript identity; task completion never depends on child JSON. Plain final assistant text is always a valid fallback summary. Foreground model-facing handoffs contain `jobId`, `ref`, `agent`, `status`, bounded `summary`, optional elapsed time, and transcript reference. Markdown headings `Summary`, `Changes`, `Evidence`, `Validation`, and `Risks` (levels 1–3, case-insensitive) are extracted into typed fields; absent headings retain the complete plain text as the summary fallback. The complete serialized envelope, including every extracted section, is bounded to 16,000 characters.
+Children do not inherit the parent transcript, skills, prompt templates, themes, context files, or extensions. Their tool allowlist comes from the selected agent definition. They are leaves (`maxDepth=1`) and cannot delegate or message peers.
 
-## 4. Job state machine and ownership
+Authoritative controller settlement owns turn status; completion never depends on child JSON. Plain final assistant text is a valid summary. Markdown sections named Summary, Changes, Evidence, Validation, and Risks are projected when present. Model-facing envelopes and displayed text are bounded and redact configured credential values. Renderer details may retain a bounded activity timeline, but a recursive model projection strips that timeline and every internal identity before serialization.
+
+## 4. Lifecycle and capacity
 
 ```text
-starting -> running -> completed | failed | interrupted
-                    \-> cancel -> interrupted
+session:  starting ─▶ running ─▶ idle ─▶ running ─▶ idle ─▶ closed
+                         │                    │
+                         └─ cancel ─▶ idle    └─ failure ─▶ idle
+             startup/cleanup failure ─────────────────────▶ crashed
 ```
 
-Internal runtime states remain `starting/running/idle/closing/closed/crashed`; internal operation settlement is authoritative and monotonic. Foreground and background are both one-shot jobs. Slots are reserved before controller creation; `settings.json` groups runtime capacity and agent overrides under `subagent`: `maxConcurrentRuns` accepts an integer from 1 through 8 (default 3 when omitted or invalid), and `subagents[agent]` supplies per-agent overrides. Every terminal/error/shutdown path releases its slot after disposal. Children are leaves (`maxDepth=1`) and cannot message peers.
+A capacity slot is reserved before controller creation and held only while a turn is starting or running. Settlement releases the slot without closing the session. Idle sessions preserve context but consume no execution capacity. `maxConcurrentRuns` is configurable from 1 through 8 and defaults to 3. At most 100 open sessions and 128 operations per session are retained in memory.
 
-Workflow node states are `pending → running → completed | failed | interrupted`, with `pending → skipped` for dependency failure, cancellation, or shutdown. Workflow state is `running → completed | failed | interrupted`. The coordinator owns only graph scheduling and bounded handoff projection; every running node still follows the existing `RuntimeHub` create/accept/settle/close lifecycle, capacity slot, exclusive lease, cancellation, progress, and live-UI path. A node never bypasses or duplicates runtime ownership.
+Controller creation has a bounded startup timeout so a provider that never constructs a controller cannot leak capacity. Explicit interruption has a bounded settlement watchdog. Neither bound is an execution deadline.
 
-Exclusive write leases (`exclusivePaths`) follow the same lifecycle as slots: normalized against the child cwd and acquired before controller creation, then released by the same terminal/error/shutdown close path (settle, cancel, crash, and shutdown all release). Any identical, ancestor, or descendant overlap with an active lease rejects the new run. Leases are v1 and in-process only: they are not OS file locks, they exist only for the current extension process, and they do not hard-block any writer, so a single writer still requires the parent to comply.
+All error, cancel, close, crash, and shutdown paths best-effort close owned resources and release held slots. Shutdown rejects new work, suppresses wakes, closes all sessions, clears timers, and disposes live UI.
 
-## 5. Notifications and recovery
+## 5. Notifications and UI
 
-Background job settlement sends a bounded follow-up wake and appends a best-effort human audit entry. The live panel first freezes the row in a reporting state; it removes the row only after Pi accepts the completion message. Delivery failure never changes authoritative state and leaves `#N · settled · reporting failed · use get` visible as a recovery affordance. Retrieving that terminal job clears the recovery row. `get("#N")` (or canonical jobId/numeric N) retains the handoff regardless of notification success. Same-turn successful job settlements may be batched; actionable failures notify immediately. A background workflow suppresses node-level wakes and sends one `W#N` wake after graph settlement. Pending notification timers are flushed/cleared during shutdown.
+The above-editor activity center is the single owner of transient foreground and background status. Each active row shows its `#N`, agent, elapsed time, bounded task text, and latest sanitized activity. Completed reasoning is shown only as `✓ Thinking`; raw reasoning is never rendered. Dense and narrow layouts prioritize refs, decisions, and recovery instructions.
 
-## 6. Resource retention and shutdown
+Foreground settlement removes its live row and returns the handoff in the tool result. A background settlement keeps a reporting row until Pi accepts its completion card. Delivery failure leaves `reporting failed · use get`; the session result remains recoverable through `get(#N)`. Completion cards show the result first and keep `#N` as a low-priority followup/recovery affordance.
 
-Runtime, operation, and workflow records are memory-only. Each runtime retains at most 128 operations; the hub retains at most 100 terminal runtimes per parent session; the coordinator retains at most 100 terminal workflows. Older records are pruned. Controller creation has a 10-second hard bound; interrupt settlement has a 5-second bound. Shutdown rejects new jobs/workflows, aborts running graphs, suppresses wakes, closes all owned sessions with bounded startup waiting, clears notification timers, disposes live UI, and releases slots.
+Tool invocation rows are durable records. Collapsed rows show the agent or action plus task title; expanded rows show the bounded task. They do not duplicate the live activity timeline.
 
-Child JSONL transcripts under `<agent-dir>/subagent-sessions/<jobId>/` are durable evidence but are not reconnectable jobs. Transcript disk GC is intentionally outside this in-memory extension boundary; `sessionRoot` is an explicit SDK configuration seam for an external TTL/count maintenance policy.
+## 6. Isolation and credentials
 
-## 7. Executor and fresh context
+Fresh context is conversation isolation, not a security sandbox. In-process children share OS credentials and filesystem permissions. Canonical cwd containment fixes the child working directory to the project boundary, but it is not filesystem isolation. Tool allowlists are capability guidance, not OS permissions.
 
-Production keeps the existing in-process `createAgentSession` executor, dedicated `SessionManager`, authoritative event reducer, explicit-cancellation abort watchdogs, progress reduction, transcript, and `RuntimeHub`. Resource loading disables implicit extensions, skills, prompt templates, themes, and context files; tools are explicit per agent definition.
+`credentialRedactionEnvNames` names environment values to redact from output; it does not control environment forwarding. The deprecated `authEnvAllowlist` option and `PI_SUBAGENT_AUTH_ENV_ALLOWLIST` setting remain compatibility aliases. Redaction is best-effort and is not credential isolation.
 
-Fresh context is conversation isolation, **not a security sandbox**. In-process children share OS credentials and filesystem permissions. Canonical cwd containment prevents selecting a cwd outside the project root, but cwd is **not a file-access sandbox**. Tool allowlists are capability controls, not OS permissions.
+## 7. Validation contract
 
-`toolBudget` is a worker-side abort, not a CPU/time guarantee: the executor counts `tool_execution_start` events and aborts exactly once the count exceeds the budget, yielding an `interrupted` result whose diagnostic summary retains the exceeded count and the limit. A non-positive or non-integer `toolBudget` is rejected up front.
+Deterministic tests cover agent discovery/model selection, fresh context construction, bounded handoffs, foreground and background turns, session reuse, cancellation followed by reuse, close idempotence, compact session listing, idle capacity release, capacity exhaustion, notifications and recovery, UI projections, startup/controller failures, unbounded turn duration, concurrent shutdown, redaction, and the absence of internal IDs and renderer timelines in model-facing payloads.
 
-`credentialRedactionEnvNames` names environment variables whose values are redacted from output; it does not allow, filter, or forward environment variables. The deprecated `authEnvAllowlist` option and `PI_SUBAGENT_AUTH_ENV_ALLOWLIST` setting remain low-cost compatibility aliases only. Redaction is best-effort and is not credential isolation.
-
-## 8. Errors
-
-Invalid/missing input, malformed/cyclic graphs, unknown agents, escaped cwd, one-shot capacity exhaustion, startup timeout, and provider/controller failures return bounded tool errors. A validated workflow waits for shared capacity instead of failing merely because another job currently occupies a slot. Cancellation follows authoritative settlement. A wait timeout is an observational non-error and never interrupts work. Cleanup errors mark the internal runtime crashed but still release capacity. No failure fabricates a completed result.
-
-## 9. Validation contract
-
-Agent definitions are discovered once at startup; malformed definitions are reported, settings overrides win over parent-model inheritance, and settings defaults are the final model fallback. Catalog and prompt snippets are bounded and include every effective registered agent.
-
-Progress summaries, completion cards, errors, and model handoffs have hard text/envelope bounds. Foreground and background activity has one transient owner: the above-editor activity center. It starts before controller creation, orders decision requests ahead of ordinary work, and renders a job-level spinner, `#N`, agent, elapsed time, up to two objective lines on wide terminals (one when compact), and only the latest activity. Completed thinking remains the generic `✓ Thinking` activity; raw reasoning never renders. Narrow layouts preserve the actionable ref and decision/recovery instruction before optional metadata. With more than three tracked jobs the center switches to dense two-line rows, omits ordinary activity, shows at most five priority-sorted jobs, and reports the overflow with a `get` affordance. Tool rows are durable invocation records with the effective ref once known; partial rows only point to the activity center and never duplicate its timeline or spinner. Foreground terminal handoffs remain tool results. Background terminal handoffs are result-first completion cards: summary is visible by default, internal identifiers stay hidden, `#N` is a low-priority recovery affordance, and Objective/Summary/Changes/Evidence/Validation/Risks appear on expansion. Failed/interrupted cards retain the newest eight redacted activity summaries. `get #N` is the bounded running/detail diagnostic view. Tool-call IDs deduplicate updates; tool completion moves the item from active to history. Tool summaries are redacted, single-line, and bounded (including a command preview for `bash`); model text/reasoning is never tool history.
-
-Activity is also retained as a bounded, event-ordered `timeline` for executor observability and diagnostics. It is an ordered array interleaving tool calls and thinking segments in the order they occur: tool entries carry `{kind:"tool", id, summary, status}` (appended when the call completes, `status` `completed`/`failed`), and thinking entries carry `{kind:"thinking", text}`. Consecutive thinking deltas merge into a single segment that is flushed only at a boundary (next tool execution or message end), preserving ordering without an entry per delta. The live timeline keeps only the newest 24 entries. The activity center renders only the current bounded projection rather than duplicating history in the tool row. Active reasoning is `Thinking…`; a flushed segment is `✓ Thinking`; raw reasoning text never reaches the UI. A sanitized projection may cross into `get` diagnostics or failed/interrupted completion cards as the literal `Thinking` marker alongside redacted tool summaries; it is never authoritative result content. Public job payloads use canonical `jobId` plus runtime-local `ref`; internal operation, process, revision, run, and bare index fields never cross that boundary. Renderer-only details may carry `displayIndex` and `toolProgress`, but model content uses `ref` rather than a bare index.
-
-The controller/runtime progress seam accepts an optional bounded decision request (`needsDecision: true` plus `decision {question, options?}`) and forwards it into live update `details` only when it carries a non-empty `question`; the question is redacted/bounded like other progress text, options are trimmed, bounded, and capped at eight, and an all-invalid or absent option list emits no `options` key. Empty or invalid payloads never pollute the public details. The production SDK event reducer does not currently originate decision requests, so this is an internal transport seam rather than an end-to-end child capability. Decision handling (fork, pause/steer, permission/review flows) is not implemented. usage/timing accounting is explicitly out of scope / not required and is not a claimed, promised, or pending item.
-
-Background notifications are at-most-once per settlement (same-turn successes may batch; failures flush immediately). Delivery is best-effort and `get(jobId)` always remains the authoritative recovery path. Controller ordering is create, accept, authoritative settle, then close/release; rejection, cancellation (including rejected interrupts), crashes, cleanup failures, and shutdown all best-effort close and release capacity.
-
-The deterministic test map covers discovery/model selection and context budgets; schema/work orders/public projection; foreground/background rendering and timer cleanup; handoff/output bounds; notification batching/recovery/suppression; capacity reservation/release/factory rejection; controller acceptance/settlement/close ordering; concurrent/reentrant shutdown, failures, transcript preservation, unbounded elapsed execution, and cancellation cleanup; exclusivePaths lease acquisition, overlap rejection (identical/ancestor/descendant), sibling/absolute-path acceptance, and release on settle/cancel/crash; toolBudget abort-once/within-budget/non-positive rejection; and workflow validation, parallel roots, dependency barriers, structured predecessor handoffs, fan-out, shared-runtime execution, failure skipping/consumption, background get/cancel, and single workflow-level notification. Required gates are strict subagent typecheck and the complete subagent Vitest suite.
+Required gates are strict TypeScript checks and the complete Vitest suite. A low-cost real Pi smoke test should cover `run → followup` on the same ref → `close` before release when provider credentials are available.
