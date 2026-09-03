@@ -219,7 +219,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const live = createLiveUi();
   const hub = createRuntimeHub({
     controllerFactory,
-    idFactory,
     maxConcurrentRuns: loadedOverrides.maxConcurrentRuns ?? 3,
     notifySettled,
     logSettled,

@@ -6,7 +6,6 @@ import { afterEach, describe, expect, test } from "vitest";
 
 import {
   createSdkSubagentController,
-  createSdkSubagentExecutor,
   filterDeclaredCustomTools,
 } from "./sdk-executor.ts";
 import type { SubagentExecutionProfile, SubagentProgress, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
@@ -213,9 +212,9 @@ describe("reusable-session SDK executor", () => {
       emit({ type: "agent_settled" });
     };
     const runOptions = options();
-    const result = await createSdkSubagentExecutor({
-      createSession: async () => ({ session: session as any }),
-    })(runOptions);
+    const controller = await fakeController(runOptions, session);
+    const result = await controller.submit(runOptions);
+    await controller.close();
     expect(result.status).toBe("completed");
     expect(result.processInstanceId).toMatch(/^[0-9a-f-]{36}$/);
     const summary = JSON.parse(result.summary);
@@ -274,7 +273,10 @@ describe("reusable-session SDK executor", () => {
       emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "partial" }], stopReason: "length" } });
       emit({ type: "agent_settled" });
     };
-    const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    const result = await controller.submit(runOptions);
+    await controller.close();
     expect(result.status).toBe("failed");
     expect(result.summary).toBe("partial");
   });
@@ -285,9 +287,10 @@ describe("reusable-session SDK executor", () => {
       opts?.preflightResult?.(true);
       emit({ type: "agent_settled" });
     };
-    const result = await createSdkSubagentExecutor({
-      createSession: async () => ({ session: session as any }),
-    })(options());
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    const result = await controller.submit(runOptions);
+    await controller.close();
     expect(result).toMatchObject({
       status: "failed",
       summary: "Child did not produce a complete final assistant response.",
@@ -300,11 +303,10 @@ describe("reusable-session SDK executor", () => {
       opts?.preflightResult?.(true);
       emit(null);
     };
-    const result = await createSdkSubagentExecutor({
-      createSession: async () => ({ session: session as any }),
-    })(options());
-    expect(result.status).toBe("failed");
-    expect(result.summary).toMatch(/(?:null|type)/i);
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    await expect(controller.submit(runOptions)).rejects.toThrow(/(?:null|type)/i);
+    await expect(controller.close()).rejects.toThrow(/(?:null|type)/i);
     expect(session.listenerCount).toBe(0);
     expect(session.disposeCalls).toBe(1);
   });
@@ -328,18 +330,11 @@ describe("reusable-session SDK executor", () => {
     }
   });
 
-  test("maps provider authentication failure during session creation to a bounded failed result", async () => {
-    const result = await createSdkSubagentExecutor({
-      createSession: async () => { throw new Error("No API key found for openrouter"); },
-    })(options({ agent: { ...profile(), model: "openrouter/stealth/ox-alpha" } }));
-    expect(result).toMatchObject({
-      runId: "run-sdk",
-      operationId: "operation-sdk",
-      agent: "scout",
-      status: "failed",
-      summary: "No API key found for openrouter",
-      transcript: {},
-    });
+  test("rejects controller creation when provider authentication fails", async () => {
+    await expect(createSdkSubagentController(
+      options({ agent: { ...profile(), model: "openrouter/stealth/ox-alpha" } }),
+      { createSession: async () => { throw new Error("No API key found for openrouter"); } },
+    )).rejects.toThrow("No API key found for openrouter");
   });
 
   test("preserves transcript evidence when submission fails after preflight", async () => {
@@ -349,10 +344,12 @@ describe("reusable-session SDK executor", () => {
       // Simulate prompt failure after preflight
       throw new Error("prompt failed");
     };
-    const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
-    expect(result.status).toBe("failed");
-    expect(result.summary).toContain("prompt failed");
-    expect(result.transcript.sessionId).toBe("sdk-session");
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    await expect(controller.submit(runOptions)).rejects.toThrow("prompt failed");
+    expect(controller.transcript.sessionId).toBe("sdk-session");
+    await expect(controller.close()).rejects.toThrow("prompt failed");
+    expect(session.disposeCalls).toBe(1);
   });
 
   test("fails on preflight rejection", async () => {
@@ -361,8 +358,13 @@ describe("reusable-session SDK executor", () => {
       if (opts?.preflightResult) opts.preflightResult(false);
       throw new Error("preflight failed");
     };
-    const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
-    expect(result.status).toBe("failed");
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    const op = controller.start(runOptions);
+    await expect(op.accepted).rejects.toThrow("preflight");
+    await expect(op.result).rejects.toThrow("preflight failed");
+    await expect(controller.close()).rejects.toThrow("preflight failed");
+    expect(session.disposeCalls).toBe(1);
   });
 
   test("reduces model and tool events to bounded redacted progress", async () => {
@@ -642,7 +644,10 @@ describe("reusable-session SDK executor", () => {
       emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: large }], stopReason: "stop" } });
       emit({ type: "agent_settled" });
     };
-    const result = await createSdkSubagentExecutor({ createSession: async () => ({ session: session as any }) })(options());
+    const runOptions = options();
+    const controller = await fakeController(runOptions, session);
+    const result = await controller.submit(runOptions);
+    await controller.close();
     expect(result.summary.length).toBeLessThanOrEqual(16_000);
     expect(result.status).toBe("completed");
   });

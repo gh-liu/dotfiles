@@ -19,11 +19,6 @@ export interface SubagentToolProgressItem {
   status: "running" | "completed" | "failed";
 }
 
-/** A bounded, redacted slice of assistant reasoning captured between tool calls. */
-export interface SubagentThinkingSegment {
-  text: string;
-}
-
 /** Ordered interleaving of tool calls and thinking segments for timeline rendering. */
 export type SubagentTimelineEntry =
   | { kind: "tool"; id: string; summary: string; status: SubagentToolProgressItem["status"] }
@@ -110,8 +105,6 @@ export class SubagentCancellationError extends Error {
     this.name = "SubagentCancellationError";
   }
 }
-
-export type SubagentExecutor = (options: SubagentRunOptions) => Promise<SubagentResult>;
 
 export interface SubagentOperation {
   /** Resolves only after runtime state and prompt acceptance are authoritative. */

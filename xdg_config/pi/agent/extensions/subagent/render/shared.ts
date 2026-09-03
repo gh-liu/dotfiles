@@ -95,12 +95,6 @@ function boundedLines(text: string, maxCharacters: number, maxLines: number): st
   return result;
 }
 
-function collapseHome(value: string): string {
-  const home = process.env.HOME;
-  if (!home || home === "/") return value;
-  return value.startsWith(`${home}/`) ? `~${value.slice(home.length)}` : value;
-}
-
 /** One-line human summary of the work order: strip labels/markdown, first meaningful text. */
 function taskTitle(task: string | undefined, maxCharacters = 80): string {
   if (!task) return "";
@@ -121,5 +115,5 @@ function publicRef(value: string | undefined): string | undefined {
   return match ? `#${match[1]}` : undefined;
 }
 
-export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderThinkingLevel, renderToolSummary, statusBackground, taskTitle };
+export { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderThinkingLevel, renderToolSummary, statusBackground, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };

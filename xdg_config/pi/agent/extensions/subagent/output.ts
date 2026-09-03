@@ -7,7 +7,7 @@ type ModelSubagentHandoffSource = Pick<SubagentResult, "agent" | "status" | "sum
   elapsedMs?: number;
 };
 
-export interface ModelSubagentHandoff {
+interface ModelSubagentHandoff {
   ref?: string;
   agent: string;
   status: SubagentResult["status"];
@@ -123,31 +123,3 @@ export function modelSubagentHandoff(result: ModelSubagentHandoffSource): ModelS
   };
 }
 
-/** Serializes the model-facing handoff under a hard character budget. */
-export function serializeSubagentResult(result: ModelSubagentHandoffSource): string {
-  const handoff = modelSubagentHandoff(result);
-  const fields = ["summary", "changes", "evidence", "validation", "risks"] as const;
-  const bounded = { ...handoff };
-  let serialized = JSON.stringify(bounded);
-  while (serialized.length > SUBAGENT_HANDOFF_MAX_CHARACTERS) {
-    const field = fields.reduce<(typeof fields)[number] | undefined>((longest, candidate) => {
-      const value = bounded[candidate];
-      if (!value) return longest;
-      return !longest || value.length > (bounded[longest]?.length ?? 0) ? candidate : longest;
-    }, undefined);
-    if (!field) throw new Error("Subagent result envelope exceeds the parent serialization limit");
-    const value = bounded[field]!;
-    if (value.length <= 1) {
-      delete bounded[field];
-    } else {
-      const next = boundText(value, {
-        maxCharacters: Math.max(1, Math.floor(value.length / 2)),
-        maxLines: 400,
-      });
-      if (next.length >= value.length) delete bounded[field];
-      else bounded[field] = next;
-    }
-    serialized = JSON.stringify(bounded);
-  }
-  return serialized;
-}

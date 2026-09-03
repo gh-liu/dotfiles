@@ -636,39 +636,3 @@ export async function createSdkSubagentController(
     close,
   };
 }
-
-export function createSdkSubagentExecutor(config: SdkSubagentConfig = {}): (options: SubagentRunOptions) => Promise<SubagentResult> {
-  return async (options) => {
-    let controller: SdkSubagentController;
-    try {
-      controller = await createSdkSubagentController(options, config);
-    } catch (error) {
-      if (error instanceof SubagentCancellationError) throw error;
-      const secrets = credentialValues(options, config);
-      return result(options as any, "failed", error instanceof Error ? error.message : String(error), {}, secrets, randomUUID());
-    }
-    let value: SubagentResult;
-    try {
-      const op = controller.start(options);
-      await op.accepted;
-      value = await op.result;
-    } catch (error) {
-      const operationMessage = error instanceof Error ? error.message : String(error);
-      let cleanupMessage: string | undefined;
-      try { await controller.close(); } catch (cleanupError) {
-        const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
-        if (message !== operationMessage) cleanupMessage = message;
-      }
-      const summary = cleanupMessage ? `${operationMessage}\n\nChild cleanup failed: ${cleanupMessage}` : operationMessage;
-      if (error instanceof SubagentCancellationError) throw new SubagentCancellationError(summary);
-      return result(options as any, "failed", summary, controller.transcript, credentialValues(options, config), controller.processInstanceId);
-    }
-    try {
-      await controller.close();
-    } catch (error) {
-      return result(options as any, "failed", `Child cleanup failed: ${error instanceof Error ? error.message : String(error)}`, value.transcript, credentialValues(options, config), controller.processInstanceId);
-    }
-    if (value.status === "interrupted") throw new SubagentCancellationError(value.summary);
-    return value;
-  };
-}

@@ -14,7 +14,7 @@ const ALLOWED_TOOLS = new Set([
   "write",
   "bash",
 ]);
-export const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
+const THINKING_LEVELS = new Set(["off", "minimal", "low", "medium", "high", "xhigh", "max"]);
 
 export interface ParsedAgentDefinition extends SubagentExecutionProfile {
   description: string;

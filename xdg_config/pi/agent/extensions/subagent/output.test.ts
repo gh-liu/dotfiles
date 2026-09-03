@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { boundText, redactSecrets, serializeSubagentResult } from "./output.ts";
+import { boundText, modelSubagentHandoff, redactSecrets } from "./output.ts";
 
 describe("bounded output", () => {
   test("bounds lines and characters and redacts likely secrets", () => {
@@ -47,24 +47,29 @@ describe("bounded output", () => {
     expect(redactSecrets(redacted, [shortSecret, spacedSecret, "REDACTED"])).toBe(redacted);
   });
 
-  test("bounds oversized structured sections as one envelope", () => {
-    const large = "x".repeat(20_000);
-    const serialized = serializeSubagentResult({
-      runId: "job", operationId: "private", agent: "scout", status: "completed",
-      summary: `## Summary\n${large}\n## Changes\n${large}\n## Evidence\n${large}\n## Validation\n${large}\n## Risks\n${large}`,
-      transcript: {},
+  test("projects structured sections through the production handoff path", () => {
+    const handoff = modelSubagentHandoff({
+      agent: "scout", status: "completed",
+      summary: "## Summary\nDone\n## Changes\nEdited a.ts\n## Evidence\nTests pass\n## Validation\nvitest\n## Risks\nNone",
     });
-    expect(serialized.length).toBeLessThanOrEqual(16_000);
-    expect(JSON.parse(serialized)).toMatchObject({ changes: expect.any(String), evidence: expect.any(String), validation: expect.any(String), risks: expect.any(String) });
+    expect(handoff).toMatchObject({
+      agent: "scout",
+      status: "completed",
+      summary: "Done",
+      changes: "Edited a.ts",
+      evidence: "Tests pass",
+      validation: "vitest",
+      risks: "None",
+    });
   });
 
-  test("fairly converges with several huge escaped sections", () => {
-    const huge = "\\\"\n".repeat(20_000);
-    const serialized = serializeSubagentResult({
-      runId: "job", operationId: "private", agent: "scout", status: "completed",
-      summary: `# Summary\n${huge}\n# Changes\n${huge}\n# Evidence\n${huge}`,
-      transcript: { sessionPath: "/sessions/result.jsonl" },
+  test("bounds the production handoff summary for the parent model", () => {
+    const huge = "x".repeat(20_000);
+    const handoff = modelSubagentHandoff({
+      agent: "scout", status: "completed",
+      summary: `# Summary\n${huge}`,
     });
-    expect(serialized.length).toBeLessThanOrEqual(16_000);
+    const bounded = boundText(handoff.summary, { maxCharacters: 16_000, maxLines: 400 });
+    expect(bounded.length).toBeLessThanOrEqual(16_000);
   });
 });

@@ -12,8 +12,8 @@ import type {
 
 /** Control-plane ownership: runtime/operation records, slots, transitions, and settlement. */
 
-export type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
-export type OperationState = "running" | "completed" | "failed" | "interrupted" | "cancelled";
+type RuntimeState = "starting" | "running" | "idle" | "closing" | "closed" | "crashed";
+type OperationState = "running" | "completed" | "failed" | "interrupted" | "cancelled";
 
 export interface OperationRecord {
   operationId: string;
@@ -72,51 +72,8 @@ function deferred<T>(): {
   return { promise, resolve, reject };
 }
 
-export const operationSnapshot = (operation: OperationRecord) => ({
-  operationId: operation.operationId,
-  turn: operation.turn,
-  status: operation.state,
-  task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
-  ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
-  ...(operation.finishedAt === undefined ? {} : { finishedAt: operation.finishedAt }),
-  ...(operation.result === undefined ? {} : {
-    result: {
-      ...operation.result,
-      summary: boundText(operation.result.summary, { maxCharacters: 2_000, maxLines: 20 }),
-    },
-  }),
-  ...(operation.error === undefined ? {} : {
-    error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }),
-  }),
-});
-
-export function runtimeSnapshot(runtime: RuntimeRecord) {
-  return {
-    runId: runtime.runId,
-    revision: runtime.revision,
-    index: runtime.index,
-    agent: runtime.agent.name,
-    ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
-    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-    status: runtime.state,
-    ...(runtime.activeOperationId === undefined ? {} : {
-      operationId: runtime.activeOperationId,
-      activeOperationId: runtime.activeOperationId,
-      activeOperation: operationSnapshot(runtime.operations.get(runtime.activeOperationId)!),
-    }),
-    ...(runtime.lastSettled === undefined ? {} : {
-      lastSettledOperation: operationSnapshot(runtime.lastSettled),
-    }),
-    ...(runtime.controller === undefined ? {} : {
-      processInstanceId: runtime.controller.processInstanceId,
-      transcript: runtime.controller.transcript,
-    }),
-  };
-}
-
 export interface RuntimeHubDeps {
   controllerFactory: SubagentControllerFactory;
-  idFactory: () => string;
   /** Maximum concurrently executing turns. Idle reusable sessions do not consume a slot. */
   maxConcurrentRuns?: number;
   /** Completion sink; the hub builds bounded details, the shell delivers them. */
@@ -159,7 +116,6 @@ export interface RuntimeHub {
   /** Reserve one execution slot for an idle reusable session. */
   reserveSlot(runtime: RuntimeRecord): boolean;
   createRuntime(input: CreateRuntimeInput): RuntimeRecord;
-  snapshot(runtime: RuntimeRecord): ReturnType<typeof runtimeSnapshot>;
   /** All tracked runtimes (active and idle). */
   listRuntimes(): RuntimeRecord[];
   beginOperation(runtime: RuntimeRecord, input: BeginOperationInput): Promise<OperationRecord>;
@@ -562,7 +518,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       );
       return runtime;
     },
-    snapshot: (runtime) => runtimeSnapshot(runtime),
     beginOperation,
     markCrashed: (runtime) => {
       if (!runtime.closePromise) transition(runtime, "crashed");
