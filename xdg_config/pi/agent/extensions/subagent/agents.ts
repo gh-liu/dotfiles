@@ -190,6 +190,78 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
   return { agents, errors };
 }
 
+/** Single-read settings load: subagent overrides + capacity + top-level defaults. */
+export function loadSubagentSettings(settingsPath: string): {
+  overrides?: unknown;
+  maxConcurrentRuns?: number;
+  errors: AgentDefinitionError[];
+  defaults: SettingsDefaults;
+} {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
+      return { errors: [], defaults: {} };
+    }
+    return {
+      errors: [{
+        filePath: "settings.json:subagent",
+        error: `settings.json:subagent: ${error instanceof Error ? error.message : String(error)}`,
+      }],
+      defaults: {},
+    };
+  }
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return { errors: [], defaults: {} };
+  const root = raw as Record<string, unknown>;
+  const provider = root.defaultProvider;
+  const model = root.defaultModel;
+  const defaults: SettingsDefaults = {
+    ...(typeof provider === "string" && provider.trim() !== "" ? { defaultProvider: provider.trim() } : {}),
+    ...(typeof model === "string" && model.trim() !== "" ? { defaultModel: model.trim() } : {}),
+  };
+  const runtime = root.subagent;
+  const errors: AgentDefinitionError[] = [];
+  if (runtime === undefined) return { errors, defaults };
+  if (runtime === null || typeof runtime !== "object" || Array.isArray(runtime)) {
+    return {
+      errors: [...errors, { filePath: "settings.json:subagent", error: "settings.json:subagent: must be an object" }],
+      defaults,
+    };
+  }
+  const runtimeSettings = runtime as Record<string, unknown>;
+  const subagents = runtimeSettings.subagents;
+  let overrides: unknown;
+  if (subagents !== undefined) {
+    if (subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
+      errors.push({
+        filePath: "settings.json:subagent.subagents",
+        error: "settings.json:subagent.subagents: must be an object",
+      });
+    } else {
+      overrides = subagents;
+    }
+  }
+  const maxConcurrentRuns = runtimeSettings.maxConcurrentRuns;
+  let capacity: number | undefined;
+  if (maxConcurrentRuns !== undefined) {
+    if (typeof maxConcurrentRuns !== "number" || !Number.isInteger(maxConcurrentRuns) || maxConcurrentRuns < 1 || maxConcurrentRuns > 8) {
+      errors.push({
+        filePath: "settings.json:subagent.maxConcurrentRuns",
+        error: "settings.json:subagent.maxConcurrentRuns: must be an integer from 1 to 8",
+      });
+    } else {
+      capacity = maxConcurrentRuns;
+    }
+  }
+  return {
+    ...(overrides === undefined ? {} : { overrides }),
+    ...(capacity === undefined ? {} : { maxConcurrentRuns: capacity }),
+    errors,
+    defaults,
+  };
+}
+
 /**
  * Loads runtime configuration and `subagent.subagents[agent]` overrides from
  * settings.json. Missing files are not errors; malformed configuration
@@ -200,59 +272,12 @@ export function loadSubagentOverrides(settingsPath: string): {
   maxConcurrentRuns?: number;
   errors: AgentDefinitionError[];
 } {
-  try {
-    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
-    if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return { errors: [] };
-    const root = settings as Record<string, unknown>;
-    const runtime = root.subagent;
-    const errors: AgentDefinitionError[] = [];
-    if (runtime === undefined) return { errors };
-    if (runtime === null || typeof runtime !== "object" || Array.isArray(runtime)) {
-      return {
-        errors: [...errors, { filePath: "settings.json:subagent", error: "settings.json:subagent: must be an object" }],
-      };
-    }
-    const runtimeSettings = runtime as Record<string, unknown>;
-    const subagents = runtimeSettings.subagents;
-    let overrides: unknown;
-    if (subagents !== undefined) {
-      if (subagents === null || typeof subagents !== "object" || Array.isArray(subagents)) {
-        errors.push({
-          filePath: "settings.json:subagent.subagents",
-          error: "settings.json:subagent.subagents: must be an object",
-        });
-      } else {
-        overrides = subagents;
-      }
-    }
-    const maxConcurrentRuns = runtimeSettings.maxConcurrentRuns;
-    let capacity: number | undefined;
-    if (maxConcurrentRuns !== undefined) {
-      if (typeof maxConcurrentRuns !== "number" || !Number.isInteger(maxConcurrentRuns) || maxConcurrentRuns < 1 || maxConcurrentRuns > 8) {
-        errors.push({
-          filePath: "settings.json:subagent.maxConcurrentRuns",
-          error: "settings.json:subagent.maxConcurrentRuns: must be an integer from 1 to 8",
-        });
-      } else {
-        capacity = maxConcurrentRuns;
-      }
-    }
-    return {
-      ...(overrides === undefined ? {} : { overrides }),
-      ...(capacity === undefined ? {} : { maxConcurrentRuns: capacity }),
-      errors,
-    };
-  } catch (error) {
-    if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
-      return { errors: [] };
-    }
-    return {
-      errors: [{
-        filePath: "settings.json:subagent",
-        error: `settings.json:subagent: ${error instanceof Error ? error.message : String(error)}`,
-      }],
-    };
-  }
+  const { overrides, maxConcurrentRuns, errors } = loadSubagentSettings(settingsPath);
+  return {
+    ...(overrides === undefined ? {} : { overrides }),
+    ...(maxConcurrentRuns === undefined ? {} : { maxConcurrentRuns }),
+    errors,
+  };
 }
 
 export interface SettingsDefaults {
@@ -268,18 +293,7 @@ export interface SettingsDefaults {
  * (overrides already own the error path).
  */
 export function loadSettingsDefaults(settingsPath: string): SettingsDefaults {
-  try {
-    const settings = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
-    if (typeof settings !== "object" || settings === null || Array.isArray(settings)) return {};
-    const provider = (settings as Record<string, unknown>).defaultProvider;
-    const model = (settings as Record<string, unknown>).defaultModel;
-    return {
-      ...(typeof provider === "string" && provider.trim() !== "" ? { defaultProvider: provider.trim() } : {}),
-      ...(typeof model === "string" && model.trim() !== "" ? { defaultModel: model.trim() } : {}),
-    };
-  } catch {
-    return {};
-  }
+  return loadSubagentSettings(settingsPath).defaults;
 }
 
 /**

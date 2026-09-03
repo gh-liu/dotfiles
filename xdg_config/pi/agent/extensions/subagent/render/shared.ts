@@ -1,4 +1,5 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
+import { redactSecrets } from "../output.ts";
 import { Box, Container, Text } from "@earendil-works/pi-tui";
 
 type SubagentRenderArgs =
@@ -65,7 +66,7 @@ function renderPartitionedStatus(text: string, theme: Theme, isPartial: boolean,
 }
 
 function oneLine(text: string, maxCharacters = 160): string {
-  const normalized = text.replace(/\s+/g, " ").trim();
+  const normalized = redactSecrets(text).replace(/\s+/g, " ").trim();
   return normalized.length <= maxCharacters
     ? normalized
     : `${normalized.slice(0, maxCharacters - 1)}…`;
@@ -105,6 +106,26 @@ function taskTitle(task: string | undefined, maxCharacters = 80): string {
   return oneLine(firstLine.replace(/^outcome\s*[:：]\s*/i, ""), maxCharacters);
 }
 
+/** Shared expanded sections: label + bounded dim lines, skipping empty values. */
+function renderDetailSections(sections: Array<[string, string | undefined]>, theme: Theme): string {
+  let text = "";
+  for (const [label, value] of sections) {
+    if (!value?.trim()) continue;
+    text += `\n${theme.fg("toolTitle", label)}`;
+    for (const line of boundedLines(value, 4_000, 20)) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
+  }
+  return text;
+}
+
+/** Shared single activity row: Thinking accent, ✓/✗ tool summary, else dim. Single-line normalized. */
+function renderActivityRow(line: string, theme: Theme): string {
+  const bounded = oneLine(line, 200);
+  if (bounded === "✓ Thinking") return theme.fg("accent", bounded);
+  const match = /^([✓✗])\s+(.+)$/.exec(bounded);
+  if (!match) return theme.fg("dim", `  ${bounded}`);
+  return `  ${theme.fg(match[1] === "✗" ? "error" : "success", match[1])} ${renderToolSummary(theme, match[2])}`;
+}
+
 function positiveSafeRuntimeIndex(value: unknown): number | undefined {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0 ? value : undefined;
 }
@@ -115,5 +136,5 @@ function publicRef(value: string | undefined): string | undefined {
   return match ? `#${match[1]}` : undefined;
 }
 
-export { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderThinkingLevel, renderToolSummary, statusBackground, taskTitle };
+export { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderActivityRow, renderDetailSections, renderPartitionedStatus, renderThinkingLevel, renderToolSummary, statusBackground, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };

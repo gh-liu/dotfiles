@@ -1,5 +1,6 @@
 import type { LiveUiController } from "./live-ui.ts";
 import { boundText, modelSubagentHandoff } from "./output.ts";
+import { normalizeProgress } from "./progress.ts";
 import { stripModel } from "./protocol.ts";
 import type { SubagentCompletionDetails } from "./render/index.ts";
 import type {
@@ -328,50 +329,21 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     // active-tool count from tools.active; onUpdate is forwarded only when the
     // tool caller provided a channel.
     const onProgress = (value: string | SubagentProgress) => {
-      const progress = typeof value === "string" ? { summary: value } : value;
-      const summary = progress.summary;
-      // Forward a bounded decision only when the child explicitly signals
-      // needsDecision with a non-empty question; empty/invalid payloads never
-      // pollute public update details.
-      const question = progress.needsDecision === true && progress.decision
-        && typeof progress.decision.question === "string"
-        ? progress.decision.question.trim()
-        : "";
-      // Bounded, non-empty option list; all-invalid input yields no options key.
-      const decisionOptions = Array.isArray(progress.decision?.options)
-        ? progress.decision.options
-            .filter((option) => typeof option === "string" && option.trim() !== "")
-            .map((option) => boundText(option, { maxCharacters: 200, maxLines: 1 }))
-            .slice(0, 8)
-        : [];
-      const recentActivity = (progress.timeline ?? [])
-        .slice(-8)
-        .flatMap((entry) => entry.kind === "thinking"
-          ? ["✓ Thinking"]
-          : [`${entry.status === "failed" ? "✗" : "✓"} ${boundText(entry.summary, { maxCharacters: 160, maxLines: 1 })}`]);
+      const normalized = normalizeProgress(value);
       operation.latestProgress = {
-        summary: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
-        recentActivity,
-        ...(progress.timeline ? { timeline: progress.timeline.map((entry) => ({ ...entry })) } : {}),
-        ...(progress.phase ? { phase: { ...progress.phase } } : {}),
-        ...(progress.tools ? {
-          tools: {
-            earlierCount: progress.tools.earlierCount,
-            history: progress.tools.history.map((entry) => ({ ...entry })),
-            active: progress.tools.active.map((entry) => ({ ...entry })),
-          },
-        } : {}),
-        ...(question ? {
-          needsDecision: true,
-          decision: {
-            question: boundText(question, { maxCharacters: 240, maxLines: 1 }),
-            ...(decisionOptions.length > 0 ? { options: decisionOptions } : {}),
-          },
+        summary: normalized.summary,
+        recentActivity: normalized.recentActivity,
+        ...(normalized.timeline ? { timeline: normalized.timeline } : {}),
+        ...(normalized.phase ? { phase: normalized.phase } : {}),
+        ...(normalized.tools ? { tools: normalized.tools } : {}),
+        ...(normalized.needsDecision && normalized.decision ? {
+          needsDecision: true as const,
+          decision: normalized.decision,
         } : {}),
       };
-      deps.live.progress(operationId, summary, progress.phase, progress.tools?.active.length, question || undefined);
+      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount, normalized.question);
       onUpdate?.({
-        content: [{ type: "text", text: summary }],
+        content: [{ type: "text", text: normalized.summary }],
         details: {
           ref: `#${runtime.index}`,
           turn: operation.turn,
@@ -380,18 +352,12 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
           startedAt: operation.startedAt,
-          activity: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
-          ...(progress.phase ? { phase: progress.phase } : {}),
-          ...(progress.tools ? { toolProgress: progress.tools } : {}),
-          ...(progress.timeline ? { timeline: progress.timeline } : {}),
-          ...(question && progress.decision
-            ? {
-                needsDecision: true,
-                decision: {
-                  question: boundText(question, { maxCharacters: 240, maxLines: 1 }),
-                  ...(decisionOptions.length > 0 ? { options: decisionOptions } : {}),
-                },
-              }
+          activity: normalized.summary,
+          ...(normalized.phase ? { phase: normalized.phase } : {}),
+          ...(normalized.tools ? { toolProgress: normalized.tools } : {}),
+          ...(normalized.timeline ? { timeline: normalized.timeline } : {}),
+          ...(normalized.needsDecision && normalized.decision
+            ? { needsDecision: true as const, decision: normalized.decision }
             : {}),
         },
       });

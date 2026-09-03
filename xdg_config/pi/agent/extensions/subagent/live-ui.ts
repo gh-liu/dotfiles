@@ -10,9 +10,9 @@
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
  * headless (-p) and RPC runs never touch terminal UI. Renders are throttled
- * (leading + trailing 250 ms), a 1 s heartbeat keeps elapsed time fresh
- * while any runtime is tracked, and a 250 ms ticker advances the job-level
- * spinner while any runtime is active; all timers stop when idle or disposed.
+ * (leading + trailing 250 ms) and a single 250 ms repaint clock keeps elapsed
+ * time fresh and advances the job-level spinner while any runtime is tracked;
+ * all timers stop when idle or disposed.
  */
 
 import type { ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
@@ -20,20 +20,14 @@ import { truncateToWidth, wrapTextWithAnsi, type Component, type TUI } from "@ea
 
 import type { SubagentActivityPhase } from "./protocol.ts";
 import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
-import { renderToolSummary } from "./render/shared.ts";
-
-const oneLine = (text: string, maxCharacters: number): string => {
-  const normalized = text.replace(/\s+/g, " ").trim();
-  return normalized.length <= maxCharacters ? normalized : `${normalized.slice(0, Math.max(1, maxCharacters - 1))}…`;
-};
+import { oneLine, renderToolSummary } from "./render/shared.ts";
 
 /** Widget key used for the above-editor live panel. */
 export const LIVE_WIDGET_ID = "subagent-live";
 
 const THROTTLE_MS = 250;
-const HEARTBEAT_MS = 1_000;
-/** Repaint cadence for the job-level spinner while any runtime is active. */
-const SPINNER_TICK_MS = 250;
+/** Single repaint clock: elapsed freshness + job-level spinner. Trailing throttle stays separate. */
+const REPAINT_TICK_MS = 250;
 
 export interface LiveRuntimeInfo {
   /** Session-local short index (#N) for display. */
@@ -196,9 +190,8 @@ export function createLiveUi(): LiveUiController {
   const runtimes = new Map<string, RuntimeDisplay>();
   let lastRenderAt = Number.NEGATIVE_INFINITY;
   let trailingTimer: ReturnType<typeof setTimeout> | undefined;
-  let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
+  let repaintTimer: ReturnType<typeof setInterval> | undefined;
   let spinnerFrame = 0;
-  let spinnerTimer: ReturnType<typeof setInterval> | undefined;
 
   // The component reads live controller state on every draw, so throttled
   // setWidget calls are pure repaint triggers.
@@ -238,25 +231,9 @@ export function createLiveUi(): LiveUiController {
       clearTimeout(trailingTimer);
       trailingTimer = undefined;
     }
-    if (heartbeatTimer !== undefined) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = undefined;
-    }
-    if (spinnerTimer !== undefined) {
-      clearInterval(spinnerTimer);
-      spinnerTimer = undefined;
-    }
-  };
-
-  const ensureHeartbeat = (): void => {
-    if (disposed || heartbeatTimer !== undefined || ![...runtimes.values()].some((runtime) => !runtime.settlement)) return;
-    heartbeatTimer = setInterval(drawNow, HEARTBEAT_MS);
-  };
-
-  const syncHeartbeat = (): void => {
-    if (![...runtimes.values()].some((runtime) => !runtime.settlement) && heartbeatTimer !== undefined) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = undefined;
+    if (repaintTimer !== undefined) {
+      clearInterval(repaintTimer);
+      repaintTimer = undefined;
     }
   };
 
@@ -268,26 +245,26 @@ export function createLiveUi(): LiveUiController {
     return false;
   };
 
-  /** Start the spinner tick while a phase animates; stop it as soon as none does. */
-  const syncSpinner = (): void => {
+  /** Single repaint clock: heartbeat freshness + spinner advance. Stops when idle. */
+  const syncRepaintClock = (): void => {
     if (disposed) return;
-    if (spinnerActive()) {
-      if (spinnerTimer === undefined) {
-        spinnerTimer = setInterval(() => {
-          spinnerFrame = (spinnerFrame + 1) % SUBAGENT_SPINNER_FRAMES.length;
-          drawNow();
-        }, SPINNER_TICK_MS);
+    if (runtimes.size === 0) {
+      if (repaintTimer !== undefined) {
+        clearInterval(repaintTimer);
+        repaintTimer = undefined;
       }
-    } else if (spinnerTimer !== undefined) {
-      clearInterval(spinnerTimer);
-      spinnerTimer = undefined;
+      return;
     }
+    if (repaintTimer !== undefined) return;
+    repaintTimer = setInterval(() => {
+      if (spinnerActive()) spinnerFrame = (spinnerFrame + 1) % SUBAGENT_SPINNER_FRAMES.length;
+      drawNow();
+    }, REPAINT_TICK_MS);
   };
 
   const detach = (operationKey: string): void => {
     if (disposed || !runtimes.delete(operationKey)) return;
-    syncHeartbeat();
-    syncSpinner();
+    syncRepaintClock();
     // Clear immediately when the panel becomes empty; otherwise coalesce.
     if (runtimes.size === 0) drawNow();
     else scheduleDraw();
@@ -308,8 +285,7 @@ export function createLiveUi(): LiveUiController {
         runId: info.runId,
         task: info.task,
       });
-      ensureHeartbeat();
-      syncSpinner();
+      syncRepaintClock();
       scheduleDraw();
     },
     progress(operationKey, summary, phase, activeCount, decision) {
@@ -319,7 +295,7 @@ export function createLiveUi(): LiveUiController {
       runtime.activityPhase = phase;
       runtime.activeCount = activeCount;
       runtime.decision = decision;
-      syncSpinner();
+      syncRepaintClock();
       scheduleDraw();
     },
     settle(operationKey, outcome, _elapsedMs) {
@@ -329,16 +305,14 @@ export function createLiveUi(): LiveUiController {
       runtime.outcome = outcome;
       runtime.decision = undefined;
       runtime.activeCount = undefined;
-      syncHeartbeat();
-      syncSpinner();
+      syncRepaintClock();
       scheduleDraw();
     },
     reportFailed(operationKey) {
       const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
       runtime.settlement = "report-failed";
-      syncHeartbeat();
-      syncSpinner();
+      syncRepaintClock();
       scheduleDraw();
     },
     remove(operationKey) {
@@ -351,8 +325,7 @@ export function createLiveUi(): LiveUiController {
         .map(([operationKey]) => operationKey);
       for (const operationKey of keys) runtimes.delete(operationKey);
       if (keys.length === 0) return;
-      syncHeartbeat();
-      syncSpinner();
+      syncRepaintClock();
       if (runtimes.size === 0) drawNow();
       else scheduleDraw();
     },

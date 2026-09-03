@@ -2,7 +2,7 @@ import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
 import { agentNameColor } from "./call.ts";
-import { boundedLines, formatDuration, oneLine, renderToolSummary } from "./shared.ts";
+import { boundedLines, formatDuration, renderActivityRow, renderDetailSections } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
@@ -61,29 +61,14 @@ function completionEntryText(
     text += `\n${theme.fg("muted", `  ${details.ref} · ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
   }
   if (expanded) {
-    const sections: Array<[string, string | undefined]> = [
+    text += renderDetailSections([
       ["Task", details.task], ["Summary", summaryRaw], ["Changes", details.changes], ["Evidence", details.evidence],
       ["Validation", details.validation], ["Risks", details.risks],
-    ];
-    for (const [label, value] of sections) {
-      if (!value?.trim()) continue;
-      text += `\n${theme.fg("toolTitle", label)}`;
-      for (const line of boundedLines(value, 4_000, 20)) if (line) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    }
+    ], theme);
     if (details.recentActivity?.length) {
       text += `\n${theme.fg("toolTitle", "Recent activity")}`;
       for (const line of details.recentActivity.slice(-8)) {
-        const bounded = oneLine(line, 200);
-        if (bounded === "✓ Thinking") {
-          text += `\n  ${theme.fg("accent", bounded)}`;
-          continue;
-        }
-        const match = /^([✓✗])\s+(.+)$/.exec(bounded);
-        if (!match) {
-          text += `\n${theme.fg("dim", `  ${bounded}`)}`;
-          continue;
-        }
-        text += `\n  ${theme.fg(match[1] === "✗" ? "error" : "success", match[1])} ${renderToolSummary(theme, match[2])}`;
+        text += `\n${renderActivityRow(line, theme)}`;
       }
     }
     text += `\n${theme.fg("muted", `${details.ref} · ${details.sessionOpen ? "workstream open · follow up gaps or close when accepted" : "workstream unavailable"}`)}`;

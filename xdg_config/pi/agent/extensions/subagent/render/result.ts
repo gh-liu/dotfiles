@@ -1,7 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { type Component, Text } from "@earendil-works/pi-tui";
 
-import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderToolSummary, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
+import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderActivityRow, renderDetailSections, renderPartitionedStatus, renderToolSummary, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
 function renderActivity(details: Record<string, unknown>, theme: Theme): string {
   let text = "";
@@ -16,10 +16,9 @@ function renderActivity(details: Record<string, unknown>, theme: Theme): string 
   for (const entry of timeline) {
     if (!entry || typeof entry !== "object") continue;
     const item = entry as Record<string, unknown>;
-    if (item.kind === "thinking") text += `\n${theme.fg("accent", "✓ Thinking")}`;
+    if (item.kind === "thinking") text += `\n${renderActivityRow("✓ Thinking", theme)}`;
     else if (item.kind === "tool" && typeof item.summary === "string") {
-      const failed = item.status === "failed";
-      text += `\n${theme.fg(failed ? "error" : "success", failed ? "✗" : "✓")} ${renderToolSummary(theme, item.summary)}`;
+      text += `\n${renderActivityRow(`${item.status === "failed" ? "✗" : "✓"} ${item.summary}`, theme)}`;
     }
   }
   if (Array.isArray(tools?.active)) {
@@ -111,15 +110,13 @@ export function renderSubagentResult(
   if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatDuration(details.elapsedMs)}`);
   if (summary && !options.expanded) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
   if (options.expanded) {
-    const sections: Array<[string, unknown]> = [
-      ["Summary", summary], ["Changes", details.changes], ["Evidence", details.evidence],
-      ["Validation", details.validation], ["Risks", details.risks],
-    ];
-    for (const [label, value] of sections) {
-      if (typeof value !== "string" || !value.trim()) continue;
-      text += `\n${theme.fg("toolTitle", label)}`;
-      for (const line of boundedLines(value, 4_000, 20)) text += `\n${theme.fg("dim", `  ${line}`)}`;
-    }
+    text += renderDetailSections([
+      ["Summary", typeof summary === "string" ? summary : undefined],
+      ["Changes", typeof details.changes === "string" ? details.changes : undefined],
+      ["Evidence", typeof details.evidence === "string" ? details.evidence : undefined],
+      ["Validation", typeof details.validation === "string" ? details.validation : undefined],
+      ["Risks", typeof details.risks === "string" ? details.risks : undefined],
+    ], theme);
     if (context.args.action === "get" && typeof details.activity === "string") {
       text += `\n${theme.fg("toolTitle", "Current")}\n${theme.fg("dim", `  ${oneLine(details.activity, 240)}`)}`;
     }

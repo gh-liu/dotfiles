@@ -91,6 +91,19 @@ export function redactSecrets(text: string, exactValues: string[] = []): string 
     .replace(/\b(?:sk-(?:proj-)?[a-z0-9_-]{16,}|gh[pousr]_[a-z0-9]{20,}|AIza[a-z0-9_-]{20,})\b/gi, "[REDACTED]");
 }
 
+export function collectCredentialValues(names: readonly string[] = [], env: Record<string, string | undefined> = process.env): string[] {
+  return [...new Set(names
+    .map((name) => env[name])
+    .filter((value): value is string => value !== undefined && value.length > 0))]
+    .sort((left, right) => right.length - left.length);
+}
+
+/** Unified display sanitizer: exact-value (longest-first, idempotent) + generic patterns, then single-line bound. */
+export function sanitizeOneLine(text: string, maxCharacters: number, exactValues: string[] = []): string {
+  const normalized = redactSecrets(text, exactValues).replace(/\s+/g, " ").trim();
+  return normalized.length <= maxCharacters ? normalized : `${normalized.slice(0, Math.max(1, maxCharacters - 1))}…`;
+}
+
 export function boundText(text: string, limits: TextLimits, exactSecretValues: string[] = []): string {
   validatePositiveLimit(limits.maxCharacters, "maxCharacters");
   validatePositiveLimit(limits.maxLines, "maxLines");

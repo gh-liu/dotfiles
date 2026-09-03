@@ -9,14 +9,13 @@ import {
   applyAgentOverrides,
   discoverUserAgents,
   formatAgentCatalog,
-  loadSettingsDefaults,
-  loadSubagentOverrides,
+  loadSubagentSettings,
   resolveAgentModel,
   type AgentDiscovery,
 } from "./agents.ts";
 import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { createLiveUi } from "./live-ui.ts";
-import { boundText, modelSubagentHandoff } from "./output.ts";
+import { boundText, collectCredentialValues, modelSubagentHandoff, sanitizeOneLine } from "./output.ts";
 import { createRuntimeHub, type OperationRecord, type RuntimeRecord } from "./runtime.ts";
 import { createSdkSubagentController } from "./sdk-executor.ts";
 import { stripModel } from "./protocol.ts";
@@ -136,13 +135,14 @@ const SubagentParameters = Type.Object({
 });
 type SubagentParameters = Static<typeof SubagentParameters>;
 
-export { loadSubagentOverrides };
+export { loadSubagentOverrides } from "./agents.ts";
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExtensionOptions = {}): void {
   const agentDirectory = options.agentDirectory ?? join(getAgentDir(), "agents");
   const settingsPath = options.settingsPath ?? join(getAgentDir(), "settings.json");
-  const loadedOverrides = loadSubagentOverrides(settingsPath);
-  const settingsDefaults = loadSettingsDefaults(settingsPath);
+  const settings = loadSubagentSettings(settingsPath);
+  const loadedOverrides = { overrides: settings.overrides, maxConcurrentRuns: settings.maxConcurrentRuns, errors: settings.errors };
+  const settingsDefaults = settings.defaults;
   const discoverEffectiveAgents = () => {
     const discovery = discoverUserAgents(agentDirectory);
     return applyAgentOverrides({
@@ -167,6 +167,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   const controllerFactory = options.controllerFactory
     ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
+  const credentialSecrets = collectCredentialValues(credentialEnvNames ?? []);
   const notifySettled = (payload: SubagentCompletionPayload): boolean => {
     const entries = "batch" in payload ? payload.batch : [payload];
     const blocks = entries.map((details) => {
@@ -175,7 +176,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         ? ` · ${Math.max(0, Math.ceil(details.elapsedMs / 1000))}s`
         : "";
       const firstLine = `${reference} ${details.agent} · ${details.status}${elapsed}`;
-      const rawTitle = completionWakeTitle(details.task);
+      const rawTitle = sanitizeOneLine(completionWakeTitle(details.task), COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS, credentialSecrets);
       const titleBudget = COMPLETION_WAKE_FIRST_LINE_MAX_CHARACTERS - firstLine.length - " — ".length;
       const title = !rawTitle || titleBudget < 2
         ? ""
@@ -188,7 +189,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ].join("\n");
     });
     const header = entries.length > 1 ? `${entries.length} background subagents settled:\n\n` : "";
-    const content = boundText(header + blocks.join("\n\n"), { maxCharacters: 16_000, maxLines: 96 });
+    const content = boundText(header + blocks.join("\n\n"), { maxCharacters: 16_000, maxLines: 96 }, credentialSecrets);
     try {
       pi.sendMessage<SubagentCompletionPayload>({
         customType: SUBAGENT_COMPLETION_MESSAGE,
@@ -210,7 +211,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         agent: details.agent,
         status: details.status,
         elapsedMs: details.elapsedMs ?? null,
-        taskPrefix: boundText(details.task, { maxCharacters: 120, maxLines: 1 }),
+        taskPrefix: boundText(details.task, { maxCharacters: 120, maxLines: 1 }, credentialSecrets),
       });
     } catch {
       // The settle log is best-effort; never affect operation state.

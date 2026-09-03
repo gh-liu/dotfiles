@@ -5,7 +5,7 @@ import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 
-import { boundText, redactSecrets, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
+import { boundText, collectCredentialValues, sanitizeOneLine, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
 import type { SubagentActivityPhase, SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem } from "./protocol.ts";
 
@@ -39,8 +39,7 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void; reje
 }
 
 function boundedOneLine(text: string, maxCharacters: number, secrets: string[]): string {
-  const normalized = redactSecrets(text, secrets).replace(/\s+/g, " ").trim();
-  return normalized.length <= maxCharacters ? normalized : `${normalized.slice(0, maxCharacters - 1)}…`;
+  return sanitizeOneLine(text, maxCharacters, secrets);
 }
 
 /** Collapse the $HOME prefix to `~` so progress paths stay short and readable. */
@@ -68,10 +67,7 @@ function credentialValues(options: SubagentRunOptions, config: SdkSubagentConfig
     ...(config.credentialEnvNames ?? []),
     ...(options.agent.tools.includes("web_search") ? ["EXA_API_KEY"] : []),
   ];
-  return [...new Set(names
-    .map((name) => process.env[name])
-    .filter((value): value is string => value !== undefined && value.length > 0))]
-    .sort((a, b) => b.length - a.length);
+  return collectCredentialValues(names);
 }
 
 function identity(
