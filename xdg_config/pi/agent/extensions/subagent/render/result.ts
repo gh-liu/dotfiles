@@ -19,7 +19,7 @@ function renderActivity(details: Record<string, unknown>, theme: Theme): string 
     if (item.kind === "thinking") text += `\n${theme.fg("accent", "✓ Thinking")}`;
     else if (item.kind === "tool" && typeof item.summary === "string") {
       const failed = item.status === "failed";
-      text += `\n${theme.fg(failed ? "error" : "success", failed ? "✗ failed" : "✓ completed")}${theme.fg("muted", `: ${oneLine(item.summary, 200)}`)}`;
+      text += `\n${theme.fg(failed ? "error" : "success", failed ? "✗" : "✓")} ${theme.fg("muted", oneLine(item.summary, 200))}`;
     }
   }
   if (Array.isArray(tools?.active)) {
@@ -27,7 +27,7 @@ function renderActivity(details: Record<string, unknown>, theme: Theme): string 
       if (!entry || typeof entry !== "object") continue;
       const item = entry as Record<string, unknown>;
       if (typeof item.summary === "string") {
-        text += `\n${theme.fg("warning", "◷ running")}${theme.fg("muted", `: ${oneLine(item.summary, 200)}`)}`;
+        text += `\n${theme.fg("warning", "◷")} ${theme.fg("muted", oneLine(item.summary, 200))}`;
       }
     }
   }

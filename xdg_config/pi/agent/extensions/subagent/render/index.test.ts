@@ -74,15 +74,15 @@ describe("task API rendering", () => {
     const rendered = text(renderSubagentResult({ content: [{ type: "text", text: "Thinking…" }], details }, { expanded: true, isPartial: true }, theme, context));
     expect(rendered).toContain("● running");
     expect(rendered).not.toContain("Timeline");
-    expect(rendered).toContain("✓ completed: read a.ts");
+    expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("… 2 earlier tool activities");
-    expect(rendered).toContain("◷ running: test auth.ts");
+    expect(rendered).toContain("◷ test auth.ts");
     expect(rendered).not.toContain("Thinking…");
     expect(rendered).not.toContain("private reasoning");
     expect(rendered).not.toContain("id: b");
     const collapsed = text(renderSubagentResult({ content: [], details }, { expanded: false, isPartial: true }, theme, context));
     expect(collapsed).toContain("● running · read a.ts…");
-    expect(collapsed).toContain("✓ completed: read a.ts");
+    expect(collapsed).toContain("✓ read a.ts");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
@@ -103,7 +103,7 @@ describe("task API rendering", () => {
       ],
     } }, { expanded: true, isPartial: false }, theme, runContext()));
     expect(runExpanded).not.toContain("Timeline");
-    expect(runExpanded).toContain("✓ completed: read auth.ts");
+    expect(runExpanded).toContain("✓ read auth.ts");
     expect(runExpanded).not.toContain("private reasoning");
 
     const recovered = text(renderSubagentResult({
@@ -127,8 +127,8 @@ describe("task API rendering", () => {
     } }, { expanded: true, isPartial: false }, theme, getContext));
     expect(expanded).toContain("Current");
     expect(expanded).not.toContain("Timeline");
-    expect(expanded).toContain("✓ completed: read auth.ts");
-    expect(expanded).toContain("✗ failed: npm test");
+    expect(expanded).toContain("✓ read auth.ts");
+    expect(expanded).toContain("✗ npm test");
     expect(expanded).toContain("Thinking");
     expect(expanded).not.toContain("private reasoning");
     const collapsed = text(renderSubagentResult({ content: [], details: {

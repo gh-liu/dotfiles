@@ -391,8 +391,8 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       const recentActivity = (progress.timeline ?? [])
         .slice(-8)
         .flatMap((entry) => entry.kind === "thinking"
-          ? ["Thinking"]
-          : [`${entry.status === "failed" ? "failed" : "completed"}: ${boundText(entry.summary, { maxCharacters: 160, maxLines: 1 })}`]);
+          ? ["✓ Thinking"]
+          : [`${entry.status === "failed" ? "✗" : "✓"} ${boundText(entry.summary, { maxCharacters: 160, maxLines: 1 })}`]);
       operation.latestProgress = {
         summary: boundText(summary, { maxCharacters: 240, maxLines: 1 }),
         recentActivity,

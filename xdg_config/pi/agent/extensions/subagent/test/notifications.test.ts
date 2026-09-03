@@ -158,7 +158,7 @@ describe("subagent notifications", () => {
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
     expect(env.extension.messages[0].message.details).toMatchObject({
       status: "failed", summary: "Tests failed", evidence: "Stack trace", risks: "Release blocked",
-      recentActivity: ["Thinking", "failed: npm test"],
+      recentActivity: ["✓ Thinking", "✗ npm test"],
     });
     await env.extension.shutdown();
   });
