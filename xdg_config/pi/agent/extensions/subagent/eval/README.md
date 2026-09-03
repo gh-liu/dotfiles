@@ -19,6 +19,7 @@ network access, takes several minutes, and incurs real model/search cost.
 | `expert-judgment` | `reviewer` resolves a bounded compatibility tradeoff | 1 |
 | `browser-qa` | `tester` launches the fixture app, exercises browser flows, preserves source, and saves screenshot evidence | 1 |
 | `implementation` | `worker` implements; parent inspects the diff and reruns tests | 1 |
+| `iterative-implementation` | One `worker` session delivers production code, receives an acceptance-gap followup, adds tests, and is verified before close | 1 |
 | `parallel-investigation` | Independent `scout` + `reviewer` sessions start before either settles | 1 |
 | `staged-delivery` | Parent visibly composes `scout → worker → reviewer` | 1 |
 | `persistent-followup` | One `#N` supports `run → followup → get → close` | 1 |

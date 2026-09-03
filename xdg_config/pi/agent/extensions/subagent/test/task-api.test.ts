@@ -12,6 +12,19 @@ describe("reusable subagent sessions", () => {
     }
   };
 
+  test("teaches the parent one-shot and iterative workstream modes", () => {
+    const tool = setup().extension.getTool() as unknown as {
+      description: string;
+      promptGuidelines: string[];
+    };
+    const guidance = tool.promptGuidelines.join("\n");
+    expect(tool.description).toContain("one-shot delegation or an iterative workstream");
+    expect(tool.description).toContain("use followup instead of restarting or redoing");
+    expect(guidance).toContain("original acceptance criteria");
+    expect(guidance).toContain("only the gap, new evidence, and next expected action");
+    expect(guidance).toContain("only after its work is accepted or its role is no longer useful");
+  });
+
   test("foreground run leaves an idle reusable session", async () => {
     const env = setup({ ids: ["session", "turn"] });
     const running = env.invoke({ action: "run", agent: "scout", task: "Inspect lifecycle" });

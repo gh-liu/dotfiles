@@ -7,9 +7,9 @@
 
 The extension provides reusable, isolated Pi sessions for bounded delegated work. Its public model is:
 
-> one agent, one task, one visible lifecycle, reusable conversation
+> one agent, one bounded workstream, one visible lifecycle, reusable conversation
 
-The parent decides whether to delegate, starts independent sessions in parallel when useful, supplies prior handoffs in later tasks when coordinating agents, inspects changes, integrates results, validates the whole outcome, and answers the user. The extension is not a workflow engine, durable queue, permission broker, autonomous team, or security sandbox.
+The parent decides whether to delegate and whether a session is a one-shot task or an iterative workstream. For an iterative workstream, it defines acceptance criteria, evaluates each handoff, and sends only unresolved gaps, new evidence, and the next expected action through `followup` on the same `#N`. It closes the session after accepting the work or deciding that role is no longer useful. Independent sessions can still run in parallel; the parent integrates results, validates the whole outcome, and answers the user. The extension is not a workflow engine, durable queue, permission broker, autonomous team, or security sandbox.
 
 The bundled roles are intentionally small:
 
@@ -32,6 +32,7 @@ subagent({ action: "close", ref })
 
 - `run` creates a fresh session for a registered agent and starts its first turn.
 - `followup` starts another turn in an idle session, preserving its conversation and controller.
+- When the same agent still owns work that has not met the original acceptance criteria, the parent should prefer `followup` over creating a replacement session or redoing that work itself. Followup tasks describe the delta rather than replaying the original task.
 - Foreground turns wait for authoritative settlement. Background turns return after acceptance and send an at-most-once completion wake after settlement.
 - `get(ref)` returns the current session and latest-turn projection. `get()` lists only each retained session's ref, agent, and state so a large catalog cannot flood model context. `waitMs` is observational: expiry returns `timedOut:true` and never interrupts work.
 - `cancel` stops only an accepted active turn. The session becomes idle and can receive another followup.

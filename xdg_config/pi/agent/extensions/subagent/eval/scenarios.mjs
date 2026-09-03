@@ -68,6 +68,24 @@ export const scenarios = [
     prompt: "Delegate one worker to implement plan.md, changing only src/session.js and test/session.test.js and running tests. After it settles, inspect the complete diff and rerun tests in the parent. Do not redo the implementation or commit.",
   },
   {
+    id: "iterative-implementation",
+    description: "One worker session delivers a staged implementation through acceptance-driven followup.",
+    quick: false, repeats: 1, fixture: "baseline", workspace: "implementation", targetRate: 1,
+    hardExpectation: {
+      requiredAgents: ["worker"],
+      actionSequence: [{ action: "run" }, { action: "followup" }, { action: "get" }, { action: "close" }],
+    },
+    expectation: {
+      requiredAgents: ["worker"], maxSubagentCalls: 6,
+      actionSequence: [{ action: "run" }, { action: "followup" }, { action: "get" }, { action: "close" }],
+      parentToolCallsAfter: [
+        { agent: "worker", tool: "bash", argsMatch: "git\\s+diff" },
+        { agent: "worker", tool: "bash", argsMatch: "(?:npm\\s+test|node\\s+--test)" },
+      ],
+    },
+    prompt: "Use one reusable worker session as an acceptance-driven workstream for plan.md. In its initial run, ask it to inspect the relevant code and implement only the production change in src/session.js, deliberately deferring test changes. Inspect that settled diff in the parent, then follow up on the same #N with the remaining acceptance gap: add the required regression coverage in test/session.test.js and run the focused tests. Inspect the complete diff and rerun the full test suite in the parent. If either inspection or validation exposes a defect, follow up on that same #N with only the concrete gap and re-check until accepted. Finally get and close the same session. Do not create another subagent, redo its implementation in the parent, or commit.",
+  },
+  {
     id: "parallel-investigation",
     description: "Independent scout and reviewer sessions start in parallel.",
     quick: false, repeats: 1, fixture: "baseline", workspace: "read-only", targetRate: 1,
