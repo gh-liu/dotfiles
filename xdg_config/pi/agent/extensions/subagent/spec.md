@@ -73,7 +73,7 @@ The above-editor activity center owns only accepted background turns after their
 
 Foreground settlement returns a result-first handoff in the tool result. Completion cards also show the result first and include the turn number. Both show `workstream open · follow up gaps or close when accepted` only when the runtime is truly idle; closed or crashed workstreams are unavailable. A card acknowledgement removes only its operation row, never another turn sharing the same public ref.
 
-Tool invocation rows are durable records. Collapsed rows show the actual agent, full `provider/model`, thinking-level value, and task title; expanded rows show the bounded task without repeating that metadata. A followup uses a `↳` continuation marker, resolves the session's registered agent rather than a generic action label, and shows its turn once authoritative progress arrives.
+Tool invocation rows are durable records. Collapsed rows show the actual agent, full `provider/model`, thinking-level value colored with Pi's matching thinking-level theme color, and task title; expanded rows show the bounded task without repeating that metadata. A followup uses a `↳` continuation marker, resolves the session's registered agent rather than a generic action label, and shows its turn once authoritative progress arrives.
 
 ## 6. Isolation and credentials
 

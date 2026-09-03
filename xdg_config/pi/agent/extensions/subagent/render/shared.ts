@@ -47,6 +47,10 @@ function statusBackground(theme: Theme, isPartial: boolean, isError: boolean): (
   return (text) => theme.bg(color, text);
 }
 
+function renderThinkingLevel(theme: Theme, level: string): string {
+  return theme.getThinkingBorderColor(level as Parameters<Theme["getThinkingBorderColor"]>[0])(level);
+}
+
 /** Keep the first status line highlighted while rendering verbose output on the terminal background. */
 function renderPartitionedStatus(text: string, theme: Theme, isPartial: boolean, isError: boolean): Container {
   const newline = text.indexOf("\n");
@@ -117,5 +121,5 @@ function publicRef(value: string | undefined): string | undefined {
   return match ? `#${match[1]}` : undefined;
 }
 
-export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderToolSummary, statusBackground, taskTitle };
+export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderThinkingLevel, renderToolSummary, statusBackground, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };

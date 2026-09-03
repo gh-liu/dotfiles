@@ -1,7 +1,12 @@
 import { describe, expect, test, vi } from "vitest";
 import { renderSubagentCall, renderSubagentCompletion, renderSubagentResult } from "./index.ts";
 
-const theme = { fg: (_color: string, value: string) => value, bg: (_color: string, value: string) => value, bold: (value: string) => value } as never;
+const theme = {
+  fg: (_color: string, value: string) => value,
+  bg: (_color: string, value: string) => value,
+  bold: (value: string) => value,
+  getThinkingBorderColor: (_level: string) => (value: string) => value,
+} as never;
 const text = (component: { render(width: number): string[] }) => component.render(200).join("\n").trim();
 
 const runContext = (state: Record<string, unknown> = {}) => ({
@@ -28,6 +33,13 @@ describe("task API rendering", () => {
     }, theme));
     expect(rendered).toContain("worker · opencode-go/deepseek-v4-flash · minimal — Implement auth");
     expect(rendered).not.toContain("thinking minimal");
+    const coloredTheme = {
+      ...theme,
+      getThinkingBorderColor: (level: string) => (value: string) => `<thinking-${level}>${value}</thinking-${level}>`,
+    } as never;
+    expect(text(renderSubagentCall({
+      action: "run", agent: "worker", model: "vendor/model", thinking: "minimal", task: "Implement auth",
+    }, coloredTheme))).toContain("<thinking-minimal>minimal</thinking-minimal>");
   });
 
   test("retains a useful multi-line prompt budget in the invocation record", () => {

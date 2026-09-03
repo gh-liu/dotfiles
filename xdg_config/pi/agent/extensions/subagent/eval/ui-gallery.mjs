@@ -17,6 +17,9 @@ const ansi = {
   colors: {
     accent: "\x1b[36m", dim: "\x1b[2m", error: "\x1b[31m", muted: "\x1b[90m",
     success: "\x1b[32m", syntaxFunction: "\x1b[35m", toolTitle: "\x1b[1;37m", warning: "\x1b[33m",
+    thinkingOff: "\x1b[90m", thinkingMinimal: "\x1b[38;2;110;110;110m", thinkingLow: "\x1b[38;2;95;135;175m",
+    thinkingMedium: "\x1b[38;2;129;162;190m", thinkingHigh: "\x1b[38;2;178;148;187m",
+    thinkingXhigh: "\x1b[38;2;209;131;232m", thinkingMax: "\x1b[38;2;255;95;255m",
   },
   backgrounds: {
     toolErrorBg: "\x1b[48;5;52m", toolPendingBg: "\x1b[48;5;236m", toolSuccessBg: "\x1b[48;5;22m",
@@ -27,6 +30,10 @@ const theme = {
   fg(color, text) { return `${ansi.colors[color] ?? ""}${text}${ansi.reset}`; },
   bg(color, text) { return `${ansi.backgrounds[color] ?? ""}${text}${ansi.reset}`; },
   bold(text) { return `${ansi.bold}${text}${ansi.reset}`; },
+  getThinkingBorderColor(level) {
+    const suffix = level === "off" ? "Off" : `${level[0]?.toUpperCase() ?? ""}${level.slice(1)}`;
+    return (text) => this.fg(`thinking${suffix}`, text);
+  },
 };
 
 const width = Number.parseInt(process.env.COLUMNS ?? "118", 10);

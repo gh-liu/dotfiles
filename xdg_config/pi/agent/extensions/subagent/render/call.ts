@@ -1,7 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
-import { boundedLines, positiveSafeRuntimeIndex, publicRef, statusBackground, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./shared.ts";
+import { boundedLines, positiveSafeRuntimeIndex, publicRef, renderThinkingLevel, statusBackground, taskTitle, type SubagentRenderArgs, type SubagentRenderContext } from "./shared.ts";
 
 type ThemeFgColor = Parameters<Theme["fg"]>[0];
 const AGENT_NAME_COLORS: readonly ThemeFgColor[] = ["syntaxKeyword", "syntaxFunction", "syntaxString", "syntaxNumber", "syntaxType", "warning", "toolDiffRemoved"];
@@ -30,7 +30,7 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const continuation = args.action === "followup" ? theme.fg("accent", "↳ ") : "";
   let text = `${continuation}${ref ? theme.fg("toolTitle", theme.bold(`${ref} `)) : ""}${theme.fg(agentNameColor(agent), theme.bold(agent))}`;
   if (model) text += theme.fg("muted", ` · ${model}`);
-  if (thinking) text += theme.fg("muted", ` · ${thinking}`);
+  if (thinking) text += ` ${theme.fg("muted", "·")} ${renderThinkingLevel(theme, thinking)}`;
   if (args.action === "followup" && context?.state.turn) text += theme.fg("muted", ` · turn ${context.state.turn}`);
   const title = taskTitle(args.task, context?.expanded ? 120 : 240);
   if (title) text += theme.fg("dim", ` — ${title}`);
