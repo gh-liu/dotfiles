@@ -17,6 +17,8 @@ export type OperationState = "running" | "completed" | "failed" | "interrupted" 
 
 export interface OperationRecord {
   operationId: string;
+  /** Monotonic user-facing turn number within the reusable session. */
+  turn: number;
   state: OperationState;
   accepted: boolean;
   task: string;
@@ -44,6 +46,7 @@ export interface RuntimeRecord {
   index: number;
   runId: string;
   revision: number;
+  nextTurnNumber: number;
   agent: SubagentRunOptions["agent"];
   cwd: string;
   parentSessionId: string;
@@ -71,6 +74,7 @@ function deferred<T>(): {
 
 export const operationSnapshot = (operation: OperationRecord) => ({
   operationId: operation.operationId,
+  turn: operation.turn,
   status: operation.state,
   task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
   ...(operation.startedAt === undefined ? {} : { startedAt: operation.startedAt }),
@@ -251,6 +255,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     const details: SubagentCompletionDetails = {
       jobId: runtime.runId,
       operationId: operation.operationId,
+      turn: operation.turn,
       ref: `#${runtime.index}`,
       agent,
       ...(model ? { model } : {}),
@@ -348,6 +353,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     let settle!: () => void;
     const operation: OperationRecord = {
       operationId,
+      turn: runtime.nextTurnNumber++,
       state: "running",
       accepted: false,
       task,
@@ -412,6 +418,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         content: [{ type: "text", text: summary }],
         details: {
           ref: `#${runtime.index}`,
+          turn: operation.turn,
           agent: runtime.agent.name,
           ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
@@ -507,6 +514,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         index: nextRuntimeIndex++,
         runId: input.initialOptions.runId,
         revision: 0,
+        nextTurnNumber: 1,
         agent: input.agent,
         cwd: input.cwd,
         parentSessionId: input.parentSessionId,

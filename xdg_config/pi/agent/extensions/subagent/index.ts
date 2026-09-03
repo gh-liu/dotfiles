@@ -54,6 +54,9 @@ function retainCallTitleDetails(
     : {};
   const model = typeof details.model === "string" ? details.model : undefined;
   const thinking = typeof details.thinking === "string" ? details.thinking : undefined;
+  const turn = typeof details.turn === "number" && Number.isSafeInteger(details.turn) && details.turn > 0
+    ? details.turn
+    : undefined;
   let changed = false;
   if (model !== undefined && context.state.model !== model) {
     context.state.model = model;
@@ -61,6 +64,10 @@ function retainCallTitleDetails(
   }
   if (thinking !== undefined && context.state.thinking !== thinking) {
     context.state.thinking = thinking;
+    changed = true;
+  }
+  if (turn !== undefined && context.state.turn !== turn) {
+    context.state.turn = turn;
     changed = true;
   }
   if (!changed) return;
@@ -225,7 +232,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     hub.closeRuntime(runtime, suppressNotification);
   const internalModelKeys = new Set([
     "displayIndex", "index", "jobId", "operationId", "processInstanceId",
-    "revision", "runId", "timeline", "toolProgress", "transcript",
+    "revision", "runId", "timeline", "toolProgress", "transcript", "turn",
   ]);
   const modelProjection = (value: unknown): unknown => {
     if (Array.isArray(value)) return value.map(modelProjection);
@@ -281,6 +288,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
       ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
       ...(operation ? {
+        turn: operation.turn,
         task: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }),
         ...turnDetails(operation, runtime),
         ...(operation.latestProgress ? {
@@ -418,6 +426,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           content: [{ type: "text", text: initial ? "Starting subagent session…" : "Continuing subagent session…" }],
           details: {
             ref: `#${runtime.index}`,
+            turn: runtime.nextTurnNumber,
             agent: runtime.agent.name,
             ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
             ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
@@ -446,6 +455,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             live.track(operation.operationId, {
               index: runtime.index,
               agent: runtime.agent.name,
+              turn: operation.turn,
               startedAt: operation.startedAt ?? Date.now(),
               runId: runtime.runId,
               task,

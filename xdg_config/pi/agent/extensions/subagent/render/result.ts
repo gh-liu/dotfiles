@@ -58,6 +58,10 @@ export function renderSubagentResult(
   const error = typeof details.error === "string" ? details.error : undefined;
   const summary = typeof details.summary === "string" ? details.summary : error;
   const displayRef = ref ?? ("ref" in context.args ? publicRef(context.args.ref) : undefined);
+  const agent = typeof details.agent === "string" ? details.agent : undefined;
+  const turn = typeof details.turn === "number" && Number.isSafeInteger(details.turn) && details.turn > 0
+    ? details.turn
+    : undefined;
 
   if (status === "unknown" && error) {
     let text = theme.fg("error", "✗ subagent error");
@@ -66,9 +70,15 @@ export function renderSubagentResult(
     return new Text(text, 0, 0);
   }
 
+  if (context.args.action === "close" && details.closed === true) {
+    let text = theme.fg("success", `✓${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · workstream closed`);
+    if (error) text += `\n${theme.fg("dim", oneLine(error, 240))}`;
+    return new Text(text, 0, 0);
+  }
+
   if (context.args.action === "cancel" || context.args.action === "close") {
-    const succeeded = context.args.action === "cancel" ? details.cancelled === true : details.closed === true;
-    const label = succeeded ? `✓ ${context.args.action} acknowledged` : `• ${context.args.action} not applied`;
+    const succeeded = context.args.action === "cancel" && details.cancelled === true;
+    const label = succeeded ? "✓ cancel acknowledged" : `• ${context.args.action} not applied`;
     let text = theme.fg(succeeded ? "success" : context.isError ? "error" : "muted", label);
     if (displayRef) text += theme.fg("toolTitle", ` · ${displayRef}`);
     text += theme.fg("muted", ` · ${status}`);
@@ -88,7 +98,6 @@ export function renderSubagentResult(
     return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent sessions."), 0, 0);
   }
 
-  const agent = typeof details.agent === "string" ? details.agent : undefined;
   let text = status === "starting" || status === "running"
     ? theme.fg("warning", details.timedOut === true ? "● still running · wait expired" : "● running")
     : status === "idle" && turnStatus
@@ -99,6 +108,7 @@ export function renderSubagentResult(
       : status === "crashed" ? theme.fg("error", "✗ session crashed")
       : theme.fg("warning", "? unknown session");
   if (displayRef && !(status === "idle" && turnStatus)) text += theme.fg("toolTitle", ` · ${displayRef}`);
+  if (turn) text += theme.fg("muted", ` · turn ${turn}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatDuration(details.elapsedMs)}`);
   if (summary && !options.expanded) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
   if (options.expanded) {
@@ -117,7 +127,7 @@ export function renderSubagentResult(
     text += renderActivity(details, theme);
   }
   if (status === "idle" && displayRef) {
-    text += `\n${theme.fg("muted", `${displayRef} · session open · follow-up or close`)}`;
+    text += `\n${theme.fg("muted", `${displayRef} · workstream open · follow up gaps or close when accepted`)}`;
   }
   return new Text(text, 0, 0);
 }

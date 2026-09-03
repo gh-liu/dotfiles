@@ -125,7 +125,7 @@ describe("subagent notifications", () => {
           fg: (_color: string, text: string) => text,
           bold: (text: string) => text,
         });
-        expect(component.render(100).join("\n")).toContain("#1 scout · card failed · get #1");
+        expect(component.render(100).join("\n")).toContain("#1 scout · turn 1 · card failed · get #1");
       });
       if (!failDelivery) {
         await env.extension.startMessage({

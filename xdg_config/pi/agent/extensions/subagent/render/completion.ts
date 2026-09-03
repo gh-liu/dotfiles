@@ -10,6 +10,7 @@ export interface SubagentCompletionDetails {
   jobId: string;
   /** Internal operation/delivery identity; never rendered or exposed to the model. */
   operationId: string;
+  turn?: number;
   ref: string;
   agent: string;
   model?: string;
@@ -47,6 +48,7 @@ function completionEntryText(
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
   const summaryRaw = details.summary ?? "";
   let text = `${theme.fg(color, marker)} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
+  if (typeof details.turn === "number") text += theme.fg("muted", ` · turn ${details.turn}`);
   if (status !== "completed") text += theme.fg(color, ` · ${status}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatDuration(details.elapsedMs)}`);
   if (!expanded && summaryRaw) {
@@ -55,7 +57,7 @@ function completionEntryText(
   const hasDetails = [details.task, summaryRaw, details.changes, details.evidence, details.validation, details.risks, ...(details.recentActivity ?? [])]
     .some((value) => typeof value === "string" && value.trim());
   if (!expanded) {
-    const affordance = details.sessionOpen ? "session open · follow-up or close" : "session unavailable";
+    const affordance = details.sessionOpen ? "workstream open · follow up gaps or close when accepted" : "workstream unavailable";
     text += `\n${theme.fg("muted", `  ${details.ref} · ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
   }
   if (expanded) {
@@ -72,7 +74,7 @@ function completionEntryText(
       text += `\n${theme.fg("toolTitle", "Recent activity")}`;
       for (const line of details.recentActivity.slice(-8)) text += `\n${theme.fg("dim", `  ${oneLine(line, 200)}`)}`;
     }
-    text += `\n${theme.fg("muted", `${details.ref} · ${details.sessionOpen ? "session open · follow-up or close" : "session unavailable"}`)}`;
+    text += `\n${theme.fg("muted", `${details.ref} · ${details.sessionOpen ? "workstream open · follow up gaps or close when accepted" : "workstream unavailable"}`)}`;
   }
   return text;
 }

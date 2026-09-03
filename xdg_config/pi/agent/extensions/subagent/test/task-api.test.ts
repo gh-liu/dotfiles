@@ -32,7 +32,7 @@ describe("reusable subagent sessions", () => {
     env.fake.controllers[0].settle(0, "completed", "Plain-text handoff.");
     const result = await running;
 
-    expect(result.details).toMatchObject({ ref: "#1", agent: "scout", status: "idle", turnStatus: "completed", summary: "Plain-text handoff." });
+    expect(result.details).toMatchObject({ ref: "#1", turn: 1, agent: "scout", status: "idle", turnStatus: "completed", summary: "Plain-text handoff." });
     expect(env.fake.controllers[0].closeCalls).toBe(0);
     expect(env.fake.controllers[0].starts[0].options.workOrder.task).toBe("Inspect lifecycle");
     expectPublic(result);
@@ -50,7 +50,7 @@ describe("reusable subagent sessions", () => {
     expect(env.fake.controllers).toHaveLength(1);
     expect(env.fake.controllers[0].starts[1].options.workOrder.task).toBe("Check the tests too");
     env.fake.controllers[0].settle(1, "completed", "Tests checked.");
-    await expect(second).resolves.toMatchObject({ details: { ref: "#1", status: "idle", summary: "Tests checked." } });
+    await expect(second).resolves.toMatchObject({ details: { ref: "#1", turn: 2, status: "idle", summary: "Tests checked." } });
   });
 
   test("background turn notifies and remains reusable", async () => {
@@ -162,5 +162,6 @@ describe("reusable subagent sessions", () => {
     expect(modelText).not.toContain("timeline");
     expect(modelText).not.toContain("private chain of thought");
     expect(modelText).not.toContain("secret-tool-call");
+    expect(modelText).not.toContain('"turn"');
   });
 });

@@ -38,6 +38,7 @@ export interface LiveRuntimeInfo {
   /** Session-local short index (#N) for display. */
   index: number;
   agent: string;
+  turn: number;
   startedAt: number;
   /** Internal runtime identity, used only to remove all rows when a session closes. */
   runId: string;
@@ -47,6 +48,7 @@ export interface LiveRuntimeInfo {
 interface RuntimeDisplay {
   index: number;
   agent: string;
+  turn: number;
   startedAt: number;
   runId: string;
   task: string;
@@ -128,7 +130,8 @@ function renderLines(
     const ref = `#${runtime.index}`;
     const elapsedMs = Math.max(0, now - runtime.startedAt);
     const time = formatDuration(elapsedMs);
-    const identity = `${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}`;
+    const turn = width >= 45 ? theme.fg("muted", ` · turn ${runtime.turn}`) : "";
+    const identity = `${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}${turn}`;
     let marker: string;
     let suffix = theme.fg("muted", ` · ${time}`);
     if (runtime.settlement === "report-failed") {
@@ -298,6 +301,7 @@ export function createLiveUi(): LiveUiController {
       runtimes.set(operationKey, {
         index: info.index,
         agent: info.agent,
+        turn: info.turn,
         startedAt: info.startedAt,
         runId: info.runId,
         task: info.task,

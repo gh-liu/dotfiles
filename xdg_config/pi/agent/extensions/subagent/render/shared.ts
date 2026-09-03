@@ -19,6 +19,8 @@ interface SubagentRenderState {
   model?: string;
   /** Effective thinking level learned from authoritative progress/update details. */
   thinking?: string;
+  /** Monotonic turn number learned from authoritative progress/update details. */
+  turn?: number;
   /** Prevents the result-triggered repaint from recursively scheduling itself. */
   runtimeIndexInvalidateQueued?: boolean;
 }

@@ -28,7 +28,9 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const thinking = args.thinking ?? context?.state.thinking;
   const ref = args.action === "followup" ? publicRef(args.ref) : index ? `#${index}` : undefined;
   const agent = args.action === "run" ? args.agent : args.agent ?? "subagent";
-  let text = `${ref ? theme.fg("toolTitle", theme.bold(`${ref} `)) : ""}${theme.fg(agentNameColor(agent), theme.bold(agent))}`;
+  const continuation = args.action === "followup" ? theme.fg("accent", "↳ ") : "";
+  let text = `${continuation}${ref ? theme.fg("toolTitle", theme.bold(`${ref} `)) : ""}${theme.fg(agentNameColor(agent), theme.bold(agent))}`;
+  if (args.action === "followup" && context?.state.turn) text += theme.fg("muted", ` · turn ${context.state.turn}`);
   const title = taskTitle(args.task, context?.expanded ? 120 : 240);
   if (title) text += theme.fg("dim", ` — ${title}`);
   if (!context?.expanded) return new Text(text, 0, 0);

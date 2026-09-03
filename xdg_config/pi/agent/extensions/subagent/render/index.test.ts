@@ -44,8 +44,8 @@ describe("task API rendering", () => {
 
   test("renders a followup on the same session", () => {
     const args = { action: "followup" as const, ref: "#2", agent: "scout", task: "Now compare the tests with the implementation." };
-    const call = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: {}, invalidate: vi.fn() } as never));
-    expect(call).toContain("#2 scout");
+    const call = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: { turn: 2 }, invalidate: vi.fn() } as never));
+    expect(call).toContain("↳ #2 scout · turn 2");
     expect(call).toContain("Now compare the tests");
   });
 
@@ -87,10 +87,10 @@ describe("task API rendering", () => {
   });
 
   test("renders terminal foreground and recovered background handoffs", () => {
-    const foreground = text(renderSubagentResult({ content: [], details: { ref: "#1", agent: "scout", status: "idle", turnStatus: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
-    expect(foreground).toContain("✓ #1 scout · 1s");
+    const foreground = text(renderSubagentResult({ content: [], details: { ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
+    expect(foreground).toContain("✓ #1 scout · turn 1 · 1s");
     expect(foreground).toContain("Done");
-    expect(foreground).toContain("#1 · session open · follow-up or close");
+    expect(foreground).toContain("#1 · workstream open · follow up gaps or close when accepted");
     const runExpanded = text(renderSubagentResult({ content: [], details: {
       ref: "#1",
       agent: "scout",
@@ -140,6 +140,13 @@ describe("task API rendering", () => {
       args: { action: "cancel", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
     } as never));
     expect(cancel).toContain("cancel acknowledged");
+
+    const close = text(renderSubagentResult({ content: [], details: {
+      ref: "#2", agent: "scout", status: "closed", closed: true,
+    } }, { expanded: false, isPartial: false }, theme, {
+      args: { action: "close", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
+    } as never));
+    expect(close).toContain("✓ #2 scout · workstream closed");
   });
 
   test("hydrates every run title with the authoritative short ref", async () => {
@@ -160,13 +167,13 @@ describe("task API rendering", () => {
   test("renders result-first completion cards without status backgrounds", () => {
     const taggedTheme = { ...theme, bg: (color: string, value: string) => `<${color}>${value}</${color}>` } as never;
     const completed = {
-      jobId: "job-1", operationId: "operation-1", ref: "#1", agent: "scout", task: "Inspect auth", status: "completed" as const, sessionOpen: true as const,
+      jobId: "job-1", operationId: "operation-1", turn: 1, ref: "#1", agent: "scout", task: "Inspect auth", status: "completed" as const, sessionOpen: true as const,
       summary: "Mapped the auth lifecycle.", evidence: "src/auth.ts", validation: "tests pass", elapsedMs: 2_000,
     };
     const collapsed = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(collapsed).toContain("✓ scout · 2s");
+    expect(collapsed).toContain("✓ scout · turn 1 · 2s");
     expect(collapsed).toContain("Mapped the auth lifecycle.");
-    expect(collapsed).toContain("#1 · session open · follow-up or close · expand for details");
+    expect(collapsed).toContain("#1 · workstream open · follow up gaps or close when accepted · expand for details");
     expect(collapsed).not.toContain("· completed");
 
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
@@ -180,7 +187,7 @@ describe("task API rendering", () => {
       completed,
       { ...completed, jobId: "job-2", operationId: "operation-2", ref: "#2", status: "failed" as const },
     ] } }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(mixed).toContain("✗ scout · failed · 2s");
+    expect(mixed).toContain("✗ scout · turn 1 · failed · 2s");
     expect(mixed).not.toContain("<toolPendingBg>");
     expect(mixed).not.toContain("<toolErrorBg>");
     expect(mixed).not.toContain("<toolSuccessBg>");
@@ -192,14 +199,14 @@ describe("task API rendering", () => {
       status: "failed" as const, summary: "Controller crashed.",
     };
     const card = text(renderSubagentCompletion({ content: "", details: unavailable }, { expanded: false, outputPad: 0 }, theme));
-    expect(card).toContain("#3 · session unavailable");
-    expect(card).not.toContain("session open");
+    expect(card).toContain("#3 · workstream unavailable");
+    expect(card).not.toContain("workstream open");
 
     const crashed = text(renderSubagentResult({
       content: [], details: { ref: "#3", agent: "reviewer", status: "crashed", error: "Controller crashed." },
     }, { expanded: false, isPartial: false }, theme, {
       args: { action: "get", ref: "#3" }, isError: true, state: {}, invalidate: vi.fn(),
     } as never));
-    expect(crashed).not.toContain("session open");
+    expect(crashed).not.toContain("workstream open");
   });
 });

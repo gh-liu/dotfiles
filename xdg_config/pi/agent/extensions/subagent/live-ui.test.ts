@@ -36,6 +36,7 @@ function renderWidget(ui: ReturnType<typeof createMockUi>, width = 120): string[
 const tracked = (overrides: Partial<Parameters<ReturnType<typeof createLiveUi>["track"]>[1]> = {}) => ({
   index: 1,
   agent: "scout",
+  turn: 1,
   task: "Map the authentication lifecycle and identify the safest implementation seam.",
   startedAt: Date.now(),
   runId: "session-1",
@@ -77,8 +78,8 @@ describe("activity center", () => {
 
     const lines = renderWidget(ui);
     expect(lines[0]).toBe("Background subagents · 2 active");
-    expect(lines.join("\n")).toContain("#1 scout · 0s");
-    expect(lines.join("\n")).toContain("#2 reviewer · 0s");
+    expect(lines.join("\n")).toContain("#1 scout · turn 1 · 0s");
+    expect(lines.join("\n")).toContain("#2 reviewer · turn 1 · 0s");
     expect(lines.join("\n")).toContain("Map the authentication lifecycle");
     expect(lines.join("\n")).toContain("Review the patch for lifecycle races.");
     expect(lines.join("\n")).toContain("↳ grep auth middleware…");
@@ -185,16 +186,16 @@ describe("activity center", () => {
     live.track("r1", tracked({ index: 1 }));
     live.track("r2", tracked({ index: 2 }));
     live.settle("r1", "completed");
-    expect(renderWidget(ui).join("\n")).toContain("✓ #1 scout · result ready · awaiting card · get #1");
+    expect(renderWidget(ui).join("\n")).toContain("✓ #1 scout · turn 1 · result ready · awaiting card · get #1");
     live.remove("r1");
     expect(renderWidget(ui).join("\n")).not.toContain("#1");
 
     live.settle("r2", "completed");
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("✓ #2 scout · result ready · awaiting card · get #2");
+    expect(renderWidget(ui).join("\n")).toContain("✓ #2 scout · turn 1 · result ready · awaiting card · get #2");
     live.reportFailed("r2");
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("! #2 scout · card failed · get #2");
+    expect(renderWidget(ui).join("\n")).toContain("! #2 scout · turn 1 · card failed · get #2");
     live.remove("r2");
     expect(lastWidgetContent(ui)).toBeUndefined();
   });
@@ -205,10 +206,11 @@ describe("activity center", () => {
     live.attach(ui);
     live.track("old", tracked({ runId: "same", index: 1, task: "First turn" }));
     live.settle("old", "completed");
-    live.track("new", tracked({ runId: "same", index: 1, task: "Followup turn" }));
+    live.track("new", tracked({ runId: "same", index: 1, turn: 2, task: "Followup turn" }));
     live.remove("old");
     const rendered = renderWidget(ui).join("\n");
     expect(rendered).toContain("Followup turn");
+    expect(rendered).toContain("#1 scout · turn 2");
     expect(rendered).not.toContain("First turn");
     live.removeSession("same");
     expect(lastWidgetContent(ui)).toBeUndefined();
