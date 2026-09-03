@@ -332,6 +332,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       "Treat results as handoffs, not proof. Inspect writing agents' settled changes and run integrated validation. Close a session only after its work is accepted or its role is no longer useful. Produce the final synthesis yourself.",
     ],
     executionMode: "parallel",
+    renderShell: "self",
     parameters: SubagentParameters,
     renderCall: (args, theme, context) => {
       const action = (args as { action?: string }).action;

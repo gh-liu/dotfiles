@@ -1,4 +1,5 @@
 import type { Theme } from "@earendil-works/pi-coding-agent";
+import { Box, Container, Text } from "@earendil-works/pi-tui";
 
 type SubagentRenderArgs =
   | {
@@ -35,9 +36,28 @@ interface SubagentRenderResult {
 interface SubagentRenderContext {
   args: SubagentRenderArgs;
   isError: boolean;
+  isPartial?: boolean;
   expanded?: boolean;
   state: SubagentRenderState;
   invalidate(): void;
+}
+
+function statusBackground(theme: Theme, isPartial: boolean, isError: boolean): (text: string) => string {
+  const color = isPartial ? "toolPendingBg" : isError ? "toolErrorBg" : "toolSuccessBg";
+  return (text) => theme.bg(color, text);
+}
+
+/** Keep the first status line highlighted while rendering verbose output on the terminal background. */
+function renderPartitionedStatus(text: string, theme: Theme, isPartial: boolean, isError: boolean): Container {
+  const newline = text.indexOf("\n");
+  const status = newline < 0 ? text : text.slice(0, newline);
+  const body = newline < 0 ? "" : text.slice(newline + 1);
+  const component = new Container();
+  const statusBox = new Box(1, 0, statusBackground(theme, isPartial, isError));
+  statusBox.addChild(new Text(status, 0, 0));
+  component.addChild(statusBox);
+  if (body) component.addChild(new Text(body, 1, 0));
+  return component;
 }
 
 function oneLine(text: string, maxCharacters = 160): string {
@@ -97,5 +117,5 @@ function publicRef(value: string | undefined): string | undefined {
   return match ? `#${match[1]}` : undefined;
 }
 
-export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderToolSummary, taskTitle };
+export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderToolSummary, statusBackground, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };

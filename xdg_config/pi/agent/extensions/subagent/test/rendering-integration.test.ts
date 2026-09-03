@@ -4,7 +4,8 @@ import { context, setup } from "./harness.ts";
 describe("subagent rendering integration", () => {
   test("tool renderer uses only task API fields", () => {
     const tool = setup().extension.getTool();
-    const theme = { fg: (_color: string, text: string) => text, bold: (text: string) => text } as never;
+    expect(tool.renderShell).toBe("self");
+    const theme = { fg: (_color: string, text: string) => text, bg: (_color: string, text: string) => text, bold: (text: string) => text } as never;
     const rendered = tool.renderCall!({ action: "run", agent: "scout", task: "Inspect", background: true } as never, theme, {
       args: {}, isError: false, state: {}, invalidate: vi.fn(),
     } as never).render(200).join("\n");
@@ -66,6 +67,7 @@ describe("subagent rendering integration", () => {
     const args = { action: "followup", ref: "#1", task: "Check tests" } as const;
     const rendered = tool.renderCall!(args as never, {
       fg: (_color: string, value: string) => value,
+      bg: (_color: string, value: string) => value,
       bold: (value: string) => value,
     } as never, { args, isError: false, state: {}, invalidate: vi.fn() } as never).render(100).join("\n");
     expect(rendered).toContain("#1 scout — Check tests");

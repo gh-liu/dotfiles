@@ -1,7 +1,7 @@
 import { type Theme } from "@earendil-works/pi-coding-agent";
-import { Text } from "@earendil-works/pi-tui";
+import { type Component, Text } from "@earendil-works/pi-tui";
 
-import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderToolSummary, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
+import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderPartitionedStatus, renderToolSummary, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
 function renderActivity(details: Record<string, unknown>, theme: Theme): string {
   let text = "";
@@ -39,7 +39,7 @@ export function renderSubagentResult(
   options: { expanded: boolean; isPartial: boolean },
   theme: Theme,
   context: SubagentRenderContext,
-): Text {
+): Component {
   const details = result.details && typeof result.details === "object" ? result.details as Record<string, unknown> : {};
   const ref = typeof details.ref === "string" ? publicRef(details.ref) : undefined;
   const index = positiveSafeRuntimeIndex(ref ? Number(ref.slice(1)) : details.displayIndex);
@@ -50,7 +50,7 @@ export function renderSubagentResult(
   }
   if (options.isPartial) {
     const activity = typeof details.activity === "string" ? details.activity : undefined;
-    return new Text(`${theme.fg("accent", "● running")}${activity ? theme.fg("dim", ` · ${oneLine(activity, 240)}`) : ""}${renderActivity(details, theme)}`, 0, 0);
+    return renderPartitionedStatus(`${theme.fg("accent", "● running")}${activity ? theme.fg("dim", ` · ${oneLine(activity, 240)}`) : ""}${renderActivity(details, theme)}`, theme, true, context.isError);
   }
 
   const status = typeof details.status === "string" ? details.status : "unknown";
@@ -67,13 +67,13 @@ export function renderSubagentResult(
     let text = theme.fg("error", "✗ subagent error");
     if (displayRef) text += theme.fg("toolTitle", ` · ${displayRef}`);
     text += `\n${theme.fg("dim", oneLine(error, 240))}`;
-    return new Text(text, 0, 0);
+    return renderPartitionedStatus(text, theme, false, true);
   }
 
   if (context.args.action === "close" && details.closed === true) {
     let text = theme.fg("success", `✓${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · workstream closed`);
     if (error) text += `\n${theme.fg("dim", oneLine(error, 240))}`;
-    return new Text(text, 0, 0);
+    return renderPartitionedStatus(text, theme, false, false);
   }
 
   if (context.args.action === "cancel" || context.args.action === "close") {
@@ -83,7 +83,7 @@ export function renderSubagentResult(
     if (displayRef) text += theme.fg("toolTitle", ` · ${displayRef}`);
     text += theme.fg("muted", ` · ${status}`);
     if (error) text += `\n${theme.fg("dim", oneLine(error, 240))}`;
-    return new Text(text, 0, 0);
+    return renderPartitionedStatus(text, theme, false, context.isError);
   }
 
   if (context.args.action === "get" && !context.args.ref && Array.isArray(details.sessions)) {
@@ -95,7 +95,7 @@ export function renderSubagentResult(
       return `${theme.fg("toolTitle", sessionRef)} ${agent} · ${sessionStatus}`;
     });
     if (sessions.length > lines.length) lines.push(theme.fg("dim", `… ${sessions.length - lines.length} more sessions`));
-    return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent sessions."), 0, 0);
+    return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent sessions."), 1, 0);
   }
 
   let text = status === "starting" || status === "running"
@@ -129,5 +129,5 @@ export function renderSubagentResult(
   if (status === "idle" && displayRef) {
     text += `\n${theme.fg("muted", `${displayRef} · workstream open · follow up gaps or close when accepted`)}`;
   }
-  return new Text(text, 0, 0);
+  return renderPartitionedStatus(text, theme, false, context.isError);
 }
