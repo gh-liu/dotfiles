@@ -420,7 +420,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ref: `#${runtime.index}`,
           turn: operation.turn,
           agent: runtime.agent.name,
-          ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+          ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
           ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
           status: "running",
           startedAt: operation.startedAt,

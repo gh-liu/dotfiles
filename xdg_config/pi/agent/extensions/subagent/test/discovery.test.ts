@@ -64,7 +64,10 @@ describe("subagent discovery", () => {
       workOrder: { task: "Find auth", projectGuidance: [expect.stringContaining("Project guidance")] },
     });
     env.fake.controllers[0].settle();
-    await running;
+    const result = await running;
+    expect(result.details).toMatchObject({ model: "vendor/model" });
+    expect(result.content[0]?.text).toContain('"model":"model"');
+    expect(result.content[0]?.text).not.toContain("vendor/model");
   });
 
   test("wake snippet delegates only when fresh context provides a concrete benefit", () => {

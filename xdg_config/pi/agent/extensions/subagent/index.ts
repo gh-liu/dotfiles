@@ -240,7 +240,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>)
         .filter(([key]) => !internalModelKeys.has(key))
-        .map(([key, entry]) => [key, modelProjection(entry)]),
+        .map(([key, entry]) => [
+          key,
+          key === "model" && typeof entry === "string" ? stripModel(entry) : modelProjection(entry),
+        ]),
     );
   };
   const response = (details: unknown, isError = false, modelDetails: unknown = details) => {
@@ -285,7 +288,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ref: `#${runtime.index}`,
       status: runtime.state,
       agent: runtime.agent.name,
-      ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+      ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
       ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
       ...(operation ? {
         turn: operation.turn,
@@ -341,7 +344,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           const enriched = {
             ...typed,
             agent: found.name,
-            ...(found.model ? { model: stripModel(found.model) } : {}),
+            ...(found.model ? { model: found.model } : {}),
             ...(found.thinking ? { thinking: found.thinking } : {}),
           };
           return renderSubagentCall(enriched as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
@@ -428,7 +431,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
             ref: `#${runtime.index}`,
             turn: runtime.nextTurnNumber,
             agent: runtime.agent.name,
-            ...(runtime.agent.model ? { model: stripModel(runtime.agent.model) } : {}),
+            ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
             ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
             status: "starting",
           },

@@ -66,7 +66,7 @@ function calls() {
   heading("CALLS · reusable session API");
   row("run foreground", renderCall(runArgs, false, { runtimeIndex: 1 }));
   row("run background", renderCall({ ...runArgs, agent: "reviewer", background: true }, false, { runtimeIndex: 2 }));
-  row("followup", renderCall({ action: "followup", ref: "#1", agent: "scout", task: "Compare the tests with the implementation." }, false, { turn: 2 }));
+  row("followup", renderCall({ action: "followup", ref: "#1", agent: "scout", task: "Compare the tests with the implementation." }, false, { model: "stealth/ox-alpha", turn: 2 }));
   row("get recent", renderCall({ action: "get" }));
   row("get session", renderCall({ action: "get", ref: "#2", waitMs: 30_000 }, false, { ref: "#2" }));
   row("cancel", renderCall({ action: "cancel", ref: "#2" }, false, { ref: "#2" }));
