@@ -30,11 +30,12 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const continuation = args.action === "followup" ? theme.fg("accent", "↳ ") : "";
   let text = `${continuation}${ref ? theme.fg("toolTitle", theme.bold(`${ref} `)) : ""}${theme.fg(agentNameColor(agent), theme.bold(agent))}`;
   if (model) text += theme.fg("muted", ` · ${model}`);
+  if (thinking) text += theme.fg("muted", ` · ${thinking}`);
   if (args.action === "followup" && context?.state.turn) text += theme.fg("muted", ` · turn ${context.state.turn}`);
   const title = taskTitle(args.task, context?.expanded ? 120 : 240);
   if (title) text += theme.fg("dim", ` — ${title}`);
   if (!context?.expanded) return new Text(text, 0, 0);
-  const meta = [thinking, args.background ? "background" : undefined].filter(Boolean);
+  const meta = [args.background ? "background" : undefined].filter(Boolean);
   if (meta.length) text += theme.fg("dim", ` · ${meta.join(" · ")}`);
   text += `\n${theme.fg("toolTitle", "  Task")}`;
   for (const line of boundedLines(args.task, 8_000, 40)) text += `\n${theme.fg("dim", `    ${line}`)}`;

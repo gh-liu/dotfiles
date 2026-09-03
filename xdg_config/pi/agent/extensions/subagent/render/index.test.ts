@@ -22,11 +22,12 @@ describe("task API rendering", () => {
     expect(text(renderSubagentCall({ action: "close", ref: "#2" }, theme))).toContain("close · #2");
   });
 
-  test("shows the full provider and model without expanding", () => {
+  test("shows the full provider, model, and thinking level without expanding", () => {
     const rendered = text(renderSubagentCall({
-      action: "run", agent: "worker", model: "opencode-go/deepseek-v4-flash", task: "Implement auth",
+      action: "run", agent: "worker", model: "opencode-go/deepseek-v4-flash", thinking: "minimal", task: "Implement auth",
     }, theme));
-    expect(rendered).toContain("worker · opencode-go/deepseek-v4-flash — Implement auth");
+    expect(rendered).toContain("worker · opencode-go/deepseek-v4-flash · minimal — Implement auth");
+    expect(rendered).not.toContain("thinking minimal");
   });
 
   test("retains a useful multi-line prompt budget in the invocation record", () => {
@@ -170,7 +171,7 @@ describe("task API rendering", () => {
     } as never);
     await Promise.resolve();
     const rendered = text(tool.renderCall!({ action: "run", agent: "scout", task: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
-    expect(rendered).toContain("#7 scout · vendor/model — Inspect");
+    expect(rendered).toContain("#7 scout · vendor/model · high — Inspect");
     expect(rendered).not.toContain("tracking");
     await env.extension.shutdown();
   }, 20_000);
