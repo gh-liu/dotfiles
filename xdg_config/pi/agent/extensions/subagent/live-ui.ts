@@ -20,6 +20,7 @@ import { truncateToWidth, wrapTextWithAnsi, type Component, type TUI } from "@ea
 
 import type { SubagentActivityPhase } from "./protocol.ts";
 import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
+import { renderToolSummary } from "./render/shared.ts";
 
 const oneLine = (text: string, maxCharacters: number): string => {
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -85,7 +86,8 @@ function renderActivity(theme: Theme, runtime: RuntimeDisplay): string {
       : phase.status === "completed" ? SUBAGENT_DONE_GLYPH
       : undefined;
     const color = phase.status === "failed" ? "error" : phase.status === "completed" ? "success" : "warning";
-    rendered = glyph ? theme.fg(color, `${glyph} ${summary}`) : summary;
+    const status = glyph ? `${theme.fg(color, glyph)} ` : "";
+    rendered = `${status}${renderToolSummary(theme, summary)}`;
   }
   // Concurrent tools (distinct toolCallIds) surface as a plain count suffix instead
   // of repeating one summary N times; 0/1 active stays concise and thinking stays

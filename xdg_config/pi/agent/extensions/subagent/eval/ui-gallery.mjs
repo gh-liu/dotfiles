@@ -16,7 +16,7 @@ const ansi = {
   bold: "\x1b[1m",
   colors: {
     accent: "\x1b[36m", dim: "\x1b[2m", error: "\x1b[31m", muted: "\x1b[90m",
-    success: "\x1b[32m", toolTitle: "\x1b[1;37m", warning: "\x1b[33m",
+    success: "\x1b[32m", syntaxFunction: "\x1b[35m", toolTitle: "\x1b[1;37m", warning: "\x1b[33m",
   },
   backgrounds: {
     toolErrorBg: "\x1b[48;5;52m", toolPendingBg: "\x1b[48;5;236m", toolSuccessBg: "\x1b[48;5;22m",

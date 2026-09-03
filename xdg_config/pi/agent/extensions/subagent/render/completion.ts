@@ -2,7 +2,7 @@ import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
 import { agentNameColor } from "./call.ts";
-import { boundedLines, formatDuration, oneLine } from "./shared.ts";
+import { boundedLines, formatDuration, oneLine, renderToolSummary } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
@@ -72,7 +72,19 @@ function completionEntryText(
     }
     if (details.recentActivity?.length) {
       text += `\n${theme.fg("toolTitle", "Recent activity")}`;
-      for (const line of details.recentActivity.slice(-8)) text += `\n${theme.fg("dim", `  ${oneLine(line, 200)}`)}`;
+      for (const line of details.recentActivity.slice(-8)) {
+        const bounded = oneLine(line, 200);
+        if (bounded === "✓ Thinking") {
+          text += `\n  ${theme.fg("accent", bounded)}`;
+          continue;
+        }
+        const match = /^([✓✗])\s+(.+)$/.exec(bounded);
+        if (!match) {
+          text += `\n${theme.fg("dim", `  ${bounded}`)}`;
+          continue;
+        }
+        text += `\n  ${theme.fg(match[1] === "✗" ? "error" : "success", match[1])} ${renderToolSummary(theme, match[2])}`;
+      }
     }
     text += `\n${theme.fg("muted", `${details.ref} · ${details.sessionOpen ? "workstream open · follow up gaps or close when accepted" : "workstream unavailable"}`)}`;
   }

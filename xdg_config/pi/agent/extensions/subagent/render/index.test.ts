@@ -80,6 +80,10 @@ describe("task API rendering", () => {
     expect(rendered).not.toContain("Thinking…");
     expect(rendered).not.toContain("private reasoning");
     expect(rendered).not.toContain("id: b");
+    const coloredTheme = { ...theme, fg: (color: string, value: string) => `<${color}>${value}</${color}>` } as never;
+    const colored = text(renderSubagentResult({ content: [], details }, { expanded: true, isPartial: true }, coloredTheme, context));
+    expect(colored).toContain("<syntaxFunction>read</syntaxFunction><muted> a.ts</muted>");
+    expect(colored).toContain("<syntaxFunction>test</syntaxFunction><muted> auth.ts</muted>");
     const collapsed = text(renderSubagentResult({ content: [], details }, { expanded: false, isPartial: true }, theme, context));
     expect(collapsed).toContain("● running · read a.ts…");
     expect(collapsed).toContain("✓ read a.ts");

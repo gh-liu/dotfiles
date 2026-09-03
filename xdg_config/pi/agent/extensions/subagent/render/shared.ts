@@ -1,3 +1,5 @@
+import type { Theme } from "@earendil-works/pi-coding-agent";
+
 type SubagentRenderArgs =
   | {
       action: "run"; agent: string; task: string; background?: boolean;
@@ -45,6 +47,14 @@ function oneLine(text: string, maxCharacters = 160): string {
     : `${normalized.slice(0, maxCharacters - 1)}…`;
 }
 
+/** Highlight only the leading tool name; keep arguments and paths low contrast. */
+function renderToolSummary(theme: Theme, summary: string, maxCharacters = 200): string {
+  const bounded = oneLine(summary, maxCharacters);
+  const match = /^(\S+)(.*)$/.exec(bounded);
+  if (!match) return theme.fg("muted", bounded);
+  return `${theme.fg("syntaxFunction", match[1])}${theme.fg("muted", match[2])}`;
+}
+
 function formatDuration(ms: number): string {
   // Seconds-only keeps the live view compact and stable between heartbeat updates.
   return `${Math.max(0, Math.ceil(ms / 1000))}s`;
@@ -87,5 +97,5 @@ function publicRef(value: string | undefined): string | undefined {
   return match ? `#${match[1]}` : undefined;
 }
 
-export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, taskTitle };
+export { boundedLines, collapseHome, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderToolSummary, taskTitle };
 export type { SubagentRenderArgs, SubagentRenderContext, SubagentRenderResult, SubagentRenderState };
