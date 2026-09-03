@@ -58,7 +58,7 @@ xnoremap <expr> A (mode()=~#'[vV]'?'<C-v>0o$A':'A')
 
 nnoremap gq? <Cmd>set formatprg? formatexpr?<CR>
 " Format whole buffer with formatprg without changing cursor position
-nnoremap <silent> gqQ :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:_winview) <cr>
+nnoremap <silent> gq= :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmarks norm ggVGgq' <bar> call winrestview(b:_winview) <cr>
 
 " select last inserted text.
 "nnoremap gV `[v`]
