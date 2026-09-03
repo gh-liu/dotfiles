@@ -49,8 +49,7 @@ export function renderSubagentResult(
     queueMicrotask(() => { try { context.invalidate(); } catch {} });
   }
   if (options.isPartial) {
-    const activity = typeof details.activity === "string" ? details.activity : undefined;
-    return renderPartitionedStatus(`${theme.fg("accent", "● running")}${activity ? theme.fg("dim", ` · ${oneLine(activity, 240)}`) : ""}${renderActivity(details, theme)}`, theme, true, context.isError);
+    return renderPartitionedStatus(`${theme.fg("accent", "● running")}${renderActivity(details, theme)}`, theme, true, context.isError);
   }
 
   const status = typeof details.status === "string" ? details.status : "unknown";

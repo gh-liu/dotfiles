@@ -93,6 +93,8 @@ describe("task API rendering", () => {
     };
     const rendered = text(renderSubagentResult({ content: [{ type: "text", text: "Thinking…" }], details }, { expanded: true, isPartial: true }, theme, context));
     expect(rendered).toContain("● running");
+    expect(rendered).not.toContain("● running ·");
+    expect(rendered.match(/read a\.ts/g)).toHaveLength(1);
     expect(rendered).not.toContain("Timeline");
     expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("… 2 earlier tool activities");
@@ -114,7 +116,8 @@ describe("task API rendering", () => {
     expect(statusLine).not.toContain("<success>✓</success>");
     expect(activityLines.join("\n")).toContain("<success>✓</success> <syntaxFunction>read</syntaxFunction>");
     const collapsed = text(renderSubagentResult({ content: [], details }, { expanded: false, isPartial: true }, theme, context));
-    expect(collapsed).toContain("● running · read a.ts…");
+    expect(collapsed).toContain("● running");
+    expect(collapsed).not.toContain("● running ·");
     expect(collapsed).toContain("✓ read a.ts");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
