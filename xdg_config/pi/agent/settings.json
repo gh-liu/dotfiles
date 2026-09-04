@@ -13,16 +13,12 @@
     "maxConcurrentRuns": 5,
     "subagents": {
       "worker": {
-        "model": "opencode-go/deepseek-v4-flash"
       },
       "scout": {
-        "model": "opencode-go/deepseek-v4-flash"
       },
       "reviewer": {
-        "model": "openai-codex/gpt-5.6-sol"
       },
       "tester": {
-        "model": "opencode-go/deepseek-v4-flash"
       }
     }
   },
