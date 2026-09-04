@@ -168,6 +168,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
   const credentialSecrets = collectCredentialValues(credentialEnvNames ?? []);
+  let parentIdle: (() => boolean) | undefined;
   const notifySettled = (payload: SubagentCompletionPayload): boolean => {
     const entries = "batch" in payload ? payload.batch : [payload];
     const blocks = entries.map((details) => {
@@ -190,13 +191,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     });
     const header = entries.length > 1 ? `${entries.length} background subagents settled:\n\n` : "";
     const content = boundText(header + blocks.join("\n\n"), { maxCharacters: 16_000, maxLines: 96 }, credentialSecrets);
+    // Busy/idle split: idle parents wake immediately; busy parents queue as
+    // followUp. Steer is never used so wakes cannot hijack active streaming.
+    let idle = true;
+    try {
+      idle = parentIdle?.() ?? true;
+    } catch {
+      idle = true;
+    }
     try {
       pi.sendMessage<SubagentCompletionPayload>({
         customType: SUBAGENT_COMPLETION_MESSAGE,
         content,
         display: true,
         details: payload,
-      }, { triggerTurn: true, deliverAs: "followUp" });
+      }, idle ? { triggerTurn: true } : { triggerTurn: true, deliverAs: "followUp" });
       return true;
     } catch {
       // Notification delivery must not change authoritative operation state.
@@ -208,6 +217,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       // Durable human-visible audit trail; never rendered into the model context.
       pi.appendEntry("subagent-settle-log", {
         jobId: details.jobId,
+        operationId: details.operationId,
+        turn: details.turn,
+        ref: details.ref,
         agent: details.agent,
         status: details.status,
         elapsedMs: details.elapsedMs ?? null,
@@ -224,6 +236,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     notifySettled,
     logSettled,
     live,
+    credentialSecrets,
     ...(options.controllerCreationTimeoutMs === undefined ? {} : {
       controllerCreationTimeoutMs: options.controllerCreationTimeoutMs,
     }),
@@ -266,14 +279,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       return {
         turnStatus: operation.state,
         ...(elapsedMs === undefined ? {} : { elapsedMs }),
-        ...(operation.error ? { error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+        ...(operation.error ? { error: boundText(operation.error, { maxCharacters: 2_000, maxLines: 20 }, credentialSecrets) } : {}),
       };
     }
+    // Redact before bounding so no credential material reaches the parent context.
     const handoff = modelSubagentHandoff({
       ref: `#${runtime.index}`,
       agent: operation.result.agent,
       status: operation.result.status,
-      summary: operation.result.summary,
+      summary: boundText(operation.result.summary, { maxCharacters: 16_000, maxLines: 400 }, credentialSecrets),
       ...(elapsedMs === undefined ? {} : { elapsedMs }),
     });
     const { status: turnStatus, ...result } = handoff;
@@ -292,7 +306,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
       ...(operation ? {
         turn: operation.turn,
-        task: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }),
+        task: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }, credentialSecrets),
         ...turnDetails(operation, runtime),
         ...(operation.latestProgress ? {
           activity: operation.latestProgress.summary,
@@ -366,11 +380,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     },
     async execute(_toolCallId, input, signal, onUpdate, ctx) {
       if (ctx.hasUI) live.attach(ctx.ui);
+      const idleProbe = ctx.isIdle?.bind(ctx);
+      if (idleProbe) parentIdle = idleProbe;
       const request = input as SubagentParameters;
       if (request.action === "get") {
         if (!request.ref) return response({ sessions: hub.listRuntimes().slice(-100).reverse().map(publicSessionSummary) });
         const runtime = hub.resolve(request.ref);
-        if (!runtime) return response({ ref: request.ref, status: "unknown", error: "Subagent session is unknown or expired." }, true);
+        if (!runtime) return response({ ref: request.ref, status: "unknown", unknown: true, error: "Subagent session is unknown or expired." }, true);
         const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : runtime.lastSettled;
         if (operation?.state === "running" && request.waitMs !== undefined && request.waitMs > 0) {
           let timedOut = false;
@@ -388,7 +404,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (request.action === "cancel") {
         if (!request.ref) return response({ error: "ref is required for subagent cancel" }, true);
         const runtime = hub.resolve(request.ref);
-        if (!runtime) return response({ ref: request.ref, status: "unknown", cancelled: false, unknown: true });
+        if (!runtime) return response({ ref: request.ref, status: "unknown", cancelled: false, unknown: true, error: `Subagent session is unknown or expired: ${request.ref}.` }, true);
         const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : undefined;
         if (!operation || operation.state !== "running" || !operation.accepted) {
           return response({ ...publicSession(runtime), cancelled: false, alreadyIdle: runtime.state === "idle" });
@@ -405,7 +421,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (request.action === "close") {
         if (!request.ref) return response({ error: "ref is required for subagent close" }, true);
         const runtime = hub.resolve(request.ref);
-        if (!runtime) return response({ ref: request.ref, status: "unknown", closed: false, unknown: true });
+        if (!runtime) return response({ ref: request.ref, status: "unknown", closed: false, unknown: true, error: `Subagent session is unknown or expired: ${request.ref}.` }, true);
         try {
           await closeRuntime(runtime, true);
           return response({ ...publicSessionSummary(runtime), closed: true });
@@ -557,6 +573,21 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const runtime = hub.createRuntime({ agent: runtimeAgent, cwd, parentSessionId, projectGuidance, initialOptions });
       return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, true, operationId);
     },
+  });
+
+  // Live error propagation for unknown refs: agent-core derives the serialized
+  // toolResult.isError only from a thrown execute() error ("Signaling errors"
+  // in docs/extensions.md), so an isError flag on a returned value is dropped
+  // before it reaches the parent transcript. Throwing would lose the
+  // structured { ref, status: "unknown", unknown: true } details required by
+  // spec §2, so unknown-ref branches keep returning them and this handler
+  // re-asserts the error flag on the live pipeline. Results without
+  // unknown:true (normal handoffs, idempotent repeats) are untouched.
+  pi.on("tool_result", (event) => {
+    if (event.toolName !== "subagent" || event.isError) return undefined;
+    const details = event.details as { unknown?: unknown } | undefined;
+    if (!details || typeof details !== "object" || details.unknown !== true) return undefined;
+    return { isError: true };
   });
 
   pi.registerMessageRenderer<SubagentCompletionPayload>(

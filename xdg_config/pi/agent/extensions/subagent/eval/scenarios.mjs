@@ -126,7 +126,8 @@ export const scenarios = [
       actionSequence: [{ action: "run", background: true }, { action: "get" }, { action: "close" }],
     },
     expectation: {
-      requiredAgents: ["scout"], maxSubagentCalls: 3,
+      // Budget 4: run×1 + get×1 + close×1 + close-after verification get×1 (same 4-call口径 as persistent-followup run→followup→get→close).
+      requiredAgents: ["scout"], maxSubagentCalls: 4,
       actionSequence: [{ action: "run", background: true }, { action: "get" }, { action: "close" }],
     },
     prompt: "Start one scout in background to inspect the TTL call flow. Continue independently with no repository reads, then use get with a wait on its #N to recover the result and close the session. Do not modify files.",
@@ -136,11 +137,13 @@ export const scenarios = [
     description: "Five turns reserve capacity and a sixth is rejected.",
     quick: false, repeats: 1, fixture: "baseline", workspace: "read-only", targetRate: 1,
     hardExpectation: {
-      maxSubagentCalls: 6,
+      // Budget 21 (observed 2026-09-03): run×6 + get×5 + close×5 + close-after verification get×5 (prompt requires retrieve accepted + close accepted).
+      maxSubagentCalls: 21,
       parallelAgents: ["scout", "reviewer", "tester", "worker"],
       expectedSubagentErrors: [{ pattern: "Subagent capacity unavailable: maxConcurrentRuns is 5\\.", count: 1 }],
     },
-    expectation: { maxSubagentCalls: 6, finalAny: ["capacity|concurrent|5"] },
+    // Budget 21 (observed 2026-09-03): run×6 + get×5 + close×5 + close-after verification get×5 (prompt requires retrieve accepted + close accepted).
+    expectation: { maxSubagentCalls: 21, finalAny: ["capacity|concurrent|5"] },
     prompt: "In one turn start exactly six independent background runs in parallel: two scouts, two reviewers, one tester, and one worker, all read-only inspection tasks. Exactly five should be accepted and the sixth should hit maxConcurrentRuns=5. Report the capacity result, retrieve accepted results, and close accepted sessions. Do not retry or modify files.",
   },
 ];

@@ -216,6 +216,24 @@ describe("activity center", () => {
     expect(lastWidgetContent(ui)).toBeUndefined();
   });
 
+  test("throttles event updates at 100ms with trailing delivery and merges bursts", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", tracked());
+    const baseline = ui.widgetCalls.length;
+    live.progress("r1", "one");
+    live.progress("r1", "two");
+    live.progress("r1", "three");
+    // 99ms: still throttled, no new draw.
+    vi.advanceTimersByTime(99);
+    expect(ui.widgetCalls).toHaveLength(baseline);
+    // 100ms: the trailing draw fires exactly once for the whole burst.
+    vi.advanceTimersByTime(1);
+    expect(ui.widgetCalls).toHaveLength(baseline + 1);
+    expect(renderWidget(ui).join("\n")).toContain("three");
+  });
+
   test("throttles burst updates and heartbeat refreshes elapsed time", () => {
     const ui = createMockUi();
     const live = createLiveUi();

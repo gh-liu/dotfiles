@@ -25,8 +25,8 @@ import { oneLine, renderToolSummary } from "./render/shared.ts";
 /** Widget key used for the above-editor live panel. */
 export const LIVE_WIDGET_ID = "subagent-live";
 
-const THROTTLE_MS = 250;
-/** Single repaint clock: elapsed freshness + job-level spinner. Trailing throttle stays separate. */
+const EVENT_THROTTLE_MS = 100;
+/** Single repaint clock: elapsed freshness + job-level spinner. Trailing event throttle stays separate. */
 const REPAINT_TICK_MS = 250;
 
 export interface LiveRuntimeInfo {
@@ -213,7 +213,7 @@ export function createLiveUi(): LiveUiController {
 
   const scheduleDraw = (): void => {
     if (!ui || disposed) return;
-    const waitMs = THROTTLE_MS - (Date.now() - lastRenderAt);
+    const waitMs = EVENT_THROTTLE_MS - (Date.now() - lastRenderAt);
     if (waitMs <= 0) {
       drawNow();
       return;

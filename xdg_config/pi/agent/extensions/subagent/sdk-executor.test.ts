@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 
 import {
+  buildWorkOrderPrompt,
   createSdkSubagentController,
   filterDeclaredCustomTools,
 } from "./sdk-executor.ts";
@@ -109,7 +110,8 @@ describe("reusable-session SDK executor", () => {
     session.promptHandler = async (_text, opts, emit) => {
       promptCount++;
       if (opts?.preflightResult) opts.preflightResult(true);
-      const task = JSON.parse(_text.split("\n\n")[1]).task;
+      const task = _text.includes("\nfirst\n") || _text.includes(":\nfirst") ? "first" : "second";
+      expect(_text).toContain("Task objective:");
       emit({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: task }], stopReason: "stop" } });
       emit({ type: "agent_settled" });
     };
@@ -218,11 +220,13 @@ describe("reusable-session SDK executor", () => {
     expect(result.status).toBe("completed");
     expect(result.processInstanceId).toMatch(/^[0-9a-f-]{36}$/);
     const summary = JSON.parse(result.summary);
-    const serializedWorkOrder = summary.goal.split("\n\n", 2)[1];
-    expect(serializedWorkOrder).toBe(JSON.stringify(runOptions.workOrder));
-    expect(serializedWorkOrder).not.toContain("\n");
-    const delegatedWorkOrder = JSON.parse(serializedWorkOrder);
-    expect(delegatedWorkOrder.task).toBe("Inspect the fixture");
+    const prompt = summary.goal as string;
+    // Natural-language prompt: task/cwd/instructions/guidance/handoff, never a JSON envelope.
+    expect(prompt).toContain("Inspect the fixture");
+    expect(prompt).toContain(`Working directory: ${runOptions.cwd}`);
+    expect(prompt).toContain("Return findings.");
+    expect(prompt).toContain("## Summary");
+    expect(prompt.split("\n\n", 2)[1]).not.toBe(JSON.stringify(runOptions.workOrder));
     expect(result.transcript.sessionId).toBe("session-sdk-1");
     expect(result.transcript.sessionPath).toBe("/tmp/session-sdk-1.jsonl");
   });
@@ -634,6 +638,24 @@ describe("reusable-session SDK executor", () => {
     await expect(controller.interrupt(runOptions.operationId)).rejects.toThrow("SDK abort did not reach authoritative settlement");
     await expect(operation.result).rejects.toThrow("SDK abort did not reach authoritative settlement");
     await expect(controller.close()).rejects.toThrow("SDK abort did not reach authoritative settlement");
+  });
+
+  test("renders the work order as natural language, never a JSON envelope", () => {
+    const prompt = buildWorkOrderPrompt({
+      task: "Inspect the fixture",
+      cwd: "/workspace/project",
+      instructions: ["Return findings."],
+      projectGuidance: ["Follow repo rules."],
+    });
+    expect(prompt).toContain("Inspect the fixture");
+    expect(prompt).toContain("Working directory: /workspace/project");
+    expect(prompt).toContain("Return findings.");
+    expect(prompt).toContain("Follow repo rules.");
+    expect(prompt).toContain("## Summary");
+    expect(() => JSON.parse(prompt)).toThrow();
+    const withoutGuidance = buildWorkOrderPrompt(workOrder("Plain task"));
+    expect(withoutGuidance).toContain("Plain task");
+    expect(withoutGuidance).not.toContain("Project guidance");
   });
 
   test("bounded summary truncates large output", async () => {

@@ -7,7 +7,7 @@ import { Type } from "typebox";
 
 import { boundText, collectCredentialValues, sanitizeOneLine, SUBAGENT_HANDOFF_MAX_CHARACTERS } from "./output.ts";
 import { SubagentCancellationError } from "./protocol.ts";
-import type { SubagentActivityPhase, SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem } from "./protocol.ts";
+import type { SubagentActivityPhase, SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem, SubagentWorkOrder } from "./protocol.ts";
 
 export interface SdkSubagentConfig {
   agentDir?: string;
@@ -60,6 +60,25 @@ function safeToolProgress(record: any, secrets: string[]): string {
     .map((v) => boundedOneLine(collapseHome(v), 80, secrets))
     .join(" · ");
   return boundedOneLine(`${toolName}${detail ? ` ${detail}` : ""}`, 120, secrets);
+}
+
+/** Renders the internal work-order envelope as natural language (never JSON). */
+export function buildWorkOrderPrompt(workOrder: SubagentWorkOrder): string {
+  const sections: string[] = [
+    "Execute this bounded work order and return only the requested handoff.",
+    `Task objective:\n${workOrder.task}`,
+    `Working directory: ${workOrder.cwd}\nStay within this directory tree. Do not read or modify paths outside it.`,
+  ];
+  if (workOrder.instructions.length > 0) {
+    sections.push(`Instructions:\n${workOrder.instructions.map((instruction) => `- ${instruction}`).join("\n")}`);
+  }
+  if (workOrder.projectGuidance.length > 0) {
+    sections.push(`Project guidance (initial turn only):\n${workOrder.projectGuidance.join("\n---\n")}`);
+  }
+  sections.push(
+    `Expected handoff format (Markdown headings; omit empty sections):\n## Summary\n## Changes\n## Evidence\n## Validation\n## Risks`,
+  );
+  return sections.join("\n\n");
 }
 
 function credentialValues(options: SubagentRunOptions, config: SdkSubagentConfig = {}): string[] {
@@ -553,7 +572,7 @@ export async function createSdkSubagentController(
           // Register abort listener before prompt
           options.signal?.addEventListener("abort", onAbort, { once: true });
           // Prepare prompt with preflight
-          const promptText = ["Execute this work order exactly as provided. Return only the requested handoff.", JSON.stringify(options.workOrder)].join("\n\n");
+          const promptText = buildWorkOrderPrompt(options.workOrder);
           let preflightResolved = false;
           const promptPromise = session.prompt(promptText, {
             preflightResult: (success: boolean) => {

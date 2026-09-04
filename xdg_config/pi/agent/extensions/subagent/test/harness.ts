@@ -154,6 +154,7 @@ export function harness() {
   let tool: ToolDefinition | undefined;
   let shutdown: (() => Promise<void> | void) | undefined;
   let messageStart: ((event: { type: "message_start"; message: Record<string, unknown> }) => Promise<void> | void) | undefined;
+  const toolResultHandlers: Array<(event: Record<string, unknown>, ctx: Record<string, unknown>) => unknown> = [];
   const messages: Array<{ message: Record<string, unknown>; options?: Record<string, unknown> }> = [];
   const messageRenderers = new Map<string, MessageRenderer>();
   const pi = {
@@ -168,12 +169,14 @@ export function harness() {
     on(event: string, handler: (...args: never[]) => Promise<void> | void) {
       if (event === "session_shutdown") shutdown = handler;
       if (event === "message_start") messageStart = handler as typeof messageStart;
+      if (event === "tool_result") toolResultHandlers.push(handler as unknown as (typeof toolResultHandlers)[number]);
     },
   } as unknown as ExtensionAPI;
   return {
     pi,
     messages,
     messageRenderers,
+    toolResultHandlers,
     getTool: () => tool!,
     startMessage: async (message: Record<string, unknown>) => {
       await messageStart?.({ type: "message_start", message });
@@ -214,7 +217,34 @@ export function setup(options: {
     params as never,
     undefined, undefined, context(root),
   );
-  return { root, agents, fake, extension, invoke };
+  // Live-equivalent invocation: agent-core drops an isError flag carried on a
+  // returned value (only a throw sets the executed flag), then applies
+  // tool_result patches before serializing the parent toolResult. This replays
+  // that pipeline so tests cover what the parent transcript actually stores.
+  const invokeLive = async (params: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const raw = await extension.getTool().execute(
+      "tool-call",
+      params as never,
+      undefined, undefined, context(root),
+    ) as unknown as Record<string, unknown>;
+    let content = raw["content"];
+    let details = raw["details"];
+    let isError = false;
+    let usage = raw["usage"];
+    for (const handler of extension.toolResultHandlers) {
+      const patch = await handler(
+        { type: "tool_result", toolName: "subagent", toolCallId: "tool-call", input: params, content, details, isError, usage },
+        {},
+      ) as unknown as Record<string, unknown> | undefined | void;
+      if (!patch) continue;
+      if (patch["content"] !== undefined) content = patch["content"];
+      if (patch["details"] !== undefined) details = patch["details"];
+      if (patch["isError"] !== undefined) isError = patch["isError"] === true;
+      if (patch["usage"] !== undefined) usage = patch["usage"];
+    }
+    return { ...raw, content, details, ...(isError ? { isError: true } : {}), ...(usage !== undefined ? { usage } : {}) };
+  };
+  return { root, agents, fake, extension, invoke, invokeLive };
 }
 
 export async function startIdle(env: ReturnType<typeof setup>) {

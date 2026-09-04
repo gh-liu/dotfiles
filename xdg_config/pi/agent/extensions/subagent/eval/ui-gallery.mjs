@@ -135,7 +135,7 @@ function terminal() {
     ["get running", { action: "get", ref: "#2" }, { ref: "#2", turn: 2, status: "running", agent: "scout" }, {}],
     ["get timed out", { action: "get", ref: "#2", waitMs: 30_000 }, { ref: "#2", turn: 2, status: "running", agent: "scout", timedOut: true }, {}],
     ["get idle", { action: "get", ref: "#2" }, { ref: "#2", turn: 2, status: "idle", turnStatus: "completed", agent: "scout", summary: "Recovered background result." }, {}],
-    ["get unknown", { action: "get", ref: "#99" }, { ref: "#99", status: "unknown", error: "Subagent session is unknown or expired." }, { isError: true }],
+    ["get unknown", { action: "get", ref: "#99" }, { ref: "#99", status: "unknown", unknown: true, error: "Subagent session is unknown or expired." }, { isError: true }],
     ["cancel accepted", { action: "cancel", ref: "#2" }, { ref: "#2", status: "idle", turnStatus: "interrupted", cancelled: true }, {}],
     ["cancel idle", { action: "cancel", ref: "#2" }, { ref: "#2", status: "idle", cancelled: false, alreadyIdle: true }, {}],
     ["close", { action: "close", ref: "#2" }, { ref: "#2", status: "closed", agent: "scout", closed: true }, {}],

@@ -38,6 +38,9 @@ export interface OperationRecord {
     decision?: { question: string; options?: string[] };
   };
   notifyOnSettle: boolean;
+  /** At-most-once guards so audit and wake never deliver twice. */
+  notified?: boolean;
+  audited?: boolean;
   settled: Promise<void>;
   settle(): void;
 }
@@ -86,6 +89,8 @@ export interface RuntimeHubDeps {
   live: LiveUiController;
   controllerCreationTimeoutMs?: number;
   maxRetainedRuntimes?: number;
+  /** Exact credential values to redact from wake/audit text before bounding. */
+  credentialSecrets?: readonly string[];
 }
 
 export interface CreateRuntimeInput {
@@ -128,6 +133,7 @@ export interface RuntimeHub {
 
 export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
   const maxConcurrentRuns = deps.maxConcurrentRuns ?? 3;
+  const credentialSecrets = deps.credentialSecrets ?? [];
   const controllerCreationTimeoutMs = deps.controllerCreationTimeoutMs ?? 10_000;
   const maxRetainedRuntimes = deps.maxRetainedRuntimes ?? 100;
   const runtimes = new Map<string, RuntimeRecord>();
@@ -151,6 +157,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       while (runtime.operations.size > 128) {
         const stale = [...runtime.operations.values()].find(
           (operation) => operation !== runtime.lastSettled
+            && operation.operationId !== runtime.activeOperationId
             && operation.state !== "running",
         );
         if (!stale) break;
@@ -175,7 +182,11 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     }
     flushScheduled = false;
     if (pendingSettlements.length === 0) return;
-    const entries = pendingSettlements.splice(0);
+    const entries = pendingSettlements.splice(0).filter((entry) => {
+      const owner = runtimes.get(entry.jobId);
+      return !owner || (owner.state !== "closing" && owner.state !== "closed");
+    });
+    if (entries.length === 0) return;
     const delivered = deps.notifySettled(entries.length === 1 ? entries[0] : { batch: entries });
     for (const entry of entries) {
       if (!delivered) deps.live.reportFailed(entry.operationId);
@@ -193,12 +204,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
   };
 
   const notifyOperationSettled = (runtime: RuntimeRecord, operation: OperationRecord): void => {
-    if (
-      !operation.notifyOnSettle
-      || shuttingDown
-      || runtime.state === "closing"
-      || runtime.state === "closed"
-    ) return;
+    if (operation.notified && operation.audited) return;
     const result = operation.result;
     const agent = runtime.agent.name.length <= 80
       ? runtime.agent.name
@@ -218,26 +224,37 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       ...(model ? { model } : {}),
       ...(thinking ? { thinking } : {}),
       ...(elapsedMs === undefined ? {} : { elapsedMs }),
-      task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }),
+      task: boundText(operation.task, { maxCharacters: 240, maxLines: 4 }, [...credentialSecrets]),
       status: result?.status ?? "failed",
       ...(runtime.state === "idle" ? { sessionOpen: true } : {}),
       summary: boundText(handoff?.summary ?? operation.error ?? "Subagent operation failed without a result.",
-        { maxCharacters: 2_000, maxLines: 20 },
+        { maxCharacters: 2_000, maxLines: 20 }, [...credentialSecrets],
       ),
-      ...(handoff?.changes ? { changes: boundText(handoff.changes, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
-      ...(handoff?.evidence ? { evidence: boundText(handoff.evidence, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
-      ...(handoff?.validation ? { validation: boundText(handoff.validation, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
-      ...(handoff?.risks ? { risks: boundText(handoff.risks, { maxCharacters: 2_000, maxLines: 20 }) } : {}),
+      ...(handoff?.changes ? { changes: boundText(handoff.changes, { maxCharacters: 2_000, maxLines: 20 }, [...credentialSecrets]) } : {}),
+      ...(handoff?.evidence ? { evidence: boundText(handoff.evidence, { maxCharacters: 2_000, maxLines: 20 }, [...credentialSecrets]) } : {}),
+      ...(handoff?.validation ? { validation: boundText(handoff.validation, { maxCharacters: 2_000, maxLines: 20 }, [...credentialSecrets]) } : {}),
+      ...(handoff?.risks ? { risks: boundText(handoff.risks, { maxCharacters: 2_000, maxLines: 20 }, [...credentialSecrets]) } : {}),
       ...(result?.status !== "completed" && operation.latestProgress?.recentActivity.length
         ? { recentActivity: operation.latestProgress.recentActivity }
         : {}),
     };
+    // Audit is best-effort and at-most-once; shutdown suppresses only the wake.
+    if (!operation.audited) {
+      operation.audited = true;
+      try {
+        deps.logSettled?.(details);
+      } catch {
+        // The settle log never affects operation state.
+      }
+    }
+    if (!operation.notifyOnSettle || operation.notified) return;
+    operation.notified = true;
+    if (shuttingDown || runtime.state === "closing" || runtime.state === "closed") return;
     // Batched wake policy: successful background settlements coalesce within
     // the same event-loop turn and flush as ONE aggregated card on the next
     // macrotask (the widget is the ambient signal meanwhile). Failures,
     // timeouts, and interruptions are actionable and notify immediately,
     // carrying any earlier pending entries along so nothing notifies twice.
-    deps.logSettled?.(details);
     pendingSettlements.push(details);
     if (details.status !== "completed") {
       flushPendingSettlements();
@@ -251,49 +268,59 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       const operation = runtime.operations.get(runtime.activeOperationId);
       if (operation) operation.notifyOnSettle = false;
     }
+    // Suppress queued wakes owned by this session so a closed session never emits triggerTurn.
+    for (let index = pendingSettlements.length - 1; index >= 0; index -= 1) {
+      if (pendingSettlements[index].jobId === runtime.runId) pendingSettlements.splice(index, 1);
+    }
     if (runtime.closePromise) return runtime.closePromise;
     deps.live.removeSession(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
     runtime.closePromise = (async () => {
       let failure: unknown;
+      let interruptTimer: ReturnType<typeof setTimeout> | undefined;
       try {
-        await runtime.controllerReady;
-      } catch (error) {
-        failure = error;
-      }
-      const activeOperationId = runtime.activeOperationId;
-      const activeOperation = activeOperationId === undefined
-        ? undefined
-        : runtime.operations.get(activeOperationId);
-      if (activeOperationId && activeOperation?.accepted && runtime.controller && !wasCrashed) {
-        try {
-          let timer: ReturnType<typeof setTimeout> | undefined;
-          const stopped = await Promise.race([
-            (async () => {
-              await runtime.controller!.interrupt(activeOperationId);
-              await activeOperation.settled;
-              return true;
-            })(),
-            new Promise<false>((resolveTimeout) => {
-              timer = setTimeout(() => resolveTimeout(false), 5_000);
-            }),
-          ]);
-          if (timer) clearTimeout(timer);
-          if (!stopped) failure ??= new Error("Subagent operation did not settle after interrupt");
-        } catch (error) {
-          failure ??= error;
-        }
-      }
-      try {
-        await runtime.controller?.close();
+        await Promise.race([
+          (async () => {
+            try {
+              await runtime.controllerReady;
+            } catch (error) {
+              failure = error;
+              return;
+            }
+            const activeOperationId = runtime.activeOperationId;
+            const activeOperation = activeOperationId === undefined
+              ? undefined
+              : runtime.operations.get(activeOperationId);
+            if (activeOperationId && activeOperation?.accepted && runtime.controller && !wasCrashed) {
+              try {
+                await runtime.controller!.interrupt(activeOperationId);
+                await activeOperation.settled;
+              } catch (error) {
+                failure ??= error;
+              }
+            }
+            try {
+              await runtime.controller?.close();
+            } catch (error) {
+              failure ??= error;
+            }
+          })(),
+          new Promise<void>((_resolve, reject) => {
+            interruptTimer = setTimeout(() => reject(new Error("Subagent close timed out after 5s")), 5_000);
+          }),
+        ]);
       } catch (error) {
         failure ??= error;
+        // Best-effort background close so the owned controller never leaks past the deadline.
+        void runtime.controllerReady.then((controller) => controller.close().catch(() => {})).catch(() => {});
+      } finally {
+        if (interruptTimer) clearTimeout(interruptTimer);
       }
       if (failure) throw failure;
       if (runtime.state !== "crashed") transition(runtime, "closed");
     })().catch((error) => {
-      transition(runtime, "crashed");
+      if (runtime.state !== "crashed") transition(runtime, "crashed");
       throw error;
     }).finally(() => {
       releaseSlot(runtime);
@@ -474,7 +501,9 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           }
           runtime.controller = controller;
           void controller.failure.then((error) => {
-            if (runtime.state === "closed") return;
+            // The close path owns the outcome once closing starts; a late
+            // failure must not flip a successfully closed session to crashed.
+            if (runtime.state === "closed" || runtime.state === "crashed" || runtime.state === "closing" || runtime.closePromise) return;
             transition(runtime, "crashed");
             void closeRuntime(runtime).catch(() => {});
           });
