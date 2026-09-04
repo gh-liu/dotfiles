@@ -124,7 +124,8 @@ describe("task API rendering", () => {
 
   test("renders terminal foreground and recovered background handoffs", () => {
     const foreground = text(renderSubagentResult({ content: [], details: { ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "completed", summary: "Done", elapsedMs: 1_000 } }, { expanded: false, isPartial: false }, theme, runContext()));
-    expect(foreground).toContain("✓ #1 scout · turn 1 · 1s");
+    expect(foreground).toContain("✓ completed · turn 1 · 1s");
+    expect(foreground).not.toContain("✓ #1 scout");
     expect(foreground).toContain("Done");
     expect(foreground).toContain("#1 · workstream open · follow up gaps or close when accepted");
     const runExpanded = text(renderSubagentResult({ content: [], details: {
@@ -147,7 +148,8 @@ describe("task API rendering", () => {
     }, { expanded: false, isPartial: false }, theme, {
       args: { action: "get", ref: "#2" }, isError: false, state: {}, invalidate: vi.fn(),
     } as never));
-    expect(recovered).toContain("✓ #2 scout · 2s");
+    expect(recovered).toContain("✓ completed · 2s");
+    expect(recovered).not.toContain("✓ #2 scout");
     expect(recovered).toContain("Recovered background result");
   });
 

@@ -100,7 +100,7 @@ export function renderSubagentResult(
     ? theme.fg("warning", details.timedOut === true ? "● still running · wait expired" : "● running")
     : status === "idle" && turnStatus
       ? theme.fg(turnStatus === "failed" ? "error" : turnStatus === "interrupted" ? "warning" : "success",
-          `${turnStatus === "completed" ? "✓" : turnStatus === "failed" ? "✗" : "■"}${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""}`)
+          `${turnStatus === "completed" ? "✓" : turnStatus === "failed" ? "✗" : "■"} ${turnStatus}`)
       : status === "idle" ? theme.fg("success", `✓${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · session idle`)
       : status === "closed" ? theme.fg("muted", "× session closed")
       : status === "crashed" ? theme.fg("error", "✗ session crashed")
