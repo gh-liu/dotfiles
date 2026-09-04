@@ -12,6 +12,7 @@ const SETTINGS = Object.freeze({
   authBaseUrl: "https://auth.openai.com",
   clientId: "app_EMoamEEZ73f0CkXaXp7hrann",
   credentialsKey: "com.liu.codex.credentials",
+  legacyCredentialsKey: "com.liu.scriptable.codex.credentials",
   notificationStateKey: "com.liu.scriptable.codex.usage-boundary",
   resetCountStateKey: "com.liu.scriptable.codex.reset-count",
   timeZone: "Asia/Shanghai",
@@ -19,10 +20,10 @@ const SETTINGS = Object.freeze({
   tokenRefreshLeewayMs: 60 * 1000,
   refreshIntervalMs: 15 * 60 * 1000,
   deviceAuthTimeoutMs: 15 * 60 * 1000,
-  progressBarWidth: 120,
   progressBarHeight: 6,
-  // Remaining percent below this threshold is rendered in red.
-  lowUsageThresholdPercent: 20,
+  // Remaining percent >= this threshold is green, >= low threshold is blue, below is red.
+  usageHighThresholdPercent: 50,
+  usageLowThresholdPercent: 20,
 });
 
 const RUNTIME = Object.freeze({
@@ -178,7 +179,16 @@ class CodexUsageApp {
     if (error.statusCode === 429) {
       return ["Too many requests", "Codex API rate limit reached"];
     }
-    return ["Unable to load usage", error.message || "Unknown error"];
+    return ["Unable to load usage", this.formatErrorDetail(error)];
+  }
+
+  formatErrorDetail(error) {
+    const message = error && error.message ? String(error.message) : "Unknown error";
+    const line = error ? error.line : undefined;
+    const column = error ? error.column : undefined;
+    if (Number.isFinite(line) && Number.isFinite(column)) return `${message} (line ${line}, col ${column})`;
+    if (Number.isFinite(line)) return `${message} (line ${line})`;
+    return message;
   }
 }
 
@@ -190,10 +200,21 @@ class CodexAuth {
   }
 
   loadCredentials() {
-    if (!Keychain.contains(this.settings.credentialsKey)) return null;
+    if (Keychain.contains(this.settings.credentialsKey)) {
+      return this.parseCredentials(Keychain.get(this.settings.credentialsKey));
+    }
 
+    const legacyKey = this.settings.legacyCredentialsKey;
+    if (legacyKey && Keychain.contains(legacyKey)) {
+      return this.parseCredentials(Keychain.get(legacyKey));
+    }
+
+    return null;
+  }
+
+  parseCredentials(raw) {
     try {
-      const credentials = JSON.parse(Keychain.get(this.settings.credentialsKey));
+      const credentials = JSON.parse(raw);
       if (!credentials.accessToken) return null;
       return credentials;
     } catch (_) {
@@ -412,15 +433,23 @@ class CodexUsageClient {
     const availableCount = Number(credits.available_count || 0);
 
     const mainWindow = windows.weekly || windows.fiveHour;
-    const resetsExpireAt = await this.fetchEarliestResetExpiry(headers);
+    const resetExpiries = await this.fetchResetExpiries(headers);
+    const resetsExpireAt = resetExpiries.length > 0 ? resetExpiries[0] : 0;
+    const availableResets =
+      resetExpiries.length > 0
+        ? resetExpiries.length
+        : Number.isFinite(availableCount)
+          ? Math.max(0, availableCount)
+          : 0;
 
     return {
       weekly: windows.weekly,
       fiveHour: windows.fiveHour,
       remainingPercent: mainWindow ? mainWindow.remainingPercent : 0,
       resetAt: mainWindow ? mainWindow.resetAt : 0,
-      availableResets: Number.isFinite(availableCount) ? Math.max(0, availableCount) : 0,
+      availableResets,
       resetsExpireAt,
+      resetExpiries,
     };
   }
 
@@ -462,24 +491,24 @@ class CodexUsageClient {
     return windows;
   }
 
-  async fetchEarliestResetExpiry(headers) {
+  async fetchResetExpiries(headers) {
     try {
       const response = await this.http.getJson(this.settings.resetsCreditsUrl, headers);
-      if (!response.ok) return 0;
+      if (!response.ok) return [];
       const payload = response.payload || {};
       const credits = Array.isArray(payload.credits) ? payload.credits : [];
-      let earliest = 0;
+      const expiries = [];
       for (const credit of credits) {
         if (!credit || credit.status !== "available") continue;
         if (typeof credit.expires_at !== "string") continue;
         const ms = Date.parse(credit.expires_at);
         if (!Number.isFinite(ms)) continue;
-        const seconds = ms / 1000;
-        if (!earliest || seconds < earliest) earliest = seconds;
+        expiries.push(ms / 1000);
       }
-      return earliest;
+      expiries.sort((a, b) => a - b);
+      return expiries;
     } catch (_) {
-      return 0;
+      return [];
     }
   }
 }
@@ -510,11 +539,7 @@ class CodexUsageNotifier {
       boundary === 0
         ? "Your weekly Codex usage has been exhausted."
         : "Your weekly Codex usage has reset and is fully available.";
-    await this.scheduleNotification(
-      `Codex weekly usage: ${boundary}%`,
-      body,
-      "codex-weekly-usage",
-    );
+    await this.scheduleNotification(`Codex weekly usage: ${boundary}%`, body, "codex-weekly-usage");
 
     Keychain.set(this.settings.notificationStateKey, String(boundary));
   }
@@ -585,7 +610,7 @@ class CodexUsageView {
 
   createUsage(usage) {
     const widget = this.createBase();
-    widget.setPadding(14, 14, 12, 14);
+    widget.setPadding(12, 12, 10, 12);
 
     const header = widget.addStack();
     header.centerAlignContent();
@@ -598,122 +623,151 @@ class CodexUsageView {
       this.colors.secondary,
     );
 
-    widget.addSpacer(10);
+    widget.addSpacer();
 
-    const weekly = usage.weekly || null;
-    const fiveHour = usage.fiveHour || null;
-
-    const rings = widget.addStack();
-    rings.centerAlignContent();
-    const fiveHourRing = rings.addImage(
-      this.createRingImage(fiveHour, this.colors.resets, "5h"),
-    );
-    fiveHourRing.size = new Size(44, 56);
-    rings.addSpacer();
-    const weeklyRing = rings.addImage(
-      this.createRingImage(weekly, this.colors.usage, "1w"),
-    );
-    weeklyRing.size = new Size(44, 56);
-
-    widget.addSpacer(6);
-
-    const resetsRow = widget.addStack();
-    resetsRow.addSpacer();
-    const resetsText = this.addText(
-      resetsRow,
-      this.formatResetsSummary(usage),
-      Font.mediumSystemFont(10),
-      this.colors.secondary,
-    );
-    resetsText.centerAlignText();
-    resetsRow.addSpacer();
-
-    widget.addSpacer(4);
-
-    const footerResetAt = weekly ? weekly.resetAt : fiveHour ? fiveHour.resetAt : 0;
-
-    const footer = widget.addStack();
-    footer.backgroundColor = this.colors.secondaryBackground;
-    footer.cornerRadius = 6;
-    footer.setPadding(5, 7, 5, 7);
-    this.addText(footer, "Usage resets", Font.mediumSystemFont(10), this.colors.secondary);
-    footer.addSpacer();
-    this.addText(
-      footer,
-      this.formatResetRemaining(footerResetAt),
-      Font.semiboldSystemFont(10),
-      this.colors.primary,
-    );
+    this.addUsageRow(widget, "5h", usage.fiveHour || null);
+    widget.addSpacer();
+    this.addUsageRow(widget, "1w", usage.weekly || null);
+    widget.addSpacer();
+    this.addResetsRow(widget, usage);
 
     widget.refreshAfterDate = new Date(Date.now() + this.settings.refreshIntervalMs);
     return widget;
   }
 
-  windowColor(window, baseColor) {
-    if (!window) return this.colors.secondary;
-    return window.remainingPercent < this.settings.lowUsageThresholdPercent
-      ? this.colors.danger
-      : baseColor;
-  }
-
-  createRingImage(window, baseColor, label) {
-    // Render at 3x resolution so the ring and text stay sharp on Retina
-    // displays; the widget shows the image at 44x56 pt.
-    const scale = 3;
-    const imageSize = new Size(44 * scale, 56 * scale);
-    const ringSize = 44 * scale;
-    const ringWidth = 5 * scale;
-    const ctx = new DrawContext();
-    ctx.size = imageSize;
-    ctx.opaque = false;
-
-    const centerX = imageSize.width / 2;
-    const centerY = ringSize / 2;
-    const radius = ringSize / 2 - ringWidth / 2 - 1;
-    const ringRect = new Rect(centerX - radius, centerY - radius, radius * 2, radius * 2);
-
-    ctx.setStrokeColor(this.colors.secondaryBackground);
-    ctx.setLineWidth(ringWidth);
-    ctx.strokeEllipse(ringRect);
-
-    const color = this.windowColor(window, baseColor);
+  addUsageRow(container, label, window) {
+    const topRow = container.addStack();
+    topRow.centerAlignContent();
+    const labelText = window ? `${label} · reset ${this.formatResetRemaining(window.resetAt)}` : `${label} · --`;
+    this.addText(topRow, labelText, Font.mediumSystemFont(10), this.colors.secondary);
+    topRow.addSpacer();
     if (window) {
-      const progress = Math.min(Math.max(window.remainingPercent, 0), 100);
-      const segments = Math.max(Math.ceil((progress / 100) * 48), 1);
-      const sweep = (progress / 100) * 2 * Math.PI;
-      ctx.setStrokeColor(color);
-      ctx.setLineWidth(ringWidth);
-      const path = new Path();
-      for (let i = 0; i <= segments; i++) {
-        const angle = -Math.PI / 2 + (i / segments) * sweep;
-        const point = new Point(
-          centerX + radius * Math.cos(angle),
-          centerY + radius * Math.sin(angle),
-        );
-        if (i === 0) path.move(point);
-        else path.addLine(point);
-      }
-      ctx.addPath(path);
-      ctx.strokePath();
+      const color = this.usageColorFor(window.remainingPercent);
+      this.addText(
+        topRow,
+        `${this.formatNumber(window.remainingPercent)}%`,
+        Font.semiboldSystemFont(10),
+        color,
+      );
+    } else {
+      this.addText(topRow, "--", Font.semiboldSystemFont(10), this.colors.secondary);
     }
 
-    const value = window ? `${this.formatNumber(window.remainingPercent)}%` : "--";
-    ctx.setFont(Font.boldSystemFont(13 * scale));
-    ctx.setTextColor(color);
-    ctx.setTextAlignedCenter();
-    ctx.drawTextInRect(value, new Rect(0, centerY - 7 * scale, imageSize.width, 16 * scale));
-
-    ctx.setFont(Font.mediumSystemFont(9 * scale));
-    ctx.setTextColor(this.colors.secondary);
-    ctx.drawTextInRect(label, new Rect(0, ringSize + 2 * scale, imageSize.width, 10 * scale));
-
-    return ctx.getImage();
+    container.addSpacer(3);
+    const percent = window ? Math.min(Math.max(window.remainingPercent, 0), 100) : 0;
+    const barColor = window ? this.usageColorFor(window.remainingPercent) : this.colors.secondary;
+    // Window is null: render an all-gray placeholder bar.
+    const fillPercent = window ? percent : 0;
+    const bar = container.addImage(this.createBarImage(fillPercent, barColor));
+    bar.size = new Size(this.barDisplayWidth(), this.settings.progressBarHeight);
   }
 
-  formatResetsSummary(usage) {
-    const count = this.formatNumber(usage.availableResets);
-    const expiring = this.formatResetsIn(usage.resetsExpireAt);
-    return expiring === "--" ? `resets ${count}` : `resets ${count} · ${expiring}`;
+  addResetsRow(container, usage) {
+    const row = container.addStack();
+    row.centerAlignContent();
+    const expiries = Array.isArray(usage.resetExpiries) ? usage.resetExpiries : [];
+    const count = Number(usage.availableResets) || 0;
+    if (count <= 0) {
+      this.addText(row, "no resets", Font.mediumSystemFont(10), this.colors.secondary);
+    } else {
+      for (let i = 0; i < count; i++) {
+        const expiry = i < expiries.length ? expiries[i] : 0;
+        this.addText(row, "⚪", Font.mediumSystemFont(10), this.resetColorFor(expiry));
+        if (i < count - 1) row.addSpacer(2);
+      }
+    }
+    row.addSpacer();
+    this.addText(
+      row,
+      this.formatResetsIn(usage.resetsExpireAt),
+      Font.mediumSystemFont(10),
+      this.colors.secondary,
+    );
+  }
+
+  usageColorFor(remainingPercent) {
+    if (remainingPercent >= this.settings.usageHighThresholdPercent) return this.colors.usage;
+    if (remainingPercent >= this.settings.usageLowThresholdPercent) return this.colors.resets;
+    return this.colors.danger;
+  }
+
+  resetColorFor(expirySeconds) {
+    if (!Number.isFinite(expirySeconds) || expirySeconds <= 0) return this.colors.secondary;
+    const diffMs = expirySeconds * 1000 - Date.now();
+    if (!Number.isFinite(diffMs)) return this.colors.secondary;
+    if (diffMs > 7 * 24 * 60 * 60 * 1000) return this.colors.usage;
+    if (diffMs >= 24 * 60 * 60 * 1000) return this.colors.resets;
+    return this.colors.danger;
+  }
+
+  smallWidgetSize() {
+    // Apple HIG: small widget is square, side length varies by device.
+    // Device.screenSize() also works for presentSmall previews (runsInApp).
+    const fallback = 155;
+    try {
+      const size = Device.screenSize();
+      const rawW = size ? size.width : NaN;
+      const rawH = size ? size.height : NaN;
+      if (!Number.isFinite(rawW) || !Number.isFinite(rawH)) return fallback;
+      // Normalize to portrait: w = min, h = max.
+      const w = Math.min(rawW, rawH);
+      const h = Math.max(rawW, rawH);
+      // Exact (w, h) match takes priority.
+      const exact = {
+        "320x568": 141,
+        "375x667": 148,
+        "375x812": 155,
+        "360x780": 155,
+        "390x844": 158,
+        "393x852": 158,
+        "414x736": 159,
+        "414x896": 169,
+        "428x926": 170,
+        "430x932": 170,
+      };
+      const hit = exact[`${w}x${h}`];
+      if (Number.isFinite(hit)) return hit;
+      // Fuzzy match by width.
+      if (w === 320) return 141;
+      if (w === 375) return h >= 800 ? 155 : 148;
+      if (w === 360) return 155;
+      if (w === 390 || w === 393) return 158;
+      if (w === 414) return h >= 800 ? 169 : 159;
+      if (w === 428 || w === 430) return 170;
+      return fallback;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  barDisplayWidth() {
+    // Small widget width varies by device; horizontal padding is 12pt on each side.
+    const width = this.smallWidgetSize() - 12 - 12;
+    if (!Number.isFinite(width) || width <= 0) return 131;
+    return width;
+  }
+
+  createBarImage(percent, color) {
+    // Render at 3x resolution so the bar stays sharp on Retina displays.
+    // Uses only long-standing base APIs (Size/Rect/fillRect/getImage).
+    const scale = 3;
+    const width = this.barDisplayWidth() * scale;
+    const height = this.settings.progressBarHeight * scale;
+    const ctx = new DrawContext();
+    ctx.size = new Size(width, height);
+    ctx.opaque = false;
+
+    ctx.setFillColor(this.colors.secondaryBackground);
+    ctx.fillRect(new Rect(0, 0, width, height));
+
+    const clamped = Math.min(Math.max(percent, 0), 100);
+    const fillWidth = (width * clamped) / 100;
+    if (fillWidth > 0) {
+      ctx.setFillColor(color);
+      ctx.fillRect(new Rect(0, 0, fillWidth, height));
+    }
+
+    return ctx.getImage();
   }
 
   createError(title, message) {
