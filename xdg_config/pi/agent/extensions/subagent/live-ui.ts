@@ -18,7 +18,7 @@
 import type { ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, wrapTextWithAnsi, type Component, type TUI } from "@earendil-works/pi-tui";
 
-import type { SubagentActivityPhase } from "./protocol.ts";
+import type { SubagentActivityPhase, SubagentTimelineEntry } from "./protocol.ts";
 import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
 import { oneLine, renderToolSummary } from "./render/shared.ts";
 
@@ -53,6 +53,8 @@ interface RuntimeDisplay {
   activityPhase?: SubagentActivityPhase;
   /** Number of concurrently running tools in the latest progress update. */
   activeCount?: number;
+  /** Bounded settled activity retained across current-activity changes. */
+  timeline?: SubagentTimelineEntry[];
   decision?: string;
   settlement?: "reporting" | "report-failed";
   outcome?: "completed" | "failed" | "interrupted";
@@ -90,6 +92,19 @@ function renderActivity(theme: Theme, runtime: RuntimeDisplay): string {
     ? theme.fg("muted", ` · ${runtime.activeCount} active`)
     : "";
   return rendered + activeSuffix;
+}
+
+function renderActivityLines(theme: Theme, runtime: RuntimeDisplay): string[] {
+  const settled = (runtime.timeline ?? []).slice(-3).map((entry) =>
+    entry.kind === "thinking"
+      ? theme.fg("accent", `${SUBAGENT_DONE_GLYPH} Thinking`)
+      : `${theme.fg(entry.status === "failed" ? "error" : "success", entry.status === "failed" ? SUBAGENT_FAILED_GLYPH : SUBAGENT_DONE_GLYPH)} ${renderToolSummary(theme, entry.summary)}`
+  );
+  const phase = runtime.activityPhase;
+  // Completed phases are already represented by the authoritative timeline.
+  // Unphased summaries (startup/synthesis) and active phases remain current.
+  if (!phase || phase.status === "running") settled.push(renderActivity(theme, runtime));
+  return settled;
 }
 
 function taskLines(task: string, width: number, maximumLines: number): string[] {
@@ -152,7 +167,9 @@ function renderLines(
       if (runtime.decision) {
         lines.push(truncateToWidth(theme.fg("warning", `  ! ${oneLine(runtime.decision, 500)}`), width));
       } else if (width >= 50 && !dense) {
-        lines.push(truncateToWidth(`  ${theme.fg("muted", "↳")} ${renderActivity(theme, runtime)}`, width));
+        for (const activity of renderActivityLines(theme, runtime)) {
+          lines.push(truncateToWidth(`  ${theme.fg("muted", "↳")} ${activity}`, width));
+        }
       }
     }
   }
@@ -171,7 +188,7 @@ export interface LiveUiController {
    * Record a progress summary plus the optional live activity phase as the current
    * activity; activeCount is the number of concurrently running tools in this update.
    */
-  progress(operationKey: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number, decision?: string): void;
+  progress(operationKey: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number, decision?: string, timeline?: SubagentTimelineEntry[]): void;
   /** Mark settlement while its completion card is handed to Pi. */
   settle(operationKey: string, outcome: "completed" | "failed" | "interrupted", elapsedMs?: number): void;
   /** Keep a settled recovery row when completion delivery fails. */
@@ -288,12 +305,13 @@ export function createLiveUi(): LiveUiController {
       syncRepaintClock();
       scheduleDraw();
     },
-    progress(operationKey, summary, phase, activeCount, decision) {
+    progress(operationKey, summary, phase, activeCount, decision, timeline) {
       const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
       runtime.activity = summary;
       runtime.activityPhase = phase;
       runtime.activeCount = activeCount;
+      runtime.timeline = timeline?.map((entry) => ({ ...entry }));
       runtime.decision = decision;
       syncRepaintClock();
       scheduleDraw();

@@ -493,6 +493,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
                 latest.phase,
                 latest.tools?.active.length,
                 latest.decision?.question,
+                latest.timeline,
               );
             }
           }

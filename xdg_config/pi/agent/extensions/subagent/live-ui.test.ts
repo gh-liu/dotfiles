@@ -86,23 +86,30 @@ describe("activity center", () => {
     expect(lines.join("\n")).toContain("↳ Thinking…");
   });
 
-  test("keeps completed Thinking and tool phase markers without duplicating the spinner", () => {
+  test("keeps completed Thinking visible when current activity advances to tools", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked());
 
-    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" });
+    const thinking = [{ kind: "thinking" as const, text: "private reasoning" }];
+    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" }, undefined, undefined, thinking);
     vi.advanceTimersByTime(250);
     expect(renderWidget(ui).join("\n")).toContain("↳ ✓ Thinking");
 
-    live.progress("r1", "grep schema complete", { kind: "tool", status: "completed" });
+    const completed = { kind: "tool" as const, id: "grep", summary: "grep schema", status: "completed" as const };
+    live.progress("r1", "grep schema complete", { kind: "tool", status: "completed" }, undefined, undefined, [...thinking, completed]);
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("↳ ✓ grep schema complete");
+    expect(renderWidget(ui).join("\n")).toContain("↳ ✓ Thinking");
+    expect(renderWidget(ui).join("\n")).toContain("↳ ✓ grep schema");
 
-    live.progress("r1", "npm test failed", { kind: "tool", status: "failed" });
+    const failed = { kind: "tool" as const, id: "test", summary: "npm test", status: "failed" as const };
+    live.progress("r1", "npm test failed", { kind: "tool", status: "failed" }, undefined, undefined, [...thinking, completed, failed]);
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("↳ ✗ npm test failed");
+    const rendered = renderWidget(ui).join("\n");
+    expect(rendered).toContain("↳ ✓ Thinking");
+    expect(rendered).toContain("↳ ✓ grep schema");
+    expect(rendered).toContain("↳ ✗ npm test");
   });
 
   test("animates one job-level spinner through startup, tools, and synthesis", () => {

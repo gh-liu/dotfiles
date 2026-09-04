@@ -374,7 +374,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           decision: normalized.decision,
         } : {}),
       };
-      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount, normalized.question);
+      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount, normalized.question, normalized.timeline);
       onUpdate?.({
         content: [{ type: "text", text: normalized.summary }],
         details: {

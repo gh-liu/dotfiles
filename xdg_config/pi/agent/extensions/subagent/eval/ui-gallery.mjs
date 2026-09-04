@@ -104,9 +104,14 @@ function progress() {
   live.attach({ setWidget(_id, content) { widgetFactory = content; } });
   const now = Date.now();
   live.track("job-1", { index: 1, agent: "scout", turn: 1, task, startedAt: now - 25_000, runId: "session-1" });
-  live.progress("job-1", "Thinking", { kind: "thinking", status: "completed" });
+  live.progress("job-1", "Thinking", { kind: "thinking", status: "completed" }, undefined, undefined, [
+    { kind: "thinking", text: "hidden" },
+  ]);
   live.track("job-2", { index: 2, agent: "scout", turn: 2, task: "Compare Pi SDK lifecycle behavior with current subagent ownership and cite the relevant API contracts.", startedAt: now - 18_000, runId: "session-2" });
-  live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" });
+  live.progress("job-2", "web_search Pi SDK lifecycle…", { kind: "tool", status: "running" }, undefined, undefined, [
+    { kind: "thinking", text: "hidden" },
+    { kind: "tool", id: "read", summary: "read SDK lifecycle", status: "completed" },
+  ]);
   live.track("job-3", { index: 3, agent: "reviewer", turn: 1, task: "Review the compatibility policy and identify any decision that changes the implementation.", startedAt: now - 11_000, runId: "session-3" });
   live.progress("job-3", "waiting for a decision", undefined, undefined, "Choose compatibility policy");
   if (typeof widgetFactory === "function") {
