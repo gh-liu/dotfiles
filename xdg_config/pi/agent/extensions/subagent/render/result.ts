@@ -8,11 +8,21 @@ function renderActivity(details: Record<string, unknown>, theme: Theme): string 
   const tools = details.toolProgress && typeof details.toolProgress === "object"
     ? details.toolProgress as Record<string, unknown>
     : undefined;
-  const earlierCount = typeof tools?.earlierCount === "number" && tools.earlierCount > 0
-    ? Math.floor(tools.earlierCount)
-    : 0;
-  if (earlierCount) text += `\n${theme.fg("muted", `… ${earlierCount} earlier tool ${earlierCount === 1 ? "activity" : "activities"}`)}`;
   const timeline = Array.isArray(details.timeline) ? details.timeline.slice(-24) : [];
+  // tools.earlierCount describes entries omitted from the 8-item tool-history
+  // snapshot, while this renderer owns the larger mixed timeline. Count only
+  // tool calls absent from that timeline, not calls that remain visible here.
+  const timelineToolCount = timeline.filter(
+    (entry) => entry && typeof entry === "object" && (entry as Record<string, unknown>).kind === "tool",
+  ).length;
+  const historyCount = Array.isArray(tools?.history) ? tools.history.length : 0;
+  const totalSettledToolCount = (
+    typeof tools?.earlierCount === "number" && tools.earlierCount > 0
+      ? Math.floor(tools.earlierCount)
+      : 0
+  ) + historyCount;
+  const omittedToolCount = Math.max(0, totalSettledToolCount - timelineToolCount);
+  if (omittedToolCount) text += `\n${theme.fg("muted", `… ${omittedToolCount} earlier tool ${omittedToolCount === 1 ? "activity" : "activities"}`)}`;
   for (const entry of timeline) {
     if (!entry || typeof entry !== "object") continue;
     const item = entry as Record<string, unknown>;

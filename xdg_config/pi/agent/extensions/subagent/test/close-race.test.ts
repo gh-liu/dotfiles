@@ -10,7 +10,7 @@ describe("close bounded deadline and failure race", () => {
   test("close is bounded by a single 5s deadline and releases the slot", async () => {
     vi.useFakeTimers();
     try {
-      const env = setup({ ids: ["job", "private"] });
+      const env = setup({ ids: ["job", "private", "replacement", "replacement-op"], maxConcurrentRuns: 1 });
       await env.invoke({ action: "run", agent: "scout", task: "Hang", background: true });
       // Hang the owned controller close past any reasonable bound.
       env.fake.controllers[0].close = () => new Promise<void>(() => {});
@@ -20,8 +20,38 @@ describe("close bounded deadline and failure race", () => {
       expect(result).toMatchObject({ isError: true });
       expect(result.details).toMatchObject({ closed: false });
       expect(String((result.details as { error?: unknown }).error)).toMatch(/5s/);
-      // The slot is released even on timeout so capacity never leaks.
-      expect(env.extension.getTool()).toBeDefined();
+      // Interrupt settled the active turn before disposal hung, so its slot is
+      // safe to reuse even though close itself reached the deadline.
+      expect((await env.invoke({ action: "run", agent: "scout", task: "Replacement", background: true })).isError).not.toBe(true);
+      await env.extension.shutdown();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("a timed-out active turn keeps its slot quarantined until authoritative settlement", async () => {
+    vi.useFakeTimers();
+    try {
+      const env = setup({
+        ids: ["job", "private", "replacement", "replacement-op"],
+        maxConcurrentRuns: 1,
+      });
+      await env.invoke({ action: "run", agent: "scout", task: "Still executing", background: true });
+      env.fake.controllers[0].interrupt = () => new Promise<boolean>(() => {});
+      env.fake.controllers[0].close = () => new Promise<void>(() => {});
+
+      const closing = env.invoke({ action: "close", ref: "#1" });
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(await closing).toMatchObject({ isError: true });
+
+      const whileActive = await env.invoke({ action: "run", agent: "scout", task: "Must wait", background: true });
+      expect(whileActive).toMatchObject({ isError: true });
+      expect(whileActive.details).toMatchObject({ occupiedSlots: 1, availableSlots: 0 });
+
+      env.fake.controllers[0].settle();
+      await vi.advanceTimersByTimeAsync(0);
+      const afterSettlement = await env.invoke({ action: "run", agent: "scout", task: "Now safe", background: true });
+      expect(afterSettlement).not.toMatchObject({ isError: true });
       await env.extension.shutdown();
     } finally {
       vi.useRealTimers();

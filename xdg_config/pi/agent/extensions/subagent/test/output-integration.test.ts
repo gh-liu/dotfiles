@@ -44,6 +44,11 @@ function deepKeys(value: unknown, keys: string[] = []): string[] {
   return keys;
 }
 
+function expectSecretRedacted(result: { content: Array<{ text: string }>; details: unknown }): void {
+  expect(result.content.map((part) => part.text).join("\n")).not.toContain(EXACT_SECRET);
+  expect(JSON.stringify(result.details)).not.toContain(EXACT_SECRET);
+}
+
 describe("output integration through response projection", () => {
   test("settled handoff strips internal identities and secrets within serialization bounds", async () => {
     const env = setupWithRedaction(["job", "private"]);
@@ -86,6 +91,38 @@ describe("output integration through response projection", () => {
     expect(result.details).toHaveProperty("timeline");
     expect(result.details).toHaveProperty("toolProgress");
     await env.extension.shutdown();
+  });
+
+  test("redacts configured credentials from startup, cancel, and close errors", async () => {
+    const startup = setupWithRedaction(["startup-job", "startup-op"]);
+    startup.fake.factory.mockRejectedValueOnce(new Error(`startup exposed ${EXACT_SECRET}`));
+    const startupResult = await startup.invoke({ action: "run", agent: "scout", task: "Start" });
+    expect(startupResult).toMatchObject({ isError: true });
+    expectSecretRedacted(startupResult);
+
+    const cancelling = setupWithRedaction(["cancel-job", "cancel-op"]);
+    await cancelling.invoke({ action: "run", agent: "scout", task: "Cancel", background: true });
+    cancelling.fake.controllers[0].interrupt = async () => {
+      throw new Error(`cancel exposed ${EXACT_SECRET}`);
+    };
+    const cancelResult = await cancelling.invoke({ action: "cancel", ref: "#1" });
+    expect(cancelResult).toMatchObject({ isError: true });
+    expectSecretRedacted(cancelResult);
+
+    const closing = setupWithRedaction(["close-job", "close-op"]);
+    await closing.invoke({ action: "run", agent: "scout", task: "Close", background: true });
+    closing.fake.controllers[0].close = async () => {
+      throw new Error(`close exposed ${EXACT_SECRET}`);
+    };
+    const closeResult = await closing.invoke({ action: "close", ref: "#1" });
+    expect(closeResult).toMatchObject({ isError: true });
+    expectSecretRedacted(closeResult);
+
+    await Promise.all([
+      startup.extension.shutdown(),
+      cancelling.extension.shutdown(),
+      closing.extension.shutdown(),
+    ]);
   });
 
   test("oversized handoffs degrade to a bounded truncation envelope", async () => {

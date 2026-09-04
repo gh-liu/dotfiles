@@ -323,7 +323,13 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (runtime.state !== "crashed") transition(runtime, "crashed");
       throw error;
     }).finally(() => {
-      releaseSlot(runtime);
+      // A timed-out close does not prove that an active turn stopped. Keep its
+      // slot quarantined until authoritative settlement releases it, otherwise
+      // a hung controller could make actual concurrency exceed the configured cap.
+      const activeOperation = runtime.activeOperationId
+        ? runtime.operations.get(runtime.activeOperationId)
+        : undefined;
+      if (!activeOperation || activeOperation.state !== "running") releaseSlot(runtime);
       prune();
     });
     return runtime.closePromise;

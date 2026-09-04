@@ -168,6 +168,11 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     ?? ((initial: SubagentRunOptions) => createSdkSubagentController(initial, sdkConfig));
   const idFactory = options.idFactory ?? randomUUID;
   const credentialSecrets = collectCredentialValues(credentialEnvNames ?? []);
+  const boundedError = (error: unknown): string => boundText(
+    error instanceof Error ? error.message : String(error),
+    { maxCharacters: 2_000, maxLines: 20 },
+    credentialSecrets,
+  );
   let parentIdle: (() => boolean) | undefined;
   const notifySettled = (payload: SubagentCompletionPayload): boolean => {
     const entries = "batch" in payload ? payload.batch : [payload];
@@ -415,7 +420,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return response({ ...publicSession(runtime), cancelled: accepted });
         } catch (error) {
           await closeRuntime(runtime, true).catch(() => {});
-          return response({ ref: `#${runtime.index}`, status: "crashed", cancelled: false, error: boundText(error instanceof Error ? error.message : String(error), { maxCharacters: 2_000, maxLines: 20 }) }, true);
+          return response({ ref: `#${runtime.index}`, status: "crashed", cancelled: false, error: boundedError(error) }, true);
         }
       }
       if (request.action === "close") {
@@ -426,7 +431,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           await closeRuntime(runtime, true);
           return response({ ...publicSessionSummary(runtime), closed: true });
         } catch (error) {
-          return response({ ...publicSessionSummary(runtime), closed: false, error: boundText(error instanceof Error ? error.message : String(error), { maxCharacters: 2_000, maxLines: 20 }) }, true);
+          return response({ ...publicSessionSummary(runtime), closed: false, error: boundedError(error) }, true);
         }
       }
 
@@ -505,10 +510,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         return response({
           ref: `#${runtime.index}`,
           status: "crashed",
-          error: boundText(error instanceof Error ? error.message : String(error), {
-            maxCharacters: 2_000,
-            maxLines: 20,
-          }),
+          error: boundedError(error),
         }, true);
       }
       };

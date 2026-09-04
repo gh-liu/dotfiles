@@ -92,7 +92,11 @@ describe("task API rendering", () => {
         { kind: "thinking", text: "private reasoning" },
         { kind: "tool", id: "a", summary: "read a.ts", status: "completed" },
       ],
-      toolProgress: { earlierCount: 2, history: [], active: [{ id: "b", summary: "test auth.ts" }] },
+      toolProgress: {
+        earlierCount: 2,
+        history: [{ id: "a", summary: "read a.ts", status: "completed" }],
+        active: [{ id: "b", summary: "test auth.ts" }],
+      },
     };
     const rendered = text(renderSubagentResult({ content: [{ type: "text", text: "Thinking…" }], details }, { expanded: true, isPartial: true }, theme, context));
     expect(rendered).toContain("● running");
@@ -128,6 +132,26 @@ describe("task API rendering", () => {
     expect(collapsed).not.toContain("● running ·");
     expect(collapsed).toContain("✓ read a.ts");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
+  });
+
+  test("does not count tool calls still visible in the mixed timeline as earlier activity", () => {
+    const timeline = Array.from({ length: 10 }, (_, index) => ({
+      kind: "tool",
+      id: `tool-${index}`,
+      summary: `read file-${index}.ts`,
+      status: "completed",
+    }));
+    const rendered = text(renderSubagentResult({
+      content: [],
+      details: {
+        status: "running",
+        timeline,
+        toolProgress: { earlierCount: 2, history: timeline.slice(-8), active: [] },
+      },
+    }, { expanded: true, isPartial: true }, theme, runContext()));
+    expect(rendered).toContain("✓ read file-0.ts");
+    expect(rendered).not.toContain("earlier tool");
+    expect(rendered).toContain("✓ read file-9.ts");
   });
 
   test("renders terminal foreground and recovered background handoffs", () => {
