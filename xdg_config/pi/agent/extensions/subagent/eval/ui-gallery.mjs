@@ -85,9 +85,16 @@ function calls() {
 
 function progress() {
   heading("PROGRESS · tool-row receipt");
-  row("active", renderResult(runArgs, {
+  row("thinking", renderResult(runArgs, {
+    ref: "#1", status: "running", activity: "Thinking…",
+    timeline: [{ kind: "tool", id: "read", summary: "read auth.ts", status: "completed" }],
+    phase: { kind: "thinking", status: "running" },
+    toolProgress: { earlierCount: 0, history: [], active: [] },
+  }, { partial: true, text: "Thinking…" }));
+  row("tool active", renderResult(runArgs, {
     ref: "#1", status: "running", activity: "testing auth flow…",
     timeline: [{ kind: "thinking", text: "hidden" }, { kind: "tool", id: "read", summary: "read auth.ts", status: "completed" }],
+    phase: { kind: "tool", status: "running" },
     toolProgress: { earlierCount: 0, history: [], active: [{ id: "test", summary: "npm test auth" }] },
   }, { partial: true, text: "Thinking…" }));
 

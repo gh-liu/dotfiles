@@ -102,9 +102,10 @@ describe("task API rendering", () => {
     expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("… 2 earlier tool activities");
     expect(rendered).toContain("✓ Thinking");
+    expect(rendered).toContain("✦ Thinking");
     expect(rendered).toContain("◷ test auth.ts");
-    const activityRows = rendered.split("\n").filter((line) => /(?:… 2 earlier|✓ Thinking|✓ read|◷ test)/.test(line));
-    expect(activityRows.map((line) => line.match(/^\s*/)?.[0].length)).toEqual([1, 1, 1, 1]);
+    const activityRows = rendered.split("\n").filter((line) => /(?:… 2 earlier|✓ Thinking|✓ read|✦ Thinking|◷ test)/.test(line));
+    expect(activityRows.map((line) => line.match(/^\s*/)?.[0].length)).toEqual([1, 1, 1, 1, 1]);
     expect(rendered).not.toContain("Thinking…");
     expect(rendered).not.toContain("private reasoning");
     expect(rendered).not.toContain("id: b");
@@ -112,6 +113,7 @@ describe("task API rendering", () => {
     const colored = text(renderSubagentResult({ content: [], details }, { expanded: true, isPartial: true }, coloredTheme, context));
     expect(colored).toContain("<syntaxFunction>read</syntaxFunction><muted> a.ts</muted>");
     expect(colored).toContain("<syntaxFunction>test</syntaxFunction><muted> auth.ts</muted>");
+    expect(colored).toContain("<accent>✦ Thinking</accent>");
     const partitionedTheme = {
       ...coloredTheme,
       bg: (color: string, value: string) => `<${color}>${value}</${color}>`,

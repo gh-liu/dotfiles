@@ -21,6 +21,12 @@ function renderActivity(details: Record<string, unknown>, theme: Theme): string 
       text += `\n${renderActivityRow(`${item.status === "failed" ? "✗" : "✓"} ${item.summary}`, theme, "")}`;
     }
   }
+  const phase = details.phase && typeof details.phase === "object"
+    ? details.phase as Record<string, unknown>
+    : undefined;
+  if (phase?.kind === "thinking" && phase.status === "running") {
+    text += `\n${theme.fg("accent", "✦ Thinking")}`;
+  }
   if (Array.isArray(tools?.active)) {
     for (const entry of tools.active) {
       if (!entry || typeof entry !== "object") continue;
