@@ -88,7 +88,10 @@ describe("task API rendering", () => {
       status: "running",
       activity: "read a.ts…",
       phase: { kind: "thinking", status: "running" },
-      timeline: [{ kind: "tool", id: "a", summary: "read a.ts", status: "completed" }],
+      timeline: [
+        { kind: "thinking", text: "private reasoning" },
+        { kind: "tool", id: "a", summary: "read a.ts", status: "completed" },
+      ],
       toolProgress: { earlierCount: 2, history: [], active: [{ id: "b", summary: "test auth.ts" }] },
     };
     const rendered = text(renderSubagentResult({ content: [{ type: "text", text: "Thinking…" }], details }, { expanded: true, isPartial: true }, theme, context));
@@ -98,7 +101,10 @@ describe("task API rendering", () => {
     expect(rendered).not.toContain("Timeline");
     expect(rendered).toContain("✓ read a.ts");
     expect(rendered).toContain("… 2 earlier tool activities");
+    expect(rendered).toContain("✓ Thinking");
     expect(rendered).toContain("◷ test auth.ts");
+    const activityRows = rendered.split("\n").filter((line) => /(?:… 2 earlier|✓ Thinking|✓ read|◷ test)/.test(line));
+    expect(activityRows.map((line) => line.match(/^\s*/)?.[0].length)).toEqual([1, 1, 1, 1]);
     expect(rendered).not.toContain("Thinking…");
     expect(rendered).not.toContain("private reasoning");
     expect(rendered).not.toContain("id: b");

@@ -16,9 +16,9 @@ function renderActivity(details: Record<string, unknown>, theme: Theme): string 
   for (const entry of timeline) {
     if (!entry || typeof entry !== "object") continue;
     const item = entry as Record<string, unknown>;
-    if (item.kind === "thinking") text += `\n${renderActivityRow("✓ Thinking", theme)}`;
+    if (item.kind === "thinking") text += `\n${renderActivityRow("✓ Thinking", theme, "")}`;
     else if (item.kind === "tool" && typeof item.summary === "string") {
-      text += `\n${renderActivityRow(`${item.status === "failed" ? "✗" : "✓"} ${item.summary}`, theme)}`;
+      text += `\n${renderActivityRow(`${item.status === "failed" ? "✗" : "✓"} ${item.summary}`, theme, "")}`;
     }
   }
   if (Array.isArray(tools?.active)) {

@@ -118,12 +118,12 @@ function renderDetailSections(sections: Array<[string, string | undefined]>, the
 }
 
 /** Shared single activity row: Thinking accent, ✓/✗ tool summary, else dim. Single-line normalized. */
-function renderActivityRow(line: string, theme: Theme): string {
+function renderActivityRow(line: string, theme: Theme, indent = "  "): string {
   const bounded = oneLine(line, 200);
   if (bounded === "✓ Thinking") return theme.fg("accent", bounded);
   const match = /^([✓✗])\s+(.+)$/.exec(bounded);
-  if (!match) return theme.fg("dim", `  ${bounded}`);
-  return `  ${theme.fg(match[1] === "✗" ? "error" : "success", match[1])} ${renderToolSummary(theme, match[2])}`;
+  if (!match) return theme.fg("dim", `${indent}${bounded}`);
+  return `${indent}${theme.fg(match[1] === "✗" ? "error" : "success", match[1])} ${renderToolSummary(theme, match[2])}`;
 }
 
 function positiveSafeRuntimeIndex(value: unknown): number | undefined {
