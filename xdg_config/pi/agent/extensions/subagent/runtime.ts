@@ -34,8 +34,6 @@ export interface OperationRecord {
     timeline?: NonNullable<SubagentProgress["timeline"]>;
     tools?: NonNullable<SubagentProgress["tools"]>;
     phase?: SubagentProgress["phase"];
-    needsDecision?: true;
-    decision?: { question: string; options?: string[] };
   };
   notifyOnSettle: boolean;
   /** At-most-once guards so audit and wake never deliver twice. */
@@ -369,12 +367,8 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         ...(normalized.timeline ? { timeline: normalized.timeline } : {}),
         ...(normalized.phase ? { phase: normalized.phase } : {}),
         ...(normalized.tools ? { tools: normalized.tools } : {}),
-        ...(normalized.needsDecision && normalized.decision ? {
-          needsDecision: true as const,
-          decision: normalized.decision,
-        } : {}),
       };
-      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount, normalized.question, normalized.timeline);
+      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount, normalized.timeline);
       onUpdate?.({
         content: [{ type: "text", text: normalized.summary }],
         details: {
@@ -389,9 +383,6 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
           ...(normalized.phase ? { phase: normalized.phase } : {}),
           ...(normalized.tools ? { toolProgress: normalized.tools } : {}),
           ...(normalized.timeline ? { timeline: normalized.timeline } : {}),
-          ...(normalized.needsDecision && normalized.decision
-            ? { needsDecision: true as const, decision: normalized.decision }
-            : {}),
         },
       });
     };

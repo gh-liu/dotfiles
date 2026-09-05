@@ -11,28 +11,14 @@ export interface NormalizedProgress {
     active: SubagentToolProgressItem[];
   };
   phase?: SubagentActivityPhase;
-  needsDecision?: true;
-  decision?: { question: string; options?: string[] };
   /** Concurrent active-tool count for live affordance. */
   activeCount?: number;
-  /** Trimmed non-empty decision question, when present. */
-  question?: string;
 }
 
-/** Single bounded projection for progress summaries, timelines, tools, phases, and decisions. */
+/** Single bounded projection for progress summaries, timelines, tools, and phases. */
 export function normalizeProgress(value: string | SubagentProgress): NormalizedProgress {
   const progress: SubagentProgress = typeof value === "string" ? { summary: value } : value;
   const summary = boundText(progress.summary, { maxCharacters: 240, maxLines: 1 });
-  const question = progress.needsDecision === true && progress.decision
-    && typeof progress.decision.question === "string"
-    ? progress.decision.question.trim()
-    : "";
-  const decisionOptions = Array.isArray(progress.decision?.options)
-    ? progress.decision.options
-        .filter((option): option is string => typeof option === "string" && option.trim() !== "")
-        .map((option) => boundText(option, { maxCharacters: 200, maxLines: 1 }))
-        .slice(0, 8)
-    : [];
   const recentActivity = (progress.timeline ?? [])
     .slice(-8)
     .flatMap((entry) => entry.kind === "thinking"
@@ -51,13 +37,5 @@ export function normalizeProgress(value: string | SubagentProgress): NormalizedP
       },
     } : {}),
     ...(progress.tools ? { activeCount: progress.tools.active.length } : {}),
-    ...(question ? {
-      needsDecision: true as const,
-      question: boundText(question, { maxCharacters: 240, maxLines: 1 }),
-      decision: {
-        question: boundText(question, { maxCharacters: 240, maxLines: 1 }),
-        ...(decisionOptions.length > 0 ? { options: decisionOptions } : {}),
-      },
-    } : {}),
   };
 }

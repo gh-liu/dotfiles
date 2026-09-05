@@ -318,10 +318,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           recentActivity: operation.latestProgress.recentActivity,
           ...(operation.latestProgress.timeline ? { timeline: operation.latestProgress.timeline } : {}),
           ...(operation.latestProgress.tools ? { toolProgress: operation.latestProgress.tools } : {}),
-          ...(operation.latestProgress.needsDecision ? {
-            needsDecision: true,
-            decision: operation.latestProgress.decision,
-          } : {}),
         } : {}),
       } : {}),
     };
@@ -354,9 +350,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     renderShell: "self",
     parameters: SubagentParameters,
     renderCall: (args, theme, context) => {
-      const action = (args as { action?: string }).action;
+      const redactedArgs = typeof (args as { task?: unknown }).task === "string"
+        ? { ...args, task: boundText((args as { task: string }).task, { maxCharacters: 8_000, maxLines: 40 }, credentialSecrets) }
+        : args;
+      const action = (redactedArgs as { action?: string }).action;
       if (action === "run" || action === "followup") {
-        const typed = args as { action: "run" | "followup"; agent?: string; ref?: string; model?: string; thinking?: string };
+        const typed = redactedArgs as { action: "run" | "followup"; agent?: string; ref?: string; model?: string; thinking?: string };
         const found = action === "run"
           ? registry.agents.find((candidate) => candidate.name === typed.agent)
           : typed.ref ? hub.resolve(typed.ref)?.agent : undefined;
@@ -370,7 +369,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return renderSubagentCall(enriched as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
         }
       }
-      return renderSubagentCall(args as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
+      return renderSubagentCall(redactedArgs as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
     },
     renderResult: (result, renderOptions, theme, context) => {
       const typedResult = result as unknown as Parameters<typeof renderSubagentResult>[0];
@@ -483,7 +482,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               turn: operation.turn,
               startedAt: operation.startedAt ?? Date.now(),
               runId: runtime.runId,
-              task,
+              task: boundText(task, { maxCharacters: 500, maxLines: 1 }, credentialSecrets),
             });
             const latest = operation.latestProgress;
             if (latest) {
@@ -492,7 +491,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
                 latest.summary,
                 latest.phase,
                 latest.tools?.active.length,
-                latest.decision?.question,
                 latest.timeline,
               );
             }

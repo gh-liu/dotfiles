@@ -27,7 +27,7 @@ function setupWithRedaction(ids: string[]) {
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
     "call", params as never, undefined, undefined, context(root),
   );
-  return { extension, fake, invoke };
+  return { root, extension, fake, invoke };
 }
 
 function deepKeys(value: unknown, keys: string[] = []): string[] {
@@ -50,6 +50,61 @@ function expectSecretRedacted(result: { content: Array<{ text: string }>; detail
 }
 
 describe("output integration through response projection", () => {
+  test("redacts credentials from collapsed and expanded invocation rows", () => {
+    const env = setupWithRedaction([]);
+    const tool = env.extension.getTool();
+    const args = {
+      action: "run",
+      agent: "scout",
+      task: `Inspect exact=${EXACT_SECRET} token=${GENERIC_TOKEN}`,
+    };
+    const theme = {
+      fg: (_color: string, text: string) => text,
+      bg: (_color: string, text: string) => text,
+      bold: (text: string) => text,
+    } as never;
+    for (const expanded of [false, true]) {
+      const rendered = tool.renderCall!(args as never, theme, {
+        args,
+        expanded,
+        isError: false,
+        state: {},
+        invalidate: vi.fn(),
+      } as never).render(200).join("\n");
+      expect(rendered).not.toContain(EXACT_SECRET);
+      expect(rendered).not.toContain(GENERIC_TOKEN);
+    }
+  });
+
+  test("redacts credentials from the background activity center task", async () => {
+    const env = setupWithRedaction(["job", "operation"]);
+    let widgetFactory: unknown;
+    const uiContext = {
+      ...context(env.root),
+      hasUI: true,
+      ui: {
+        setWidget(_id: string, content: unknown) { widgetFactory = content; },
+        setStatus() {},
+      },
+    } as never;
+    await env.extension.getTool().execute("call", {
+      action: "run",
+      agent: "scout",
+      task: `Inspect exact=${EXACT_SECRET} token=${GENERIC_TOKEN}`,
+      background: true,
+    } as never, undefined, undefined, uiContext);
+    expect(typeof widgetFactory).toBe("function");
+    const theme = {
+      fg: (_color: string, text: string) => text,
+      bold: (text: string) => text,
+    };
+    const widget = (widgetFactory as (tui: unknown, theme: unknown) => { render(width: number): string[] })(undefined, theme);
+    const rendered = widget.render(200).join("\n");
+    expect(rendered).not.toContain(EXACT_SECRET);
+    expect(rendered).not.toContain(GENERIC_TOKEN);
+    await env.extension.shutdown();
+  });
+
   test("settled handoff strips internal identities and secrets within serialization bounds", async () => {
     const env = setupWithRedaction(["job", "private"]);
     const longSection = "evidence-line\n".repeat(400);

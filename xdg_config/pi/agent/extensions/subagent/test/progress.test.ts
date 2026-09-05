@@ -40,23 +40,6 @@ describe("normalizeProgress", () => {
     expect(normalized.tools).not.toBe(tools);
   });
 
-  test("哨兵decision: 空question不透出, 非法options丢弃, 超长截断且最多8个", () => {
-    expect(normalizeProgress({ summary: "s", needsDecision: true }).needsDecision).toBeUndefined();
-    expect(
-      normalizeProgress({ summary: "s", needsDecision: true, decision: { question: "   " } }).needsDecision,
-    ).toBeUndefined();
-    const options = Array.from({ length: 10 }, (_, i) => (i % 3 === 0 ? "" : `${"z".repeat(300)}${i}`));
-    const normalized = normalizeProgress({
-      summary: "s",
-      needsDecision: true,
-      decision: { question: `  ${"q".repeat(500)}  `, options },
-    });
-    expect(normalized.needsDecision).toBe(true);
-    expect(normalized.question?.length).toBeLessThanOrEqual(240);
-    expect(normalized.decision?.options?.length).toBeLessThanOrEqual(8);
-    for (const option of normalized.decision?.options ?? []) expect(option.length).toBeLessThanOrEqual(240);
-  });
-
   test("string输入收敛为同结果且phase透传拷贝", () => {
     const fromString = normalizeProgress("hello");
     const fromObject = normalizeProgress({ summary: "hello" });

@@ -1,7 +1,7 @@
 # Pi Subagent Extension Specification
 
 - Status: Active
-- Updated: 2026-09-02
+- Updated: 2026-09-05
 
 ## 1. Product model
 
@@ -50,7 +50,7 @@ Children do not inherit the parent transcript, skills, prompt templates, themes,
 
 The child prompt is natural language, never a serialized JSON envelope: task objective, working-directory constraint, instructions, initial-turn project guidance, and the expected Summary/Changes/Evidence/Validation/Risks handoff format. The agent definition travels in the session `systemPrompt`; guidance is rendered as prompt prose. `SubagentWorkOrder` remains the internal envelope; only the rendering layer changed.
 
-Only user-scope agents (`~/.pi/agent/agents`) are supported. Project-local agents are explicitly unsupported: there is no scope parameter, no project-trust bypass, and no confirm escape hatch. A child cwd outside the allowed root is rejected.
+The production entrypoint discovers only user-scope agents (`~/.pi/agent/agents`). Project-local agents are explicitly unsupported: there is no model-facing scope parameter, no project-trust bypass, and no confirm escape hatch. Programmatic directory, settings, controller, timeout, and ID overrides are internal dependency-injection seams for deterministic tests, not product scope. A child cwd outside the allowed root is rejected.
 
 Authoritative controller settlement owns turn status; completion never depends on child JSON. Plain final assistant text is a valid summary. Markdown sections named Summary, Changes, Evidence, Validation, and Risks are projected when present. Model-facing envelopes and displayed text, including startup, cancellation, and close errors, are bounded and redact configured credential values. Renderer details may retain a bounded activity timeline, but a recursive model projection strips that timeline and every internal identity before serialization. Tool activity does not replace preceding thinking entries: thinking is flushed into the ordered timeline at tool boundaries. The timeline retains the newest 24 activity entries by design, and its earlier-activity count includes only tool calls no longer visible in that timeline.
 
@@ -59,8 +59,9 @@ Authoritative controller settlement owns turn status; completion never depends o
 ```text
 session:  starting ─▶ running ─▶ idle ─▶ running ─▶ idle ─▶ closed
                          │                    │
-                         └─ cancel ─▶ idle    └─ failure ─▶ idle
-             startup/cleanup failure ─────────────────────▶ crashed
+                         ├─ cancel ─▶ idle    └─ child result (completed/failed/interrupted) ─▶ idle
+                         └─ controller/provider/protocol failure ──────────────────────────▶ crashed
+             startup/cleanup failure ─────────────────────────────────────────────────────▶ crashed
 ```
 
 A capacity slot is reserved before controller creation and held only while a turn is starting or running. Settlement releases the slot without closing the session. Idle sessions preserve context but consume no execution capacity. `maxConcurrentRuns` is configurable from 1 through 8 and defaults to 3. At most 100 open sessions and 128 operations per session are retained in memory.
@@ -73,7 +74,7 @@ All error, cancel, close, crash, and shutdown paths best-effort close owned reso
 
 Foreground and background turns have separate visual owners. A foreground tool result uses a status-colored header for the invocation and current state while keeping the potentially long activity history on the terminal background. The live status line is status-only (`● running`): it never repeats `details.activity`, because the active activity row is the single visual owner of the current tool. The activity region distinguishes active thinking as `✦ Thinking` from settled thinking as `✓ Thinking`, and renders earlier-count, thinking, completed/failed tools, and active tools at one consistent indentation level; indentation never implies a hierarchy between lifecycle entries. Raw reasoning, tool-call IDs, and tool output are never rendered.
 
-The above-editor activity center owns only accepted background turns after their tool call returns. Rows are keyed internally by operation and display the session's `#N` plus a monotonic `turn N`, so an older completion and a newer followup in the same session cannot overwrite or be confused with each other. Each row also shows its agent, elapsed time, bounded task, up to three settled timeline entries, and the latest sanitized current activity; a tool transition therefore cannot visually erase the preceding completed Thinking marker. A background settlement remains `result ready · awaiting card · get #N` until Pi emits `message_start` for that exact completion card; queuing `sendMessage` is not treated as delivery acknowledgement. Delivery failure leaves a recoverable `card failed · get #N` row. Dense and narrow layouts prioritize refs, decisions, and recovery instructions.
+The above-editor activity center owns only accepted background turns after their tool call returns. Rows are keyed internally by operation and display the session's `#N` plus a monotonic `turn N`, so an older completion and a newer followup in the same session cannot overwrite or be confused with each other. Each row also shows its agent, elapsed time, bounded task, up to three settled timeline entries, and the latest sanitized current activity; a tool transition therefore cannot visually erase the preceding completed Thinking marker. A background settlement remains `result ready · awaiting card · get #N` until Pi emits `message_start` for that exact completion card; queuing `sendMessage` is not treated as delivery acknowledgement. Delivery failure leaves a recoverable `card failed · get #N` row. Dense and narrow layouts prioritize refs and recovery instructions.
 
 Wake routing follows parent busyness: background completion wakes are custom messages with `customType: "subagent-operation-settled"` (exported in code as `SUBAGENT_COMPLETION_MESSAGE`, the single source of truth). Idle parents receive `sendMessage({ triggerTurn: true })` immediately, while busy parents receive the same wake queued as `deliverAs: "followUp"`. `steer` is never used. Auditing (`subagent-settle-log` with `jobId`/`operationId`/`turn`/`ref`/`agent`/`status`) and waking are tracked separately with per-operation at-most-once guards: shutdown and close suppress queued wakes but never the audit. Closing a session drops its queued wakes so a closed session never emits `triggerTurn`. Event-driven widget updates are throttled to 100 ms (leading + trailing, bursts coalesce); the elapsed-time/spinner repaint clock stays at 250 ms.
 

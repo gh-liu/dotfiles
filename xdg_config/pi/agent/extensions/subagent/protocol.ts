@@ -50,12 +50,6 @@ export const SUBAGENT_FAILED_GLYPH = "✗";
  */
 export const SUBAGENT_SPINNER_FRAMES = [SUBAGENT_SPINNER_GLYPH, "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-/** A bounded decision request the child raises when it needs parent input to proceed. */
-export interface SubagentDecision {
-  question: string;
-  options?: string[];
-}
-
 export interface SubagentProgress {
   summary: string;
   /** Explicit thinking/tool boundary state for live renderers; omitted otherwise. */
@@ -68,10 +62,6 @@ export interface SubagentProgress {
   };
   /** Bounded, event-ordered timeline interleaving tool calls and thinking segments. */
   timeline?: SubagentTimelineEntry[];
-  /** True only when this progress update carries a decision the parent must answer. */
-  needsDecision?: boolean;
-  /** Bounded decision payload surfaced alongside a needsDecision update. */
-  decision?: SubagentDecision;
 }
 
 export interface SubagentRunOptions {

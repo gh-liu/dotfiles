@@ -93,18 +93,18 @@ describe("activity center", () => {
     live.track("r1", tracked());
 
     const thinking = [{ kind: "thinking" as const, text: "private reasoning" }];
-    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" }, undefined, undefined, thinking);
+    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" }, undefined, thinking);
     vi.advanceTimersByTime(250);
     expect(renderWidget(ui).join("\n")).toContain("↳ ✓ Thinking");
 
     const completed = { kind: "tool" as const, id: "grep", summary: "grep schema", status: "completed" as const };
-    live.progress("r1", "grep schema complete", { kind: "tool", status: "completed" }, undefined, undefined, [...thinking, completed]);
+    live.progress("r1", "grep schema complete", { kind: "tool", status: "completed" }, undefined, [...thinking, completed]);
     vi.advanceTimersByTime(250);
     expect(renderWidget(ui).join("\n")).toContain("↳ ✓ Thinking");
     expect(renderWidget(ui).join("\n")).toContain("↳ ✓ grep schema");
 
     const failed = { kind: "tool" as const, id: "test", summary: "npm test", status: "failed" as const };
-    live.progress("r1", "npm test failed", { kind: "tool", status: "failed" }, undefined, undefined, [...thinking, completed, failed]);
+    live.progress("r1", "npm test failed", { kind: "tool", status: "failed" }, undefined, [...thinking, completed, failed]);
     vi.advanceTimersByTime(250);
     const rendered = renderWidget(ui).join("\n");
     expect(rendered).toContain("↳ ✓ Thinking");
@@ -141,19 +141,16 @@ describe("activity center", () => {
     expect(rendered).not.toContain("old activity");
   });
 
-  test("prioritizes decisions and preserves actionable text on narrow terminals", () => {
+  test("keeps active rows readable on narrow terminals", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked({ index: 1 }));
     live.track("r2", tracked({ index: 12, agent: "reviewer" }));
-    live.progress("r2", "waiting", undefined, undefined, "Choose API version");
+    live.progress("r2", "reviewing API version");
     vi.advanceTimersByTime(250);
     const lines = renderWidget(ui, 32);
-    const decisionHeader = lines.find((line) => line.includes("#12"));
-    expect(decisionHeader).toContain("needs input");
-    expect(lines.find((line) => line.includes("Choose API"))).toBeDefined();
-    expect(lines.findIndex((line) => line.includes("#12"))).toBeLessThan(lines.findIndex((line) => line.includes("#1 scout")));
+    expect(lines.find((line) => line.includes("#12 reviewer"))).toBeDefined();
     for (const line of lines) expect(visibleWidth(line)).toBeLessThanOrEqual(32);
   });
 
@@ -169,18 +166,17 @@ describe("activity center", () => {
     expect(compact[0]).toContain("…");
   });
 
-  test("bounds dense layouts while retaining priority jobs", () => {
+  test("bounds dense layouts and points to get for hidden sessions", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     for (let index = 1; index <= 7; index += 1) {
       live.track(`r${index}`, tracked({ index, task: `Investigate bounded work stream ${index} and return evidence.` }));
     }
-    live.progress("r7", "waiting", undefined, undefined, "Resolve the release policy");
     vi.advanceTimersByTime(250);
     const lines = renderWidget(ui, 100);
     expect(lines[0]).toContain("7 active");
-    expect(lines.find((line) => line.includes("#7 scout"))).toBeDefined();
+    expect(lines.find((line) => line.includes("#5 scout"))).toBeDefined();
     expect(lines.find((line) => line.includes("#6 scout"))).toBeUndefined();
     expect(lines.at(-1)).toContain("… 2 more sessions · use get for details");
     expect(lines.filter((line) => line.includes("↳"))).toHaveLength(0);
