@@ -7,6 +7,34 @@ afterEach(() => {
 });
 
 describe("close bounded deadline and failure race", () => {
+  test("a successful close releases the slot when an unaccepted start does not settle", async () => {
+    const env = setup({
+      autoAccept: false,
+      ids: ["job", "private", "replacement", "replacement-op"],
+      maxConcurrentRuns: 1,
+    });
+    const initialRun = env.invoke({ action: "run", agent: "scout", task: "Never accepted", background: true });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    const controller = env.fake.controllers[0];
+    // A controller may successfully dispose its child before the pending start
+    // reports acceptance or settlement. Runtime capacity must not depend on
+    // those promises after close has authoritatively succeeded.
+    controller.close = async () => { controller.closeCalls += 1; };
+
+    expect(await env.invoke({ action: "close", ref: "#1" })).toMatchObject({
+      details: { closed: true, status: "closed" },
+    });
+    const replacementRun = env.invoke({ action: "run", agent: "scout", task: "Replacement", background: true });
+    await vi.waitFor(() => expect(env.fake.controllers[1]?.starts).toHaveLength(1));
+    env.fake.controllers[1].accept();
+    expect(await replacementRun).not.toMatchObject({ isError: true });
+
+    controller.accept();
+    controller.settle();
+    await initialRun;
+    await env.extension.shutdown();
+  });
+
   test("close is bounded by a single 5s deadline and releases the slot", async () => {
     vi.useFakeTimers();
     try {

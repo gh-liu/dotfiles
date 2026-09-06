@@ -3,6 +3,31 @@ import { type Component, Text } from "@earendil-works/pi-tui";
 
 import { boundedLines, formatDuration, oneLine, positiveSafeRuntimeIndex, publicRef, renderActivityRow, renderDetailSections, renderPartitionedStatus, renderToolSummary, type SubagentRenderContext, type SubagentRenderResult } from "./shared.ts";
 
+/** The one activity worth showing while collapsed; history belongs to the expanded view. */
+function renderCurrentActivity(details: Record<string, unknown>, theme: Theme): string | undefined {
+  const phase = details.phase && typeof details.phase === "object"
+    ? details.phase as Record<string, unknown>
+    : undefined;
+  if (phase?.kind === "thinking" && phase.status === "running") return theme.fg("accent", "✦ Thinking");
+  const tools = details.toolProgress && typeof details.toolProgress === "object"
+    ? details.toolProgress as Record<string, unknown>
+    : undefined;
+  const active = Array.isArray(tools?.active)
+    ? tools.active.filter((entry) => entry && typeof entry === "object") as Array<Record<string, unknown>>
+    : [];
+  const latest = active.at(-1);
+  if (typeof latest?.summary === "string") {
+    const suffix = active.length > 1 ? theme.fg("muted", ` · ${active.length} active`) : "";
+    return `${theme.fg("warning", "◷")} ${renderToolSummary(theme, latest.summary)}${suffix}`;
+  }
+  if (typeof details.activity === "string" && details.activity.trim()) {
+    return phase?.kind === "tool"
+      ? `${theme.fg("warning", "◷")} ${renderToolSummary(theme, details.activity)}`
+      : theme.fg("dim", oneLine(details.activity, 240));
+  }
+  return undefined;
+}
+
 function renderActivity(details: Record<string, unknown>, theme: Theme): string {
   let text = "";
   const tools = details.toolProgress && typeof details.toolProgress === "object"
@@ -64,7 +89,13 @@ export function renderSubagentResult(
     queueMicrotask(() => { try { context.invalidate(); } catch {} });
   }
   if (options.isPartial) {
-    return renderPartitionedStatus(`${theme.fg("accent", "● running")}${renderActivity(details, theme)}`, theme, true, context.isError);
+    let text = theme.fg("warning", "● running");
+    if (options.expanded) text += renderActivity(details, theme);
+    else {
+      const current = renderCurrentActivity(details, theme);
+      if (current) text += `\n  ${current}`;
+    }
+    return renderPartitionedStatus(text, theme, true, context.isError);
   }
 
   const status = typeof details.status === "string" ? details.status : "unknown";
@@ -91,6 +122,12 @@ export function renderSubagentResult(
   }
 
   if (context.args.action === "cancel" || context.args.action === "close") {
+    if (status === "crashed") {
+      let text = theme.fg("error", `✗${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · session crashed`);
+      if (error) text += `\n  ${theme.fg("dim", oneLine(error, 240))}`;
+      if (agent) text += `\n  ${theme.fg("muted", `start a new ${agent} session`)}`;
+      return renderPartitionedStatus(text, theme, false, true);
+    }
     const succeeded = context.args.action === "cancel" && details.cancelled === true;
     const label = succeeded ? "✓ cancel acknowledged" : `• ${context.args.action} not applied`;
     let text = theme.fg(succeeded ? "success" : context.isError ? "error" : "muted", label);
@@ -119,12 +156,16 @@ export function renderSubagentResult(
           `${turnStatus === "completed" ? "✓" : turnStatus === "failed" ? "✗" : "■"} ${turnStatus}`)
       : status === "idle" ? theme.fg("success", `✓${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · session idle`)
       : status === "closed" ? theme.fg("muted", "× session closed")
-      : status === "crashed" ? theme.fg("error", "✗ session crashed")
+      : status === "crashed" ? theme.fg("error", `✗${displayRef ? ` ${displayRef}` : ""}${agent ? ` ${agent}` : ""} · session crashed`)
       : theme.fg("warning", "? unknown session");
-  if (displayRef && !(status === "idle" && turnStatus)) text += theme.fg("toolTitle", ` · ${displayRef}`);
+  if (displayRef && !(status === "idle" && turnStatus) && status !== "crashed") text += theme.fg("toolTitle", ` · ${displayRef}`);
   if (turn) text += theme.fg("muted", ` · turn ${turn}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatDuration(details.elapsedMs)}`);
-  if (summary && !options.expanded) text += `\n${theme.fg("dim", oneLine(summary, 240))}`;
+  if (summary && !options.expanded) text += `\n  ${theme.fg("dim", oneLine(summary, 240))}`;
+  if (!summary && !options.expanded && (status === "starting" || status === "running")) {
+    const current = renderCurrentActivity(details, theme);
+    if (current) text += `\n  ${current}`;
+  }
   if (options.expanded) {
     text += renderDetailSections([
       ["Summary", typeof summary === "string" ? summary : undefined],
@@ -139,7 +180,9 @@ export function renderSubagentResult(
     text += renderActivity(details, theme);
   }
   if (status === "idle" && displayRef) {
-    text += `\n${theme.fg("muted", `${displayRef} · workstream open · follow up gaps or close when accepted`)}`;
+    text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `workstream open · follow up ${displayRef} or close ${displayRef}`)}`;
+  } else if (status === "crashed" && agent) {
+    text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `start a new ${agent} session`)}`;
   }
   return renderPartitionedStatus(text, theme, false, context.isError);
 }

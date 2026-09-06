@@ -118,19 +118,16 @@ describe("task API rendering", () => {
     expect(colored).toContain("<syntaxFunction>read</syntaxFunction><muted> a.ts</muted>");
     expect(colored).toContain("<syntaxFunction>test</syntaxFunction><muted> auth.ts</muted>");
     expect(colored).toContain("<accent>✦ Thinking</accent>");
-    const partitionedTheme = {
-      ...coloredTheme,
-      bg: (color: string, value: string) => `<${color}>${value}</${color}>`,
-    } as never;
-    const partitioned = text(renderSubagentResult({ content: [], details }, { expanded: true, isPartial: true }, partitionedTheme, context));
-    expect(partitioned).toContain("<toolPendingBg>");
+    const partitioned = text(renderSubagentResult({ content: [], details }, { expanded: true, isPartial: true }, coloredTheme, context));
     const [statusLine, ...activityLines] = partitioned.split("\n");
     expect(statusLine).not.toContain("<success>✓</success>");
     expect(activityLines.join("\n")).toContain("<success>✓</success> <syntaxFunction>read</syntaxFunction>");
     const collapsed = text(renderSubagentResult({ content: [], details }, { expanded: false, isPartial: true }, theme, context));
     expect(collapsed).toContain("● running");
     expect(collapsed).not.toContain("● running ·");
-    expect(collapsed).toContain("✓ read a.ts");
+    expect(collapsed).toContain("✦ Thinking");
+    expect(collapsed).not.toContain("✓ read a.ts");
+    expect(collapsed).not.toContain("earlier tool activities");
     expect((context as { state: { spinnerTimer?: unknown } }).state.spinnerTimer).toBeUndefined();
   });
 
@@ -159,7 +156,7 @@ describe("task API rendering", () => {
     expect(foreground).toContain("✓ completed · turn 1 · 1s");
     expect(foreground).not.toContain("✓ #1 scout");
     expect(foreground).toContain("Done");
-    expect(foreground).toContain("#1 · workstream open · follow up gaps or close when accepted");
+    expect(foreground).toContain("workstream open · follow up #1 or close #1");
     const runExpanded = text(renderSubagentResult({ content: [], details: {
       ref: "#1",
       agent: "scout",
@@ -211,6 +208,14 @@ describe("task API rendering", () => {
     } as never));
     expect(cancel).toContain("cancel acknowledged");
 
+    const crashedCancel = text(renderSubagentResult({ content: [], details: {
+      ref: "#2", agent: "scout", status: "crashed", cancelled: false, error: "Provider connection closed.",
+    } }, { expanded: false, isPartial: false }, theme, {
+      args: { action: "cancel", ref: "#2" }, isError: true, state: {}, invalidate: vi.fn(),
+    } as never));
+    expect(crashedCancel).toContain("✗ #2 scout · session crashed");
+    expect(crashedCancel).toContain("start a new scout session");
+
     const close = text(renderSubagentResult({ content: [], details: {
       ref: "#2", agent: "scout", status: "closed", closed: true,
     } }, { expanded: false, isPartial: false }, theme, {
@@ -241,9 +246,9 @@ describe("task API rendering", () => {
       summary: "Mapped the auth lifecycle.", evidence: "src/auth.ts", validation: "tests pass", elapsedMs: 2_000,
     };
     const collapsed = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(collapsed).toContain("✓ scout · turn 1 · 2s");
+    expect(collapsed).toContain("✓ #1 scout · turn 1 · 2s");
     expect(collapsed).toContain("Mapped the auth lifecycle.");
-    expect(collapsed).toContain("#1 · workstream open · follow up gaps or close when accepted · expand for details");
+    expect(collapsed).toContain("workstream open · follow up #1 or close #1 · expand for details");
     expect(collapsed).not.toContain("· completed");
 
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
@@ -257,7 +262,7 @@ describe("task API rendering", () => {
       completed,
       { ...completed, jobId: "job-2", operationId: "operation-2", ref: "#2", status: "failed" as const },
     ] } }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(mixed).toContain("✗ scout · turn 1 · failed · 2s");
+    expect(mixed).toContain("✗ #2 scout · turn 1 · failed · 2s");
     expect(mixed).not.toContain("<toolPendingBg>");
     expect(mixed).not.toContain("<toolErrorBg>");
     expect(mixed).not.toContain("<toolSuccessBg>");
@@ -269,7 +274,8 @@ describe("task API rendering", () => {
       status: "failed" as const, summary: "Controller crashed.",
     };
     const card = text(renderSubagentCompletion({ content: "", details: unavailable }, { expanded: false, outputPad: 0 }, theme));
-    expect(card).toContain("#3 · workstream unavailable");
+    expect(card).toContain("✗ #3 reviewer · failed");
+    expect(card).toContain("workstream unavailable");
     expect(card).not.toContain("workstream open");
 
     const crashed = text(renderSubagentResult({
@@ -277,6 +283,8 @@ describe("task API rendering", () => {
     }, { expanded: false, isPartial: false }, theme, {
       args: { action: "get", ref: "#3" }, isError: true, state: {}, invalidate: vi.fn(),
     } as never));
+    expect(crashed).toContain("✗ #3 reviewer · session crashed");
+    expect(crashed).toContain("start a new reviewer session");
     expect(crashed).not.toContain("workstream open");
   });
 });

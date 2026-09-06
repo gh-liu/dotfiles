@@ -47,7 +47,7 @@ function completionEntryText(
   const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
   const summaryRaw = details.summary ?? "";
-  let text = `${theme.fg(color, marker)} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
+  let text = `${theme.fg(color, marker)} ${theme.fg("toolTitle", theme.bold(details.ref))} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
   if (typeof details.turn === "number") text += theme.fg("muted", ` · turn ${details.turn}`);
   if (status !== "completed") text += theme.fg(color, ` · ${status}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatDuration(details.elapsedMs)}`);
@@ -57,8 +57,10 @@ function completionEntryText(
   const hasDetails = [details.task, summaryRaw, details.changes, details.evidence, details.validation, details.risks, ...(details.recentActivity ?? [])]
     .some((value) => typeof value === "string" && value.trim());
   if (!expanded) {
-    const affordance = details.sessionOpen ? "workstream open · follow up gaps or close when accepted" : "workstream unavailable";
-    text += `\n${theme.fg("muted", `  ${details.ref} · ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
+    const affordance = details.sessionOpen
+      ? `workstream open · follow up ${details.ref} or close ${details.ref}`
+      : "workstream unavailable";
+    text += `\n${theme.fg("muted", `  ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
   }
   if (expanded) {
     text += renderDetailSections([
@@ -71,7 +73,7 @@ function completionEntryText(
         text += `\n${renderActivityRow(line, theme)}`;
       }
     }
-    text += `\n${theme.fg("muted", `${details.ref} · ${details.sessionOpen ? "workstream open · follow up gaps or close when accepted" : "workstream unavailable"}`)}`;
+    text += `\n\n${theme.fg("muted", details.sessionOpen ? `workstream open · follow up ${details.ref} or close ${details.ref}` : "workstream unavailable")}`;
   }
   return text;
 }

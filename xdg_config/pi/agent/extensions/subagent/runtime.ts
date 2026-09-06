@@ -274,6 +274,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     deps.live.removeSession(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
+    let controllerDisposed = false;
     runtime.closePromise = (async () => {
       let failure: unknown;
       let interruptTimer: ReturnType<typeof setTimeout> | undefined;
@@ -299,7 +300,10 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
               }
             }
             try {
-              await runtime.controller?.close();
+              if (runtime.controller) {
+                await runtime.controller.close();
+                controllerDisposed = true;
+              }
             } catch (error) {
               failure ??= error;
             }
@@ -321,13 +325,14 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (runtime.state !== "crashed") transition(runtime, "crashed");
       throw error;
     }).finally(() => {
-      // A timed-out close does not prove that an active turn stopped. Keep its
-      // slot quarantined until authoritative settlement releases it, otherwise
-      // a hung controller could make actual concurrency exceed the configured cap.
+      // A successful controller close authoritatively ends even an unaccepted
+      // start whose promises never settle. A failed or timed-out close does not
+      // prove that an active turn stopped, so keep that slot quarantined until
+      // authoritative operation settlement releases it.
       const activeOperation = runtime.activeOperationId
         ? runtime.operations.get(runtime.activeOperationId)
         : undefined;
-      if (!activeOperation || activeOperation.state !== "running") releaseSlot(runtime);
+      if (controllerDisposed || !activeOperation || activeOperation.state !== "running") releaseSlot(runtime);
       prune();
     });
     return runtime.closePromise;
@@ -368,7 +373,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
         ...(normalized.phase ? { phase: normalized.phase } : {}),
         ...(normalized.tools ? { tools: normalized.tools } : {}),
       };
-      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount, normalized.timeline);
+      deps.live.progress(operationId, normalized.summary, normalized.phase, normalized.activeCount);
       onUpdate?.({
         content: [{ type: "text", text: normalized.summary }],
         details: {

@@ -9,16 +9,16 @@
  * delivery leaves a static recovery row rather than silently losing the result.
  *
  * Every method is a safe no-op until attach(ui) provides a UI context, so
- * headless (-p) and RPC runs never touch terminal UI. Renders are throttled
- * (leading + trailing 250 ms) and a single 250 ms repaint clock keeps elapsed
+ * headless (-p) and RPC runs never touch terminal UI. Event renders are throttled
+ * (leading + trailing 100 ms) and a separate 250 ms repaint clock keeps elapsed
  * time fresh and advances the job-level spinner while any runtime is tracked;
  * all timers stop when idle or disposed.
  */
 
 import type { ExtensionUIContext, Theme } from "@earendil-works/pi-coding-agent";
-import { truncateToWidth, wrapTextWithAnsi, type Component, type TUI } from "@earendil-works/pi-tui";
+import { truncateToWidth, type Component, type TUI } from "@earendil-works/pi-tui";
 
-import type { SubagentActivityPhase, SubagentTimelineEntry } from "./protocol.ts";
+import type { SubagentActivityPhase } from "./protocol.ts";
 import { SUBAGENT_DONE_GLYPH, SUBAGENT_FAILED_GLYPH, SUBAGENT_SPINNER_FRAMES } from "./protocol.ts";
 import { oneLine, renderToolSummary } from "./render/shared.ts";
 
@@ -53,10 +53,9 @@ interface RuntimeDisplay {
   activityPhase?: SubagentActivityPhase;
   /** Number of concurrently running tools in the latest progress update. */
   activeCount?: number;
-  /** Bounded settled activity retained across current-activity changes. */
-  timeline?: SubagentTimelineEntry[];
   settlement?: "reporting" | "report-failed";
   outcome?: "completed" | "failed" | "interrupted";
+  settledElapsedMs?: number;
 }
 
 /** Plain elapsed seconds count with unit suffix: `0s`, `42s`, `221s`. */
@@ -93,30 +92,6 @@ function renderActivity(theme: Theme, runtime: RuntimeDisplay): string {
   return rendered + activeSuffix;
 }
 
-function renderActivityLines(theme: Theme, runtime: RuntimeDisplay): string[] {
-  const settled = (runtime.timeline ?? []).slice(-3).map((entry) =>
-    entry.kind === "thinking"
-      ? theme.fg("accent", `${SUBAGENT_DONE_GLYPH} Thinking`)
-      : `${theme.fg(entry.status === "failed" ? "error" : "success", entry.status === "failed" ? SUBAGENT_FAILED_GLYPH : SUBAGENT_DONE_GLYPH)} ${renderToolSummary(theme, entry.summary)}`
-  );
-  const phase = runtime.activityPhase;
-  // Completed phases are already represented by the authoritative timeline.
-  // Unphased summaries (startup/synthesis) and active phases remain current.
-  if (!phase || phase.status === "running") settled.push(renderActivity(theme, runtime));
-  return settled;
-}
-
-function taskLines(task: string, width: number, maximumLines: number): string[] {
-  const available = Math.max(1, width - 2);
-  const limit = Math.min(maximumLines, width >= 80 ? 2 : 1);
-  const wrapped = wrapTextWithAnsi(oneLine(task, 500), available);
-  const visible = wrapped.slice(0, limit);
-  if (wrapped.length > visible.length && visible.length > 0) {
-    visible[visible.length - 1] = truncateToWidth(`${visible[visible.length - 1]}…`, available, "…");
-  }
-  return visible;
-}
-
 function renderLines(
   theme: Theme,
   width: number,
@@ -126,41 +101,37 @@ function renderLines(
 ): string[] {
   const values = [...runtimes.values()];
   const active = values.filter((runtime) => !runtime.settlement).length;
-  const reporting = runtimes.size - active;
-  const counts = [`${active} active`, ...(reporting ? [`${reporting} reporting`] : [])];
-  const lines: string[] = [truncateToWidth(theme.fg("toolTitle", `Background subagents · ${counts.join(" · ")}`), width)];
-  const ordered = values.sort((first, second) => Number(Boolean(first.settlement)) - Number(Boolean(second.settlement)) || first.index - second.index);
-  const dense = ordered.length > 3;
-  const visible = ordered.slice(0, 5);
+  const ready = runtimes.size - active;
+  const counts = [...(active ? [`${active} running`] : []), ...(ready ? [`${ready} ready`] : [])];
+  const lines: string[] = [truncateToWidth(theme.fg("toolTitle", `Subagents${counts.length ? ` · ${counts.join(" · ")}` : ""}`), width)];
+  const priority = (runtime: RuntimeDisplay): number =>
+    runtime.settlement === "report-failed" ? 0 : runtime.settlement === "reporting" ? 1 : 2;
+  const ordered = values.sort((first, second) => priority(first) - priority(second) || first.index - second.index);
+  const visible = ordered.slice(0, 4);
   for (const runtime of visible) {
     const ref = `#${runtime.index}`;
-    const elapsedMs = Math.max(0, now - runtime.startedAt);
+    const elapsedMs = runtime.settledElapsedMs ?? Math.max(0, now - runtime.startedAt);
     const time = formatDuration(elapsedMs);
+    const compact = width < 50;
     const turn = width >= 45 ? theme.fg("muted", ` · turn ${runtime.turn}`) : "";
     const identity = `${theme.fg("toolTitle", theme.bold(ref))} ${theme.bold(oneLine(runtime.agent, width < 45 ? 12 : 24))}${turn}`;
     let marker: string;
     let suffix = theme.fg("muted", ` · ${time}`);
     if (runtime.settlement === "report-failed") {
       marker = theme.fg("error", "!");
-      suffix = theme.fg("error", ` · card failed · get ${ref}`);
+      suffix = theme.fg("error", compact ? ` · failed · get ${ref}` : ` · ${time} · delivery failed · get ${ref}`);
     } else if (runtime.settlement === "reporting") {
       const outcome = runtime.outcome ?? "completed";
       marker = theme.fg(outcome === "completed" ? "success" : outcome === "failed" ? "error" : "warning",
         outcome === "completed" ? SUBAGENT_DONE_GLYPH : outcome === "failed" ? SUBAGENT_FAILED_GLYPH : "■");
-      suffix = theme.fg("muted", ` · result ready · awaiting card · get ${ref}`);
+      suffix = theme.fg("muted", compact ? ` · ready · get ${ref}` : ` · ${time} · ready · get ${ref}`);
     } else {
       marker = theme.fg("warning", SUBAGENT_SPINNER_FRAMES[spinnerFrame] ?? SUBAGENT_SPINNER_FRAMES[0]);
     }
     lines.push(truncateToWidth(`${marker} ${identity}${suffix}`, width));
-    if (!runtime.settlement) {
-      for (const task of taskLines(runtime.task, width, dense ? 1 : 2)) {
-        lines.push(truncateToWidth(theme.fg("dim", `  ${task}`), width));
-      }
-      if (width >= 50 && !dense) {
-        for (const activity of renderActivityLines(theme, runtime)) {
-          lines.push(truncateToWidth(`  ${theme.fg("muted", "↳")} ${activity}`, width));
-        }
-      }
+    lines.push(truncateToWidth(theme.fg("dim", `  ${oneLine(runtime.task, 500)}`), width, "…"));
+    if (!runtime.settlement && width >= 40) {
+      lines.push(truncateToWidth(`  ${theme.fg("muted", "↳")} ${renderActivity(theme, runtime)}`, width));
     }
   }
   if (ordered.length > visible.length) {
@@ -178,7 +149,7 @@ export interface LiveUiController {
    * Record a progress summary plus the optional live activity phase as the current
    * activity; activeCount is the number of concurrently running tools in this update.
    */
-  progress(operationKey: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number, timeline?: SubagentTimelineEntry[]): void;
+  progress(operationKey: string, summary: string, phase?: SubagentActivityPhase, activeCount?: number): void;
   /** Mark settlement while its completion card is handed to Pi. */
   settle(operationKey: string, outcome: "completed" | "failed" | "interrupted", elapsedMs?: number): void;
   /** Keep a settled recovery row when completion delivery fails. */
@@ -295,21 +266,21 @@ export function createLiveUi(): LiveUiController {
       syncRepaintClock();
       scheduleDraw();
     },
-    progress(operationKey, summary, phase, activeCount, timeline) {
+    progress(operationKey, summary, phase, activeCount) {
       const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
       runtime.activity = summary;
       runtime.activityPhase = phase;
       runtime.activeCount = activeCount;
-      runtime.timeline = timeline?.map((entry) => ({ ...entry }));
       syncRepaintClock();
       scheduleDraw();
     },
-    settle(operationKey, outcome, _elapsedMs) {
+    settle(operationKey, outcome, elapsedMs) {
       const runtime = runtimes.get(operationKey);
       if (disposed || !runtime) return;
       runtime.settlement = "reporting";
       runtime.outcome = outcome;
+      runtime.settledElapsedMs = elapsedMs;
       runtime.activeCount = undefined;
       syncRepaintClock();
       scheduleDraw();

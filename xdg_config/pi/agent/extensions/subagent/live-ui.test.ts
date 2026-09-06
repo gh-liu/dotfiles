@@ -77,7 +77,7 @@ describe("activity center", () => {
     vi.advanceTimersByTime(250);
 
     const lines = renderWidget(ui);
-    expect(lines[0]).toBe("Background subagents · 2 active");
+    expect(lines[0]).toBe("Subagents · 2 running");
     expect(lines.join("\n")).toContain("#1 scout · turn 1 · 0s");
     expect(lines.join("\n")).toContain("#2 reviewer · turn 1 · 0s");
     expect(lines.join("\n")).toContain("Map the authentication lifecycle");
@@ -86,30 +86,27 @@ describe("activity center", () => {
     expect(lines.join("\n")).toContain("↳ Thinking…");
   });
 
-  test("keeps completed Thinking visible when current activity advances to tools", () => {
+  test("shows only the current activity as it advances", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked());
 
-    const thinking = [{ kind: "thinking" as const, text: "private reasoning" }];
-    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" }, undefined, thinking);
+    live.progress("r1", "Thinking", { kind: "thinking", status: "completed" });
     vi.advanceTimersByTime(250);
     expect(renderWidget(ui).join("\n")).toContain("↳ ✓ Thinking");
 
-    const completed = { kind: "tool" as const, id: "grep", summary: "grep schema", status: "completed" as const };
-    live.progress("r1", "grep schema complete", { kind: "tool", status: "completed" }, undefined, [...thinking, completed]);
+    live.progress("r1", "grep schema complete", { kind: "tool", status: "completed" });
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("↳ ✓ Thinking");
-    expect(renderWidget(ui).join("\n")).toContain("↳ ✓ grep schema");
+    expect(renderWidget(ui).join("\n")).not.toContain("↳ ✓ Thinking");
+    expect(renderWidget(ui).join("\n")).toContain("↳ ✓ grep schema complete");
 
-    const failed = { kind: "tool" as const, id: "test", summary: "npm test", status: "failed" as const };
-    live.progress("r1", "npm test failed", { kind: "tool", status: "failed" }, undefined, [...thinking, completed, failed]);
+    live.progress("r1", "npm test failed", { kind: "tool", status: "failed" });
     vi.advanceTimersByTime(250);
     const rendered = renderWidget(ui).join("\n");
-    expect(rendered).toContain("↳ ✓ Thinking");
-    expect(rendered).toContain("↳ ✓ grep schema");
-    expect(rendered).toContain("↳ ✗ npm test");
+    expect(rendered).not.toContain("↳ ✓ Thinking");
+    expect(rendered).not.toContain("↳ ✓ grep schema");
+    expect(rendered).toContain("↳ ✗ npm test failed");
   });
 
   test("animates one job-level spinner through startup, tools, and synthesis", () => {
@@ -154,14 +151,25 @@ describe("activity center", () => {
     for (const line of lines) expect(visibleWidth(line)).toBeLessThanOrEqual(32);
   });
 
-  test("uses two task lines when wide and one when compact", () => {
+  test("keeps recovery actions visible on narrow terminals", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    live.track("r1", tracked({ index: 12, agent: "reviewer" }));
+    live.settle("r1", "completed", 12_000);
+    expect(renderWidget(ui, 36).find((line) => line.includes("#12"))).toContain("ready · get #12");
+    live.reportFailed("r1");
+    expect(renderWidget(ui, 36).find((line) => line.includes("#12"))).toContain("failed · get #12");
+  });
+
+  test("uses one bounded task line at every width", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked({ task: "A deliberately long task that explains what the child should inspect, why the investigation matters, and what evidence it should return to the parent." }));
     const wide = renderWidget(ui, 80).filter((line) => line.startsWith("  ") && !line.includes("↳"));
     const compact = renderWidget(ui, 48).filter((line) => line.startsWith("  ") && !line.includes("↳"));
-    expect(wide).toHaveLength(2);
+    expect(wide).toHaveLength(1);
     expect(compact).toHaveLength(1);
     expect(compact[0]).toContain("…");
   });
@@ -175,11 +183,11 @@ describe("activity center", () => {
     }
     vi.advanceTimersByTime(250);
     const lines = renderWidget(ui, 100);
-    expect(lines[0]).toContain("7 active");
-    expect(lines.find((line) => line.includes("#5 scout"))).toBeDefined();
-    expect(lines.find((line) => line.includes("#6 scout"))).toBeUndefined();
-    expect(lines.at(-1)).toContain("… 2 more sessions · use get for details");
-    expect(lines.filter((line) => line.includes("↳"))).toHaveLength(0);
+    expect(lines[0]).toContain("7 running");
+    expect(lines.find((line) => line.includes("#4 scout"))).toBeDefined();
+    expect(lines.find((line) => line.includes("#5 scout"))).toBeUndefined();
+    expect(lines.at(-1)).toContain("… 3 more sessions · use get for details");
+    expect(lines.filter((line) => line.includes("↳"))).toHaveLength(4);
   });
 
   test("keeps settlement until its card is acknowledged", () => {
@@ -189,16 +197,16 @@ describe("activity center", () => {
     live.track("r1", tracked({ index: 1 }));
     live.track("r2", tracked({ index: 2 }));
     live.settle("r1", "completed");
-    expect(renderWidget(ui).join("\n")).toContain("✓ #1 scout · turn 1 · result ready · awaiting card · get #1");
+    expect(renderWidget(ui).join("\n")).toContain("✓ #1 scout · turn 1 · 0s · ready · get #1");
     live.remove("r1");
     expect(renderWidget(ui).join("\n")).not.toContain("#1");
 
     live.settle("r2", "completed");
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("✓ #2 scout · turn 1 · result ready · awaiting card · get #2");
+    expect(renderWidget(ui).join("\n")).toContain("✓ #2 scout · turn 1 · 0s · ready · get #2");
     live.reportFailed("r2");
     vi.advanceTimersByTime(250);
-    expect(renderWidget(ui).join("\n")).toContain("! #2 scout · turn 1 · card failed · get #2");
+    expect(renderWidget(ui).join("\n")).toContain("! #2 scout · turn 1 · 0s · delivery failed · get #2");
     live.remove("r2");
     expect(lastWidgetContent(ui)).toBeUndefined();
   });

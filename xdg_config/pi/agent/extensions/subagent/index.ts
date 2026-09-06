@@ -419,7 +419,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return response({ ...publicSession(runtime), cancelled: accepted });
         } catch (error) {
           await closeRuntime(runtime, true).catch(() => {});
-          return response({ ref: `#${runtime.index}`, status: "crashed", cancelled: false, error: boundedError(error) }, true);
+          return response({ ref: `#${runtime.index}`, agent: runtime.agent.name, status: "crashed", cancelled: false, error: boundedError(error) }, true);
         }
       }
       if (request.action === "close") {
@@ -491,7 +491,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
                 latest.summary,
                 latest.phase,
                 latest.tools?.active.length,
-                latest.timeline,
               );
             }
           }
@@ -508,6 +507,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         }
         return response({
           ref: `#${runtime.index}`,
+          agent: runtime.agent.name,
           status: "crashed",
           error: boundedError(error),
         }, true);
