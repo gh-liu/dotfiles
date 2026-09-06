@@ -194,8 +194,6 @@ function renderEditorBorder(
   editorTheme: { borderColor: (text: string) => string },
   footerTheme: Theme | undefined,
   width: number,
-  activity: Activity,
-  spinnerFrame: number,
   snapshot: StatusSnapshot | undefined,
   position: "top" | "bottom",
 ): string {
@@ -204,11 +202,6 @@ function renderEditorBorder(
   const borderColor = footerTheme
     ? footerTheme.getThinkingBorderColor(thinking ?? "off")
     : editorTheme.borderColor;
-  const display = ACTIVITY_DISPLAY[activity];
-  const activityText = display.spinner.length > 0
-    ? `${display.spinner[spinnerFrame % display.spinner.length]} ${display.label}`
-    : display.label;
-  const activitySegment = ` ${activityText} `;
   const semantic = (color: keyof typeof NORD, text: string) =>
     footerTheme ? paint(footerTheme, color, text) : text;
   const providerText = snapshot?.provider ? semantic("muted", `(${snapshot.provider})`) : "";
@@ -219,13 +212,13 @@ function renderEditorBorder(
   const metadataText = [thinkingText, [modelText, providerText].filter(Boolean).join("")]
     .filter(Boolean)
     .join(" • ");
-  const semanticText = position === "top"
-    ? truncateToWidth(` ${metadataText} `, width, "")
-    : truncateToWidth(semantic(display.color, activitySegment), width, "");
+  const semanticText = truncateToWidth(` ${metadataText} `, width, "");
   const semanticWidth = visibleWidth(semanticText);
-  const line = position === "top"
-    ? `${borderColor("─".repeat(Math.max(0, width - semanticWidth)))}${semanticText}`
-    : `${semanticText}${borderColor("─".repeat(Math.max(0, width - semanticWidth)))}`;
+  if (position === "bottom") {
+    const line = borderColor("─".repeat(width));
+    return footerTheme ? line : editorTheme.borderColor(line);
+  }
+  const line = `${borderColor("─".repeat(Math.max(0, width - semanticWidth)))}${semanticText}`;
   return footerTheme ? line : editorTheme.borderColor(line);
 }
 
@@ -251,7 +244,17 @@ function renderStatusLine(
     }`;
   const metric = (label: string, value: string, color: keyof typeof NORD) =>
     `${paint(theme, "muted", label)} ${paint(theme, color, value)}`;
+  const display = ACTIVITY_DISPLAY[activity];
+  const activityText = display.spinner.length > 0
+    ? `${display.spinner[spinnerFrame % display.spinner.length]} ${display.label}`
+    : display.label;
   const items: StatusItem[] = [
+    {
+      id: "activity",
+      zone: "left",
+      text: paint(theme, display.color, ` ${activityText} `),
+      dropRank: 30,
+    },
     {
       id: "directory",
       zone: "left",
@@ -407,8 +410,6 @@ export default function status(pi: ExtensionAPI) {
               theme,
               currentFooterTheme,
               width,
-              activity,
-              spinnerFrame,
               snapshot,
               "top",
             );
@@ -417,8 +418,6 @@ export default function status(pi: ExtensionAPI) {
                 theme,
                 currentFooterTheme,
                 width,
-                activity,
-                spinnerFrame,
                 snapshot,
                 "bottom",
               );

@@ -102,33 +102,34 @@ function setup(options: {
 describe("status extension", () => {
   test("tracks UI prompts and compaction lifecycle from Pi 0.84.4", async () => {
     const env = setup();
-    expect(env.editorRender()).toContain("READY");
+    expect(env.render()).toContain("READY");
+    expect(env.editorRender()).not.toContain("READY");
 
     await env.fire("ui_prompt_start", { kind: "confirm", reason: "ui_prompt" });
-    expect(env.editorRender()).toContain("INPUT NEEDED");
+    expect(env.render()).toContain("INPUT NEEDED");
 
     env.setIdle(false);
     await env.fire("message_update", { assistantMessageEvent: { type: "thinking_delta" } });
-    expect(env.editorRender()).toContain("INPUT NEEDED");
+    expect(env.render()).toContain("INPUT NEEDED");
     await env.fire("ui_prompt_end", { kind: "confirm", reason: "ui_prompt" });
-    expect(env.editorRender()).toContain("WAITING");
+    expect(env.render()).toContain("WAITING");
 
     await env.fire("session_before_compact");
-    expect(env.editorRender()).toContain("COMPACTING");
+    expect(env.render()).toContain("COMPACTING");
     await env.fire("session_compact_failed", { aborted: false });
-    expect(env.editorRender()).toContain("ERROR");
+    expect(env.render()).toContain("ERROR");
 
     env.setIdle(true);
     await env.fire("session_before_compact");
     await env.fire("session_compact_failed", { aborted: true });
-    expect(env.editorRender()).toContain("READY");
+    expect(env.render()).toContain("READY");
 
     await env.fire("session_before_compact");
     await env.fire("session_compact", { willRetry: false });
-    expect(env.editorRender()).toContain("READY");
+    expect(env.render()).toContain("READY");
   });
 
-  test("uses activity, muted border, and thinking colors in the editor border", () => {
+  test("uses plain thinking-colored bottom border and footer activity", () => {
     vi.stubEnv("NO_COLOR", "1");
     const env = setup({ thinking: "high" });
     const border = env.editorRender();
@@ -136,12 +137,14 @@ describe("status extension", () => {
     const lines = border.split("\n");
     expect(lines[0]).toContain("<thinking-high>high</thinking-high> • <text>model</text><muted>(example)</muted>");
     expect(lines[0]).toContain("<thinking-high>────────────────");
-    expect(lines.at(-1)).toContain("<text> ● READY </text>");
+    expect(lines.at(-1)).not.toContain("READY");
     expect(lines.at(-1)).toContain("<thinking-high>────────────────");
+    expect(env.render(300)).toContain("<text> ● READY </text>");
   });
 
   test("moves model and provider into the editor border while keeping footer metrics", () => {
     const env = setup({ provider: "acme", thinking: "medium" });
+    expect(env.render(300)).toContain("READY");
     expect(env.render()).not.toContain("acme");
     expect(env.render()).not.toContain("model");
     expect(env.render()).toContain("ctx");
@@ -157,7 +160,9 @@ describe("status extension", () => {
   test("renders the compressed current directory before the git branch", () => {
     vi.stubEnv("NO_COLOR", "1");
     const env = setup({ cwd: `${homedir()}/project`, branch: "main" });
-    expect(env.render(300)).toContain("<muted>~/project</muted> · <success>main</success>");
+    expect(env.render(300)).toContain(
+      "<text> ● READY </text> · <muted>~/project</muted> · <success>main</success>",
+    );
   });
 
   test("labels only known subscription-backed authentication as sub", () => {
