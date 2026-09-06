@@ -20,9 +20,11 @@
  */
 
 import { watch, type FSWatcher } from "node:fs";
+import { homedir } from "node:os";
 import {
   type ExtensionAPI,
   type ExtensionContext,
+  CustomEditor,
   getAgentDir,
   SettingsManager,
   type Theme,
@@ -44,6 +46,12 @@ const ACTIVE_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", 
 const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
 const TOOL_SPINNER_FRAMES = ["›", "»", "≫", "»"] as const;
 const MAX_BRANCH_WIDTH = 32;
+const MAX_DIRECTORY_WIDTH = 32;
+
+function formatDirectory(cwd: string): string {
+  const home = homedir();
+  return cwd === home ? "~" : cwd.startsWith(`${home}/`) ? `~${cwd.slice(home.length)}` : cwd;
+}
 
 interface StatusSnapshot {
   provider?: string;
@@ -182,6 +190,45 @@ function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
   };
 }
 
+function renderEditorBorder(
+  editorTheme: { borderColor: (text: string) => string },
+  footerTheme: Theme | undefined,
+  width: number,
+  activity: Activity,
+  spinnerFrame: number,
+  snapshot: StatusSnapshot | undefined,
+  position: "top" | "bottom",
+): string {
+  if (width <= 0) return "";
+  const thinking = snapshot?.thinking;
+  const borderColor = footerTheme
+    ? footerTheme.getThinkingBorderColor(thinking ?? "off")
+    : editorTheme.borderColor;
+  const display = ACTIVITY_DISPLAY[activity];
+  const activityText = display.spinner.length > 0
+    ? `${display.spinner[spinnerFrame % display.spinner.length]} ${display.label}`
+    : display.label;
+  const activitySegment = ` ${activityText} `;
+  const semantic = (color: keyof typeof NORD, text: string) =>
+    footerTheme ? paint(footerTheme, color, text) : text;
+  const providerText = snapshot?.provider ? semantic("muted", `(${snapshot.provider})`) : "";
+  const modelText = snapshot?.model ? semantic("primary", snapshot.model) : "";
+  const thinkingText = thinking
+    ? footerTheme ? footerTheme.getThinkingBorderColor(thinking)(thinking) : thinking
+    : "";
+  const metadataText = [thinkingText, [modelText, providerText].filter(Boolean).join("")]
+    .filter(Boolean)
+    .join(" • ");
+  const semanticText = position === "top"
+    ? truncateToWidth(` ${metadataText} `, width, "")
+    : truncateToWidth(semantic(display.color, activitySegment), width, "");
+  const semanticWidth = visibleWidth(semanticText);
+  const line = position === "top"
+    ? `${borderColor("─".repeat(Math.max(0, width - semanticWidth)))}${semanticText}`
+    : `${semanticText}${borderColor("─".repeat(Math.max(0, width - semanticWidth)))}`;
+  return footerTheme ? line : editorTheme.borderColor(line);
+}
+
 function renderStatusLine(
   theme: Theme,
   width: number,
@@ -189,6 +236,7 @@ function renderStatusLine(
   spinnerFrame: number,
   snapshot: StatusSnapshot,
   branch: string | null,
+  cwd: string,
 ): string {
   width = Math.max(0, width - 1);
   if (width <= 0) return "";
@@ -203,53 +251,13 @@ function renderStatusLine(
     }`;
   const metric = (label: string, value: string, color: keyof typeof NORD) =>
     `${paint(theme, "muted", label)} ${paint(theme, color, value)}`;
-  const activityDisplay = ACTIVITY_DISPLAY[activity];
   const items: StatusItem[] = [
     {
-      id: "activity",
+      id: "directory",
       zone: "left",
-      text: paint(
-        theme,
-        activityDisplay.color,
-        theme.bold(
-          activityDisplay.spinner.length > 0
-            ? `${activityDisplay.spinner[spinnerFrame % activityDisplay.spinner.length]} ${activityDisplay.label}`
-            : activityDisplay.label,
-        ),
-      ),
-      dropRank: Number.POSITIVE_INFINITY,
-      required: true,
+      text: paint(theme, "muted", truncateToWidth(formatDirectory(cwd), MAX_DIRECTORY_WIDTH, "…")),
+      dropRank: 10,
     },
-    ...(snapshot.model
-      ? [
-        {
-          id: "model",
-          zone: "left" as const,
-          text: paint(theme, "primary", snapshot.model),
-          dropRank: 50,
-        },
-      ]
-      : []),
-    ...(snapshot.provider
-      ? [
-        {
-          id: "provider",
-          zone: "left" as const,
-          text: paint(theme, "muted", `(${snapshot.provider})`),
-          dropRank: 30,
-        },
-      ]
-      : []),
-    ...(snapshot.thinking
-      ? [
-        {
-          id: "thinking",
-          zone: "left" as const,
-          text: theme.getThinkingBorderColor(snapshot.thinking)(snapshot.thinking),
-          dropRank: 10,
-        },
-      ]
-      : []),
     ...(branch
       ? [
         {
@@ -336,6 +344,7 @@ function renderStatusLine(
 
 export default function status(pi: ExtensionAPI) {
   let activity: Activity = "ready";
+  let currentFooterTheme: Theme | undefined;
   let currentSessionManager: ExtensionContext["sessionManager"] | undefined;
   let snapshot: StatusSnapshot | undefined;
   let requestRender = () => { };
@@ -389,7 +398,39 @@ export default function status(pi: ExtensionAPI) {
     if (ctx.mode !== "tui") return;
 
     ctx.ui.setWorkingVisible(false);
+    ctx.ui.setEditorComponent?.((tui, theme, keybindings) =>
+      new (class extends CustomEditor {
+        render(width: number): string[] {
+          const lines = super.render(width);
+          if (lines.length > 0) {
+            lines[0] = renderEditorBorder(
+              theme,
+              currentFooterTheme,
+              width,
+              activity,
+              spinnerFrame,
+              snapshot,
+              "top",
+            );
+            if (lines.length > 1) {
+              lines[lines.length - 1] = renderEditorBorder(
+                theme,
+                currentFooterTheme,
+                width,
+                activity,
+                spinnerFrame,
+                snapshot,
+                "bottom",
+              );
+            }
+          }
+          return lines;
+        }
+      })(tui, theme, keybindings),
+    );
+    const cwd = ctx.cwd;
     ctx.ui.setFooter((tui, theme, footerData) => {
+      currentFooterTheme = theme;
       let disposed = false;
       requestRender = () => {
         if (!disposed && isCurrentSession(ctx)) tui.requestRender();
@@ -405,6 +446,7 @@ export default function status(pi: ExtensionAPI) {
               spinnerFrame,
               snapshot ?? readSnapshot(pi, ctx),
               footerData.getGitBranch(),
+              cwd,
             ),
           ];
         },
@@ -413,6 +455,7 @@ export default function status(pi: ExtensionAPI) {
           if (disposed) return;
           disposed = true;
           unsubscribe();
+          if (currentFooterTheme === theme) currentFooterTheme = undefined;
           if (isCurrentSession(ctx)) {
             stopSpinner();
             stopSettingsWatcher();
@@ -535,11 +578,13 @@ export default function status(pi: ExtensionAPI) {
   pi.on("session_shutdown", (_event, ctx) => {
     if (!isCurrentSession(ctx)) return;
     ctx.ui.setFooter(undefined);
+    ctx.ui.setEditorComponent?.(undefined);
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();
     uiPromptActive = false;
     currentSessionManager = undefined;
+    currentFooterTheme = undefined;
     snapshot = undefined;
     requestRender = () => { };
   });
