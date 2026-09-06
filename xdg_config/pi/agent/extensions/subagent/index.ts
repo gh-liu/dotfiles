@@ -482,7 +482,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
               turn: operation.turn,
               startedAt: operation.startedAt ?? Date.now(),
               runId: runtime.runId,
-              task: boundText(task, { maxCharacters: 500, maxLines: 1 }, credentialSecrets),
+              // Redact before display so credential material never reaches the
+              // widget; single source with the wake/audit path via credentialSecrets.
+              task: boundText(task, { maxCharacters: 500, maxLines: 5 }, credentialSecrets),
             });
             const latest = operation.latestProgress;
             if (latest) {
@@ -518,7 +520,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         if (!request.ref) return response({ error: "ref is required for subagent followup" }, true);
         if (!request.task) return response({ error: "task is required for subagent followup" }, true);
         const runtime = hub.resolve(request.ref);
-        if (!runtime) return response({ ref: request.ref, status: "unknown", error: "Subagent session is unknown or expired." }, true);
+        if (!runtime) return response({ ref: request.ref, status: "unknown", unknown: true, error: "Subagent session is unknown or expired." }, true);
         if (runtime.state !== "idle") return response({ ...publicSession(runtime), error: `Subagent session is ${runtime.state}; followup requires idle.` }, true);
         if (!hub.reserveSlot(runtime)) return response({ error: `Subagent capacity unavailable: maxConcurrentRuns is ${hub.maxConcurrentRuns}.`, ...publicSession(runtime) }, true);
         return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, false);

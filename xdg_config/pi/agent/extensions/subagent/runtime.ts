@@ -274,6 +274,10 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     deps.live.removeSession(runtime.runId);
     const wasCrashed = runtime.state === "crashed";
     if (!wasCrashed) transition(runtime, "closing");
+    // Design note, not a bug: interrupt + settlement + close share one serial
+    // 5s outer deadline. A slow controller must hit the outer timeout, continue
+    // disposal best-effort in the background, and keep its slot quarantined until
+    // authoritative settlement releases it.
     let controllerDisposed = false;
     runtime.closePromise = (async () => {
       let failure: unknown;
@@ -440,9 +444,10 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     maxConcurrentRuns,
     get: (runtimeId) => runtimes.get(runtimeId),
     resolve: (reference) => {
-      const exact = runtimes.get(reference);
+      const trimmed = reference.trim();
+      const exact = runtimes.get(trimmed);
       if (exact) return exact;
-      const match = /^(?:#)?([1-9]\d*)$/.exec(reference);
+      const match = /^(?:#)?([1-9]\d*)$/.exec(trimmed);
       if (!match) return undefined;
       const index = Number(match[1]);
       return Number.isSafeInteger(index)

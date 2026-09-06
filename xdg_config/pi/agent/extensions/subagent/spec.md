@@ -68,6 +68,8 @@ A capacity slot is reserved before controller creation and held only while a tur
 
 Controller creation has a bounded startup timeout so a provider that never constructs a controller cannot leak capacity. Explicit interruption has a bounded settlement watchdog. Neither bound is an execution deadline. Operation pruning never evicts the active operation or the last settled record, and the settle audit always carries `operationId`/`turn`/`ref`.
 
+容量不足、参数缺失等非常规错误在 live 管道中 `isError` 为 `false`，以 `content`/`details.error` 文本为准；eval 用 `expectedSubagentErrors` 的 `pattern` 判错（与 `capacity-exhaustion` 场景口径一致）。
+
 All error, cancel, close, crash, and shutdown paths best-effort close owned resources and release held slots. Shutdown rejects new work, suppresses wakes (never the audit trail), closes all sessions, clears timers, and disposes live UI. A controller failure that lands while the close path owns the session is ignored so a successfully closed session can never flip to `crashed`.
 
 ## 5. Notifications and UI
