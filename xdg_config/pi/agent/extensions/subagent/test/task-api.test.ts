@@ -24,6 +24,8 @@ describe("reusable subagent sessions", () => {
     expect(tool.promptGuidelines.every((rule) => rule.includes("subagent"))).toBe(true);
     expect(guidance).toContain("only the delta and next action");
     expect(guidance).toContain("Work directly only for exact lookups, trivial edits");
+    expect(guidance).toContain("Do not poll with repeated get calls");
+    expect(guidance).toContain("rely on completion wakes, or use one bounded get wait");
     expect(guidance).toContain("only after its work is accepted or its role is no longer useful");
   });
 
