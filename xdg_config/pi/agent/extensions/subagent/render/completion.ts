@@ -2,7 +2,7 @@ import { type Theme } from "@earendil-works/pi-coding-agent";
 import { Box, Text } from "@earendil-works/pi-tui";
 
 import { agentNameColor } from "./call.ts";
-import { boundedLines, formatDuration, renderActivityRow, renderDetailSections } from "./shared.ts";
+import { boundedLines, formatDuration, renderActivityRow, renderDetailSections, taskTitle } from "./shared.ts";
 
 export const SUBAGENT_COMPLETION_MESSAGE = "subagent-operation-settled";
 
@@ -37,6 +37,13 @@ export interface SubagentCompletionBatch {
 
 export type SubagentCompletionPayload = SubagentCompletionDetails | SubagentCompletionBatch;
 
+function compactSummary(summary: string): string {
+  if (summary === "Subagent operation interrupted by controller" || summary === "Subagent run cancelled by controller") {
+    return "controller stopped this turn";
+  }
+  return summary;
+}
+
 // --- Completion notification (custom message) ---
 function completionEntryText(
   details: SubagentCompletionDetails,
@@ -47,19 +54,29 @@ function completionEntryText(
   const color = status === "completed" ? "success" : status === "interrupted" ? "warning" : "error";
   const marker = status === "completed" ? "✓" : status === "interrupted" ? "■" : "✗";
   const summaryRaw = details.summary ?? "";
-  let text = `${theme.fg(color, marker)} ${theme.fg("toolTitle", theme.bold(details.ref))} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
-  if (typeof details.turn === "number") text += theme.fg("muted", ` · turn ${details.turn}`);
+  const followup = typeof details.turn === "number" && details.turn > 1;
+  let text = followup ? theme.fg("accent", "↳ ") : "";
+  text += `${theme.fg(color, marker)} ${theme.fg("toolTitle", theme.bold(details.ref))} ${theme.fg(agentNameColor(details.agent), theme.bold(details.agent))}`;
+  if (typeof details.turn === "number") {
+    text += theme.fg("muted", ` · turn ${details.turn} · ${followup ? "follow-up" : "initial"}`);
+  }
   if (status !== "completed") text += theme.fg(color, ` · ${status}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("muted", ` · ${formatDuration(details.elapsedMs)}`);
-  if (!expanded && summaryRaw) {
-    for (const line of boundedLines(summaryRaw, 480, 2)) text += `\n${theme.fg("dim", `  ${line}`)}`;
+  if (!expanded) {
+    const task = taskTitle(details.task, 180);
+    if (task) text += `\n${theme.fg("muted", "  task · ")}${theme.fg("dim", task)}`;
+    if (summaryRaw) {
+      for (const line of boundedLines(compactSummary(summaryRaw), 240, 1)) {
+        text += `\n${theme.fg("muted", "  result · ")}${theme.fg("dim", line)}`;
+      }
+    }
   }
   const hasDetails = [details.task, summaryRaw, details.changes, details.evidence, details.validation, details.risks, ...(details.recentActivity ?? [])]
     .some((value) => typeof value === "string" && value.trim());
   if (!expanded) {
     const affordance = details.sessionOpen
-      ? `workstream open · follow up ${details.ref} or close ${details.ref}`
-      : "workstream unavailable";
+      ? `session ${details.ref} open · follow up ${details.ref} or close ${details.ref}`
+      : `session ${details.ref} unavailable`;
     text += `\n${theme.fg("muted", `  ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
   }
   if (expanded) {
@@ -73,7 +90,7 @@ function completionEntryText(
         text += `\n${renderActivityRow(line, theme)}`;
       }
     }
-    text += `\n\n${theme.fg("muted", details.sessionOpen ? `workstream open · follow up ${details.ref} or close ${details.ref}` : "workstream unavailable")}`;
+    text += `\n\n${theme.fg("muted", details.sessionOpen ? `session ${details.ref} open · follow up ${details.ref} or close ${details.ref}` : `session ${details.ref} unavailable`)}`;
   }
   return text;
 }
@@ -88,6 +105,9 @@ export function renderSubagentCompletion(
     ? [{ ...({} as SubagentCompletionDetails) }]
     : "batch" in raw ? raw.batch : [raw];
   const box = new Box(outputPad, 0);
+  if (entries.length > 1) {
+    box.addChild(new Text(theme.fg("toolTitle", `Subagents · ${entries.length} turns settled`), 0, 0));
+  }
   entries.forEach((entry, index) => {
     if (index > 0) box.addChild(new Text(theme.fg("muted", "─"), 0, 0));
     box.addChild(new Text(completionEntryText(entry, { expanded }, theme), 0, 0));

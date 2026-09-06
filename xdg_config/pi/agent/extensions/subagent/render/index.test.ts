@@ -246,9 +246,10 @@ describe("task API rendering", () => {
       summary: "Mapped the auth lifecycle.", evidence: "src/auth.ts", validation: "tests pass", elapsedMs: 2_000,
     };
     const collapsed = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(collapsed).toContain("✓ #1 scout · turn 1 · 2s");
-    expect(collapsed).toContain("Mapped the auth lifecycle.");
-    expect(collapsed).toContain("workstream open · follow up #1 or close #1 · expand for details");
+    expect(collapsed).toContain("✓ #1 scout · turn 1 · initial · 2s");
+    expect(collapsed).toContain("task · Inspect auth");
+    expect(collapsed).toContain("result · Mapped the auth lifecycle.");
+    expect(collapsed).toContain("session #1 open · follow up #1 or close #1 · expand for details");
     expect(collapsed).not.toContain("· completed");
 
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));
@@ -258,11 +259,24 @@ describe("task API rendering", () => {
     expect(expanded).toContain("Validation");
     expect(expanded).toContain("#1");
 
+    const interruptedFollowup = text(renderSubagentCompletion({ content: "", details: {
+      ...completed,
+      turn: 2,
+      task: "Fix the directory rendering test without changing production behavior.",
+      status: "interrupted" as const,
+      summary: "Subagent operation interrupted by controller",
+    } }, { expanded: false, outputPad: 0 }, taggedTheme));
+    expect(interruptedFollowup).toContain("↳ ■ #1 scout · turn 2 · follow-up · interrupted · 2s");
+    expect(interruptedFollowup).toContain("task · Fix the directory rendering test without changing production behavior.");
+    expect(interruptedFollowup).toContain("result · controller stopped this turn");
+    expect(interruptedFollowup).not.toContain("Subagent operation interrupted by controller");
+
     const mixed = text(renderSubagentCompletion({ content: "", details: { batch: [
       completed,
       { ...completed, jobId: "job-2", operationId: "operation-2", ref: "#2", status: "failed" as const },
     ] } }, { expanded: false, outputPad: 0 }, taggedTheme));
-    expect(mixed).toContain("✗ #2 scout · turn 1 · failed · 2s");
+    expect(mixed).toContain("Subagents · 2 turns settled");
+    expect(mixed).toContain("✗ #2 scout · turn 1 · initial · failed · 2s");
     expect(mixed).not.toContain("<toolPendingBg>");
     expect(mixed).not.toContain("<toolErrorBg>");
     expect(mixed).not.toContain("<toolSuccessBg>");
@@ -275,8 +289,8 @@ describe("task API rendering", () => {
     };
     const card = text(renderSubagentCompletion({ content: "", details: unavailable }, { expanded: false, outputPad: 0 }, theme));
     expect(card).toContain("✗ #3 reviewer · failed");
-    expect(card).toContain("workstream unavailable");
-    expect(card).not.toContain("workstream open");
+    expect(card).toContain("session #3 unavailable");
+    expect(card).not.toContain("session #3 open");
 
     const crashed = text(renderSubagentResult({
       content: [], details: { ref: "#3", agent: "reviewer", status: "crashed", error: "Controller crashed." },

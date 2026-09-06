@@ -126,6 +126,59 @@ function progress() {
   live.dispose();
 }
 
+function multiturn() {
+  heading("MULTI-TURN ACTIVITY CENTER · latest session turn only");
+  let widgetFactory;
+  const live = createLiveUi();
+  live.attach({ setWidget(_id, content) { widgetFactory = content; } });
+  const now = Date.now();
+  for (let turn = 1; turn <= 4; turn += 1) {
+    const operationId = `session-2-turn-${turn}`;
+    live.track(operationId, {
+      index: 2,
+      agent: "worker",
+      turn,
+      task: turn === 4
+        ? "Apply the final status layout correction and verify the focused test suite."
+        : `Earlier accepted instruction for turn ${turn}.`,
+      startedAt: now - (5 - turn) * 10_000,
+      runId: "session-2",
+    });
+    live.settle(operationId, "completed", (5 - turn) * 10_000);
+  }
+  if (typeof widgetFactory === "function") {
+    const widget = widgetFactory({}, theme);
+    process.stdout.write(`${widget.render(width).join("\n")}\n`);
+  }
+  live.dispose();
+}
+
+function lineage() {
+  heading("BACKGROUND COMPLETIONS · one session, four calls");
+  const tasks = [
+    "Use tmux to start a fresh Pi instance and verify that it is usable.",
+    "Fix the new directory-rendering test's environment assumption without changing production behavior.",
+    "Change the editor-border metadata order to thinking level, model, then provider.",
+    "Resolve the remaining narrow-width test failure and run the focused suite.",
+  ];
+  tasks.forEach((task, index) => {
+    const turn = index + 1;
+    const card = renderSubagentCompletion({ content: "", details: {
+      jobId: "session-2",
+      operationId: `session-2-turn-${turn}`,
+      turn,
+      ref: "#2",
+      agent: "worker",
+      task,
+      status: "interrupted",
+      sessionOpen: true,
+      summary: "Subagent operation interrupted by controller",
+      elapsedMs: [111_000, 15_000, 60_000, 39_000][index],
+    } }, { expanded: false, outputPad: 1 }, theme);
+    process.stdout.write(`${card.render(width).join("\n")}\n${turn < tasks.length ? "\n" : ""}`);
+  });
+}
+
 function terminal() {
   heading("TERMINAL RESULTS · session outcomes");
   const cases = [
@@ -169,7 +222,7 @@ function completions() {
   ] } }, { expanded: false, outputPad: 1 }, theme));
 }
 
-const sections = { calls, progress, terminal, completions };
+const sections = { calls, progress, multiturn, lineage, terminal, completions };
 if (category === "all") Object.values(sections).forEach((section) => section());
 else if (sections[category]) sections[category]();
 else {

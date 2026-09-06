@@ -255,6 +255,12 @@ export function createLiveUi(): LiveUiController {
     },
     track(operationKey, info) {
       if (disposed) return;
+      // The activity center is session-oriented: a newer turn supersedes any
+      // unacknowledged row from the same reusable session. Exact operation keys
+      // still make late completion-card acknowledgements harmless.
+      for (const [trackedKey, runtime] of runtimes) {
+        if (trackedKey !== operationKey && runtime.runId === info.runId) runtimes.delete(trackedKey);
+      }
       runtimes.set(operationKey, {
         index: info.index,
         agent: info.agent,

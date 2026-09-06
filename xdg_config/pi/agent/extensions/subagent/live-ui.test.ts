@@ -179,7 +179,7 @@ describe("activity center", () => {
     const live = createLiveUi();
     live.attach(ui);
     for (let index = 1; index <= 7; index += 1) {
-      live.track(`r${index}`, tracked({ index, task: `Investigate bounded work stream ${index} and return evidence.` }));
+      live.track(`r${index}`, tracked({ runId: `session-${index}`, index, task: `Investigate bounded work stream ${index} and return evidence.` }));
     }
     vi.advanceTimersByTime(250);
     const lines = renderWidget(ui, 100);
@@ -195,7 +195,7 @@ describe("activity center", () => {
     const live = createLiveUi();
     live.attach(ui);
     live.track("r1", tracked({ index: 1 }));
-    live.track("r2", tracked({ index: 2 }));
+    live.track("r2", tracked({ runId: "session-2", index: 2 }));
     live.settle("r1", "completed");
     expect(renderWidget(ui).join("\n")).toContain("✓ #1 scout · turn 1 · 0s · ready · get #1");
     live.remove("r1");
@@ -211,20 +211,43 @@ describe("activity center", () => {
     expect(lastWidgetContent(ui)).toBeUndefined();
   });
 
-  test("operation keys isolate overlapping rows from the same session", () => {
+  test("a newer turn replaces the older row from the same session", () => {
     const ui = createMockUi();
     const live = createLiveUi();
     live.attach(ui);
     live.track("old", tracked({ runId: "same", index: 1, task: "First turn" }));
     live.settle("old", "completed");
     live.track("new", tracked({ runId: "same", index: 1, turn: 2, task: "Followup turn" }));
-    live.remove("old");
-    const rendered = renderWidget(ui).join("\n");
+    let rendered = renderWidget(ui).join("\n");
+    expect(rendered).toContain("Subagents · 1 running");
     expect(rendered).toContain("Followup turn");
     expect(rendered).toContain("#1 scout · turn 2");
     expect(rendered).not.toContain("First turn");
+
+    // A late acknowledgement for the superseded operation cannot remove the
+    // current turn because rows retain exact operation identities internally.
+    live.remove("old");
+    rendered = renderWidget(ui).join("\n");
+    expect(rendered).toContain("Followup turn");
     live.removeSession("same");
     expect(lastWidgetContent(ui)).toBeUndefined();
+  });
+
+  test("collapses many ready turns into the latest session row", () => {
+    const ui = createMockUi();
+    const live = createLiveUi();
+    live.attach(ui);
+    for (let turn = 1; turn <= 4; turn += 1) {
+      live.track(`turn-${turn}`, tracked({ runId: "same", index: 2, turn, task: `Task for turn ${turn}` }));
+      live.settle(`turn-${turn}`, "completed", turn * 1_000);
+    }
+
+    const rendered = renderWidget(ui).join("\n");
+    expect(rendered).toContain("Subagents · 1 ready");
+    expect(rendered).toContain("#2 scout · turn 4 · 4s · ready · get #2");
+    expect(rendered).toContain("Task for turn 4");
+    expect(rendered).not.toContain("Task for turn 1");
+    expect(rendered).not.toContain("more sessions");
   });
 
   test("throttles event updates at 100ms with trailing delivery and merges bursts", () => {
