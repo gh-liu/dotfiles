@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only review and expert judgment for bounded changes, plans, fixes, regressions, tradeoffs, invariants, and difficult failure sequences
+description: Read-only judgment answering whether a bounded change, plan, fix, invariant, or tradeoff is correct and why
 tools:
   - read
   - grep

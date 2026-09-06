@@ -97,10 +97,11 @@ export function validateCredentialRedactionEnvNames(names: readonly string[] | u
 export const validateAuthEnvAllowlist = validateCredentialRedactionEnvNames;
 
 export function buildWakeWordSnippet(registry: AgentDiscovery): string {
-  const names = registry.agents.map((agent) => agent.name);
-  const registered = names.length > 0 ? names.join(", ") : "none";
+  const roles = registry.agents.length > 0
+    ? registry.agents.map((agent) => `${agent.name}=${agent.description.replace(/\s+/g, " ").trim()}`).join("; ")
+    : "none registered";
   return boundText(
-    `Delegate to registered agents (${registered}) when a bounded task benefits from fresh context, specialization, independent judgment, or parallel work; work directly when delegation would only add handoff overhead. The parent owns decomposition, coordination, integration, and final verification.`,
+    `Delegate separately owned work through subagent rather than executing it with parent tools whenever a registered role matches: ${roles}. The parent owns decomposition, acceptance, integration, and final verification. Work directly only for exact lookups, trivial edits, or tightly coupled work that has no useful handoff boundary.`,
     { maxCharacters: 1_000, maxLines: 1 },
   );
 }
@@ -126,12 +127,12 @@ const mainModelOf = (model: { provider?: unknown; id?: unknown } | undefined): s
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
 const SubagentParameters = Type.Object({
-  action: StringEnum(["run", "followup", "get", "cancel", "close"] as const, { description: "Session action" }),
-  agent: Type.Optional(Type.String({ description: "Registered agent name; required for run" })),
-  task: Type.Optional(Type.String({ minLength: 1, description: "Task for run/followup" })),
-  background: Type.Optional(Type.Boolean({ description: "Return after acceptance and notify on turn settlement; default false" })),
-  ref: Type.Optional(Type.String({ minLength: 1, description: "Session-local #N reference; required for followup/cancel/close, optional for get" })),
-  waitMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000, description: "Maximum get wait" })),
+  action: StringEnum(["run", "followup", "get", "cancel", "close"] as const, { description: "run: new session; followup: continue idle session; get: inspect/list; cancel: stop active turn; close: release session" }),
+  agent: Type.Optional(Type.String({ description: "Registered role; required only for run" })),
+  task: Type.Optional(Type.String({ minLength: 1, description: "Self-contained outcome and acceptance criteria for run; only the unresolved delta and next action for followup" })),
+  background: Type.Optional(Type.Boolean({ description: "Return after acceptance and notify on settlement; use only when the parent can continue independently; default false" })),
+  ref: Type.Optional(Type.String({ minLength: 1, description: "Session-local #N; required for followup/cancel/close and optional for get" })),
+  waitMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000, description: "Observational wait for get only; never interrupts work" })),
 });
 type SubagentParameters = Static<typeof SubagentParameters>;
 
@@ -337,14 +338,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     name: "subagent",
     label: "Subagent",
     description:
-      `Run a bounded task in a registered subagent session, continue that same context with followup, inspect it with get, stop its active turn with cancel, or release it with close. A session may be a one-shot delegation or an iterative workstream: keep its #N while the same agent owns unresolved acceptance criteria, and use followup instead of restarting or redoing that work in the parent. Use subagents only when specialization, independent judgment, context isolation, or parallel execution provides a concrete benefit. Parallel work is expressed as parallel run calls; the parent owns acceptance, sequencing, and synthesis. Idle sessions keep context but consume no execution slot. At most ${hub.maxConcurrentRuns} turns execute concurrently.\n\nstartup catalog:\n${startupCatalog}`,
+      `Create and reuse isolated sessions for bounded delegated work. run starts a session; followup continues its preserved context; get inspects or lists; cancel stops only the active turn; close releases the session. Use parallel run calls only for independent work. Idle sessions retain context without consuming capacity. At most ${hub.maxConcurrentRuns} turns execute concurrently. The parent owns acceptance, integration, and final verification.\n\nRegistered roles:\n${startupCatalog}`,
     promptSnippet: wakeSnippet,
     promptGuidelines: [
-      "Give a new session one self-contained task with its desired outcome, acceptance criteria, necessary paths or evidence, constraints, and expected result in plain text. Do not forward the raw user prompt or add boilerplate fields.",
-      "Delegate only when the catalog offers a concrete advantage over doing the work directly: a separately owned discovery or implementation task, independent review or expert judgment, browser QA, multi-source research, or genuinely parallel work. Do not delegate exact lookups, trivial edits, or serial handoffs with no context-isolation benefit.",
-      "After each handoff, compare it with the original acceptance criteria. If the same agent still owns an unresolved gap, use followup on its #N with only the gap, new evidence, and next expected action; do not create a replacement session or redo its work in the parent. Repeat while useful.",
-      `Use parallel run calls only for independent work. Runs have no execution deadline; cancel stops only the active turn and close releases the session. Set background only when the parent can continue independently. At most ${hub.maxConcurrentRuns} turns execute at once.`,
-      "Treat results as handoffs, not proof. Inspect writing agents' settled changes and run integrated validation. Close a session only after its work is accepted or its role is no longer useful. Produce the final synthesis yourself.",
+      "Delegate separately owned work through subagent rather than executing that work with parent tools whenever a role matches: scout owns bounded multi-file or source-heavy investigation, reviewer owns requested fresh-eyes review or a settled judgment, worker owns bounded implementation with a settled outcome and scope, and tester owns exploratory or browser QA. The parent may inspect and validate after the handoff. Work directly only for exact lookups, trivial edits, or tightly coupled work with no useful handoff boundary.",
+      `For subagent run, provide one self-contained outcome, acceptance criteria, necessary paths/evidence, constraints, and expected result. For an unresolved gap still owned by the same role, use followup on its #N with only the delta and next action. Use parallel runs only for independent work and background only when the parent can continue independently. At most ${hub.maxConcurrentRuns} turns execute at once.`,
+      "Treat subagent results as handoffs, not proof: inspect writing agents' settled changes, run integrated validation, produce the final synthesis, and close a session only after its work is accepted or its role is no longer useful.",
     ],
     executionMode: "parallel",
     renderShell: "self",
@@ -578,18 +577,18 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     },
   });
 
-  // Live error propagation for unknown refs: agent-core derives the serialized
+  // Live error propagation: agent-core derives the serialized
   // toolResult.isError only from a thrown execute() error ("Signaling errors"
   // in docs/extensions.md), so an isError flag on a returned value is dropped
-  // before it reaches the parent transcript. Throwing would lose the
-  // structured { ref, status: "unknown", unknown: true } details required by
-  // spec §2, so unknown-ref branches keep returning them and this handler
-  // re-asserts the error flag on the live pipeline. Results without
-  // unknown:true (normal handoffs, idempotent repeats) are untouched.
+  // before it reaches the parent transcript. Throwing would lose structured
+  // recovery details, so error branches return details.error or a failed turn
+  // status and this handler re-asserts the flag on the live pipeline. Normal
+  // handoffs and idempotent repeats remain successful.
   pi.on("tool_result", (event) => {
     if (event.toolName !== "subagent" || event.isError) return undefined;
-    const details = event.details as { unknown?: unknown } | undefined;
-    if (!details || typeof details !== "object" || details.unknown !== true) return undefined;
+    const details = event.details as { error?: unknown; turnStatus?: unknown } | undefined;
+    if (!details || typeof details !== "object") return undefined;
+    if (typeof details.error !== "string" && details.turnStatus !== "failed") return undefined;
     return { isError: true };
   });
 

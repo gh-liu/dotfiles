@@ -120,7 +120,7 @@ describe("agent definitions", () => {
     expect(scout.systemPrompt).toContain("## Parent Next Step");
     expect(scout.systemPrompt).toContain("Do not return a flat list of keyword matches");
     expect(scout.systemPrompt).toContain("For web research");
-    expect(scout.description).toContain("local and web investigation");
+    expect(scout.description).toContain("where, how, and what evidence");
   });
 
   test("loads the bundled reviewer as a medium-thinking read-only review profile", () => {
@@ -141,7 +141,8 @@ describe("agent definitions", () => {
     expect(reviewer.systemPrompt).toContain("Do not modify files");
     expect(reviewer.systemPrompt).toContain("Judgment");
     expect(reviewer.systemPrompt).toContain("recommendation or verdict");
-    expect(reviewer.description).toContain("review and expert judgment");
+    expect(reviewer.description).toContain("whether a bounded change");
+    expect(reviewer.description).toContain("is correct and why");
   });
 
   test("loads the bundled worker as a medium-thinking implementation profile", () => {
@@ -159,7 +160,8 @@ describe("agent definitions", () => {
     expect(worker.systemPrompt).toContain("# Status: [complete | partial | blocked]");
     expect(worker.systemPrompt).toContain("settled outcome");
     expect(worker.systemPrompt).toContain("Do not assume every line in the final diff is yours");
-    expect(worker.description).toContain("not discovery or architecture design");
+    expect(worker.description).toContain("necessary code reading");
+    expect(worker.description).toContain("not open-ended discovery or product design");
   });
 
   test("loads the bundled tester with fail-fast provisioning and explicit isolation limits", () => {
@@ -174,8 +176,8 @@ describe("agent definitions", () => {
       contextPolicy: "fresh",
       maxDepth: 1,
     });
-    expect(tester.description).toContain("Fresh-context exploratory QA");
-    expect(tester.description).toContain("use instead of parent-driven browser testing");
+    expect(tester.description).toContain("Fresh-context exploratory and browser QA");
+    expect(tester.description).toContain("reproducible evidence");
     expect(tester.systemPrompt).toContain("not a filesystem, process, network, or credential sandbox");
     expect(tester.systemPrompt).toContain("report the missing prerequisite as a blocker");
     expect(tester.systemPrompt).toContain("Never install packages, browsers, or system dependencies");

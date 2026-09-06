@@ -12,16 +12,18 @@ describe("reusable subagent sessions", () => {
     }
   };
 
-  test("teaches the parent one-shot and iterative workstream modes", () => {
+  test("teaches the parent when to delegate and how to reuse a workstream", () => {
     const tool = setup().extension.getTool() as unknown as {
       description: string;
       promptGuidelines: string[];
     };
     const guidance = tool.promptGuidelines.join("\n");
-    expect(tool.description).toContain("one-shot delegation or an iterative workstream");
-    expect(tool.description).toContain("use followup instead of restarting or redoing");
-    expect(guidance).toContain("original acceptance criteria");
-    expect(guidance).toContain("only the gap, new evidence, and next expected action");
+    expect(tool.description).toContain("run starts a session");
+    expect(tool.description).toContain("followup continues its preserved context");
+    expect(tool.promptGuidelines).toHaveLength(3);
+    expect(tool.promptGuidelines.every((rule) => rule.includes("subagent"))).toBe(true);
+    expect(guidance).toContain("only the delta and next action");
+    expect(guidance).toContain("Work directly only for exact lookups, trivial edits");
     expect(guidance).toContain("only after its work is accepted or its role is no longer useful");
   });
 

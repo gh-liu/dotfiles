@@ -1,6 +1,6 @@
 ---
 name: scout
-description: Read-only local and web investigation for bounded code discovery, current facts, authoritative sources, ownership, and change surface
+description: Read-only investigation answering where, how, and what evidence supports a bounded code or web question
 tools:
   - read
   - grep

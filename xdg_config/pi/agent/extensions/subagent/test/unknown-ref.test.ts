@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { context, fakeFactory, harness, registerSubagentExtension, setup, temporaryDirectory, writeAgent } from "./harness.ts";
 
@@ -84,6 +84,38 @@ describe("unknown session references", () => {
     expect(live).toMatchObject({ isError: true });
     expect(live.details).toMatchObject({ ref: "#99", status: "unknown", unknown: true });
     await env.extension.shutdown();
+  });
+
+  test("all structured failures are explicit errors through the live pipeline", async () => {
+    const invalid = setup();
+    expect(await invalid.invokeLive({ action: "run", agent: "scout" })).toMatchObject({
+      isError: true,
+      details: { error: "task is required for subagent run" },
+    });
+    expect(await invalid.invokeLive({ action: "run", agent: "missing", task: "Inspect" })).toMatchObject({
+      isError: true,
+      details: { error: expect.stringContaining("Unknown agent: missing") },
+    });
+
+    const capacity = setup({ maxConcurrentRuns: 1 });
+    await capacity.invoke({ action: "run", agent: "scout", task: "First", background: true });
+    expect(await capacity.invokeLive({ action: "run", agent: "scout", task: "Second", background: true })).toMatchObject({
+      isError: true,
+      details: { error: "Subagent capacity unavailable: maxConcurrentRuns is 1." },
+    });
+
+    const failed = setup();
+    const failedRun = failed.invokeLive({ action: "run", agent: "scout", task: "Inspect" });
+    await vi.waitFor(() => expect(failed.fake.controllers[0]?.starts).toHaveLength(1));
+    failed.fake.controllers[0].settle(0, "failed", "Could not inspect.");
+    expect(await failedRun).toMatchObject({
+      isError: true,
+      details: { turnStatus: "failed", summary: "Could not inspect." },
+    });
+
+    await invalid.extension.shutdown();
+    await capacity.extension.shutdown();
+    await failed.extension.shutdown();
   });
 
   test("ref resolution trims whitespace but still rejects #0/#01", async () => {

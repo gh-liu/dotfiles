@@ -68,7 +68,7 @@ A capacity slot is reserved before controller creation and held only while a tur
 
 Controller creation has a bounded startup timeout so a provider that never constructs a controller cannot leak capacity. Explicit interruption has a bounded settlement watchdog. Neither bound is an execution deadline. Operation pruning never evicts the active operation or the last settled record, and the settle audit always carries `operationId`/`turn`/`ref`.
 
-容量不足、参数缺失等非常规错误在 live 管道中 `isError` 为 `false`，以 `content`/`details.error` 文本为准；eval 用 `expectedSubagentErrors` 的 `pattern` 判错（与 `capacity-exhaustion` 场景口径一致）。
+Structured control-plane failures carry `details.error`; a child-settled foreground failure carries `turnStatus:"failed"`. Both surface as `isError:true` in direct and live tool-result pipelines, covering invalid parameters, unknown agents or refs, unavailable capacity, startup/controller failures, and failed foreground turns while preserving recovery details for the parent.
 
 All error, cancel, close, crash, and shutdown paths best-effort close owned resources and release held slots. Shutdown rejects new work, suppresses wakes (never the audit trail), closes all sessions, clears timers, and disposes live UI. A controller failure that lands while the close path owns the session is ignored so a successfully closed session can never flip to `crashed`.
 
@@ -92,6 +92,6 @@ Fresh context is conversation isolation, not a security sandbox. In-process chil
 
 ## 7. Validation contract
 
-Deterministic tests cover agent discovery/model selection, fresh context construction, bounded handoffs, foreground and background turns, session reuse, cancellation followed by reuse, close idempotence, compact session listing, idle capacity release, capacity exhaustion, notifications and recovery, UI projections, startup/controller failures, unbounded turn duration, concurrent shutdown, redaction, and the absence of internal IDs and renderer timelines in model-facing payloads.
+Deterministic tests cover agent discovery/model selection, prompt routing metadata, fresh context construction, bounded handoffs, foreground and background turns, session reuse, cancellation followed by reuse, close idempotence, compact session listing, idle capacity release, capacity exhaustion, consistent live error signaling, notifications and recovery, UI projections, startup/controller failures, unbounded turn duration, concurrent shutdown, redaction, and the absence of internal IDs and renderer timelines in model-facing payloads. Live evaluations use prompts that do not name `subagent` or a bundled role when measuring implicit tool and role selection; scenarios that specifically exercise lifecycle action sequences may remain explicit.
 
 Required gates are strict TypeScript checks and the complete Vitest suite. A low-cost real Pi smoke test should cover `run → followup` on the same ref → `close` before release when provider credentials are available.

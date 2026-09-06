@@ -70,13 +70,12 @@ describe("subagent discovery", () => {
     expect(result.content[0]?.text).not.toContain("vendor/model");
   });
 
-  test("wake snippet delegates only when fresh context provides a concrete benefit", () => {
+  test("wake snippet gives explicit role boundaries without triggering on trivial work", () => {
     const snippet = buildWakeWordSnippet({ agents: [{ name: "scout", description: "Inspect", tools: [], systemPrompt: "" }], errors: [] });
-    expect(snippet).toContain("Delegate to registered agents");
-    expect(snippet).toContain("registered agents (scout)");
-    expect(snippet).toContain("fresh context, specialization, independent judgment, or parallel work");
-    expect(snippet).toContain("delegation would only add handoff overhead");
-    expect(snippet).toContain("decomposition, coordination, integration, and final verification");
+    expect(snippet).toContain("Delegate separately owned work through subagent");
+    expect(snippet).toContain("registered role matches: scout=Inspect");
+    expect(snippet).toContain("Work directly only for exact lookups, trivial edits, or tightly coupled work");
+    expect(snippet).toContain("decomposition, acceptance, integration, and final verification");
     expect(snippet.length).toBeLessThanOrEqual(1_000);
   });
 
