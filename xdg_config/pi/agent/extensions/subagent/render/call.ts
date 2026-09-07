@@ -25,7 +25,8 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const index = positiveSafeRuntimeIndex(context?.state.runtimeIndex);
   const model = args.model ?? context?.state.model;
   const thinking = args.thinking ?? context?.state.thinking;
-  const ref = args.action === "followup" ? publicRef(args.ref) : index ? `#${index}` : undefined;
+  const reusable = args.action === "followup" || args.mode === "session";
+  const ref = args.action === "followup" ? publicRef(args.ref) : reusable && index ? `#${index}` : undefined;
   const agent = args.action === "run" ? args.agent : args.agent ?? "subagent";
   const continuation = args.action === "followup" ? theme.fg("accent", "↳ ") : "";
   let text = `${continuation}${ref ? theme.fg("toolTitle", theme.bold(`${ref} `)) : ""}${theme.fg(agentNameColor(agent), theme.bold(agent))}`;
@@ -35,7 +36,7 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const title = taskTitle(args.task, context?.expanded ? 120 : 240);
   if (title) text += theme.fg("dim", ` — ${title}`);
   if (!context?.expanded) return renderCallBlock(text);
-  const meta = [args.background ? "background" : undefined].filter(Boolean);
+  const meta = [args.action === "run" ? args.mode ?? "task" : undefined, args.background ? "background" : undefined].filter(Boolean);
   if (meta.length) text += theme.fg("dim", ` · ${meta.join(" · ")}`);
   text += `\n${theme.fg("toolTitle", "  Task")}`;
   for (const line of boundedLines(args.task, 8_000, 40)) text += `\n${theme.fg("dim", `    ${line}`)}`;

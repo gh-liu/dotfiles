@@ -62,6 +62,37 @@ describe("task API rendering", () => {
     }
   });
 
+  test("distinguishes one-shot tasks from reusable sessions", () => {
+    const taskArgs = { action: "run" as const, agent: "worker", task: "Implement once" };
+    const taskCall = text(renderSubagentCall(taskArgs, theme, {
+      args: taskArgs, expanded: true, isError: false, state: { runtimeIndex: 3 }, invalidate: vi.fn(),
+    } as never));
+    expect(taskCall).toContain("worker — Implement once · task");
+    expect(taskCall).not.toContain("#3");
+
+    const sessionArgs = { ...taskArgs, mode: "session" as const };
+    const sessionCall = text(renderSubagentCall(sessionArgs, theme, {
+      args: sessionArgs, expanded: false, isError: false, state: { runtimeIndex: 3 }, invalidate: vi.fn(),
+    } as never));
+    expect(sessionCall).toContain("#3 worker — Implement once");
+
+    const taskResult = text(renderSubagentResult({ content: [], details: {
+      mode: "task", status: "closed", turn: 1, turnStatus: "completed", summary: "Implemented and verified.", elapsedMs: 2_000,
+    } }, { expanded: false, isPartial: false }, theme, { ...runContext(), args: taskArgs } as never));
+    expect(taskResult).toContain("✓ completed · turn 1 · 2s");
+    expect(taskResult).toContain("Implemented and verified.");
+    expect(taskResult).not.toContain("#3");
+    expect(taskResult).not.toContain("follow up");
+    expect(taskResult).not.toContain("session closed");
+
+    const crashedTask = text(renderSubagentResult({ content: [], details: {
+      mode: "task", status: "crashed", agent: "worker", error: "Provider unavailable.",
+    } }, { expanded: false, isPartial: false }, theme, { ...runContext(), args: taskArgs, isError: true } as never));
+    expect(crashedTask).toContain("✗ task failed");
+    expect(crashedTask).toContain("Provider unavailable.");
+    expect(crashedTask).not.toContain("session");
+  });
+
   test("renders a followup on the same session", () => {
     const args = { action: "followup" as const, ref: "#2", agent: "scout", task: "Now compare the tests with the implementation." };
     const call = text(renderSubagentCall(args, theme, { args, expanded: true, isError: false, state: { turn: 2 }, invalidate: vi.fn() } as never));
@@ -230,10 +261,10 @@ describe("task API rendering", () => {
     const state: Record<string, unknown> = {};
     const invalidate = vi.fn();
     tool.renderResult!({ content: [], details: { ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: true }, theme, {
-      args: { action: "run", agent: "scout", task: "Inspect", background: false }, isError: false, state, invalidate,
+      args: { action: "run", mode: "session", agent: "scout", task: "Inspect", background: false }, isError: false, state, invalidate,
     } as never);
     await Promise.resolve();
-    const rendered = text(tool.renderCall!({ action: "run", agent: "scout", task: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
+    const rendered = text(tool.renderCall!({ action: "run", mode: "session", agent: "scout", task: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
     expect(rendered).toContain("#7 scout · vendor/model · high — Inspect");
     expect(rendered).not.toContain("tracking");
     await env.extension.shutdown();

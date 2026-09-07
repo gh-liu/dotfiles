@@ -20,7 +20,7 @@ describe("wake busy/idle routing and suppression", () => {
 
     const idleEnv = setup({ ids: ["idle-job", "idle-op"] });
     await idleEnv.extension.getTool().execute(
-      "call", { action: "run", agent: "scout", task: "Idle work", background: true },
+      "call", { action: "run", mode: "session", agent: "scout", task: "Idle work", background: true },
       undefined, undefined, idleContext(idleEnv.root),
     );
     idleEnv.fake.controllers[0].settle();
@@ -30,7 +30,7 @@ describe("wake busy/idle routing and suppression", () => {
 
     const busyEnv = setup({ ids: ["busy-job", "busy-op"] });
     await busyEnv.extension.getTool().execute(
-      "call", { action: "run", agent: "scout", task: "Busy work", background: true },
+      "call", { action: "run", mode: "session", agent: "scout", task: "Busy work", background: true },
       undefined, undefined, busyContext(busyEnv.root),
     );
     busyEnv.fake.controllers[0].settle();
@@ -79,7 +79,7 @@ describe("wake busy/idle routing and suppression", () => {
     const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
       "call", params as never, undefined, undefined, context(root),
     );
-    await invoke({ action: "run", agent: "scout", task: "Once", background: true });
+    await invoke({ action: "run", mode: "session", agent: "scout", task: "Once", background: true });
     fake.controllers[0].settle();
     // A duplicate settle signal for the same operation must not double-notify.
     fake.controllers[0].settle();

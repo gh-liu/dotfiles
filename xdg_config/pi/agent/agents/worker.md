@@ -1,6 +1,6 @@
 ---
 name: worker
-description: Bounded implementation of a settled outcome with necessary code reading, focused tests, and a structured handoff; not open-ended discovery or product design
+description: Independent bounded implementation with necessary code reading, focused tests, and a handoff; not a coherent parent work path, discovery, or product design
 tools:
   - read
   - grep

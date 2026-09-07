@@ -101,7 +101,7 @@ export function buildWakeWordSnippet(registry: AgentDiscovery): string {
     ? registry.agents.map((agent) => `${agent.name}=${agent.description.replace(/\s+/g, " ").trim()}`).join("; ")
     : "none registered";
   return boundText(
-    `Delegate separately owned work through subagent rather than executing it with parent tools whenever a registered role matches: ${roles}. The parent owns decomposition, acceptance, integration, and final verification. Work directly only for exact lookups, trivial edits, or tightly coupled work that has no useful handoff boundary.`,
+    `Use subagent only when delegation has a concrete context-isolation, independent-review, or parallel-work benefit. Registered roles: ${roles}. A coherent implementation, routine self-review, exact lookup, trivial edit, or serial handoff stays with the parent. run defaults to a one-shot task; use mode=session only when preserved child context will materially help later followups. The parent owns decomposition, acceptance, integration, and final verification.`,
     { maxCharacters: 1_000, maxLines: 1 },
   );
 }
@@ -127,10 +127,11 @@ const mainModelOf = (model: { provider?: unknown; id?: unknown } | undefined): s
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
 const SubagentParameters = Type.Object({
-  action: StringEnum(["run", "followup", "get", "cancel", "close"] as const, { description: "run: new session; followup: continue idle session; get: inspect/list; cancel: stop active turn; close: release session" }),
+  action: StringEnum(["run", "followup", "get", "cancel", "close"] as const, { description: "run: execute a fresh task or start a reusable session; followup: continue idle session; get: inspect/list; cancel: stop active turn; close: release session" }),
   agent: Type.Optional(Type.String({ description: "Registered role; required only for run" })),
   task: Type.Optional(Type.String({ minLength: 1, description: "Self-contained outcome and acceptance criteria for run; only the unresolved delta and next action for followup" })),
-  background: Type.Optional(Type.Boolean({ description: "Return after acceptance and notify on settlement; use only when the parent can continue independently; default false" })),
+  mode: Type.Optional(StringEnum(["task", "session"] as const, { description: "run lifecycle: task (default) auto-closes after one result; session preserves context for followup" })),
+  background: Type.Optional(Type.Boolean({ description: "Session mode only: return after acceptance and notify on settlement; default false" })),
   ref: Type.Optional(Type.String({ minLength: 1, description: "Session-local #N; required for followup/cancel/close and optional for get" })),
   waitMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000, description: "Observational wait for get only; never interrupts work" })),
 });
@@ -277,7 +278,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     };
   };
 
-  const turnDetails = (operation: OperationRecord, runtime: RuntimeRecord) => {
+  const turnDetails = (operation: OperationRecord, runtime: RuntimeRecord, exposeRef = true) => {
     const elapsedMs = operation.startedAt === undefined
       ? undefined
       : (operation.finishedAt ?? Date.now()) - operation.startedAt;
@@ -290,7 +291,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     }
     // Redact before bounding so no credential material reaches the parent context.
     const handoff = modelSubagentHandoff({
-      ref: `#${runtime.index}`,
+      ...(exposeRef ? { ref: `#${runtime.index}` } : {}),
       agent: operation.result.agent,
       status: operation.result.status,
       summary: boundText(operation.result.summary, { maxCharacters: 16_000, maxLines: 400 }, credentialSecrets),
@@ -334,16 +335,34 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     return response(details, operation.state === "failed");
   };
 
+  const taskResponse = (operation: OperationRecord, runtime: RuntimeRecord, cleanupError?: string) => response({
+    mode: "task",
+    status: cleanupError ? "crashed" : "closed",
+    agent: runtime.agent.name,
+    turn: operation.turn,
+    task: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }, credentialSecrets),
+    ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
+    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+    ...turnDetails(operation, runtime, false),
+    ...(operation.latestProgress ? {
+      activity: operation.latestProgress.summary,
+      recentActivity: operation.latestProgress.recentActivity,
+      ...(operation.latestProgress.timeline ? { timeline: operation.latestProgress.timeline } : {}),
+      ...(operation.latestProgress.tools ? { toolProgress: operation.latestProgress.tools } : {}),
+    } : {}),
+    ...(cleanupError ? { cleanupError } : {}),
+  }, operation.state === "failed" || cleanupError !== undefined);
+
   pi.registerTool({
     name: "subagent",
     label: "Subagent",
     description:
-      `Create and reuse isolated sessions for bounded delegated work. run starts a session; followup continues its preserved context; get inspects or lists; cancel stops only the active turn; close releases the session. Use parallel run calls only for independent work. Idle sessions retain context without consuming capacity. At most ${hub.maxConcurrentRuns} turns execute concurrently. The parent owns acceptance, integration, and final verification.\n\nRegistered roles:\n${startupCatalog}`,
+      `Delegate bounded work into fresh isolated context. run defaults to one-shot task mode and auto-closes after its result; use mode=session only when later followups will materially benefit from preserved child context. followup continues an idle session; get inspects or lists sessions; cancel stops an active session turn; close releases a session. Use parallel run calls only for independent work. At most ${hub.maxConcurrentRuns} turns execute concurrently. The parent owns acceptance, integration, and final verification.\n\nRegistered roles:\n${startupCatalog}`,
     promptSnippet: wakeSnippet,
     promptGuidelines: [
-      "Delegate separately owned work through subagent rather than executing that work with parent tools whenever a role matches: scout owns bounded multi-file or source-heavy investigation, reviewer owns requested fresh-eyes review or a settled judgment, worker owns bounded implementation with a settled outcome and scope, and tester owns exploratory or browser QA. The parent may inspect and validate after the handoff. Work directly only for exact lookups, trivial edits, or tightly coupled work with no useful handoff boundary.",
-      `For subagent run, provide one self-contained outcome, acceptance criteria, necessary paths/evidence, constraints, and expected result. For an unresolved gap still owned by the same role, use followup on its #N with only the delta and next action. Use parallel runs only for independent work and background only when the parent can continue independently. Do not poll with repeated get calls: rely on completion wakes, or use one bounded get wait when explicit waiting is necessary. At most ${hub.maxConcurrentRuns} turns execute at once.`,
-      "Treat subagent results as handoffs, not proof: inspect writing agents' settled changes, run integrated validation, produce the final synthesis, and close a session only after its work is accepted or its role is no longer useful.",
+      "Use subagent only when delegation has a concrete benefit: independently owned parallel work, substantial intermediate output that should stay out of the parent context, an explicitly requested fresh-eyes review, or separately owned exploratory/browser QA. Do not delegate one coherent implementation merely because it is non-trivial, a serial handoff with no context-isolation benefit, routine self-review, exact lookup, or trivial edit.",
+      `For run, provide one self-contained outcome, acceptance criteria, necessary paths/evidence, constraints, and expected result. Omit mode for a one-shot task. Use mode=session only when the same role is expected to own unresolved followups; then send only the delta and next action through followup. Use parallel runs only for independent work and background only with session mode when the parent can continue independently. Do not poll with repeated get calls: rely on completion wakes, or use one bounded get wait when explicit waiting is necessary. At most ${hub.maxConcurrentRuns} turns execute at once.`,
+      "Treat subagent results as handoffs, not proof: inspect writing agents' settled changes, run integrated validation, and produce the final synthesis. Close reusable sessions after accepting their work or when their role is no longer useful.",
     ],
     executionMode: "parallel",
     renderShell: "self",
@@ -354,7 +373,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         : args;
       const action = (redactedArgs as { action?: string }).action;
       if (action === "run" || action === "followup") {
-        const typed = redactedArgs as { action: "run" | "followup"; agent?: string; ref?: string; model?: string; thinking?: string };
+        const typed = redactedArgs as { action: "run" | "followup"; agent?: string; ref?: string; mode?: "task" | "session"; model?: string; thinking?: string };
         const found = action === "run"
           ? registry.agents.find((candidate) => candidate.name === typed.agent)
           : typed.ref ? hub.resolve(typed.ref)?.agent : undefined;
@@ -387,7 +406,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (idleProbe) parentIdle = idleProbe;
       const request = input as SubagentParameters;
       if (request.action === "get") {
-        if (!request.ref) return response({ sessions: hub.listRuntimes().slice(-100).reverse().map(publicSessionSummary) });
+        if (!request.ref) return response({ sessions: hub.listRuntimes().filter((runtime) => runtime.reusable).slice(-100).reverse().map(publicSessionSummary) });
         const runtime = hub.resolve(request.ref);
         if (!runtime) return response({ ref: request.ref, status: "unknown", unknown: true, error: "Subagent session is unknown or expired." }, true);
         const operation = runtime.activeOperationId ? runtime.operations.get(runtime.activeOperationId) : runtime.lastSettled;
@@ -440,15 +459,19 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         runSignal: AbortSignal | undefined,
         runOnUpdate: typeof onUpdate,
         initial: boolean,
+        reusable: boolean,
         initialOperationId?: string,
       ) => {
         const operationId = initialOperationId ?? idFactory();
         const workOrder = createWorkOrder(task, runtime.cwd, initial ? runtime.projectGuidance : []);
         try {
         runOnUpdate?.({
-          content: [{ type: "text", text: initial ? "Starting subagent session…" : "Continuing subagent session…" }],
+          content: [{ type: "text", text: initial
+            ? `Starting subagent ${reusable ? "session" : "task"}…`
+            : "Continuing subagent session…" }],
           details: {
-            ref: `#${runtime.index}`,
+            ...(reusable ? { ref: `#${runtime.index}` } : {}),
+            mode: reusable ? "session" : "task",
             turn: runtime.nextTurnNumber,
             agent: runtime.agent.name,
             ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
@@ -466,6 +489,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           operationId,
           task,
           notifyOnSettle: background,
+          exposeRef: reusable,
           workOrder,
           signal: runSignal,
           onUpdate: runOnUpdate,
@@ -498,7 +522,13 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return response(publicSession(runtime));
         }
         await operation.settled;
-        return operationResponse(operation, runtime);
+        if (reusable) return operationResponse(operation, runtime);
+        try {
+          await closeRuntime(runtime);
+          return taskResponse(operation, runtime);
+        } catch (error) {
+          return taskResponse(operation, runtime, boundedError(error));
+        }
       } catch (error) {
         hub.markCrashed(runtime);
         try {
@@ -507,7 +537,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           // The original startup/operation failure is the actionable error.
         }
         return response({
-          ref: `#${runtime.index}`,
+          ...(reusable ? { ref: `#${runtime.index}` } : {}),
+          mode: reusable ? "session" : "task",
           agent: runtime.agent.name,
           status: "crashed",
           error: boundedError(error),
@@ -522,11 +553,15 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         if (!runtime) return response({ ref: request.ref, status: "unknown", unknown: true, error: "Subagent session is unknown or expired." }, true);
         if (runtime.state !== "idle") return response({ ...publicSession(runtime), error: `Subagent session is ${runtime.state}; followup requires idle.` }, true);
         if (!hub.reserveSlot(runtime)) return response({ error: `Subagent capacity unavailable: maxConcurrentRuns is ${hub.maxConcurrentRuns}.`, ...publicSession(runtime) }, true);
-        return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, false);
+        return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, false, true);
       }
 
       if (!request.agent) return response({ error: "agent is required for subagent run" }, true);
       if (!request.task) return response({ error: "task is required for subagent run" }, true);
+      const mode = request.mode ?? "task";
+      if (mode === "task" && request.background === true) {
+        return response({ error: "background requires mode=session; task mode returns one final result and auto-closes" }, true);
+      }
       if (hub.isShuttingDown()) return response({ error: "Subagent runtime is shutting down; new sessions are rejected." }, true);
       if (!hub.capacityAvailable()) {
         return response({
@@ -534,10 +569,10 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           maxConcurrentRuns: hub.maxConcurrentRuns,
           occupiedSlots: hub.occupiedSlots(),
           availableSlots: hub.availableSlots(),
-          sessions: hub.listRuntimes().slice(-100).map(publicSessionSummary),
+          sessions: hub.listRuntimes().filter((runtime) => runtime.reusable).slice(-100).map(publicSessionSummary),
         }, true);
       }
-      const openSessions = hub.listRuntimes().filter((runtime) => runtime.state !== "closed" && runtime.state !== "crashed");
+      const openSessions = hub.listRuntimes().filter((runtime) => runtime.reusable && runtime.state !== "closed" && runtime.state !== "crashed");
       if (openSessions.length >= 100) return response({ error: "Subagent session limit reached; close an idle session before starting another." }, true);
       const agent = registry.agents.find((candidate) => candidate.name === request.agent);
       if (!agent) {
@@ -572,8 +607,8 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
         parentSessionId,
         signal,
       };
-      const runtime = hub.createRuntime({ agent: runtimeAgent, cwd, parentSessionId, projectGuidance, initialOptions });
-      return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, true, operationId);
+      const runtime = hub.createRuntime({ reusable: mode === "session", agent: runtimeAgent, cwd, parentSessionId, projectGuidance, initialOptions });
+      return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, true, mode === "session", operationId);
     },
   });
 
@@ -586,9 +621,9 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   // handoffs and idempotent repeats remain successful.
   pi.on("tool_result", (event) => {
     if (event.toolName !== "subagent" || event.isError) return undefined;
-    const details = event.details as { error?: unknown; turnStatus?: unknown } | undefined;
+    const details = event.details as { error?: unknown; cleanupError?: unknown; turnStatus?: unknown } | undefined;
     if (!details || typeof details !== "object") return undefined;
-    if (typeof details.error !== "string" && details.turnStatus !== "failed") return undefined;
+    if (typeof details.error !== "string" && typeof details.cleanupError !== "string" && details.turnStatus !== "failed") return undefined;
     return { isError: true };
   });
 

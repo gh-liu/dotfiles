@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 
 import { context, setup } from "./harness.ts";
 
-describe("reusable subagent sessions", () => {
+describe("subagent tasks and reusable sessions", () => {
   const forbidden = new Set(["jobId", "operationId", "processInstanceId", "revision", "index", "runId", "transcript"]);
   const expectPublic = (value: unknown): void => {
     if (!value || typeof value !== "object") return;
@@ -18,15 +18,56 @@ describe("reusable subagent sessions", () => {
       promptGuidelines: string[];
     };
     const guidance = tool.promptGuidelines.join("\n");
-    expect(tool.description).toContain("run starts a session");
-    expect(tool.description).toContain("followup continues its preserved context");
+    expect(tool.description).toContain("run defaults to one-shot task mode");
+    expect(tool.description).toContain("followup continues an idle session");
     expect(tool.promptGuidelines).toHaveLength(3);
-    expect(tool.promptGuidelines.every((rule) => rule.includes("subagent"))).toBe(true);
     expect(guidance).toContain("only the delta and next action");
-    expect(guidance).toContain("Work directly only for exact lookups, trivial edits");
+    expect(guidance).toContain("Do not delegate one coherent implementation");
+    expect(guidance).toContain("Omit mode for a one-shot task");
     expect(guidance).toContain("Do not poll with repeated get calls");
     expect(guidance).toContain("rely on completion wakes, or use one bounded get wait");
-    expect(guidance).toContain("only after its work is accepted or its role is no longer useful");
+    expect(guidance).toContain("after accepting their work or when their role is no longer useful");
+  });
+
+  test("run defaults to a one-shot task without exposing a reusable ref", async () => {
+    const env = setup({ ids: ["task-runtime", "task-operation"] });
+    const running = env.extension.getTool().execute(
+      "call",
+      { action: "run", agent: "scout", task: "Inspect once" } as never,
+      undefined, undefined, context(env.root),
+    );
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].settle(0, "completed", "One-shot handoff.");
+    const result = await running;
+
+    expect(result.details).toMatchObject({ mode: "task", status: "closed", turn: 1, turnStatus: "completed", summary: "One-shot handoff." });
+    expect(result.details).not.toHaveProperty("ref");
+    expect(env.fake.controllers[0].closeCalls).toBe(1);
+    expect((await env.invoke({ action: "get" })).details).toEqual({ sessions: [] });
+    expect((await env.invoke({ action: "followup", ref: "#1", task: "Cannot continue" })).isError).toBe(true);
+    expectPublic(result);
+  });
+
+  test("task mode rejects background execution before creating a controller", async () => {
+    const env = setup();
+    const result = await env.invoke({ action: "run", mode: "task", agent: "scout", task: "Inspect", background: true });
+    expect(result).toMatchObject({ isError: true, details: { error: "background requires mode=session; task mode returns one final result and auto-closes" } });
+    expect(env.fake.controllers).toHaveLength(0);
+  });
+
+  test("task cleanup failure remains an explicit live error without losing the handoff", async () => {
+    const env = setup({ ids: ["task-runtime", "task-operation"] });
+    const running = env.invokeLive({ action: "run", mode: "task", agent: "scout", task: "Inspect once" });
+    await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
+    env.fake.controllers[0].close = async () => { throw new Error("cleanup unavailable"); };
+    env.fake.controllers[0].settle(0, "completed", "Useful handoff.");
+    const result = await running;
+
+    expect(result).toMatchObject({
+      isError: true,
+      details: { mode: "task", status: "crashed", turnStatus: "completed", summary: "Useful handoff.", cleanupError: "cleanup unavailable" },
+    });
+    expect(result.details).not.toHaveProperty("ref");
   });
 
   test("foreground run leaves an idle reusable session", async () => {
@@ -118,7 +159,7 @@ describe("reusable subagent sessions", () => {
 
   test("get wait is observational and exposes bounded progress", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    await env.extension.getTool().execute("call", { action: "run", agent: "scout", task: "Inspect", background: true }, undefined, undefined, context(env.root));
+    await env.extension.getTool().execute("call", { action: "run", mode: "session", agent: "scout", task: "Inspect", background: true }, undefined, undefined, context(env.root));
     env.fake.controllers[0].starts[0].options.onProgress?.({
       summary: "reading runtime",
       tools: {

@@ -150,7 +150,7 @@ describe("unknown session references", () => {
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
     await extension.getTool().execute("call", {
-      action: "run", agent: "scout", task: `Inspect auth with ${secret} embedded`, background: true,
+      action: "run", mode: "session", agent: "scout", task: `Inspect auth with ${secret} embedded`, background: true,
     }, undefined, undefined, ctx);
     const rendered = renderWidgetText(widget);
     expect(rendered).toContain("Inspect auth");

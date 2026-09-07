@@ -142,7 +142,8 @@ describe("agent definitions", () => {
     expect(reviewer.systemPrompt).toContain("Judgment");
     expect(reviewer.systemPrompt).toContain("recommendation or verdict");
     expect(reviewer.description).toContain("whether a bounded change");
-    expect(reviewer.description).toContain("is correct and why");
+    expect(reviewer.description).toContain("is correct");
+    expect(reviewer.description).toContain("not routine self-review");
   });
 
   test("loads the bundled worker as a medium-thinking implementation profile", () => {
@@ -161,7 +162,8 @@ describe("agent definitions", () => {
     expect(worker.systemPrompt).toContain("settled outcome");
     expect(worker.systemPrompt).toContain("Do not assume every line in the final diff is yours");
     expect(worker.description).toContain("necessary code reading");
-    expect(worker.description).toContain("not open-ended discovery or product design");
+    expect(worker.description).toContain("not a coherent parent work path");
+    expect(worker.description).toContain("discovery, or product design");
   });
 
   test("loads the bundled tester with fail-fast provisioning and explicit isolation limits", () => {
@@ -176,8 +178,9 @@ describe("agent definitions", () => {
       contextPolicy: "fresh",
       maxDepth: 1,
     });
-    expect(tester.description).toContain("Fresh-context exploratory and browser QA");
-    expect(tester.description).toContain("reproducible evidence");
+    expect(tester.description).toContain("fresh-context exploratory/browser QA");
+    expect(tester.description).toContain("evidence");
+    expect(tester.description).toContain("not routine focused tests");
     expect(tester.systemPrompt).toContain("not a filesystem, process, network, or credential sandbox");
     expect(tester.systemPrompt).toContain("report the missing prerequisite as a blocker");
     expect(tester.systemPrompt).toContain("Never install packages, browsers, or system dependencies");

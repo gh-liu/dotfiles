@@ -15,7 +15,7 @@ export const scenarios = [
     id: "local-discovery",
     description: "Implicit bounded multi-file discovery routes to scout.",
     quick: true, repeats: 3, fixture: "baseline", workspace: "read-only", targetRate: 2 / 3,
-    expectation: { requiredAgents: ["scout"], maxSubagentCalls: 1, actionSequence: [{ action: "run" }] },
+    expectation: { requiredAgents: ["scout"], maxSubagentCalls: 1, actionSequence: [{ action: "run", mode: undefined }] },
     prompt: "Keep this context focused on synthesis. Obtain a separate fresh-context investigation of the session lifecycle across src/session.js, src/handler.js, tests, and plan.md, then synthesize its cited evidence, ownership flow, and smallest change seam. Do not modify files.",
   },
   {
@@ -73,17 +73,17 @@ export const scenarios = [
     quick: false, repeats: 1, fixture: "baseline", workspace: "implementation", targetRate: 1,
     hardExpectation: {
       requiredAgents: ["worker"],
-      actionSequence: [{ action: "run" }, { action: "followup" }, { action: "get" }, { action: "close" }],
+      actionSequence: [{ action: "run", mode: "session" }, { action: "followup" }, { action: "get" }, { action: "close" }],
     },
     expectation: {
       requiredAgents: ["worker"], maxSubagentCalls: 6,
-      actionSequence: [{ action: "run" }, { action: "followup" }, { action: "get" }, { action: "close" }],
+      actionSequence: [{ action: "run", mode: "session" }, { action: "followup" }, { action: "get" }, { action: "close" }],
       parentToolCallsAfter: [
         { agent: "worker", tool: "bash", argsMatch: "git\\s+diff" },
         { agent: "worker", tool: "bash", argsMatch: "(?:npm\\s+test|node\\s+--test)" },
       ],
     },
-    prompt: "Use one reusable worker session as an acceptance-driven workstream for plan.md. In its initial run, ask it to inspect the relevant code and implement only the production change in src/session.js, deliberately deferring test changes. Inspect that settled diff in the parent, then follow up on the same #N with the remaining acceptance gap: add the required regression coverage in test/session.test.js and run the focused tests. Inspect the complete diff and rerun the full test suite in the parent. If either inspection or validation exposes a defect, follow up on that same #N with only the concrete gap and re-check until accepted. Finally get and close the same session. Do not create another subagent, redo its implementation in the parent, or commit.",
+    prompt: "Use one reusable worker session (run with mode=session) as an acceptance-driven workstream for plan.md. In its initial run, ask it to inspect the relevant code and implement only the production change in src/session.js, deliberately deferring test changes. Inspect that settled diff in the parent, then follow up on the same #N with the remaining acceptance gap: add the required regression coverage in test/session.test.js and run the focused tests. Inspect the complete diff and rerun the full test suite in the parent. If either inspection or validation exposes a defect, follow up on that same #N with only the concrete gap and re-check until accepted. Finally get and close the same session. Do not create another subagent, redo its implementation in the parent, or commit.",
   },
   {
     id: "parallel-investigation",
@@ -109,13 +109,13 @@ export const scenarios = [
     quick: true, repeats: 1, fixture: "baseline", workspace: "read-only", targetRate: 1,
     hardExpectation: {
       requiredAgents: ["scout"],
-      actionSequence: [{ action: "run" }, { action: "followup" }, { action: "get" }, { action: "close" }],
+      actionSequence: [{ action: "run", mode: "session" }, { action: "followup" }, { action: "get" }, { action: "close" }],
     },
     expectation: {
       requiredAgents: ["scout"], maxSubagentCalls: 4,
-      actionSequence: [{ action: "run" }, { action: "followup" }, { action: "get" }, { action: "close" }],
+      actionSequence: [{ action: "run", mode: "session" }, { action: "followup" }, { action: "get" }, { action: "close" }],
     },
-    prompt: "Exercise one reusable scout session. Run it to map createSession, then follow up on the same #N asking it to compare tests with plan.md. Get that same session, close it, and summarize. Do not create a second session or modify files.",
+    prompt: "Exercise one reusable scout session. Run it with mode=session to map createSession, then follow up on the same #N asking it to compare tests with plan.md. Get that same session, close it, and summarize. Do not create a second session or modify files.",
   },
   {
     id: "background-recovery",
@@ -123,14 +123,14 @@ export const scenarios = [
     quick: false, repeats: 1, fixture: "baseline", workspace: "read-only", targetRate: 1,
     hardExpectation: {
       requiredAgents: ["scout"],
-      actionSequence: [{ action: "run", background: true }, { action: "get" }, { action: "close" }],
+      actionSequence: [{ action: "run", mode: "session", background: true }, { action: "get" }, { action: "close" }],
     },
     expectation: {
       // Budget 4: run×1 + get×1 + close×1 + close-after verification get×1 (same 4-call口径 as persistent-followup run→followup→get→close).
       requiredAgents: ["scout"], maxSubagentCalls: 4,
-      actionSequence: [{ action: "run", background: true }, { action: "get" }, { action: "close" }],
+      actionSequence: [{ action: "run", mode: "session", background: true }, { action: "get" }, { action: "close" }],
     },
-    prompt: "Start one scout in background to inspect the TTL call flow. Continue independently with no repository reads, then use get with a wait on its #N to recover the result and close the session. Do not modify files.",
+    prompt: "Start one scout in mode=session and background to inspect the TTL call flow. Continue independently with no repository reads, then use get with a wait on its #N to recover the result and close the session. Do not modify files.",
   },
   {
     id: "capacity-exhaustion",
@@ -144,6 +144,6 @@ export const scenarios = [
     },
     // Budget 21 (observed 2026-09-03): run×6 + get×5 + close×5 + close-after verification get×5 (prompt requires retrieve accepted + close accepted).
     expectation: { maxSubagentCalls: 21, finalAny: ["capacity|concurrent|5"] },
-    prompt: "In one turn start exactly six independent background runs in parallel: two scouts, two reviewers, one tester, and one worker, all read-only inspection tasks. Exactly five should be accepted and the sixth should hit maxConcurrentRuns=5. Report the capacity result, retrieve accepted results, and close accepted sessions. Do not retry or modify files.",
+    prompt: "In one turn start exactly six independent mode=session background runs in parallel: two scouts, two reviewers, one tester, and one worker, all read-only inspection tasks. Exactly five should be accepted and the sixth should hit maxConcurrentRuns=5. Report the capacity result, retrieve accepted results, and close accepted sessions. Do not retry or modify files.",
   },
 ];

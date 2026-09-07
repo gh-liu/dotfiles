@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only judgment answering whether a bounded change, plan, fix, invariant, or tradeoff is correct and why
+description: Independent read-only judgment on whether a bounded change, plan, invariant, or tradeoff is correct; explicit or decision-changing only, not routine self-review
 tools:
   - read
   - grep

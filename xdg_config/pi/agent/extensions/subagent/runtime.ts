@@ -46,6 +46,8 @@ export interface OperationRecord {
 export interface RuntimeRecord {
   /** Session-local short index (#N) for human/model-friendly targeting. */
   index: number;
+  /** False for one-shot tasks whose runtime is never publicly reusable. */
+  reusable: boolean;
   runId: string;
   revision: number;
   nextTurnNumber: number;
@@ -92,6 +94,7 @@ export interface RuntimeHubDeps {
 }
 
 export interface CreateRuntimeInput {
+  reusable: boolean;
   agent: RuntimeRecord["agent"];
   cwd: string;
   parentSessionId: string;
@@ -103,6 +106,8 @@ export interface BeginOperationInput {
   operationId: string;
   task: string;
   notifyOnSettle: boolean;
+  /** Whether model/UI progress may expose the reusable session ref. */
+  exposeRef: boolean;
   workOrder: SubagentRunOptions["workOrder"];
   signal?: AbortSignal;
   onUpdate?: (update: { content: Array<{ type: "text"; text: string }>; details: Record<string, unknown> }) => void;
@@ -346,7 +351,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
     runtime: RuntimeRecord,
     input: BeginOperationInput,
   ): Promise<OperationRecord> => {
-    const { operationId, task, notifyOnSettle, workOrder, signal, onUpdate } = input;
+    const { operationId, task, notifyOnSettle, exposeRef, workOrder, signal, onUpdate } = input;
     let settle!: () => void;
     const operation: OperationRecord = {
       operationId,
@@ -381,7 +386,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       onUpdate?.({
         content: [{ type: "text", text: normalized.summary }],
         details: {
-          ref: `#${runtime.index}`,
+          ...(exposeRef ? { ref: `#${runtime.index}` } : {}),
           turn: operation.turn,
           agent: runtime.agent.name,
           ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
@@ -451,7 +456,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       if (!match) return undefined;
       const index = Number(match[1]);
       return Number.isSafeInteger(index)
-        ? [...runtimes.values()].find((runtime) => runtime.index === index)
+        ? [...runtimes.values()].find((runtime) => runtime.reusable && runtime.index === index)
         : undefined;
     },
     capacityAvailable: () => occupiedSlots < maxConcurrentRuns,
@@ -468,6 +473,7 @@ export function createRuntimeHub(deps: RuntimeHubDeps): RuntimeHub {
       const controllerReady = deferred<SubagentController>();
       const runtime: RuntimeRecord = {
         index: nextRuntimeIndex++,
+        reusable: input.reusable,
         runId: input.initialOptions.runId,
         revision: 0,
         nextTurnNumber: 1,

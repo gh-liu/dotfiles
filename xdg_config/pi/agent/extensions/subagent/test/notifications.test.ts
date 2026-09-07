@@ -41,7 +41,7 @@ describe("subagent notifications", () => {
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
     const starting = env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", task: "Inspect acceptance", background: true,
+      action: "run", mode: "session", agent: "scout", task: "Inspect acceptance", background: true,
     }, undefined, undefined, ctx);
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].starts[0].options.onProgress?.({ summary: "reading startup files" });
@@ -60,7 +60,7 @@ describe("subagent notifications", () => {
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
     const starting = env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", task: "Finish immediately", background: true,
+      action: "run", mode: "session", agent: "scout", task: "Finish immediately", background: true,
     }, undefined, undefined, ctx);
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle();
@@ -79,7 +79,7 @@ describe("subagent notifications", () => {
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
     await env.extension.getTool().execute("call", {
-      action: "run", agent: "scout", task: "First turn", background: true,
+      action: "run", mode: "session", agent: "scout", task: "First turn", background: true,
     }, undefined, undefined, ctx);
     env.fake.controllers[0].settle();
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
@@ -110,7 +110,7 @@ describe("subagent notifications", () => {
       });
 
       await env.extension.getTool().execute("call", {
-        action: "run", agent: "scout", task: "Inspect", background: true,
+        action: "run", mode: "session", agent: "scout", task: "Inspect", background: true,
       }, undefined, undefined, ctx);
       expect(typeof widget).toBe("function");
       env.fake.controllers[0].settle();

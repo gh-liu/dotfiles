@@ -195,6 +195,8 @@ export function setup(options: {
   settingsPath?: string;
   agentNames?: string[];
   maxConcurrentRuns?: number;
+  /** Most existing lifecycle tests exercise reusable sessions explicitly. */
+  defaultRunMode?: "task" | "session";
 } = {}) {
   const root = temporaryDirectory("pi-subagent-project-");
   const agents = temporaryDirectory("pi-subagent-agents-");
@@ -212,9 +214,13 @@ export function setup(options: {
     idFactory: () => ids.shift()!,
     settingsPath,
   });
+  const withDefaultRunMode = (params: Record<string, unknown>): Record<string, unknown> =>
+    params.action === "run" && params.mode === undefined
+      ? { ...params, mode: options.defaultRunMode ?? "session" }
+      : params;
   const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
     "tool-call",
-    params as never,
+    withDefaultRunMode(params) as never,
     undefined, undefined, context(root),
   );
   // Live-equivalent invocation: agent-core drops an isError flag carried on a
@@ -222,9 +228,10 @@ export function setup(options: {
   // tool_result patches before serializing the parent toolResult. This replays
   // that pipeline so tests cover what the parent transcript actually stores.
   const invokeLive = async (params: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const effectiveParams = withDefaultRunMode(params);
     const raw = await extension.getTool().execute(
       "tool-call",
-      params as never,
+      effectiveParams as never,
       undefined, undefined, context(root),
     ) as unknown as Record<string, unknown>;
     let content = raw["content"];
@@ -233,7 +240,7 @@ export function setup(options: {
     let usage = raw["usage"];
     for (const handler of extension.toolResultHandlers) {
       const patch = await handler(
-        { type: "tool_result", toolName: "subagent", toolCallId: "tool-call", input: params, content, details, isError, usage },
+        { type: "tool_result", toolName: "subagent", toolCallId: "tool-call", input: effectiveParams, content, details, isError, usage },
         {},
       ) as unknown as Record<string, unknown> | undefined | void;
       if (!patch) continue;

@@ -2,7 +2,7 @@
 
 // Deterministic visual inventory for every current subagent renderer branch.
 // This is a review tool, not a provider test: fixtures use the public
-// run/followup/get/cancel/close contract and extension-produced details.
+// task/session run plus followup/get/cancel/close contract and extension-produced details.
 
 import {
   renderSubagentCall,
@@ -70,29 +70,31 @@ const runArgs = {
 };
 
 function calls() {
-  heading("CALLS · reusable session API");
-  row("run foreground", renderCall(runArgs, false, { runtimeIndex: 1 }));
-  row("run background", renderCall({ ...runArgs, agent: "reviewer", background: true }, false, { runtimeIndex: 2 }));
-  row("followup", renderCall({ action: "followup", ref: "#1", agent: "scout", task: "Compare the tests with the implementation." }, false, { model: "stealth/ox-alpha", thinking: "minimal", turn: 2 }));
+  heading("CALLS · one-shot task and reusable session");
+  row("task (default)", renderCall(runArgs, false, { runtimeIndex: 1 }));
+  row("session", renderCall({ ...runArgs, mode: "session" }, false, { runtimeIndex: 2 }));
+  row("session background", renderCall({ ...runArgs, mode: "session", agent: "reviewer", background: true }, false, { runtimeIndex: 3 }));
+  row("followup", renderCall({ action: "followup", ref: "#2", agent: "scout", task: "Compare the tests with the implementation." }, false, { model: "stealth/ox-alpha", thinking: "minimal", turn: 2 }));
   row("get recent", renderCall({ action: "get" }));
   row("get session", renderCall({ action: "get", ref: "#2", waitMs: 30_000 }, false, { ref: "#2" }));
   row("cancel", renderCall({ action: "cancel", ref: "#2" }, false, { ref: "#2" }));
   row("close", renderCall({ action: "close", ref: "#2" }, false, { ref: "#2" }));
 
-  heading("CALL · expanded task");
-  row("run expanded", renderCall(runArgs, true, { runtimeIndex: 1 }));
+  heading("CALLS · expanded lifecycle");
+  row("task expanded", renderCall(runArgs, true, { runtimeIndex: 1 }));
+  row("session expanded", renderCall({ ...runArgs, mode: "session" }, true, { runtimeIndex: 2 }));
 }
 
 function progress() {
   heading("PROGRESS · tool-row receipt");
   row("thinking", renderResult(runArgs, {
-    ref: "#1", status: "running", activity: "Thinking…",
+    mode: "task", status: "running", activity: "Thinking…",
     timeline: [{ kind: "tool", id: "read", summary: "read auth.ts", status: "completed" }],
     phase: { kind: "thinking", status: "running" },
     toolProgress: { earlierCount: 0, history: [], active: [] },
   }, { partial: true, text: "Thinking…" }));
   row("tool active", renderResult(runArgs, {
-    ref: "#1", status: "running", activity: "testing auth flow…",
+    mode: "task", status: "running", activity: "testing auth flow…",
     timeline: [{ kind: "thinking", text: "hidden" }, { kind: "tool", id: "read", summary: "read auth.ts", status: "completed" }],
     phase: { kind: "tool", status: "running" },
     toolProgress: { earlierCount: 0, history: [], active: [{ id: "test", summary: "npm test auth" }] },
@@ -180,11 +182,12 @@ function lineage() {
 }
 
 function terminal() {
-  heading("TERMINAL RESULTS · session outcomes");
+  heading("TERMINAL RESULTS · task and session outcomes");
   const cases = [
-    ["run completed", runArgs, { ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
-    ["run interrupted", runArgs, { ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
-    ["run crashed", runArgs, { ref: "#1", agent: "scout", status: "crashed", error: "Provider authentication failed before generation." }, { isError: true }],
+    ["task completed", runArgs, { mode: "task", agent: "scout", turn: 1, status: "closed", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
+    ["task interrupted", runArgs, { mode: "task", agent: "scout", turn: 1, status: "closed", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
+    ["task crashed", runArgs, { mode: "task", agent: "scout", status: "crashed", error: "Provider authentication failed before generation." }, { isError: true }],
+    ["session completed", { ...runArgs, mode: "session" }, { ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "completed", summary: "Reusable handoff.", elapsedMs: 20_000 }, {}],
     ["get running", { action: "get", ref: "#2" }, { ref: "#2", turn: 2, status: "running", agent: "scout" }, {}],
     ["get timed out", { action: "get", ref: "#2", waitMs: 30_000 }, { ref: "#2", turn: 2, status: "running", agent: "scout", timedOut: true }, {}],
     ["get idle", { action: "get", ref: "#2" }, { ref: "#2", turn: 2, status: "idle", turnStatus: "completed", agent: "scout", summary: "Recovered background result." }, {}],
@@ -197,7 +200,7 @@ function terminal() {
   for (const [label, args, details, options] of cases) row(label, renderResult(args, details, options));
 
   heading("TERMINAL RESULT · expanded handoff");
-  row("expanded run", renderResult(runArgs, {
+  row("expanded session", renderResult({ ...runArgs, mode: "session" }, {
     ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "completed", elapsedMs: 54_000,
     summary: "Evidence\n- sdk-executor.ts owns the child session.\n- runtime.ts owns lifecycle transitions.\n\nValidation\n- Targeted tests passed.\n\nRisks\n- Restart recovery remains intentionally unsupported.",
   }, { expanded: true }));

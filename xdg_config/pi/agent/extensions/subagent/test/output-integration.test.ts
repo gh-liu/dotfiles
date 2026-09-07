@@ -24,9 +24,14 @@ function setupWithRedaction(ids: string[]) {
     idFactory: () => ids.shift()!,
     credentialRedactionEnvNames: ["PI_OUTPUT_INT_SECRET"],
   });
-  const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
-    "call", params as never, undefined, undefined, context(root),
-  );
+  const invoke = (params: Record<string, unknown>) => {
+    const effectiveParams = params.action === "run" && params.mode === undefined
+      ? { ...params, mode: "session" }
+      : params;
+    return extension.getTool().execute(
+      "call", effectiveParams as never, undefined, undefined, context(root),
+    );
+  };
   return { root, extension, fake, invoke };
 }
 
@@ -55,6 +60,7 @@ describe("output integration through response projection", () => {
     const tool = env.extension.getTool();
     const args = {
       action: "run",
+      mode: "session",
       agent: "scout",
       task: `Inspect exact=${EXACT_SECRET} token=${GENERIC_TOKEN}`,
     };
@@ -89,6 +95,7 @@ describe("output integration through response projection", () => {
     } as never;
     await env.extension.getTool().execute("call", {
       action: "run",
+      mode: "session",
       agent: "scout",
       task: `Inspect exact=${EXACT_SECRET} token=${GENERIC_TOKEN}`,
       background: true,

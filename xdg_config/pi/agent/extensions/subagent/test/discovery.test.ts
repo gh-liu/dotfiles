@@ -72,9 +72,11 @@ describe("subagent discovery", () => {
 
   test("wake snippet gives explicit role boundaries without triggering on trivial work", () => {
     const snippet = buildWakeWordSnippet({ agents: [{ name: "scout", description: "Inspect", tools: [], systemPrompt: "" }], errors: [] });
-    expect(snippet).toContain("Delegate separately owned work through subagent");
-    expect(snippet).toContain("registered role matches: scout=Inspect");
-    expect(snippet).toContain("Work directly only for exact lookups, trivial edits, or tightly coupled work");
+    expect(snippet).toContain("only when delegation has a concrete");
+    expect(snippet).toContain("Registered roles: scout=Inspect");
+    expect(snippet).toContain("A coherent implementation, routine self-review, exact lookup, trivial edit");
+    expect(snippet).toContain("run defaults to a one-shot task");
+    expect(snippet).toContain("mode=session only when preserved child context");
     expect(snippet).toContain("decomposition, acceptance, integration, and final verification");
     expect(snippet.length).toBeLessThanOrEqual(1_000);
   });

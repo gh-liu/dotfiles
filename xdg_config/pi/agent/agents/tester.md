@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Fresh-context exploratory and browser QA for user-visible behavior, regressions, console or network failures, and reproducible evidence
+description: Separate fresh-context exploratory/browser QA for user-visible behavior, regressions, console/network failures, and evidence; not routine focused tests
 tools:
   - read
   - grep

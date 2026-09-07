@@ -5,7 +5,7 @@ import { Container, Text } from "@earendil-works/pi-tui";
 type SubagentRenderArgs =
   | {
       action: "run"; agent: string; task: string; background?: boolean;
-      model?: string; thinking?: string;
+      mode?: "task" | "session"; model?: string; thinking?: string;
     }
   | { action: "followup"; ref: string; task: string; background?: boolean; agent?: string; model?: string; thinking?: string }
   | { action: "get"; ref?: string; waitMs?: number }

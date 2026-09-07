@@ -100,6 +100,8 @@ export function renderSubagentResult(
 
   const status = typeof details.status === "string" ? details.status : "unknown";
   const turnStatus = typeof details.turnStatus === "string" ? details.turnStatus : undefined;
+  const taskMode = details.mode === "task";
+  const cleanupError = typeof details.cleanupError === "string" ? details.cleanupError : undefined;
   const error = typeof details.error === "string" ? details.error : undefined;
   const summary = typeof details.summary === "string" ? details.summary : error;
   const displayRef = ref ?? ("ref" in context.args ? publicRef(context.args.ref) : undefined);
@@ -149,7 +151,14 @@ export function renderSubagentResult(
     return new Text(lines.length ? lines.join("\n") : theme.fg("dim", "No subagent sessions."), 1, 0);
   }
 
-  let text = status === "starting" || status === "running"
+  let text = taskMode && cleanupError
+    ? theme.fg("error", "✗ task cleanup failed")
+    : taskMode && turnStatus
+      ? theme.fg(turnStatus === "failed" ? "error" : turnStatus === "interrupted" ? "warning" : "success",
+          `${turnStatus === "completed" ? "✓" : turnStatus === "failed" ? "✗" : "■"} ${turnStatus}`)
+    : taskMode && status === "crashed"
+      ? theme.fg("error", "✗ task failed")
+    : status === "starting" || status === "running"
     ? theme.fg("warning", details.timedOut === true ? "● still running · wait expired" : "● running")
     : status === "idle" && turnStatus
       ? theme.fg(turnStatus === "failed" ? "error" : turnStatus === "interrupted" ? "warning" : "success",
@@ -162,6 +171,7 @@ export function renderSubagentResult(
   if (turn) text += theme.fg("muted", ` · turn ${turn}`);
   if (typeof details.elapsedMs === "number") text += theme.fg("dim", ` · ${formatDuration(details.elapsedMs)}`);
   if (summary && !options.expanded) text += `\n  ${theme.fg("dim", oneLine(summary, 240))}`;
+  if (cleanupError && !options.expanded) text += `\n  ${theme.fg("error", oneLine(cleanupError, 240))}`;
   if (!summary && !options.expanded && (status === "starting" || status === "running")) {
     const current = renderCurrentActivity(details, theme);
     if (current) text += `\n  ${current}`;
@@ -173,6 +183,7 @@ export function renderSubagentResult(
       ["Evidence", typeof details.evidence === "string" ? details.evidence : undefined],
       ["Validation", typeof details.validation === "string" ? details.validation : undefined],
       ["Risks", typeof details.risks === "string" ? details.risks : undefined],
+      ["Cleanup error", cleanupError],
     ], theme);
     if (context.args.action === "get" && typeof details.activity === "string") {
       text += `\n${theme.fg("toolTitle", "Current")}\n${theme.fg("dim", `  ${oneLine(details.activity, 240)}`)}`;
@@ -181,7 +192,7 @@ export function renderSubagentResult(
   }
   if (status === "idle" && displayRef) {
     text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `workstream open · follow up ${displayRef} or close ${displayRef}`)}`;
-  } else if (status === "crashed" && agent) {
+  } else if (!taskMode && status === "crashed" && agent) {
     text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `start a new ${agent} session`)}`;
   }
   return renderPartitionedStatus(text, theme, false, context.isError);
