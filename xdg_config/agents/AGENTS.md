@@ -41,3 +41,33 @@
     * 直接回应请求并先给结论。
     * 发生变更时简要报告`改动`和`验证`结果。
     * 仅补充有助于理解、审阅或决定后续行动的关键决策、限制、风险或待办。
+
+# 技能
+
+## 视觉表达
+
+> 适合视觉表达时，直接用伪代码、树、Mermaid、diff 或自包含 HTML 展示，少写文字；HTML 必须实际打开验证；复制内容保持纯文本。
+
+```text
+on(save)
+  if unchanged: return cached result
+```
+
+```text
+SessionPage
+├── Toolbar
+└── Timeline
+```
+
+```mermaid
+sequenceDiagram
+  User->>UI: Save
+  UI->>API: POST /sessions
+  API-->>UI: Result
+```
+
+```diff
+ submitForm
++  expandSkillMention
+   launchAgent
+```
