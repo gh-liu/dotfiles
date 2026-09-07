@@ -46,7 +46,10 @@
 
 ## 视觉表达
 
+> Pick the smallest view that makes the key point clear.
+
 > 适合视觉表达时，直接用伪代码、树、Mermaid、diff 或自包含 HTML 展示，少写文字；HTML 必须实际打开验证；复制内容保持纯文本。
+
 
 ```text
 on(save)
