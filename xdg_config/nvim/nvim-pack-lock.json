@@ -18,7 +18,7 @@
       "src": "https://github.com/gh-liu/fold_line.nvim"
     },
     "friendly-snippets": {
-      "rev": "6cd7280adead7f586db6fccbd15d2cac7e2188b9",
+      "rev": "bb548e5ae4550a5e318b7e398a93b9af456b65e1",
       "src": "https://github.com/rafamadriz/friendly-snippets"
     },
     "kulala.nvim": {
@@ -26,19 +26,19 @@
       "src": "https://github.com/mistweaverco/kulala.nvim"
     },
     "mini.nvim": {
-      "rev": "e58ad4b0c9e9376096b9704f98fc00d4c9448870",
+      "rev": "455856f765c78220fe547fb0862708942b52c42c",
       "src": "https://github.com/nvim-mini/mini.nvim"
     },
     "nvim-dap": {
-      "rev": "9e848e09a697ee95302a3ef2dd43fd6eb709e570",
+      "rev": "c9a0738e45f1bd41d792a126941348dce661cf9b",
       "src": "https://github.com/mfussenegger/nvim-dap"
     },
     "nvim-lint": {
-      "rev": "9b99aad869102ac01775187abd8d49017b148612",
+      "rev": "3d55c8f67c6ae5c15e1042571e107c7a3d5c5f4e",
       "src": "https://github.com/mfussenegger/nvim-lint"
     },
     "nvim-lspconfig": {
-      "rev": "fbaef6156f9ad65790931ab543ab1dfec57bbec7",
+      "rev": "da1aff0332774a0f60d52bf972e815dfc226f276",
       "src": "https://github.com/neovim/nvim-lspconfig"
     },
     "nvim-peek": {
@@ -50,7 +50,7 @@
       "src": "https://github.com/gh-liu/nvim-tester"
     },
     "nvim-treesitter": {
-      "rev": "074aa4422bf029908338e855d0c0f71470a971bb",
+      "rev": "5cb0114e6242625db56dd6440e945ed1ece10bc7",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter"
     },
     "nvim-treesitter-context": {
@@ -106,7 +106,7 @@
       "src": "https://github.com/tpope/vim-fugitive"
     },
     "vim-obsession": {
-      "rev": "ed9dfc7c2cc917ace8b24f4f9f80a91e05614b63",
+      "rev": "5d63e5b50ebf554d378528e357157c89e91313c9",
       "src": "https://github.com/tpope/vim-obsession"
     },
     "vim-projectionist": {
