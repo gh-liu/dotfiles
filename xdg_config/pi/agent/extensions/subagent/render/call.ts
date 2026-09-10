@@ -36,7 +36,7 @@ export function renderSubagentCall(args: SubagentRenderArgs, theme: Theme, conte
   const title = taskTitle(args.task, context?.expanded ? 120 : 240);
   if (title) text += theme.fg("dim", ` — ${title}`);
   if (!context?.expanded) return renderCallBlock(text);
-  const meta = [args.action === "run" ? args.mode ?? "task" : undefined, args.background ? "background" : undefined].filter(Boolean);
+  const meta = ["mode" in args && args.mode === "session" ? "session" : undefined, args.background ? "background" : undefined].filter(Boolean);
   if (meta.length) text += theme.fg("dim", ` · ${meta.join(" · ")}`);
   text += `\n${theme.fg("toolTitle", "  Task")}`;
   for (const line of boundedLines(args.task, 8_000, 40)) text += `\n${theme.fg("dim", `    ${line}`)}`;

@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { realpathSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { buildWakeWordSnippet, context, loadSubagentOverrides, setup, temporaryDirectory, validateAuthEnvAllowlist, writeAgent } from "./harness.ts";
+import { context, loadSubagentOverrides, setup, temporaryDirectory, validateAuthEnvAllowlist, writeAgent } from "./harness.ts";
 
 describe("subagent discovery", () => {
   test("loads configurable capacity alongside agent overrides", () => {
@@ -68,17 +68,6 @@ describe("subagent discovery", () => {
     expect(result.details).toMatchObject({ model: "vendor/model" });
     expect(result.content[0]?.text).toContain('"model":"model"');
     expect(result.content[0]?.text).not.toContain("vendor/model");
-  });
-
-  test("wake snippet gives explicit role boundaries without triggering on trivial work", () => {
-    const snippet = buildWakeWordSnippet({ agents: [{ name: "scout", description: "Inspect", tools: [], systemPrompt: "" }], errors: [] });
-    expect(snippet).toContain("only when delegation has a concrete");
-    expect(snippet).toContain("Registered roles: scout=Inspect");
-    expect(snippet).toContain("A coherent implementation, routine self-review, exact lookup, trivial edit");
-    expect(snippet).toContain("run defaults to a one-shot task");
-    expect(snippet).toContain("mode=session only when preserved child context");
-    expect(snippet).toContain("decomposition, acceptance, integration, and final verification");
-    expect(snippet.length).toBeLessThanOrEqual(1_000);
   });
 
   test("inherits the parent model, while an explicit override wins", async () => {

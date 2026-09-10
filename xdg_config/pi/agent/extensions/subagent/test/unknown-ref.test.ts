@@ -88,11 +88,11 @@ describe("unknown session references", () => {
 
   test("all structured failures are explicit errors through the live pipeline", async () => {
     const invalid = setup();
-    expect(await invalid.invokeLive({ action: "run", agent: "scout" })).toMatchObject({
+    expect(await invalid.invokeLive({ agent: "scout" })).toMatchObject({
       isError: true,
-      details: { error: "task is required for subagent run" },
+      details: { error: "task is required for subagent task" },
     });
-    expect(await invalid.invokeLive({ action: "run", agent: "missing", task: "Inspect" })).toMatchObject({
+    expect(await invalid.invokeLive({ agent: "missing", task: "Inspect" })).toMatchObject({
       isError: true,
       details: { error: expect.stringContaining("Unknown agent: missing") },
     });
@@ -143,14 +143,15 @@ describe("unknown session references", () => {
       controllerFactory: fake.factory,
       idFactory: (() => { const ids = ["widget-job", "widget-op"]; return () => ids.shift()!; })(),
       credentialRedactionEnvNames: ["PI_LIVE_WIDGET_SECRET"],
+      sessionsEnabled: true,
     });
     let widget: unknown;
     const ctx = {
       ...context(root), hasUI: true,
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
-    await extension.getTool().execute("call", {
-      action: "run", mode: "session", agent: "scout", task: `Inspect auth with ${secret} embedded`, background: true,
+    await extension.getTool("subagent_session").execute("call", {
+      action: "open", agent: "scout", task: `Inspect auth with ${secret} embedded`, background: true,
     }, undefined, undefined, ctx);
     const rendered = renderWidgetText(widget);
     expect(rendered).toContain("Inspect auth");

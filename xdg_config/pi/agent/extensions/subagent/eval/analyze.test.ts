@@ -77,10 +77,10 @@ describe("live subagent evaluation analysis", () => {
 
   test("reports missing actions, schema failures, role order, and final evidence", () => {
     const analysis = analyzeJsonl([
-      line({ type: "tool_execution_start", toolName: "subagent", args: { agent: "worker" } }),
+      line({ type: "tool_execution_start", toolName: "subagent_session", args: { agent: "worker" } }),
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "reviewer" } }),
       line({ type: "tool_execution_start", toolName: "subagent", args: { action: "run", agent: "worker" } }),
-      line({ type: "tool_execution_end", toolName: "subagent", isError: true, result: { content: [{ type: "text", text: "action is required by schema" }] } }),
+      line({ type: "tool_execution_end", toolName: "subagent_session", isError: true, result: { content: [{ type: "text", text: "action is required by schema" }] } }),
       line({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "No issues." }] } }),
     ].join("\n"));
     const result = evaluateExpectation(analysis, {
@@ -93,6 +93,14 @@ describe("live subagent evaluation analysis", () => {
     expect(analysis.schemaErrors).toHaveLength(1);
     expect(result.passed).toBe(false);
     expect(result.reasons).toHaveLength(2);
+  });
+
+  test("captures provider generation failures", () => {
+    const analysis = analyzeJsonl(line({
+      type: "message_end",
+      message: { role: "assistant", content: [], stopReason: "error", errorMessage: "provider unavailable" },
+    }));
+    expect(analysis.assistantErrors).toEqual(["provider unavailable"]);
   });
 
   test("requires parent verification after a writing subagent settles", () => {

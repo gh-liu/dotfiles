@@ -40,8 +40,8 @@ describe("subagent notifications", () => {
       ...context(env.root), hasUI: true,
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
-    const starting = env.extension.getTool().execute("call", {
-      action: "run", mode: "session", agent: "scout", task: "Inspect acceptance", background: true,
+    const starting = env.extension.getTool("subagent_session").execute("call", {
+      action: "open", agent: "scout", task: "Inspect acceptance", background: true,
     }, undefined, undefined, ctx);
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].starts[0].options.onProgress?.({ summary: "reading startup files" });
@@ -59,8 +59,8 @@ describe("subagent notifications", () => {
       ...context(env.root), hasUI: true,
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
-    const starting = env.extension.getTool().execute("call", {
-      action: "run", mode: "session", agent: "scout", task: "Finish immediately", background: true,
+    const starting = env.extension.getTool("subagent_session").execute("call", {
+      action: "open", agent: "scout", task: "Finish immediately", background: true,
     }, undefined, undefined, ctx);
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle();
@@ -78,13 +78,13 @@ describe("subagent notifications", () => {
       ...context(env.root), hasUI: true,
       ui: { setWidget(_id: string, content: unknown) { widget = content; }, setStatus() {} },
     } as never;
-    await env.extension.getTool().execute("call", {
-      action: "run", mode: "session", agent: "scout", task: "First turn", background: true,
+    await env.extension.getTool("subagent_session").execute("call", {
+      action: "open", agent: "scout", task: "First turn", background: true,
     }, undefined, undefined, ctx);
     env.fake.controllers[0].settle();
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
-    await env.extension.getTool().execute("call", {
-      action: "followup", ref: "#1", task: "New followup", background: true,
+    await env.extension.getTool("subagent_session").execute("call", {
+      action: "send", ref: "#1", task: "New followup", background: true,
     }, undefined, undefined, ctx);
     expect(renderWidget(widget)).toContain("New followup");
     await env.extension.startMessage({ role: "custom", ...env.extension.messages[0].message });
@@ -109,8 +109,8 @@ describe("subagent notifications", () => {
         expect(typeof widget).toBe("function");
       });
 
-      await env.extension.getTool().execute("call", {
-        action: "run", mode: "session", agent: "scout", task: "Inspect", background: true,
+      await env.extension.getTool("subagent_session").execute("call", {
+        action: "open", agent: "scout", task: "Inspect", background: true,
       }, undefined, undefined, ctx);
       expect(typeof widget).toBe("function");
       env.fake.controllers[0].settle();

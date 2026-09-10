@@ -2,8 +2,8 @@
 
 This suite runs the real `pi` CLI against isolated temporary Git repositories.
 It measures whether the parent delegates at the intended boundary, selects one
-of the four bundled roles, composes sessions visibly, reuses a session through
-followup, consumes handoffs, and verifies delegated implementation.
+of the four bundled roles, uses lightweight tasks by default, consumes handoffs,
+and enables reusable sessions only for scenarios that need preserved context.
 
 It is deliberately **not** part of `npm test`: it needs provider credentials and
 network access, takes several minutes, and incurs real model/search cost.
@@ -22,8 +22,8 @@ network access, takes several minutes, and incurs real model/search cost.
 | `iterative-implementation` | One `worker` session delivers production code, receives an acceptance-gap followup, adds tests, and is verified before close | 1 |
 | `parallel-investigation` | Independent `scout` + `reviewer` sessions start before either settles | 1 |
 | `staged-delivery` | Parent visibly composes `scout → worker → reviewer` | 1 |
-| `persistent-followup` | One `#N` supports `run → followup → get → close` | 1 |
-| `background-recovery` | Background result is recovered with `get` and then closed | 1 |
+| `persistent-followup` | One `#N` supports `open → send → get → close` | 1 |
+| `background-recovery` | A background `open` result is recovered with `get` and then closed | 1 |
 | `capacity-exhaustion` | Five active turns fill configured capacity; the sixth fails fast | 1 |
 
 The fixture contains an intentional seconds-versus-milliseconds bug and a
@@ -120,10 +120,11 @@ Deterministic invariants always fail the command:
 - Pi exits successfully before the timeout and emits valid JSONL.
 - Pi leaves no child process group behind; the runner reports a hard failure and
   terminates the group if a delegated temporary server or browser is orphaned.
-- Every subagent call includes `action`; no failed subagent invocation or schema
-  error is hidden by a successful retry. A scenario may consume only an exact,
-  counted expected error (currently the sixth-call capacity rejection); every
-  unmatched error remains fatal.
+- Default `subagent` calls contain only `agent` and `task`. Advanced
+  `subagent_session` calls use `open`, `send`, `get`, `cancel`, or `close`; no
+  failed invocation or schema error is hidden by a successful retry. A scenario
+  may consume only an exact, counted expected error (currently the sixth-call
+  capacity rejection); every unmatched error remains fatal.
 - Explicit delegation, parent-visible composition, parallel starts, and reusable
   session action orders are honored.
 - Tasks contain enough plain-text context for fresh sessions without requiring a

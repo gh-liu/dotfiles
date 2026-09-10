@@ -194,6 +194,7 @@ export function discoverUserAgents(directory: string): AgentDiscovery {
 export function loadSubagentSettings(settingsPath: string): {
   overrides?: unknown;
   maxConcurrentRuns?: number;
+  sessionsEnabled: boolean;
   errors: AgentDefinitionError[];
   defaults: SettingsDefaults;
 } {
@@ -202,9 +203,10 @@ export function loadSubagentSettings(settingsPath: string): {
     raw = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && (error as { code?: unknown }).code === "ENOENT") {
-      return { errors: [], defaults: {} };
+      return { sessionsEnabled: false, errors: [], defaults: {} };
     }
     return {
+      sessionsEnabled: false,
       errors: [{
         filePath: "settings.json:subagent",
         error: `settings.json:subagent: ${error instanceof Error ? error.message : String(error)}`,
@@ -212,7 +214,7 @@ export function loadSubagentSettings(settingsPath: string): {
       defaults: {},
     };
   }
-  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return { errors: [], defaults: {} };
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return { sessionsEnabled: false, errors: [], defaults: {} };
   const root = raw as Record<string, unknown>;
   const provider = root.defaultProvider;
   const model = root.defaultModel;
@@ -222,9 +224,10 @@ export function loadSubagentSettings(settingsPath: string): {
   };
   const runtime = root.subagent;
   const errors: AgentDefinitionError[] = [];
-  if (runtime === undefined) return { errors, defaults };
+  if (runtime === undefined) return { sessionsEnabled: false, errors, defaults };
   if (runtime === null || typeof runtime !== "object" || Array.isArray(runtime)) {
     return {
+      sessionsEnabled: false,
       errors: [...errors, { filePath: "settings.json:subagent", error: "settings.json:subagent: must be an object" }],
       defaults,
     };
@@ -254,9 +257,30 @@ export function loadSubagentSettings(settingsPath: string): {
       capacity = maxConcurrentRuns;
     }
   }
+  const sessions = runtimeSettings.sessions;
+  let sessionsEnabled = false;
+  if (sessions !== undefined) {
+    if (sessions === null || typeof sessions !== "object" || Array.isArray(sessions)) {
+      errors.push({
+        filePath: "settings.json:subagent.sessions",
+        error: "settings.json:subagent.sessions: must be an object",
+      });
+    } else {
+      const enabled = (sessions as Record<string, unknown>).enabled;
+      if (enabled !== undefined && typeof enabled !== "boolean") {
+        errors.push({
+          filePath: "settings.json:subagent.sessions.enabled",
+          error: "settings.json:subagent.sessions.enabled: must be a boolean",
+        });
+      } else {
+        sessionsEnabled = enabled === true;
+      }
+    }
+  }
   return {
     ...(overrides === undefined ? {} : { overrides }),
     ...(capacity === undefined ? {} : { maxConcurrentRuns: capacity }),
+    sessionsEnabled,
     errors,
     defaults,
   };

@@ -85,7 +85,7 @@ export function analyzeJsonl(source) {
       id: event.toolCallId ?? event.id ?? null,
       eventIndex: index,
     }));
-  const subagentCalls = tools.filter((tool) => tool.name === "subagent");
+  const subagentCalls = tools.filter((tool) => tool.name === "subagent" || tool.name === "subagent_session");
   const subagentEnds = events
     .map((event, index) => ({
       event,
@@ -93,8 +93,11 @@ export function analyzeJsonl(source) {
       id: event.toolCallId ?? event.id ?? null,
     }))
     .filter(({ event }) => event.type === "tool_execution_end"
-      && (event.toolName ?? event.tool?.name ?? event.name ?? "") === "subagent");
-  const initialSubagentCalls = subagentCalls.filter((call) => call.args.action === "run");
+      && ["subagent", "subagent_session"].includes(event.toolName ?? event.tool?.name ?? event.name ?? ""));
+  const isInitialCall = (call) => call.name === "subagent"
+    ? call.args.action === undefined || call.args.action === "run"
+    : call.args.action === "open";
+  const initialSubagentCalls = subagentCalls.filter(isInitialCall);
   const unmatchedEnds = new Set(subagentEnds);
   const subagentSettlements = initialSubagentCalls.map((call) => {
     const end = call.id === null
@@ -108,10 +111,10 @@ export function analyzeJsonl(source) {
     };
   });
   const subagentRoles = subagentCalls
-    .filter((call) => call.args.action === "run" && typeof call.args.agent === "string")
+    .filter((call) => isInitialCall(call) && typeof call.args.agent === "string")
     .map((call) => call.args.agent);
   const subagentActions = subagentCalls
-    .map((call) => call.args.action)
+    .map((call) => call.name === "subagent" && call.args.action === undefined ? "task" : call.args.action)
     .filter((action) => typeof action === "string");
   const parentToolCounts = {};
   for (const tool of tools) {
@@ -136,14 +139,17 @@ export function analyzeJsonl(source) {
       text: errorText(event),
     }));
   const schemaErrors = toolErrors.filter((error) =>
-    error.name === "subagent"
+    (error.name === "subagent" || error.name === "subagent_session")
       && /(?:argument|parameter|schema|validation|required|must include|action)/iu.test(error.text)
   );
-  const subagentErrors = toolErrors.filter((error) => error.name === "subagent");
+  const subagentErrors = toolErrors.filter((error) => error.name === "subagent" || error.name === "subagent_session");
 
   const assistantMessages = events
     .filter((event) => event.type === "message_end" && event.message?.role === "assistant")
     .map((event) => event.message);
+  const assistantErrors = assistantMessages
+    .filter((message) => message.stopReason === "error" || typeof message.errorMessage === "string")
+    .map((message) => String(message.errorMessage ?? "assistant generation failed"));
   const finalText = assistantMessages.length > 0
     ? textContent(assistantMessages.at(-1).content)
     : "";
@@ -173,21 +179,22 @@ export function analyzeJsonl(source) {
     subagentCalls,
     subagentRoles,
     subagentActions,
-    missingActionCalls: subagentCalls.filter((call) => typeof call.args.action !== "string"),
+    missingActionCalls: subagentCalls.filter((call) => call.name === "subagent_session" && typeof call.args.action !== "string"),
     toolErrors,
     subagentErrors,
     schemaErrors,
+    assistantErrors,
     finalText,
     usage,
     subagentEnds,
     subagentSettlements,
     subagentHandoffFields,
     parallelSubagentStarts: subagentCalls
-      .filter((call) => call.args.action === "run")
+      .filter(isInitialCall)
       .filter((call) => {
         const firstSubagentEnd = events.findIndex((event) =>
           event.type === "tool_execution_end"
-          && (event.toolName ?? event.tool?.name ?? event.name ?? "") === "subagent",
+          && ["subagent", "subagent_session"].includes(event.toolName ?? event.tool?.name ?? event.name ?? ""),
         );
         return firstSubagentEnd >= 0 && call.eventIndex < firstSubagentEnd;
       })
@@ -266,7 +273,11 @@ export function evaluateExpectation(analysis, expectation = {}) {
     }
   }
   if (expectation.actionSequence) {
-    const calls = analysis.subagentCalls.map((call) => call.args);
+    const calls = analysis.subagentCalls.map((call) => ({
+      tool: call.name,
+      ...call.args,
+      ...(call.name === "subagent" && call.args.action === undefined ? { action: "task" } : {}),
+    }));
     const matched = containsOrdered(calls, expectation.actionSequence, (actual, expected) =>
       Object.entries(expected).every(([key, value]) => actual[key] === value)
     );

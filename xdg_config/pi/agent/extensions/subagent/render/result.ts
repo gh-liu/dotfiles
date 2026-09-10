@@ -191,7 +191,7 @@ export function renderSubagentResult(
     text += renderActivity(details, theme);
   }
   if (status === "idle" && displayRef) {
-    text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `workstream open · follow up ${displayRef} or close ${displayRef}`)}`;
+    text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `workstream open · send ${displayRef} or close ${displayRef}`)}`;
   } else if (!taskMode && status === "crashed" && agent) {
     text += `${options.expanded ? "\n\n" : "\n  "}${theme.fg("muted", `start a new ${agent} session`)}`;
   }

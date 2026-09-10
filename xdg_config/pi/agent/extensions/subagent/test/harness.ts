@@ -10,7 +10,6 @@ import type {
   ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import {
-  buildWakeWordSnippet,
   loadSubagentOverrides,
   registerSubagentExtension,
   validateAuthEnvAllowlist,
@@ -151,14 +150,14 @@ export function fakeFactory(autoAccept = true) {
 }
 
 export function harness() {
-  let tool: ToolDefinition | undefined;
+  const tools = new Map<string, ToolDefinition>();
   let shutdown: (() => Promise<void> | void) | undefined;
   let messageStart: ((event: { type: "message_start"; message: Record<string, unknown> }) => Promise<void> | void) | undefined;
   const toolResultHandlers: Array<(event: Record<string, unknown>, ctx: Record<string, unknown>) => unknown> = [];
   const messages: Array<{ message: Record<string, unknown>; options?: Record<string, unknown> }> = [];
   const messageRenderers = new Map<string, MessageRenderer>();
   const pi = {
-    registerTool(definition: ToolDefinition) { tool = definition; },
+    registerTool(definition: ToolDefinition) { tools.set(definition.name, definition); },
     registerMessageRenderer(customType: string, renderer: MessageRenderer) {
       messageRenderers.set(customType, renderer);
     },
@@ -177,7 +176,7 @@ export function harness() {
     messages,
     messageRenderers,
     toolResultHandlers,
-    getTool: () => tool!,
+    getTool: (name = "subagent") => tools.get(name)!,
     startMessage: async (message: Record<string, unknown>) => {
       await messageStart?.({ type: "message_start", message });
     },
@@ -195,6 +194,7 @@ export function setup(options: {
   settingsPath?: string;
   agentNames?: string[];
   maxConcurrentRuns?: number;
+  sessionsEnabled?: boolean;
   /** Most existing lifecycle tests exercise reusable sessions explicitly. */
   defaultRunMode?: "task" | "session";
 } = {}) {
@@ -213,12 +213,16 @@ export function setup(options: {
     controllerFactory: fake.factory,
     idFactory: () => ids.shift()!,
     settingsPath,
+    sessionsEnabled: options.sessionsEnabled ?? true,
   });
   const withDefaultRunMode = (params: Record<string, unknown>): Record<string, unknown> =>
     params.action === "run" && params.mode === undefined
       ? { ...params, mode: options.defaultRunMode ?? "session" }
       : params;
-  const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
+  const toolFor = (params: Record<string, unknown>) => params.action === undefined
+    ? extension.getTool()
+    : extension.getTool("subagent_session");
+  const invoke = (params: Record<string, unknown>) => toolFor(params).execute(
     "tool-call",
     withDefaultRunMode(params) as never,
     undefined, undefined, context(root),
@@ -229,7 +233,8 @@ export function setup(options: {
   // that pipeline so tests cover what the parent transcript actually stores.
   const invokeLive = async (params: Record<string, unknown>): Promise<Record<string, unknown>> => {
     const effectiveParams = withDefaultRunMode(params);
-    const raw = await extension.getTool().execute(
+    const tool = toolFor(effectiveParams);
+    const raw = await tool.execute(
       "tool-call",
       effectiveParams as never,
       undefined, undefined, context(root),
@@ -240,7 +245,7 @@ export function setup(options: {
     let usage = raw["usage"];
     for (const handler of extension.toolResultHandlers) {
       const patch = await handler(
-        { type: "tool_result", toolName: "subagent", toolCallId: "tool-call", input: effectiveParams, content, details, isError, usage },
+        { type: "tool_result", toolName: tool.name, toolCallId: "tool-call", input: effectiveParams, content, details, isError, usage },
         {},
       ) as unknown as Record<string, unknown> | undefined | void;
       if (!patch) continue;
@@ -262,4 +267,4 @@ export async function startIdle(env: ReturnType<typeof setup>) {
   return identity;
 }
 
-export { buildWakeWordSnippet, loadSubagentOverrides, registerSubagentExtension, SUBAGENT_COMPLETION_MESSAGE, validateAuthEnvAllowlist };
+export { loadSubagentOverrides, registerSubagentExtension, SUBAGENT_COMPLETION_MESSAGE, validateAuthEnvAllowlist };

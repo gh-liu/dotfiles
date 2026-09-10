@@ -20,6 +20,7 @@ describe("settings单读", () => {
     expect(combined.errors).toEqual([]);
     expect(combined.defaults).toEqual({});
     expect(combined.overrides).toBeUndefined();
+    expect(combined.sessionsEnabled).toBe(false);
     expect(loadSubagentOverrides(path).errors).toEqual([]);
     expect(loadSettingsDefaults(path)).toEqual({});
   });
@@ -45,5 +46,19 @@ describe("settings单读", () => {
     expect(combined.errors.some((e) => e.filePath === "settings.json:subagent.maxConcurrentRuns")).toBe(true);
     expect(combined.defaults).toEqual({ defaultProvider: "openai", defaultModel: "gpt-5" });
     expect(combined.overrides).toEqual({ scout: { model: "openai/gpt-5" } });
+  });
+
+  test("sessions are opt-in and malformed values are rejected", () => {
+    const enabled = loadSubagentSettings(tempSettings(JSON.stringify({
+      subagent: { sessions: { enabled: true } },
+    })));
+    expect(enabled.sessionsEnabled).toBe(true);
+    expect(enabled.errors).toEqual([]);
+
+    const malformed = loadSubagentSettings(tempSettings(JSON.stringify({
+      subagent: { sessions: { enabled: "yes" } },
+    })));
+    expect(malformed.sessionsEnabled).toBe(false);
+    expect(malformed.errors[0]?.filePath).toBe("settings.json:subagent.sessions.enabled");
   });
 });

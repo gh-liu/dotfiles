@@ -2,12 +2,13 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   buildWorkOrderPrompt,
   createSdkSubagentController,
   filterDeclaredCustomTools,
+  resolveSubagentModel,
 } from "./sdk-executor.ts";
 import type { SubagentExecutionProfile, SubagentProgress, SubagentRunOptions, SubagentWorkOrder } from "./protocol.ts";
 
@@ -102,6 +103,16 @@ function fakeController(initial: SubagentRunOptions, session: FakeSession, confi
 }
 
 describe("reusable-session SDK executor", () => {
+  test("resolves nested model ids and caps output without shrinking the context window", () => {
+    const getModel = vi.fn(() => ({ id: "z-ai/glm-5.3-flash", maxTokens: 131_072, contextWindow: 1_048_576 }));
+    expect(resolveSubagentModel({ getModel }, "openrouter/z-ai/glm-5.3-flash")).toEqual({
+      id: "z-ai/glm-5.3-flash",
+      maxTokens: 8_192,
+      contextWindow: 1_048_576,
+    });
+    expect(getModel).toHaveBeenCalledWith("openrouter", "z-ai/glm-5.3-flash");
+  });
+
   test("reuses one controller sequentially and rejects invalid submit timing", async () => {
     const session = new FakeSession();
     session.sessionId = "reused-session";

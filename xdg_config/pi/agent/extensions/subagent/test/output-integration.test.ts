@@ -23,12 +23,13 @@ function setupWithRedaction(ids: string[]) {
     controllerFactory: fake.factory,
     idFactory: () => ids.shift()!,
     credentialRedactionEnvNames: ["PI_OUTPUT_INT_SECRET"],
+    sessionsEnabled: true,
   });
   const invoke = (params: Record<string, unknown>) => {
     const effectiveParams = params.action === "run" && params.mode === undefined
       ? { ...params, mode: "session" }
       : params;
-    return extension.getTool().execute(
+    return extension.getTool("subagent_session").execute(
       "call", effectiveParams as never, undefined, undefined, context(root),
     );
   };
@@ -59,8 +60,6 @@ describe("output integration through response projection", () => {
     const env = setupWithRedaction([]);
     const tool = env.extension.getTool();
     const args = {
-      action: "run",
-      mode: "session",
       agent: "scout",
       task: `Inspect exact=${EXACT_SECRET} token=${GENERIC_TOKEN}`,
     };
@@ -93,9 +92,8 @@ describe("output integration through response projection", () => {
         setStatus() {},
       },
     } as never;
-    await env.extension.getTool().execute("call", {
-      action: "run",
-      mode: "session",
+    await env.extension.getTool("subagent_session").execute("call", {
+      action: "open",
       agent: "scout",
       task: `Inspect exact=${EXACT_SECRET} token=${GENERIC_TOKEN}`,
       background: true,

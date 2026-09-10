@@ -9,6 +9,8 @@ import { boundText, collectCredentialValues, sanitizeOneLine, SUBAGENT_HANDOFF_M
 import { SubagentCancellationError } from "./protocol.ts";
 import type { SubagentActivityPhase, SubagentController, SubagentOperation, SubagentProgress, SubagentResult, SubagentRunOptions, SubagentTimelineEntry, SubagentToolProgressItem, SubagentWorkOrder } from "./protocol.ts";
 
+const SUBAGENT_MAX_OUTPUT_TOKENS = 8_192;
+
 export interface SdkSubagentConfig {
   agentDir?: string;
   sessionRoot?: string;
@@ -217,6 +219,19 @@ export function filterDeclaredCustomTools(declaredTools: readonly string[], cust
 
 export type SdkSubagentController = SubagentController;
 
+/** Keep bounded child tasks from inheriting provider-sized output budgets. */
+function capSubagentOutputTokens(model: any): any {
+  if (!model || typeof model.maxTokens !== "number" || model.maxTokens <= SUBAGENT_MAX_OUTPUT_TOKENS) return model;
+  return { ...model, maxTokens: SUBAGENT_MAX_OUTPUT_TOKENS };
+}
+
+/** Resolve provider/model-id references without truncating model ids that contain slashes. */
+export function resolveSubagentModel(runtime: any, reference: string): any {
+  const slash = reference.indexOf("/");
+  if (slash <= 0 || slash === reference.length - 1) return undefined;
+  return capSubagentOutputTokens(runtime.getModel(reference.slice(0, slash), reference.slice(slash + 1)));
+}
+
 export async function createSdkSubagentController(
   initial: SubagentRunOptions,
   config: SdkSubagentConfig = {},
@@ -257,10 +272,8 @@ export async function createSdkSubagentController(
     const thinkingLevel = initial.agent.thinking as any;
     let modelInstance: any = undefined;
     if (initial.agent.model) {
-      const slash = initial.agent.model.lastIndexOf("/");
+      const slash = initial.agent.model.indexOf("/");
       if (slash !== -1) {
-        const provider = initial.agent.model.slice(0, slash);
-        const id = initial.agent.model.slice(slash + 1);
         let runtime = config.modelRuntime;
         if (!runtime) {
           try {
@@ -275,7 +288,7 @@ export async function createSdkSubagentController(
           }
         }
         if (runtime) {
-          try { modelInstance = runtime.getModel(provider, id); } catch {}
+          try { modelInstance = resolveSubagentModel(runtime, initial.agent.model); } catch {}
         }
       }
     }

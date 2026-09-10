@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 
-import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { getAgentDir, type ExtensionAPI, type ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { StringEnum } from "@earendil-works/pi-ai";
 import { Type, type Static } from "typebox";
 
@@ -11,7 +11,6 @@ import {
   formatAgentCatalog,
   loadSubagentSettings,
   resolveAgentModel,
-  type AgentDiscovery,
 } from "./agents.ts";
 import { createWorkOrder, findAllowedRoot, loadProjectGuidance, resolveChildCwd } from "./context.ts";
 import { createLiveUi } from "./live-ui.ts";
@@ -41,13 +40,16 @@ export interface SubagentExtensionOptions {
   controllerCreationTimeoutMs?: number;
   idFactory?: () => string;
   settingsPath?: string;
+  /** Internal/test override; production defaults to settings.json subagent.sessions.enabled. */
+  sessionsEnabled?: boolean;
 }
 
 function retainCallTitleDetails(
   result: SubagentRenderResult,
   context: SubagentRenderContext,
 ): void {
-  if (context.args.action !== "run" && context.args.action !== "followup") return;
+  const action = (context.args as { action?: string }).action;
+  if (action !== undefined && action !== "run" && action !== "followup" && action !== "open" && action !== "send") return;
   const details = result.details && typeof result.details === "object"
     ? result.details as Record<string, unknown>
     : {};
@@ -96,16 +98,6 @@ export function validateCredentialRedactionEnvNames(names: readonly string[] | u
 /** @deprecated Use validateCredentialRedactionEnvNames. */
 export const validateAuthEnvAllowlist = validateCredentialRedactionEnvNames;
 
-export function buildWakeWordSnippet(registry: AgentDiscovery): string {
-  const roles = registry.agents.length > 0
-    ? registry.agents.map((agent) => `${agent.name}=${agent.description.replace(/\s+/g, " ").trim()}`).join("; ")
-    : "none registered";
-  return boundText(
-    `Use subagent only when delegation has a concrete context-isolation, independent-review, or parallel-work benefit. Registered roles: ${roles}. A coherent implementation, routine self-review, exact lookup, trivial edit, or serial handoff stays with the parent. run defaults to a one-shot task; use mode=session only when preserved child context will materially help later followups. The parent owns decomposition, acceptance, integration, and final verification.`,
-    { maxCharacters: 1_000, maxLines: 1 },
-  );
-}
-
 /** One compact model-facing title: the first task line, never the work-order body. */
 function completionWakeTitle(task: string): string {
   const firstMeaningfulLine = task
@@ -126,16 +118,30 @@ const mainModelOf = (model: { provider?: unknown; id?: unknown } | undefined): s
 
 // Provider tool APIs require a root object schema; a root Type.Union serializes
 // as anyOf and is rejected by DeepSeek before the model can call the tool.
-const SubagentParameters = Type.Object({
-  action: StringEnum(["run", "followup", "get", "cancel", "close"] as const, { description: "run: execute a fresh task or start a reusable session; followup: continue idle session; get: inspect/list; cancel: stop active turn; close: release session" }),
-  agent: Type.Optional(Type.String({ description: "Registered role; required only for run" })),
-  task: Type.Optional(Type.String({ minLength: 1, description: "Self-contained outcome and acceptance criteria for run; only the unresolved delta and next action for followup" })),
-  mode: Type.Optional(StringEnum(["task", "session"] as const, { description: "run lifecycle: task (default) auto-closes after one result; session preserves context for followup" })),
-  background: Type.Optional(Type.Boolean({ description: "Session mode only: return after acceptance and notify on settlement; default false" })),
-  ref: Type.Optional(Type.String({ minLength: 1, description: "Session-local #N; required for followup/cancel/close and optional for get" })),
+const SubagentTaskParameters = Type.Object({
+  agent: Type.String({ description: "Registered role that owns this bounded task" }),
+  task: Type.String({ minLength: 1, description: "Self-contained outcome, necessary context, constraints, acceptance criteria, and expected handoff" }),
+});
+type SubagentTaskParameters = Static<typeof SubagentTaskParameters>;
+
+const SubagentSessionParameters = Type.Object({
+  action: StringEnum(["open", "send", "get", "cancel", "close"] as const, { description: "open: start a reusable session; send: continue an idle session; get: inspect/list; cancel: stop active turn; close: release session" }),
+  agent: Type.Optional(Type.String({ description: "Registered role; required only for open" })),
+  task: Type.Optional(Type.String({ minLength: 1, description: "Self-contained work order for open; only the unresolved delta and next action for send" })),
+  background: Type.Optional(Type.Boolean({ description: "Return after acceptance and notify on settlement; default false" })),
+  ref: Type.Optional(Type.String({ minLength: 1, description: "Session-local #N; required for send/cancel/close and optional for get" })),
   waitMs: Type.Optional(Type.Integer({ minimum: 0, maximum: 3_600_000, description: "Observational wait for get only; never interrupts work" })),
 });
-type SubagentParameters = Static<typeof SubagentParameters>;
+type SubagentSessionParameters = Static<typeof SubagentSessionParameters>;
+type ControlRequest = {
+  action: "run" | "followup" | "get" | "cancel" | "close";
+  agent?: string;
+  task?: string;
+  mode?: "task" | "session";
+  background?: boolean;
+  ref?: string;
+  waitMs?: number;
+};
 
 export { loadSubagentOverrides } from "./agents.ts";
 
@@ -154,7 +160,6 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   };
   let registry = discoverEffectiveAgents();
   const startupCatalog = boundText(formatAgentCatalog(registry), { maxCharacters: 16_000, maxLines: 200 });
-  const wakeSnippet = buildWakeWordSnippet(registry);
   const authEnvSetting = process.env.PI_SUBAGENT_AUTH_ENV_ALLOWLIST;
   const configuredAuthEnvNames = options.credentialRedactionEnvNames ?? options.authEnvAllowlist
     ?? (authEnvSetting?.trim()
@@ -335,51 +340,58 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
     return response(details, operation.state === "failed");
   };
 
-  const taskResponse = (operation: OperationRecord, runtime: RuntimeRecord, cleanupError?: string) => response({
-    mode: "task",
-    status: cleanupError ? "crashed" : "closed",
-    agent: runtime.agent.name,
-    turn: operation.turn,
-    task: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }, credentialSecrets),
-    ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
-    ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
-    ...turnDetails(operation, runtime, false),
-    ...(operation.latestProgress ? {
-      activity: operation.latestProgress.summary,
-      recentActivity: operation.latestProgress.recentActivity,
-      ...(operation.latestProgress.timeline ? { timeline: operation.latestProgress.timeline } : {}),
-      ...(operation.latestProgress.tools ? { toolProgress: operation.latestProgress.tools } : {}),
-    } : {}),
-    ...(cleanupError ? { cleanupError } : {}),
-  }, operation.state === "failed" || cleanupError !== undefined);
+  const taskResponse = (operation: OperationRecord, runtime: RuntimeRecord, cleanupError?: string) => {
+    const turn = turnDetails(operation, runtime, false);
+    const details = {
+      mode: "task",
+      status: cleanupError ? "crashed" : "closed",
+      agent: runtime.agent.name,
+      task: boundText(operation.task, { maxCharacters: 2_000, maxLines: 20 }, credentialSecrets),
+      ...(runtime.agent.model ? { model: runtime.agent.model } : {}),
+      ...(runtime.agent.thinking ? { thinking: runtime.agent.thinking } : {}),
+      ...turn,
+      ...(operation.latestProgress ? {
+        activity: operation.latestProgress.summary,
+        recentActivity: operation.latestProgress.recentActivity,
+        ...(operation.latestProgress.timeline ? { timeline: operation.latestProgress.timeline } : {}),
+        ...(operation.latestProgress.tools ? { toolProgress: operation.latestProgress.tools } : {}),
+      } : {}),
+      ...(cleanupError ? { cleanupError } : {}),
+    };
+    const { turnStatus, ...handoff } = turn;
+    return response(details, operation.state === "failed" || cleanupError !== undefined, {
+      agent: runtime.agent.name,
+      status: cleanupError ? "failed" : turnStatus,
+      ...handoff,
+      ...(cleanupError ? { cleanupError } : {}),
+    });
+  };
 
-  pi.registerTool({
-    name: "subagent",
-    label: "Subagent",
+  const sessionTool: ToolDefinition = {
+    name: "subagent_session",
+    label: "Subagent Session",
     description:
-      `Delegate bounded work into fresh isolated context. run defaults to one-shot task mode and auto-closes after its result; use mode=session only when later followups will materially benefit from preserved child context. followup continues an idle session; get inspects or lists sessions; cancel stops an active session turn; close releases a session. Use parallel run calls only for independent work. At most ${hub.maxConcurrentRuns} turns execute concurrently. The parent owns acceptance, integration, and final verification.\n\nRegistered roles:\n${startupCatalog}`,
-    promptSnippet: wakeSnippet,
-    promptGuidelines: [
-      "Use subagent only when delegation has a concrete benefit: independently owned parallel work, substantial intermediate output that should stay out of the parent context, an explicitly requested fresh-eyes review, or separately owned exploratory/browser QA. Do not delegate one coherent implementation merely because it is non-trivial, a serial handoff with no context-isolation benefit, routine self-review, exact lookup, or trivial edit.",
-      `For run, provide one self-contained outcome, acceptance criteria, necessary paths/evidence, constraints, and expected result. Omit mode for a one-shot task. Use mode=session only when the same role is expected to own unresolved followups; then send only the delta and next action through followup. Use parallel runs only for independent work and background only with session mode when the parent can continue independently. Do not poll with repeated get calls: rely on completion wakes, or use one bounded get wait when explicit waiting is necessary. At most ${hub.maxConcurrentRuns} turns execute at once.`,
-      "Treat subagent results as handoffs, not proof: inspect writing agents' settled changes, run integrated validation, and produce the final synthesis. Close reusable sessions after accepting their work or when their role is no longer useful.",
-    ],
+      `Advanced reusable child conversations. open starts a session, send continues preserved context, get inspects, cancel stops the active turn, and close releases it. Use only when later turns materially benefit from the same child context. At most ${hub.maxConcurrentRuns} turns execute concurrently.\n\nRegistered roles:\n${startupCatalog}`,
     executionMode: "parallel",
     renderShell: "self",
-    parameters: SubagentParameters,
+    parameters: SubagentSessionParameters,
     renderCall: (args, theme, context) => {
+      const input = args as Record<string, unknown>;
       const redactedArgs = typeof (args as { task?: unknown }).task === "string"
-        ? { ...args, task: boundText((args as { task: string }).task, { maxCharacters: 8_000, maxLines: 40 }, credentialSecrets) }
-        : args;
-      const action = (redactedArgs as { action?: string }).action;
+        ? { ...input, task: boundText((args as { task: string }).task, { maxCharacters: 8_000, maxLines: 40 }, credentialSecrets) }
+        : input;
+      const publicAction = (redactedArgs as { action?: string }).action;
+      const action = publicAction === "open" ? "run" : publicAction === "send" ? "followup" : publicAction;
+      const renderArgs = { ...redactedArgs, action };
       if (action === "run" || action === "followup") {
-        const typed = redactedArgs as { action: "run" | "followup"; agent?: string; ref?: string; mode?: "task" | "session"; model?: string; thinking?: string };
+        const typed = renderArgs as { action: "run" | "followup"; agent?: string; ref?: string; model?: string; thinking?: string };
         const found = action === "run"
           ? registry.agents.find((candidate) => candidate.name === typed.agent)
           : typed.ref ? hub.resolve(typed.ref)?.agent : undefined;
         if (found) {
           const enriched = {
             ...typed,
+            mode: "session" as const,
             agent: found.name,
             ...(found.model ? { model: found.model } : {}),
             ...(found.thinking ? { thinking: found.thinking } : {}),
@@ -387,7 +399,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
           return renderSubagentCall(enriched as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
         }
       }
-      return renderSubagentCall(redactedArgs as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
+      return renderSubagentCall(renderArgs as unknown as Parameters<typeof renderSubagentCall>[0], theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
     },
     renderResult: (result, renderOptions, theme, context) => {
       const typedResult = result as unknown as Parameters<typeof renderSubagentResult>[0];
@@ -404,7 +416,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       if (ctx.hasUI) live.attach(ctx.ui);
       const idleProbe = ctx.isIdle?.bind(ctx);
       if (idleProbe) parentIdle = idleProbe;
-      const request = input as SubagentParameters;
+      const rawRequest = input as SubagentSessionParameters | ControlRequest;
+      const request: ControlRequest = rawRequest.action === "open"
+        ? { ...rawRequest, action: "run", mode: "session" }
+        : rawRequest.action === "send"
+          ? { ...rawRequest, action: "followup", mode: "session" }
+          : rawRequest as ControlRequest;
       if (request.action === "get") {
         if (!request.ref) return response({ sessions: hub.listRuntimes().filter((runtime) => runtime.reusable).slice(-100).reverse().map(publicSessionSummary) });
         const runtime = hub.resolve(request.ref);
@@ -547,17 +564,19 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       };
 
       if (request.action === "followup") {
-        if (!request.ref) return response({ error: "ref is required for subagent followup" }, true);
-        if (!request.task) return response({ error: "task is required for subagent followup" }, true);
+        const label = rawRequest.action === "send" ? "send" : "followup";
+        if (!request.ref) return response({ error: `ref is required for subagent session ${label}` }, true);
+        if (!request.task) return response({ error: `task is required for subagent session ${label}` }, true);
         const runtime = hub.resolve(request.ref);
         if (!runtime) return response({ ref: request.ref, status: "unknown", unknown: true, error: "Subagent session is unknown or expired." }, true);
-        if (runtime.state !== "idle") return response({ ...publicSession(runtime), error: `Subagent session is ${runtime.state}; followup requires idle.` }, true);
+        if (runtime.state !== "idle") return response({ ...publicSession(runtime), error: `Subagent session is ${runtime.state}; ${label} requires idle.` }, true);
         if (!hub.reserveSlot(runtime)) return response({ error: `Subagent capacity unavailable: maxConcurrentRuns is ${hub.maxConcurrentRuns}.`, ...publicSession(runtime) }, true);
         return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, false, true);
       }
 
-      if (!request.agent) return response({ error: "agent is required for subagent run" }, true);
-      if (!request.task) return response({ error: "task is required for subagent run" }, true);
+      const runLabel = rawRequest.action === "open" ? "session open" : "task";
+      if (!request.agent) return response({ error: `agent is required for subagent ${runLabel}` }, true);
+      if (!request.task) return response({ error: `task is required for subagent ${runLabel}` }, true);
       const mode = request.mode ?? "task";
       if (mode === "task" && request.background === true) {
         return response({ error: "background requires mode=session; task mode returns one final result and auto-closes" }, true);
@@ -610,7 +629,42 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
       const runtime = hub.createRuntime({ reusable: mode === "session", agent: runtimeAgent, cwd, parentSessionId, projectGuidance, initialOptions });
       return executeTurn(runtime, request.task, request.background === true, signal, onUpdate, true, mode === "session", operationId);
     },
+  };
+
+  pi.registerTool({
+    name: "subagent",
+    label: "Subagent",
+    description:
+      `Run one bounded task in fresh isolated context and return its final handoff. Use only for independently owned parallel work, substantial context isolation, explicit independent review, or separate exploratory/browser QA. Work directly on coherent implementation, routine self-review, exact lookups, and serial steps. Parallel calls express independent tasks.\n\nRegistered roles:\n${startupCatalog}`,
+    executionMode: "parallel",
+    renderShell: "self",
+    parameters: SubagentTaskParameters,
+    renderCall: (args, theme, context) => {
+      const typed = args as unknown as SubagentTaskParameters;
+      const found = registry.agents.find((candidate) => candidate.name === typed.agent);
+      const enriched = {
+        action: "run" as const,
+        ...typed,
+        task: boundText(typed.task, { maxCharacters: 8_000, maxLines: 40 }, credentialSecrets),
+        ...(found?.model ? { model: found.model } : {}),
+        ...(found?.thinking ? { thinking: found.thinking } : {}),
+      };
+      return renderSubagentCall(enriched, theme, context as unknown as Parameters<typeof renderSubagentCall>[2]);
+    },
+    renderResult: sessionTool.renderResult,
+    async execute(toolCallId, input, signal, onUpdate, ctx) {
+      const task = input as SubagentTaskParameters;
+      if (!task.agent) return response({ error: "agent is required for subagent task" }, true);
+      if (!task.task) return response({ error: "task is required for subagent task" }, true);
+      return sessionTool.execute(toolCallId, {
+        action: "run",
+        mode: "task",
+        agent: task.agent,
+        task: task.task,
+      } as never, signal, onUpdate, ctx);
+    },
   });
+  if (options.sessionsEnabled ?? settings.sessionsEnabled) pi.registerTool(sessionTool);
 
   // Live error propagation: agent-core derives the serialized
   // toolResult.isError only from a thrown execute() error ("Signaling errors"
@@ -620,7 +674,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: SubagentExt
   // status and this handler re-asserts the flag on the live pipeline. Normal
   // handoffs and idempotent repeats remain successful.
   pi.on("tool_result", (event) => {
-    if (event.toolName !== "subagent" || event.isError) return undefined;
+    if ((event.toolName !== "subagent" && event.toolName !== "subagent_session") || event.isError) return undefined;
     const details = event.details as { error?: unknown; cleanupError?: unknown; turnStatus?: unknown } | undefined;
     if (!details || typeof details !== "object") return undefined;
     if (typeof details.error !== "string" && typeof details.cleanupError !== "string" && details.turnStatus !== "failed") return undefined;

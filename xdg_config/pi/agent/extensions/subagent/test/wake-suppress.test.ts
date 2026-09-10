@@ -19,8 +19,8 @@ describe("wake busy/idle routing and suppression", () => {
     const { setup } = await import("./harness.ts");
 
     const idleEnv = setup({ ids: ["idle-job", "idle-op"] });
-    await idleEnv.extension.getTool().execute(
-      "call", { action: "run", mode: "session", agent: "scout", task: "Idle work", background: true },
+    await idleEnv.extension.getTool("subagent_session").execute(
+      "call", { action: "open", agent: "scout", task: "Idle work", background: true },
       undefined, undefined, idleContext(idleEnv.root),
     );
     idleEnv.fake.controllers[0].settle();
@@ -29,8 +29,8 @@ describe("wake busy/idle routing and suppression", () => {
     await idleEnv.extension.shutdown();
 
     const busyEnv = setup({ ids: ["busy-job", "busy-op"] });
-    await busyEnv.extension.getTool().execute(
-      "call", { action: "run", mode: "session", agent: "scout", task: "Busy work", background: true },
+    await busyEnv.extension.getTool("subagent_session").execute(
+      "call", { action: "open", agent: "scout", task: "Busy work", background: true },
       undefined, undefined, busyContext(busyEnv.root),
     );
     busyEnv.fake.controllers[0].settle();
@@ -75,8 +75,9 @@ describe("wake busy/idle routing and suppression", () => {
       agentDirectory: agents,
       controllerFactory: fake.factory,
       idFactory: () => ids.shift()!,
+      sessionsEnabled: true,
     });
-    const invoke = (params: Record<string, unknown>) => extension.getTool().execute(
+    const invoke = (params: Record<string, unknown>) => extension.getTool("subagent_session").execute(
       "call", params as never, undefined, undefined, context(root),
     );
     await invoke({ action: "run", mode: "session", agent: "scout", task: "Once", background: true });

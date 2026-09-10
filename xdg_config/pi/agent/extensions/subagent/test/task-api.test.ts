@@ -12,52 +12,52 @@ describe("subagent tasks and reusable sessions", () => {
     }
   };
 
-  test("teaches the parent when to delegate and how to reuse a workstream", () => {
-    const tool = setup().extension.getTool() as unknown as {
-      description: string;
-      promptGuidelines: string[];
-    };
-    const guidance = tool.promptGuidelines.join("\n");
-    expect(tool.description).toContain("run defaults to one-shot task mode");
-    expect(tool.description).toContain("followup continues an idle session");
-    expect(tool.promptGuidelines).toHaveLength(3);
-    expect(guidance).toContain("only the delta and next action");
-    expect(guidance).toContain("Do not delegate one coherent implementation");
-    expect(guidance).toContain("Omit mode for a one-shot task");
-    expect(guidance).toContain("Do not poll with repeated get calls");
-    expect(guidance).toContain("rely on completion wakes, or use one bounded get wait");
-    expect(guidance).toContain("after accepting their work or when their role is no longer useful");
+  test("keeps the default task contract small and the session control plane separate", () => {
+    const env = setup();
+    const task = env.extension.getTool() as unknown as { description: string; promptSnippet?: string; promptGuidelines?: string[] };
+    const session = env.extension.getTool("subagent_session") as unknown as { description: string };
+    expect(task.description).toContain("Run one bounded task");
+    expect(task.description).toContain("Work directly on coherent implementation");
+    expect(task.promptSnippet).toBeUndefined();
+    expect(task.promptGuidelines).toBeUndefined();
+    expect(session.description).toContain("Advanced reusable child conversations");
+    expect(session.description).toContain("open starts a session");
   });
 
   test("run defaults to a one-shot task without exposing a reusable ref", async () => {
     const env = setup({ ids: ["task-runtime", "task-operation"] });
     const running = env.extension.getTool().execute(
       "call",
-      { action: "run", agent: "scout", task: "Inspect once" } as never,
+      { agent: "scout", task: "Inspect once" } as never,
       undefined, undefined, context(env.root),
     );
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0, "completed", "One-shot handoff.");
     const result = await running;
 
-    expect(result.details).toMatchObject({ mode: "task", status: "closed", turn: 1, turnStatus: "completed", summary: "One-shot handoff." });
+    expect(result.details).toMatchObject({ mode: "task", status: "closed", turnStatus: "completed", summary: "One-shot handoff." });
+    expect(result.details).not.toHaveProperty("turn");
     expect(result.details).not.toHaveProperty("ref");
     expect(env.fake.controllers[0].closeCalls).toBe(1);
     expect((await env.invoke({ action: "get" })).details).toEqual({ sessions: [] });
-    expect((await env.invoke({ action: "followup", ref: "#1", task: "Cannot continue" })).isError).toBe(true);
+    expect((await env.invoke({ action: "send", ref: "#1", task: "Cannot continue" })).isError).toBe(true);
     expectPublic(result);
   });
 
-  test("task mode rejects background execution before creating a controller", async () => {
-    const env = setup();
-    const result = await env.invoke({ action: "run", mode: "task", agent: "scout", task: "Inspect", background: true });
-    expect(result).toMatchObject({ isError: true, details: { error: "background requires mode=session; task mode returns one final result and auto-closes" } });
-    expect(env.fake.controllers).toHaveLength(0);
+  test("task schema exposes only agent and task", () => {
+    const env = setup({ sessionsEnabled: false });
+    const schema = JSON.parse(JSON.stringify(env.extension.getTool().parameters)) as {
+      properties: Record<string, unknown>;
+      required: string[];
+    };
+    expect(Object.keys(schema.properties)).toEqual(["agent", "task"]);
+    expect(schema.required).toEqual(["agent", "task"]);
+    expect(env.extension.getTool("subagent_session")).toBeUndefined();
   });
 
   test("task cleanup failure remains an explicit live error without losing the handoff", async () => {
     const env = setup({ ids: ["task-runtime", "task-operation"] });
-    const running = env.invokeLive({ action: "run", mode: "task", agent: "scout", task: "Inspect once" });
+    const running = env.invokeLive({ agent: "scout", task: "Inspect once" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].close = async () => { throw new Error("cleanup unavailable"); };
     env.fake.controllers[0].settle(0, "completed", "Useful handoff.");
@@ -72,7 +72,7 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("foreground run leaves an idle reusable session", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    const running = env.invoke({ action: "run", agent: "scout", task: "Inspect lifecycle" });
+    const running = env.invoke({ action: "open", agent: "scout", task: "Inspect lifecycle" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0, "completed", "Plain-text handoff.");
     const result = await running;
@@ -85,12 +85,12 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("followup reuses the same controller and conversation", async () => {
     const env = setup({ ids: ["session", "first", "second"] });
-    const first = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
+    const first = env.invoke({ action: "open", agent: "scout", task: "Inspect" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0, "completed", "Found the seam.");
     await first;
 
-    const second = env.invoke({ action: "followup", ref: "#1", task: "Check the tests too" });
+    const second = env.invoke({ action: "send", ref: "#1", task: "Check the tests too" });
     await vi.waitFor(() => expect(env.fake.controllers[0].starts).toHaveLength(2));
     expect(env.fake.controllers).toHaveLength(1);
     expect(env.fake.controllers[0].starts[1].options.workOrder.task).toBe("Check the tests too");
@@ -100,7 +100,7 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("background turn notifies and remains reusable", async () => {
     const env = setup({ ids: ["session", "first", "second"] });
-    expect((await env.invoke({ action: "run", agent: "scout", task: "Inspect", background: true })).details)
+    expect((await env.invoke({ action: "open", agent: "scout", task: "Inspect", background: true })).details)
       .toMatchObject({ ref: "#1", status: "running" });
     env.fake.controllers[0].settle(0, "completed", "Done.");
     await vi.waitFor(() => expect(env.extension.messages).toHaveLength(1));
@@ -111,12 +111,12 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("cancel stops only the active turn and permits a followup", async () => {
     const env = setup({ ids: ["session", "first", "second"] });
-    await env.invoke({ action: "run", agent: "scout", task: "Long task", background: true });
+    await env.invoke({ action: "open", agent: "scout", task: "Long task", background: true });
     expect((await env.invoke({ action: "cancel", ref: "#1" })).details)
       .toMatchObject({ ref: "#1", status: "idle", turnStatus: "interrupted", cancelled: true });
     expect(env.fake.controllers[0].closeCalls).toBe(0);
 
-    const followup = env.invoke({ action: "followup", ref: "#1", task: "Try a smaller scope" });
+    const followup = env.invoke({ action: "send", ref: "#1", task: "Try a smaller scope" });
     await vi.waitFor(() => expect(env.fake.controllers[0].starts).toHaveLength(2));
     env.fake.controllers[0].settle(1);
     await followup;
@@ -124,19 +124,19 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("close releases a session and is idempotent", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    const run = env.invoke({ action: "run", agent: "scout", task: "Inspect" });
+    const run = env.invoke({ action: "open", agent: "scout", task: "Inspect" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle();
     await run;
     expect((await env.invoke({ action: "close", ref: "#1" })).details).toMatchObject({ ref: "#1", status: "closed", closed: true });
     expect((await env.invoke({ action: "close", ref: "#1" })).details).toMatchObject({ status: "closed", closed: true });
     expect(env.fake.controllers[0].closeCalls).toBe(1);
-    expect((await env.invoke({ action: "followup", ref: "#1", task: "Too late" })).isError).toBe(true);
+    expect((await env.invoke({ action: "send", ref: "#1", task: "Too late" })).isError).toBe(true);
   });
 
   test("get without a ref lists compact session summaries", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    const run = env.invoke({ action: "run", agent: "scout", task: "A deliberately verbose task" });
+    const run = env.invoke({ action: "open", agent: "scout", task: "A deliberately verbose task" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0, "completed", "A deliberately verbose result");
     await run;
@@ -148,18 +148,18 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("idle sessions release execution capacity", async () => {
     const env = setup({ maxConcurrentRuns: 1, ids: ["one", "one-turn", "two", "two-turn"] });
-    const first = env.invoke({ action: "run", agent: "scout", task: "One" });
+    const first = env.invoke({ action: "open", agent: "scout", task: "One" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle();
     await first;
-    expect((await env.invoke({ action: "run", agent: "scout", task: "Two", background: true })).isError).not.toBe(true);
+    expect((await env.invoke({ action: "open", agent: "scout", task: "Two", background: true })).isError).not.toBe(true);
     expect(env.fake.controllers).toHaveLength(2);
     await env.extension.shutdown();
   });
 
   test("get wait is observational and exposes bounded progress", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    await env.extension.getTool().execute("call", { action: "run", mode: "session", agent: "scout", task: "Inspect", background: true }, undefined, undefined, context(env.root));
+    await env.extension.getTool("subagent_session").execute("call", { action: "open", agent: "scout", task: "Inspect", background: true }, undefined, undefined, context(env.root));
     env.fake.controllers[0].starts[0].options.onProgress?.({
       summary: "reading runtime",
       tools: {
@@ -180,7 +180,7 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("extracts structured handoff sections without transcript identities", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    const run = env.invoke({ action: "run", agent: "scout", task: "Report" });
+    const run = env.invoke({ action: "open", agent: "scout", task: "Report" });
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle(0, "completed", "## Summary\nDone\n## Changes\nEdited a.ts\n## Validation\ntests pass");
     const result = await run;
@@ -190,7 +190,10 @@ describe("subagent tasks and reusable sessions", () => {
 
   test("omits renderer timelines and internal tool IDs from model-facing results", async () => {
     const env = setup({ ids: ["session", "turn"] });
-    const run = env.invoke({ action: "run", agent: "scout", task: "Inspect auth" });
+    const run = env.extension.getTool().execute(
+      "call", { agent: "scout", task: "Inspect auth" } as never,
+      undefined, undefined, context(env.root),
+    );
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].starts[0].options.onProgress?.({
       summary: "read auth.ts",
@@ -204,6 +207,9 @@ describe("subagent tasks and reusable sessions", () => {
 
     expect(result.details).toMatchObject({ timeline: expect.any(Array) });
     const modelText = result.content[0]?.text ?? "";
+    expect(JSON.parse(modelText)).toMatchObject({ agent: "scout", status: "completed", summary: "Done" });
+    expect(modelText).not.toContain('"mode"');
+    expect(modelText).not.toContain('"turnStatus"');
     expect(modelText).not.toContain("timeline");
     expect(modelText).not.toContain("private chain of thought");
     expect(modelText).not.toContain("secret-tool-call");

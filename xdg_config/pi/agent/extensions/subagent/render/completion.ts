@@ -75,7 +75,7 @@ function completionEntryText(
     .some((value) => typeof value === "string" && value.trim());
   if (!expanded) {
     const affordance = details.sessionOpen
-      ? `session ${details.ref} open · follow up ${details.ref} or close ${details.ref}`
+      ? `session ${details.ref} open · send ${details.ref} or close ${details.ref}`
       : `session ${details.ref} unavailable`;
     text += `\n${theme.fg("muted", `  ${affordance}${hasDetails ? " · expand for details" : ""}`)}`;
   }
@@ -90,7 +90,7 @@ function completionEntryText(
         text += `\n${renderActivityRow(line, theme)}`;
       }
     }
-    text += `\n\n${theme.fg("muted", details.sessionOpen ? `session ${details.ref} open · follow up ${details.ref} or close ${details.ref}` : `session ${details.ref} unavailable`)}`;
+    text += `\n\n${theme.fg("muted", details.sessionOpen ? `session ${details.ref} open · send ${details.ref} or close ${details.ref}` : `session ${details.ref} unavailable`)}`;
   }
   return text;
 }

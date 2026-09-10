@@ -63,15 +63,15 @@ describe("subagent rendering integration", () => {
     await vi.waitFor(() => expect(env.fake.controllers[0]?.starts).toHaveLength(1));
     env.fake.controllers[0].settle();
     await running;
-    const tool = env.extension.getTool();
-    const args = { action: "followup", ref: "#1", task: "Check tests" } as const;
+    const tool = env.extension.getTool("subagent_session");
+    const args = { action: "send", ref: "#1", task: "Check tests" } as const;
     const rendered = tool.renderCall!(args as never, {
       fg: (_color: string, value: string) => value,
       bg: (_color: string, value: string) => value,
       bold: (value: string) => value,
     } as never, { args, isError: false, state: {}, invalidate: vi.fn() } as never).render(100).join("\n");
     expect(rendered).toContain("#1 scout — Check tests");
-    expect(rendered).not.toContain("followup");
+    expect(rendered).not.toContain("send");
     await env.extension.shutdown();
   });
 });

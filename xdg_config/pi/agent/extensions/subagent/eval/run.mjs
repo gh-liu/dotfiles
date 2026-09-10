@@ -190,7 +190,7 @@ function executionPlan(options, selected) {
   return plan;
 }
 
-function createIsolatedAgentDirectory(runtimeDirectory) {
+function createIsolatedAgentDirectory(runtimeDirectory, enableSessions) {
   const directory = join(runtimeDirectory, "agent-config");
   mkdirSync(directory);
   for (const name of ["agents", "extensions", "skills", "missions"]) {
@@ -209,6 +209,13 @@ function createIsolatedAgentDirectory(runtimeDirectory) {
   ]) {
     const source = join(agentRoot, name);
     if (existsSync(source)) copyFileSync(source, join(directory, name));
+  }
+  if (enableSessions) {
+    const settingsPath = join(directory, "settings.json");
+    const settings = existsSync(settingsPath) ? JSON.parse(readFileSync(settingsPath, "utf8")) : {};
+    settings.subagent ??= {};
+    settings.subagent.sessions = { enabled: true };
+    writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
   }
   return directory;
 }
@@ -331,6 +338,9 @@ function validateRun(scenario, fixture, beforeSnapshot, processResult, analysis)
   }
   if (analysis.schemaErrors.length > 0) {
     hardFailures.push(`${analysis.schemaErrors.length} subagent schema/validation error(s)`);
+  }
+  if (analysis.assistantErrors.length > 0) {
+    hardFailures.push(`${analysis.assistantErrors.length} assistant generation error(s): ${analysis.assistantErrors[0]}`);
   }
   const runtimeErrors = analysis.subagentErrors.filter((error) => !analysis.schemaErrors.includes(error));
   const expectedErrors = scenario.hardExpectation?.expectedSubagentErrors ?? [];
@@ -528,7 +538,7 @@ async function main() {
   const runtimeDirectory = mkdtempSync(join(tmpdir(), "pi-subagent-eval-runtime-"));
   options.xdgConfigDirectory = join(runtimeDirectory, "xdg-config");
   mkdirSync(options.xdgConfigDirectory);
-  options.piAgentDirectory = createIsolatedAgentDirectory(runtimeDirectory);
+  options.piAgentDirectory = createIsolatedAgentDirectory(runtimeDirectory, selected.some((scenario) => scenario.sessions));
   overrideSubagents(options.piAgentDirectory, options.subagentModel, options.subagentThinking);
   const cleanup = (signal = "SIGTERM") => {
     for (const child of activeChildren) killChild(child, signal);

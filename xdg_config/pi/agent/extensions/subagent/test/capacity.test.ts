@@ -10,7 +10,7 @@ describe("subagent capacity", () => {
     const env = setup({ settingsPath });
     const jobs = await Promise.all([1, 2].map((n) => env.invoke({ action: "run", agent: "scout", task: `Job ${n}`, background: true })));
     expect((await env.invoke({ action: "run", agent: "scout", task: "Third", background: true })).isError).toBe(true);
-    expect(env.extension.getTool().description).toContain("At most 2 turns");
+    expect(env.extension.getTool("subagent_session").description).toContain("At most 2 turns");
     await env.invoke({ action: "cancel", ref: (jobs[0].details as { ref: string }).ref });
     expect((await env.invoke({ action: "run", agent: "scout", task: "Replacement", background: true })).isError).not.toBe(true);
     await env.extension.shutdown();

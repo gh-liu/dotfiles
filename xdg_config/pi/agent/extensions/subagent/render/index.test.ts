@@ -67,7 +67,8 @@ describe("task API rendering", () => {
     const taskCall = text(renderSubagentCall(taskArgs, theme, {
       args: taskArgs, expanded: true, isError: false, state: { runtimeIndex: 3 }, invalidate: vi.fn(),
     } as never));
-    expect(taskCall).toContain("worker — Implement once · task");
+    expect(taskCall).toContain("worker — Implement once");
+    expect(taskCall).not.toContain("· task");
     expect(taskCall).not.toContain("#3");
 
     const sessionArgs = { ...taskArgs, mode: "session" as const };
@@ -77,9 +78,9 @@ describe("task API rendering", () => {
     expect(sessionCall).toContain("#3 worker — Implement once");
 
     const taskResult = text(renderSubagentResult({ content: [], details: {
-      mode: "task", status: "closed", turn: 1, turnStatus: "completed", summary: "Implemented and verified.", elapsedMs: 2_000,
+      mode: "task", status: "closed", turnStatus: "completed", summary: "Implemented and verified.", elapsedMs: 2_000,
     } }, { expanded: false, isPartial: false }, theme, { ...runContext(), args: taskArgs } as never));
-    expect(taskResult).toContain("✓ completed · turn 1 · 2s");
+    expect(taskResult).toContain("✓ completed · 2s");
     expect(taskResult).toContain("Implemented and verified.");
     expect(taskResult).not.toContain("#3");
     expect(taskResult).not.toContain("follow up");
@@ -187,7 +188,7 @@ describe("task API rendering", () => {
     expect(foreground).toContain("✓ completed · turn 1 · 1s");
     expect(foreground).not.toContain("✓ #1 scout");
     expect(foreground).toContain("Done");
-    expect(foreground).toContain("workstream open · follow up #1 or close #1");
+    expect(foreground).toContain("workstream open · send #1 or close #1");
     const runExpanded = text(renderSubagentResult({ content: [], details: {
       ref: "#1",
       agent: "scout",
@@ -255,16 +256,16 @@ describe("task API rendering", () => {
     expect(close).toContain("✓ #2 scout · workstream closed");
   });
 
-  test("hydrates every run title with the authoritative short ref", async () => {
+  test("hydrates every session open title with the authoritative short ref", async () => {
     const env = (await import("../test/harness.ts")).setup();
-    const tool = env.extension.getTool();
+    const tool = env.extension.getTool("subagent_session");
     const state: Record<string, unknown> = {};
     const invalidate = vi.fn();
     tool.renderResult!({ content: [], details: { ref: "#7", status: "starting", model: "vendor/model", thinking: "high" } } as never, { expanded: false, isPartial: true }, theme, {
-      args: { action: "run", mode: "session", agent: "scout", task: "Inspect", background: false }, isError: false, state, invalidate,
+      args: { action: "open", agent: "scout", task: "Inspect", background: false }, isError: false, state, invalidate,
     } as never);
     await Promise.resolve();
-    const rendered = text(tool.renderCall!({ action: "run", mode: "session", agent: "scout", task: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
+    const rendered = text(tool.renderCall!({ action: "open", agent: "scout", task: "Inspect", background: false } as never, theme, { args: {}, isError: false, state, invalidate } as never));
     expect(rendered).toContain("#7 scout · vendor/model · high — Inspect");
     expect(rendered).not.toContain("tracking");
     await env.extension.shutdown();
@@ -280,7 +281,7 @@ describe("task API rendering", () => {
     expect(collapsed).toContain("✓ #1 scout · turn 1 · initial · 2s");
     expect(collapsed).toContain("task · Inspect auth");
     expect(collapsed).toContain("result · Mapped the auth lifecycle.");
-    expect(collapsed).toContain("session #1 open · follow up #1 or close #1 · expand for details");
+    expect(collapsed).toContain("session #1 open · send #1 or close #1 · expand for details");
     expect(collapsed).not.toContain("· completed");
 
     const expanded = text(renderSubagentCompletion({ content: "", details: completed }, { expanded: true, outputPad: 0 }, taggedTheme));

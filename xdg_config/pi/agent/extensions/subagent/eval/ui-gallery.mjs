@@ -2,7 +2,7 @@
 
 // Deterministic visual inventory for every current subagent renderer branch.
 // This is a review tool, not a provider test: fixtures use the public
-// task/session run plus followup/get/cancel/close contract and extension-produced details.
+// task plus opt-in session open/send/get/cancel/close contract and extension-produced details.
 
 import {
   renderSubagentCall,
@@ -71,10 +71,10 @@ const runArgs = {
 
 function calls() {
   heading("CALLS · one-shot task and reusable session");
-  row("task (default)", renderCall(runArgs, false, { runtimeIndex: 1 }));
+  row("default call", renderCall(runArgs, false, { runtimeIndex: 1 }));
   row("session", renderCall({ ...runArgs, mode: "session" }, false, { runtimeIndex: 2 }));
   row("session background", renderCall({ ...runArgs, mode: "session", agent: "reviewer", background: true }, false, { runtimeIndex: 3 }));
-  row("followup", renderCall({ action: "followup", ref: "#2", agent: "scout", task: "Compare the tests with the implementation." }, false, { model: "stealth/ox-alpha", thinking: "minimal", turn: 2 }));
+  row("session send", renderCall({ action: "followup", ref: "#2", agent: "scout", task: "Compare the tests with the implementation." }, false, { model: "stealth/ox-alpha", thinking: "minimal", turn: 2 }));
   row("get recent", renderCall({ action: "get" }));
   row("get session", renderCall({ action: "get", ref: "#2", waitMs: 30_000 }, false, { ref: "#2" }));
   row("cancel", renderCall({ action: "cancel", ref: "#2" }, false, { ref: "#2" }));
@@ -184,8 +184,8 @@ function lineage() {
 function terminal() {
   heading("TERMINAL RESULTS · task and session outcomes");
   const cases = [
-    ["task completed", runArgs, { mode: "task", agent: "scout", turn: 1, status: "closed", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
-    ["task interrupted", runArgs, { mode: "task", agent: "scout", turn: 1, status: "closed", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
+    ["task completed", runArgs, { mode: "task", agent: "scout", status: "closed", turnStatus: "completed", summary: "Mapped the lifecycle and identified the ownership boundary.", elapsedMs: 54_000 }, {}],
+    ["task interrupted", runArgs, { mode: "task", agent: "scout", status: "closed", turnStatus: "interrupted", summary: "Stopped before synthesis.", elapsedMs: 14_000 }, {}],
     ["task crashed", runArgs, { mode: "task", agent: "scout", status: "crashed", error: "Provider authentication failed before generation." }, { isError: true }],
     ["session completed", { ...runArgs, mode: "session" }, { ref: "#1", agent: "scout", turn: 1, status: "idle", turnStatus: "completed", summary: "Reusable handoff.", elapsedMs: 20_000 }, {}],
     ["get running", { action: "get", ref: "#2" }, { ref: "#2", turn: 2, status: "running", agent: "scout" }, {}],
