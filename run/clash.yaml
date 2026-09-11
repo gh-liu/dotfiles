@@ -61,13 +61,13 @@ proxy-providers:
     # path: ./main_sub.yaml
     health-check:
       enable: true
-      interval: 600
+      interval: 300
       url: https://cp.cloudflare.com/generate_204
 proxy-groups:
   - name: 🇭🇰 HK
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
@@ -75,7 +75,7 @@ proxy-groups:
   - name: 🇹🇼 TW
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
@@ -83,7 +83,7 @@ proxy-groups:
   - name: 🇯🇵 JP
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
@@ -91,7 +91,7 @@ proxy-groups:
   - name: 🇰🇷 KR
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
@@ -99,7 +99,7 @@ proxy-groups:
   - name: 🇸🇬 SG
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
@@ -107,7 +107,7 @@ proxy-groups:
   - name: 🇺🇸 US
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
@@ -115,7 +115,7 @@ proxy-groups:
   - name: 🇵🇭 PH
     type: url-test
     url: https://cp.cloudflare.com/generate_204
-    interval: 86400
+    interval: 600
     tolerance: 80
     use:
       - main_sub
