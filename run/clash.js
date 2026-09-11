@@ -18,7 +18,7 @@ const COUNTRY_GROUPS = [
         ],
 ];
 
-const TEST_URL = "http://www.gstatic.com/generate_204";
+const TEST_URL = "https://cp.cloudflare.com/generate_204";
 const EXCLUDE_FILTER =
         "(?i)(剩余流量|流量剩余|到期时间|过期时间|有效期|下次重置|重置时间|套餐信息|订阅信息|\\b(traffic|remaining|expiration|expires?|reset|bandwidth)\\b)";
 
@@ -61,7 +61,7 @@ const main = (config) => {
                         icon: `https://cdn.jsdelivr.net/gh/gh-liu/dotfiles@master/run/img/flags_png/${name === "UK" ? "GB" : name}.png`,
                         url: TEST_URL,
                         interval: 600,
-                        tolerance: 50,
+                        tolerance: 80,
                 });
                 console.log(`✅ 添加国家代理组：${name}`);
         }
