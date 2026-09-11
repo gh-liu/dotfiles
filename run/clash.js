@@ -30,6 +30,25 @@ const main = (config) => {
         config.profile ??= {};
         config.profile["store-selected"] = true;
 
+        // align with clash.yaml
+        config.dns = {
+                enable: true,
+                ipv6: false,
+                listen: "0.0.0.0:1053",
+                "use-hosts": true,
+                "enhanced-mode": "fake-ip",
+                "fake-ip-range": "198.18.0.1/16",
+                "fake-ip-filter": ["*.lan", "*.local", "localhost"],
+                "default-nameserver": ["114.114.114.114", "180.76.76.76"],
+                nameserver: ["https://doh.pub/dns-query", "https://dns.alidns.com/dns-query"],
+                fallback: ["https://dns.google/dns-query", "https://cloudflare-dns.com/dns-query"],
+                "fallback-filter": {
+                        geoip: true,
+                        "geoip-code": "CN",
+                },
+                "proxy-server-nameserver": ["114.114.114.114", "180.76.76.76"],
+        };
+
         const groups = [];
 
         for (const [name, filter] of COUNTRY_GROUPS) {
