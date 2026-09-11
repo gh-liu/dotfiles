@@ -34,7 +34,7 @@ def group_urltests:
         interval: "1m",
         tolerance: 100,
         idle_timeout: "10m",
-        interrupt_exist_connections: true
+        interrupt_exist_connections: false
       }
   ];
 
