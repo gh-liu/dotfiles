@@ -31,7 +31,10 @@ def group_urltests:
         tag: $group.tag,
         outbounds: $tags,
         url: "https://www.gstatic.com/generate_204",
-        interval: "3m"
+        interval: "1m",
+        tolerance: 100,
+        idle_timeout: "10m",
+        interrupt_exist_connections: true
       }
   ];
 
@@ -47,6 +50,7 @@ def proxy_default($outbounds):
 | group_urltests as $groups
 | group_tags($groups) as $proxy_outbounds
 | base_config
+| .dns.strategy = "prefer_ipv4"
 | .outbounds = (
     (.outbounds | map(if .tag == "proxy" then . + {
       outbounds: $proxy_outbounds,
