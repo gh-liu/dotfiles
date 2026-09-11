@@ -19,7 +19,7 @@ def groups: [
 ];
 
 def status_node:
-  .tag | test("(?i)(剩余|流量|重置|到期|expire|traffic|subscription)");
+  .tag | test("(?i)(剩余|流量|重置|到期|官网|expire|traffic|subscription|website|url)");
 
 def group_urltests:
   [
@@ -51,6 +51,7 @@ def proxy_default($outbounds):
 | group_tags($groups) as $proxy_outbounds
 | base_config
 | .dns.strategy = "prefer_ipv4"
+| (.route.rule_set //= [])
 | .outbounds = (
     (.outbounds | map(if .tag == "proxy" then . + {
       outbounds: $proxy_outbounds,
