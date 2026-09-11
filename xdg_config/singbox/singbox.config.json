@@ -12,11 +12,12 @@
     }
   ],
   "dns": {
+    "strategy": "prefer_ipv4",
     "servers": [
       {
         "tag": "remote",
         "type": "udp",
-        "server": "223.5.5.5"
+        "server": "114.114.114.114"
       },
       {
         "tag": "local",

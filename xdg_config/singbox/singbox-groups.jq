@@ -31,7 +31,7 @@ def group_urltests:
         tag: $group.tag,
         outbounds: $tags,
         url: "https://www.gstatic.com/generate_204",
-        interval: "10m"
+        interval: "3m"
       }
   ];
 
