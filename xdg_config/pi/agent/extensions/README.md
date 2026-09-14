@@ -39,29 +39,6 @@ summary and the current worktree as primary context, consulting the persisted
 session JSONL only when a decision-critical detail is missing, contradictory, or
 ambiguous. This avoids routinely refilling the newly compacted context.
 
-## Sessions
-
-The `sessions` extension registers two history-reading tools. Call them in order:
-
-- `sessions_search({ query, cwd?, limit? })` searches local Pi session history for
-  matching messages. Use its exact `sessionId` or indexed `path` with
-  `sessions_read`. It searches globally by default; `cwd` restricts results to
-  that directory and its descendants. Results contain bounded metadata and
-  snippets, not complete sessions.
-- `sessions_read({ session, mode, cwd?, entryId?, entryLimit?, childLimit? })`
-  reads a bounded view of the exact session id or path. `summary` is a bounded
-  metadata/overview projection and latest-entry view, not a generated or complete
-  summary. `entries` returns branch-aware conversation entries; with `entryId`,
-  it follows that entry's resolved branch and can include its direct children.
-  Without an explicit `cwd`, reads are restricted to the current cwd; a supplied
-  cwd permits only that directory or descendants. In `entries` mode, `entryLimit`
-  budgets branch entries and `childLimit` independently budgets direct child
-  entries. Entry projections include `role` when available and model-visible text
-  and overall output are bounded.
-
-History capabilities are independent of active-session IPC and remain available
-without any broker or runtime connection.
-
 ## Subagent live evaluation
 
 `node subagent/eval/run.mjs --quick` (or the equivalent `bun` command) runs real
@@ -76,17 +53,16 @@ statistical run, report format, and baseline comparison workflow.
 
 - `auth`: syncs Codex OAuth credentials from macOS Keychain, falling back to `CODEX_HOME/auth.json`.
 - `continue`: resumes after compaction from the summary and worktree, consulting history only for decision-critical gaps.
-- `sessions`: `sessions_search` locates history; `sessions_read` reads summary first and bounded entries only as needed.
 - `status`: shows activity, model, token, cost, and context state.
 - `subagent`: runs independent subtasks and presents their results.
 - `websearch`: provides Exa `web_search` for current or external facts.
 
-Use `continue` for compaction recovery, and sessions only for missing decisions. `sessions_read` is a direct bounded low-level read, not a subagent operation, to avoid recursion, latency, and permission complexity.
+Use `continue` for compaction recovery. It is intentionally the only history-related extension because it uses session history only when a compaction recovery decision requires it.
 
 ## Configuration, tests, and troubleshooting
 
 Set `EXA_API_KEY` in the environment that starts Pi. Codex uses `CODEX_HOME` (default `~/.codex`). Never document or log secrets or auth-file contents. Run `npm test` in this directory; focused checks are `npm run typecheck:status` and `npm run typecheck:subagent`.
 
-If web search is unavailable, verify `EXA_API_KEY` and the API/network response. If Codex does not sync, verify Keychain access on macOS, then verify `CODEX_HOME/auth.json` contains OAuth fields and an access-token JWT with `exp`. If history is rejected, search first and pass the exact id/path within the allowed `cwd`; summary is the default first step.
+If web search is unavailable, verify `EXA_API_KEY` and the API/network response. If Codex does not sync, verify Keychain access on macOS, then verify `CODEX_HOME/auth.json` contains OAuth fields and an access-token JWT with `exp`.
 
 For current/external facts, web search prefers official/primary sources, preserves source URLs, and distinguishes snippets from verified facts.
