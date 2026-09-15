@@ -1,6 +1,6 @@
 vim.cmd([[
 setlocal signcolumn=no
-let &l:statusline = '%q %{exists("w:quickfix_title") ? w:quickfix_title : ""} %= %l/%L'
+let &l:statusline = '%#Title#%q%* %{exists("w:quickfix_title") ? w:quickfix_title : ""} %= %l/%L'
 ]])
 
 local info = vim.fn.getwininfo(vim.fn.win_getid())[1] or {}
@@ -44,13 +44,13 @@ end, { desc = "Go to next quickfix in history", nowait = true, buffer = 0 })
 local qf_mapping_ack_style = vim.g.qf_mapping_ack_style or 1
 
 local ACKMAP = {}
---[[ 
+--[[
 s - open entry in a new horizontal window
 v - open entry in a new vertical window
 t - open entry in a new tab
 o - open entry and come back
 O - open entry and close the location/quickfix window
-p - open entry in a preview window 
+p - open entry in a preview window
 ]]
 
 ---@class QFItem
