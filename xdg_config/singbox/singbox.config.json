@@ -1,4 +1,5 @@
 {
+  "$schema": "https://sing-box.sagernet.org/schema.json",
   "log": {
     "level": "info",
     "timestamp": true
@@ -13,6 +14,8 @@
   ],
   "dns": {
     "strategy": "prefer_ipv4",
+    "timeout": "3s",
+    "optimistic": true,
     "servers": [
       {
         "tag": "remote",
@@ -52,30 +55,33 @@
       "type": "block"
     }
   ],
+  "http_clients": [
+    {
+      "tag": "rule-set"
+    }
+  ],
   "route": {
     "auto_detect_interface": true,
+    "default_http_client": "rule-set",
     "default_domain_resolver": "remote",
     "rule_set": [
       {
         "type": "remote",
         "tag": "geosite-category-ads-all",
         "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs",
-        "download_detour": "direct"
+        "url": "https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-category-ads-all.srs"
       },
       {
         "type": "remote",
         "tag": "geosite-cn",
         "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-cn.srs",
-        "download_detour": "direct"
+        "url": "https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@rule-set/geosite-cn.srs"
       },
       {
         "type": "remote",
         "tag": "geoip-cn",
         "format": "binary",
-        "url": "https://cdn.jsdelivr.net/gh/SagerNet/sing-geoip@rule-set/geoip-cn.srs",
-        "download_detour": "direct"
+        "url": "https://cdn.jsdelivr.net/gh/SagerNet/sing-geoip@rule-set/geoip-cn.srs"
       }
     ],
     "rules": [

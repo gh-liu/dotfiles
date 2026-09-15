@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-SINGBOX_CONFIG=$HOME/singbox.config.json
+SINGBOX_CONFIG=${SINGBOX_CONFIG:-$HOME/singbox.config.json}
 
 : "${SUB_URL:?SUB_URL is required}"
 
