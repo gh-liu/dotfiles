@@ -473,3 +473,31 @@ P1.1–P1.13
 ```
 
 Each report records Pi version, extension hash, requested parent/child model, concrete routed response models, thinking levels, scenario attempts, conclusive/inconclusive classification, JSONL artifacts, workspace diff, test output, process cleanup, and aggregate pass rates.
+
+## 13. Exploratory parent-call policy probe
+
+`trigger.mjs` probes whether a real Pi parent chooses and invokes `subagent` at the intended boundary. It is deliberately separate from the acceptance matrix above: matching the expected call count does not prove that the parent or child completed the underlying task correctly.
+
+Run the complete probe or selected scenarios with:
+
+```bash
+node eval/trigger.mjs
+node eval/trigger.mjs simple-lookup parallel-investigation
+```
+
+The runner checks the number of `tool_execution_start` events, pairs subagent errors from `tool_execution_end`, and verifies that both starts precede either end for the parallel case. Each scenario uses an isolated temporary Git repository. Its `callPolicyPass` field describes only delegation behavior.
+
+### 2026-09-17 single-sample observation
+
+Requested model: `openrouter/openrouter/free`; thinking: `minimal`. This is an exploratory sample, not a stable pass-rate claim, because the free router selected different concrete models.
+
+| Scenario | Expected | Observed | Routed model | Call-policy result | Underlying task observation |
+| --- | --- | --- | --- | --- | --- |
+| Small direct lookup | 0 calls | 0 | `thinkingmachines/inkling-small:free` | Pass | Returned the expected value. |
+| Fresh-context multi-file investigation | 1 call | 1 valid task-only call | `thinkingmachines/inkling:free` | Pass | Returned the expected ownership boundary. |
+| Independent diff review | 1 call | 1 valid task-only call | `thinkingmachines/inkling:free` | Pass | The call completed, but its review conclusion was incorrect: the changed implementation and existing explicit-TTL expectation were aligned. |
+| Bounded implementation | 1 call | 0; emitted tool-call JSON as prose | `thinkingmachines/inkling:free` | Fail | No implementation occurred. |
+| Two independent investigations | 2 parallel calls | 2; both starts preceded either end | `thinkingmachines/inkling-small:free` | Pass | Parent produced a plausible synthesis from both handoffs. |
+| Small coherent edit | 0 calls | 0 | `thinkingmachines/inkling-small:free` | Pass | Delegation choice was correct, but the parent emptied the file and reported a failed test. |
+
+Observed call-policy score: 5/6. Task success was lower and must not be inferred from that score. A prior run also showed model variance: one routed model attempted an invalid top-level `model` field, another skipped the independent review call, and a child implementation timed out. These are evidence that `openrouter/free` tool use needs repeated sampling and hard event-level assertions; they do not by themselves identify a deterministic plugin defect.
