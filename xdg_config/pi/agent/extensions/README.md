@@ -39,6 +39,26 @@ summary and the current worktree as primary context, consulting the persisted
 session JSONL only when a decision-critical detail is missing, contradictory, or
 ambiguous. This avoids routinely refilling the newly compacted context.
 
+## Subagent configuration
+
+`subagent` is a role-free, one-shot child agent. Configure its controller policy in
+Pi's normal settings rather than a separate extension file:
+
+```json
+{
+  "subagent": {
+    "maxConcurrentRuns": 4
+  }
+}
+```
+
+The default is 4. A trusted project's `.pi/settings.json` may override the global
+`~/.pi/agent/settings.json` value. The value must be a positive integer. Per-call
+model and thinking overrides remain in the tool's `opts`; child tools, system
+prompt, nesting, credential handling, and output limits remain code-owned safety
+policy. Named `worker`/`scout`/`reviewer`/`tester` profiles are not part of the
+current contract; describe the required behavior and handoff directly in `task`.
+
 ## Subagent live evaluation
 
 `node subagent/eval/run.mjs --quick` (or the equivalent `bun` command) runs real

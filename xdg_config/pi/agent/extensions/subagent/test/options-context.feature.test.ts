@@ -1,9 +1,34 @@
 import { mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test, vi } from "vitest";
+import { resolveConfiguredCapacity } from "../index.ts";
 import { setup, temporaryDirectory } from "./harness.ts";
 
 describe("Feature: execution options and context resolution", () => {
+  test("Scenario: settings configure capacity with trusted project override", () => {
+    expect(resolveConfiguredCapacity({ subagent: { maxConcurrentRuns: 5 } }, {}, false)).toBe(5);
+    expect(resolveConfiguredCapacity(
+      { subagent: { maxConcurrentRuns: 5 } },
+      { subagent: { maxConcurrentRuns: 2 } },
+      true,
+    )).toBe(2);
+    expect(resolveConfiguredCapacity(
+      { subagent: { maxConcurrentRuns: 5 } },
+      { subagent: { maxConcurrentRuns: 2 } },
+      false,
+    )).toBe(5);
+  });
+
+  test.each([
+    [0],
+    [-1],
+    [1.5],
+    ["4"],
+  ])("Scenario Outline: invalid configured capacity %j is rejected", (maxConcurrentRuns) => {
+    expect(() => resolveConfiguredCapacity({ subagent: { maxConcurrentRuns } }, {}, false))
+      .toThrow("subagent.maxConcurrentRuns must be a positive integer");
+  });
+
   test.each([
     [undefined, "parent-provider/parent-model", "medium"],
     [{ model: "child-provider/child-model" }, "child-provider/child-model", "medium"],

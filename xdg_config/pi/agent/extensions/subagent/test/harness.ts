@@ -95,7 +95,7 @@ export function setup(options: {
   } as unknown as ExtensionAPI;
 
   registerSubagentExtension(pi, {
-    capacity: options.capacity,
+    capacity: options.capacity ?? 4,
     childFactory: createChild,
     credentialValues: () => options.credentialValues ?? [],
     allowedRoot: options.cwd,

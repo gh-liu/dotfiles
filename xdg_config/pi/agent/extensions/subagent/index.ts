@@ -1,5 +1,10 @@
 import type { Model } from "@earendil-works/pi-ai";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import {
+  getAgentDir,
+  SettingsManager,
+  type ExtensionAPI,
+  type ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
@@ -39,6 +44,48 @@ interface RegisterOptions {
   childFactory?: ChildFactory;
   credentialValues?: () => string[];
   allowedRoot?: string;
+}
+
+interface SubagentSettings {
+  maxConcurrentRuns?: unknown;
+}
+
+interface SettingsWithSubagent {
+  subagent?: unknown;
+}
+
+const DEFAULT_CAPACITY = 4;
+
+function subagentSettings(value: unknown): SubagentSettings | undefined {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("subagent settings must be an object");
+  }
+  return value as SubagentSettings;
+}
+
+export function resolveConfiguredCapacity(
+  globalSettings: SettingsWithSubagent,
+  projectSettings: SettingsWithSubagent,
+  projectTrusted: boolean,
+): number {
+  const global = subagentSettings(globalSettings.subagent);
+  const project = projectTrusted ? subagentSettings(projectSettings.subagent) : undefined;
+  const value = project?.maxConcurrentRuns ?? global?.maxConcurrentRuns ?? DEFAULT_CAPACITY;
+  if (!Number.isInteger(value) || (value as number) < 1) {
+    throw new Error("subagent.maxConcurrentRuns must be a positive integer");
+  }
+  return value as number;
+}
+
+function configuredCapacity(ctx: ExtensionContext): number {
+  const projectTrusted = ctx.isProjectTrusted();
+  const settings = SettingsManager.create(ctx.cwd, getAgentDir(), { projectTrusted });
+  return resolveConfiguredCapacity(
+    settings.getGlobalSettings() as SettingsWithSubagent,
+    settings.getProjectSettings() as SettingsWithSubagent,
+    projectTrusted,
+  );
 }
 
 const SubagentParameters = Type.Object({
@@ -131,8 +178,9 @@ function environmentCredentialValues(): string[] {
 }
 
 export function registerSubagentExtension(pi: ExtensionAPI, options: RegisterOptions = {}): void {
-  const capacity = options.capacity ?? 4;
-  if (!Number.isInteger(capacity) || capacity < 1) throw new Error("Subagent capacity must be a positive integer.");
+  if (options.capacity !== undefined && (!Number.isInteger(options.capacity) || options.capacity < 1)) {
+    throw new Error("Subagent capacity must be a positive integer.");
+  }
   const childFactory = options.childFactory ?? createSdkChildFactory();
   const credentialValues = options.credentialValues ?? environmentCredentialValues;
   const owned = new Set<ChildHandle>();
@@ -152,6 +200,12 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: RegisterOpt
       const validationError = validate(rawParams);
       if (validationError) return errorResult(validationError, credentials);
       if (shuttingDown) return errorResult("Subagent plugin is shutting down.", credentials);
+      let capacity: number;
+      try {
+        capacity = options.capacity ?? configuredCapacity(ctx);
+      } catch (error) {
+        return errorResult(error instanceof Error ? error.message : String(error), credentials);
+      }
       if (occupied >= capacity) {
         return errorResult(`Subagent capacity unavailable: ${occupied}/${capacity} children are owned.`, credentials);
       }

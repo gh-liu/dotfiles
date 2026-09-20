@@ -10,13 +10,7 @@
   },
   "packages": [],
   "subagent": {
-    "maxConcurrentRuns": 5,
-    "subagents": {
-      "worker": {},
-      "scout": {},
-      "reviewer": {},
-      "tester": {}
-    }
+    "maxConcurrentRuns": 5
   },
   "theme": "nord",
   "defaultProvider": "openai-codex",
