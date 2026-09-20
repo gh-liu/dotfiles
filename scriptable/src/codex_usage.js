@@ -672,7 +672,8 @@ class CodexUsageView {
     } else {
       for (let i = 0; i < count; i++) {
         const expiry = i < expiries.length ? expiries[i] : 0;
-        this.addText(row, "⚪", Font.mediumSystemFont(10), this.resetColorFor(expiry));
+        // Use a text glyph rather than an emoji so Scriptable can apply textColor.
+        this.addText(row, "●", Font.mediumSystemFont(10), this.resetColorFor(expiry));
         if (i < count - 1) row.addSpacer(2);
       }
     }
