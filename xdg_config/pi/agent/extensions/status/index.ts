@@ -56,11 +56,11 @@ function takeGraphemes(value: string, count: number): string {
 }
 
 function abbreviateDirectoryName(name: string, initials: number): string {
-  if (!name.startsWith(".") || name === "." || name === "..") {
-    return takeGraphemes(name, initials);
-  }
-  // A lone dot is not useful, so hidden directories always retain one name initial.
-  return `.${takeGraphemes(name.slice(1), Math.max(1, initials - 1))}`;
+  const abbreviated = !name.startsWith(".") || name === "." || name === ".."
+    ? takeGraphemes(name, initials)
+    // A lone dot is not useful, so hidden directories always retain one name initial.
+    : `.${takeGraphemes(name.slice(1), Math.max(1, initials - 1))}`;
+  return abbreviated === name ? name : `${abbreviated}…`;
 }
 
 export function formatDirectory(cwd: string, maxWidth = MAX_DIRECTORY_WIDTH): string {

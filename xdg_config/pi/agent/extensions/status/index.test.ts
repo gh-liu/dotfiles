@@ -104,16 +104,16 @@ describe("formatDirectory", () => {
     expect(formatDirectory(`${homedir()}/project`, 32)).toBe("~/project");
   });
 
-  test("abbreviates parent directories to two initials before using one", () => {
+  test("marks abbreviated parents and prefers two initials before using one", () => {
     expect(formatDirectory(`${homedir()}/tools/dotfiles/xdg_config/pi/agent/extensions`, 32))
-      .toBe("~/to/do/xd/pi/ag/extensions");
-    expect(formatDirectory(`${homedir()}/alpha/bravo/charlie/extensions`, 18))
-      .toBe("~/a/b/c/extensions");
+      .toBe("~/to…/do…/xd…/pi/ag…/extensions");
+    expect(formatDirectory(`${homedir()}/alpha/bravo/charlie/extensions`, 21))
+      .toBe("~/a…/b…/c…/extensions");
   });
 
   test("preserves a useful initial for hidden directories", () => {
     expect(formatDirectory(`${homedir()}/.config/alpha/extensions`, 20))
-      .toBe("~/.c/al/extensions");
+      .toBe("~/.c…/al…/extensions");
   });
 
   test("falls back to a middle ellipsis while preserving the final directory", () => {
