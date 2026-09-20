@@ -1,6 +1,8 @@
 # Docs:
 # ghostty +show-config --default --docs | nvim
 
+auto-update-channel = tip
+
 theme = "nord"
 
 font-family = "JetBrainsMonoNL Nerd Font Mono"
