@@ -54,19 +54,30 @@
 - subagent 的结果是待验证的交接，不是权威事实。父 agent 仍负责检查证据、审阅变更并完成最终验证。
 - subagent 隔离的是对话上下文，不是文件系统、安全边界或责任归属。
 
-# 技能
-
-## 视觉表达
+# 视觉表达
 
 > Pick the smallest view that makes the key point clear.
 
-> 适合视觉表达时，直接用伪代码、树、Mermaid、diff 或自包含 HTML 展示，少写文字；HTML 必须实际打开验证；复制内容保持纯文本。
+- 仅当视觉结构比简短文字更清晰时使用；不要为了美观重复表达同一信息。
+- 选择能够说明问题的最小形式：
+    - 分支、状态或算法：伪代码。
+    - 层级和组成关系：文本树。
+    - 跨组件交互或时序：Mermaid。
+    - 代码或方案变化：diff。
+    - 必须展示布局、样式或交互：自包含 HTML，并实际打开验证。
+- 命令、代码和需要复制的内容必须保留为纯文本，不要放入截图。
+- 图示必须与代码、日志或其他证据一致，不能用视觉表达代替验证。
 
+## 示例
+
+状态或分支：
 
 ```text
 on(save)
   if unchanged: return cached result
 ```
+
+层级关系：
 
 ```text
 SessionPage
@@ -74,12 +85,16 @@ SessionPage
 └── Timeline
 ```
 
+交互或时序：
+
 ```mermaid
 sequenceDiagram
   User->>UI: Save
   UI->>API: POST /sessions
   API-->>UI: Result
 ```
+
+方案变化：
 
 ```diff
  submitForm
