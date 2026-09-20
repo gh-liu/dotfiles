@@ -47,10 +47,45 @@ const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
 const TOOL_SPINNER_FRAMES = ["›", "»", "≫", "»"] as const;
 const MAX_BRANCH_WIDTH = 32;
 const MAX_DIRECTORY_WIDTH = 32;
+const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
-function formatDirectory(cwd: string): string {
+function takeGraphemes(value: string, count: number): string {
+  return Array.from(GRAPHEME_SEGMENTER.segment(value), ({ segment }) => segment)
+    .slice(0, count)
+    .join("");
+}
+
+function abbreviateDirectoryName(name: string, initials: number): string {
+  if (!name.startsWith(".") || name === "." || name === "..") {
+    return takeGraphemes(name, initials);
+  }
+  // A lone dot is not useful, so hidden directories always retain one name initial.
+  return `.${takeGraphemes(name.slice(1), Math.max(1, initials - 1))}`;
+}
+
+export function formatDirectory(cwd: string, maxWidth = MAX_DIRECTORY_WIDTH): string {
+  if (maxWidth <= 0) return "";
   const home = homedir();
-  return cwd === home ? "~" : cwd.startsWith(`${home}/`) ? `~${cwd.slice(home.length)}` : cwd;
+  const display = cwd === home ? "~" : cwd.startsWith(`${home}/`) ? `~${cwd.slice(home.length)}` : cwd;
+  if (visibleWidth(display) <= maxWidth) return display;
+
+  const parts = display.split("/");
+  if (parts.length <= 2) return truncateToWidth(display, maxWidth, "…");
+
+  const abbreviated = (initials: number) => parts
+    .map((part, index) => index > 0 && index < parts.length - 1
+      ? abbreviateDirectoryName(part, initials)
+      : part)
+    .join("/");
+  for (const initials of [2, 1]) {
+    const candidate = abbreviated(initials);
+    if (visibleWidth(candidate) <= maxWidth) return candidate;
+  }
+
+  const prefix = parts[0] ? `${parts[0]}/…/` : "/…/";
+  const leafWidth = maxWidth - visibleWidth(prefix);
+  if (leafWidth <= 0) return truncateToWidth(prefix, maxWidth, "");
+  return `${prefix}${truncateToWidth(parts.at(-1) ?? "", leafWidth, "…")}`;
 }
 
 interface StatusSnapshot {

@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { ExtensionAPI, ExtensionContext, Theme } from "@earendil-works/pi-coding-agent";
-import status from "./index.ts";
+import status, { formatDirectory } from "./index.ts";
 
 type Handler = (event: any, context: ExtensionContext) => void | Promise<void>;
 
@@ -98,6 +98,29 @@ function setup(options: {
     setIdle: (next: boolean) => { idle = next; },
   };
 }
+
+describe("formatDirectory", () => {
+  test("keeps a path unchanged when it fits", () => {
+    expect(formatDirectory(`${homedir()}/project`, 32)).toBe("~/project");
+  });
+
+  test("abbreviates parent directories to two initials before using one", () => {
+    expect(formatDirectory(`${homedir()}/tools/dotfiles/xdg_config/pi/agent/extensions`, 32))
+      .toBe("~/to/do/xd/pi/ag/extensions");
+    expect(formatDirectory(`${homedir()}/alpha/bravo/charlie/extensions`, 18))
+      .toBe("~/a/b/c/extensions");
+  });
+
+  test("preserves a useful initial for hidden directories", () => {
+    expect(formatDirectory(`${homedir()}/.config/alpha/extensions`, 20))
+      .toBe("~/.c/al/extensions");
+  });
+
+  test("falls back to a middle ellipsis while preserving the final directory", () => {
+    expect(formatDirectory(`${homedir()}/alpha/bravo/charlie/extensions`, 16))
+      .toBe("~/…/extensions");
+  });
+});
 
 describe("status extension", () => {
   test("tracks UI prompts and compaction lifecycle from Pi 0.84.4", async () => {
