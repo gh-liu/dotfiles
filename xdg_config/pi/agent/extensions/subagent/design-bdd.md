@@ -300,12 +300,14 @@ When the call is rendered collapsed and expanded
 Then the collapsed row shows a bounded task title
 And may show the effective model and thinking level as human-facing metadata
 And the expanded row shows sanitized bounded task text
-And neither view shows transient spinner state after settlement
+And a running call streams its sanitized current activity
+And the expanded result shows bounded recent thinking and tool lifecycle summaries
+And neither view shows transient running state after settlement
 ```
 
 #### Scenario: the result distinguishes outcome without exposing reasoning
 
-Assert completed, failed, and interrupted renderings. Ensure raw thinking, tool-call IDs, and child tool output are absent. A transcript tool row is sufficient; there is no separate activity center.
+Assert running, completed, failed, and interrupted renderings. Running details may contain only bounded semantic thinking state and selected tool names, paths, patterns, or commands. Ensure raw thinking text, tool-call IDs, complete tool-call payloads, and child tool output are absent. The transcript tool row is the activity surface; there is no separate activity center.
 
 ## 3. Architecture derived from the scenarios
 

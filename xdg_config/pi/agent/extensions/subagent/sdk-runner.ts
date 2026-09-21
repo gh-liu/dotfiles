@@ -7,7 +7,14 @@ import {
   type CreateAgentSessionOptions,
 } from "@earendil-works/pi-coding-agent";
 
-import type { ChildFactory, ChildHandle, ChildRequest, ChildResult } from "./index.ts";
+import type {
+  ChildActivity,
+  ChildFactory,
+  ChildHandle,
+  ChildProgress,
+  ChildRequest,
+  ChildResult,
+} from "./index.ts";
 
 const CHILD_TOOLS = ["read", "grep", "find", "ls", "bash", "edit", "write"];
 const CHILD_SYSTEM_PROMPT = `You are a fresh one-shot child agent. Complete the assigned task in the supplied working directory.
@@ -64,11 +71,31 @@ function assistantText(message: unknown): { text: string; stopReason?: string } 
   return { text, ...(typeof value.stopReason === "string" ? { stopReason: value.stopReason } : {}) };
 }
 
+function oneLine(value: unknown, maxCharacters = 120): string {
+  const normalized = String(value ?? "").replace(/\s+/gu, " ").trim();
+  return normalized.length <= maxCharacters
+    ? normalized
+    : `${normalized.slice(0, Math.max(1, maxCharacters - 1))}…`;
+}
+
+function toolLabel(event: Record<string, unknown>): string {
+  const name = oneLine(event.toolName || "tool", 30);
+  const args = event.args && typeof event.args === "object" && !Array.isArray(event.args)
+    ? event.args as Record<string, unknown>
+    : {};
+  const detail = name === "bash"
+    ? args.command
+    : name === "grep"
+      ? [args.pattern, args.path].filter(Boolean).join(" · ")
+      : args.path ?? args.file_path ?? args.pattern;
+  return oneLine(detail ? `${name} ${String(detail)}` : name);
+}
+
 export function createSdkChildFactory(dependencies: SdkDependencies = {}): ChildFactory {
   const createSession = dependencies.createSession ?? createAgentSession;
   const abortTimeoutMs = dependencies.abortTimeoutMs ?? 5_000;
 
-  return async (request: ChildRequest): Promise<ChildHandle> => {
+  return async (request: ChildRequest, onProgress?: (progress: ChildProgress) => void): Promise<ChildHandle> => {
     const loader = new DefaultResourceLoader({
       cwd: request.cwd,
       agentDir: getAgentDir(),
@@ -98,6 +125,31 @@ export function createSdkChildFactory(dependencies: SdkDependencies = {}): Child
     let abortFailure: Error | undefined;
     let interruptPromise: Promise<void> | undefined;
     let disposePromise: Promise<void> | undefined;
+    let thinking = false;
+    let currentActivity = "Starting child…";
+    let earlierCount = 0;
+    const activeTools = new Map<string, ChildActivity>();
+    const recent: ChildActivity[] = [];
+    const report = () => {
+      onProgress?.({
+        activity: currentActivity,
+        active: [...activeTools.values()].map((activity) => ({ ...activity })),
+        recent: recent.map((activity) => ({ ...activity })),
+        earlierCount,
+      });
+    };
+    const remember = (activity: ChildActivity) => {
+      recent.push(activity);
+      if (recent.length > 8) {
+        earlierCount += recent.length - 8;
+        recent.splice(0, recent.length - 8);
+      }
+    };
+    const finishThinking = () => {
+      if (!thinking) return;
+      thinking = false;
+      remember({ kind: "thinking", label: "Thinking", status: "completed" });
+    };
     let resolveResult!: (result: ChildResult) => void;
     const result = new Promise<ChildResult>((resolve) => { resolveResult = resolve; });
     const finish = (value: ChildResult) => {
@@ -108,9 +160,59 @@ export function createSdkChildFactory(dependencies: SdkDependencies = {}): Child
 
     const unsubscribe = session.subscribe((event) => {
       if (!event || typeof event !== "object" || !("type" in event)) return;
+      const value = event as Record<string, unknown>;
+      if (event.type === "agent_start") {
+        currentActivity = "Waiting for model…";
+        report();
+      }
+      if (event.type === "message_update" && "assistantMessageEvent" in event) {
+        const update = event.assistantMessageEvent as { type?: unknown } | undefined;
+        const type = typeof update?.type === "string" ? update.type : "";
+        if (type.startsWith("thinking")) {
+          thinking = type !== "thinking_end";
+          currentActivity = thinking ? "Thinking…" : "Working…";
+          if (type === "thinking_end") remember({ kind: "thinking", label: "Thinking", status: "completed" });
+          report();
+        } else if (type.startsWith("toolcall")) {
+          finishThinking();
+          currentActivity = "Preparing tool call…";
+          report();
+        } else if (type.startsWith("text")) {
+          finishThinking();
+          currentActivity = "Writing response…";
+          report();
+        }
+      }
+      if (event.type === "tool_execution_start") {
+        finishThinking();
+        const id = typeof value.toolCallId === "string" ? value.toolCallId : `tool-${activeTools.size + 1}`;
+        const activity: ChildActivity = { kind: "tool", label: toolLabel(value), status: "running" };
+        activeTools.set(id, activity);
+        currentActivity = activeTools.size > 1 ? `${activity.label} · ${activeTools.size} active` : activity.label;
+        report();
+      }
+      if (event.type === "tool_execution_end") {
+        const id = typeof value.toolCallId === "string" ? value.toolCallId : "";
+        const active = activeTools.get(id);
+        activeTools.delete(id);
+        const failed = value.isError === true;
+        const activity: ChildActivity = {
+          kind: "tool",
+          label: active?.label ?? toolLabel(value),
+          status: failed ? "failed" : "completed",
+        };
+        remember(activity);
+        currentActivity = activeTools.size > 0
+          ? [...activeTools.values()].at(-1)!.label
+          : failed ? `${activity.label} failed · reviewing…` : `${activity.label} done · working…`;
+        report();
+      }
       if (event.type === "message_end" && "message" in event) {
         const candidate = assistantText(event.message);
         if (candidate) finalAssistant = candidate;
+        finishThinking();
+        currentActivity = candidate?.stopReason === "toolUse" ? "Preparing tool call…" : "Finalizing response…";
+        report();
       }
       if (event.type === "agent_settled") {
         settled = true;
@@ -131,6 +233,7 @@ export function createSdkChildFactory(dependencies: SdkDependencies = {}): Child
       }
     });
 
+    report();
     void session.prompt(promptFor(request)).then(() => {
       if (!settled && !terminal) {
         finish({ status: "failed", error: "Child did not produce a complete final assistant response." });

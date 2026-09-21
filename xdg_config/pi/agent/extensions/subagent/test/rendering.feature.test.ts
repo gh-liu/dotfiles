@@ -60,4 +60,59 @@ describe("Feature: minimal rendering", () => {
     expect(rendered).toContain(label);
     expect(rendered).not.toMatch(/sessionPath|operationId|toolCallId|thinking/i);
   });
+
+  test("Scenario: running activity streams into the expanded tool result", async () => {
+    const env = setup({ credentialValues: ["stream-secret"] });
+    const updates: Array<{ content: Array<{ text: string }>; details: Record<string, unknown> }> = [];
+    const delegated = env.execute(
+      { task: "Inspect ownership" },
+      undefined,
+      {},
+      (update) => updates.push(update as typeof updates[number]),
+    );
+    await vi.waitFor(() => expect(env.children).toHaveLength(1));
+
+    env.children[0].progress({
+      activity: "bash pnpm test stream-secret",
+      earlierCount: 2,
+      recent: [
+        { kind: "thinking", label: "Thinking", status: "completed" },
+        { kind: "tool", label: "read auth.ts", status: "completed" },
+      ],
+      active: [{ kind: "tool", label: "bash pnpm test stream-secret", status: "running" }],
+    });
+
+    expect(updates).toHaveLength(1);
+    const expanded = render(env.tool.renderResult!(updates[0] as never, {
+      expanded: true,
+      isPartial: true,
+    }, theme, {
+      args: { task: "Inspect ownership" },
+      expanded: true,
+      isError: false,
+      state: {},
+      invalidate: vi.fn(),
+    } as never));
+    const collapsed = render(env.tool.renderResult!(updates[0] as never, {
+      expanded: false,
+      isPartial: true,
+    }, theme, {
+      args: { task: "Inspect ownership" },
+      expanded: false,
+      isError: false,
+      state: {},
+      invalidate: vi.fn(),
+    } as never));
+
+    expect(collapsed).toContain("running · bash pnpm test [REDACTED]");
+    expect(collapsed).not.toContain("read auth.ts");
+    expect(expanded).toContain("2 earlier activities");
+    expect(expanded).toContain("✓ Thinking");
+    expect(expanded).toContain("✓ read auth.ts");
+    expect(expanded).toContain("◷ bash pnpm test [REDACTED]");
+    expect(expanded).not.toContain("stream-secret");
+
+    env.children[0].complete();
+    await delegated;
+  });
 });

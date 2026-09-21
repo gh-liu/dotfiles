@@ -7,6 +7,7 @@ import type { ExtensionAPI, ExtensionContext, ToolDefinition } from "@earendil-w
 import {
   registerSubagentExtension,
   type ChildHandle,
+  type ChildProgress,
   type ChildRequest,
   type ChildResult,
 } from "../index.ts";
@@ -42,7 +43,11 @@ export class FakeChild implements ChildHandle {
   disposeFailure?: Error;
   interruptFailure?: Error;
 
-  constructor(readonly request: ChildRequest, readonly id: number) {}
+  constructor(
+    readonly request: ChildRequest,
+    readonly id: number,
+    readonly onProgress?: (progress: ChildProgress) => void,
+  ) {}
 
   get result(): Promise<ChildResult> {
     return this.outcome.promise;
@@ -66,6 +71,10 @@ export class FakeChild implements ChildHandle {
   fail(error = "Provider failed"): void {
     this.outcome.resolve({ status: "failed", error });
   }
+
+  progress(progress: ChildProgress): void {
+    this.onProgress?.(progress);
+  }
 }
 
 export function setup(options: {
@@ -78,10 +87,10 @@ export function setup(options: {
   const tools = new Map<string, ToolDefinition>();
   let shutdown: (() => Promise<void> | void) | undefined;
   const children: FakeChild[] = [];
-  const createChild = vi.fn(async (request: ChildRequest) => {
+  const createChild = vi.fn(async (request: ChildRequest, onProgress?: (progress: ChildProgress) => void) => {
     await options.beforeCreate;
     if (options.createFailure) throw options.createFailure;
-    const child = new FakeChild(request, children.length + 1);
+    const child = new FakeChild(request, children.length + 1, onProgress);
     children.push(child);
     return child;
   });
@@ -124,12 +133,13 @@ export function setup(options: {
       params: Record<string, unknown>,
       signal?: AbortSignal,
       contextOverride: Partial<ExtensionContext> = {},
+      onUpdate?: (result: unknown) => void,
     ) {
       return tool.execute(
         `call-${children.length + 1}`,
         params as never,
         signal,
-        undefined,
+        onUpdate as never,
         { ...context, ...contextOverride } as ExtensionContext,
       );
     },

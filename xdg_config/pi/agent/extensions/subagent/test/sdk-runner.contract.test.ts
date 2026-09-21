@@ -58,6 +58,73 @@ describe("SDK child adapter contract", () => {
     expect(session.dispose).toHaveBeenCalledOnce();
   });
 
+  test("projects thinking and tool lifecycle events without exposing raw reasoning or output", async () => {
+    const listeners: Array<(event: unknown) => void> = [];
+    const session: SdkSession = {
+      subscribe(listener) {
+        listeners.push(listener);
+        return () => listeners.splice(listeners.indexOf(listener), 1);
+      },
+      prompt: vi.fn(async () => new Promise<void>(() => {})),
+      abort: vi.fn(async () => {}),
+      dispose: vi.fn(),
+    };
+    const progress: Array<{
+      activity: string;
+      active: Array<{ label: string; status: string }>;
+      recent: Array<{ label: string; status: string }>;
+    }> = [];
+    const child = await createSdkChildFactory({ createSession: async () => ({ session }) })(
+      request(),
+      (update) => progress.push(update),
+    );
+    const emit = (event: unknown) => listeners.forEach((listener) => listener(event));
+
+    emit({
+      type: "message_update",
+      assistantMessageEvent: { type: "thinking_delta", delta: "PRIVATE_REASONING" },
+    });
+    emit({
+      type: "message_end",
+      message: { role: "assistant", content: [], stopReason: "toolUse" },
+    });
+    expect(progress.at(-1)?.activity).toBe("Preparing tool call…");
+    emit({
+      type: "tool_execution_start",
+      toolCallId: "tool-1",
+      toolName: "read",
+      args: { path: "src/auth.ts" },
+    });
+    emit({
+      type: "tool_execution_end",
+      toolCallId: "tool-1",
+      toolName: "read",
+      result: { content: [{ type: "text", text: "PRIVATE_TOOL_OUTPUT" }] },
+      isError: false,
+    });
+
+    expect(progress.some((update) => update.activity === "Thinking…")).toBe(true);
+    expect(progress.some((update) => update.active.some((item) => item.label === "read src/auth.ts"))).toBe(true);
+    expect(progress.at(-1)?.recent).toEqual([
+      { kind: "thinking", label: "Thinking", status: "completed" },
+      { kind: "tool", label: "read src/auth.ts", status: "completed" },
+    ]);
+    expect(JSON.stringify(progress)).not.toContain("PRIVATE_REASONING");
+    expect(JSON.stringify(progress)).not.toContain("PRIVATE_TOOL_OUTPUT");
+
+    emit({
+      type: "message_end",
+      message: {
+        role: "assistant",
+        content: [{ type: "text", text: "Final handoff" }],
+        stopReason: "stop",
+      },
+    });
+    emit({ type: "agent_settled" });
+    await expect(child.result).resolves.toEqual({ status: "completed", handoff: "Final handoff" });
+    await child.dispose();
+  });
+
   test("rejects a non-authoritative or incomplete final response", async () => {
     const session = fakeSession();
     session.prompt = vi.fn(async () => {

@@ -27,17 +27,37 @@ export type ChildResult =
   | { status: "completed"; handoff: string }
   | { status: "failed" | "interrupted"; error: string };
 
+export interface ChildActivity {
+  label: string;
+  status: "running" | "completed" | "failed";
+  kind: "thinking" | "tool" | "response";
+}
+
+export interface ChildProgress {
+  activity: string;
+  active: ChildActivity[];
+  recent: ChildActivity[];
+  earlierCount: number;
+}
+
 export interface ChildHandle {
   readonly result: Promise<ChildResult>;
   interrupt(): Promise<void>;
   dispose(): Promise<void>;
 }
 
-export type ChildFactory = (request: ChildRequest) => Promise<ChildHandle>;
+export type ChildFactory = (
+  request: ChildRequest,
+  onProgress?: (progress: ChildProgress) => void,
+) => Promise<ChildHandle>;
 
 export type ParentResult =
   | { status: "completed"; handoff: string; warning?: string }
   | { status: "failed" | "interrupted"; error: string };
+
+interface ParentProgress extends ChildProgress {
+  status: "running";
+}
 
 interface RegisterOptions {
   capacity?: number;
@@ -195,7 +215,7 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: RegisterOpt
     promptSnippet: "Delegate one bounded task to a fresh child context and wait for its final handoff",
     executionMode: "parallel",
     parameters: SubagentParameters,
-    async execute(_toolCallId, rawParams, signal, _onUpdate, ctx) {
+    async execute(_toolCallId, rawParams, signal, onUpdate, ctx) {
       const credentials = credentialValues();
       const validationError = validate(rawParams);
       if (validationError) return errorResult(validationError, credentials);
@@ -223,7 +243,24 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: RegisterOpt
       activeCalls.add(callDone);
       let child: ChildHandle;
       try {
-        child = await childFactory(request);
+        child = await childFactory(request, (progress) => {
+          if (!onUpdate) return;
+          const sanitizeActivity = (activity: ChildActivity): ChildActivity => ({
+            ...activity,
+            label: safeText(activity.label, credentials).replace(/\s+/gu, " "),
+          });
+          const details: ParentProgress = {
+            status: "running",
+            activity: safeText(progress.activity, credentials).replace(/\s+/gu, " "),
+            active: progress.active.slice(-4).map(sanitizeActivity),
+            recent: progress.recent.slice(-8).map(sanitizeActivity),
+            earlierCount: Math.max(0, Math.floor(progress.earlierCount)),
+          };
+          onUpdate({
+            content: [{ type: "text", text: details.activity }],
+            details,
+          });
+        });
       } catch (error) {
         occupied -= 1;
         completeCall();
@@ -282,9 +319,26 @@ export function registerSubagentExtension(pi: ExtensionAPI, options: RegisterOpt
       if (!context.expanded) return new Text(header, 0, 0);
       return new Text(`${header}\n\n${safeText(args.task, credentials)}`, 0, 0);
     },
-    renderResult(result, _renderOptions, theme) {
-      const details = result.details as ParentResult | undefined;
+    renderResult(result, renderOptions, theme) {
+      const details = result.details as ParentResult | ParentProgress | undefined;
       if (!details) return new Text(theme.fg("error", "failed — invalid subagent result"), 0, 0);
+      if (details.status === "running") {
+        let text = `${theme.fg("warning", "● running")} · ${details.activity}`;
+        if (renderOptions.expanded) {
+          if (details.earlierCount > 0) {
+            text += `\n${theme.fg("muted", `  … ${details.earlierCount} earlier activities`)}`;
+          }
+          for (const activity of details.recent) {
+            const marker = activity.status === "failed" ? "✗" : "✓";
+            const color = activity.status === "failed" ? "error" : "success";
+            text += `\n${theme.fg(color, `  ${marker}`)} ${activity.label}`;
+          }
+          for (const activity of details.active) {
+            text += `\n${theme.fg("warning", "  ◷")} ${activity.label}`;
+          }
+        }
+        return new Text(text, 0, 0);
+      }
       const marker = details.status === "completed" ? "✓" : details.status === "interrupted" ? "■" : "✗";
       const color = details.status === "completed" ? "success" : details.status === "interrupted" ? "warning" : "error";
       const body = details.status === "completed" ? details.handoff : details.error;
