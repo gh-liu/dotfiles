@@ -453,6 +453,7 @@ export PI_CODING_AGENT_DIR=$XDG_CONFIG_HOME/pi/agent
 # curl -fsSL https://chatgpt.com/codex/install.sh | bash
 # curl -fsSL https://ampcode.com/install.sh | bash
 # curl -fsSL https://opencode.ai/install | bash
+# curl -fsSL https://fx.sh/setup.sh | bash
 # }
 # #claude
 # export ANTHROPIC_API_KEY=""
