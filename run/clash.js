@@ -11,6 +11,7 @@ const COUNTRY_GROUPS = [
         ["FR", "(?i)(法国|法國|巴黎|France|(^|[^a-z])FR($|[^a-z]))"],
         ["DE", "(?i)(德国|德國|柏林|法兰克福|法蘭克福|Germany|Deutschland|(^|[^a-z])DE($|[^a-z]))"],
         ["NL", "(?i)(荷兰|荷蘭|阿姆斯特丹|Netherlands|(^|[^a-z])NL($|[^a-z]))"],
+        ["SE", "(?i)(瑞典|斯德哥尔摩|斯德哥爾摩|Sweden|Stockholm|(^|[^a-z])SE($|[^a-z]))"],
         // ["IT", "(?i)(意大利|義大利|米兰|米蘭|罗马|羅馬|Italy|(^|[^a-z])IT($|[^a-z]))"],
         [
                 "US",
