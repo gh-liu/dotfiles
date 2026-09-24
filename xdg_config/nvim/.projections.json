@@ -24,9 +24,6 @@
   "lua/liu/config/*.lua": {
     "type": "config"
   },
-  "lua/liu/plugins/*.lua": {
-    "type": "plugin_spec"
-  },
   "snippets/*.json": {
     "type": "snippet"
   },
