@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Environment Check
 -- =============================================================================
-if vim.fn.has("nvim-0.11") == 0 then
+if vim.fn.has("nvim-0.13") == 0 then
 	vim.notify("Need nvim 0.13 or bigger", vim.log.levels.ERROR)
 	return
 end
