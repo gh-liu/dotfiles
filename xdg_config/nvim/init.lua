@@ -9,7 +9,6 @@ end
 -- =============================================================================
 -- Basic Settings
 -- =============================================================================
-require("liu.snacks_profiler")
 vim.cmd.colorscheme("nord")
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
