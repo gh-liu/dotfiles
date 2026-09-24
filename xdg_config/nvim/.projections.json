@@ -1,6 +1,13 @@
 {
+  "lua/liu/lsp/init.lua": {
+    "type": "Lsp"
+  },
+  "lua/liu/lsp/servers/*.lua": {
+    "type": "LspEx",
+    "alternate": "after/lsp/{}.lua"
+  },
   "after/lsp/*.lua": {
-    "type": "lsp",
+    "type": "LspServers",
     "alternate": "lua/liu/lsp/servers/{}.lua",
     "template": [
       "---@type vim.lsp.Config",
@@ -8,21 +15,11 @@
       "return Config"
     ]
   },
-  "lua/liu/lsp/servers/*.lua": {
-    "type": "lsp_ex",
-    "alternate": "after/lsp/{}.lua"
-  },
-  "lua/liu/lsp/init.lua": {
-    "type": "lsp_init"
+  "lua/liu/dap/init.lua": {
+    "type": "Dap"
   },
   "lua/liu/dap/adapters/*.lua": {
-    "type": "dap"
-  },
-  "lua/liu/dap/init.lua": {
-    "type": "dap_init"
-  },
-  "lua/liu/config/*.lua": {
-    "type": "config"
+    "type": "DapAdapters"
   },
   "snippets/*.json": {
     "type": "snippet"
@@ -31,9 +28,9 @@
     "type": "ftplugin"
   },
   "after/plugin/*.lua": {
-    "type": "after_plugin"
+    "type": "plugin"
   },
   "after/plugin/*.vim": {
-    "type": "after_plugin"
+    "type": "plugin"
   }
 }
