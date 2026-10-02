@@ -1,29 +1,45 @@
 #!/usr/bin/env bash
 _skills_install() {
+        # REMOVE ALL SKILLS
         # skills remove --all -g -y
         local agent=$1
         local -a target=(-g -y -a "$agent")
 
+        command -v skills >/dev/null 2>&1 || {
+                echo "skillsu: skills command not found" >&2
+                return 127
+        }
+
         if [[ $agent == pi && -n ${PI_CODING_AGENT_DIR:-} ]]; then
-                mkdir -p "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent"
-                if [[ -L $HOME/.pi/agent/skills ]]; then
-                        rm "$HOME/.pi/agent/skills" || return
-                elif [[ -d $HOME/.pi/agent/skills ]]; then
-                        rmdir "$HOME/.pi/agent/skills" || return
+                local skills_dir link_path="$HOME/.pi/agent/skills"
+                mkdir -p "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent" || return
+                skills_dir=$(cd "$PI_CODING_AGENT_DIR/skills" && pwd -P) || return
+                if [[ -L $link_path && $(readlink "$link_path") == "$skills_dir" ]]; then
+                        : # Keep an already-correct link unchanged.
+                else
+                        if [[ -L $link_path ]]; then
+                                rm "$link_path" || return
+                        elif [[ -d $link_path ]]; then
+                                # Never delete an existing non-empty skills directory.
+                                rmdir "$link_path" || return
+                        elif [[ -e $link_path ]]; then
+                                echo "skillsu: refusing to replace $link_path" >&2
+                                return 1
+                        fi
+                        ln -s "$skills_dir" "$link_path" || return
                 fi
-                ln -s "$PI_CODING_AGENT_DIR/skills" "$HOME/.pi/agent/skills" || return
         fi
 
-        skills remove "${target[@]}"
+        # add overwrites selected skills; do not remove unrelated skills first.
 
         # use mcp
         # skills add upstash/context7 "${target[@]}" -s find-docs
         # skills add seflless/deepwiki "${target[@]}" -s deepwiki
         # skills add exa-labs/agent-skills "${target[@]}" -s "exa-search"
 
-        skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling
+        skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling || return
 
-        skills add vercel-labs/agent-browser "${target[@]}" -s agent-browser
+        skills add vercel-labs/agent-browser "${target[@]}" -s agent-browser || return
 
         # skills add openclaw/openclaw "${target[@]}" -s tmux --dangerously-accept-openclaw-risks
         # skills add jetbrains/go-modern-guidelines "${target[@]}" -s use-modern-go
