@@ -18,6 +18,7 @@ _skills_install() {
 
         skills add upstash/context7 "${target[@]}" -s find-docs
         skills add seflless/deepwiki "${target[@]}" -s deepwiki
+        skills add exa-labs/agent-skills "${target[@]}" -s "exa-search"
 
         skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling
 
