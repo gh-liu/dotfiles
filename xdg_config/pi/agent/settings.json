@@ -7,6 +7,9 @@
   "terminal": {
     "showTerminalProgress": true
   },
+  "defaultTools": [
+    "+codemode"
+  ],
   "packages": [],
   "theme": "nord",
   "lastChangelogVersion": "1.0.0",
