@@ -1215,7 +1215,7 @@ xnoremap <silent> gZ :<C-U>call <SID>TboneSendKeys()<CR>
 ]])
 
 local aug_kulala = vim.api.nvim_create_augroup("liu.kulala", { clear = true })
-vim.pack.add({ "https://github.com/mistweaverco/kulala.nvim" }, { load = function() end })
+vim.pack.add({ "https://github.com/dont-be-evil-company/kulala.nvim" }, { load = function() end })
 vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
 	group = aug_kulala,
 	pattern = "*.http",
