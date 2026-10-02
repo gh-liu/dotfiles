@@ -4,15 +4,12 @@
   "steeringMode": "all",
   "followUpMode": "all",
   "treeFilterMode": "all",
-  "tuiMode": "fullscreen",
   "terminal": {
     "showTerminalProgress": true
   },
   "packages": [],
-  "subagent": {
-    "maxConcurrentRuns": 5
-  },
   "theme": "nord",
+  "lastChangelogVersion": "1.0.0",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "medium"

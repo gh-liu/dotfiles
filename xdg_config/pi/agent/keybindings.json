@@ -16,12 +16,12 @@
     "ctrl+n"
   ],
   "app.models.toggleProvider": [],
-  "app.models.cycleForward": [],
-  "app.models.cycleBackward": [],
+  "app.model.cycleForward": [],
+  "app.model.cycleBackward": [],
   "app.tree.foldOrUp": [
     "ctrl+left"
   ],
-  "app.tree.foldOrDown": [
+  "app.tree.unfoldOrDown": [
     "ctrl+right"
   ],
   "app.session.new": [

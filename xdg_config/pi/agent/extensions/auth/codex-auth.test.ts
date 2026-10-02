@@ -33,6 +33,24 @@ describe("codex auth", () => {
     expect(codexKeychainAccount(path)).toBe(`cli|${expected}`);
   });
 
+  test("falls back on keychain exceptions and uses the configured file path", () => {
+    let filePath = "";
+    const result = codexAuth({ platform: "darwin", env: { CODEX_HOME: "/configured/codex" },
+      execSecurity: () => { throw new Error("synthetic-secret"); },
+      readFile: (path) => { filePath = path; return auth(); } });
+    expect(result[1]).toBe(true);
+    expect(filePath).toBe("/configured/codex/auth.json");
+  });
+
+  test.each([0, -1, 1e308])("rejects invalid or overflowing expiry %s", (exp) => {
+    expect(codexAuth({ platform: "linux", env: {}, readFile: () => auth(token(exp)) })).toEqual([{}, false]);
+  });
+
+  test.each(["access_token", "refresh_token", "account_id"])("rejects empty %s", (field) => {
+    const tokens = { access_token: token(), refresh_token: "refresh", account_id: "account", [field]: " " };
+    expect(codexAuth({ platform: "linux", env: {}, readFile: () => JSON.stringify({ tokens }) })).toEqual([{}, false]);
+  });
+
   test("does not expose secrets in unavailable results", () => {
     const result = codexAuth({ platform: "linux", env: { CODEX_HOME: "/missing" }, readFile: () => { throw new Error("secret-token"); } });
     expect(result).toEqual([{}, false]);

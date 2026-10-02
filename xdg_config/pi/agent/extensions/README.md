@@ -27,10 +27,9 @@ The replacement workflow uses native features only:
 
 ## Web search
 
-`websearch` registers a local `web_search` tool backed by the Exa Search API. Export
-`EXA_API_KEY` in the environment that starts Pi. Per-result limits are sent to
-Exa, and the extension independently caps aggregate model-visible results at
-24,000 characters; complete provider results remain in tool details.
+Web search uses the `exa-search` skill and raw HTTP instead of a custom tool.
+Export `EXA_API_KEY` in the environment that starts Pi. The skill is discovered
+under `../skills/exa-search/`; no `websearch` extension is loaded.
 
 ## Continue after compaction
 
@@ -39,50 +38,49 @@ summary and the current worktree as primary context, consulting the persisted
 session JSONL only when a decision-critical detail is missing, contradictory, or
 ambiguous. This avoids routinely refilling the newly compacted context.
 
-## Subagent configuration
+## Status usage
 
-`subagent` is a role-free, one-shot child agent. Configure its controller policy in
-Pi's normal settings rather than a separate extension file:
+The footer counts assistant and tool-result usage, compaction and branch-summary
+usage, and standalone `usage` entries such as background cache warming. All
+reported input/output tokens and total costs are included, regardless of kind or
+provider. Reasoning tokens are already included in output and are not added again.
+Cache hit remains the latest assistant request's ratio; background usage does not
+replace it. Background costs appear on the next normal snapshot refresh.
 
-```json
-{
-  "subagent": {
-    "maxConcurrentRuns": 4
-  }
-}
-```
+## Removed extensions
 
-The default is 4. A trusted project's `.pi/settings.json` may override the global
-`~/.pi/agent/settings.json` value. The value must be a positive integer. Per-call
-model and thinking overrides remain in the tool's `opts`; child tools, system
-prompt, nesting, credential handling, and output limits remain code-owned safety
-policy. Named `worker`/`scout`/`reviewer`/`tester` profiles are not part of the
-current contract; describe the required behavior and handoff directly in `task`.
-
-## Subagent live evaluation
-
-`node subagent/eval/run.mjs --quick` (or the equivalent `bun` command) runs real
-Pi sessions against isolated fixtures to evaluate subagent routing and outcomes.
-It uses provider credentials, network access, and model quota, so it is
-intentionally separate from `npm test`. There is no package-script alias so the
-runner is equally usable with Node.js or Bun. See
-[subagent/eval/README.md](subagent/eval/README.md) for the scenario matrix, full
-statistical run, report format, and baseline comparison workflow.
+`websearch` and `subagent` were removed on 2026-10-02. Exa retrieval is covered by
+the skill; the custom child-agent workflow did not justify its maintenance cost.
+The subagent settings, unused named profiles, tests and evaluation runners were
+removed together. Codemode is not a replacement for isolated child context.
 
 ## Complete extension list and composition
 
-- `auth`: syncs Codex OAuth credentials from macOS Keychain, falling back to `CODEX_HOME/auth.json`.
+- `auth`: conservatively imports Codex OAuth credentials from macOS Keychain,
+  falling back to `CODEX_HOME/auth.json`. Pi owns request-time refresh; existing
+  API keys, other accounts and equal/newer credentials are preserved. See
+  [authentication API boundary and synchronization policy](auth/API.md).
 - `continue`: resumes after compaction from the summary and worktree, consulting history only for decision-critical gaps.
 - `status`: shows activity, model, token, cost, and context state.
-- `subagent`: runs independent subtasks and presents their results.
-- `websearch`: provides Exa `web_search` for current or external facts.
 
 Use `continue` for compaction recovery. It is intentionally the only history-related extension because it uses session history only when a compaction recovery decision requires it.
 
 ## Configuration, tests, and troubleshooting
 
-Set `EXA_API_KEY` in the environment that starts Pi. Codex uses `CODEX_HOME` (default `~/.codex`). Never document or log secrets or auth-file contents. Run `npm test` in this directory; focused checks are `npm run typecheck:status` and `npm run typecheck:subagent`.
+Codex uses `CODEX_HOME` (default `~/.codex`). Never document or log secrets or
+auth-file contents. If Codex does not sync, check Keychain access and valid OAuth
+fields/JWT expiry, then whether Pi already holds a protected credential. Deliberate
+account changes require Pi login or logout followed by a new session.
 
-If web search is unavailable, verify `EXA_API_KEY` and the API/network response. If Codex does not sync, verify Keychain access on macOS, then verify `CODEX_HOME/auth.json` contains OAuth fields and an access-token JWT with `exp`.
+Host packages are `peerDependencies`; pinned Pi 1.0.0 development copies support
+local checks. Install with `npm ci --ignore-scripts`, then run `npm test`.
+Focused checks are `npm run typecheck:auth` and `npm run typecheck:status`.
+Vitest and TypeScript received compatible patch updates. Pi 1.0.0's published
+shrinkwrap still pins vulnerable `brace-expansion@5.0.9` in the development tree;
+`npm audit fix` cannot update that nested pin. Track the upstream package fix
+rather than modifying the installed shrinkwrap. These development dependencies
+do not update the globally installed Pi runtime.
 
-For current/external facts, web search prefers official/primary sources, preserves source URLs, and distinguishes snippets from verified facts.
+For current/external facts, use the Exa skill with official/primary sources,
+preserve URLs, and distinguish snippets from verified facts. Restart Pi after
+removing extensions; active sessions may retain previously registered tools.

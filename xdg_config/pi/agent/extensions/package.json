@@ -3,20 +3,21 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run typecheck:subagent && npm run typecheck:auth && npm run typecheck:status && vitest run",
+    "test": "npm run typecheck:auth && npm run typecheck:status && vitest run",
     "typecheck:auth": "tsc -p auth/tsconfig.json",
-    "typecheck:status": "tsc -p status/tsconfig.json",
-    "typecheck:subagent": "tsc -p subagent/tsconfig.json"
+    "typecheck:status": "tsc -p status/tsconfig.json"
   },
-  "dependencies": {
-    "@earendil-works/pi-ai": "0.84.4",
-    "@earendil-works/pi-coding-agent": "0.84.4",
-    "@earendil-works/pi-tui": "0.84.4",
-    "typebox": "1.3.7"
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
   },
   "devDependencies": {
-    "@types/node": "22.18.3",
-    "typescript": "5.9.2",
-    "vitest": "4.1.10"
+    "@earendil-works/pi-ai": "1.0.0",
+    "@earendil-works/pi-coding-agent": "1.0.0",
+    "@earendil-works/pi-tui": "1.0.0",
+    "@types/node": "22.20.5",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
   }
 }

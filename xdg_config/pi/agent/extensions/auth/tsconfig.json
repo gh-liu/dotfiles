@@ -9,5 +9,5 @@
     "target": "ES2022",
     "types": ["node"]
   },
-  "include": ["codex-auth.ts"]
+  "include": ["index.ts", "codex-auth.ts", "*.test.ts"]
 }

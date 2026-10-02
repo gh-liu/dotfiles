@@ -182,14 +182,17 @@ function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
   let costAvailable = false;
 
   for (const entry of ctx.sessionManager.getEntries()) {
+    // Non-message work (for example cache warming) is billed too, regardless of kind.
     const usage =
-      entry.type === "message" && entry.message.role === "assistant"
-        ? entry.message.usage
-        : entry.type === "message" && entry.message.role === "toolResult"
+      entry.type === "usage"
+        ? entry.usage
+        : entry.type === "message" && entry.message.role === "assistant"
           ? entry.message.usage
-          : (entry.type === "branch_summary" || entry.type === "compaction") && entry.usage
-            ? entry.usage
-            : undefined;
+          : entry.type === "message" && entry.message.role === "toolResult"
+            ? entry.message.usage
+            : (entry.type === "branch_summary" || entry.type === "compaction") && entry.usage
+              ? entry.usage
+              : undefined;
     if (!usage) continue;
     usageAvailable = true;
     input += Number.isFinite(usage.input) ? usage.input : 0;
@@ -198,6 +201,7 @@ function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
       cost += usage.cost.total;
       costAvailable = true;
     }
+    // Cache hit describes the latest assistant prompt, not background work or totals.
     if (entry.type === "message" && entry.message.role === "assistant") {
       const prompt = usage.input + usage.cacheRead + usage.cacheWrite;
       cacheHit = prompt > 0 ? (usage.cacheRead / prompt) * 100 : undefined;
