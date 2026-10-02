@@ -1,1 +1,22 @@
-{}
+{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${CONTEXT7_API_KEY}"
+      },
+      "description": "Resolve libraries and retrieve up-to-date, version-specific API documentation and code examples."
+    },
+    "deepwiki": {
+      "url": "https://mcp.deepwiki.com/mcp",
+      "description": "Read public GitHub repository documentation and ask questions about repository architecture and implementation."
+    },
+    "exa": {
+      "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa",
+      "headers": {
+        "Authorization": "Bearer ${EXA_API_KEY}"
+      },
+      "description": "Search current external information and fetch webpages, with advanced domain, date and content filters; prefer primary sources."
+    }
+  }
+}

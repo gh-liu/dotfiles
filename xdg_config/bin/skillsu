@@ -16,15 +16,16 @@ _skills_install() {
 
         skills remove "${target[@]}"
 
-        skills add upstash/context7 "${target[@]}" -s find-docs
-        skills add seflless/deepwiki "${target[@]}" -s deepwiki
-        skills add exa-labs/agent-skills "${target[@]}" -s "exa-search"
+        # use mcp
+        # skills add upstash/context7 "${target[@]}" -s find-docs
+        # skills add seflless/deepwiki "${target[@]}" -s deepwiki
+        # skills add exa-labs/agent-skills "${target[@]}" -s "exa-search"
 
         skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling
 
         skills add vercel-labs/agent-browser "${target[@]}" -s agent-browser
 
-        skills add openclaw/openclaw "${target[@]}" -s tmux --dangerously-accept-openclaw-risks
+        # skills add openclaw/openclaw "${target[@]}" -s tmux --dangerously-accept-openclaw-risks
         # skills add jetbrains/go-modern-guidelines "${target[@]}" -s use-modern-go
 }
 
