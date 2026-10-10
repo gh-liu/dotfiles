@@ -32,6 +32,21 @@ Requires Nvim `v0.13.0`
 
 本质：显式优于隐式，可发现优于隐藏。
 
+### mini.files bookmarks
+
+- `<leader>E` 从 cwd 打开，`<leader>e` 从当前文件附近打开；两者的持久化书签均按打开时的 cwd 隔离，不推断 Git root。
+- `mA` 设置当前聚焦目录的书签，`` `A `` 跳转；仅持久化 `A-Z`，排除预设的 `C`（Neovim 配置目录）。
+- 打开时恢复，关闭 explorer 时保存到 `stdpath("state")/mini-files-bookmarks/<cwd 的 SHA256>.json`；保存后可跨 Neovim 重启恢复。
+- 多标签页关闭时仅合并本次新增或修改的书签，不用旧快照覆盖其他 explorer 的修改；同一书签被双方修改时，以后关闭者的修改为准。原子写入不提供多个 Neovim 进程同时写入时的锁保护。
+- 设置后需先关闭 explorer 才会落盘；直接退出 Neovim、崩溃或强制终止前未关闭的新增书签不会保存。
+- 已不存在的目录在恢复时跳过；损坏的 JSON 会提示警告，并禁用本次 explorer 的保存，避免覆盖原文件。
+
+回归测试（在仓库根目录运行，需要已安装 mini.nvim）：
+
+```sh
+nvim --headless -u NONE -i NONE -l xdg_config/nvim/tests/mini-files-bookmarks.lua
+```
+
 ## vimscript or lua
 
 总方针：
