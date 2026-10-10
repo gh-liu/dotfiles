@@ -145,7 +145,51 @@ end
 
 nvim_on("VimEnter", aug_mini, function()
 	local aug_mini_files = vim.api.nvim_create_augroup("liu.mini.files", { clear = true })
-	require("mini.files").setup({
+	local MiniFiles = require("mini.files")
+	local bookmark_dir = vim.fn.stdpath("state") .. "/mini-files-bookmarks"
+	local bookmark_sessions = {}
+	local bookmark_projects = {}
+	local function persistent_bookmarks(bookmarks)
+		local result = {}
+		for id, bookmark in pairs(bookmarks) do
+			if
+				type(id) == "string"
+				and id:match("^[A-Z]$")
+				and id ~= "C"
+				and type(bookmark) == "table"
+				and type(bookmark.path) == "string"
+			then
+				result[id] = { path = bookmark.path, desc = type(bookmark.desc) == "string" and bookmark.desc or nil }
+			end
+		end
+		return result
+	end
+	local function read_bookmarks(file)
+		if vim.uv.fs_stat(file) == nil then
+			return {}
+		end
+		local ok, bookmarks = pcall(function()
+			return vim.json.decode(table.concat(vim.fn.readfile(file), "\n"))
+		end)
+		if not ok or type(bookmarks) ~= "table" then
+			vim.notify("Could not read mini.files bookmarks: " .. file, vim.log.levels.WARN)
+			return nil
+		end
+		return persistent_bookmarks(bookmarks)
+	end
+	local function write_bookmarks(file, bookmarks)
+		local temporary = file .. "." .. vim.fn.getpid() .. ".tmp"
+		local ok, err = pcall(function()
+			vim.fn.mkdir(bookmark_dir, "p")
+			assert(vim.fn.writefile({ vim.json.encode(bookmarks) }, temporary) == 0)
+			assert(vim.uv.fs_rename(temporary, file))
+		end)
+		if not ok then
+			vim.fn.delete(temporary)
+			vim.notify("Could not save mini.files bookmarks: " .. tostring(err), vim.log.levels.ERROR)
+		end
+	end
+	MiniFiles.setup({
 		mappings = {
 			go_in = "<c-l>", -- Enter directory or open file (default)
 			go_out = "<c-h>", -- Go to parent directory (default)
@@ -175,13 +219,65 @@ nvim_on("VimEnter", aug_mini, function()
 		group = aug_mini_files,
 		pattern = "MiniFilesExplorerOpen",
 		callback = function()
-			local MiniFiles = require("mini.files")
+			-- Match <leader>E: cwd is the project root, regardless of explorer anchor.
+			local tab = vim.api.nvim_get_current_tabpage()
+			local file = bookmark_dir .. "/" .. vim.fn.sha256(vim.fn.getcwd()) .. ".json"
+			local anchor = MiniFiles.get_explorer_state().anchor
+			local previous = bookmark_projects[anchor]
+			local session = bookmark_sessions[tab]
+			if previous ~= nil and previous ~= file and not (session and session.reset) then
+				-- Explorer history is keyed by anchor, not cwd. Discard another project's marks.
+				bookmark_sessions[tab] = { reset = true }
+				MiniFiles.open(anchor, false)
+				return
+			end
+			local bookmarks = read_bookmarks(file)
+			if bookmarks ~= nil then
+				for id, bookmark in pairs(bookmarks) do
+					if vim.fn.isdirectory(bookmark.path) == 1 then
+						MiniFiles.set_bookmark(id, bookmark.path, { desc = bookmark.desc })
+					end
+				end
+			end
+			bookmark_sessions[tab] = {
+				file = file,
+				baseline = bookmarks ~= nil and persistent_bookmarks(MiniFiles.get_explorer_state().bookmarks) or nil,
+			}
 			MiniFiles.set_bookmark("~", "~", { desc = "Home directory" })
 			MiniFiles.set_bookmark("C", vim.fn.stdpath("config"), { desc = "nvim Config directory" })
 			MiniFiles.set_bookmark("w", vim.fn.getcwd, { desc = "Working directory" })
 			MiniFiles.set_bookmark("r", function()
 				return vim.fs.root(0, { ".git" }) or vim.fn.getcwd()
 			end, { desc = "Root directory" })
+		end,
+	})
+	vim.api.nvim_create_autocmd("User", {
+		group = aug_mini_files,
+		pattern = "MiniFilesExplorerClose",
+		callback = function()
+			local tab = vim.api.nvim_get_current_tabpage()
+			local session = bookmark_sessions[tab]
+			if session == nil or session.reset then
+				return
+			end
+			bookmark_sessions[tab] = nil
+			local state = MiniFiles.get_explorer_state()
+			-- mini.files records this exact explorer as anchor history after the close event.
+			bookmark_projects[state.anchor] = session.file
+			if session.baseline == nil then
+				return
+			end
+			local bookmarks = read_bookmarks(session.file)
+			if bookmarks == nil then
+				return
+			end
+			-- Merge only local edits; unchanged snapshots must not undo another explorer's edits.
+			for id, bookmark in pairs(persistent_bookmarks(state.bookmarks)) do
+				if not vim.deep_equal(bookmark, session.baseline[id]) then
+					bookmarks[id] = bookmark
+				end
+			end
+			write_bookmarks(session.file, bookmarks)
 		end,
 	})
 	vim.api.nvim_create_autocmd("User", {
@@ -233,7 +329,7 @@ nvim_on("VimEnter", aug_mini, function()
 		local MiniFiles = require("mini.files")
 		if not MiniFiles.close() then
 			local path = vim.fn.getcwd()
-			MiniFiles.open(path, false)
+			MiniFiles.open(path)
 		end
 	end)
 	vim.keymap.set("n", "<leader>e", function()
@@ -260,9 +356,9 @@ nvim_on("VimEnter", aug_mini, function()
 			if count == 1 and vim.fn.isdirectory(bufname) == 0 then
 				-- If it is a path to file, its parent directory is used as anchor
 				-- while explorer will focus on the supplied file.
-				MiniFiles.open(bufname, false)
+				MiniFiles.open(bufname)
 			else
-				MiniFiles.open(path, false)
+				MiniFiles.open(path)
 			end
 		end
 	end)
