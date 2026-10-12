@@ -47,6 +47,10 @@ provider. Reasoning tokens are already included in output and are not added agai
 Cache hit remains the latest assistant request's ratio; background usage does not
 replace it. Background costs appear on the next normal snapshot refresh.
 
+The session name appears immediately after the Git branch (or the directory when
+there is no branch) and refreshes on rename. Unnamed sessions omit it; long names
+are truncated to 32 columns, and narrow terminals hide it before the branch.
+
 ## Removed extensions
 
 `websearch` and `subagent` were removed on 2026-10-02. Exa retrieval is covered by

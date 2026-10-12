@@ -47,6 +47,7 @@ const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
 const TOOL_SPINNER_FRAMES = ["›", "»", "≫", "»"] as const;
 const MAX_BRANCH_WIDTH = 32;
 const MAX_DIRECTORY_WIDTH = 32;
+const MAX_SESSION_NAME_WIDTH = 32;
 const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 function takeGraphemes(value: string, count: number): string {
@@ -91,6 +92,7 @@ export function formatDirectory(cwd: string, maxWidth = MAX_DIRECTORY_WIDTH): st
 interface StatusSnapshot {
   provider?: string;
   model?: string;
+  sessionName?: string;
   thinking?: Parameters<Theme["getThinkingBorderColor"]>[0];
   input: number;
   output: number;
@@ -215,6 +217,7 @@ function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
   return {
     provider: ctx.model?.provider,
     model: ctx.model?.id,
+    sessionName: pi.getSessionName(),
     thinking: pi.getThinkingLevel(),
     input,
     output,
@@ -307,6 +310,16 @@ function renderStatusLine(
           zone: "left" as const,
           text: paint(theme, "green", truncateToWidth(branch, MAX_BRANCH_WIDTH, "…")),
           dropRank: 20,
+        },
+      ]
+      : []),
+    ...(snapshot.sessionName
+      ? [
+        {
+          id: "session",
+          zone: "left" as const,
+          text: paint(theme, "primary", truncateToWidth(snapshot.sessionName, MAX_SESSION_NAME_WIDTH, "…")),
+          dropRank: 15,
         },
       ]
       : []),
@@ -597,6 +610,9 @@ export default function status(pi: ExtensionAPI) {
     if (isCurrentSession(ctx)) refresh(ctx);
   });
   pi.on("thinking_level_select", (_event, ctx) => {
+    if (isCurrentSession(ctx)) refresh(ctx);
+  });
+  pi.on("session_info_changed", (_event, ctx) => {
     if (isCurrentSession(ctx)) refresh(ctx);
   });
   pi.on("session_before_compact", (_event, ctx) => {
