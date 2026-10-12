@@ -29,6 +29,7 @@ function setup(options: {
   thinking?: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
   cwd?: string;
   branch?: string | null;
+  sessionName?: string;
   entries?: SessionEntry[];
 } = {}) {
   vi.spyOn(SettingsManager, "create").mockReturnValue({
@@ -39,6 +40,7 @@ function setup(options: {
   let footerFactory: ((tui: any, theme: Theme, footerData: any) => any) | undefined;
   let editorFactory: ((tui: any, theme: any, keybindings: any) => any) | undefined;
   let idle = options.idle ?? true;
+  let sessionName = options.sessionName;
   const model = {
     provider: options.provider ?? "example",
     id: "model",
@@ -67,6 +69,7 @@ function setup(options: {
   } as unknown as ExtensionContext;
   const pi = {
     getThinkingLevel: () => options.thinking,
+    getSessionName: () => sessionName,
     on: (event: string, handler: Handler) => { handlers.set(event, handler); },
   } as unknown as ExtensionAPI;
 
@@ -108,6 +111,7 @@ function setup(options: {
     render,
     editorRender,
     setIdle: (next: boolean) => { idle = next; },
+    setSessionName: (next: string | undefined) => { sessionName = next; },
     setEntries: (next: SessionEntry[]) => { entries = next; },
   };
 }
@@ -265,6 +269,27 @@ describe("status extension", () => {
     expect(env.render(300)).toContain(
       "<text> ● READY </text> · <muted>~/project</muted> · <success>main</success>",
     );
+  });
+
+  test("shows the session name after the branch and refreshes rename and clear", async () => {
+    const env = setup({ cwd: "/project", branch: "master", sessionName: "Fix bookmarks" });
+    expect(env.render(300)).toContain("master · Fix bookmarks");
+    env.setSessionName("Review status");
+    await env.fire("session_info_changed", { name: "Review status" });
+    expect(env.render(300)).toContain("master · Review status");
+    expect(env.render(300)).not.toContain("Fix bookmarks");
+    env.setSessionName(undefined);
+    await env.fire("session_info_changed", { name: undefined });
+    expect(env.render(300)).not.toContain("Review status");
+    expect(env.render(300)).toContain("master");
+  });
+
+  test("truncates session names and preserves context metrics at narrow widths", () => {
+    const env = setup({ cwd: "/project", sessionName: "会话".repeat(20) });
+    expect(env.render(300)).toContain("/project · " + "会话".repeat(7) + "会…");
+    expect(env.render(300)).not.toContain("会话".repeat(20));
+    expect(env.render(60)).not.toContain("会话");
+    expect(env.render(60)).toContain("ctx 12.5%/100k (auto)");
   });
 
   test("labels only known subscription-backed authentication as sub", () => {
