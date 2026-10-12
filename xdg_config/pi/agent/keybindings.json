@@ -15,6 +15,12 @@
     "down",
     "ctrl+n"
   ],
+  "tui.altScreen.previousPrompt": "ctrl+alt+k",
+  "tui.altScreen.nextPrompt": "ctrl+alt+j",
+  "tui.altScreen.halfPageUp": "ctrl+alt+u",
+  "tui.altScreen.halfPageDown": "ctrl+alt+d",
+  "tui.altScreen.top": "ctrl+alt+p",
+  "tui.altScreen.bottom": "ctrl+alt+n",
   "app.models.toggleProvider": [],
   "app.model.cycleForward": [],
   "app.model.cycleBackward": [],
