@@ -2,6 +2,9 @@
   "keybindings.json": {
     "dispatch": ":lua vim.ui.open(\"https://pi.dev/docs/latest/keybindings\")"
   },
+  "mcp.json": {
+    "dispatch": ":lua vim.ui.open(\"https://pi.dev/docs/latest/mcp\")"
+  },
   "settings.json": {
     "dispatch": ":lua vim.ui.open(\"https://pi.dev/docs/latest/settings\")"
   }
