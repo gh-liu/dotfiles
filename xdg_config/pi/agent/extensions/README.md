@@ -31,12 +31,14 @@ Web search uses the `exa-search` skill and raw HTTP instead of a custom tool.
 Export `EXA_API_KEY` in the environment that starts Pi. The skill is discovered
 under `../skills/exa-search/`; no `websearch` extension is loaded.
 
-## Continue after compaction
+## Compaction continuation
 
-`continue` resumes the active task after compaction. It treats Pi's compaction
-summary and the current worktree as primary context, consulting the persisted
-session JSONL only when a decision-critical detail is missing, contradictory, or
-ambiguous. This avoids routinely refilling the newly compacted context.
+The `continue` extension was removed because Pi 1.2.0 already schedules the next
+response after between-turn compaction and retries recoverable context overflow.
+`session_compact.willRetry === false` does not mean no response is scheduled;
+injecting a generic follow-up can run an extra turn after the task finishes.
+Continuation is owned by Pi's scheduler, not by a global compaction listener.
+Manual `/compact` keeps its native behavior and does not imply task resumption.
 
 ## Status usage
 
@@ -64,10 +66,7 @@ removed together. Codemode is not a replacement for isolated child context.
   falling back to `CODEX_HOME/auth.json`. Pi owns request-time refresh; existing
   API keys, other accounts and equal/newer credentials are preserved. See
   [authentication API boundary and synchronization policy](auth/API.md).
-- `continue`: resumes after compaction from the summary and worktree, consulting history only for decision-critical gaps.
 - `status`: shows activity, model, token, cost, and context state.
-
-Use `continue` for compaction recovery. It is intentionally the only history-related extension because it uses session history only when a compaction recovery decision requires it.
 
 ## Configuration, tests, and troubleshooting
 
