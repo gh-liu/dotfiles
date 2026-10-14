@@ -1,0 +1,18 @@
+onboarding = false
+
+[theme]
+name = "nord"
+auto_switch = false
+
+[ui]
+status_indicators = "symbols"
+
+[ui.sound]
+enabled = false
+
+[ui.toast]
+delivery = "herdr"
+
+[keys]
+# https://herdr.dev/docs/configuration/#keybindings
+# prefix = "ctrl+b"
