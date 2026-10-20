@@ -1,4 +1,5 @@
 {
+  "$schema": "https://pi.dev/schemas/keybindings.schema.json",
   "tui.editor.cursorUp": [
     "up",
     "ctrl+p"
@@ -15,20 +16,20 @@
     "down",
     "ctrl+n"
   ],
-  "tui.altScreen.previousPrompt": "ctrl+alt+k",
-  "tui.altScreen.nextPrompt": "ctrl+alt+j",
+  "tui.altScreen.previousPrompt": "ctrl+alt+p",
+  "tui.altScreen.nextPrompt": "ctrl+alt+n",
   "tui.altScreen.halfPageUp": "ctrl+alt+u",
   "tui.altScreen.halfPageDown": "ctrl+alt+d",
-  "tui.altScreen.top": "ctrl+alt+p",
-  "tui.altScreen.bottom": "ctrl+alt+n",
+  "tui.altScreen.top": "ctrl+alt+t",
+  "tui.altScreen.bottom": "ctrl+alt+b",
   "app.models.toggleProvider": [],
   "app.model.cycleForward": [],
   "app.model.cycleBackward": [],
   "app.tree.foldOrUp": [
-    "ctrl+left"
+    "ctrl+alt+h"
   ],
   "app.tree.unfoldOrDown": [
-    "ctrl+right"
+    "ctrl+alt+l"
   ],
   "app.session.new": [
     "ctrl+s"
