@@ -228,8 +228,7 @@ install_kulala_core() {
 	kulala_os=$OS
 	kulala_arch=$(printf '%s' "$ARCH" | sed 's/^x86_64$/x86_64/; s/^aarch64$/aarch64/; s/^arm64$/arm64/')
 	case "$kulala_os:$kulala_arch" in
-	linux:x86_64 | linux:aarch64 | darwin:x86_64 | darwin:arm64)
-		;;
+	linux:x86_64 | linux:aarch64 | darwin:x86_64 | darwin:arm64) ;;
 	*)
 		echo "kulala-core: unsupported platform: $kulala_os-$kulala_arch" >&2
 		return 1
@@ -490,6 +489,8 @@ install_lsp() {
 		bun i -g typescript
 		bun i -g typescript-language-server
 		bun i -g agent-browser
+
+		bun i -g @excalidraw/cli
 
 		# bun i -g @github/copilot-language-server
 
