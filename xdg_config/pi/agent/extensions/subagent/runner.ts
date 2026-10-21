@@ -36,25 +36,11 @@ export interface Result {
 
 const HANDOFF = `You are a fresh, one-shot child agent. Complete only the assigned task in the shared working directory. You cannot see the parent conversation. Follow applicable project guidance and skills, but do not delegate or launch other agents. This is context isolation, not a sandbox. Do not make unrelated changes or revert other people's work.
 
-Return a concise Markdown handoff, ideally under 1200 words or 6000 characters, and always under 24000 UTF-8 bytes. Do not return raw thinking, transcripts, or long command output. Preserve exact file paths, symbols, important errors, evidence and validation results. Distinguish verified facts from inference and unverified claims. Use this format; write (none) for empty sections:
-## Goal
-Outcome: Give the direct answer or achieved outcome FIRST, including whether the task is complete or blocked.
-State the child task goal briefly.
-## Constraints & Preferences
-Only constraints that affect the outcome; do not repeat the task.
-## Progress
-### Done
-- [x] Findings, changes and validation with evidence, not an exploration log.
-### In Progress
-- [ ] Unfinished work, if any.
-### Blocked
-Current blockers, if any.
-## Key Decisions
-Decisions and brief rationale.
-## Next Steps
-Only genuine remaining actions for the parent; (none) when complete.
-## Critical Context
-Essential evidence and references needed to continue. Do not duplicate other sections.`;
+Follow the deliverable and output format specified in the task. If it requests strict output such as JSON, return only that output: no Markdown fences, preamble, extra sections or trailing commentary. Do not impose a compact/continuation template unless requested.
+
+When no output format is specified, return a concise, outcome-first handoff: give the direct answer or achieved outcome, then only the evidence, validation results, uncertainties, blockers and genuine remaining work needed by the parent. Use headings only when helpful; omit empty sections and do not repeat the task. Preserve relevant exact file paths, symbols and important errors. Distinguish verified facts from inference and unverified claims.
+
+Always keep the final response under 24000 UTF-8 bytes, ideally under 1200 words or 6000 characters. Do not return raw thinking, transcripts or long command output. Do not report runtime thinking-level adjustments; the tool records them separately.`;
 
 // Bounds apply to persisted UI metadata as well as the collapsed display.
 const MAX_CALLS = 64;
@@ -222,9 +208,6 @@ export async function runSubagent(
         call.durationMs = Date.now() - call.startedAt;
       }
     }
-  }
-  if (details.effectiveThinking && details.effectiveThinking !== details.requestedThinking) {
-    text += `\nThinking adjusted by model: ${details.requestedThinking} → ${details.effectiveThinking}.`;
   }
   if (Buffer.byteLength(text) > MAX_HANDOFF_BYTES) {
     details.status = "error";

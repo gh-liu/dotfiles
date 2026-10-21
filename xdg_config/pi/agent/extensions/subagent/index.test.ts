@@ -102,7 +102,6 @@ test("real parent/child sessions isolate tool output, preserve guidance and retu
     expect(childFirst.tools.map((entry: any) => entry.function.name).sort()).toEqual(["bash", "edit", "find", "grep", "ls", "read", "write"]);
     expect(JSON.stringify(childFirst)).toContain("GLOBAL_APPEND_SENTINEL");
     expect(JSON.stringify(childFirst)).not.toContain("UNTRUSTED_APPEND_SENTINEL");
-    expect(JSON.stringify(childFirst)).toContain("Outcome:");
   } finally { session.dispose(); }
 }, 15000);
 
@@ -200,15 +199,17 @@ test.each([
   await writeFile(join(agentDir, "models.json"), JSON.stringify(config));
   const ctx = await context();
   ctx.thinkingLevel = parent;
-  respond = (_body, response) => answer(response, { content: "## Goal\nOutcome: Verified." });
-  const result = await subagent.execute("thinking", { description: "Thinking", task: "Verify", thinking: requested }, undefined, undefined, ctx);
+  const handoff = '{"outcome":"verified","evidence":["fixture.txt"],"blocked":false}';
+  const task = "Verify the fixture and return only JSON with outcome, evidence and blocked fields. No Markdown or extra text.";
+  respond = (_body, response) => answer(response, { content: handoff });
+  const result = await subagent.execute("thinking", { description: "Thinking", task, thinking: requested }, undefined, undefined, ctx);
   expect(result.isError).toBe(false);
   expect(result.details.requestedThinking).toBe(requested ?? parent);
   expect(result.details.effectiveThinking).toBe(effective);
   expect(requests[0].reasoning_effort).toBe(effective);
-  expect(result.content[0]).toMatchObject({ text: requested === "off"
-    ? expect.stringContaining("Thinking adjusted by model: off → low")
-    : expect.not.stringContaining("Thinking adjusted") });
+  expect(result.content).toEqual([{ type: "text", text: handoff }]);
+  expect(JSON.parse((result.content[0] as { text: string }).text)).toEqual({ outcome: "verified", evidence: ["fixture.txt"], blocked: false });
+  expect(requests[0].messages).toContainEqual(expect.objectContaining({ role: "user", content: [{ type: "text", text: task }] }));
 });
 
 test("provider failures remain bounded while preserving a real diagnostic session", async () => {
