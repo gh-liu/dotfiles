@@ -1,0 +1,6 @@
+{
+  "extends": "../status/tsconfig.json",
+  "compilerOptions": { "target": "ES2023" },
+  "include": ["*.ts"],
+  "exclude": []
+}
