@@ -76,7 +76,13 @@ test("real parent/child sessions isolate tool output, preserve guidance and retu
       if (body.messages.some((message: any) => message.role === "tool")) answer(response, { content: "Parent received the handoff." });
       else tool(response, "subagent", { description: "Inspect fixture", task: "CHILD_TASK: inspect fixture.txt" });
     } else if (body.messages.some((message: any) => message.role === "tool")) answer(response, { content: handoff });
-    else tool(response, "read", { path: "fixture.txt" });
+    else tool(response, "codemode", { code: `
+      const names = ALL_TOOLS.map(tool => tool.name).sort();
+      if (JSON.stringify(names) !== JSON.stringify(["bash", "edit", "read", "write"])) {
+        throw new Error("Unexpected child tools: " + JSON.stringify(names));
+      }
+      text(await tools.read({ path: "fixture.txt" }));
+    ` });
   };
   const ctx = await context();
   const settings = SettingsManager.create(root, agentDir, { projectTrusted: false });
@@ -90,7 +96,7 @@ test("real parent/child sessions isolate tool output, preserve guidance and retu
     const result = session.messages.find((message) => message.role === "toolResult") as any;
     expect(result.content).toEqual([{ type: "text", text: handoff }]);
     expect(result.details.status).toBe("ok");
-    expect(result.details.calls).toMatchObject([{ name: "read", status: "ok" }]);
+    expect(result.details.calls).toContainEqual(expect.objectContaining({ name: "codemode", status: "ok" }));
     const childRecord = await readFile(result.details.sessionFile, "utf8");
     expect(childRecord).toContain("CHILD_TOOL_OUTPUT_SENTINEL");
     expect(childRecord).not.toContain("PARENT_PRIVATE_SENTINEL");
@@ -99,7 +105,7 @@ test("real parent/child sessions isolate tool output, preserve guidance and retu
     expect(JSON.stringify(parentNext)).not.toContain("startedAt");
     expect(JSON.stringify(parentNext)).toContain(handoff.replace(/\n/g, "\\n"));
     const childFirst = requests.find((body) => !JSON.stringify(body).includes("PARENT_PRIVATE_SENTINEL"));
-    expect(childFirst.tools.map((entry: any) => entry.function.name).sort()).toEqual(["bash", "edit", "find", "grep", "ls", "read", "write"]);
+    expect(childFirst.tools.map((entry: any) => entry.function.name).sort()).toEqual(["bash", "codemode", "edit", "read", "write"]);
     expect(JSON.stringify(childFirst)).toContain("GLOBAL_APPEND_SENTINEL");
     expect(JSON.stringify(childFirst)).not.toContain("UNTRUSTED_APPEND_SENTINEL");
   } finally { session.dispose(); }
