@@ -95,8 +95,11 @@ adjustment without appending it to the result body. Missing both parent and
 requested levels fails explicitly.
 It does not inherit parent extensions, permission hooks, runtime-only credentials,
 dynamic providers or routers. An unresolved model fails rather than falling back.
-Its tools are explicitly limited to read, grep, find, ls, bash, edit and write;
-there is no child MCP or codemode extension. Background cache warming is disabled
+Its tools are explicitly limited to read, write, edit, bash and codemode.
+The SDK's codemode extension is initialized independently for each child and can
+call the child's file and shell tools, but does not inherit parent MCP tools.
+Search and directory listing use bash rather than separate grep/find/ls tools.
+Background cache warming is disabled
 using scoped in-memory settings, without modifying the user's configuration.
 The shell environment and filesystem are shared; installed commands can still
 access the network through bash. Tool isolation is not network isolation, and

@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
 import {
-  createAgentSession, DefaultResourceLoader, getAgentDir, ModelRuntime,
+  createAgentSession, createCodemodeExtension, DefaultResourceLoader, getAgentDir, ModelRuntime,
   SessionManager, SettingsManager,
   type AgentSession, type ExtensionToolContext,
 } from "@earendil-works/pi-coding-agent";
@@ -103,6 +103,7 @@ export async function runSubagent(
     const loader = new DefaultResourceLoader({
       cwd: ctx.cwd, agentDir, settingsManager: settings,
       noExtensions: true, noPromptTemplates: true, noThemes: true,
+      extensionFactories: [createCodemodeExtension()],
       appendSystemPromptOverride: (base) => [...base, HANDOFF],
     });
     await loader.reload();
@@ -117,7 +118,7 @@ export async function runSubagent(
     ({ session: child } = await createAgentSession({
       cwd: ctx.cwd, agentDir, modelRuntime: runtime, model, thinkingLevel: thinking,
       settingsManager: settings, resourceLoader: loader, sessionManager: manager,
-      tools: ["read", "grep", "find", "ls", "bash", "edit", "write"], excludeTools: ["subagent"],
+      tools: ["read", "write", "edit", "bash", "codemode"], excludeTools: ["subagent"],
     }));
     details.effectiveThinking = child.thinkingLevel;
     checkCancelled();
