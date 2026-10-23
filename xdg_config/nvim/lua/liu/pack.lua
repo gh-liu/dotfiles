@@ -471,6 +471,7 @@ local aug_fug = vim.api.nvim_create_augroup("liu.fugitive", { clear = true })
 vim.pack.add({
 	"https://github.com/tpope/vim-fugitive",
 	"https://github.com/tpope/vim-rhubarb",
+	"https://github.com/shumphrey/fugitive-gitlab.vim"
 })
 vim.keymap.set("n", "g<space>", function()
 	for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
