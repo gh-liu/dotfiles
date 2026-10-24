@@ -3,10 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "npm run typecheck:auth && npm run typecheck:status && npm run typecheck:subagent && vitest run",
+    "test": "npm run typecheck:auth && npm run typecheck:status && npm run typecheck:subagent && npm run typecheck:forks && vitest run",
     "typecheck:auth": "tsc -p auth/tsconfig.json",
     "typecheck:status": "tsc -p status/tsconfig.json",
-    "typecheck:subagent": "tsc -p subagent/tsconfig.json"
+    "typecheck:subagent": "tsc -p subagent/tsconfig.json",
+    "typecheck:forks": "tsc -p forks/tsconfig.json"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
