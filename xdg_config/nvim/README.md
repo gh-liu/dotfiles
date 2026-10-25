@@ -32,6 +32,20 @@ Requires Nvim `v0.13.0`
 
 本质：显式优于隐式，可发现优于隐藏。
 
+### Mermaid 图片链接
+
+- Markdown 中的 Mermaid 围栏代码块会在开头的 `mermaid` 文本上设置 URL extmark，显示为下划线；编辑后自动更新，删除代码块时清理。
+- 使用 decoration provider 的 `on_win` 驱动更新，以 buffer 的 `changedtick` 缓存结果；没有编辑事件监听，未显示的 buffer 在下次显示时更新。保留持久化 extmark，使内置 `gx` 能在重绘之外查询 URL。
+- 支持反引号和波浪线围栏，忽略其他代码块内嵌套的示例；目前不处理 blockquote（`>`）中的围栏。
+- 在支持 OSC 8 的终端中使用终端的超链接点击手势打开图片，也可把光标放到 `mermaid` 上按 `gx`，由默认浏览器打开 SVG。
+- 图片通过 `mermaid.ink` 按需生成，无需本地 CLI。打开链接时会将该代码块的内容发送给该服务；内容通过 Base64 编码在 URL 中，超大图可能受到服务或终端的 URL 长度限制。
+
+回归测试（在 Neovim 配置目录运行）：
+
+```sh
+nvim --headless -u NONE -i NONE -l tests/mermaid.lua
+```
+
 ### mini.files bookmarks
 
 - `<leader>E` 从 cwd 打开，`<leader>e` 从当前文件附近打开；两者的持久化书签均按打开时的 cwd 隔离，不推断 Git root。
