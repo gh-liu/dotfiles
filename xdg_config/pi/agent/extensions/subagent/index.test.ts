@@ -4,10 +4,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
-  createAgentSession, DefaultResourceLoader, ModelRuntime, SessionManager, SettingsManager,
+  createAgentSession, DefaultResourceLoader, initTheme, ModelRuntime, SessionManager, SettingsManager,
   type ExtensionToolContext,
 } from "@earendil-works/pi-coding-agent";
 import { subagent } from "./index.ts";
+import { renderResult } from "./renderer.ts";
+import type { Details, Result } from "./runner.ts";
 
 let root: string;
 let agentDir: string;
@@ -248,4 +250,88 @@ test("parallel tool progress stays running after the first completion", async ()
   expect(intermediate?.activity).toBe("Running 1 tool…");
   expect(result.details.calls.map((call) => call.status)).toEqual(["ok", "ok"]);
   expect(result.details.running).toBe(0);
+});
+
+test.each([false, true])("thinking activities retain ordered, bounded history and stay UI-only (cancel=%s)", async (cancel) => {
+  const controller = new AbortController();
+  const updates: Result[] = [];
+  respond = (body, response) => {
+    if (!body.messages.some((message: any) => message.role === "tool")) {
+      answer(response, {
+        reasoning_content: "A" + "😀".repeat(6100),
+        content: "INTERMEDIATE_TEXT",
+        tool_calls: [{ index: 0, id: "pause", type: "function", function: { name: "bash", arguments: '{"command":"sleep 0.4"}' } }],
+      }, "tool_calls");
+      return;
+    }
+    response.writeHead(200, { "content-type": "text/event-stream" });
+    const chunk = (delta: object, finish: string | null = null) => response.write(`data: ${JSON.stringify({
+      id: "stream", object: "chat.completion.chunk", model: "test", choices: [{ index: 0, delta, finish_reason: finish }],
+    })}\n\n`);
+    chunk({ role: "assistant", reasoning_content: "NEW_THINKING" });
+    const timer = setTimeout(() => {
+      chunk({ content: "FINAL_TEXT" });
+      chunk({}, "stop");
+      response.end("data: [DONE]\n\n");
+    }, 700);
+    response.on("close", () => clearTimeout(timer));
+  };
+  const result = await subagent.execute("stream", { description: "Stream", task: "Investigate" }, controller.signal, (update) => {
+    updates.push(update as Result);
+    if (cancel && update.details.calls.some((call) => call.kind === "thinking" && call.args === "NEW_THINKING")) controller.abort();
+  }, await context());
+  expect(result.details.calls.map((call) => call.kind ?? call.name)).toEqual(["thinking", "bash", "thinking"]);
+  const [old, , current] = result.details.calls;
+  expect(old.args).toBe("A" + "😀".repeat(5999));
+  expect(old.truncated).toBe(true);
+  expect(old.status).toBe("ok");
+  expect(old.durationMs).toBeLessThan(400); // Excludes the subsequent bash sleep.
+  expect(current.args).toBe("NEW_THINKING");
+  expect(updates.some((update) => update.details.calls.at(-1)?.status === "running" && update.details.calls.at(-1)?.kind === "thinking")).toBe(true);
+  expect(JSON.stringify(updates)).not.toContain("INTERMEDIATE_TEXT");
+  expect(JSON.stringify(result.content)).not.toContain("NEW_THINKING");
+  expect(updates.every((update) => update.content.length === 0)).toBe(true);
+  if (cancel) {
+    expect(result.details.status).toBe("cancelled");
+    expect(current.status).toBe("cancelled");
+  } else {
+    expect(result.isError).toBe(false);
+    expect(result.content).toEqual([{ type: "text", text: "FINAL_TEXT" }]);
+    expect(current.status).toBe("ok");
+  }
+  const count = updates.length;
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  expect(updates).toHaveLength(count);
+});
+
+test("thinking renders as ordered tool-like rows, with content only when expanded", () => {
+  initTheme("dark", false);
+  const theme = { fg: (_color: string, text: string) => text } as any;
+  const details: Details = { status: "running", startedAt: Date.now(), activity: "Thinking", omitted: 0, running: 0,
+    calls: [
+      { id: "first", kind: "thinking", name: "Thinking", args: "OLD_THINKING", status: "ok", startedAt: 0, durationMs: 1234 },
+      { id: "tool", name: "read", args: "fixture.txt", status: "ok", startedAt: 0, durationMs: 20 },
+      { id: "second", kind: "thinking", name: "Thinking", args: "NEW_THINKING", status: "running", startedAt: Date.now(), truncated: true },
+    ] };
+  const render = (expanded: boolean, isPartial = true) => renderResult({ content: [{ type: "text", text: "FINAL_OUTPUT" }], details },
+    { expanded, isPartial }, theme, { isError: details.status === "cancelled" } as any).render(80).join("\n");
+  expect(render(false)).toContain("✓ Thought · 1.2s");
+  expect(render(false)).toContain("… Thinking…");
+  expect(render(false).indexOf("Thought")).toBeLessThan(render(false).indexOf("read"));
+  expect(render(false).indexOf("read")).toBeLessThan(render(false).indexOf("Thinking…"));
+  expect(render(false).match(/Thinking/g)).toHaveLength(1);
+  expect(render(false)).not.toContain("NEW_THINKING");
+  expect(render(false)).not.toContain("OLD_THINKING");
+  expect(render(false)).not.toContain("FINAL_OUTPUT");
+  expect(render(true)).toContain("NEW_THINKING");
+  expect(render(true)).toContain("OLD_THINKING");
+  expect(render(true)).toContain("shortened; full text in child session");
+  details.status = "cancelled";
+  details.calls[2].status = "cancelled";
+  expect(render(false, false)).toContain("⊘ Thinking interrupted");
+  expect(render(false, false)).toContain("FINAL_OUTPUT");
+  details.status = "ok";
+  details.calls[2].status = "ok";
+  expect(render(true, false)).toContain("NEW_THINKING");
+  expect(render(true, false)).toContain("FINAL_OUTPUT");
 });
