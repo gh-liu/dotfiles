@@ -10,6 +10,8 @@ export type Thinking = NonNullable<ExtensionToolContext["thinkingLevel"]>;
 export interface Request { description: string; task: string; thinking?: Thinking }
 export interface Activity {
   id: string;
+  kind?: "thinking";
+  truncated?: boolean;
   name: string;
   args: string;
   status: "running" | "ok" | "error" | "cancelled";
@@ -63,6 +65,16 @@ export async function runSubagent(
     status: "running", startedAt: Date.now(), activity: "Starting child…", calls: [], omitted: 0, running: 0,
   };
   const active = new Set<string>();
+  const thoughts = new Map<number, { startedAt: number; call?: Activity }>();
+  let thoughtId = 0;
+  const addActivity = (call: Activity) => {
+    details.calls.push(call);
+    if (details.calls.length > MAX_CALLS) {
+      const completed = details.calls.findIndex((item) => item.status !== "running");
+      details.calls.splice(completed < 0 ? 0 : completed, 1);
+      details.omitted++;
+    }
+  };
   let child: AgentSession | undefined;
   let unsubscribe: (() => void) | undefined;
   let cancelled = signal?.aborted ?? false;
@@ -127,10 +139,49 @@ export async function runSubagent(
       if (event.type === "agent_start" && cancelled) cancel();
       const sessionFile = manager.getSessionFile();
       if (sessionFile && existsSync(sessionFile)) details.sessionFile = sessionFile;
+      if (event.type === "message_start" && event.message.role === "assistant" && !cancelled) {
+        thoughts.clear();
+      }
+      if (event.type === "message_update" && !cancelled) {
+        const delta = event.assistantMessageEvent;
+        if (delta.type === "thinking_start") thoughts.set(delta.contentIndex, { startedAt: Date.now() });
+        if (delta.type === "thinking_delta" && delta.delta) {
+          const thought = thoughts.get(delta.contentIndex) ?? { startedAt: Date.now() };
+          thoughts.set(delta.contentIndex, thought);
+          if (!thought.call) {
+            thought.call = { id: `thinking-${++thoughtId}`, kind: "thinking", name: "Thinking", args: "", status: "running", startedAt: thought.startedAt };
+            addActivity(thought.call);
+          }
+          const call = thought.call;
+          if (!call.truncated) {
+            const value = call.args + delta.delta;
+            call.truncated = value.length > 12_000;
+            let end = Math.min(value.length, 12_000);
+            if (call.truncated && /[\uD800-\uDBFF]/.test(value[end - 1])) end--;
+            call.args = value.slice(0, end);
+          }
+        }
+        if (delta.type === "thinking_end") {
+          const call = thoughts.get(delta.contentIndex)?.call;
+          if (call) {
+            call.status = "ok";
+            call.durationMs = Date.now() - call.startedAt;
+          }
+          thoughts.delete(delta.contentIndex);
+        }
+      }
+      if (event.type === "message_end" && event.message.role === "assistant" && !cancelled) {
+        for (const { call } of thoughts.values()) {
+          if (call?.status === "running") {
+            call.status = ["stop", "toolUse"].includes(event.message.stopReason) ? "ok" : "error";
+            call.durationMs = Date.now() - call.startedAt;
+          }
+        }
+      }
       if (event.type === "message_update" && !cancelled && !active.size) {
         const type = event.assistantMessageEvent.type;
-        if (type.startsWith("thinking")) details.activity = "Thinking";
-        else if (type.startsWith("text")) details.activity = "Writing handoff…";
+        if (type.startsWith("thinking")) details.activity = type === "thinking_end" ? "Waiting for model…" : "Thinking";
+        else if (type.startsWith("text")) details.activity = "Writing…";
         else if (type.startsWith("toolcall")) details.activity = "Preparing tool call…";
       }
       if (event.type === "tool_execution_start") {
@@ -138,22 +189,17 @@ export async function runSubagent(
         details.running = active.size;
         const raw = JSON.stringify(event.args) ?? "";
         const suffix = "… [arguments shortened; see child session]";
-        details.calls.push({
+        addActivity({
           id: event.toolCallId, name: event.toolName,
           args: raw.length > MAX_ARGS ? `${raw.slice(0, MAX_ARGS - suffix.length)}${suffix}` : raw,
           status: "running", startedAt: Date.now(),
         });
-        if (details.calls.length > MAX_CALLS) {
-          const completed = details.calls.findIndex((call) => call.status !== "running");
-          details.calls.splice(completed < 0 ? 0 : completed, 1);
-          details.omitted++;
-        }
         if (!cancelled) details.activity = `Running ${active.size} tool${active.size === 1 ? "" : "s"}…`;
       }
       if (event.type === "tool_execution_end") {
         active.delete(event.toolCallId);
         details.running = active.size;
-        const call = details.calls.find((item) => item.id === event.toolCallId);
+        const call = details.calls.find((item) => !item.kind && item.id === event.toolCallId);
         if (call) {
           call.status = cancelled ? "cancelled" : event.isError ? "error" : "ok";
           call.durationMs = event.durationMs ?? Date.now() - call.startedAt;

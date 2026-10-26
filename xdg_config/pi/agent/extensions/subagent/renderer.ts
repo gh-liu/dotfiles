@@ -37,22 +37,34 @@ export const renderResult: NonNullable<ToolDefinition<any, Details>["renderResul
   const calls = details?.calls ?? [];
   const running = calls.filter((call) => call.status === "running");
   const completedSlots = Math.max(0, 8 - running.length);
-  const shown = options.expanded ? calls : [
+  const selected = new Set([
     ...running.slice(0, 8),
     ...(completedSlots ? calls.filter((call) => call.status !== "running").slice(-completedSlots) : []),
-  ];
+  ]);
+  const shown = options.expanded ? calls : calls.filter((call) => selected.has(call));
   if (calls.length || (options.isPartial && details)) component.addChild(new Spacer(1));
   const hidden = (details?.omitted ?? 0) + calls.length - shown.length;
   if (hidden) add(theme.fg("muted", `… (${hidden} hidden activities${details?.omitted ? "; full records in child session" : `, ${keyHint("app.tools.expand", "to expand")}`})`));
-  const hiddenRunning = (details?.running ?? 0) - shown.filter((call) => call.status === "running").length;
+  const hiddenRunning = (details?.running ?? 0) - shown.filter((call) => !call.kind && call.status === "running").length;
   if (hiddenRunning > 0) add(theme.fg("muted", `… (${hiddenRunning} more tools running)`));
   for (const call of shown) {
     const icon = { running: "…", ok: "✓", error: "✗", cancelled: "⊘" }[call.status];
     const color = call.status === "error" ? "error" : call.status === "ok" ? "success" : "muted";
+    if (call.kind === "thinking") {
+      const label = call.status === "running" ? "Thinking…" : call.status === "ok" ? "Thought" : "Thinking interrupted";
+      add(`${theme.fg(color, icon)} ${theme.fg("toolTitle", label)}${call.durationMs === undefined ? "" : theme.fg("dim", ` · ${duration(call.durationMs)}`)}`);
+      if (options.expanded) {
+        add(theme.fg("dim", display(call.args)));
+        if (call.truncated) add(theme.fg("muted", "… (shortened; full text in child session)"));
+      }
+      continue;
+    }
     const args = options.expanded || call.args.length <= 80 ? call.args : `${call.args.slice(0, 77)}…`;
     add(`${theme.fg(color, icon)} ${theme.fg("toolTitle", display(call.name))} ${theme.fg("muted", display(args))}${call.durationMs === undefined ? "" : theme.fg("dim", ` ${duration(call.durationMs)}`)}`);
   }
-  if (options.isPartial && details) add(theme.fg("muted", `… ${details.activity}`));
+  if (options.isPartial && details && !(details.activity === "Thinking" && shown.some((call) => call.kind === "thinking" && call.status === "running"))) {
+    add(theme.fg("muted", `… ${details.activity}`));
+  }
   const output = display(result.content.filter((part) => part.type === "text").map((part) => part.text).join("\n"));
   if (!options.isPartial && output) {
     component.addChild(new Spacer(1));
