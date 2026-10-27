@@ -1,9 +1,10 @@
 import { join } from "node:path";
 import { existsSync } from "node:fs";
+import type { Usage } from "@earendil-works/pi-ai";
 import {
   createAgentSession, createCodemodeExtension, DefaultResourceLoader, getAgentDir, ModelRuntime,
   SessionManager, SettingsManager,
-  type AgentSession, type ExtensionToolContext,
+  type AgentSession, type ExtensionToolContext, type SessionEntry,
 } from "@earendil-works/pi-coding-agent";
 
 export type Thinking = NonNullable<ExtensionToolContext["thinkingLevel"]>;
@@ -11,7 +12,6 @@ export interface Request { description: string; task: string; thinking?: Thinkin
 export interface Activity {
   id: string;
   kind?: "thinking";
-  truncated?: boolean;
   name: string;
   args: string;
   status: "running" | "ok" | "error" | "cancelled";
@@ -34,6 +34,7 @@ export interface Result {
   content: { type: "text"; text: string }[];
   details: Details;
   isError?: boolean;
+  usage?: Usage;
 }
 
 const HANDOFF = `You are a fresh, one-shot child agent. Complete only the assigned task in the shared working directory. You cannot see the parent conversation. Follow applicable project guidance and skills, but do not delegate or launch other agents. This is context isolation, not a sandbox. Do not make unrelated changes or revert other people's work.
@@ -53,6 +54,28 @@ function bounded(text: string, bytes: number): string {
   if (Buffer.byteLength(text, "utf8") <= bytes) return text;
   const suffix = "… [shortened; see child session if available]";
   return Buffer.from(text).subarray(0, bytes - Buffer.byteLength(suffix) - 3).toString("utf8") + suffix;
+}
+
+// Match Pi's session statistics: use all persisted entries, not the current context
+// or streaming events, which can omit failed retries or double-count compaction.
+export function sessionUsage(entries: SessionEntry[]): Usage | undefined {
+  let total: Usage | undefined;
+  for (const entry of entries) {
+    const usage = entry.type === "message" && (entry.message.role === "assistant" || entry.message.role === "toolResult")
+      ? entry.message.usage
+      : entry.type === "usage" || entry.type === "compaction" || entry.type === "branch_summary" ? entry.usage : undefined;
+    if (!usage) continue;
+    if (!total) {
+      total = { ...usage, cost: { ...usage.cost } };
+      continue;
+    }
+    for (const key of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const) total[key] += usage[key];
+    for (const key of ["cacheWrite1h", "reasoning"] as const) {
+      if (usage[key] !== undefined) total[key] = (total[key] ?? 0) + usage[key];
+    }
+    for (const key of ["input", "output", "cacheRead", "cacheWrite", "total"] as const) total.cost[key] += usage.cost[key];
+  }
+  return total;
 }
 
 export async function runSubagent(
@@ -94,6 +117,7 @@ export async function runSubagent(
   const timer = setInterval(update, 250);
   timer.unref();
   let text = "";
+  let usage: Usage | undefined;
   try {
     checkCancelled();
     if (!ctx.model) throw new Error("No parent model selected; refusing a fallback model.");
@@ -151,14 +175,6 @@ export async function runSubagent(
           if (!thought.call) {
             thought.call = { id: `thinking-${++thoughtId}`, kind: "thinking", name: "Thinking", args: "", status: "running", startedAt: thought.startedAt };
             addActivity(thought.call);
-          }
-          const call = thought.call;
-          if (!call.truncated) {
-            const value = call.args + delta.delta;
-            call.truncated = value.length > 12_000;
-            let end = Math.min(value.length, 12_000);
-            if (call.truncated && /[\uD800-\uDBFF]/.test(value[end - 1])) end--;
-            call.args = value.slice(0, end);
           }
         }
         if (delta.type === "thinking_end") {
@@ -239,6 +255,7 @@ export async function runSubagent(
       await child.abort().catch((error: unknown) => { abortError = error; });
       await abortPromise;
       unsubscribe?.();
+      usage = sessionUsage(child.sessionManager.getEntries());
       child.dispose();
     }
     clearInterval(timer);
@@ -262,5 +279,5 @@ export async function runSubagent(
     text = `Subagent failed: returned content exceeds ${MAX_HANDOFF_BYTES} bytes.\n${bounded(text, 20_000)}`;
   }
   if (details.status !== "ok" && details.sessionFile) text += `\nChild session: ${details.sessionFile}`;
-  return { content: [{ type: "text", text: bounded(text, MAX_HANDOFF_BYTES) }], details: snapshot(), isError: details.status !== "ok" };
+  return { content: [{ type: "text", text: bounded(text, MAX_HANDOFF_BYTES) }], details: snapshot(), isError: details.status !== "ok", ...(usage ? { usage } : {}) };
 }

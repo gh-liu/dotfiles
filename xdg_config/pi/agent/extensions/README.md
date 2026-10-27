@@ -174,12 +174,17 @@ Multiple subagent calls themselves remain sequential.
 
 UI metadata retains up to 64 calls and 2,048 argument characters per call, with
 explicit notices for evicted/shortened data. Raw tool results and thinking are not
-copied into parent metadata. Full child records are persisted separately under
+copied into parent metadata, including expanded views (older metadata may still contain
+thinking). Full child records are persisted separately under
 `<agentDir>/sessions/subagents/`; expanded output shows the path. These records can
-contain sensitive tool data and are not automatically deleted. Parent session
+contain sensitive tool data and thinking, and are not automatically deleted. Parent session
 metadata is bounded, not empty. Cancellation cooperatively aborts the child,
 waits for shutdown, then disposes it; a tool ignoring cancellation can delay this.
-There is no total runtime, token or cost cap in this version.
+The final tool result reports child usage from all persisted session entries, including
+failed attempts, retries, tool usage and compaction summaries, once each. Pi's parent
+session totals include that usage. Counts and costs depend on usage actually reported
+and recorded by the SDK/provider; missing usage cannot be reconstructed. There is no
+total runtime, token or cost cap in this version.
 
 ## Complete extension list and composition
 
