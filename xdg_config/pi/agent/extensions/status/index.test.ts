@@ -1,8 +1,9 @@
 import { homedir } from "node:os";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { SettingsManager, type ExtensionAPI, type ExtensionContext, type SessionEntry, type Theme } from "@earendil-works/pi-coding-agent";
 import type { Usage } from "@earendil-works/pi-ai";
+import { stripTerminalSequences, visibleWidth } from "@earendil-works/pi-tui";
 
 // Keep footer tests independent of user settings and filesystem watcher timing.
 vi.mock("node:fs", async (importOriginal) => ({
@@ -83,14 +84,17 @@ function setup(options: {
     { borderColor: (text: string) => text, selectList: {} },
     {},
   );
-  const editorRender = (width = 160) => editor.render(width).map((line) => line.replace(/\u001b\[[0-9;]*m/g, "")).join("\n");
+  const editorRaw = (width = 160) => editor.render(width).join("\n");
+  const editorRender = (width = 160) => stripTerminalSequences(editorRaw(width));
 
   const component = footerFactory(
     { requestRender: vi.fn() },
     {
       bold: (text: string) => text,
-      fg: (color: string, text: string) => `<${color}>${text}</${color}>`,
-      getThinkingBorderColor: (level: string) => (text: string) => `<thinking-${level}>${text}</thinking-${level}>`,
+      // ANSI styles occupy no columns, unlike visible markup in a theme mock.
+      fg: (_color: string, text: string) => `\u001b[37m${text}\u001b[39m`,
+      getThinkingBorderColor: (level: string) => (text: string) =>
+        `\u001b[${level === "high" ? 35 : 36}m${text}\u001b[39m`,
     } as unknown as Theme,
     {
       getGitBranch: () => options.branch ?? null,
@@ -102,7 +106,7 @@ function setup(options: {
     handlers.get("session_shutdown")?.({ type: "session_shutdown" }, context);
   });
 
-  const render = (width = 160) => component.render(width)[0].replace(/\u001b\[[0-9;]*m/g, "");
+  const render = (width = 160) => stripTerminalSequences(component.render(width)[0]);
   const fire = async (event: string, payload: Record<string, unknown> = {}) => {
     await handlers.get(event)?.({ type: event, ...payload }, context);
   };
@@ -110,6 +114,7 @@ function setup(options: {
     fire,
     render,
     editorRender,
+    editorRaw,
     setIdle: (next: boolean) => { idle = next; },
     setSessionName: (next: string | undefined) => { sessionName = next; },
     setEntries: (next: SessionEntry[]) => { entries = next; },
@@ -164,7 +169,9 @@ function assistantEntry(value: Usage): SessionEntry {
   };
 }
 
-describe("status extension", () => {
+describe.each([undefined, "1"])("status extension (NO_COLOR=%s)", (noColor) => {
+  beforeEach(() => vi.stubEnv("NO_COLOR", noColor));
+
   test("counts standalone usage of any kind without inventing an assistant cache hit", () => {
     const env = setup({ entries: [
       usageEntry("cache_warm", usage(0, 0, 0.015, 50_000)),
@@ -236,16 +243,13 @@ describe("status extension", () => {
   });
 
   test("uses plain thinking-colored bottom border and footer activity", () => {
-    vi.stubEnv("NO_COLOR", "1");
     const env = setup({ thinking: "high" });
-    const border = env.editorRender();
-
-    const lines = border.split("\n");
-    expect(lines[0]).toContain("<thinking-high>high</thinking-high> • <text>model</text><muted>(example)</muted>");
-    expect(lines[0]).toContain("<thinking-high>────────────────");
-    expect(lines.at(-1)).not.toContain("READY");
-    expect(lines.at(-1)).toContain("<thinking-high>────────────────");
-    expect(env.render(300)).toContain("<text> ● READY </text>");
+    const lines = env.editorRaw().split("\n");
+    expect(stripTerminalSequences(lines[0])).toContain("high • model(example)");
+    expect(lines[0]).toContain("\u001b[35mhigh\u001b[39m");
+    expect(lines[0]).toContain("\u001b[35m────────────────");
+    expect(lines.at(-1)).toBe(`\u001b[35m${"─".repeat(160)}\u001b[39m`);
+    expect(env.render(300)).toContain(" ● READY ");
   });
 
   test("moves model and provider into the editor border while keeping footer metrics", () => {
@@ -257,18 +261,12 @@ describe("status extension", () => {
     expect(env.editorRender()).toContain("model(acme)");
     expect(env.editorRender()).not.toContain("(acme) model");
     expect(env.editorRender()).toContain("medium");
-    expect(env.editorRender(12).split("\n").every((line) => {
-      const plain = line.replace(/<[^>]+>/g, "");
-      return [...plain].length <= 12;
-    })).toBe(true);
+    expect(env.editorRaw(12).split("\n").every((line) => visibleWidth(line) <= 12)).toBe(true);
   });
 
   test("renders the compressed current directory before the git branch", () => {
-    vi.stubEnv("NO_COLOR", "1");
     const env = setup({ cwd: `${homedir()}/project`, branch: "main" });
-    expect(env.render(300)).toContain(
-      "<text> ● READY </text> · <muted>~/project</muted> · <success>main</success>",
-    );
+    expect(env.render(300)).toContain(" ● READY  · ~/project · main");
   });
 
   test("shows the session name after the branch and refreshes rename and clear", async () => {
