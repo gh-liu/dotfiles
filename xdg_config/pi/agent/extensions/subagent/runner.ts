@@ -8,7 +8,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 export type Thinking = NonNullable<ExtensionToolContext["thinkingLevel"]>;
-export interface Request { description: string; task: string; thinking?: Thinking }
+export interface Request { description: string; task: string; model?: string; thinking?: Thinking }
 export interface Activity {
   id: string;
   kind?: "thinking";
@@ -27,6 +27,8 @@ export interface Details {
   calls: Activity[];
   omitted: number;
   running: number;
+  parentModel?: string;
+  effectiveModel?: string;
   requestedThinking?: Thinking;
   effectiveThinking?: Thinking;
 }
@@ -120,7 +122,11 @@ export async function runSubagent(
   let usage: Usage | undefined;
   try {
     checkCancelled();
-    if (!ctx.model) throw new Error("No parent model selected; refusing a fallback model.");
+    details.parentModel = ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined;
+    const modelName = request.model ?? details.parentModel;
+    if (!modelName) throw new Error("No parent model selected; refusing a fallback model.");
+    const separator = modelName.indexOf("/");
+    if (separator <= 0 || separator === modelName.length - 1) throw new Error("Model must use provider/model-id format.");
     const thinking = request.thinking ?? ctx.thinkingLevel;
     if (!thinking) throw new Error("No parent or requested thinking level; refusing an implicit default.");
     details.requestedThinking = thinking;
@@ -148,8 +154,9 @@ export async function runSubagent(
       authPath: join(agentDir, "auth.json"), modelsPath: join(agentDir, "models.json"), signal,
     });
     checkCancelled();
-    const model = runtime.getModel(ctx.model.provider, ctx.model.id);
-    if (!model) throw new Error(`Child cannot resolve ${ctx.model.provider}/${ctx.model.id} from configured providers. Dynamic parent providers/routers are not inherited.`);
+    const model = runtime.getModel(modelName.slice(0, separator), modelName.slice(separator + 1));
+    if (!model) throw new Error(`Child cannot resolve ${modelName} from configured providers. Dynamic parent providers/routers are not inherited.`);
+    details.effectiveModel = `${model.provider}/${model.id}`;
     const manager = SessionManager.create(ctx.cwd, join(agentDir, "sessions", "subagents"));
     ({ session: child } = await createAgentSession({
       cwd: ctx.cwd, agentDir, modelRuntime: runtime, model, thinkingLevel: thinking,

@@ -262,6 +262,39 @@ test.each([
   expect(requests[0].messages).toContainEqual(expect.objectContaining({ role: "user", content: [{ type: "text", text: task }] }));
 });
 
+test.each([undefined, "fixture/test", "fixture/vendor/other", "alternate/test"])("model selection and display: %s", async (model) => {
+  const config = JSON.parse(await readFile(join(agentDir, "models.json"), "utf8"));
+  config.providers.fixture.models.push({ id: "vendor/other", contextWindow: 128000, maxTokens: 4096 });
+  config.providers.alternate = { ...config.providers.fixture };
+  await writeFile(join(agentDir, "models.json"), JSON.stringify(config));
+  respond = (_body, response) => answer(response, { content: "Selected model answered" });
+  const result = await subagent.execute("model", { description: "Model", task: "Answer", model }, undefined, undefined, await context());
+  expect(result.isError).toBe(false);
+  expect(requests[0].model).toBe(model === "fixture/vendor/other" ? "vendor/other" : "test");
+  expect(result.details.parentModel).toBe("fixture/test");
+  expect(result.details.effectiveModel).toBe(model ?? "fixture/test");
+  const entries = (await readFile(result.details.sessionFile!, "utf8")).trim().split("\n").map((line) => JSON.parse(line));
+  expect(entries).toContainEqual(expect.objectContaining({ type: "model_change", provider: model === "alternate/test" ? "alternate" : "fixture", modelId: requests[0].model }));
+  initTheme("dark", false);
+  const theme = { fg: (_color: string, text: string) => text } as any;
+  for (const expanded of [false, true]) {
+    for (const isPartial of [false, true]) {
+      const rendered = renderResult(result, { expanded, isPartial }, theme, {} as any).render(80).join("\n");
+      expect(rendered).not.toContain("Model ");
+      if (model && model !== "fixture/test") expect(rendered).toContain(`${model} · Thinking off`);
+      else expect(rendered).not.toContain("fixture/test");
+    }
+  }
+  expect(result.content).toEqual([{ type: "text", text: "Selected model answered" }]);
+});
+
+test.each(["fixture/missing", "missing/test", "test", "/test", "fixture/"])("invalid model %s fails without fallback", async (model) => {
+  const result = await subagent.execute("invalid-model", { description: "Model", task: "Answer", model }, undefined, undefined, await context());
+  expect(result.isError).toBe(true);
+  expect(requests).toHaveLength(0);
+  expect(result.content[0]).toMatchObject({ text: expect.stringMatching(/cannot resolve|provider\/model-id format/) });
+});
+
 test("provider failures remain bounded while preserving a real diagnostic session", async () => {
   const diagnostic = "PROVIDER_DIAGNOSTIC_".repeat(4000);
   respond = (_body, response) => {
