@@ -42,8 +42,9 @@ Manual `/compact` keeps its native behavior and does not imply task resumption.
 
 ## Herdr fork tabs
 
-`herdr-fork` handles successful native `/clone` and `/fork` transitions through
-`session_start` with `reason: "fork"`. In a Herdr-managed interactive Pi, it
+`forks` registers its event handler only when `HERDR_ENV=1` and handles
+successful native `/clone` and `/fork` transitions through `session_start`
+with `reason: "fork"`. In a Herdr-managed interactive Pi, it
 creates an unfocused temporary tab named `Restoring Pi` and resumes
 `previousSessionFile` there. The current layout stays intact while Herdr waits
 for an interactive-ready Pi. Only then does it move the restored pane beside
@@ -75,7 +76,7 @@ retried for up to five seconds; ambiguous failures and timeouts are never retrie
 On startup or move failure, the forked session stays active and a warning is
 shown. Any created pane is left intact because a timed-out command
 may already have started Pi; inspect it before closing or retrying. No session
-files are deleted. Run `npm run typecheck:herdr-fork` for its type check or
+files are deleted. Run `npm run typecheck:forks` for its type check or
 `npm test` for the full extension suite. Existing Pi instances need `/reload`
 once to discover the extension.
 
@@ -195,7 +196,7 @@ total runtime, token or cost cap in this version.
 - `status`: shows activity, model, token, cost, and context state.
 - `subagent`: delegates context-heavy tasks to fresh child conversations with a
   streamed codemode-style UI and task-specific, concise final handoff.
-- `herdr-fork`: opens native clones/forks in a new Herdr tab while restoring the
+- `forks`: opens native clones/forks in a new Herdr tab while restoring the
   previous session in the original tab.
 
 ## Configuration, tests, and troubleshooting
@@ -208,7 +209,7 @@ account changes require Pi login or logout followed by a new session.
 Host packages are `peerDependencies`; pinned Pi 1.3.0 development copies support
 local checks. Install with `npm ci --ignore-scripts`, then run `npm test`.
 Focused checks are `npm run typecheck:auth`, `npm run typecheck:status`,
-`npm run typecheck:subagent` and `npm run typecheck:herdr-fork`.
+`npm run typecheck:subagent` and `npm run typecheck:forks`.
 `npx vitest run subagent/index.test.ts` exercises real
 SDK parent/child sessions against a local HTTP fixture provider, including context
 isolation, untrusted resources, cancellation, failure and output bounds. It does
