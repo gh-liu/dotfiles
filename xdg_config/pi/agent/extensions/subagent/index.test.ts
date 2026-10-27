@@ -9,7 +9,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { subagent } from "./index.ts";
 import { renderResult } from "./renderer.ts";
-import type { Details, Result } from "./runner.ts";
+import { sessionUsage, type Details, type Result } from "./runner.ts";
 
 let root: string;
 let agentDir: string;
@@ -23,17 +23,18 @@ const server = createServer(async (request, response) => {
   respond(body, response);
 });
 
-function answer(response: ServerResponse, delta: object, finish = "stop") {
+function answer(response: ServerResponse, delta: object, finish = "stop", usage?: object) {
   response.writeHead(200, { "content-type": "text/event-stream" });
   for (const chunk of [
     { choices: [{ index: 0, delta: { role: "assistant", ...delta }, finish_reason: null }] },
     { choices: [{ index: 0, delta: {}, finish_reason: finish }] },
   ]) response.write(`data: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", model: "test", ...chunk })}\n\n`);
+  if (usage) response.write(`data: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", model: "test", choices: [], usage })}\n\n`);
   response.end("data: [DONE]\n\n");
 }
 
-function tool(response: ServerResponse, name: string, args: object) {
-  answer(response, { tool_calls: [{ index: 0, id: "child-tool", type: "function", function: { name, arguments: JSON.stringify(args) } }] }, "tool_calls");
+function tool(response: ServerResponse, name: string, args: object, usage?: object) {
+  answer(response, { tool_calls: [{ index: 0, id: "child-tool", type: "function", function: { name, arguments: JSON.stringify(args) } }] }, "tool_calls", usage);
 }
 
 beforeEach(async () => {
@@ -64,6 +65,45 @@ async function context() {
   return { cwd: root, model: runtime.getModel("fixture", "test")!, thinkingLevel: "off", isProjectTrusted: () => false } as ExtensionToolContext;
 }
 
+test("usage aggregates persisted entries including retries, tool results and compactions without counting summaries twice", () => {
+  const usage = { input: 10, output: 5, cacheRead: 2, cacheWrite: 3, cacheWrite1h: 1, reasoning: 4,
+    totalTokens: 20, cost: { input: 1, output: 2, cacheRead: 3, cacheWrite: 4, total: 10 } };
+  const entries = [
+    { type: "message", message: { role: "assistant", stopReason: "error", usage } },
+    { type: "message", message: { role: "assistant", stopReason: "stop", usage } },
+    { type: "message", message: { role: "toolResult", usage } },
+    { type: "compaction", usage }, { type: "branch_summary", usage }, { type: "usage", usage },
+    { type: "message", message: { role: "compactionSummary", usage } },
+  ] as any;
+  expect(sessionUsage(entries)).toEqual({ input: 60, output: 30, cacheRead: 12, cacheWrite: 18,
+    cacheWrite1h: 6, reasoning: 24, totalTokens: 120,
+    cost: { input: 6, output: 12, cacheRead: 18, cacheWrite: 24, total: 60 } });
+  expect(sessionUsage([])).toBeUndefined();
+  expect(usage.input).toBe(10);
+});
+
+test.each(["stop", "length"])("real child usage is returned on %s", async (stop) => {
+  respond = (_body, response) => answer(response, { content: "Child answer" }, stop,
+    { prompt_tokens: 100, completion_tokens: 25, total_tokens: 125, prompt_tokens_details: { cached_tokens: 20 }, completion_tokens_details: { reasoning_tokens: 7 } });
+  const result = await subagent.execute("usage", { description: "Usage", task: "Answer" }, undefined, undefined, await context());
+  expect(result.isError).toBe(stop !== "stop");
+  expect(result.usage).toMatchObject({ input: 80, output: 25, cacheRead: 20, totalTokens: 125, reasoning: 7 });
+});
+
+test("retry after a provider failure reports the recorded usage once", async () => {
+  await writeFile(join(agentDir, "settings.json"), JSON.stringify({ retry: { enabled: true, maxRetries: 1, baseDelayMs: 1, provider: { maxRetries: 0 } } }));
+  respond = (_body, response) => {
+    if (requests.length === 1) {
+      response.writeHead(429, { "content-type": "application/json" });
+      response.end(JSON.stringify({ error: { message: "rate limit" } }));
+    } else answer(response, { content: "Recovered" }, "stop", { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 });
+  };
+  const result = await subagent.execute("retry", { description: "Retry", task: "Answer" }, undefined, undefined, await context());
+  expect(requests).toHaveLength(2);
+  expect(result.isError).toBe(false);
+  expect(result.usage).toMatchObject({ input: 10, output: 5, totalTokens: 15 });
+});
+
 test("real parent/child sessions isolate tool output, preserve guidance and return only the handoff", async () => {
   await writeFile(join(root, "fixture.txt"), "CHILD_TOOL_OUTPUT_SENTINEL");
   await writeFile(join(agentDir, "APPEND_SYSTEM.md"), "GLOBAL_APPEND_SENTINEL");
@@ -77,14 +117,14 @@ test("real parent/child sessions isolate tool output, preserve guidance and retu
     if (parent) {
       if (body.messages.some((message: any) => message.role === "tool")) answer(response, { content: "Parent received the handoff." });
       else tool(response, "subagent", { description: "Inspect fixture", task: "CHILD_TASK: inspect fixture.txt" });
-    } else if (body.messages.some((message: any) => message.role === "tool")) answer(response, { content: handoff });
+    } else if (body.messages.some((message: any) => message.role === "tool")) answer(response, { content: handoff }, "stop", { prompt_tokens: 50, completion_tokens: 10, total_tokens: 60 });
     else tool(response, "codemode", { code: `
       const names = ALL_TOOLS.map(tool => tool.name).sort();
       if (JSON.stringify(names) !== JSON.stringify(["bash", "edit", "read", "write"])) {
         throw new Error("Unexpected child tools: " + JSON.stringify(names));
       }
       text(await tools.read({ path: "fixture.txt" }));
-    ` });
+    ` }, { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 });
   };
   const ctx = await context();
   const settings = SettingsManager.create(root, agentDir, { projectTrusted: false });
@@ -98,6 +138,8 @@ test("real parent/child sessions isolate tool output, preserve guidance and retu
     const result = session.messages.find((message) => message.role === "toolResult") as any;
     expect(result.content).toEqual([{ type: "text", text: handoff }]);
     expect(result.details.status).toBe("ok");
+    expect(result.usage).toMatchObject({ input: 150, output: 30, totalTokens: 180 });
+    expect(session.getSessionStats().tokens).toMatchObject({ input: 150, output: 30, total: 180 });
     expect(result.details.calls).toContainEqual(expect.objectContaining({ name: "codemode", status: "ok" }));
     const childRecord = await readFile(result.details.sessionFile, "utf8");
     expect(childRecord).toContain("CHILD_TOOL_OUTPUT_SENTINEL");
@@ -252,7 +294,7 @@ test("parallel tool progress stays running after the first completion", async ()
   expect(result.details.running).toBe(0);
 });
 
-test.each([false, true])("thinking activities retain ordered, bounded history and stay UI-only (cancel=%s)", async (cancel) => {
+test.each([false, true])("thinking activities retain ordered status without content (cancel=%s)", async (cancel) => {
   const controller = new AbortController();
   const updates: Result[] = [];
   respond = (body, response) => {
@@ -278,15 +320,16 @@ test.each([false, true])("thinking activities retain ordered, bounded history an
   };
   const result = await subagent.execute("stream", { description: "Stream", task: "Investigate" }, controller.signal, (update) => {
     updates.push(update as Result);
-    if (cancel && update.details.calls.some((call) => call.kind === "thinking" && call.args === "NEW_THINKING")) controller.abort();
+    if (cancel && update.details.calls.filter((call) => call.kind === "thinking").length === 2) controller.abort();
   }, await context());
   expect(result.details.calls.map((call) => call.kind ?? call.name)).toEqual(["thinking", "bash", "thinking"]);
   const [old, , current] = result.details.calls;
-  expect(old.args).toBe("A" + "😀".repeat(5999));
-  expect(old.truncated).toBe(true);
+  expect(old.args).toBe("");
   expect(old.status).toBe("ok");
   expect(old.durationMs).toBeLessThan(400); // Excludes the subsequent bash sleep.
-  expect(current.args).toBe("NEW_THINKING");
+  expect(current.args).toBe("");
+  expect(JSON.stringify([updates, result.details])).not.toContain("NEW_THINKING");
+  expect(JSON.stringify([updates, result.details])).not.toContain("😀");
   expect(updates.some((update) => update.details.calls.at(-1)?.status === "running" && update.details.calls.at(-1)?.kind === "thinking")).toBe(true);
   expect(JSON.stringify(updates)).not.toContain("INTERMEDIATE_TEXT");
   expect(JSON.stringify(result.content)).not.toContain("NEW_THINKING");
@@ -304,14 +347,14 @@ test.each([false, true])("thinking activities retain ordered, bounded history an
   expect(updates).toHaveLength(count);
 });
 
-test("thinking renders as ordered tool-like rows, with content only when expanded", () => {
+test("thinking renders as ordered status rows even for legacy metadata with content", () => {
   initTheme("dark", false);
   const theme = { fg: (_color: string, text: string) => text } as any;
   const details: Details = { status: "running", startedAt: Date.now(), activity: "Thinking", omitted: 0, running: 0,
     calls: [
       { id: "first", kind: "thinking", name: "Thinking", args: "OLD_THINKING", status: "ok", startedAt: 0, durationMs: 1234 },
       { id: "tool", name: "read", args: "fixture.txt", status: "ok", startedAt: 0, durationMs: 20 },
-      { id: "second", kind: "thinking", name: "Thinking", args: "NEW_THINKING", status: "running", startedAt: Date.now(), truncated: true },
+      { id: "second", kind: "thinking", name: "Thinking", args: "NEW_THINKING", status: "running", startedAt: Date.now() },
     ] };
   const render = (expanded: boolean, isPartial = true) => renderResult({ content: [{ type: "text", text: "FINAL_OUTPUT" }], details },
     { expanded, isPartial }, theme, { isError: details.status === "cancelled" } as any).render(80).join("\n");
@@ -323,15 +366,14 @@ test("thinking renders as ordered tool-like rows, with content only when expande
   expect(render(false)).not.toContain("NEW_THINKING");
   expect(render(false)).not.toContain("OLD_THINKING");
   expect(render(false)).not.toContain("FINAL_OUTPUT");
-  expect(render(true)).toContain("NEW_THINKING");
-  expect(render(true)).toContain("OLD_THINKING");
-  expect(render(true)).toContain("shortened; full text in child session");
+  expect(render(true)).not.toContain("NEW_THINKING");
+  expect(render(true)).not.toContain("OLD_THINKING");
   details.status = "cancelled";
   details.calls[2].status = "cancelled";
   expect(render(false, false)).toContain("⊘ Thinking interrupted");
   expect(render(false, false)).toContain("FINAL_OUTPUT");
   details.status = "ok";
   details.calls[2].status = "ok";
-  expect(render(true, false)).toContain("NEW_THINKING");
+  expect(render(true, false)).not.toContain("NEW_THINKING");
   expect(render(true, false)).toContain("FINAL_OUTPUT");
 });
