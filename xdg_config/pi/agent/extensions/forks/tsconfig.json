@@ -1,5 +1,0 @@
-{
-  "extends": "../status/tsconfig.json",
-  "exclude": [],
-  "include": ["*.ts"]
-}
