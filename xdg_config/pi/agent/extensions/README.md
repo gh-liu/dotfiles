@@ -104,7 +104,7 @@ Codemode is not a replacement for isolated child context.
 
 ## Subagent
 
-`subagent({ description, task, thinking? })` runs a bounded exploration or implementation
+`subagent({ description, task, model?, thinking? })` runs a bounded exploration or implementation
 task synchronously in a fresh Pi session. Supply the background, scope,
 constraints, acceptance criteria and evidence requirements: the child cannot see
 the parent conversation. Prefer file references over pasted logs. The child shares
@@ -123,8 +123,13 @@ Supply a self-contained brief with relevant facts and references, scope/non-goal
 read-only or write boundaries, user constraints/approvals, acceptance checks and
 required evidence. The child chooses its approach unless a method is required.
 
-The child resolves the parent's model from the same agent directory's static
-provider/auth configuration, retains its project trust, and
+The child defaults to the parent's model. Override `model` with an exact
+`provider/model-id` from the same agent directory's static provider/auth
+configuration (the model ID may contain slashes). Unknown or malformed models
+fail without fallback. When the selected provider/model differs from the parent's,
+the UI shows it alongside Thinking and Elapsed/Took, including restored sessions;
+identical models are omitted. Model metadata is not appended to the handoff.
+The child retains the parent's project trust and
 loads project guidance, SYSTEM/APPEND instructions and skills independently.
 Thinking defaults to the parent's level. The calling agent may request `off`,
 `minimal`, `low`, `medium`, `high`, `xhigh` or `max` for a clear task-specific

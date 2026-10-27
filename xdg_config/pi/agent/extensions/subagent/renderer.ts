@@ -73,7 +73,9 @@ export const renderResult: NonNullable<ToolDefinition<any, Details>["renderResul
     const elapsed = options.isPartial ? Date.now() - details.startedAt : ctx.durationMs ?? details.durationMs ?? 0;
     const thinking = details.effectiveThinking
       ? `Thinking ${details.requestedThinking !== details.effectiveThinking ? `${details.requestedThinking} → ` : ""}${details.effectiveThinking} · ` : "";
-    add(theme.fg("muted", `${thinking}${options.isPartial ? "Elapsed" : "Took"} ${duration(elapsed)}`));
+    const model = details.effectiveModel && details.effectiveModel !== details.parentModel
+      ? `${display(details.effectiveModel)} · ` : "";
+    add(theme.fg("muted", `${model}${thinking}${options.isPartial ? "Elapsed" : "Took"} ${duration(elapsed)}`));
     if (details.sessionFile && (options.expanded || details.omitted)) add(theme.fg("dim", `Child session: ${display(details.sessionFile)}`));
   }
   return component;
