@@ -42,43 +42,10 @@ Manual `/compact` keeps its native behavior and does not imply task resumption.
 
 ## Herdr fork tabs
 
-`forks` registers its event handler only when `HERDR_ENV=1` and handles
-successful native `/clone` and `/fork` transitions through `session_start`
-with `reason: "fork"`. In a Herdr-managed interactive Pi, it
-creates an unfocused temporary tab named `Restoring Pi` and resumes
-`previousSessionFile` there. The current layout stays intact while Herdr waits
-for an interactive-ready Pi. Only then does it move the restored pane beside
-the current pane and immediately move the current Pi into a focused new tab.
-Moving out the restored pane automatically closes the temporary tab. A split
-is visible only between the two moves, not throughout Pi startup; the overall
-command still waits for restoration. The old tab retains its ID, position and
-other panes; the forked Pi retains its process and `/fork` editor draft. The
-restored old session uses a new Pi process, not the old terminal's scrollback or
-ephemeral UI state. Restored Pi uses its normal startup configuration.
-
-The new tab is named `<original tab name> · fork`, with ` 2`, ` 3`, etc. added
-on collisions within the workspace. Purely numeric labels are treated as
-default names: use the current Pi session name, or `Pi` when unnamed. Herdr's
-generated numeric label can differ from its stable tab number; manually chosen
-purely numeric labels use the same fallback. Both native
-commands use the `fork` suffix because `session_start` does not identify which
-command caused the transition. The original tab's label is never changed.
-
-Herdr 0.9.5 does not support cross-tab `pane swap`: it exits successfully with
-`changed: false, reason: "cross_tab"`. Background restoration followed by two
-moves avoids that limitation and never rewrites session JSONL. Resolve the
-caller with `pane current --current`; inherited tab IDs become stale after the
-first move.
-
-Startup, resume, reload, cancelled forks and non-TUI/non-Herdr runs leave the
-layout alone. A new shell's explicit pre-launch `agent_pane_busy` rejection is
-retried for up to five seconds; ambiguous failures and timeouts are never retried.
-On startup or move failure, the forked session stays active and a warning is
-shown. Any created pane is left intact because a timed-out command
-may already have started Pi; inspect it before closing or retrying. No session
-files are deleted. Run `npm run typecheck:forks` for its type check or
-`npm test` for the full extension suite. Existing Pi instances need `/reload`
-once to discover the extension.
+The `forks` extension was removed because its automatic tab restoration and
+pane movement were not useful enough in practice. Native `/clone` and `/fork`
+remain available without automatic Herdr layout changes. Existing tabs and
+session files are left intact. Restart Pi to unload the removed extension.
 
 ## Status usage
 
@@ -201,8 +168,6 @@ total runtime, token or cost cap in this version.
 - `status`: shows activity, model, token, cost, and context state.
 - `subagent`: delegates context-heavy tasks to fresh child conversations with a
   streamed codemode-style UI and task-specific, concise final handoff.
-- `forks`: opens native clones/forks in a new Herdr tab while restoring the
-  previous session in the original tab.
 
 ## Configuration, tests, and troubleshooting
 
@@ -214,7 +179,7 @@ account changes require Pi login or logout followed by a new session.
 Host packages are `peerDependencies`; pinned Pi 1.3.0 development copies support
 local checks. Install with `npm ci --ignore-scripts`, then run `npm test`.
 Focused checks are `npm run typecheck:auth`, `npm run typecheck:status`,
-`npm run typecheck:subagent` and `npm run typecheck:forks`.
+and `npm run typecheck:subagent`.
 `npx vitest run subagent/index.test.ts` exercises real
 SDK parent/child sessions against a local HTTP fixture provider, including context
 isolation, untrusted resources, cancellation, failure and output bounds. It does
