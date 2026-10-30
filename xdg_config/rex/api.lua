@@ -987,6 +987,7 @@
 ---@field close fun(args: RexBlockCloseArgs): RexBlockCloseResult, string?
 ---@field event fun(args: RexBlockEventArgs): RexBlockEventResult, string?
 ---@field method fun(args: RexBlockMethodArgs): any, string?
+---@field call fun(creator: string, method: string, args: table?): table, string?
 
 ---@class RexBlockCreator
 ---@field list fun(args: RexBlockCreatorListArgs): RexBlockCreatorListResult, string?
@@ -1074,21 +1075,99 @@
 ---@field complete fun(args: RexTargetCompleteArgs): RexTargetCompleteResult, string?
 ---@field resolve fun(args: RexTargetResolveArgs): RexTargetResolveResult, string?
 
+---@field call fun(creator: string, method: string, args: table?): table, string?
+
 ---@class RexContext
 ---@field session_id string
 ---@field block_id string?
 ---@field client_id string?
+---@field origin string?
+---@field server string?
+
+---@class RexEvent
+---@field [string] any
+
+---@class RexActionDefinition
+---@field name string
+---@field title string
+---@field description string?
+---@field category string?
+---@field keywords string?
+---@field args table?
+---@field repeats boolean?
+---@field run fun(ctx: RexContext, args: table): any
+
+---@class RexLayout
+---@field block fun(definition: { flavor: string, options: table? }): table
+---@field horizontal fun(ratio: number, before: table, after: table): table
+---@field vertical fun(ratio: number, before: table, after: table): table
+
+---@class RexClientRuntime
+---@field queue fun(name: RexActionName, args: table?): nil
+
+---@class RexJson
+---@field encode fun(value: any, options: { indent: boolean }?): string, string?
+---@field decode fun(text: string): any, string?
+
+---@class RexExecResult
+---@field code integer
+---@field signal string?
+---@field stdout string
+---@field stderr string
+---@field timed_out boolean
+---@field ok boolean
+
+---@class RexExecHandle
+---@field pid integer
+---@field wait fun(seconds: number?): RexExecResult, string?
+---@field write fun(data: string): boolean, string?
+---@field close_stdin fun(): boolean, string?
+---@field kill fun(signal: string|integer?): boolean, string?
+---@field running fun(): boolean
+
+---@class RexTimer
+---@field cancel fun(): nil
+---@field active fun(): boolean
+
+---@class RexHostDefinition
+---@field label string
+---@field endpoints string[]?
+---@field endpoint string?
+---@field id string?
+
+---@class RexExec
+---@operator call(RexExecResult, string?) fun(argv: string[], options: table?): RexExecResult, string?
+---@field start fun(argv: string[], options: table?): RexExecHandle, string?
 
 ---@class RexRuntime
 ---@field session RexSession
 ---@field block RexBlock
----@field client RexClient
----@field bind fun(key: string, action: RexActionName|fun(ctx: RexContext, ev: table), args: table?)
----@field unbind fun(key: string, target: string|function|nil): integer
----@field action fun(definition: table)
+---@field client RexClientRuntime
+---@field layout RexLayout
+---@field bind fun(key: string, action: RexActionName|fun(ctx: RexContext, ev: RexEvent): boolean?), args: table?)
+---@field unbind fun(key: string, target: string|function|table|nil): integer
+---@field bindings fun(filter: { key: string?, mode: string?, action: string? }?): table[]
 ---@field mode fun(name: string, options: { exclusive: boolean }?)
+---@field modes fun(): table[]
+---@field action fun(definition: RexActionDefinition)
+---@field invoke fun(name: string, args: table?): any, string?
+---@field on fun(event: string, callback: fun(ctx: RexContext, ev: RexEvent)): nil
 ---@field call fun(method: string, args: table?): table, string?
----@field json table
+---@field block_call fun(creator: string, method: string, args: table?): table, string?
+---@field host fun(definition: RexHostDefinition)
+---@field servers fun(): string[]
+---@field server fun(label: string): RexRuntime
+---@field exec RexExec
+---@field sleep fun(seconds: number): nil
+---@field wait fun(event: string, filter: table|fun(ev: RexEvent, ctx: RexContext): boolean, timeout: number?): RexEvent, RexContext|string?
+---@field stop fun(code: integer?): nil
+---@field after fun(seconds: number, callback: fun(ctx: RexContext)): RexTimer
+---@field every fun(seconds: number, callback: fun(ctx: RexContext)): RexTimer
+---@field json RexJson
+---@field log fun(level: string, message: string)
+---@field args table
+---@field session_id string
+---@field block_id string?
 
 ---@type RexRuntime
 rex = rex
