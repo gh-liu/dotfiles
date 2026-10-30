@@ -1,5 +1,6 @@
 {
   "quietStartup": true,
+  "showHardwareCursor": true,
   "hideThinkingBlock": true,
   "steeringMode": "all",
   "followUpMode": "all",
