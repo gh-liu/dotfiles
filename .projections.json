@@ -28,6 +28,9 @@
     "type": "rex",
     "dispatch": ":lua vim.ui.open(\"https://www.superlogical.com/rex/docs/customize/config\")"
   },
+  "xdg_config/rex/api_gen.lua": {
+    "dispatch": ":!rex do %"
+  },
   "xdg_config/kitty/kitty.conf": {
     "type": "kitty"
   },
