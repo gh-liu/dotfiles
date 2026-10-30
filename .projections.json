@@ -24,6 +24,10 @@
   "xdg_config/ghostty/config": {
     "type": "ghostty"
   },
+  "xdg_config/rex/init.lua": {
+    "type": "rex",
+    "dispatch": ":lua vim.ui.open(\"https://www.superlogical.com/rex/docs/customize/config\")"
+  },
   "xdg_config/kitty/kitty.conf": {
     "type": "kitty"
   },
