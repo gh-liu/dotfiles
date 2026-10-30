@@ -5,7 +5,7 @@ XDG_CONFIG_DIR := $(DOTFILES_DIR)/xdg_config
 BREWFILE := $(XDG_CONFIG_DIR)/Brewfile
 DEVLANGS := ./xdg_config/bin/devlangs
 
-.PHONY: help zsh starship ghostty hammerspoon brew brewdump langs
+.PHONY: help zsh starship ghostty hammerspoon brew brewdump langs rex
 
 help: ## Print available targets
 	@echo "$$(grep -hE '^[[:alnum:]_%-]+:.*##' $(MAKEFILE_LIST) | sed -e 's/:.*##\s*/:/' -e 's/^\(.\+\):\(.*\)/\\033[36m\1\\033[m:\2/' | column -c2 -t -s :)"
@@ -24,6 +24,11 @@ ghostty: ## Link Ghostty config
 
 hammerspoon: ## Link Hammerspoon config
 	@ln -svf $(XDG_CONFIG_DIR)/hammerspoon/init.lua ~/.hammerspoon/init.lua
+
+rex: ## Link Rex config
+	@mkdir -p ~/.config
+	@ln -sfn $(XDG_CONFIG_DIR)/rex ~/.config/rex
+	@rex config reload
 
 brew: ## Install packages from Brewfile
 	@brew bundle install --file=$(BREWFILE)
