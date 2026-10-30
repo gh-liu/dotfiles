@@ -6,6 +6,7 @@ return {
 			workspace = {
 				library = {
 					"$VIMRUNTIME/lua",
+					"$XDG_CONFIG_HOME/rex",
 					"$XDG_CONFIG_HOME/nvim/lua",
 					"$XDG_DATA_HOME/nvim/lazy/busted/library",
 					"$XDG_DATA_HOME/nvim/lazy/luassert/library",
