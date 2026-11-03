@@ -14,6 +14,6 @@
   "packages": [],
   "lastChangelogVersion": "1.1.0",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.1-sol",
+  "defaultModel": "gpt-6.1-terra",
   "defaultThinkingLevel": "medium"
 }
