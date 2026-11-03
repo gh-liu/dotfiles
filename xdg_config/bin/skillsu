@@ -37,7 +37,7 @@ _skills_install() {
         # skills add seflless/deepwiki "${target[@]}" -s deepwiki
         # skills add exa-labs/agent-skills "${target[@]}" -s "exa-search"
 
-        skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling || return
+        # skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling || return
 
         skills add vercel-labs/agent-browser "${target[@]}" -s agent-browser || return
 
