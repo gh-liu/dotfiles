@@ -17,6 +17,10 @@
         "Authorization": "Bearer ${EXA_API_KEY}"
       },
       "description": "Search current external information and fetch webpages, with advanced domain, date and content filters; prefer primary sources."
+    },
+    "excalidraw": {
+      "url": "https://mcp.excalidraw.com/mcp",
+      "description": "Create, edit, animate, save, restore, and export Excalidraw diagrams for flowcharts, architecture diagrams, sequence diagrams, wireframes, and visual explanations."
     }
   }
 }
