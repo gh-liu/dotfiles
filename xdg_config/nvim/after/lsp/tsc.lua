@@ -1,4 +1,13 @@
 -- https://github.com/neovim/nvim-lspconfig/blob/master/doc/configs.md#tsc
 ---@type vim.lsp.Config
-local Config = {}
+local Config = {
+	settings = {
+		["js/ts"] = {
+			referencesCodeLens = {
+				enabled = true,
+				showOnAllFunctions = true
+			}
+		}
+	}
+}
 return Config
