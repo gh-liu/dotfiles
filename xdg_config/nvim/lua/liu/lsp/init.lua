@@ -344,7 +344,8 @@ vim.lsp.enable({ "rust_analyzer" })
 
 vim.lsp.enable("zls")
 
-vim.lsp.enable({ "ts_ls" })
+-- vim.lsp.enable({ "ts_ls" })
+vim.lsp.enable({ "tsc" }) -- for TypeScript >= 7
 -- vim.lsp.enable({ "oxlint", "oxfmt" })
 
 vim.lsp.enable({ "emmylua_ls" })
