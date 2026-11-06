@@ -1264,18 +1264,6 @@ vim.cmd([[
 	nnoremap <leader>ac <cmd>AV<cr>
 ]])
 
-local aug_qf_ref = vim.api.nvim_create_augroup("liu.quickfix.reflector", { clear = true })
-vim.pack.add({ "https://github.com/stefandtw/quickfix-reflector.vim" })
-vim.api.nvim_create_autocmd("VimLeavePre", {
-	group = aug_qf_ref,
-	callback = function(args)
-		for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-			if vim.api.nvim_buf_get_name(buf):match("quickfix-%a") then
-				vim.api.nvim_buf_delete(buf, { force = true })
-			end
-		end
-	end,
-})
 
 vim.pack.add({ "https://github.com/numEricL/table.vim" })
 vim.cmd([[
