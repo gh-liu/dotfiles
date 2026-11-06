@@ -1,6 +1,32 @@
+-- Stack position label for the statusline: "[Quickfix 2/5]" / "[Location 1/3]".
+-- getqflist({'nr': '$'}) returns the number of lists in the stack (the last list
+-- number), getqflist({'nr': 0}) the position of the current list; lists are
+-- capped by 'chistory'. Same for location lists with getloclist().
+---@param winid? integer  window whose stack is queried, defaults to the current one
+---@return string
+local function qf_stack_label(winid)
+	winid = winid or vim.api.nvim_get_current_win()
+	local loclist = (vim.fn.getwininfo(winid)[1] or {}).loclist == 1
+	local count, current
+	if loclist then
+		count = vim.fn.getloclist(winid, { nr = "$" }).nr
+		current = vim.fn.getloclist(winid, { nr = 0, id = 0 }).nr
+	else
+		count = vim.fn.getqflist({ nr = "$" }).nr
+		current = vim.fn.getqflist({ nr = 0, id = 0 }).nr
+	end
+	if count == 0 then
+		return ""
+	end
+	return string.format("[%s %d/%d]", loclist and "Location" or "Quickfix", current, count)
+end
+
+-- referenced from the statusline below, evaluated on every redraw
+_G.QF_STACK_LABEL = qf_stack_label
+
 vim.cmd([[
 setlocal signcolumn=no
-let &l:statusline = '%#Title#%q%* %{exists("w:quickfix_title") ? w:quickfix_title : ""} %= %l/%L'
+let &l:statusline = '%#Title#%{v:lua.QF_STACK_LABEL()}%* %{exists("w:quickfix_title") ? w:quickfix_title : ""} %= %l/%L'
 ]])
 
 local info = vim.fn.getwininfo(vim.fn.win_getid())[1] or {}
@@ -13,7 +39,9 @@ end
 
 local older = vim.cmd.colder
 local newer = vim.cmd.cnewer
-if not vim.b.qf_is_quickfix then
+-- NOTE: a location list window reports both loclist=1 and quickfix=1 in
+-- getwininfo(), so test loclist explicitly instead of "not quickfix".
+if vim.b.qf_is_loclist == 1 then
 	older = vim.cmd.lolder
 	newer = vim.cmd.lnewer
 end
