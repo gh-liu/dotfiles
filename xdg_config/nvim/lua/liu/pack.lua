@@ -1071,6 +1071,27 @@ vim.keymap.set("n", "gJ", "<CMD>TSJJoin<CR>", {})
 vim.keymap.set("n", "gS", "<CMD>TSJSplit<CR>", {})
 
 vim.pack.add({ "https://github.com/tpope/vim-repeat" })
+
+-- 2-char motion. Keep options in sync with ~/tools/dotfiles/vimrc.
+vim.g["sneak#s_next"] = 0 -- `;`/`,` repeat the motion, `s` waits for a new pair
+vim.pack.add({ "https://github.com/justinmk/vim-sneak" })
+-- Neovim maps `zI`/`z?` in operator-pending mode, so sneak skips its own
+-- `z`/`Z` operator mappings (plugin/sneak.vim:85). Restore them to get
+-- `dzab` / `yz` / `d3zqt` like the Vim side; normal-mode `zI` stays intact.
+vim.keymap.set("o", "z", "<Plug>Sneak_s", { remap = true })
+vim.keymap.set("o", "Z", "<Plug>Sneak_S", { remap = true })
+-- Link to the search/selection groups of colors/nord.lua instead of choosing
+-- colors here. Re-applied on ColorScheme: `hi clear` drops these links, and
+-- sneak's own `highlight default` (magenta) would win on the next reload.
+local aug_sneak = vim.api.nvim_create_augroup("liu.sneak", { clear = true })
+local function set_sneak_hl()
+	vim.api.nvim_set_hl(0, "Sneak", { link = "Search" })
+	vim.api.nvim_set_hl(0, "SneakCurrent", { link = "CurSearch" })
+	vim.api.nvim_set_hl(0, "SneakScope", { link = "Visual" })
+end
+set_sneak_hl()
+nvim_on("ColorScheme", aug_sneak, set_sneak_hl)
+
 vim.pack.add({ "https://github.com/tpope/vim-abolish" })
 vim.g.abolish_save_file = vim.fn.stdpath("config") .. "/after/plugin/abolish.vim"
 vim.keymap.set("n", "cR", "<Plug>(abolish-coerce)")
