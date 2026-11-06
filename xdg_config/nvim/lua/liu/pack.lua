@@ -1322,78 +1322,8 @@ function! s:TboneSendKeys() abort
 endfunction
 xnoremap <silent> gz :<C-U>call <SID>TboneTwrite()<CR>
 xnoremap <silent> gZ :<C-U>call <SID>TboneSendKeys()<CR>
-]])
-
-local aug_kulala = vim.api.nvim_create_augroup("liu.kulala", { clear = true })
-vim.pack.add({ "https://github.com/dont-be-evil-company/kulala.nvim" }, { load = function() end })
-vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
-	group = aug_kulala,
-	pattern = "*.http",
-	callback = function(ev)
-		vim.cmd.packadd("kulala.nvim")
-		-- https://neovim.getkulala.net/docs/getting-started/configuration-options
-		require("kulala").setup({
-			global_keymaps = false,
-			ui = {
-				-- display_mode = "float", -- float/split
-				-- split_direction = "", -- vertical/horizontal
-				-- win_opts = {},
-				-- default_view = "body",
-				default_winbar_panes = {
-					"body",
-					"headers",
-					"headers_body",
-					"verbose",
-					"stats",
-					"report",
-					"script_output",
-				},
-			},
-			lsp = {
-				enable = true,
-				filetypes = { "http", "lua", "javascript", "json" },
-			},
-			kulala_core = {
-				path = vim.fn.exepath("kulala-core"),
-			},
-		})
-
-		vim.api.nvim_create_user_command("Kulala", function(args)
-			local kulala = require("kulala")
-			local fn = args.fargs[1]
-			local fargs = { unpack(args.fargs, 2) }
-			assert(type(kulala[fn]) == "function", "kulala: not a function: " .. tostring(fn))
-			kulala[fn](unpack(fargs))
-		end, {
-			nargs = "+",
-			complete = function(arglead, cmdline)
-				-- only complete the first arg (function name)
-				if cmdline:match("^%s*Kulala%s+%S*$") then
-					return vim.iter(vim.tbl_keys(require("kulala")))
-						:filter(function(k)
-							return type(require("kulala")[k]) == "function" and vim.startswith(k, arglead)
-						end)
-						:totable()
-				end
-				return {}
-			end,
-		})
-	end,
-	once = true,
-})
-vim.api.nvim_create_autocmd({ "FileType" }, {
-	group = aug_kulala,
-	pattern = "http",
-	callback = function(ev)
-		local buf = ev.buf
-		vim.b[buf].dispatch = [[:lua require("kulala").run()]]
-
-		local kulala = require("kulala")
-		vim.keymap.set("n", "[[", kulala.jump_prev, { buffer = buf, desc = "Jump to previous request" })
-		vim.keymap.set("n", "]]", kulala.jump_next, { buffer = buf, desc = "Jump to next request" })
-		vim.keymap.set("n", "<cr>", kulala.run, { buffer = buf, desc = "Run" })
-	end,
-})
+]]
+)
 
 vim.pack.add({ "https://github.com/gh-liu/nvim-tester" })
 
