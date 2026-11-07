@@ -87,6 +87,16 @@ absolute path for on-demand reading, following codemode's documentation pattern.
 - `status`: shows activity, model, token, cost, and context state.
 - `subagent`: delegates context-heavy tasks to fresh child conversations with a
   streamed codemode-style UI and task-specific, concise final handoff.
+- `sessions`: exposes `list_sessions` through codemode, not as an active model
+  tool. `await tools.list_sessions({})` returns saved sessions for the current directory,
+  newest modified first, as `{ id, title, path }[]`. Titles use the session name
+  or fall back to the first user message. Use `read` on the absolute JSONL path
+  (with `offset`/`limit` for large files); raw files include branches, not just the
+  current conversation path. Explicit tool activation can override codemode exposure.
+  Optional `query` matches a case-insensitive title substring (trimmed; empty
+  matches all). `currentDirectoryOnly` defaults to `true`, restricting results to
+  the current working directory, excluding subdirectories. Set it to `false` to
+  search all projects. Both filters can be combined.
 
 ## Configuration, tests, and troubleshooting
 
