@@ -89,7 +89,7 @@ absolute path for on-demand reading, following codemode's documentation pattern.
   streamed codemode-style UI and task-specific, concise final handoff.
 - `sessions`: exposes `list_sessions` through codemode, not as an active model
   tool. `await tools.list_sessions({})` returns saved sessions for the current directory,
-  newest modified first, as `{ id, title, path }[]`. Titles use the session name
+  newest modified first, as `{ id, title, path, parentSessionId? }[]`. Titles use the session name
   or fall back to the first user message. Use `read` on the absolute JSONL path
   (with `offset`/`limit` for large files); raw files include branches, not just the
   current conversation path. Explicit tool activation can override codemode exposure.
@@ -97,6 +97,9 @@ absolute path for on-demand reading, following codemode's documentation pattern.
   matches all). `currentDirectoryOnly` defaults to `true`, restricting results to
   the current working directory, excluding subdirectories. Set it to `false` to
   search all projects. Both filters can be combined.
+  `parentSessionId` identifies the originating session, not a message branch or
+  an execution owner. It is resolved even when the parent is outside the filtered
+  results, and omitted for root sessions or missing/unreadable/malformed parents.
 
 ## Configuration, tests, and troubleshooting
 
