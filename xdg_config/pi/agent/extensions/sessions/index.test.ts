@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, expect, test, vi } from "vitest";
@@ -54,4 +54,23 @@ test("lists only session metadata across projects, with readable paths and codem
   expect(await list({ query: "request", currentDirectoryOnly: true })).toEqual([]);
   expect((await listSessions.execute("parent-directory", { currentDirectoryOnly: true },
     undefined, undefined, { cwd: root } as ExtensionToolContext)).structuredContent).toEqual([]);
+});
+
+test("resolves parent IDs outside filtered results from headers, omitting unavailable parents", async () => {
+  root = await mkdtemp(join(tmpdir(), "pi-session-ancestry-"));
+  vi.stubEnv("PI_CODING_AGENT_DIR", join(root, "agent"));
+  const parent = SessionManager.create(join(root, "parent-project"));
+  parent.appendMessage({ role: "user", content: "Parent task", timestamp: Date.now() });
+  const parentPath = join(root, "renamed-parent.jsonl");
+  await rename(parent.getSessionFile()!, parentPath);
+  const child = SessionManager.create(join(root, "child-project"), undefined, { parentSession: parentPath });
+  child.appendMessage({ role: "user", content: "Child task", timestamp: Date.now() });
+  const ctx = { cwd: join(root, "child-project") } as ExtensionToolContext;
+  const list = async () => (await listSessions.execute("ancestry", { query: "Child" }, undefined, undefined, ctx)).structuredContent;
+  const metadata = { id: child.getSessionId(), title: "Child task", path: child.getSessionFile() };
+  expect(await list()).toEqual([{ ...metadata, parentSessionId: parent.getSessionId() }]);
+  await writeFile(parentPath, "invalid header\n");
+  expect(await list()).toEqual([metadata]);
+  await rm(parentPath);
+  expect(await list()).toEqual([metadata]);
 });
