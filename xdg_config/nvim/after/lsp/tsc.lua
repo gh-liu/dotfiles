@@ -5,7 +5,7 @@ local Config = {
 		["js/ts"] = {
 			referencesCodeLens = {
 				enabled = true,
-				showOnAllFunctions = true
+				showOnAllFunctions = false
 			}
 		}
 	}
