@@ -53,6 +53,8 @@ export const renderResult: NonNullable<ToolDefinition<any, Details>["renderResul
     if (call.kind === "thinking") {
       const label = call.status === "running" ? "Thinking…" : call.status === "ok" ? "Thought" : "Thinking interrupted";
       add(`${theme.fg(color, icon)} ${theme.fg("toolTitle", label)}${call.durationMs === undefined ? "" : theme.fg("dim", ` · ${duration(call.durationMs)}`)}`);
+      if (options.expanded && call.args) component.addChild(new Text(theme.fg("thinkingText", display(call.args)), 2, 0));
+      if (options.expanded && call.thinkingTruncated) add(theme.fg("muted", "  … [thinking shortened to 4 KiB; see child session]"));
       continue;
     }
     const args = options.expanded || call.args.length <= 80 ? call.args : `${call.args.slice(0, 77)}…`;

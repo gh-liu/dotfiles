@@ -75,7 +75,8 @@ The codemode-style tool block shows request, live activity, result and time.
 Ctrl+O uses Pi's native expansion state: collapsed previews show 10 visual request
 lines, up to 8 calls (running first, then recent completed) and 5 visual result
 lines. Expanded views show the full
-request, retained call parameters and returned handoff. Thinking is a status only.
+request, retained call parameters, thinking text and returned handoff. Thinking
+stays status-only when collapsed; expanded text updates while the child thinks.
 Each finished call shows its duration; the bottom displays live Elapsed or final
 Took, including failures/cancellation and restored sessions. Regions are separated
 by one blank line. Child tool calls can run in parallel; activity reports the
@@ -83,9 +84,14 @@ total number still running, including calls hidden by the display/history limits
 Multiple subagent calls themselves remain sequential.
 
 UI metadata retains up to 64 calls and 2,048 argument characters per call, with
-explicit notices for evicted/shortened data. Raw tool results and thinking are not
-copied into parent metadata, including expanded views (older metadata may still contain
-thinking). Full child records are persisted separately under
+explicit notices for evicted/shortened data. Thinking activities instead retain
+the first 4 KiB of UTF-8 text per segment, without splitting characters, and mark
+truncation explicitly in the expanded view. Unlike Pi's general tool output
+limit (50 KiB / 2,000 lines), this smaller per-activity limit keeps thinking text
+within 256 KiB across 64 retained activities. Raw tool results are not copied
+into parent metadata. Thinking is UI metadata, not part of the model-facing
+handoff; older status-only records cannot recover text they did not retain.
+Full child records are persisted separately under
 `<agentDir>/sessions/subagents/`; expanded output shows the path. These records can
 contain sensitive tool data and thinking, and are not automatically deleted. Parent session
 metadata is bounded, not empty. Cancellation cooperatively aborts the child,

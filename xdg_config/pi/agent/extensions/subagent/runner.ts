@@ -14,6 +14,7 @@ export interface Activity {
   kind?: "thinking";
   name: string;
   args: string;
+  thinkingTruncated?: boolean;
   status: "running" | "ok" | "error" | "cancelled";
   startedAt: number;
   durationMs?: number;
@@ -50,6 +51,7 @@ Always keep the final response under 24000 UTF-8 bytes, ideally under 1200 words
 // Bounds apply to persisted UI metadata as well as the collapsed display.
 const MAX_CALLS = 64;
 const MAX_ARGS = 2048;
+const MAX_THINKING_BYTES = 4 * 1024;
 const MAX_HANDOFF_BYTES = 24_000;
 
 function bounded(text: string, bytes: number): string {
@@ -182,6 +184,18 @@ export async function runSubagent(
           if (!thought.call) {
             thought.call = { id: `thinking-${++thoughtId}`, kind: "thinking", name: "Thinking", args: "", status: "running", startedAt: thought.startedAt };
             addActivity(thought.call);
+          }
+          if (!thought.call.thinkingTruncated) {
+            let bytes = Buffer.byteLength(thought.call.args, "utf8");
+            // Keep a prefix without splitting UTF-8 characters; stop retaining later deltas once full.
+            for (const character of delta.delta) {
+              bytes += Buffer.byteLength(character, "utf8");
+              if (bytes > MAX_THINKING_BYTES) {
+                thought.call.thinkingTruncated = true;
+                break;
+              }
+              thought.call.args += character;
+            }
           }
         }
         if (delta.type === "thinking_end") {

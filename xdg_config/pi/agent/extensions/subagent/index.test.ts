@@ -23,10 +23,10 @@ const server = createServer(async (request, response) => {
   respond(body, response);
 });
 
-function answer(response: ServerResponse, delta: object, finish = "stop", usage?: object) {
+function answer(response: ServerResponse, delta: object | object[], finish = "stop", usage?: object) {
   response.writeHead(200, { "content-type": "text/event-stream" });
   for (const chunk of [
-    { choices: [{ index: 0, delta: { role: "assistant", ...delta }, finish_reason: null }] },
+    ...(Array.isArray(delta) ? delta : [delta]).map((part) => ({ choices: [{ index: 0, delta: { role: "assistant", ...part }, finish_reason: null }] })),
     { choices: [{ index: 0, delta: {}, finish_reason: finish }] },
   ]) response.write(`data: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", model: "test", ...chunk })}\n\n`);
   if (usage) response.write(`data: ${JSON.stringify({ id: "test", object: "chat.completion.chunk", model: "test", choices: [], usage })}\n\n`);
@@ -327,16 +327,24 @@ test("parallel tool progress stays running after the first completion", async ()
   expect(result.details.running).toBe(0);
 });
 
-test.each([false, true])("thinking activities retain ordered status without content (cancel=%s)", async (cancel) => {
+test.each([
+  { cancel: false, thinking: "A" + "😀".repeat(6100), retained: "A" + "😀".repeat(1023), truncated: true },
+  { cancel: true, thinking: "A" + "😀".repeat(6100), retained: "A" + "😀".repeat(1023), truncated: true },
+  { cancel: false, thinking: "中".repeat(1365) + "A", retained: "中".repeat(1365) + "A", truncated: false },
+])("thinking retains a bounded UTF-8 prefix (cancel=$cancel, truncated=$truncated)", async ({ cancel, thinking, retained, truncated }) => {
   const controller = new AbortController();
   const updates: Result[] = [];
   respond = (body, response) => {
     if (!body.messages.some((message: any) => message.role === "tool")) {
-      answer(response, {
-        reasoning_content: "A" + "😀".repeat(6100),
-        content: "INTERMEDIATE_TEXT",
-        tool_calls: [{ index: 0, id: "pause", type: "function", function: { name: "bash", arguments: '{"command":"sleep 0.4"}' } }],
-      }, "tool_calls");
+      answer(response, [
+        { reasoning_content: thinking.slice(0, 1) },
+        { reasoning_content: thinking.slice(1) },
+        ...(truncated ? [{ reasoning_content: "MUST_NOT_APPEND_AFTER_TRUNCATION" }] : []),
+        {
+          content: "INTERMEDIATE_TEXT",
+          tool_calls: [{ index: 0, id: "pause", type: "function", function: { name: "bash", arguments: '{"command":"sleep 0.4"}' } }],
+        },
+      ], "tool_calls");
       return;
     }
     response.writeHead(200, { "content-type": "text/event-stream" });
@@ -357,12 +365,14 @@ test.each([false, true])("thinking activities retain ordered status without cont
   }, await context());
   expect(result.details.calls.map((call) => call.kind ?? call.name)).toEqual(["thinking", "bash", "thinking"]);
   const [old, , current] = result.details.calls;
-  expect(old.args).toBe("");
+  expect(old.args).toBe(retained);
+  expect(Buffer.byteLength(old.args, "utf8")).toBeLessThanOrEqual(4096);
+  expect(Boolean(old.thinkingTruncated)).toBe(truncated);
   expect(old.status).toBe("ok");
   expect(old.durationMs).toBeLessThan(400); // Excludes the subsequent bash sleep.
-  expect(current.args).toBe("");
-  expect(JSON.stringify([updates, result.details])).not.toContain("NEW_THINKING");
-  expect(JSON.stringify([updates, result.details])).not.toContain("😀");
+  expect(current.args).toBe("NEW_THINKING");
+  expect(current.thinkingTruncated).toBeUndefined();
+  expect(JSON.parse(JSON.stringify(result.details)).calls[0].args).toBe(retained);
   expect(updates.some((update) => update.details.calls.at(-1)?.status === "running" && update.details.calls.at(-1)?.kind === "thinking")).toBe(true);
   expect(JSON.stringify(updates)).not.toContain("INTERMEDIATE_TEXT");
   expect(JSON.stringify(result.content)).not.toContain("NEW_THINKING");
@@ -380,12 +390,12 @@ test.each([false, true])("thinking activities retain ordered status without cont
   expect(updates).toHaveLength(count);
 });
 
-test("thinking renders as ordered status rows even for legacy metadata with content", () => {
+test("thinking text is visible only when expanded, including live and restored activities", () => {
   initTheme("dark", false);
   const theme = { fg: (_color: string, text: string) => text } as any;
   const details: Details = { status: "running", startedAt: Date.now(), activity: "Thinking", omitted: 0, running: 0,
     calls: [
-      { id: "first", kind: "thinking", name: "Thinking", args: "OLD_THINKING", status: "ok", startedAt: 0, durationMs: 1234 },
+      { id: "first", kind: "thinking", name: "Thinking", args: "OLD_THINKING\x1b[2J", thinkingTruncated: true, status: "ok", startedAt: 0, durationMs: 1234 },
       { id: "tool", name: "read", args: "fixture.txt", status: "ok", startedAt: 0, durationMs: 20 },
       { id: "second", kind: "thinking", name: "Thinking", args: "NEW_THINKING", status: "running", startedAt: Date.now() },
     ] };
@@ -399,14 +409,20 @@ test("thinking renders as ordered status rows even for legacy metadata with cont
   expect(render(false)).not.toContain("NEW_THINKING");
   expect(render(false)).not.toContain("OLD_THINKING");
   expect(render(false)).not.toContain("FINAL_OUTPUT");
-  expect(render(true)).not.toContain("NEW_THINKING");
-  expect(render(true)).not.toContain("OLD_THINKING");
+  expect(render(true)).toContain("  NEW_THINKING");
+  expect(render(true)).toContain("  OLD_THINKING");
+  expect(render(true)).not.toContain("\x1b[2J");
+  expect(render(true)).toContain("thinking shortened to 4 KiB; see child session");
+  expect(render(false)).not.toContain("thinking shortened");
   details.status = "cancelled";
   details.calls[2].status = "cancelled";
   expect(render(false, false)).toContain("⊘ Thinking interrupted");
   expect(render(false, false)).toContain("FINAL_OUTPUT");
   details.status = "ok";
   details.calls[2].status = "ok";
-  expect(render(true, false)).not.toContain("NEW_THINKING");
+  expect(render(true, false)).toContain("NEW_THINKING");
   expect(render(true, false)).toContain("FINAL_OUTPUT");
+  details.calls[0].args = ""; // Older status-only records remain renderable.
+  delete details.calls[0].thinkingTruncated;
+  expect(render(true, false)).not.toContain("OLD_THINKING");
 });
