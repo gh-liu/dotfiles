@@ -2,7 +2,7 @@
 
 The `codemode` tool lets the model write a JavaScript script that calls pi's other tools and runs non-LLM models, such as classifiers and image models.
 
-- Prefer codemode than bash.
+- Prefer `codemode` than `bash` when executing code.
 
 ## Use classifier models
 
