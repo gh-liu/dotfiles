@@ -48,6 +48,18 @@
 
 - Prefer `Functional Core, Imperative Shell`.
 
+## 双钻模型（Double Diamond）
+
+贯彻结构化设计思维框架。
+
+- 第一个钻石（问题空间）：做正确的事（Discover / Define）—— 确保找到真正值得解决的问题。
+- 第二个钻石（方案空间）：把事情做正确（Develop / Deliver）—— 围绕问题，设计并验证最优解决方案。
+
+1. Discover（发现 / 发散问题）
+2. Define（定义 / 收敛问题）
+3. Develop（开发 / 发散方案）
+4. Deliver（交付 / 收敛方案）
+
 # 表达
 
 ## 文字表达
