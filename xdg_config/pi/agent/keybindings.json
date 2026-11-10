@@ -16,20 +16,20 @@
     "down",
     "ctrl+n"
   ],
-  "tui.altScreen.previousPrompt": "ctrl+shift+k",
-  "tui.altScreen.nextPrompt": "ctrl+shift+j",
-  "tui.altScreen.halfPageUp": "",
-  "tui.altScreen.halfPageDown": "",
-  "tui.altScreen.top": "",
-  "tui.altScreen.bottom": "ctrl+shift+m",
+  "tui.altScreen.previousPrompt": "alt+k",
+  "tui.altScreen.nextPrompt": "alt+j",
+  "tui.altScreen.halfPageUp": [],
+  "tui.altScreen.halfPageDown": [],
+  "tui.altScreen.top": "alt+u",
+  "tui.altScreen.bottom": "alt+m",
   "app.models.toggleProvider": [],
   "app.model.cycleForward": [],
   "app.model.cycleBackward": [],
   "app.tree.foldOrUp": [
-    "ctrl+shift+h"
+    "alt+h"
   ],
   "app.tree.unfoldOrDown": [
-    "ctrl+shift+l"
+    "alt+l"
   ],
   "app.session.new": [
     "ctrl+s"
@@ -37,7 +37,9 @@
   "app.session.resume": [
     "ctrl+r"
   ],
-  "app.session.tree": [],
+  "app.session.tree": [
+    "ctrl+h"
+  ],
   "app.session.toggleNamedFilter": [
     "ctrl+l"
   ],
