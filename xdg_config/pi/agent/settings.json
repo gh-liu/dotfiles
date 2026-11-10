@@ -12,8 +12,8 @@
     "+codemode"
   ],
   "packages": [],
-  "lastChangelogVersion": "1.1.0",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6.1-terra",
   "defaultThinkingLevel": "medium"
+  "lastChangelogVersion": "1.5.1",
 }
