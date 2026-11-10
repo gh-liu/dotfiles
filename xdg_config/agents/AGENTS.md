@@ -119,3 +119,8 @@ submitForm
 +  expandSkillMention
    launchAgent
 ```
+
+# 其他
+
+- 使用版本控制工具如 git 时：
+  * 使用原子提交的方式组织提交代码：确保每个提交都能独立编译、测试
