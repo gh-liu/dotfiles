@@ -2,58 +2,45 @@
 -- See |CmdAtom| and the worked examples in |repeat.txt|.
 
 -- ====================================================================
--- 1. Semantic Visual dot-repeat: "." in Visual mode re-executes the last
---    Visual operation (selection + operator) via its captured keysequence,
---    instead of a bare ":normal .". Falls back to ":normal ." (the old
---    behavior) when no replayable Visual atom is known.
--- ====================================================================
-vim.api.nvim_create_autocmd("CmdAtom", {
-	callback = function(ev)
-		if ev.data.type == "visual" then
-			local keys = ev.data.keys
-			if keys ~= "" then
-				vim.g.voperator = keys
-			end
-		elseif ev.data.changed then
-			vim.g.voperator = nil -- the last change is no longer the Visual one
-		end
-	end,
-})
-vim.keymap.set("x", ".", function()
-	-- CmdAtom is deferred: schedule the replay after any pending event,
-	-- so `vim.g.voperator` is fresh. Leave Visual mode first: the captured
-	-- keys are a Normal-mode sequence (e.g. "viwd") and must not be consumed
-	-- while still in Visual mode.
-	vim.schedule(function()
-		if vim.g.voperator then
-				vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
-			vim.api.nvim_feedkeys(vim.g.voperator, "n", false) -- "n": already resolved
-		else
-			vim.cmd("normal .")
-		end
-	end)
-end)
-
--- ====================================================================
--- 2. "." in operator-pending mode repeats the last motion, so "d.",
+-- 1. "." in operator-pending mode repeats the last motion, so "d.",
 --    "y.", "c." operate on the repeated motion (motion-repeat in
---    |repeat.txt|: "3w", "fx", "/pat<CR>", ...). An expr mapping feeds
---    the captured keys straight into the operator's motion stream.
---    Note: expr is evaluated synchronously; vim.g.motion is one event-loop
---    tick stale at worst, which is below human typing latency.
+--    |repeat.txt|: "3w", "fx", "/pat<CR>", ...). Replay resolved keys
+--    without remapping, or the original input when capture was lossy.
+--    CmdAtom is deferred, so only motions already delivered can be repeated.
 -- ====================================================================
+local motion
+local function remember_motion(atom)
+	if atom.changed then
+		return
+	elseif atom.type == "motion" then
+		motion = atom
+	elseif atom.type == "mapping" then
+		-- Composite mappings may contain Normal-only setup, e.g. ms/beta<CR>.
+		-- Keep the motion itself so it is valid after an operator as well.
+		for _, step in ipairs(atom.atoms or {}) do
+			remember_motion(step)
+		end
+	end
+end
 vim.api.nvim_create_autocmd("CmdAtom", {
-	pattern = "motion",
+	pattern = { "motion", "mapping" },
 	callback = function(ev)
-		vim.g.motion = ev.data.keys
+		remember_motion(ev.data)
 	end,
 })
 vim.keymap.set("o", ".", function()
-	return vim.g.motion or ""
+	if not motion or motion.keys == "" then
+		return ""
+	elseif motion.keys then
+		return motion.keys
+	end
+	-- Resolve lossy input again in operator-pending mode.
+	vim.api.nvim_feedkeys(motion.lhs, "mi", false)
+	return ""
 end, { expr = true })
 
 -- ====================================================================
--- 3. Undo/redo change highlight: on `u`/`<C-r>` (or :undo/:redo/:earlier/
+-- 2. Undo/redo change highlight: on `u`/`<C-r>` (or :undo/:redo/:earlier/
 --    :later), highlight the lines that changed. CmdAtom detects the
 --    undo/redo atom (deferred, i.e. after the change applied);
 --    nvim_buf_attach's on_bytes (sync, fires on every text change incl.
@@ -75,7 +62,8 @@ local function attach_undo_tracker(buf)
 				-- |nvim_buf_attach()|), and the region is end-exclusive.
 				local len = math.max(old_end_col, new_end_col)
 				local dir = old_end_col < new_end_col and "add" or (old_end_col > new_end_col and "del" or "chg")
-				vim.b[buf]._undodiff_last_change = { start_row, start_col, start_row, start_col + math.max(len, 1), dir }
+				vim.b[buf]._undodiff_last_change =
+				{ start_row, start_col, start_row, start_col + math.max(len, 1), dir }
 			else
 				-- Multi-line change: fall back to linewise region.
 				local change_end = start_row + math.max(old_end_row, new_end_row)
@@ -105,15 +93,17 @@ vim.api.nvim_create_autocmd("VimEnter", {
 	end,
 })
 
---- Undo/redo atoms: keys u/<C-r> (command) or :undo/:redo/:earlier/:later (ex).
---- `keys` carries the full ex line for `:` atoms (cmd is always ":").
+--- Undo/redo atoms: u/<C-r>/g-/g+ (normal) or undo/redo/earlier/later (excmd).
 local is_undo_atom = function(d)
-	if d.type == "command" then
+	if not d.changed then
+		return false
+	elseif d.type == "normal" then
 		return d.cmd == "u" or d.cmd == "<C-R>" or d.cmd == "g-" or d.cmd == "g+"
-	elseif d.type == "ex" then
-		local k = d.keys or ""
-		return k:match("^:undo") ~= nil or k:match("^:u\n") ~= nil or k:match("^:u%d") ~= nil
-			or k:match("^:redo") ~= nil or k:match("^:earlier") ~= nil or k:match("^:later") ~= nil
+	elseif d.type == "excmd" then
+		-- Parse the command text to support abbreviations and modifiers without
+		-- mistaking unrelated commands such as :undojoin for :undo.
+		local ok, cmd = pcall(vim.api.nvim_parse_cmd, d.text or "", {})
+		return ok and (cmd.cmd == "undo" or cmd.cmd == "redo" or cmd.cmd == "earlier" or cmd.cmd == "later")
 	end
 	return false
 end
@@ -153,3 +143,56 @@ vim.api.nvim_create_autocmd("CmdAtom", {
 		end
 	end,
 })
+
+-- ====================================================================
+-- 3. Retrospective macro: [count]<leader>@ drafts the last [count] actions
+--    in the cmdwin; <Enter> saves it, :q cancels. Without a count,
+--    <leader>@ replays the saved macro. Keep at most 20 replayable actions.
+-- ====================================================================
+local atom_ring = {}
+local macro_lhs = vim.keycode("<leader>@")
+vim.api.nvim_create_autocmd("CmdAtom", {
+	callback = function(ev)
+		local atom = ev.data
+		if
+			atom.keys == ""
+			or atom.lhs:gsub("^%d+", "") == macro_lhs
+			or not vim.api.nvim_buf_is_valid(ev.buf)
+			or vim.fn.getcmdwintype() ~= ""
+			or (atom.type == "excmd" and (atom.text or ""):match("^lua%s+vim%.g%.atom_macro%s*="))
+		then
+			return
+		end
+		atom_ring[#atom_ring + 1] = atom
+		if #atom_ring > 20 then
+			table.remove(atom_ring, 1)
+		end
+	end,
+})
+vim.keymap.set("n", "<leader>@", function()
+	local count = vim.v.count
+	-- Let pending CmdAtom events reach the ring before reading it.
+	vim.schedule(function()
+		if count == 0 then
+			if not vim.g.atom_macro then
+				vim.notify("No saved atom macro")
+				return
+			end
+			for _, step in ipairs(vim.g.atom_macro) do
+				vim.api.nvim_feedkeys(vim.keycode(step.keys or step.lhs), step.keys and "n" or "m", false)
+			end
+			return
+		elseif #atom_ring == 0 then
+			vim.notify("No recorded actions")
+			return
+		end
+		local parts = {}
+		for i = math.max(1, #atom_ring - count + 1), #atom_ring do
+			local atom = atom_ring[i]
+			local field = atom.keys and "keys" or "lhs"
+			parts[#parts + 1] = ("{%s=%q},"):format(field, vim.fn.keytrans(atom.keys or atom.lhs))
+		end
+		local command = (":lua vim.g.atom_macro = { %s }"):format(table.concat(parts, " "))
+		vim.api.nvim_feedkeys(command .. vim.keycode("<C-f>"), "n", false)
+	end)
+end, { desc = "Replay atom macro; use a count to edit recent actions" })

@@ -67,7 +67,6 @@ nnoremap <silent> gq= :let b:_winview=winsaveview() <bar> exe 'keepjumps keepmar
 nnoremap gs mr:let @/='\<'.expand('<cword>').'\>'<CR>cgn
 xnoremap gs mr"sy:let @/=@s<CR>cgn
 
-" Semantic Visual dot-repeat lives in after/plugin/cmdatom.lua.
 " }}}
 " tab/win/buffer {{{
 " switch to alternate buffer

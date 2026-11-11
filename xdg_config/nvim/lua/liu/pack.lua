@@ -504,7 +504,7 @@ augroup liu.fug
   autocmd VimLeavePre * if get(b:, 'fugitive_type', '') ==# 'index' | execute 'bwipe!' bufnr() | endif
 augroup END
 
-nnoremap d. :<C-U>Gvdiffsplit :%<left><left>
+nnoremap Uv :<C-U>Gvdiffsplit :%<left><left>
 nnoremap Us :<C-U>G difftool --name-status<space>
 nmap US Us
 ]])
