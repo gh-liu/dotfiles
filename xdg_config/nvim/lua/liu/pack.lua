@@ -1332,5 +1332,4 @@ vim.pack.add({ "https://github.com/gh-liu/nvim-tester" })
 -- =============================================================================
 vim.cmd("packadd nvim.difftool")
 vim.cmd("packadd nvim.undotree")
-vim.cmd("packadd nohlsearch")
 vim.cmd("packadd cfilter")

@@ -42,6 +42,15 @@ local liu_augroup = function(group_name)
 	return augroup("liu/" .. group_name, { clear = true })
 end
 
+autocmd({ "CursorHold", "InsertEnter" }, {
+	desc = "Clear search highlighting without injecting keys into CmdAtom",
+	group = liu_augroup("nohlsearch"),
+	-- Search state is restored after autocmds, so clear it outside the callback.
+	callback = vim.schedule_wrap(function()
+		vim.v.hlsearch = 0
+	end),
+})
+
 -- -- :h vim.hl.on_yank
 -- augroups.highlighting_yank = {
 -- 	highlighting_yank = {
