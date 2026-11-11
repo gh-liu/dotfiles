@@ -61,10 +61,6 @@
       "rev": "072704e2ad9dd02d3f0b9b4040cf4972f7c31d93",
       "src": "https://github.com/gh-liu/nvim-treesitter-textobjects"
     },
-    "quickfix-reflector.vim": {
-      "rev": "6a6a9e28e1713b9e9db99eec1e6672e5666c01b9",
-      "src": "https://github.com/stefandtw/quickfix-reflector.vim"
-    },
     "snacks.nvim": {
       "rev": "882c996cf28183f4d63640de0b4c02ec886d01f2",
       "src": "https://github.com/folke/snacks.nvim"
