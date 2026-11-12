@@ -7,10 +7,6 @@
       },
       "description": "Resolve libraries and retrieve up-to-date, version-specific API documentation and code examples."
     },
-    "deepwiki": {
-      "url": "https://mcp.deepwiki.com/mcp",
-      "description": "Read public GitHub repository documentation and ask questions about repository architecture and implementation."
-    },
     "exa": {
       "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa",
       "headers": {
