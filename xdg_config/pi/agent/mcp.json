@@ -11,10 +11,6 @@
       "url": "https://mcp.deepwiki.com/mcp",
       "description": "Read public GitHub repository documentation and ask questions about repository architecture and implementation."
     },
-    "excalidraw": {
-      "url": "https://mcp.excalidraw.com/mcp",
-      "description": "Create, edit, animate, save, restore, and export Excalidraw diagrams for flowcharts, architecture diagrams, sequence diagrams, wireframes, and visual explanations."
-    },
     "exa": {
       "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa",
       "headers": {
