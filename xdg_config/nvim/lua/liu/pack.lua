@@ -1132,6 +1132,12 @@ vim.cmd([[
 ]])
 
 vim.pack.add({ "https://github.com/tpope/vim-dispatch" })
+vim.g.dispatch_handlers = {
+	"rex",
+	"tmux",
+	"job",
+	"terminal",
+}
 vim.g.dispatch_no_maps = false
 vim.g.dispatch_compilers = {
 	-- python
