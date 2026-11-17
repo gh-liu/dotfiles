@@ -1333,6 +1333,8 @@ xnoremap <silent> gZ :<C-U>call <SID>TboneSendKeys()<CR>
 
 vim.pack.add({ "https://github.com/gh-liu/nvim-tester" })
 
+vim.pack.add({ "https://github.com/chrisbra/csv.vim" })
+
 -- =============================================================================
 -- Built-in Plugins
 -- =============================================================================
