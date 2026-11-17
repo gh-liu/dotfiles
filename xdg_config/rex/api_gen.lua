@@ -1,4 +1,4 @@
--- Generate EmmyLua definitions from Rex's machine-readable API schema.
+-- Generate EmmyLua definitions from Rex's CLI schemas and runtime exports.
 -- Run from the dotfiles root with:
 --   rex do xdg_config/rex/api_gen.lua
 -- Use output=/path/to/api.lua to inspect definitions without replacing the config copy.
@@ -218,6 +218,20 @@ table.sort(action_names)
 
 local classes = {}
 local emitted = {}
+local actions = {}
+for _, action in ipairs(actions_document.actions or {}) do
+  if type(action.name) == "string" and action.args then
+    actions[#actions + 1] = {
+      name = action.name,
+      input_schema = action.args,
+      input_type = schema_type(action.args, method_type_name(action.name, "ActionArgs"), classes, emitted)
+    }
+  end
+end
+table.sort(actions, function (a, b)
+  return a.name < b.name
+end)
+
 local methods = {}
 local methods_by_name = {}
 for _, method in ipairs(document.methods or {}) do
@@ -226,7 +240,9 @@ for _, method in ipairs(document.methods or {}) do
   method.input_type = schema_type(method.input_schema, method_type_name(method.name, "Args"), classes, emitted)
   method.output_type = schema_type(method.output_schema, method_type_name(method.name, "Result"), classes, emitted)
 end
-table.sort(methods, function(a, b) return a.name < b.name end)
+table.sort(methods, function (a, b)
+  return a.name < b.name
+end)
 
 local block_methods = {}
 for _, block in ipairs(document.block_types or {}) do
@@ -238,16 +254,18 @@ for _, block in ipairs(document.block_types or {}) do
       member = method.name,
       input_schema = method.args_schema,
       input_type = schema_type(method.args_schema, method_type_name(name, "Args"), classes, emitted),
-      output_type = schema_type(method.output_schema, method_type_name(name, "Result"), classes, emitted),
+      output_type = schema_type(method.output_schema, method_type_name(name, "Result"), classes, emitted)
     }
   end
 end
-table.sort(block_methods, function(a, b) return a.name < b.name end)
+table.sort(block_methods, function (a, b)
+  return a.name < b.name
+end)
 
 local function method_signature(method, selector)
   local optional = #(method.input_schema and method.input_schema.required or {}) == 0 and "?" or ""
-  return "fun(" .. (selector and selector .. ", " or "")
-    .. "args: " .. method.input_type .. optional .. "): " .. method.output_type .. "|nil, string?"
+  return "fun(" .. (selector and selector .. ", " or "") .. "args: " .. method.input_type .. optional .. "): "
+    .. method.output_type .. "|nil, string?"
 end
 
 -- Reflect values without calling host functions. Schema names also expose helpers
@@ -256,6 +274,25 @@ local runtime_tables = {}
 local function runtime_type(value, name, path)
   local kind = type(value)
   if kind == "function" then
+    if path == "client.queue" or path == "bind" or path == "invoke" then
+      local overloads = {}
+      -- Only the Lua calling convention is adapted here. Action names, argument
+      -- fields, types, descriptions and enum choices all come from Rex.
+      local prefix = path == "bind" and "key: string, " or ""
+      local result = path == "invoke" and ": any|nil, string?" or ""
+      for _, action in ipairs(actions) do
+        local optional = #(action.input_schema.required or {}) == 0 and "?" or ""
+        overloads[#overloads + 1] = "fun(" .. prefix .. "action: " .. lua_string(action.name)
+          .. ", args: " .. action.input_type
+          .. optional .. ")" .. result
+      end
+      overloads[#overloads + 1] = "fun(" .. prefix .. "action: RexActionName, args?: table)" .. result
+      if path == "bind" then
+        overloads[#overloads + 1] = "fun(key: string, fn: function)"
+      end
+      classes[#classes + 1] = { name = name, fields = {}, overloads = overloads }
+      return name
+    end
     if path == "call" or path == "block.call" then
       local overloads = {}
       for _, method in ipairs(path == "call" and methods or block_methods) do
@@ -270,53 +307,67 @@ local function runtime_type(value, name, path)
     local method = methods_by_name[path]
     if method then
       -- The RPC schema does not describe defaults supplied by Lua wrappers.
-      classes[#classes + 1] = {
-        name = name,
-        fields = {},
-        overloads = { method_signature(method), "fun(...: any): any" },
-      }
+      classes[#classes + 1] = { name = name, fields = {}, overloads = { method_signature(method), "fun(...: any): any" } }
       return name
     end
     return "function"
   end
-  if kind ~= "table" then return kind end
-  if runtime_tables[value] then return runtime_tables[value] end
+  if kind ~= "table" then
+    return kind
+  end
+  if runtime_tables[value] then
+    return runtime_tables[value]
+  end
   runtime_tables[value] = name
 
   local class = { name = name, fields = {} }
   classes[#classes + 1] = class
   local keys, sources = {}, {}
   local function collect(source)
-    if sources[source] then return end
+    if sources[source] then
+      return
+    end
     sources[source] = true
     for key in pairs(source) do
-      if type(key) == "string" or type(key) == "number" then keys[key] = true end
+      if type(key) == "string" or type(key) == "number" then
+        keys[key] = true
+      end
     end
     local meta = getmetatable(source)
-    if type(meta) == "table" and type(meta.__index) == "table" then collect(meta.__index) end
+    if type(meta) == "table" and type(meta.__index) == "table" then
+      collect(meta.__index)
+    end
   end
   collect(value)
   local prefix = path == "" and "" or path .. "."
   for _, method in ipairs(methods) do
     if method.name:sub(1, #prefix) == prefix then
       local key = method.name:sub(#prefix + 1):match("^[^.]+")
-      if key then keys[key] = true end
+      if key then
+        keys[key] = true
+      end
     end
   end
   local ordered = {}
-  for key in pairs(keys) do ordered[#ordered + 1] = key end
-  table.sort(ordered, function(a, b)
-    if type(a) ~= type(b) then return type(a) < type(b) end
+  for key in pairs(keys) do
+    ordered[#ordered + 1] = key
+  end
+  table.sort(ordered, function (a, b)
+    if type(a) ~= type(b) then
+      return type(a) < type(b)
+    end
     return a < b
   end)
   for _, key in ipairs(ordered) do
     local member = value[key]
     if member ~= nil then
       local member_path = prefix .. tostring(key)
+      local member_type = runtime_type(member, name .. pascal(tostring(key)), member_path)
       class.fields[#class.fields + 1] = {
         key = key,
-        type = runtime_type(member, name .. pascal(tostring(key)), member_path),
-        description = methods_by_name[member_path] and methods_by_name[member_path].description,
+        type = member_type,
+        description = methods_by_name[member_path] and methods_by_name[member_path].description
+          or (member_type == "function" and "Exported by Rex; no signature schema is available." or nil)
       }
     end
   end
@@ -335,6 +386,8 @@ end)
 local lines = {
   "---@meta", "", "-- Generated by xdg_config/rex/api_gen.lua.",
   "-- Do not edit this file directly; run the generator again after Rex updates.",
+  "-- API and action types come from `rex api list --json` and `rex actions --json`.",
+  "-- Lua calling conventions are adapted locally; Rex does not export their signatures.",
   "-- Runtime fields reflect this rex do environment; opaque host functions have no inferred signature.", ""
 }
 
@@ -399,5 +452,7 @@ if not closed then
   fail("cannot close " .. output_path .. ": " .. tostring(close_error))
 end
 
-print("Generated " .. output_path .. " from " .. tostring(#methods)
-  .. " Rex API methods and " .. tostring(#block_methods) .. " block methods")
+print(
+  "Generated " .. output_path .. " from " .. tostring(#methods) .. " Rex API methods and " .. tostring(#block_methods)
+    .. " block methods"
+)

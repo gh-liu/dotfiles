@@ -71,3 +71,10 @@ rex.bind("cmd+shift+m", function (ctx)
         minimized_zoom[target.layer_id] = nil
         return true
 end)
+
+-- client settings: rex do init_client_settings
+rex.action({
+        name = "init_client_settings",
+        title = "Apply client settings from init.lua",
+        run = require("client_setup")
+})
