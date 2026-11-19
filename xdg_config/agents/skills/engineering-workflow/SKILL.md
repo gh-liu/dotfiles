@@ -1,6 +1,6 @@
 ---
 name: engineering-workflow
-description: Use when an engineering task needs investigation to define success, trace behavior across components, or choose between implementations with material trade-offs. Also use when compatibility or state changes require explicit invariants and verification. Apply the relevant steps as the investigation unfolds.
+description: Use when an engineering task needs investigation to define success, trace behavior across components, or choose between implementations with material trade-offs. Also use when compatibility or state changes require explicit invariants and verification. Use when consulting an existing Architecture Decision Record (ADR) or documenting a significant architectural choice in a lightweight ADR.
 ---
 
 # 工程工作流
@@ -10,6 +10,7 @@ description: Use when an engineering task needs investigation to define success,
 ## 理解问题
 
 - 用一个可观察的结果描述成功。明确本次要解决的问题、范围之外的需求、约束，以及变更前后必须成立的条件。
+- 变更涉及架构约定时，先查阅相关且仍生效的架构决策记录（ADR），确认哪些约束适用于当前问题。
 - 从正常入口沿调用方、实现和配置追踪行为，对照契约、测试或日志。跨组件问题可按需画出控制流或数据流，找出在哪个边界能独立观察和测试行为。
 - 有多个可能成因时，选择能区分它们的最小实验。必要时检查部署环境或外部依赖。标明推断及依据。调查后仍有会改变方案或结果的需求歧义时，向 LIU 确认。
 
@@ -17,7 +18,34 @@ description: Use when an engineering task needs investigation to define success,
 
 - 比较可行方案如何满足同一组验收条件。遵循项目既有模式，默认依次考虑正确性与安全、可维护性、性能。
 - 选择满足约束的最小改动。引入抽象或拆分文件时，说明它简化了哪段逻辑、满足了什么复用需求，或隔离了什么独立职责。
-- 长期决策的依据若难以从代码、测试或现有文档还原，在项目已有文档体系中记录取舍。
+- 长期决策的依据若难以从代码、测试或现有文档还原，在项目已有文档体系中记录取舍。对难以逆转或会约束后续工作的关键架构决策，沿用项目约定写一份轻量 ADR。说明要达成的目标、影响选择的约束和证据，以及为何从实际考虑过的方案中选定当前方案。
+- 决策依赖可能变化的前提时，写清适用边界和重新评估的条件。指出哪些新要求会使当前方案失效，哪些可观察的信号只需触发调查。若新决策取代已有 ADR，在两份记录之间互相链接。
+
+### 轻量 ADR 默认格式
+
+> 一个架构决策本质上是：D=f(G,C,A,E)
+> (G)：目标（Goals）
+> (C)：约束（Constraints）
+> (A)：可选方案（Alternatives）
+> (E)：当前证据（Evidence）
+> 保留设计的因果依据，比单纯保存设计结论更重要。
+
+优先沿用项目已有的 ADR 模板。项目尚无模板时，使用以下 Markdown 结构，标题和正文沿用项目文档语言。
+
+```markdown
+# ADR-<编号> <决策标题>
+
+状态：<当前状态>
+
+## 背景与约束
+<要达成的目标、影响选择的约束和当前证据>
+
+## 决策与取舍
+<选择了什么、为什么，以及实际比较过的方案有何取舍>
+
+## 重新评估条件
+<哪些变化会使方案失效，哪些信号值得调查。已有监控阈值时写明阈值和观察窗口。>
+```
 
 ## 实现与验证
 
