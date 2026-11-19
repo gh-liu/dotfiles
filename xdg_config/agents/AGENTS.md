@@ -79,43 +79,4 @@
 
 ## 视觉表达
 
-目标：用最小的视觉结构说明关键关系，不用图示装饰文字。
-
-- 仅当视觉结构比文字更清晰时使用；优先选择能直接支持结论的最小形式。
-- 按信息类型选择形式：
-  - 分支、状态或算法：伪代码。
-  - 层级和组成关系：文本树。
-  - 交互或时序：Mermaid。
-  - 代码或方案变化：diff。
-  - 布局、样式或交互：运行真实应用验证；独立原型仅用于真实应用不可用的场景，且不能替代真实应用验证。
-- 图示必须与代码、配置、日志或测试结果一致。图示不能替代证据。
-- 命令、代码和需要复制的内容使用纯文本，不放入截图。
-- 可以截图、或生成图片
-
-### 示例
-
-```text
-状态或分支：伪代码
-on(save)
-  if unchanged: return cached result
-```
-
-```text
-层级关系：文本树
-SessionPage
-├── Toolbar
-└── Timeline
-```
-
-```mermaid
-sequenceDiagram
-  User->>UI: Save
-  UI->>API: POST /sessions
-  API-->>UI: Result
-```
-
-```diff
-submitForm
-+  expandSkillMention
-   launchAgent
-```
+视觉结构比文字更容易说明关键关系、变化或界面行为时，使用 `visual-explanation` skill。
