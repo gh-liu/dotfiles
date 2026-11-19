@@ -1,16 +1,6 @@
 ## Codemode
 
-The `codemode` tool lets the model write a JavaScript script that calls pi's other tools and runs non-LLM models, such as classifiers and image models.
+Use `codemode` to run JavaScript that calls pi tools.
 
-- When making multiple tool calls, prefer to orchestrate them in a single `codemode` script.
-
-## Use classifier models
-
-`classifier` is pi's model type. System One decision models such as TypeSafe Jev are classifiers:
-call them from codemode with `models.getModelOfType("classifier", ...)` and
-`models.classify(model, { state, questions })`.
-
-## Use image models
-
-Image models also run only through codemode: call `models.generateImages(model, { input })`,
-then show each image block in `result.output` with `image()`.
+- When making multiple tool calls, prefer a single `codemode` script.
+- Call classifier and image models only through `codemode`. In pi, `System One` decision models such as `TypeSafe Jev` have the model type `classifier`.
