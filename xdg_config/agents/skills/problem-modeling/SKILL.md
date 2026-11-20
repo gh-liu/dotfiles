@@ -76,7 +76,7 @@ actual problem.
     implementation unless the user asks to proceed.
 
 11. **Keep internal workflow invisible.**
-    Use modeling steps, frameworks, and completion criteria
+    Use modeling steps, frameworks, and stopping criteria
     as internal guidance, not as a user-facing report.
 
     Do not expose internal process labels, checklist results,
@@ -437,8 +437,8 @@ Internal instructions are not output templates.
 Do not use internal process labels as response headings,
 including:
 
-- Completion Gate
-- Completion Gate Assessment
+- Stopping Criteria
+- Stopping Criteria Assessment
 - Step 1 / Step 2
 - Workflow Status
 - Modeling Phase
@@ -456,7 +456,7 @@ Instead, communicate actual findings and their
 implications in natural language.
 
 Bad:
-"Completion Gate: 6/7 checks passed."
+"Stopping criteria: 4/5 checks passed."
 
 Good:
 "The problem and major constraints are clear, but
@@ -485,7 +485,7 @@ explain the problem, but not merely to demonstrate
 that a framework was applied.
 
 When the user explicitly asks about methodology,
-framework application, or completion criteria,
+framework application, or stopping criteria,
 explain them directly.
 
 ### Optional: Persistent Documentation
@@ -528,56 +528,48 @@ during an explicitly modeling-only request.
 
 ---
 
-## Completion Gate
+## Stopping Criteria
 
-Problem modeling is complete when:
+Stop modeling when:
 
-1. **Problem**
+1. **The underlying problem is sufficiently understood.**
    The actual problem is distinguishable from
    a proposed solution.
 
-2. **Outcome**
-   The desired result is sufficiently clear
+2. **The relevant boundaries and constraints are clear.**
+   The machine's responsibilities, external constraints,
+   and important trade-offs are understood well enough
    for the next decision.
 
-3. **Boundary**
-   Relevant environment constraints and
-   controllable system boundaries are understood.
+3. **No unresolved uncertainty blocks the next decision.**
+   Remaining unknowns are non-blocking, have safe defaults,
+   or have an explicit validation plan.
 
-4. **Constraints**
-   Important trade-offs, non-goals, and anti-goals
-   are explicit where relevant.
+4. **Important outcomes can be verified.**
+   Expected behavior can be checked through concrete
+   examples, invariants, or observable success signals.
 
-5. **Uncertainty**
-   Decision-changing unknowns are resolved,
-   documented as assumptions, or assigned
-   a concrete validation step.
-
-6. **Verification**
-   Important expected behaviors can be checked
-   through examples, invariants, or observations.
-
-7. **Next Step**
-   The next engineering action is clear and
+5. **The next action is clear.**
+   The next engineering decision or investigation
    does not depend on invented critical requirements.
 
-These are internal quality criteria, not required
-document sections or user-facing output headings.
+These are internal reasoning guidelines,
+not a checklist to report to the user.
 
 Evaluate them silently.
 
-Do not announce "Completion Gate passed",
-"Completion assessment", or similar process-oriented
-results.
+Do not announce stopping-criteria assessments,
+scores, or other process-oriented results.
 
-For simple requests, most criteria may be
-satisfied implicitly.
+Do not force unnecessary analysis to satisfy
+every criterion.
 
-If material uncertainties remain, explain their
-practical consequences in natural language.
+If a critical uncertainty remains, explain
+its practical impact and ask a focused question
+or recommend a targeted investigation.
 
-Completion depends on decision readiness,
-not documentation volume or file creation.
+Stop when further modeling is unlikely to
+materially improve the next decision.
 
 ---
 
