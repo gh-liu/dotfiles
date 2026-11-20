@@ -75,6 +75,17 @@ actual problem.
     During explicit problem-modeling work, do not start
     implementation unless the user asks to proceed.
 
+11. **Keep internal workflow invisible.**
+    Use modeling steps, frameworks, and completion criteria
+    as internal guidance, not as a user-facing report.
+
+    Do not expose internal process labels, checklist results,
+    or framework terminology unless the user explicitly
+    asks about the methodology.
+
+    Communicate findings, decisions, and unresolved questions
+    in natural, user-facing language.
+
 ---
 
 ## Workflow
@@ -419,6 +430,64 @@ Omit sections that add no value.
 Do not explain all five methodologies unless
 the user requests methodological detail.
 
+### User-Facing Language
+
+Internal instructions are not output templates.
+
+Do not use internal process labels as response headings,
+including:
+
+- Completion Gate
+- Completion Gate Assessment
+- Step 1 / Step 2
+- Workflow Status
+- Modeling Phase
+- Framework Applied
+- Anti-pattern Check
+
+Do not translate these labels into user-facing headings
+or substitute equivalent process-oriented labels in
+another language.
+
+Do not report internal checklist scores, completion
+percentages, or framework execution status.
+
+Instead, communicate actual findings and their
+implications in natural language.
+
+Bad:
+"Completion Gate: 6/7 checks passed."
+
+Good:
+"The problem and major constraints are clear, but
+the consistency requirement during failure recovery
+still needs clarification because it affects the design."
+
+Bad:
+"Step 4 — Resolve Critical Uncertainty"
+
+Good:
+"One important question remains: should the system
+return stale data or wait for a fresh result?"
+
+Bad:
+"Problem Frames and Shape Up analysis completed."
+
+Good:
+"The storage implementation can change, but existing
+API contracts and session expiration behavior must
+remain compatible."
+
+Use plain, precise language.
+
+Technical terminology is appropriate when it helps
+explain the problem, but not merely to demonstrate
+that a framework was applied.
+
+When the user explicitly asks about methodology,
+framework application, or completion criteria,
+explain them directly.
+
 ### Optional: Persistent Documentation
 
 Create or modify files only when:
@@ -492,14 +561,20 @@ Problem modeling is complete when:
    The next engineering action is clear and
    does not depend on invented critical requirements.
 
-These are quality criteria, not required
-document sections.
+These are internal quality criteria, not required
+document sections or user-facing output headings.
+
+Evaluate them silently.
+
+Do not announce "Completion Gate passed",
+"Completion assessment", or similar process-oriented
+results.
 
 For simple requests, most criteria may be
 satisfied implicitly.
 
-If material uncertainties remain, state them
-rather than claiming the model is complete.
+If material uncertainties remain, explain their
+practical consequences in natural language.
 
 Completion depends on decision readiness,
 not documentation volume or file creation.
