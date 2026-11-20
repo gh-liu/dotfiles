@@ -5,7 +5,7 @@ argument-hint: "[target or focus, e.g. staged, HEAD~1..HEAD, path, or PR]"
 
 Review the target changes using an ablation-study approach (target or focus: ${@:-default target}; default target is the current uncommitted changes, or the latest commit if the working tree is clean—use it when no target or only a focus is given). Treat the full change set as the baseline and evaluate what actually changes when each substantive factor is removed, disabled, or replaced.
 
-1. **Inspect scope & baseline**: Determine the exact diff/target and its stated goal, invariants, and constraints. If the target or intent is ambiguous, ask clarifying questions instead of guessing.
+1. **Inspect scope & baseline**: Determine the exact diff/target and its stated goal, invariants, and constraints. Evaluate strictly from code and test evidence rather than prior implementation rationale. If the target or intent is ambiguous, ask clarifying questions instead of guessing.
 2. **Decompose into factors**: Break the diff into substantive change units (branches, guards, state/cache/concurrency logic, abstractions, config/parameters, fallbacks, optimizations). Skip purely mechanical formatting or renames unless they hide behavioral changes. For large diffs, prioritize high-risk or high-complexity factors.
 3. **Ablate each factor** (holding the rest of the baseline fixed):
    - **Intervention**: Ask what happens if the factor is removed or disabled. If removal breaks compilation or core contracts (a required component), substitute the simplest mechanism with the same interface.
