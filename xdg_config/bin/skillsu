@@ -49,8 +49,6 @@ _skills_install() {
 
         # skills add openclaw/openclaw "${target[@]}" -s tmux --dangerously-accept-openclaw-risks
         # skills add jetbrains/go-modern-guidelines "${target[@]}" -s use-modern-go
-
-        skills add github/awesome-copilot --skill git-commit "${target[@]}" || return
 }
 
 if (($# > 1)); then
