@@ -1,7 +1,7 @@
 ---
 name: problem-modeling
 description: >
-  Model ambiguous software engineering problems before implementation. Use when requirements are unclear, a user proposes a solution without defining the problem, scope is uncertain, or acceptance criteria are missing. Combines Problem Frames, Shape Up, Working Backwards, critical clarification, and Specification by Example.
+  Model software engineering problems before committing to solutions. Use when requirements are ambiguous, a user proposes a solution without defining the underlying problem, system boundaries are unclear, scope is uncertain, or acceptance criteria are missing. Combines Problem Frames, Shape Up, Working Backwards, critical clarification, and Specification by Example.
 
 ---
 
@@ -9,14 +9,20 @@ description: >
 
 ## Mission
 
-Transform an ambiguous request into a bounded,
-testable problem specification.
+Transform an ambiguous request into a clear, bounded,
+and testable problem model.
 
-Do not start implementation before understanding:
+The goal is not to produce documentation.
+The goal is to reduce uncertainty that materially affects
+the next engineering decision.
+
+Before committing to a solution, understand:
+
 - Why the problem matters
 - What exists today
-- What behavior must change
-- What cannot change
+- What behavior needs to change
+- What parts of the system can be changed
+- What constraints must be respected
 - What constitutes success or failure
 
 Do not assume the user's proposed solution is the
@@ -24,28 +30,72 @@ actual problem.
 
 ## Operating Principles
 
-1. Separate observations, assumptions, requirements,
-   and proposed solutions.
-2. Inspect available code and documents before asking.
-3. Ask only questions whose answers materially affect
-   implementation and cannot be resolved from evidence.
-4. Prefer concrete scenarios over abstract questions.
-5. Propose reasonable defaults with explicit rationale.
-6. Never silently turn assumptions into confirmed facts.
-7. Stop exploring when remaining uncertainty no longer
-   materially affects the next decision.
-8. Do not implement code during this skill unless
-   explicitly instructed to proceed.
+1. **Problem before solution.**
+   Distinguish the underlying problem from the proposed
+   implementation. Treat proposed solutions as candidates,
+   not predetermined answers.
+
+2. **Evidence before assumptions.**
+   Inspect available code, documentation, tests, and
+   other evidence before drawing conclusions.
+   Distinguish confirmed facts, user-reported information,
+   assumptions, and hypotheses.
+
+3. **Investigate before asking.**
+   Do not ask questions that available evidence can answer.
+
+4. **Ask only decision-changing questions.**
+   Ask when different answers would materially affect
+   implementation and the answer cannot be reliably
+   established from available evidence.
+
+5. **Prefer concrete scenarios.**
+   Use observable examples and edge cases rather than
+   abstract or overly broad questions.
+
+6. **Use reasoned defaults.**
+   For low-risk, reversible decisions, propose a reasonable
+   default with its rationale instead of asking unnecessarily.
+   Never silently assume critical requirements.
+
+7. **Keep scope bounded.**
+   Identify constraints, non-goals, and risks before
+   exploring potentially expensive solutions.
+
+8. **Model only as much as necessary.**
+   Apply only the steps and techniques needed to resolve
+   decision-relevant uncertainty. Do not force every
+   framework onto every request.
+
+9. **Prefer verifiable outcomes.**
+   Express important requirements as observable behaviors,
+   concrete examples, or measurable success criteria.
+
+10. **Do not implement prematurely.**
+    During explicit problem-modeling work, do not start
+    implementation unless the user asks to proceed.
+
+---
 
 ## Workflow
 
+The following six steps are a default reasoning sequence,
+not a mandatory checklist.
+
+Skip or combine steps when they do not add useful
+information. Revisit earlier steps when new evidence
+changes the understanding of the problem.
+
 ### Step 1 — Frame the Problem
 
-Inspired by Working Backwards and Design Docs.
+Inspired by Working Backwards and engineering Design Docs.
+
+**Core question: Why does this problem need to be solved?**
 
 Identify:
+
 - Current situation
-- Observable pain
+- Observable pain or unmet need
 - Affected users or systems
 - Why now
 - Consequences of doing nothing
@@ -53,168 +103,486 @@ Identify:
 - Observable success signals
 
 Distinguish:
-- Problem: what is wrong or missing
-- Requirement: what must hold
-- Solution: how we might change the system
 
-If the request is solution-shaped, reconstruct the
+- **Problem:** What is wrong, missing, or insufficient?
+- **Requirement:** What must hold true?
+- **Solution:** How might the system be changed?
+
+If the request is solution-shaped, investigate the
 underlying problem without dismissing the proposal.
+
+Example:
+
+Request:
+"Move session storage from MySQL to MongoDB."
+
+Possible underlying problem:
+"The current session storage cannot meet the required
+write throughput or data-model flexibility."
+
+This is a hypothesis, not a confirmed fact.
+
+Do not invent the motivation or success metrics.
+
+**Expected result:**
+A concise problem statement independent of a
+specific implementation.
 
 ### Step 2 — Model the World
 
 Inspired by Michael Jackson's Problem Frames.
 
+**Core question: What exists outside the machine,
+and what can the machine actually control?**
+
 Identify:
+
 - Relevant environment domains
-- Existing contracts and invariants
-- External actors and systems
-- Machine boundary: what we can change
-- Shared phenomena and interfaces
-- Who controls each relevant event or state
-- Who can observe each outcome
+- The machine being designed or modified
+- Existing external contracts and constraints
+- Shared phenomena across interfaces
+- Who controls relevant events or states
+- Who observes relevant events or states
+- Required outcomes in the environment
 
-Represent important interactions as:
+Distinguish:
 
-Domain A --[event/state]--> Machine
-Machine --[event/state]--> Domain B
+- **Given:** Established external realities or constraints
+  that the machine must accommodate.
+- **Machine:** The software under our control.
+- **Requirement:** The desired condition or behavior
+  that the machine must help establish.
 
-Distinguish external facts from assumed constraints.
-Do not confuse current implementation with immutable
-reality.
+"Given" is a practical shorthand for this skill.
+Do not treat all existing implementation choices
+as immutable external facts.
+
+For important interactions, ask:
+
+1. Who initiates or controls the event?
+2. Who can observe the event?
+3. What information crosses the boundary?
+4. What guarantees or assumptions exist?
+5. What outcome must the machine ensure?
+
+Example:
+
+Agent --[heartbeat event]--> Monitoring Service
+Monitoring Service --[status]--> Operator
+
+The existence of heartbeat events does not itself
+guarantee correct failure detection.
+
+The requirement concerns the observable health state,
+not merely the interface mechanism.
+
+**Expected result:**
+A clear understanding of the environment,
+machine boundary, responsibilities, and interactions.
+
+Use a diagram only when it improves clarity.
 
 ### Step 3 — Shape the Scope
 
-Inspired by Shape Up.
+Inspired by Basecamp's Shape Up.
 
-Capture:
-- Appetite: acceptable investment or complexity
-- In scope
-- Out of scope
-- No-gos: explicitly forbidden changes
-- Rabbit holes: risks that could consume the budget
-- Potential cuts if scope exceeds appetite
+**Core question: How much are we willing to invest,
+and what must remain outside the solution?**
 
-Appetite is a constraint on the solution, not a
-forecast of how long implementation will take.
+Identify when relevant:
+
+- **Appetite:** Acceptable investment or complexity budget
+- **In scope:** Problems the change must address
+- **Out of scope:** Problems deliberately excluded
+- **No-gos:** Changes or outcomes that are unacceptable
+- **Rabbit holes:** Risks or unknowns that could consume
+  disproportionate effort
+- **Must-preserve behavior:** Existing guarantees that
+  cannot be broken without an explicit decision
+
+Appetite is a constraint on the solution,
+not a prediction of implementation duration.
+
+Do not invent an appetite if none has been provided.
+
+For rabbit holes:
+
+- Identify the uncertainty
+- Explain its potential impact
+- Investigate, contain, simplify, or explicitly defer it
+
+Do not treat identifying a risk as resolving it.
+
+If the proposed scope exceeds the appetite:
+
+1. Preserve the core outcome.
+2. Identify optional work.
+3. Consider simpler alternatives.
+4. Make the trade-offs explicit.
+
+**Expected result:**
+A bounded problem with explicit constraints,
+non-goals, and material risks.
 
 ### Step 4 — Resolve Critical Uncertainty
 
-Inspired by agent-oriented brainstorming.
+Inspired by high-signal AI-agent brainstorming.
+
+**Core question: Which unanswered questions
+would actually change the next decision?**
 
 For each uncertainty:
 
-1. Can the repository or documentation answer it?
-   If yes, investigate rather than ask.
+1. **Can available evidence answer it?**
+   If yes, investigate instead of asking.
 
-2. Would different answers change the architecture,
-   behavior, data model, interfaces, or testing?
-   If no, choose a documented default.
+2. **Would different answers materially change
+   architecture, behavior, interfaces, data semantics,
+   or testing?**
+   If no, choose a documented reasonable default.
 
-3. Is it a blocking decision?
-   If yes, ask one concrete question.
+3. **Is choosing incorrectly costly, unsafe,
+   or difficult to reverse?**
+   If yes, clarify explicitly or propose validation.
 
-Prefer scenario-based questions.
+4. **Can a focused experiment resolve it?**
+   If yes, consider the experiment rather than
+   prolonged speculation.
+
+Ask concrete, scenario-based questions.
 
 Bad:
 "What consistency do you need?"
 
 Better:
-"If a write succeeds but the read replica is 2 seconds
-behind, should the next read wait, return stale data,
-or fail?"
+"A write succeeds, but the read replica is two
+seconds behind. Should the next read wait,
+return stale data, or fail?"
 
-Define anti-goals:
-- Outcomes considered failures even when the feature works
-- Unacceptable risks
-- Regressions that must not occur
+Prefer one high-impact question at a time.
+Avoid exhaustive questionnaires.
+
+#### Anti-goals
+
+Identify unacceptable outcomes even if the
+main feature technically works.
+
+Examples:
+
+- Queries become faster but data is silently lost.
+- Throughput improves but infrastructure cost
+  increases beyond the acceptable budget.
+- Migration succeeds but existing clients break.
+- The feature works normally but cannot recover
+  from a routine downstream failure.
+
+Distinguish confirmed anti-goals from
+proposed ones requiring validation.
+
+#### Stopping Rule
+
+Stop clarifying when:
+
+- Remaining unknowns do not materially affect
+  the next decision.
+- Safe and reversible defaults exist.
+- Remaining uncertainty has an explicit
+  validation or investigation plan.
+
+Do not claim a blocking uncertainty is resolved
+when it is not.
+
+**Expected result:**
+Resolved decisions, documented assumptions,
+and a small number of genuinely important open questions.
 
 ### Step 5 — Specify by Example
 
 Inspired by Specification by Example and BDD.
 
-For each important behavior, provide:
-- Normal example
-- Boundary example
-- Counterexample or failure example
+**Core question: What observable behavior proves
+that the problem has been solved?**
 
-Use Given / When / Then when appropriate.
+For important behaviors, use concrete examples.
 
-Define:
-- Inputs
-- Preconditions
-- Expected outputs
-- Invariants
-- Error behavior
-- Measurable success criteria
+Prefer:
 
-Mark unknown targets as TBD rather than inventing
-latency, reliability, or capacity requirements.
+- A normal scenario
+- A boundary scenario
+- A negative or failure scenario
+
+The number of examples should match the complexity
+of the requirement. Do not force exactly three.
+
+Use Given / When / Then when helpful.
+
+Example:
+
+Given an existing valid session
+When the storage implementation is migrated
+Then the session remains usable
+And the client does not need to log in again
+
+Consider relevant edge cases:
+
+- Empty or invalid input
+- Maximum size
+- Timeout
+- Retry
+- Duplicate events
+- Concurrent requests
+- Partial failure
+- Stale data
+- Authorization failure
+- Recovery after interruption
+
+Select only cases relevant to the problem.
+
+#### Invariants
+
+Identify properties that must continue to hold.
+
+Examples:
+
+- An acknowledged write must not disappear.
+- A user cannot access another tenant's data.
+- Duplicate delivery must not create duplicate
+  business effects.
+
+#### Measurable Outcomes
+
+Prefer observable criteria over vague adjectives.
+
+Weak:
+"The query should be fast."
+
+Better:
+"Under the agreed workload, query p95 latency
+must remain below the agreed threshold."
+
+If the threshold or workload is not established,
+mark it as unresolved instead of inventing values.
+
+**Expected result:**
+Concrete, testable examples and invariants that
+can guide implementation and verification.
 
 ### Step 6 — Challenge the Model
 
-Before finalizing, check:
+**Core question: What might be wrong with
+our current understanding of the problem?**
+
+Check:
 
 - Are we solving a symptom rather than a cause?
-- Did we confuse a preferred technology with a goal?
-- Did we ignore an external stakeholder?
-- Is a stated constraint actually negotiable?
-- Could a simpler solution satisfy the same goal?
-- Does each critical requirement have a test?
-- Can the proposed solution meet the anti-goals?
-- What evidence would invalidate this model?
+- Have we confused a preferred technology with a goal?
+- Have we assumed a root cause without evidence?
+- Have we ignored relevant external stakeholders?
+- Are stated constraints genuinely immutable?
+- Could a simpler solution achieve the same outcome?
+- Are important requirements observable and testable?
+- Could the proposed approach violate an anti-goal?
+- What evidence would invalidate our assumptions?
 
-Revise if necessary.
+Revise the model when necessary.
 
-## Deliverables
+Do not expand into exhaustive analysis unless
+material uncertainty justifies it.
 
-Produce two artifacts:
+**Expected result:**
+A coherent, evidence-aware problem model suitable
+for the next engineering decision.
 
-1. problem.md
-   - Problem statement
-   - Context and evidence
-   - World and boundary model
-   - Goals and anti-goals
-   - Appetite, scope and no-gos
-   - Assumptions and open decisions
-   - Candidate approaches and trade-offs
+---
 
-2. acceptance.md
-   - Scenarios
-   - Preconditions
-   - Expected behavior
-   - Edge cases
-   - Invariants
-   - Measurable acceptance criteria
+## Output Policy
 
-Label statements as:
-- Confirmed
-- Assumed
-- Proposed
-- Unresolved
+Prefer the smallest output that preserves the
+understanding needed for the next step.
+
+### Default: Conversational Output
+
+Respond directly in the conversation.
+
+Include only relevant information, typically:
+
+- Problem statement
+- Desired outcome
+- Relevant system boundaries
+- Constraints and anti-goals
+- Critical assumptions or unresolved questions
+- Concrete acceptance scenarios
+- Recommended next step
+
+Omit sections that add no value.
+
+Do not explain all five methodologies unless
+the user requests methodological detail.
+
+### Optional: Persistent Documentation
+
+Create or modify files only when:
+
+- The user explicitly requests files.
+- Existing project conventions require documentation.
+- Durable handoff to another agent or team is needed.
+- The model is too large for a practical conversation.
+
+When persistence is needed:
+
+1. Prefer updating an existing relevant document.
+2. Otherwise prefer one consolidated document.
+3. Split into multiple files only when size,
+   ownership, or maintenance justifies it.
+
+Do not require `problem.md` or `acceptance.md`.
+
+File creation is not a completion criterion.
+
+### Handoff
+
+When the modeling work is complete, communicate:
+
+- The problem to solve
+- The constraints to preserve
+- Decisions already made
+- Important unresolved assumptions
+- The behavior that will demonstrate success
+- The recommended next action
+
+If implementation is the next step, provide
+enough information for an implementation agent
+to proceed without inventing critical requirements.
+
+Do not silently proceed to implementation
+during an explicitly modeling-only request.
+
+---
 
 ## Completion Gate
 
-The skill is complete when:
+Problem modeling is complete when:
 
-- The problem is stated without prescribing a solution.
-- System boundaries and controllable parts are clear.
-- Critical constraints and anti-goals are explicit.
-- Blocking uncertainties are resolved or documented.
-- Important behaviors have concrete examples.
-- A planning or implementation agent can identify
-  the next action without guessing critical requirements.
+1. **Problem**
+   The actual problem is distinguishable from
+   a proposed solution.
 
-If the gate is not met, report unresolved questions
-instead of claiming the specification is complete.
+2. **Outcome**
+   The desired result is sufficiently clear
+   for the next decision.
 
-## Handoff
+3. **Boundary**
+   Relevant environment constraints and
+   controllable system boundaries are understood.
 
-Summarize:
-- Problem to solve
-- Constraints to preserve
-- Decisions made
-- Decisions still open
-- Acceptance tests
-- Recommended next step
+4. **Constraints**
+   Important trade-offs, non-goals, and anti-goals
+   are explicit where relevant.
 
-Never silently proceed to implementation.
+5. **Uncertainty**
+   Decision-changing unknowns are resolved,
+   documented as assumptions, or assigned
+   a concrete validation step.
+
+6. **Verification**
+   Important expected behaviors can be checked
+   through examples, invariants, or observations.
+
+7. **Next Step**
+   The next engineering action is clear and
+   does not depend on invented critical requirements.
+
+These are quality criteria, not required
+document sections.
+
+For simple requests, most criteria may be
+satisfied implicitly.
+
+If material uncertainties remain, state them
+rather than claiming the model is complete.
+
+Completion depends on decision readiness,
+not documentation volume or file creation.
+
+---
+
+## Anti-patterns
+
+### 1. Solution Anchoring
+
+Treating the user's proposed technology as
+the underlying requirement.
+
+Instead:
+Investigate the outcome the technology
+is intended to achieve.
+
+### 2. Premature Architecture
+
+Designing components before understanding
+the problem and external constraints.
+
+Instead:
+Establish required behavior and boundaries first.
+
+### 3. False Certainty
+
+Presenting assumptions or causal hypotheses
+as confirmed facts.
+
+Instead:
+Distinguish evidence, assumptions, and unknowns.
+
+### 4. Questionnaire Overload
+
+Asking every potentially relevant question.
+
+Instead:
+Ask only questions that materially affect
+the next decision.
+
+### 5. Documentation Theater
+
+Generating comprehensive documents without
+improving problem understanding.
+
+Instead:
+Produce the smallest useful output.
+
+### 6. Untestable Requirements
+
+Using vague terms such as fast, scalable,
+reliable, or easy without observable meaning.
+
+Instead:
+Identify measurable outcomes or concrete scenarios.
+
+### 7. Over-modeling
+
+Applying every framework to a simple request.
+
+Instead:
+Use the minimum modeling effort required
+to make the next decision responsibly.
+
+---
+
+## Final Principle
+
+Problem modeling is not about eliminating
+every uncertainty.
+
+It is about establishing enough understanding
+to make the next engineering decision well.
+
+Prefer:
+
+- Problems over premature solutions
+- Evidence over unsupported assumptions
+- Boundaries over uncontrolled scope
+- Concrete examples over vague requirements
+- Critical questions over exhaustive questionnaires
+- Decision readiness over document completeness
+
+Stop when additional modeling is unlikely
+to materially improve the next decision.
