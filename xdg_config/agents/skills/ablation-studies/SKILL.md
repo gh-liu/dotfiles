@@ -7,9 +7,32 @@ description: Designs and runs ablation studies to isolate the contribution of a 
 
 Use the full system as the baseline. For each factor, start from that baseline, remove, disable, or replace the factor, and compare performance on the same task.
 
-1. **Make a testable prediction.** Specify which factor should change which outcome, on which inputs, and what observation would weaken that explanation. Choose a metric that distinguishes the competing explanations. For a numerical metric, decide in advance how large a difference would change your conclusion.
-2. **Set up the comparison.** Keep the rest of the implementation, inputs, initial state, and evaluation procedure the same. Verify that the baseline exercises the factor and the variant bypasses it. For performance claims, check that both configurations still satisfy the same task requirements before interpreting a speedup or cost reduction. If removing a component would prevent the system from running, substitute a simple mechanism with the same interface. The experiment then measures the difference between the two mechanisms. To test whether a trained model relies on a factor, disable it during evaluation. To test whether the model can learn without it, retrain with the factor removed and the same training budget. State which hyperparameters stay fixed. If the question is how well each variant can perform after tuning, give both variants comparable tuning budgets.
-3. **Pair the measurements.** Decide how to handle failures before running the experiment. Score system failures according to the task metric and report the failure rate. For example, a timeout counts as a missed deadline when measuring on-time completion. If a test infrastructure failure invalidates a measurement, record the cause and rerun the pair according to the agreed rule. Run both configurations on the same examples. For stochastic runs, repeat across seeds and use the same seed within each pair. For timing measurements, alternate which configuration runs first. Record the difference for each pair.
-4. **Interpret the results.** Report the conditions needed to reproduce the experiment, the values measured for both configurations, the size and direction of the difference, and the inputs and configurations the conclusion covers. For repeated measurements, quantify uncertainty, for example with a confidence interval for the mean paired difference. If the entire interval falls within the predefined range of meaningful gains, report a meaningful gain. If it includes both zero and the gain threshold, the data leave open whether the gain reaches that threshold. If two factors may compensate for each other, measure a fourth configuration with both removed alongside the baseline and the two single-factor variants. Use that measurement to assess their combined effect. If the task is limited to study design or you cannot run the experiment, report the plan and decision criteria and leave measured results blank.
+## Design the comparison
 
-For example, to test whether a cache reduces database reads, start with an empty cache and replay `A, A, B` in both configurations. Bypass the cache only in the variant. Verify that both configurations return the same responses, then compare database read counts for each request. If cache hits explain the reduction, the second request for `A` should require fewer reads with the cache enabled. The first request for `B` serves as a control because it should miss the cache.
+Predict which outcome should change, on which inputs, and what observation would weaken the explanation. Choose a metric that distinguishes the competing explanations. For a numerical metric, set the smallest difference that would change the decision.
+
+Keep the rest of the implementation, inputs, initial state, and evaluation procedure the same. Choose the intervention that answers the question:
+
+- **Required component:** If removal breaks the system, substitute a simpler mechanism with the same interface. The comparison measures the difference between mechanisms.
+- **Trained model:** To test reliance, disable the factor during evaluation. To test whether the model can learn without it, retrain without it using the same training budget. State which hyperparameters stay fixed. If comparing performance after tuning, give both variants comparable tuning budgets.
+- **Compensating factors:** To measure their combined effect, test four configurations: the full system, each factor removed separately, and both removed together.
+
+Decide how failures count before running. Score system failures by the task metric and report their rate: a timeout is a missed deadline when measuring on-time completion. If infrastructure invalidates a measurement, record the cause and rerun the pair according to the agreed rule.
+
+## Run matched pairs
+
+Verify that the baseline exercises the factor and the variant bypasses or replaces it. Run both on the same examples. Before interpreting a speedup or cost reduction, check that both still meet the task requirements.
+
+- **Stochastic runs:** Repeat across seeds, using the same seed within each pair.
+- **Timing measurements:** Alternate which configuration runs first.
+- **Independent repeats:** Match the unit of repetition to the claim. For retraining, compute the metric over the examples in each run, then record one difference per seed pair, not one per example.
+
+## Interpret and report
+
+Report both configurations’ measured values, the size and direction of the difference, the conditions needed to reproduce it, and the inputs and configurations the conclusion covers. For design-only work or an experiment you could not run, report the plan and decision criteria without measured results.
+
+Quantify uncertainty across independent pairs, for example with a confidence interval for the mean difference. Compare the interval with zero to judge direction and separately with the predefined threshold to judge practical importance. An interval of 2–8 ms saved supports a speedup but leaves open whether it reaches a 5 ms target.
+
+## Example: Does the cache reduce database reads?
+
+Start both configurations with an empty cache and replay `A, A, B`, bypassing the cache only in the variant. Verify that responses match, then compare reads per request. If hits explain the reduction, the second `A` should need fewer reads with caching. The first `B` should miss even with caching, so it serves as a control.
