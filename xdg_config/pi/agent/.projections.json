@@ -7,5 +7,9 @@
   },
   "settings.json": {
     "dispatch": ":lua vim.ui.open(\"https://pi.dev/docs/latest/settings\")"
+  },
+  "prompts/*.md": {
+    "dispatch": ":lua vim.ui.open(\"https://docs.pi.dev/latest/prompt-templates\")",
+    "type": "prompt"
   }
 }
