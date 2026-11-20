@@ -3,30 +3,31 @@ name: visual-explanation
 description: Use when a reader can understand an engineering question more easily by seeing a relationship, sequence, change, or UI behavior. Choose a minimal diagram, diff, screenshot, or other visual and ground it in the available evidence.
 ---
 
-# 视觉表达
+# Visual explanation
 
-先确定读者需要看清什么。一句话能说清时直接用文字。需要图示时，只保留回答这个问题所需的元素。
+Decide what the reader needs to see first. If one sentence makes it clear, use text. When a visual helps, keep only the elements needed to answer that question.
 
-| 读者的问题                       | 表达形式                                                                           |
-|----------------------------------|------------------------------------------------------------------------------------|
-| 哪个条件会改变执行路径或状态？   | 用伪代码标出条件和对应结果。                                                       |
-| 谁包含谁？                       | 用文本树表示层级和组成。                                                           |
-| 谁先调用谁，结果返回给谁？       | 用 Mermaid 时序图标出参与者和消息顺序。                                            |
-| 代码或方案具体改了哪一步？       | 用 diff 展示变化，保留能定位改动的上下文。                                         |
-| 页面如何呈现，操作后发生了什么？ | 运行真实应用验证布局、样式和交互。静态外观可用截图，交互变化可展示操作前后的状态。 |
+| Reader's question                                                  | Visual form                                                                                                                                          |
+|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Which condition changes the execution path or state?               | Use pseudocode to show conditions and outcomes.                                                                                                      |
+| What contains what?                                                | Use a text tree for hierarchy and composition.                                                                                                       |
+| Who calls whom first, and where does the result return?            | Use a Mermaid sequence diagram for participants and message order.                                                                                   |
+| How do states transition, or how does data flow across components? | Use a Mermaid state diagram or flowchart.                                                                                                            |
+| Which step changed in the code or design?                          | Use a diff with enough context to locate the change.                                                                                                 |
+| How does the UI look, and what changes after an action?            | Run the real app to verify layout, styling, and interaction. Use a screenshot for static appearance and before/after states for interaction changes. |
 
-按代码、配置、日志或测试结果核对图中的关系。说明哪项观察支持结论。真实应用不可用时，可以用独立原型或生成图片说明预期效果，并标明真实应用中仍待验证的部分。命令、代码和其他需要复制的内容使用纯文本。
+Verify relationships in the visual against code, configuration, logs, or test results, and note which observation supports the conclusion. When the real app is unavailable, use a standalone prototype or generated image to illustrate the expected result, and mark what still needs verification in the real app. Keep commands, code, and other copyable content as plain text.
 
-## 示例
+## Examples
 
-**保存时何时复用缓存？**
+**When does save reuse the cache?**
 
 ```text
 on(save)
   if unchanged: return cached result
 ```
 
-**会话页面包含哪些组件？**
+**Which components make up the session page?**
 
 ```text
 SessionPage
@@ -34,7 +35,7 @@ SessionPage
 └── Timeline
 ```
 
-**点击保存后，谁发起请求？**
+**Who sends the request after clicking Save?**
 
 ```mermaid
 sequenceDiagram
@@ -43,7 +44,7 @@ sequenceDiagram
     API-->>UI: Result
 ```
 
-**提交表单时新增了哪一步？**
+**Which step was added to form submission?**
 
 ```diff
  submitForm

@@ -31,7 +31,7 @@ Verify that the baseline exercises the factor and the variant bypasses or replac
 
 Report both configurations’ measured values, the size and direction of the difference, the conditions needed to reproduce it, and the inputs and configurations the conclusion covers. For design-only work or an experiment you could not run, report the plan and decision criteria without measured results.
 
-Quantify uncertainty across independent pairs, for example with a confidence interval for the mean difference. Compare the interval with zero to judge direction and separately with the predefined threshold to judge practical importance. An interval of 2–8 ms saved supports a speedup but leaves open whether it reaches a 5 ms target.
+For stochastic or noisy metrics, quantify uncertainty across independent pairs, for example with a confidence interval for the mean difference. Compare the interval with zero to judge direction and separately with the predefined threshold to judge practical importance. An interval of 2–8 ms saved supports a speedup but leaves open whether it reaches a 5 ms target. For deterministic behavior, report the exact difference and verify the control cases.
 
 ## Example: Does the cache reduce database reads?
 

@@ -3,22 +3,22 @@ name: technical-writing
 description: Use when drafting or revising technical prose that readers will use to make a decision, follow a procedure, or take over work. Examples include design notes, runbooks, incident reports, and handoffs. Also use when someone explicitly asks to improve wording, clarity, or structure, even for a single sentence.
 ---
 
-# 技术写作
+# Technical writing
 
-动笔前先确定谁会读这段文字、读者已经知道什么，以及读完后要做什么。把读者最需要的判断或动作写在开头，只补充理解它所需的背景。改写已有文字时，保留原意、技术细节和确定程度。
+Before writing, identify who will read the text, what they already know, and what they need to do afterward. Put the judgment or action the reader needs most at the beginning, and add only the background required to understand it. When revising existing text, preserve the original meaning, technical details, and level of certainty. For local or single-sentence edits, preserve the original length and structure instead of expanding unnecessarily.
 
-## 按读者的任务组织内容
+## Organize by the reader's task
 
-- **做决定**。先写需要决定什么以及建议选哪项，再给出影响选择的约束、依据和取舍。指出哪些待验证的条件会改变建议。
-- **执行操作**。先交代适用条件，把实际风险放在对应操作之前。按执行顺序写步骤，保留可复制的命令。说明如何判断成功，以及失败后从哪里查起。
-- **接手工作**。先写当前状态和影响范围，再交代已完成的工作、验证结果与待办。有阻塞时写明解除阻塞需要什么。
+- **Making a decision.** State what needs to be decided and the recommended option first, then present the constraints, evidence, and trade-offs that shape the choice. Note which unverified conditions would change the recommendation.
+- **Following a procedure.** State the preconditions first and place real risks before the corresponding step. Write steps in execution order and keep commands copyable. Explain how to verify success and where to investigate on failure.
+- **Taking over work.** Lead with current status and scope of impact, followed by completed work, verification results, and remaining tasks. When blocked, state what is needed to unblock.
 
-## 审稿时检查
+## Review checklist
 
-- 用具体的主体和动词写清谁做了什么。一句话表达一个主要意思。较长内容用读者关心的问题分段，同类信息使用一致的结构。
-- 同一概念始终使用同一术语。保留标识符、API 名称、命令和引文的准确形式。在读者可能不熟悉的缩写首次出现时解释含义。
-- 对照证据检查每项结论，保留影响判断的前提、范围、单位和例外。分别写清已经观察到什么、据此推断什么，以及建议做什么。
+- Use concrete subjects and verbs to make clear who did what. Express one main idea per sentence. Break longer text into sections aligned with the reader's questions, and use parallel structure for similar information.
+- Use one term consistently for each concept. Preserve exact identifiers, API names, commands, and quotes. Expand abbreviations on first use when readers may not know them.
+- Check every claim against evidence, keeping the preconditions, scope, units, and exceptions that affect judgment. Clearly separate what was observed, what is inferred, and what is recommended.
 
-例如，排障记录可以写成「日志显示这次响应命中了缓存。缓存未失效可能解释旧数据。可绕过缓存重试同一请求，对比两次响应。」验证报告可以写成「超时重试的回归测试已通过。生产环境中的重试行为仍待验证。」
+For example, a troubleshooting note might read: "Logs show this response hit the cache. Stale cache invalidation may explain the outdated data. Retry the same request bypassing the cache and compare the two responses." A verification report might read: "The regression test for timeout retries passed. Retry behavior in production still needs verification."
 
-清晰表达的原则参考了 ASD-STE100，并按中文工程协作场景调整。[ASD Simplified Technical English](https://www.asd-ste100.org/)
+Clarity principles are adapted from ASD Simplified Technical English (ASD-STE100).
