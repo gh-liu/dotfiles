@@ -21,7 +21,7 @@ For a split series, verify the project build at each committed snapshot. Use a c
 
 ## Problem / Solution
 
-A subject alone is enough for a simple change. When the motivation needs explaining, draw on the issue, tests, or user-provided context to write two short paragraphs.
+A subject alone is enough for a simple change. When the motivation needs explaining, draw on the issue, tests, or user-provided context. Choose the format for each section independently. Use prose for one point and a bulleted list for several distinct points about the same change.
 
 - **Problem** describes what happens, under which conditions, and who it affects. For a feature, describe what users previously could not do. Would the problem still make sense if someone chose a different solution?
 - **Solution** explains how the change addresses that problem. Include implementation details that help readers understand the outcome. Check claims about scope against the diff and performance claims against measurements.
@@ -34,5 +34,6 @@ Exporting account ID 00123 produces 123 in the CSV. On import, that row
 no longer matches the original account.
 
 Solution:
-Write the account ID to the CSV using its original string value.
+- Write the account ID to the CSV using its original string value.
+- Add a round-trip test that exports and imports account ID 00123.
 ```
