@@ -24,11 +24,11 @@ async function readParentSessionId(path: string, signal?: AbortSignal): Promise<
 export const listSessions = defineTool({
   name: "list_sessions",
   label: "List sessions",
-  description: "List saved Pi sessions for the current working directory by default, newest modified first. Set currentDirectoryOnly to false to search all projects. Returns id, title (session name or first user message), absolute JSONL file path, and parentSessionId when resolvable. Parent IDs describe session ancestry, not message branches or execution ownership; parents may be outside the filtered results. Use read on path to inspect a session; large files may require offset/limit. Raw JSONL includes branches, not just the current conversation path.",
-  exposure: "codemode",
+  description: "List saved Pi sessions (newest first). `title` is the session name or first user message; `parentSessionId` reflects session ancestry (not message branches) and may point outside filtered results. Use `read` (with `offset`/`limit`) on `path`; raw JSONL includes all branches.",
+  exposure: "deferred",
   parameters: Type.Object({
-    query: Type.Optional(Type.String({ description: "Case-insensitive substring of the title. Surrounding whitespace is ignored; empty matches all titles." })),
-    currentDirectoryOnly: Type.Optional(Type.Boolean({ description: "Only sessions for the current working directory, not subdirectories. Default: true. Set false for all projects." })),
+    query: Type.Optional(Type.String({ description: "Case-insensitive title substring (trimmed; empty matches all)." })),
+    currentDirectoryOnly: Type.Optional(Type.Boolean({ description: "Restrict to current cwd, excluding subdirs (default true)." })),
   }),
   outputSchema: Type.Array(Type.Object({
     id: Type.String(),

@@ -12,7 +12,7 @@ afterEach(async () => {
   if (root) await rm(root, { recursive: true, force: true });
 });
 
-test("lists only session metadata across projects, with readable paths and codemode exposure", async () => {
+test("lists only session metadata across projects, with readable paths and deferred exposure", async () => {
   root = await mkdtemp(join(tmpdir(), "pi-list-sessions-"));
   vi.stubEnv("PI_CODING_AGENT_DIR", join(root, "agent"));
   const ctx = { cwd: join(root, "project-a") } as ExtensionToolContext;
@@ -25,7 +25,7 @@ test("lists only session metadata across projects, with readable paths and codem
   unnamed.appendMessage({ role: "user", content: "Unnamed request", timestamp: Date.now() });
 
   const result = await listSessions.execute("list", { currentDirectoryOnly: false }, undefined, undefined, ctx);
-  expect(listSessions.exposure).toBe("codemode");
+  expect(listSessions.exposure).toBe("deferred");
   expect(result.structuredContent).toHaveLength(2);
   expect(result.structuredContent).toEqual(expect.arrayContaining([
     { id: named.getSessionId(), title: "Renamed session", path: named.getSessionFile() },
