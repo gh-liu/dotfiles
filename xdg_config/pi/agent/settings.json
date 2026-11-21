@@ -1,12 +1,14 @@
 {
-  "quietStartup": true,
+  "enableInstallTelemetry": false,
+  "quietStartup": false,
   "showHardwareCursor": true,
   "hideThinkingBlock": true,
   "steeringMode": "all",
   "followUpMode": "all",
   "treeFilterMode": "all",
   "terminal": {
-    "showTerminalProgress": true
+    "showTerminalProgress": true,
+    "imageWidthCells": 120
   },
   "defaultTools": [
     "+tool_search",
@@ -14,7 +16,6 @@
   ],
   "packages": [],
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.1-terra",
+  "defaultModel": "gpt-6.2-sol",
   "defaultThinkingLevel": "medium"
-  "lastChangelogVersion": "1.5.1",
 }
