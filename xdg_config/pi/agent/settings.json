@@ -9,6 +9,7 @@
     "showTerminalProgress": true
   },
   "defaultTools": [
+    "+tool_search",
     "+codemode"
   ],
   "packages": [],
