@@ -51,11 +51,10 @@ an equivalent minimal replacement.
 
 ## Validation
 
-From `xdg_config/pi/agent/extensions`, after dependency installation finishes:
+From `xdg_config/pi/agent/extensions/auth`, after `npm ci`:
 
 ```sh
-npm run typecheck:auth
-npx vitest run auth/codex-auth.test.ts auth/index.test.ts
+npm test
 ```
 
 The typecheck includes the entry point and regression tests. Tests use injected

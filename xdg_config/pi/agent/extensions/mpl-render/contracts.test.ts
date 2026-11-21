@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, test } from "vitest";
@@ -116,4 +116,22 @@ test("keeps essential constraints inline and links local README and API declarat
   expect(mplRender.exposure).toBe("deferred");
   expect(JSON.stringify(mplRender.outputSchema)).toContain('"image"');
   expect(JSON.stringify(mplRender.outputSchema)).toContain('"logs"');
+});
+
+test("keeps runtime-only dependencies in dependencies and host-mapped packages out", async () => {
+  const raw = await readFile(new URL("./package.json", import.meta.url), "utf8");
+  const manifest = JSON.parse(raw) as {
+    dependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  };
+  expect(Object.keys(manifest.dependencies ?? {}).sort()).toEqual([
+    "@earendil-works/pi-codemode",
+    "mpl",
+    "rolldown",
+  ]);
+  expect(Object.keys(manifest.peerDependencies ?? {}).sort()).toEqual([
+    "@earendil-works/pi-ai",
+    "@earendil-works/pi-coding-agent",
+    "@earendil-works/pi-tui",
+  ]);
 });

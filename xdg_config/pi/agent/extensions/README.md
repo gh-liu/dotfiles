@@ -100,7 +100,7 @@ absolute path for on-demand reading, following codemode's documentation pattern.
   `parentSessionId` identifies the originating session, not a message branch or
   an execution owner. It is resolved even when the parent is outside the filtered
   results, and omitted for root sessions or missing/unreadable/malformed parents.
-- `mpl-render`: renders charts as PNGs from codemode by running native `mpl` code in a QuickJS sandbox. It is a standalone package with its own `package.json` and lockfile, so its dependencies are installed inside `mpl-render/`. See the [chart tool README](mpl-render/README.md) for the script contract, limits, and measurements.
+- `mpl-render`: renders charts as PNGs from codemode by running native `mpl` code in a QuickJS sandbox. See the [chart tool README](mpl-render/README.md) for the script contract, limits, and measurements.
 
 ## Configuration, tests, and troubleshooting
 
@@ -109,23 +109,30 @@ auth-file contents. If Codex does not sync, check Keychain access and valid OAut
 fields/JWT expiry, then whether Pi already holds a protected credential. Deliberate
 account changes require Pi login or logout followed by a new session.
 
-Host packages are `peerDependencies`; pinned Pi 1.3.0 development copies support
-local checks. Run `npm ci` with Node.js 24 or newer, then run `npm test`. An
-extension that needs runtime dependencies keeps them in its own `package.json`
-and lockfile, so install it in its own directory as well:
-`npm --prefix mpl-render ci`. The pinned GitHub dependency `mpl` builds during
-that install, and `mpl-render`'s `postinstall` bundles it for the QuickJS
-sandbox; `--ignore-scripts` skips both. Root `npm test` runs the chart
-extension's tests too, so install it first. Restart Pi or run `/reload` to
-discover the chart tool after installation.
-Focused checks are `npm run typecheck:auth`, `npm run typecheck:status`,
-`npm run typecheck:subagent`, and `npm --prefix mpl-render test` (typecheck plus
-that extension's tests).
-`npx vitest run subagent/index.test.ts` exercises real
-SDK parent/child sessions against a local HTTP fixture provider, including context
-isolation, untrusted resources, cancellation, failure and output bounds. It does
-not use live credentials. These development dependencies do not update the
-globally installed Pi runtime.
+Each extension directory is its own package. There is no shared manifest in
+this directory. Pi supplies `@earendil-works/pi-ai`,
+`@earendil-works/pi-coding-agent`, and `@earendil-works/pi-tui` at runtime, so
+those are `peerDependencies`; pinned Pi 1.3.0 copies plus TypeScript and Vitest
+are that package's `devDependencies`. `mpl-render` keeps
+`@earendil-works/pi-codemode`, `mpl`, and `rolldown` in `dependencies`:
+`pi-codemode` is not one of the modules Pi maps to its own copy, and moving it
+to `devDependencies` would make the extension fail to load.
+
+With Node.js 24 or newer, install and test one extension from inside it:
+
+```sh
+npm ci
+npm test
+```
+
+`npm test` typechecks that package and runs its Vitest files. For `mpl-render`,
+`npm ci` builds the pinned GitHub dependency `mpl` and the `postinstall` script
+bundles it for the QuickJS sandbox; `--ignore-scripts` skips both. Restart Pi
+or run `/reload` to discover the chart tool after installation.
+`npm test` in `subagent` exercises real SDK parent/child sessions against a
+local HTTP fixture provider, including context isolation, untrusted resources,
+cancellation, failure and output bounds. It does not use live credentials.
+These development dependencies do not update the globally installed Pi runtime.
 
 For current/external facts, use the Exa skill with official/primary sources,
 preserve URLs, and distinguish snippets from verified facts. Restart Pi after

@@ -1,12 +1,11 @@
 {
-  "name": "pi-extensions",
+  "name": "pi-subagent",
   "private": true,
   "type": "module",
+  "description": "Delegate one bounded task to a fresh Pi session.",
   "scripts": {
-    "test": "npm run typecheck:auth && npm run typecheck:status && npm run typecheck:subagent && vitest run",
-    "typecheck:auth": "tsc -p auth/tsconfig.json",
-    "typecheck:status": "tsc -p status/tsconfig.json",
-    "typecheck:subagent": "tsc -p subagent/tsconfig.json"
+    "test": "npm run typecheck && vitest run",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

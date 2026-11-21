@@ -1,4 +1,14 @@
 {
-  "extends": "../status/tsconfig.json",
-  "include": ["index.ts"]
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["node"]
+  },
+  "exclude": ["**/*.test.ts"],
+  "include": ["*.ts"]
 }

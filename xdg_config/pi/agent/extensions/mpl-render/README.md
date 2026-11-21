@@ -4,7 +4,7 @@
 
 ## Install
 
-From the parent `extensions` directory, install the host development copies with `npm ci`, then install this folder as its own package with `npm --prefix mpl-render ci` (Node.js 24 or newer). Do not use `--ignore-scripts`: the pinned GitHub dependency `mpl` builds during installation, and this folder's `postinstall` bundles it for the sandbox (see [The bundle is not committed](#the-bundle-is-not-committed)). With codemode enabled, restart Pi or run `/reload` to load the extension.
+From this directory, run `npm ci` with Node.js 24 or newer. Do not use `--ignore-scripts`: the pinned GitHub dependency `mpl` builds during installation, and this folder's `postinstall` bundles it for the sandbox (see [The bundle is not committed](#the-bundle-is-not-committed)). With codemode enabled, restart Pi or run `/reload` to load the extension.
 
 ## Use
 
@@ -113,11 +113,11 @@ Measurements on an Apple M-series laptop, 1.4 MB minified bundle, `figsize: [9, 
 | Drawing + PNG encode at 1800 × 840 | ~150 ms |
 | Full call | 360–400 ms |
 
-The sandbox produces byte-identical PNGs to Node `mpl`, so native scripts are not a reduced rendering path. `npm --prefix mpl-render test` (typecheck plus this folder's tests) asserts that identity, the `dpi` and `scale` paths, script line mapping, host-side image validation, cancellation, and the snapshot limits. Failure modes were checked with real scripts: `while (true) {}` fails at the deadline, an unbounded `Array` allocation fails with `out of memory`, a 60 × 60 inch figure fails the pixel limit before rendering, and `process.pid` raises `ReferenceError` with a mapped script line.
+The sandbox produces byte-identical PNGs to Node `mpl`, so native scripts are not a reduced rendering path. `npm test` in this directory (typecheck plus this folder's tests) asserts that identity, the `dpi` and `scale` paths, script line mapping, host-side image validation, cancellation, and the snapshot limits. Failure modes were checked with real scripts: `while (true) {}` fails at the deadline, an unbounded `Array` allocation fails with `out of memory`, a 60 × 60 inch figure fails the pixel limit before rendering, and `process.pid` raises `ReferenceError` with a mapped script line.
 
 ## The bundle is not committed
 
-`mpl.bundle.js` (1.4 MB) is a build artifact: it is git-ignored and produced locally from the pinned `mpl` dependency by this folder's `postinstall` script. This folder is a standalone package (`pi-mpl-render`) with its own `package.json` and `package-lock.json`, so its dependencies never enter the parent `extensions` manifest; `npm --prefix mpl-render ci` installs them and runs that `postinstall`. `rolldown` is a regular dependency here for that reason, so an install without dev dependencies still builds it. Only `--ignore-scripts` skips it, and then the first call fails with the command to run:
+`mpl.bundle.js` (1.4 MB) is a build artifact: it is git-ignored and produced locally from the pinned `mpl` dependency by this folder's `postinstall` script. This folder is its own package (`pi-mpl-render`) with its own `package.json` and `package-lock.json`. `npm ci` here installs those dependencies and runs that `postinstall`. `rolldown` is a regular dependency here for that reason, so an install without dev dependencies still builds it. Only `--ignore-scripts` skips it, and then the first call fails with the command to run:
 
 ```sh
 npm run build

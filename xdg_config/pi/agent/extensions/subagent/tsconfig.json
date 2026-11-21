@@ -1,6 +1,18 @@
 {
-  "extends": "../status/tsconfig.json",
-  "compilerOptions": { "target": "ES2023" },
-  "include": ["*.ts"],
-  "exclude": []
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2023",
+    "types": [
+      "node"
+    ]
+  },
+  "exclude": [],
+  "include": [
+    "*.ts"
+  ]
 }
