@@ -100,6 +100,7 @@ absolute path for on-demand reading, following codemode's documentation pattern.
   `parentSessionId` identifies the originating session, not a message branch or
   an execution owner. It is resolved even when the parent is outside the filtered
   results, and omitted for root sessions or missing/unreadable/malformed parents.
+- `mpl-render`: renders charts as PNGs from codemode by running native `mpl` code in a QuickJS sandbox. It is a standalone package with its own `package.json` and lockfile, so its dependencies are installed inside `mpl-render/`. See the [chart tool README](mpl-render/README.md) for the script contract, limits, and measurements.
 
 ## Configuration, tests, and troubleshooting
 
@@ -109,9 +110,17 @@ fields/JWT expiry, then whether Pi already holds a protected credential. Deliber
 account changes require Pi login or logout followed by a new session.
 
 Host packages are `peerDependencies`; pinned Pi 1.3.0 development copies support
-local checks. Install with `npm ci --ignore-scripts`, then run `npm test`.
+local checks. Run `npm ci` with Node.js 24 or newer, then run `npm test`. An
+extension that needs runtime dependencies keeps them in its own `package.json`
+and lockfile, so install it in its own directory as well:
+`npm --prefix mpl-render ci`. The pinned GitHub dependency `mpl` builds during
+that install, and `mpl-render`'s `postinstall` bundles it for the QuickJS
+sandbox; `--ignore-scripts` skips both. Root `npm test` runs the chart
+extension's tests too, so install it first. Restart Pi or run `/reload` to
+discover the chart tool after installation.
 Focused checks are `npm run typecheck:auth`, `npm run typecheck:status`,
-and `npm run typecheck:subagent`.
+`npm run typecheck:subagent`, and `npm --prefix mpl-render test` (typecheck plus
+that extension's tests).
 `npx vitest run subagent/index.test.ts` exercises real
 SDK parent/child sessions against a local HTTP fixture provider, including context
 isolation, untrusted resources, cancellation, failure and output bounds. It does

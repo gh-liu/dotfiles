@@ -1,0 +1,17 @@
+{
+  "name": "pi-mpl-render",
+  "private": true,
+  "type": "module",
+  "description": "Native mpl chart rendering for Pi codemode, sandboxed in QuickJS.",
+  "scripts": {
+    "build": "node bundle.mjs",
+    "postinstall": "node bundle.mjs",
+    "test": "npm run typecheck && vitest run",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@earendil-works/pi-codemode": "1.3.0",
+    "mpl": "git+https://github.com/ivarvong/mpl.git#689ebd4383c0f55b4219e73303f0b1dea6660bbf",
+    "rolldown": "1.2.12"
+  }
+}
