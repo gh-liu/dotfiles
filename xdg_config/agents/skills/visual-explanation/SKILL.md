@@ -1,20 +1,21 @@
 ---
 name: visual-explanation
-description: Use when a reader can understand an engineering question more easily by seeing a relationship, sequence, change, or UI behavior. Choose a minimal diagram, diff, screenshot, or other visual and ground it in the available evidence.
+description: Explain engineering relationships, sequences, comparisons, changes, or UI behavior with a minimal diagram, table, diff, or screenshot grounded in evidence. Use when a reader can understand a structure, flow, comparison, or change more easily by seeing it than by reading prose alone.
 ---
 
 # Visual explanation
 
 Decide what the reader needs to see first. If one sentence makes it clear, use text. When a visual helps, keep only the elements needed to answer that question.
 
-| Reader's question                                                  | Visual form                                                                                                                                          |
-|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Which condition changes the execution path or state?               | Use pseudocode to show conditions and outcomes.                                                                                                      |
-| What contains what?                                                | Use a text tree for hierarchy and composition.                                                                                                       |
-| Who calls whom first, and where does the result return?            | Use a Mermaid sequence diagram for participants and message order.                                                                                   |
-| How do states transition, or how does data flow across components? | Use a Mermaid state diagram or flowchart.                                                                                                            |
-| Which step changed in the code or design?                          | Use a diff with enough context to locate the change.                                                                                                 |
-| How does the UI look, and what changes after an action?            | Run the real app to verify layout, styling, and interaction. Use a screenshot for static appearance and before/after states for interaction changes. |
+| Reader's question                                                   | Visual form                                                                                                                                          |
+|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Which condition changes the execution path or state?                | Use pseudocode to show conditions and outcomes.                                                                                                      |
+| What contains what?                                                 | Use a text tree for hierarchy and composition.                                                                                                       |
+| Who calls whom first, and where does the result return?             | Use a Mermaid sequence diagram for participants and message order.                                                                                   |
+| How do states transition, or how does data flow across components?  | Use a Mermaid state diagram or flowchart.                                                                                                            |
+| How do options, configurations, or cases compare across attributes? | Use a Markdown table with parallel columns.                                                                                                          |
+| Which step changed in the code or design?                           | Use a diff with enough context to locate the change.                                                                                                 |
+| How does the UI look, and what changes after an action?             | Run the real app to verify layout, styling, and interaction. Use a screenshot for static appearance and before/after states for interaction changes. |
 
 Verify relationships in the visual against code, configuration, logs, or test results, and note which observation supports the conclusion. When the real app is unavailable, use a standalone prototype or generated image to illustrate the expected result, and mark what still needs verification in the real app. Keep commands, code, and other copyable content as plain text.
 

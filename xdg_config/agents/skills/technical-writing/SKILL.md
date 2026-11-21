@@ -1,6 +1,6 @@
 ---
 name: technical-writing
-description: Use when drafting or revising technical prose that readers will use to make a decision, follow a procedure, or take over work. Examples include design notes, runbooks, incident reports, and handoffs. Also use when someone explicitly asks to improve wording, clarity, or structure, even for a single sentence.
+description: Draft or revise technical prose that readers use to make a decision, follow a procedure, or take over work, such as design notes, runbooks, incident reports, and handoffs. Use when writing decision or operational documents, or when someone explicitly asks to improve wording, clarity, or structure, even for a single sentence.
 ---
 
 # Technical writing

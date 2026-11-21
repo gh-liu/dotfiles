@@ -1,15 +1,15 @@
 ---
 name: git-commit
-description: Use when the user invokes /commit or asks to commit changes, split changes into commits, or draft or review a commit message. Apply repository conventions, keep commits atomic and buildable, and explain the problem and solution when context is needed.
+description: Create atomic commits and draft or review commit messages following repository conventions. Use when the user invokes /commit or asks to commit changes, split changes into commits, or draft or review a commit message.
 ---
 
 # Git commits
 
 Follow the repository's contribution guide, commit template, and language conventions. If the user asks only for a draft or review, return the proposed message or review comments.
 
-## Conventional Commits
+## Subject format
 
-Check recent commits for the project's subject format. When the repository uses Conventional Commits, write `type(scope): subject`. Choose the type that describes the change, such as `fix` or `feat`. Include a scope when it helps identify the affected component. Use a short subject that tells readers what changes.
+Check recent commits for the project's subject format and follow it (for example, `scope: subject` or `type(scope): subject`). When the repository uses Conventional Commits, write `type(scope): subject`, choosing a type such as `fix` or `feat` and a scope when it helps identify the affected component. Use a short subject that tells readers what changes.
 
 ## Atomic commits
 
@@ -17,7 +17,7 @@ Give each commit one logical purpose. In projects with a build step, the reposit
 
 Use `git status`, `git diff --cached`, and `git diff` to identify the changes. Stage related files or hunks together and preserve the user's staging choices. If the staged changes conflict with the requested scope, clarify the scope first. Review `git diff --cached` before running `git commit`.
 
-For a split series, verify the project build at each committed snapshot. Use a clean worktree if pending edits could affect the result. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
+When splitting code changes in a project with a build or test step, verify the build at each committed snapshot. Use a clean worktree if pending edits could affect the result. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
 
 ## Problem / Solution
 

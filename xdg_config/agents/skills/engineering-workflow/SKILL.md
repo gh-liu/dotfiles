@@ -1,6 +1,6 @@
 ---
 name: engineering-workflow
-description: Use when an engineering task needs investigation to define success, trace behavior across components, or choose between implementations with material trade-offs. Also use when compatibility or state changes require explicit invariants and verification. Use when consulting an existing Architecture Decision Record (ADR) or documenting a significant architectural choice in a lightweight ADR.
+description: Investigate behavior across components, compare implementation options, and verify changes against explicit invariants. Use when an engineering task needs codebase investigation to define success or trace behavior, when choosing between implementations with material trade-offs, when compatibility or state changes require invariant verification, or when consulting or writing a lightweight Architecture Decision Record (ADR).
 ---
 
 # Engineering workflow
@@ -23,14 +23,6 @@ Start from the question that currently affects the decision. When investigation 
 - When a decision depends on assumptions that may change, document its applicability boundary and re-evaluation conditions. Distinguish new requirements that invalidate the approach from observable signals that only warrant investigation. If a new decision supersedes an existing ADR, link the two records bidirectionally.
 
 ### Lightweight ADR default format
-
-> An architectural decision is essentially: `D = f(G, C, A, E)`
-> - `G`: Goals
-> - `C`: Constraints
-> - `A`: Alternatives
-> - `E`: Current Evidence
->
-> Preserving the causal rationale behind a design matters more than preserving the conclusion alone.
 
 Prefer the project's existing ADR template. When none exists, use the Markdown structure below, writing the title and body in the project's documentation language.
 
