@@ -1,12 +1,10 @@
 # Subagent
 
-`subagent({ description, task, model?, thinking? })` runs a bounded exploration or implementation
-task synchronously in a fresh Pi session. Supply the background, scope,
-constraints, acceptance criteria and evidence requirements: the child cannot see
-the parent conversation. Prefer file references over pasted logs. The child shares
-the working directory and may modify files; it is not a sandbox, and cancellation
-does not roll back changes. Calls are sequential and model-only, not callable from
-codemode. Children cannot delegate through this extension.
+Call `subagent({ description, task, model?, thinking? })` directly as a model tool.
+Each call runs synchronously in a fresh Pi session. The child receives the task
+brief and shares the working directory. It can modify files, and those changes
+persist after cancellation. Calls run sequentially. Only the parent model can
+invoke this tool.
 
 ## When to delegate
 
@@ -101,3 +99,10 @@ failed attempts, retries, tool usage and compaction summaries, once each. Pi's p
 session totals include that usage. Counts and costs depend on usage actually reported
 and recorded by the SDK/provider; missing usage cannot be reconstructed. There is no
 total runtime, token or cost cap in this version.
+
+## Tests
+
+Run `npm test` from this directory after `npm ci`. The tests exercise real SDK
+parent and child sessions against a local HTTP fixture provider. They cover
+context isolation, untrusted resources, cancellation, failure, and output limits
+without live credentials.

@@ -4,7 +4,7 @@
 
 ## Install
 
-From this directory, run `npm ci` with Node.js 24 or newer. Do not use `--ignore-scripts`: the pinned GitHub dependency `mpl` builds during installation, and this folder's `postinstall` bundles it for the sandbox (see [The bundle is not committed](#the-bundle-is-not-committed)). With codemode enabled, restart Pi or run `/reload` to load the extension.
+With Node.js 24 or newer, run `npm ci` from this directory with install scripts enabled. npm builds the pinned GitHub dependency `mpl`, then runs the package's `postinstall` script to bundle it for QuickJS. With codemode enabled, run `/reload` or restart Pi to load the extension.
 
 ## Use
 
@@ -97,7 +97,7 @@ and hands it to `CodemodeSandbox` from `@earendil-works/pi-codemode`. That class
 
 ## Verified
 
-`node mpl-render/bench.mjs` runs a two-panel latency chart through the tool and then through plain Node `mpl`:
+From this directory, `node bench.mjs` runs a two-panel latency chart through the tool and then through plain Node `mpl`:
 
 ```text
 sandboxed ms: 402 360 360
