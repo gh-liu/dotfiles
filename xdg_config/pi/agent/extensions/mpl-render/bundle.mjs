@@ -1,5 +1,5 @@
 // Builds `mpl.bundle.js`: one IIFE that installs `mpl` inside the QuickJS sandbox.
-// Regenerate after changing the pinned `mpl` version: `npm run build:mpl`.
+// Regenerate after changing the pinned `mpl` version: `npm run build`.
 import { rolldown } from "rolldown";
 import { fileURLToPath } from "node:url";
 

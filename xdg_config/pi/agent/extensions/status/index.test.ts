@@ -84,7 +84,7 @@ function setup(options: {
     { borderColor: (text: string) => text, selectList: {} },
     {},
   );
-  const editorRaw = (width = 160) => editor.render(width).join("\n");
+  const editorRaw = (width = 160): string => editor.render(width).join("\n");
   const editorRender = (width = 160) => stripTerminalSequences(editorRaw(width));
 
   const component = footerFactory(

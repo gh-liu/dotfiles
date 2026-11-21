@@ -9,6 +9,6 @@
     "target": "ES2022",
     "types": ["node"]
   },
-  "exclude": ["**/*.test.ts"],
+  "exclude": [],
   "include": ["*.ts"]
 }

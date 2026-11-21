@@ -5,6 +5,10 @@ import { expect, test, vi } from "vitest";
 const pending = vi.hoisted(() => ({
   rejectSlow: undefined as ((error: Error) => void) | undefined,
   reads: 0,
+  reset() {
+    this.rejectSlow = undefined;
+    this.reads = 0;
+  },
 }));
 
 vi.mock("node:fs/promises", () => ({
@@ -22,7 +26,7 @@ vi.mock("node:fs/promises", () => ({
 const { loadBundle } = await import("./index.ts");
 
 test("a failed bundle read drops only its own cache entry", async () => {
-  pending.reads = 0;
+  pending.reset();
   const slow = loadBundle(new URL("file:///slow-missing.js"));
   await expect(loadBundle(new URL("file:///good.js"))).resolves.toBe(JSON.stringify("var mpl = {};\n"));
   const readsAfterGood = pending.reads;
@@ -36,7 +40,7 @@ test("a failed bundle read drops only its own cache entry", async () => {
 });
 
 test("an older failure does not discard a newer read of the same URL", async () => {
-  pending.rejectSlow = undefined;
+  pending.reset();
   const url = new URL("file:///slow-missing-again.js");
   const slow = loadBundle(url);
   await loadBundle(new URL("file:///other.js"));
