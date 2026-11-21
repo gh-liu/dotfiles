@@ -176,6 +176,8 @@ alias skillsra="skills remove --all -g -y"
 alias skillsua="skills update --all -g -y"
 
 mdagent() {
+	ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md ~/.config/AGENT.md
+
 	# https://developers.openai.com/codex/guides/agents-md
 	ln -svf $XDG_CONFIG_HOME/agents/AGENTS.md $HOME/.codex/AGENTS.md
 	# https://ampcode.com/manual#AGENTS.md
