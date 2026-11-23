@@ -40,24 +40,35 @@ export interface Result {
   usage?: Usage;
 }
 
+// Bounds apply to persisted UI metadata as well as the collapsed display.
+const MAX_CALLS = 64;
+const MAX_ARGS = 2048;
+const MAX_THINKING_BYTES = 4 * 1024;
+export const MAX_HANDOFF_BYTES = 24_000;
+
 const HANDOFF = `You are a fresh, one-shot child agent. Complete only the assigned task in the shared working directory. You cannot see the parent conversation. Follow applicable project guidance and skills, but do not delegate or launch other agents. This is context isolation, not a sandbox. Do not make unrelated changes or revert other people's work.
+
+You have only read, write, edit, bash, and codemode tools. Parent extensions, MCP tools, and extension-registered dynamic providers (such as classifier or image models not in static config) are unavailable even if mentioned in inherited guidance or skills.
 
 Follow the deliverable and output format specified in the task. If it requests strict output such as JSON, return only that output: no Markdown fences, preamble, extra sections or trailing commentary. Do not impose a compact/continuation template unless requested.
 
 When no output format is specified, return a concise, outcome-first handoff: give the direct answer or achieved outcome, then only the evidence, validation results, uncertainties, blockers and genuine remaining work needed by the parent. Use headings only when helpful; omit empty sections and do not repeat the task. Preserve relevant exact file paths, symbols and important errors. Distinguish verified facts from inference and unverified claims.
 
-Always keep the final response under 24000 UTF-8 bytes, ideally under 1200 words or 6000 characters. Do not return raw thinking, transcripts or long command output. Do not report runtime thinking-level adjustments; the tool records them separately.`;
+Always keep the final response under ${MAX_HANDOFF_BYTES} UTF-8 bytes, ideally under 1200 words or 6000 characters. Do not return raw thinking, transcripts or long command output. Do not report runtime thinking-level adjustments; the tool records them separately.`;
 
-// Bounds apply to persisted UI metadata as well as the collapsed display.
-const MAX_CALLS = 64;
-const MAX_ARGS = 2048;
-const MAX_THINKING_BYTES = 4 * 1024;
-const MAX_HANDOFF_BYTES = 24_000;
-
-function bounded(text: string, bytes: number): string {
+export function bounded(text: string, bytes: number): string {
   if (Buffer.byteLength(text, "utf8") <= bytes) return text;
   const suffix = "… [shortened; see child session if available]";
-  return Buffer.from(text).subarray(0, bytes - Buffer.byteLength(suffix) - 3).toString("utf8") + suffix;
+  const limit = Math.max(0, bytes - Buffer.byteLength(suffix, "utf8"));
+  let used = 0;
+  let end = 0;
+  for (const ch of text) {
+    const len = Buffer.byteLength(ch, "utf8");
+    if (used + len > limit) break;
+    used += len;
+    end += ch.length;
+  }
+  return text.slice(0, end) + suffix;
 }
 
 // Match Pi's session statistics: use all persisted entries, not the current context
@@ -103,6 +114,7 @@ export async function runSubagent(
     }
   };
   let child: AgentSession | undefined;
+  let manager: SessionManager | undefined;
   let unsubscribe: (() => void) | undefined;
   let cancelled = signal?.aborted ?? false;
   let abortPromise: Promise<void> | undefined;
@@ -124,6 +136,9 @@ export async function runSubagent(
   let usage: Usage | undefined;
   try {
     checkCancelled();
+    const description = request.description.trim();
+    if (!description) throw new Error("Subagent description must not be empty.");
+    if (!request.task.trim()) throw new Error("Subagent task must not be empty.");
     details.parentModel = ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined;
     const modelName = request.model ?? details.parentModel;
     if (!modelName) throw new Error("No parent model selected; refusing a fallback model.");
@@ -159,7 +174,7 @@ export async function runSubagent(
     const model = runtime.getModel(modelName.slice(0, separator), modelName.slice(separator + 1));
     if (!model) throw new Error(`Child cannot resolve ${modelName} from configured providers. Dynamic parent providers/routers are not inherited.`);
     details.effectiveModel = `${model.provider}/${model.id}`;
-    const manager = SessionManager.create(ctx.cwd, join(agentDir, "sessions", "subagents"));
+    manager = SessionManager.create(ctx.cwd, join(agentDir, "sessions", "subagents"));
     ({ session: child } = await createAgentSession({
       cwd: ctx.cwd, agentDir, modelRuntime: runtime, model, thinkingLevel: thinking,
       settingsManager: settings, resourceLoader: loader, sessionManager: manager,
@@ -167,10 +182,10 @@ export async function runSubagent(
     }));
     details.effectiveThinking = child.thinkingLevel;
     checkCancelled();
-    child.setSessionName(`Subagent: ${request.description}`);
+    child.setSessionName(`Subagent: ${description}`);
     unsubscribe = child.subscribe((event) => {
       if (event.type === "agent_start" && cancelled) cancel();
-      const sessionFile = manager.getSessionFile();
+      const sessionFile = manager?.getSessionFile();
       if (sessionFile && existsSync(sessionFile)) details.sessionFile = sessionFile;
       if (event.type === "message_start" && event.message.role === "assistant" && !cancelled) {
         thoughts.clear();
@@ -279,6 +294,8 @@ export async function runSubagent(
       usage = sessionUsage(child.sessionManager.getEntries());
       child.dispose();
     }
+    const sessionFile = manager?.getSessionFile();
+    if (sessionFile && existsSync(sessionFile)) details.sessionFile = sessionFile;
     clearInterval(timer);
     if (abortError) {
       details.status = "error";

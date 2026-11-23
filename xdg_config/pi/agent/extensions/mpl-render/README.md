@@ -78,7 +78,7 @@ Everything else is absent: no `process`, `require`, `fetch`, timers, file system
 
 The deadline and heap are enforced by the QuickJS sandbox (`CodemodeSandbox` from `@earendil-works/pi-codemode`, also used by the built-in `codemode` tool): a script that loops or allocates forever fails with `exceeded 20s` or `out of memory` instead of blocking Pi. Aborting the tool call stops the script too, reported as `Chart script was cancelled.` Script errors report the caller's line numbers as `script:<line>:<column>`, and the script's `console` output when it failed.
 
-Limits are checked twice for the paths they cover: `render()` rejects an oversized figure before allocating pixels, and the host re-checks the PNG header and size so a script that calls `image()` directly cannot bypass them.
+Limits are enforced at both ends: `render()` rejects an oversized figure before allocating pixels and emits the PNG through an internal per-call tagged channel, so direct `image()` calls are ignored. The host then checks the base64 byte length before decoding and verifies the PNG header, dimensions, chunk bounds, CRC-32 checksums, `IDAT`, and `IEND`.
 
 ## How it works
 

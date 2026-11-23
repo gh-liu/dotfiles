@@ -1,9 +1,11 @@
+import { crc32, deflateSync } from "node:zlib";
 import type { Color } from "@earendil-works/pi-tui";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import * as mpl from "mpl";
 import { allFonts } from "mpl/fonts/all";
+import type { CodemodeOutputItem } from "@earendil-works/pi-codemode";
 import type { ExtensionToolContext } from "@earendil-works/pi-coding-agent";
-import { limits, loadBundle, mplRender } from "./index.ts";
+import { collectLogs, limits, loadBundle, mplRender, validatePng } from "./index.ts";
 
 function render(params: Parameters<typeof mplRender.execute>[1], signal?: AbortSignal) {
   return mplRender.execute("test", params, signal, undefined, {} as ExtensionToolContext);
@@ -21,7 +23,18 @@ const chart = `render((() => {
 const dates = ["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05"];
 const data = { dates, p95: [120, 183, 146, 171, 159], qps: [12, 18, 21] };
 
-/** A PNG header with arbitrary IHDR dimensions: enough for the host-side checks, not decodable. */
+const PNG_SIG = Buffer.from("89504e470d0a1a0a", "hex");
+
+function pngChunk(type: string, payload: Buffer) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(payload.length, 0);
+  const body = Buffer.concat([Buffer.from(type, "ascii"), payload]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body), 0);
+  return Buffer.concat([len, body, crc]);
+}
+
+/** A PNG header with arbitrary IHDR dimensions: lacks CRC, IDAT, and IEND (not decodable). */
 function header(width: number, height: number) {
   const ihdr = Buffer.alloc(25);
   ihdr.writeUInt32BE(13, 0);
@@ -30,7 +43,21 @@ function header(width: number, height: number) {
   ihdr.writeUInt32BE(height, 12);
   ihdr[16] = 8;
   ihdr[17] = 2;
-  return Buffer.concat([Buffer.from("89504e470d0a1a0a", "hex"), ihdr]);
+  return Buffer.concat([PNG_SIG, ihdr]);
+}
+
+function minimalPng(width = 1, height = 1, colorType = 6) {
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = colorType;
+  const bpp = colorType === 6 ? 4 : colorType === 2 ? 3 : 1;
+  const idat = deflateSync(Buffer.alloc((width * bpp + 1) * height));
+  const chunks = [pngChunk("IHDR", ihdr)];
+  if (colorType === 3) chunks.push(pngChunk("PLTE", Buffer.from([0, 0, 0])));
+  chunks.push(pngChunk("IDAT", idat), pngChunk("IEND", Buffer.alloc(0)));
+  return Buffer.concat([PNG_SIG, ...chunks]);
 }
 
 test("renders native mpl code byte-identically to Node mpl", async () => {
@@ -157,8 +184,8 @@ test("hides host globals and internal helpers, and maps script line numbers", as
     script: `const [fig] = mpl.subplots();\nrender(fig, { scale: process.pid });`,
   })).rejects.toThrow(/process is not defined\n.*at <anonymous> \(script:2:\d+\)/s);
   await expect(render({
-    script: `throw new Error([typeof require, typeof fetch, typeof Buffer, typeof __bundle, typeof __B64, typeof __base64, typeof __themedRc].join("|"));`,
-  })).rejects.toThrow("undefined|undefined|undefined|undefined|undefined|undefined|undefined");
+    script: `throw new Error([typeof require, typeof fetch, typeof Buffer, typeof __bundle, typeof __B64, typeof __base64, typeof __themedRc, typeof __renderMarker, typeof __image, typeof __text, typeof __Figure, typeof __toPNGSync].join("|"));`,
+  })).rejects.toThrow("undefined|undefined|undefined|undefined|undefined|undefined|undefined|undefined|undefined|undefined|undefined|undefined");
   await expect(render({ script: `const [fig, ax] = mpl.subplots();\nrender(ax);` }))
     .rejects.toThrow("render(fig) expects the Figure");
 });
@@ -168,16 +195,160 @@ test("reports console output when a script fails", async () => {
     .rejects.toThrow(/Chart script failed: Error: nope[\s\S]*Script output:\ndebug 1/);
 });
 
-test("validates script-produced images on the host side", async () => {
-  const emit = (bytes: Buffer) => render({ script: `image({ type: "image", data: "${bytes.toString("base64")}", mimeType: "image/png" });` });
-  await expect(render({ script: `image({ type: "image", data: "bm90IGEgcG5n", mimeType: "image/png" });` }))
-    .rejects.toThrow("not a PNG");
-  await expect(emit(Buffer.from("89504e470d0a1a0a", "hex"))).rejects.toThrow("truncated PNG");
+test("ignores direct image() calls and requires output from render(fig)", async () => {
+  const fake = header(1, 1).toString("base64");
+  // Direct image() without render(fig) must be rejected, even with PNG header bytes.
+  await expect(render({ script: `image({ type: "image", data: "${fake}", mimeType: "image/png" });` }))
+    .rejects.toThrow("did not call render(fig)");
+
+  // Direct image() after render(fig) must not replace the rendered chart.
+  const expected = await render({ script: `const [fig, ax] = mpl.subplots({ figsize: [2, 1.5] }); ax.plot([0, 1], [0, 1]); render(fig);` });
+  const withTrailingImage = await render({
+    script: `const [fig, ax] = mpl.subplots({ figsize: [2, 1.5] });
+      ax.plot([0, 1], [0, 1]);
+      render(fig);
+      image({ type: "image", data: "${fake}", mimeType: "image/png" });`,
+  });
+  expect(pngOf(withTrailingImage).equals(pngOf(expected))).toBe(true);
+
+  // Overriding fig.toPNGSync on the instance must not hijack render(fig).
+  const tampered = await render({
+    data: { fake: Array.from(header(1, 1)) },
+    script: `const [fig, ax] = mpl.subplots({ figsize: [2, 1.5] });
+      ax.plot([0, 1], [0, 1]);
+      fig.toPNGSync = () => new Uint8Array(data.fake);
+      render(fig);`,
+  });
+  expect(pngOf(tampered).equals(pngOf(expected))).toBe(true);
+
+  // Direct image() with a structurally valid PNG must still be rejected without render(fig).
+  await expect(render({ script: `image({ type: "image", data: "${minimalPng().toString("base64")}", mimeType: "image/png" });` }))
+    .rejects.toThrow("did not call render(fig)");
+
+  // render.toString() must not leak any internal marker, and logs/errors must not include it.
+  const logged = await render({
+    script: `const [fig, ax] = mpl.subplots({ figsize: [2, 1.5] });
+      ax.plot([0, 1], [0, 1]);
+      console.log("hello");
+      render(fig);
+      if (/__mpl_render_[0-9a-f]{32}/.test(render.toString())) throw new Error("marker leaked in render.toString()");`,
+  });
+  expect((logged.structuredContent as { logs?: string }).logs).toBe("hello");
+
+  await expect(render({
+    script: `const [fig, ax] = mpl.subplots({ figsize: [2, 1.5] });
+      ax.plot([0, 1], [0, 1]);
+      console.log("before crash");
+      render(fig);
+      throw new Error("boom");`,
+  })).rejects.not.toThrow(/__mpl_render_/);
+});
+
+test("validates base64 bounds and complete PNG structure on the host side", () => {
+  const valid = minimalPng();
+  expect(validatePng(valid.toString("base64")).equals(valid)).toBe(true);
+  expect(validatePng(minimalPng(2, 2, 3).toString("base64")).length).toBeGreaterThan(0);
+
+  // Rejects malformed base64 and oversized payloads before allocating a decoded Buffer.
+  expect(() => validatePng("not-padded")).toThrow("invalid base64");
+  expect(() => validatePng("!!!!")).toThrow("invalid base64");
+  const huge = "A".repeat(4 * 1024);
+  const fromSpy = vi.spyOn(Buffer, "from");
+  try {
+    expect(() => validatePng(huge, { png: 100, pixels: limits.pixels })).toThrow("The PNG is 3072 bytes; the limit is 100.");
+    expect(fromSpy).not.toHaveBeenCalled();
+  } finally {
+    fromSpy.mockRestore();
+  }
+
+  expect(() => validatePng(Buffer.from("not a png").toString("base64"))).toThrow("not a PNG");
+  expect(() => validatePng(PNG_SIG.toString("base64"))).toThrow("truncated PNG");
+
   const badChunk = header(10, 10);
   badChunk.write("NOPE", 12, "ascii");
-  await expect(emit(badChunk)).rejects.toThrow("invalid PNG header");
-  await expect(emit(header(0, 10))).rejects.toThrow("zero width or height");
-  await expect(emit(header(3000, 3000))).rejects.toThrow("exceeds the rendered-pixel limit");
+  expect(() => validatePng(badChunk.toString("base64"))).toThrow("invalid PNG header");
+  expect(() => validatePng(header(0, 10).toString("base64"))).toThrow("zero width or height");
+  expect(() => validatePng(header(3000, 3000).toString("base64"))).toThrow("exceeds the rendered-pixel limit");
+
+  // Header-only bytes without valid CRC / IDAT / IEND must be rejected.
+  expect(() => validatePng(header(1, 1).toString("base64"))).toThrow("corrupted PNG");
+
+  const ihdrPayload = Buffer.alloc(13);
+  ihdrPayload.writeUInt32BE(1, 0);
+  ihdrPayload.writeUInt32BE(1, 4);
+  ihdrPayload[8] = 8;
+  ihdrPayload[9] = 6;
+  const ihdrOnly = Buffer.concat([PNG_SIG, pngChunk("IHDR", ihdrPayload)]);
+  expect(() => validatePng(ihdrOnly.toString("base64"))).toThrow("incomplete PNG");
+
+  const noIdat = Buffer.concat([PNG_SIG, pngChunk("IHDR", ihdrPayload), pngChunk("IEND", Buffer.alloc(0))]);
+  expect(() => validatePng(noIdat.toString("base64"))).toThrow("incomplete PNG");
+
+  const badCrc = Buffer.from(valid);
+  badCrc[badCrc.length - 1] ^= 0xff;
+  expect(() => validatePng(badCrc.toString("base64"))).toThrow("corrupted PNG");
+
+  const trailing = Buffer.concat([valid, Buffer.from([0x00])]);
+  expect(() => validatePng(trailing.toString("base64"))).toThrow("corrupted PNG");
+
+  const indexedNoPltePayload = Buffer.from(ihdrPayload);
+  indexedNoPltePayload[9] = 3;
+  const indexedNoPlte = Buffer.concat([
+    PNG_SIG,
+    pngChunk("IHDR", indexedNoPltePayload),
+    pngChunk("IDAT", deflateSync(Buffer.alloc(2))),
+    pngChunk("IEND", Buffer.alloc(0)),
+  ]);
+  expect(() => validatePng(indexedNoPlte.toString("base64"))).toThrow("invalid PNG");
+});
+
+test("truncates logs incrementally to 2000 chars and strips the internal render marker", async () => {
+  const marker = "__mpl_render_0123456789abcdef0123456789abcdef";
+  let reads = 0;
+  const tailItem: CodemodeOutputItem = {
+    type: "text",
+    get text() {
+      reads += 1;
+      return "should not be read";
+    },
+  };
+  const output: CodemodeOutputItem[] = [
+    { type: "text", text: marker },
+    { type: "text", text: "a".repeat(1_999), console: true },
+    { type: "text", text: "bcde", console: true },
+    tailItem,
+  ];
+  expect(collectLogs(output, marker)).toBe(`${"a".repeat(1_999)}\n`);
+  expect(reads).toBe(0);
+
+  // Exact boundary: 2000-char item followed by more items has no trailing newline and skips the tail.
+  let exactReads = 0;
+  const exactTail: CodemodeOutputItem = {
+    type: "text",
+    get text() {
+      exactReads += 1;
+      return "y";
+    },
+  };
+  expect(collectLogs([
+    { type: "text", text: "x".repeat(2_000), console: true },
+    exactTail,
+  ], marker)).toBe("x".repeat(2_000));
+  expect(exactReads).toBe(0);
+
+  // Console log matching the marker text is kept (only non-console internal markers are stripped).
+  expect(collectLogs([{ type: "text", text: marker, console: true }], marker)).toBe(marker);
+
+  // End-to-end cap via the tool.
+  const res = await render({
+    script: `for (let i = 0; i < 300; i++) console.log("line-" + i + "-" + "x".repeat(20));
+      const [fig, ax] = mpl.subplots({ figsize: [2, 1.5] });
+      ax.plot([0, 1], [0, 1]);
+      render(fig);`,
+  });
+  const logs = (res.structuredContent as { logs?: string }).logs ?? "";
+  expect(logs.length).toBe(2_000);
+  expect(logs.startsWith("line-0-")).toBe(true);
 });
 
 test("strips trailing undefined arguments before injecting theme rc in mpl.subplots", async () => {

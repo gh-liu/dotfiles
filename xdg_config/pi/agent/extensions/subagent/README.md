@@ -3,8 +3,9 @@
 Call `subagent({ description, task, model?, thinking? })` directly as a model tool.
 Each call runs synchronously in a fresh Pi session. The child receives the task
 brief and shares the working directory. It can modify files, and those changes
-persist after cancellation. Calls run sequentially. Only the parent model can
-invoke this tool.
+persist after cancellation. Multiple calls in the same assistant turn run in
+parallel; callers must avoid overlapping writes across parallel calls. Only the
+parent model can invoke this tool.
 
 ## When to delegate
 
@@ -14,7 +15,8 @@ large intermediate context but a concise, reviewable handoff. The solution need
 not be known before delegation. Keep simple lookups, small edits, frequent
 back-and-forth and work requiring the parent's raw reasoning context or exclusive
 tools in the parent. Do not repeat a delegated investigation. Each call is fresh;
-there is no follow-up/resume API or background parallel work for the parent.
+there is no follow-up/resume API or background work across turns (parallel calls
+still complete synchronously within the same turn).
 Supply a self-contained brief with relevant facts and references, scope/non-goals,
 read-only or write boundaries, user constraints/approvals, acceptance checks and
 required evidence. The child chooses its approach unless a method is required.
@@ -46,8 +48,10 @@ Background cache warming is disabled
 using scoped in-memory settings, without modifying the user's configuration.
 The shell environment and filesystem are shared; installed commands can still
 access the network through bash. Tool isolation is not network isolation, and
-delegation must never bypass required approvals. Independently loaded skills may
-require tools unavailable to this child.
+delegation must never bypass required approvals. Independently loaded guidance (`APPEND_SYSTEM.md`) and skills may reference
+tools, `tool_call` hooks, or extension-registered dynamic providers (such as
+classifier or image models not in static config) that are unavailable to this
+child; the child's handoff prompt states this explicitly.
 
 ## Handoff and failures
 
@@ -79,7 +83,8 @@ Each finished call shows its duration; the bottom displays live Elapsed or final
 Took, including failures/cancellation and restored sessions. Regions are separated
 by one blank line. Child tool calls can run in parallel; activity reports the
 total number still running, including calls hidden by the display/history limits.
-Multiple subagent calls themselves remain sequential.
+Multiple subagent calls issued in one assistant turn also run in parallel, each
+with its own tool block, activity stream and child session file.
 
 UI metadata retains up to 64 calls and 2,048 argument characters per call, with
 explicit notices for evicted/shortened data. Thinking activities instead retain

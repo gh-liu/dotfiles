@@ -1,6 +1,6 @@
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
-import { Type } from "@earendil-works/pi-ai";
+import { Type } from "typebox";
 import { defineTool, SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 async function readParentSessionId(path: string, signal?: AbortSignal): Promise<string | undefined> {

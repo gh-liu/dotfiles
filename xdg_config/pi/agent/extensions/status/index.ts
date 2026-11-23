@@ -3,7 +3,7 @@
  *
  * Pi event                                          Footer activity
  * ------------------------------------------------  ----------------
- * session_start (idle), agent_settled (idle)        READY
+ * session_start (idle), agent_settled (idle, unless ERROR)   READY
  * session_start (active), agent_start               WAITING
  * assistant start/done or content phase end         WAITING
  * thinking_start, thinking_delta                    THINKING
@@ -45,6 +45,8 @@ type Activity =
 const ACTIVE_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
 const TOOL_SPINNER_FRAMES = ["›", "»", "≫", "»"] as const;
+// LCM of 10 (active) and 4 (thinking/tool) so every spinner cycles without skipping frames.
+const SPINNER_CYCLE = 20;
 const MAX_BRANCH_WIDTH = 32;
 const MAX_DIRECTORY_WIDTH = 32;
 const MAX_SESSION_NAME_WIDTH = 32;
@@ -141,7 +143,7 @@ const ACTIVITY_DISPLAY = {
 >;
 
 function paint(theme: Theme, color: keyof typeof NORD, text: string): string {
-  if ("NO_COLOR" in process.env) {
+  if (process.env.NO_COLOR) {
     const fallback =
       color === "red"
         ? "error"
@@ -205,8 +207,11 @@ function readSnapshot(pi: ExtensionAPI, ctx: ExtensionContext): StatusSnapshot {
     }
     // Cache hit describes the latest assistant prompt, not background work or totals.
     if (entry.type === "message" && entry.message.role === "assistant") {
-      const prompt = usage.input + usage.cacheRead + usage.cacheWrite;
-      cacheHit = prompt > 0 ? (usage.cacheRead / prompt) * 100 : undefined;
+      const promptInput = Number.isFinite(usage.input) ? Math.max(0, usage.input) : 0;
+      const cacheRead = Number.isFinite(usage.cacheRead) ? Math.max(0, usage.cacheRead) : 0;
+      const cacheWrite = Number.isFinite(usage.cacheWrite) ? Math.max(0, usage.cacheWrite) : 0;
+      const prompt = promptInput + cacheRead + cacheWrite;
+      cacheHit = prompt > 0 ? (cacheRead / prompt) * 100 : undefined;
     }
   }
 
@@ -238,12 +243,31 @@ function renderEditorBorder(
   width: number,
   snapshot: StatusSnapshot | undefined,
   position: "top" | "bottom",
+  hiddenLineCount = 0,
 ): string {
   if (width <= 0) return "";
   const thinking = snapshot?.thinking;
   const borderColor = footerTheme
     ? footerTheme.getThinkingBorderColor(thinking ?? "off")
     : editorTheme.borderColor;
+  const fillBorder = (fillWidth: number, direction: "↑" | "↓"): string => {
+    if (fillWidth <= 0) return "";
+    if (hiddenLineCount <= 0) return borderColor("─".repeat(fillWidth));
+    const label = ` ${direction} ${hiddenLineCount} more `;
+    const labelWidth = visibleWidth(label);
+    if (labelWidth + 2 <= fillWidth) {
+      const left = Math.floor((fillWidth - labelWidth) / 2);
+      const right = fillWidth - left - labelWidth;
+      return borderColor(`${"─".repeat(left)}${label}${"─".repeat(right)}`);
+    }
+    if (labelWidth <= fillWidth) {
+      return borderColor(`${label}${"─".repeat(fillWidth - labelWidth)}`);
+    }
+    return borderColor("─".repeat(fillWidth));
+  };
+  if (position === "bottom") {
+    return fillBorder(width, "↓");
+  }
   const semantic = (color: keyof typeof NORD, text: string) =>
     footerTheme ? paint(footerTheme, color, text) : text;
   const providerText = snapshot?.provider ? semantic("muted", `(${snapshot.provider})`) : "";
@@ -254,14 +278,13 @@ function renderEditorBorder(
   const metadataText = [thinkingText, [modelText, providerText].filter(Boolean).join("")]
     .filter(Boolean)
     .join(" • ");
-  const semanticText = truncateToWidth(` ${metadataText} `, width, "");
-  const semanticWidth = visibleWidth(semanticText);
-  if (position === "bottom") {
-    const line = borderColor("─".repeat(width));
-    return footerTheme ? line : editorTheme.borderColor(line);
+  if (!metadataText) {
+    return fillBorder(width, "↑");
   }
-  const line = `${borderColor("─".repeat(Math.max(0, width - semanticWidth)))}${semanticText}`;
-  return footerTheme ? line : editorTheme.borderColor(line);
+  const rawSemantic = truncateToWidth(` ${metadataText} `, width, "");
+  const semanticText = footerTheme ? rawSemantic : editorTheme.borderColor(rawSemantic);
+  const leftWidth = Math.max(0, width - visibleWidth(semanticText));
+  return `${fillBorder(leftWidth, "↑")}${semanticText}`;
 }
 
 function renderStatusLine(
@@ -365,16 +388,11 @@ function renderStatusLine(
   ];
 
   const active = [...items];
-  const renderZone = (zone: StatusItem["zone"], separator: string) => {
-    const zoneItems = active.filter((item) => item.zone === zone);
-    return zoneItems.reduce((result, item, index) => {
-      if (index === 0) return item.text;
-      const previous = zoneItems[index - 1];
-      const itemSeparator =
-        (previous.id === "model" && item.id === "provider") ? "" : separator;
-      return `${result}${itemSeparator}${item.text}`;
-    }, "");
-  };
+  const renderZone = (zone: StatusItem["zone"], separator: string) =>
+    active
+      .filter((item) => item.zone === zone)
+      .map((item) => item.text)
+      .join(separator);
   const left = () => renderZone("left", " · ");
   const right = () => renderZone("right", "  ");
   const measured = () => visibleWidth(left()) + visibleWidth(right()) + (left() && right() ? 2 : 0);
@@ -418,7 +436,7 @@ export default function status(pi: ExtensionAPI) {
   const startSpinner = () => {
     if (spinnerTimer !== undefined) return;
     spinnerTimer = setInterval(() => {
-      spinnerFrame = (spinnerFrame + 1) % ACTIVE_SPINNER_FRAMES.length;
+      spinnerFrame = (spinnerFrame + 1) % SPINNER_CYCLE;
       requestRender();
     }, 80);
   };
@@ -447,35 +465,38 @@ export default function status(pi: ExtensionAPI) {
     stopSettingsWatcher();
     executingToolCalls.clear();
     uiPromptActive = false;
+    if (ctx.mode !== "tui") {
+      currentSessionManager = undefined;
+      snapshot = undefined;
+      return;
+    }
     currentSessionManager = ctx.sessionManager;
     activity = ctx.isIdle() ? "ready" : "waiting";
     snapshot = readSnapshot(pi, ctx);
-    if (ctx.mode !== "tui") return;
 
     ctx.ui.setWorkingVisible(false);
     ctx.ui.setEditorComponent?.((tui, theme, keybindings) =>
       new (class extends CustomEditor {
-        render(width: number): string[] {
-          const lines = super.render(width);
-          if (lines.length > 0) {
-            lines[0] = renderEditorBorder(
-              theme,
-              currentFooterTheme,
-              width,
-              snapshot,
-              "top",
-            );
-            if (lines.length > 1) {
-              lines[lines.length - 1] = renderEditorBorder(
-                theme,
-                currentFooterTheme,
-                width,
-                snapshot,
-                "bottom",
-              );
-            }
-          }
-          return lines;
+        protected override renderTopBorder(width: number, hiddenLineCount: number): string {
+          return renderEditorBorder(
+            theme,
+            currentFooterTheme,
+            width,
+            snapshot,
+            "top",
+            hiddenLineCount,
+          );
+        }
+
+        protected override renderBottomBorder(width: number, hiddenLineCount: number): string {
+          return renderEditorBorder(
+            theme,
+            currentFooterTheme,
+            width,
+            snapshot,
+            "bottom",
+            hiddenLineCount,
+          );
         }
       })(tui, theme, keybindings),
     );
@@ -515,9 +536,16 @@ export default function status(pi: ExtensionAPI) {
         },
       };
     });
-    settingsWatcher = watch(getAgentDir(), { persistent: false }, (_eventType, filename) => {
-      if (filename === "settings.json" && isCurrentSession(ctx)) refresh(ctx);
-    });
+    try {
+      settingsWatcher = watch(getAgentDir(), { persistent: false }, (_eventType, filename) => {
+        if ((filename == null || filename === "settings.json") && isCurrentSession(ctx)) {
+          refresh(ctx);
+        }
+      });
+      settingsWatcher.on?.("error", stopSettingsWatcher);
+    } catch {
+      settingsWatcher = undefined;
+    }
     if (ACTIVITY_DISPLAY[activity].spinner.length > 0) startSpinner();
   });
 
@@ -536,7 +564,13 @@ export default function status(pi: ExtensionAPI) {
   pi.on("ui_prompt_end", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     uiPromptActive = false;
-    setActivity(ctx.isIdle() ? "ready" : "waiting");
+    setActivity(
+      executingToolCalls.size > 0
+        ? "running_tools"
+        : ctx.isIdle()
+          ? "ready"
+          : "waiting",
+    );
   });
 
   pi.on("message_update", (event, ctx) => {
@@ -597,23 +631,26 @@ export default function status(pi: ExtensionAPI) {
   });
 
   pi.on("agent_settled", (_event, ctx) => {
-    if (!isCurrentSession(ctx) || !ctx.isIdle()) return;
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui" || !ctx.isIdle()) return;
     executingToolCalls.clear();
-    setActivity("ready");
+    if (activity !== "error") setActivity("ready");
     refresh(ctx);
   });
 
   pi.on("turn_end", (_event, ctx) => {
-    if (isCurrentSession(ctx)) refresh(ctx);
+    if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
   });
   pi.on("model_select", (_event, ctx) => {
-    if (isCurrentSession(ctx)) refresh(ctx);
+    if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
   });
   pi.on("thinking_level_select", (_event, ctx) => {
-    if (isCurrentSession(ctx)) refresh(ctx);
+    if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
   });
   pi.on("session_info_changed", (_event, ctx) => {
-    if (isCurrentSession(ctx)) refresh(ctx);
+    if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
+  });
+  pi.on("session_tree", (_event, ctx) => {
+    if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
   });
   pi.on("session_before_compact", (_event, ctx) => {
     if (isCurrentSession(ctx) && ctx.mode === "tui") setActivity("compacting");
@@ -633,6 +670,7 @@ export default function status(pi: ExtensionAPI) {
     if (!isCurrentSession(ctx)) return;
     ctx.ui.setFooter(undefined);
     ctx.ui.setEditorComponent?.(undefined);
+    ctx.ui.setWorkingVisible?.(true);
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();

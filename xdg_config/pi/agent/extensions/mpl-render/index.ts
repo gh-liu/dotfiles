@@ -1,10 +1,12 @@
+import { randomBytes } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { crc32 } from "node:zlib";
 import { colorToHex, type Color } from "@earendil-works/pi-tui";
-import { Type } from "@earendil-works/pi-ai";
-import { CodemodeSandbox } from "@earendil-works/pi-codemode";
+import { Type } from "typebox";
+import { CodemodeSandbox, type CodemodeOutputItem } from "@earendil-works/pi-codemode";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 type Limits = { script: number; data: number; pixels: number; png: number; timeoutMs: number; memory: number };
@@ -60,7 +62,7 @@ function __base64(u8) {
   return parts.join("");
 }
 function render(fig, options) {
-  if (!(fig instanceof mpl.Figure)) throw new Error("render(fig) expects the Figure returned by mpl.subplots().");
+  if (!(fig instanceof __Figure)) throw new Error("render(fig) expects the Figure returned by mpl.subplots().");
   const opts = options && typeof options === "object" ? options : {};
   const hasDpi = opts.dpi !== undefined, hasScale = opts.scale !== undefined;
   if (hasDpi && hasScale) throw new Error("Pass either dpi or scale to render(fig); mpl accepts one of them.");
@@ -74,9 +76,12 @@ function render(fig, options) {
   if (width * height > ${bounds.pixels}) {
     throw new Error("A " + width + "x" + height + " render exceeds the ${bounds.pixels}-pixel limit; reduce figsize, dpi, or scale.");
   }
-  const png = fig.toPNGSync(hasDpi ? opts : { ...opts, scale });
+  const pngOpts = hasDpi ? { ...opts, dpi } : { ...opts, scale };
+  const png = __toPNGSync.call(fig, pngOpts);
+  if (!(png instanceof Uint8Array)) throw new Error("render(fig) did not produce PNG bytes.");
   if (png.length > ${bounds.png}) throw new Error("The PNG is " + png.length + " bytes; the limit is ${bounds.png}.");
-  image({ type: "image", data: __base64(png), mimeType: "image/png" });
+  __image({ type: "image", data: __base64(png), mimeType: "image/png" });
+  __text(__renderMarker);
 }
 `;
 
@@ -135,7 +140,148 @@ export function loadBundle(url = new URL("./mpl.bundle.js", import.meta.url)): P
   return source;
 }
 
-const isPng = (bytes: Buffer) => bytes.subarray(0, 8).toString("hex") === "89504e470d0a1a0a";
+const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
+const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;
+
+// Valid PNG bit depths per color type (ISO/IEC 15948, Table 11.1).
+const PNG_BIT_DEPTHS: Readonly<Record<number, readonly number[]>> = {
+  0: [1, 2, 4, 8, 16],
+  2: [8, 16],
+  3: [1, 2, 4, 8],
+  4: [8, 16],
+  6: [8, 16],
+};
+
+function validatePng(data: string, bounds: Pick<Limits, "png" | "pixels"> = limits): Buffer {
+  if (typeof data !== "string" || data.length === 0 || data.length % 4 !== 0) {
+    throw new Error("The script produced invalid base64 image data.");
+  }
+  const padding = data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0;
+  const decodedLength = (data.length / 4) * 3 - padding;
+  if (decodedLength > bounds.png) {
+    throw new Error(`The PNG is ${decodedLength} bytes; the limit is ${bounds.png}.`);
+  }
+  if (!BASE64_PATTERN.test(data)) {
+    throw new Error("The script produced invalid base64 image data.");
+  }
+
+  const bytes = Buffer.from(data, "base64");
+  if (bytes.length < 8 || !bytes.subarray(0, 8).equals(PNG_SIGNATURE)) {
+    throw new Error("The script produced data that is not a PNG.");
+  }
+  // Signature (8) + IHDR length (4) + type (4) + data (13) + CRC (4) = 33 bytes minimum.
+  if (bytes.length < 33) {
+    throw new Error("The script produced a truncated PNG.");
+  }
+  const ihdrLength = bytes.readUInt32BE(8);
+  const ihdrType = bytes.subarray(12, 16).toString("ascii");
+  if (ihdrType !== "IHDR" || ihdrLength !== 13) {
+    throw new Error("The script produced an invalid PNG header.");
+  }
+
+  const width = bytes.readUInt32BE(16);
+  const height = bytes.readUInt32BE(20);
+  if (width === 0 || height === 0) {
+    throw new Error("The PNG has zero width or height.");
+  }
+  if (width * height > bounds.pixels) {
+    throw new Error("The PNG exceeds the rendered-pixel limit.");
+  }
+
+  const bitDepth = bytes[24];
+  const colorType = bytes[25];
+  const compression = bytes[26];
+  const filter = bytes[27];
+  const interlace = bytes[28];
+  const allowedDepths = PNG_BIT_DEPTHS[colorType];
+  if (!allowedDepths || !allowedDepths.includes(bitDepth) || compression !== 0 || filter !== 0 || (interlace !== 0 && interlace !== 1)) {
+    throw new Error("The script produced an invalid PNG header.");
+  }
+
+  let offset = 8;
+  let hasIdat = false;
+  let hasIend = false;
+  let hasPlte = false;
+  while (offset < bytes.length) {
+    if (offset + 12 > bytes.length) {
+      throw new Error("The script produced a truncated PNG.");
+    }
+    const chunkLength = bytes.readUInt32BE(offset);
+    if (chunkLength > 0x7fffffff || offset + 12 + chunkLength > bytes.length) {
+      throw new Error("The script produced a truncated PNG.");
+    }
+    const typeStart = offset + 4;
+    const dataEnd = offset + 8 + chunkLength;
+    const expectedCrc = bytes.readUInt32BE(dataEnd);
+    if (crc32(bytes.subarray(typeStart, dataEnd)) !== expectedCrc) {
+      throw new Error("The script produced a corrupted PNG.");
+    }
+    const type = bytes.subarray(typeStart, typeStart + 4).toString("ascii");
+    if (offset > 8 && type === "IHDR") {
+      throw new Error("The script produced an invalid PNG header.");
+    }
+    if (type === "IDAT" && chunkLength > 0) {
+      hasIdat = true;
+    } else if (type === "PLTE") {
+      if (chunkLength === 0 || chunkLength % 3 !== 0 || chunkLength > 256 * 3) {
+        throw new Error("The script produced an invalid PNG.");
+      }
+      hasPlte = true;
+    } else if (type === "IEND") {
+      if (chunkLength !== 0 || dataEnd + 4 !== bytes.length) {
+        throw new Error("The script produced a corrupted PNG.");
+      }
+      hasIend = true;
+    }
+    offset = dataEnd + 4;
+  }
+
+  if (colorType === 3 && !hasPlte) {
+    throw new Error("The script produced an invalid PNG.");
+  }
+  if (!hasIdat || !hasIend) {
+    throw new Error("The script produced an incomplete PNG.");
+  }
+  return bytes;
+}
+
+function collectLogs(output: readonly CodemodeOutputItem[], marker = "", maxChars = 2_000): string {
+  const parts: string[] = [];
+  let length = 0;
+  let seen = false;
+  for (const item of output) {
+    if (length >= maxChars) break;
+    if (item.type !== "text") continue;
+    if (marker && !item.console && item.text === marker) continue;
+    if (seen) {
+      parts.push("\n");
+      length += 1;
+      if (length >= maxChars) break;
+    }
+    seen = true;
+    const remaining = maxChars - length;
+    if (item.text.length <= remaining) {
+      parts.push(item.text);
+      length += item.text.length;
+    } else {
+      parts.push(item.text.slice(0, remaining));
+      length = maxChars;
+      break;
+    }
+  }
+  return parts.join("");
+}
+
+function findRenderedImage(output: readonly CodemodeOutputItem[], marker: string): Extract<CodemodeOutputItem, { type: "image" }> | undefined {
+  for (let i = output.length - 1; i >= 1; i--) {
+    const item = output[i];
+    if (item.type === "text" && !item.console && item.text === marker) {
+      const prev = output[i - 1];
+      if (prev.type === "image") return prev;
+    }
+  }
+  return undefined;
+}
 
 export const mplRender = defineTool({
   name: "mpl_render",
@@ -158,15 +304,20 @@ export const mplRender = defineTool({
 
     const palette = ctx.hasUI ? snapshotPalette(ctx.ui.theme) : null;
     const bundle = await loadBundle();
+    const renderMarker = `__mpl_render_${randomBytes(16).toString("hex")}`;
     const preamble = [
       `const data = ${dataJson};`,
       `const palette = ${serializeJsonLiteral(palette)};`,
-      `const { mpl, render } = ((__bundle) => {`,
+      `const { mpl, render } = ((__bundle, __renderMarker) => {`,
+      `const __image = image;`,
+      `const __text = text;`,
       `const mpl = new Function(__bundle + "\\nreturn mpl;")();`,
+      `const __Figure = mpl.Figure;`,
+      `const __toPNGSync = __Figure.prototype.toPNGSync;`,
       buildRuntime(limits),
       themedSubplots,
       `return { mpl, render };`,
-      `})(${bundle});\n`,
+      `})(${bundle}, ${serializeJsonLiteral(renderMarker)});\n`,
     ].join("\n");
     const firstScriptLine = preamble.split("\n").length;
 
@@ -177,7 +328,7 @@ export const mplRender = defineTool({
     } finally {
       await sandbox.close();
     }
-    const logs = result.output.filter((item) => item.type === "text").map((item) => item.text).join("\n").slice(0, 2_000);
+    const logs = collectLogs(result.output, renderMarker);
     if (!result.ok) {
       const where = new RegExp("codemode\\.js:(\\d+):(\\d+)", "g");
       const stack = (result.error.stack ?? "").replace(where, (frame, line: string, column: string) => {
@@ -193,17 +344,9 @@ export const mplRender = defineTool({
       throw new Error(logs ? `${reason}\nScript output:\n${logs}` : reason);
     }
 
-    const block = [...result.output].reverse().find((item) => item.type === "image");
+    const block = findRenderedImage(result.output, renderMarker);
     if (!block) throw new Error("The script did not call render(fig).");
-    const bytes = Buffer.from(block.data, "base64");
-    if (!isPng(bytes)) throw new Error("The script produced data that is not a PNG.");
-    if (bytes.length < 24) throw new Error("The script produced a truncated PNG.");
-    if (bytes.subarray(12, 16).toString("ascii") !== "IHDR") throw new Error("The script produced an invalid PNG header.");
-    if (bytes.length > limits.png) throw new Error(`The PNG is ${bytes.length} bytes; the limit is ${limits.png}.`);
-    const width = bytes.readUInt32BE(16);
-    const height = bytes.readUInt32BE(20);
-    if (width === 0 || height === 0) throw new Error("The PNG has zero width or height.");
-    if (width * height > limits.pixels) throw new Error("The PNG exceeds the rendered-pixel limit.");
+    validatePng(block.data, limits);
 
     const image = { type: "image", data: block.data, mimeType: "image/png" } as const;
     const content = logs ? [image, { type: "text" as const, text: logs }] : [image];
@@ -216,4 +359,4 @@ export default function (pi: ExtensionAPI) {
   pi.registerTool(mplRender);
 }
 
-export { limits };
+export { collectLogs, limits, validatePng };

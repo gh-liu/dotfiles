@@ -3,9 +3,9 @@ import { dirname, join } from "node:path";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import type { ExtensionToolContext } from "@earendil-works/pi-coding-agent";
-import { limits, loadBundle, mplRender } from "./index.ts";
+import { limits, loadBundle, mplRender, validatePng } from "./index.ts";
 
 function render(params: Parameters<typeof mplRender.execute>[1]) {
   return mplRender.execute("test", params, undefined, undefined, {} as ExtensionToolContext);
@@ -47,11 +47,19 @@ test("uses the live PNG limit inside the sandbox, before base64 encoding", async
   });
 });
 
-test("rejects an oversized PNG on the host even when a script bypasses render()", async () => {
+test("rejects direct image() bypasses and enforces PNG size before decoding on the host", async () => {
+  const bytes = header(1, 1);
+  await expect(render({ script: `image({ type: "image", data: "${bytes.toString("base64")}", mimeType: "image/png" });` }))
+    .rejects.toThrow("did not call render(fig)");
+
   await withLimits({ png: 32 }, async () => {
-    const bytes = header(1, 1);
-    await expect(render({ script: `image({ type: "image", data: "${bytes.toString("base64")}", mimeType: "image/png" });` }))
-      .rejects.toThrow("The PNG is 33 bytes; the limit is 32.");
+    const spy = vi.spyOn(Buffer, "from");
+    try {
+      expect(() => validatePng(bytes.toString("base64"), limits)).toThrow("The PNG is 33 bytes; the limit is 32.");
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 
@@ -130,8 +138,8 @@ test("keeps runtime-only dependencies in dependencies and host-mapped packages o
     "rolldown",
   ]);
   expect(Object.keys(manifest.peerDependencies ?? {}).sort()).toEqual([
-    "@earendil-works/pi-ai",
     "@earendil-works/pi-coding-agent",
     "@earendil-works/pi-tui",
+    "typebox",
   ]);
 });

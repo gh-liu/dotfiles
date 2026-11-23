@@ -9,7 +9,7 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import { subagent } from "./index.ts";
 import { renderResult } from "./renderer.ts";
-import { sessionUsage, type Details, type Result } from "./runner.ts";
+import { bounded, sessionUsage, type Details, type Result } from "./runner.ts";
 
 let root: string;
 let agentDir: string;
@@ -426,3 +426,122 @@ test("thinking text is visible only when expanded, including live and restored a
   delete details.calls[0].thinkingTruncated;
   expect(render(true, false)).not.toContain("OLD_THINKING");
 });
+
+test("tool definition exposes plain enum schema, parallel mode, and model-only exposure", () => {
+  expect(subagent.exposure).toBe("model-only");
+  expect(subagent.executionMode).toBe("parallel");
+  const thinking = (subagent.parameters as any).properties.thinking;
+  expect(thinking).toMatchObject({
+    type: "string",
+    enum: ["off", "minimal", "low", "medium", "high", "xhigh", "max"],
+  });
+  expect(thinking.anyOf).toBeUndefined();
+});
+
+test("bounded truncates multi-byte UTF-8 text without splitting code points or surrogates", () => {
+  for (const sample of ["中".repeat(50), "🚀".repeat(50), `a${"中🚀".repeat(30)}`]) {
+    const out = bounded(sample, 64);
+    expect(Buffer.byteLength(out, "utf8")).toBeLessThanOrEqual(64);
+    expect(out).not.toContain("\uFFFD");
+    expect(Buffer.from(out, "utf8").toString("utf8")).toBe(out);
+    expect(out).toContain("shortened");
+  }
+  expect(() => bounded("hello world", 10)).not.toThrow();
+});
+
+test.each([
+  { description: "   ", task: "Valid task", expected: "description must not be empty" },
+  { description: "Valid", task: " \n\t ", expected: "task must not be empty" },
+])("whitespace-only input fails before launching child: $expected", async ({ description, task, expected }) => {
+  respond = (_body, response) => answer(response, { content: "SHOULD_NOT_RUN" });
+  const result = await subagent.execute("blank", { description, task }, undefined, undefined, await context());
+  expect(result.isError).toBe(true);
+  expect(result.details.status).toBe("error");
+  expect(result.content[0]).toMatchObject({ text: expect.stringContaining(expected) });
+  expect(requests).toHaveLength(0);
+  expect(result.details.sessionFile).toBeUndefined();
+});
+
+test("multiple subagent calls in one parent turn run in parallel with isolated sessions and combined usage", async () => {
+  await writeFile(join(agentDir, "APPEND_SYSTEM.md"), "INHERITED_CODEMODE_GUIDANCE");
+  const pending: Array<{ label: string; response: ServerResponse }> = [];
+  let maxInFlight = 0;
+  let parentTurn = 0;
+  respond = (body, response) => {
+    const text = JSON.stringify(body.messages);
+    if (text.includes("PARENT_PARALLEL_PROMPT")) {
+      parentTurn++;
+      if (parentTurn === 1) {
+        answer(response, { tool_calls: [
+          { index: 0, id: "sub-a", type: "function", function: { name: "subagent", arguments: JSON.stringify({ description: "Task A", task: "CHILD_TASK_A" }) } },
+          { index: 1, id: "sub-b", type: "function", function: { name: "subagent", arguments: JSON.stringify({ description: "Task B", task: "CHILD_TASK_B" }) } },
+        ] }, "tool_calls");
+      } else {
+        answer(response, { content: "Parent combined parallel handoffs" });
+      }
+      return;
+    }
+    const label = text.includes("CHILD_TASK_A") ? "A" : "B";
+    pending.push({ label, response });
+    maxInFlight = Math.max(maxInFlight, pending.length);
+    if (pending.length === 2) {
+      for (const item of pending.splice(0)) {
+        answer(item.response, { content: `HANDOFF_${item.label}` }, "stop",
+          { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 });
+      }
+    }
+  };
+  const ctx = await context();
+  const settings = SettingsManager.create(root, agentDir, { projectTrusted: false });
+  const loader = new DefaultResourceLoader({ cwd: root, agentDir, settingsManager: settings, noExtensions: true, noSkills: true });
+  await loader.reload();
+  const { session } = await createAgentSession({ cwd: root, agentDir, model: ctx.model,
+    settingsManager: settings, resourceLoader: loader, sessionManager: SessionManager.inMemory(root),
+    tools: ["subagent"], customTools: [subagent], thinkingLevel: "off" });
+  try {
+    await session.prompt("PARENT_PARALLEL_PROMPT");
+    expect(maxInFlight).toBe(2);
+    const results = session.messages.filter((message) => message.role === "toolResult") as any[];
+    expect(results).toHaveLength(2);
+    expect(results.map((r) => r.content[0].text)).toEqual(["HANDOFF_A", "HANDOFF_B"]);
+    expect(results.every((r) => !r.isError && r.details.status === "ok")).toBe(true);
+    expect(results[0].details.sessionFile).not.toBe(results[1].details.sessionFile);
+    expect(session.getSessionStats().tokens).toMatchObject({ input: 200, output: 40, total: 240 });
+    const childReq = requests.find((body) => JSON.stringify(body).includes("CHILD_TASK_A"));
+    expect(JSON.stringify(childReq)).toContain("INHERITED_CODEMODE_GUIDANCE");
+    expect(JSON.stringify(childReq)).toContain("extension-registered dynamic providers");
+  } finally { session.dispose(); }
+}, 15000);
+
+test("cancelling a parent turn aborts all in-flight parallel subagent calls cleanly", async () => {
+  let inFlight = 0;
+  let parentSession: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
+  respond = (body, response) => {
+    const text = JSON.stringify(body.messages);
+    if (text.includes("PARENT_ABORT_PARALLEL")) {
+      answer(response, { tool_calls: [
+        { index: 0, id: "sub-1", type: "function", function: { name: "subagent", arguments: JSON.stringify({ description: "Cancel 1", task: "CHILD_WAIT_1" }) } },
+        { index: 1, id: "sub-2", type: "function", function: { name: "subagent", arguments: JSON.stringify({ description: "Cancel 2", task: "CHILD_WAIT_2" }) } },
+      ] }, "tool_calls");
+      return;
+    }
+    inFlight++;
+    response.writeHead(200, { "content-type": "text/event-stream" });
+    response.write(`data: ${JSON.stringify({ id: "hold", object: "chat.completion.chunk", model: "test", choices: [{ index: 0, delta: { role: "assistant", content: "partial" }, finish_reason: null }] })}\n\n`);
+    if (inFlight === 2) void parentSession?.abort();
+  };
+  const ctx = await context();
+  const settings = SettingsManager.create(root, agentDir, { projectTrusted: false });
+  const loader = new DefaultResourceLoader({ cwd: root, agentDir, settingsManager: settings, noExtensions: true, noSkills: true });
+  await loader.reload();
+  ({ session: parentSession } = await createAgentSession({ cwd: root, agentDir, model: ctx.model,
+    settingsManager: settings, resourceLoader: loader, sessionManager: SessionManager.inMemory(root),
+    tools: ["subagent"], customTools: [subagent], thinkingLevel: "off" }));
+  try {
+    await parentSession.prompt("PARENT_ABORT_PARALLEL");
+    expect(inFlight).toBe(2);
+    const results = parentSession.messages.filter((message) => message.role === "toolResult") as any[];
+    expect(results).toHaveLength(2);
+    expect(results.every((r) => r.isError && r.details.status === "cancelled")).toBe(true);
+  } finally { parentSession.dispose(); }
+}, 15000);

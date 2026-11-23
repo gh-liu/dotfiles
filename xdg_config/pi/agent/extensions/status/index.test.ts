@@ -1,3 +1,4 @@
+import { watch } from "node:fs";
 import { homedir } from "node:os";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -8,7 +9,7 @@ import { stripTerminalSequences, visibleWidth } from "@earendil-works/pi-tui";
 // Keep footer tests independent of user settings and filesystem watcher timing.
 vi.mock("node:fs", async (importOriginal) => ({
   ...await importOriginal<typeof import("node:fs")>(),
-  watch: vi.fn(() => ({ close: vi.fn() })),
+  watch: vi.fn(() => ({ close: vi.fn(), on: vi.fn() })),
 }));
 import status, { formatDirectory } from "./index.ts";
 
@@ -26,27 +27,35 @@ function setup(options: {
   idle?: boolean;
   oauth?: boolean;
   provider?: string;
+  model?: { provider: string; id: string; contextWindow: number } | undefined;
   subscriptionAuth?: boolean;
   thinking?: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
   cwd?: string;
   branch?: string | null;
   sessionName?: string;
   entries?: SessionEntry[];
+  contextUsage?: { percent: number | null; contextWindow: number; tokens: number | null };
+  borderColor?: (text: string) => string;
 } = {}) {
-  vi.spyOn(SettingsManager, "create").mockReturnValue({
-    getCompactionEnabled: () => true,
-  } as SettingsManager);
+  let autoCompact = true;
+  vi.spyOn(SettingsManager, "create").mockImplementation(() => ({
+    getCompactionEnabled: () => autoCompact,
+  }) as SettingsManager);
   let entries = options.entries ?? [];
+  let contextUsage = options.contextUsage ?? { percent: 12.5, contextWindow: 100_000, tokens: 12_500 };
   const handlers = new Map<string, Handler>();
   let footerFactory: ((tui: any, theme: Theme, footerData: any) => any) | undefined;
   let editorFactory: ((tui: any, theme: any, keybindings: any) => any) | undefined;
   let idle = options.idle ?? true;
   let sessionName = options.sessionName;
-  const model = {
-    provider: options.provider ?? "example",
-    id: "model",
-    contextWindow: 100_000,
-  };
+  const setWorkingVisible = vi.fn();
+  const model = "model" in options
+    ? options.model
+    : {
+      provider: options.provider ?? "example",
+      id: "model",
+      contextWindow: 100_000,
+    };
   const sessionManager = {
     getEntries: () => entries,
   };
@@ -59,13 +68,13 @@ function setup(options: {
       getProvider: () => ({ auth: { oauth: options.subscriptionAuth ? { isSubscription: true } : undefined } }),
       isUsingOAuth: () => options.oauth ?? false,
     },
-    getContextUsage: () => ({ percent: 12.5, contextWindow: 100_000, tokens: 12_500 }),
+    getContextUsage: () => contextUsage,
     isIdle: () => idle,
     isProjectTrusted: () => true,
     ui: {
       setFooter: (factory: typeof footerFactory) => { footerFactory = factory; },
       setEditorComponent: (factory: typeof editorFactory) => { editorFactory = factory ?? undefined; },
-      setWorkingVisible: vi.fn(),
+      setWorkingVisible,
     },
   } as unknown as ExtensionContext;
   const pi = {
@@ -81,8 +90,17 @@ function setup(options: {
 
   const editor = editorFactory(
     { requestRender: vi.fn(), terminal: { rows: 24 } },
-    { borderColor: (text: string) => text, selectList: {} },
-    {},
+    {
+      borderColor: options.borderColor ?? ((text: string) => text),
+      selectList: {
+        selectedPrefix: (text: string) => text,
+        selectedText: (text: string) => text,
+        description: (text: string) => text,
+        scrollInfo: (text: string) => text,
+        noMatch: (text: string) => text,
+      },
+    },
+    { matches: () => false },
   );
   const editorRaw = (width = 160): string => editor.render(width).join("\n");
   const editorRender = (width = 160) => stripTerminalSequences(editorRaw(width));
@@ -106,18 +124,25 @@ function setup(options: {
     handlers.get("session_shutdown")?.({ type: "session_shutdown" }, context);
   });
 
-  const render = (width = 160) => stripTerminalSequences(component.render(width)[0]);
+  const renderRaw = (width = 160) => component.render(width)[0];
+  const render = (width = 160) => stripTerminalSequences(renderRaw(width));
   const fire = async (event: string, payload: Record<string, unknown> = {}) => {
     await handlers.get(event)?.({ type: event, ...payload }, context);
   };
   return {
     fire,
     render,
+    renderRaw,
+    editor,
     editorRender,
     editorRaw,
+    component,
+    setWorkingVisible,
     setIdle: (next: boolean) => { idle = next; },
     setSessionName: (next: string | undefined) => { sessionName = next; },
     setEntries: (next: SessionEntry[]) => { entries = next; },
+    setContextUsage: (next: typeof contextUsage) => { contextUsage = next; },
+    setAutoCompact: (next: boolean) => { autoCompact = next; },
   };
 }
 
@@ -295,4 +320,223 @@ describe.each([undefined, "1"])("status extension (NO_COLOR=%s)", (noColor) => {
     expect(setup({ oauth: true, subscriptionAuth: true }).render()).toContain("(sub)");
     expect(setup({ provider: "kimi-coding" }).render()).toContain("(sub)");
   });
+
+  test("preserves autocomplete dropdown rows and scroll indicators in editor borders", async () => {
+    const env = setup({ thinking: "high" });
+    env.editor.setAutocompleteProvider({
+      getSuggestions: async () => ({
+        items: [
+          { value: "help", label: "help" },
+          { value: "quit", label: "quit" },
+        ],
+        prefix: "/",
+      }),
+      applyCompletion: (lines: string[], cursorLine: number, cursorCol: number) => ({
+        lines,
+        cursorLine,
+        cursorCol,
+      }),
+    });
+    env.editor.handleInput("/");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    const rawLines = env.editor.render(80);
+    const plainLines = rawLines.map((line: string) => stripTerminalSequences(line));
+    expect(plainLines.some((line: string) => line.includes("help"))).toBe(true);
+    expect(plainLines.some((line: string) => line.includes("quit"))).toBe(true);
+    const quitIndex = plainLines.findIndex((line: string) => line.includes("quit"));
+    expect(rawLines[quitIndex - 2]).toBe(`\u001b[35m${"─".repeat(80)}\u001b[39m`);
+
+    // Scroll overflow indicators should survive in both top and bottom borders.
+    env.editor.setText(Array.from({ length: 14 }, (_, i) => `line ${i + 1}`).join("\n"));
+    env.editor.handleInput("\u001b[A"); // up a few lines to have hidden lines both above and below
+    env.editor.handleInput("\u001b[A");
+    env.editor.handleInput("\u001b[A");
+    env.editor.handleInput("\u001b[A");
+    env.editor.handleInput("\u001b[A");
+    env.editor.handleInput("\u001b[A");
+    const scrolledLines = env.editor.render(80).map((line: string) => stripTerminalSequences(line));
+    expect(scrolledLines[0]).toContain("↑");
+    expect(scrolledLines[0]).toContain("high • model(example)");
+    expect(scrolledLines.at(-1)).toContain("↓");
+  });
+
+  test("keeps ERROR activity after agent_settled until a new run starts", async () => {
+    const env = setup({ idle: false });
+    await env.fire("agent_start");
+    await env.fire("message_update", { assistantMessageEvent: { type: "error", reason: "error" } });
+    await env.fire("message_end", { message: { role: "assistant", stopReason: "error" } });
+    expect(env.render()).toContain("ERROR");
+
+    env.setIdle(true);
+    await env.fire("agent_settled");
+    expect(env.render()).toContain("ERROR");
+
+    env.setIdle(false);
+    await env.fire("agent_start");
+    expect(env.render()).toContain("WAITING");
+  });
+
+  test("handles fs.watch failures, watcher error events, and null filenames", () => {
+    const watchMock = vi.mocked(watch);
+
+    // Synchronous watch failure should not break session_start or active spinner startup.
+    watchMock.mockImplementationOnce(() => {
+      throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    });
+    const envOnThrow = setup({ idle: false });
+    expect(envOnThrow.render()).toContain("WAITING");
+
+    // Watcher error events should be caught and close the watcher; null filenames should refresh.
+    let errorHandler: (() => void) | undefined;
+    let watchCallback: ((eventType: string, filename: string | null) => void) | undefined;
+    const close = vi.fn();
+    watchMock.mockImplementationOnce(((_path: any, _opts: any, cb: any) => {
+      watchCallback = cb;
+      return {
+        close,
+        on: (event: string, listener: () => void) => {
+          if (event === "error") errorHandler = listener;
+        },
+      };
+    }) as any);
+
+    const env = setup();
+    expect(env.render(300)).toContain("(auto)");
+    env.setAutoCompact(false);
+    watchCallback?.("change", null);
+    expect(env.render(300)).not.toContain("(auto)");
+
+    expect(errorHandler).toBeDefined();
+    errorHandler?.();
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  test("refreshes snapshot on session_tree navigation", async () => {
+    const env = setup({ entries: [assistantEntry(usage(10, 5, 0.001, 90))] });
+    expect(env.render(300)).toContain("ctx 12.5%/100k");
+    expect(env.render(300)).toContain("in 10");
+
+    env.setEntries([assistantEntry(usage(200, 40, 0.05, 800))]);
+    env.setContextUsage({ percent: 45.0, contextWindow: 100_000, tokens: 45_000 });
+    await env.fire("session_tree");
+    const line = env.render(300);
+    expect(line).toContain("ctx 45.0%/100k");
+    expect(line).toContain("in 200");
+    expect(line).toContain("$0.050");
+  });
+
+  test("restores RUNNING TOOLS on ui_prompt_end while tool calls are still executing", async () => {
+    const env = setup({ idle: false });
+    await env.fire("tool_execution_start", { toolCallId: "tool-1" });
+    expect(env.render()).toContain("RUNNING TOOLS");
+
+    await env.fire("ui_prompt_start", { kind: "confirm", reason: "ui_prompt" });
+    expect(env.render()).toContain("INPUT NEEDED");
+
+    await env.fire("ui_prompt_end", { kind: "confirm", reason: "ui_prompt" });
+    expect(env.render()).toContain("RUNNING TOOLS");
+  });
+
+  test("does not scan session entries or read settings in non-TUI mode", async () => {
+    const createSpy = vi.spyOn(SettingsManager, "create").mockReturnValue({
+      getCompactionEnabled: () => true,
+    } as SettingsManager);
+    const getEntries = vi.fn(() => []);
+    const handlers = new Map<string, Handler>();
+    const context = {
+      cwd: process.cwd(),
+      mode: "print",
+      model: { provider: "example", id: "model", contextWindow: 100_000 },
+      sessionManager: { getEntries },
+      modelRegistry: { getProvider: () => undefined, isUsingOAuth: () => false },
+      getContextUsage: () => ({ percent: 10, contextWindow: 100_000, tokens: 10_000 }),
+      isIdle: () => true,
+      isProjectTrusted: () => true,
+      ui: { setFooter: vi.fn(), setEditorComponent: vi.fn(), setWorkingVisible: vi.fn() },
+    } as unknown as ExtensionContext;
+    const pi = {
+      getThinkingLevel: () => undefined,
+      getSessionName: () => undefined,
+      on: (event: string, handler: Handler) => { handlers.set(event, handler); },
+    } as unknown as ExtensionAPI;
+
+    status(pi);
+    await handlers.get("session_start")?.({ type: "session_start" }, context);
+    await handlers.get("turn_end")?.({ type: "turn_end" }, context);
+    await handlers.get("agent_settled")?.({ type: "agent_settled" }, context);
+    await handlers.get("model_select")?.({ type: "model_select" }, context);
+    await handlers.get("thinking_level_select")?.({ type: "thinking_level_select" }, context);
+    await handlers.get("session_info_changed")?.({ type: "session_info_changed" }, context);
+    await handlers.get("session_tree")?.({ type: "session_tree" }, context);
+
+    expect(createSpy).not.toHaveBeenCalled();
+    expect(getEntries).not.toHaveBeenCalled();
+  });
+
+  test("cycles 4-frame spinners smoothly without skipping frames across timer wrap", async () => {
+    vi.useFakeTimers();
+    try {
+      const env = setup({ idle: false });
+      await env.fire("message_update", { assistantMessageEvent: { type: "thinking_start" } });
+      const glyphs: string[] = [];
+      for (let i = 0; i < 12; i++) {
+        const match = env.render(300).match(/([∼≈≋]) THINKING/);
+        glyphs.push(match?.[1] ?? "");
+        vi.advanceTimersByTime(80);
+      }
+      expect(glyphs).toEqual(["∼", "≈", "≋", "≈", "∼", "≈", "≋", "≈", "∼", "≈", "≋", "≈"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test("avoids double-wrapping editorTheme.borderColor and trailing spaces when metadata is empty", () => {
+    const env = setup({
+      thinking: undefined,
+      model: undefined,
+      borderColor: (text: string) => `[${text}]`,
+    });
+    env.component.dispose?.();
+    const lines = env.editor.render(20);
+    expect(lines[0]).toBe(`[${"─".repeat(20)}]`);
+    expect(lines.at(-1)).toBe(`[${"─".repeat(20)}]`);
+    expect(lines[0]).not.toContain("[[");
+    expect(lines.at(-1)).not.toContain("[[");
+  });
+
+  test("guards non-finite cache fields and restores working visibility on shutdown", async () => {
+    const infiniteCache = {
+      input: 100,
+      output: 20,
+      cacheRead: Number.POSITIVE_INFINITY,
+      cacheWrite: 0,
+      totalTokens: 120,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0.01 },
+    };
+    const env = setup({ entries: [assistantEntry(infiniteCache)] });
+    expect(env.render(300)).toContain("cache 0%");
+    expect(env.render(300)).not.toContain("NaN");
+
+    const missingCacheWrite = {
+      input: 100,
+      output: 20,
+      cacheRead: 100,
+      cacheWrite: undefined as unknown as number,
+      totalTokens: 220,
+      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0.01 },
+    };
+    env.setEntries([assistantEntry(missingCacheWrite)]);
+    await env.fire("turn_end");
+    expect(env.render(300)).toContain("cache 50%");
+
+    await env.fire("session_shutdown");
+    expect(env.setWorkingVisible).toHaveBeenCalledWith(true);
+  });
+});
+
+test("treats empty NO_COLOR as unset per no-color.org", () => {
+  vi.stubEnv("NO_COLOR", "");
+  const env = setup();
+  expect(env.renderRaw(300)).toContain("\u001b[38;2;");
 });

@@ -1,3 +1,4 @@
+import { crc32, deflateSync } from "node:zlib";
 import { expect, test, vi } from "vitest";
 import type { ExtensionToolContext } from "@earendil-works/pi-coding-agent";
 
@@ -26,14 +27,29 @@ vi.mock("@earendil-works/pi-codemode", () => ({
 
 const { mplRender } = await import("./index.ts");
 
+function chunk(type: string, data: Buffer) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length, 0);
+  const body = Buffer.concat([Buffer.from(type, "ascii"), data]);
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(body), 0);
+  return Buffer.concat([len, body, crc]);
+}
+
 function png(width: number, height: number) {
-  const ihdr = Buffer.alloc(25);
-  ihdr.writeUInt32BE(13, 0);
-  ihdr.write("IHDR", 4, "ascii");
-  ihdr.writeUInt32BE(width, 8);
-  ihdr.writeUInt32BE(height, 12);
-  const bytes = Buffer.concat([Buffer.from("89504e470d0a1a0a", "hex"), ihdr]);
-  return { type: "image", data: bytes.toString("base64"), mimeType: "image/png" };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = 6;
+  const idat = deflateSync(Buffer.alloc((width * 4 + 1) * height));
+  const bytes = Buffer.concat([
+    Buffer.from("89504e470d0a1a0a", "hex"),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", idat),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+  return { type: "image" as const, data: bytes.toString("base64"), mimeType: "image/png" };
 }
 
 const run = (script: string) => mplRender.execute("test", { script }, undefined, undefined, {} as ExtensionToolContext);
@@ -41,7 +57,17 @@ const run = (script: string) => mplRender.execute("test", { script }, undefined,
 test("closes the sandbox after a successful call and passes the documented caps", async () => {
   state.closes = 0;
   state.options.length = 0;
-  state.execute = async () => ({ ok: true, value: undefined, output: [png(1, 1)], calls: [], storeWrites: { set: {}, delete: [] } });
+  state.execute = async (code: string) => {
+    const marker = code.match(/__mpl_render_[0-9a-f]{32}/)?.[0];
+    if (!marker) throw new Error("missing render marker in preamble");
+    return {
+      ok: true,
+      value: undefined,
+      output: [png(1, 1), { type: "text", text: marker }],
+      calls: [],
+      storeWrites: { set: {}, delete: [] },
+    };
+  };
   const result = await run("render(fig);");
   expect(state.closes).toBe(1);
   expect(state.options).toEqual([{ timeoutMs: 20_000, memoryLimitBytes: 256 * 1024 * 1024 }]);
