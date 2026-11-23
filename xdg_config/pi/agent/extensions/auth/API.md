@@ -1,4 +1,4 @@
-# Codex credential import (Pi 1.0.0)
+# Codex credential import (Pi 1.6.0)
 
 The extension retains the built-in `openai-codex` provider and Pi's normal
 request-time OAuth refresh. It does not register a replacement provider, poll,
@@ -6,7 +6,7 @@ refresh tokens itself, or open a second credential store.
 
 ## Public API boundary
 
-Reviewed the installed Pi 1.0.0 `docs/providers.md`, `docs/extensions.md`,
+Reviewed the installed Pi 1.6.0 `docs/providers.md`, `docs/extensions.md`,
 `docs/sdk.md`, authentication-related `docs/configuration.md`, `docs/models.md`,
 `docs/custom-provider.md`, and the SDK credentials and custom-provider examples.
 The shipped declarations establish the exact boundary:
@@ -36,18 +36,22 @@ an equivalent minimal replacement.
 
 - No credential access during extension discovery. Read Codex at `session_start`
   so a later session can see a new source; overlapping starts share one sync.
-- Preserve keychain-first lookup, canonical CODEX_HOME hashing and file fallback.
+- Preserve keychain-first lookup, canonical CODEX_HOME hashing and file fallback,
+  using async process/file I/O so `session_start` does not block the event loop.
   Bound the macOS security command to two seconds. Missing/bad sources are quiet.
 - Compare inside the runtime store's lock. Import when no credential exists
   (including an expired source, allowing Pi's own refresh to bootstrap).
-- For existing auth, update only same-account OAuth with strictly later expiry
-  and a still-valid source. Keep API keys, different accounts, equal/newer tokens,
-  and unknown-age current credentials. Expiry is a conservative ordering proxy,
-  not proof of refresh-token validity; deliberate account switching uses Pi login
-  or logout followed by a new session. No forced override command is added.
+- For existing auth, update only same-account OAuth with a different token pair,
+  strictly later expiry, and a still-valid source. Keep API keys, different
+  accounts, identical/equal/newer tokens, and unknown-age current credentials.
+  Expiry is a conservative ordering proxy, not proof of refresh-token validity;
+  deliberate account switching uses Pi login or logout followed by a new session.
+  No forced override command is added.
 - Preserve existing provider metadata; refresh the public model snapshot offline
-  only after a write. If refresh fails after persistence, retry only refresh on
-  the next session start. Errors never echo storage/provider error payloads.
+  only after a write (or when the persisted same-account credential is not yet
+  reflected by `getProviderAuthStatus("openai-codex")`, e.g. after `/reload`).
+  If refresh fails or is aborted after persistence, retry only refresh on the
+  next session start. Errors never echo storage/provider error payloads.
 
 ## Validation
 

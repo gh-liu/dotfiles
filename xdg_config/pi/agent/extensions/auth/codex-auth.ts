@@ -1,6 +1,6 @@
-import { readFileSync, realpathSync } from "node:fs";
+import { readFile, realpath } from "node:fs/promises";
 import { homedir } from "node:os";
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { isAbsolute, join, resolve } from "node:path";
 
@@ -12,14 +12,22 @@ type ReaderOptions = {
   env?: NodeJS.ProcessEnv;
   platform?: NodeJS.Platform;
   home?: string;
-  readFile?: (path: string, encoding: "utf8") => string;
-  execSecurity?: (args: string[]) => string;
+  readFile?: (path: string, encoding: "utf8") => string | Promise<string>;
+  execSecurity?: (args: string[]) => string | Promise<string>;
 };
 
-export function codexKeychainAccount(codexHome: string): string {
-  const canonical = (() => {
-    try { return realpathSync(codexHome); } catch { return resolve(codexHome); }
-  })();
+function execSecurityDefault(args: string[]): Promise<string> {
+  return new Promise((resolvePromise, rejectPromise) => {
+    const child = execFile("security", args, { encoding: "utf8", timeout: 2000 }, (error, stdout) => {
+      if (error) rejectPromise(error);
+      else resolvePromise(stdout);
+    });
+    child.stdin?.end();
+  });
+}
+
+export async function codexKeychainAccount(codexHome: string): Promise<string> {
+  const canonical = await realpath(codexHome).catch(() => resolve(codexHome));
   return `cli|${createHash("sha256").update(canonical).digest("hex").slice(0, 16)}`;
 }
 
@@ -42,19 +50,19 @@ function keychainPayload(raw: string): unknown {
   try { return JSON.parse(raw); } catch { return undefined; }
 }
 
-export function codexAuth(options: ReaderOptions = {}): AuthResult {
+export async function codexAuth(options: ReaderOptions = {}): Promise<AuthResult> {
   const env = options.env ?? process.env;
   const home = options.home ?? homedir();
   const codexHomeValue = env.CODEX_HOME || join(home, ".codex");
   const codexHome = isAbsolute(codexHomeValue) ? codexHomeValue : resolve(codexHomeValue);
-  const readFile = options.readFile ?? ((path: string, encoding: "utf8") => readFileSync(path, encoding));
+  const read = options.readFile ?? ((path: string, encoding: "utf8") => readFile(path, encoding));
   if ((options.platform ?? process.platform) === "darwin") {
     try {
-      const exec = options.execSecurity ?? ((args: string[]) => execFileSync("security", args, { encoding: "utf8", timeout: 2000, stdio: ["ignore", "pipe", "ignore"] }));
-      const raw = exec(["find-internet-password", "-s", "Codex Auth", "-a", codexKeychainAccount(codexHome), "-w"]);
+      const exec = options.execSecurity ?? execSecurityDefault;
+      const raw = await exec(["find-internet-password", "-s", "Codex Auth", "-a", await codexKeychainAccount(codexHome), "-w"]);
       const result = oauthCredential(keychainPayload(raw));
       if (result[1]) return result;
     } catch { /* fall through to the file */ }
   }
-  try { return oauthCredential(JSON.parse(readFile(join(codexHome, "auth.json"), "utf8"))); } catch { return [{}, false]; }
+  try { return oauthCredential(JSON.parse(await read(join(codexHome, "auth.json"), "utf8"))); } catch { return [{}, false]; }
 }
