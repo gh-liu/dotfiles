@@ -1,4 +1,4 @@
--- Apply with `rex do init_client_settings`.
+-- Apply with `rex do init_client_settings` or `rex do ~/.config/rex/client_setup.lua`.
 -- Commented entries document the current defaults; uncomment to pin a value.
 -- Explicit values make repeated runs idempotent. Omitted entries are not reset.
 -- Enum argument casts enable value completion in EmmyLua LS.
@@ -6,7 +6,7 @@
 -- Import Nord and Nord Light on a new machine before selecting them here:
 -- rex do client.theme.import path='/Applications/Ghostty.app/Contents/Resources/ghostty/themes/Nord'
 -- rex do client.theme.import path='/Applications/Ghostty.app/Contents/Resources/ghostty/themes/Nord Light'
-return function ()
+local function apply_client_settings()
         -- Notifications
         rex.client.queue(
                 "client.setting.notifications.overview.position",
@@ -14,7 +14,6 @@ return function ()
         )
         -- rex.client.queue("client.setting.notifications.activity.tab_activity", { value = true })
         -- rex.client.queue("client.setting.notifications.activity.idle_in_activity", { value = true })
-        rex.client.queue("client.setting.notifications.activity.processes_in_activity", { value = true })
         -- rex.client.queue("client.setting.notifications.activity.system_notifications", { value = true })
         -- rex.client.queue("client.setting.notifications.activity.dock_badge", { value = true })
         rex.client.queue("client.setting.notifications.activity.sounds", { value = false })
@@ -162,3 +161,9 @@ return function ()
         -- rex.client.queue("client.setting.developer.experimental.terminal_anchor", { value = "top" } --[[@as RexClientSettingDeveloperExperimentalTerminalAnchorActionArgs]])
         -- rex.client.queue("client.setting.developer.experimental.new_quick_switcher", { value = false })
 end
+
+-- require passes the module name. A standalone Rex script receives no varargs.
+if ... == "client_setup" then
+        return apply_client_settings
+end
+apply_client_settings()

@@ -77,7 +77,6 @@
 ---| "client.setting.interface.window.window_width"
 ---| "client.setting.notifications.activity.dock_badge"
 ---| "client.setting.notifications.activity.idle_in_activity"
----| "client.setting.notifications.activity.processes_in_activity"
 ---| "client.setting.notifications.activity.sound_volume"
 ---| "client.setting.notifications.activity.sounds"
 ---| "client.setting.notifications.activity.status_blocked"
@@ -133,6 +132,8 @@
 ---| "client.sidebar.activity.toggle"
 ---| "client.sidebar.filter.focus"
 ---| "client.sidebar.toggle"
+---| "client.tab.back"
+---| "client.tab.back.in_session"
 ---| "client.tab.close"
 ---| "client.tab.close_others"
 ---| "client.tab.goto"
@@ -140,9 +141,12 @@
 ---| "client.tab.move.backward"
 ---| "client.tab.move.forward"
 ---| "client.tab.move_to_new_window"
+---| "client.tab.mute"
 ---| "client.tab.new"
 ---| "client.tab.next"
 ---| "client.tab.previous"
+---| "client.tab.recent"
+---| "client.tab.recent.in_session"
 ---| "client.tab.rename"
 ---| "client.tab_style.toggle"
 ---| "client.theme.change"
@@ -165,17 +169,36 @@
 ---| "pane.close_others"
 ---| "pane.copy"
 ---| "pane.copy_id"
+---| "pane.copy_mode.copy_to_line_end"
+---| "pane.copy_mode.count"
+---| "pane.copy_mode.enter"
+---| "pane.copy_mode.exit"
+---| "pane.copy_mode.find"
+---| "pane.copy_mode.find_again"
+---| "pane.copy_mode.move"
+---| "pane.copy_mode.search"
+---| "pane.copy_mode.search_again"
+---| "pane.copy_mode.select"
+---| "pane.copy_mode.swap_ends"
+---| "pane.copy_mode.yank"
 ---| "pane.float"
 ---| "pane.focus"
 ---| "pane.focus.down"
 ---| "pane.focus.left"
 ---| "pane.focus.right"
 ---| "pane.focus.up"
+---| "pane.focus_back"
+---| "pane.focus_back.in_session"
+---| "pane.focus_back.in_tab"
 ---| "pane.focus_next"
 ---| "pane.focus_previous"
+---| "pane.focus_recent"
+---| "pane.focus_recent.in_tab"
 ---| "pane.go_to"
 ---| "pane.go_to_directory"
+---| "pane.insert_file"
 ---| "pane.insert_path"
+---| "pane.insert_photo"
 ---| "pane.minimize_all_floating"
 ---| "pane.minimize_floating"
 ---| "pane.move"
@@ -199,13 +222,16 @@
 ---| "pane.split.up"
 ---| "pane.view_activity"
 ---| "pane.zoom"
+---| "session.back"
 ---| "session.close"
 ---| "session.collapse"
 ---| "session.collapse_others"
 ---| "session.expand"
 ---| "session.new"
+---| "session.new.on_host"
 ---| "session.next"
 ---| "session.previous"
+---| "session.recent"
 ---| "session.refresh"
 ---| "session.rename"
 ---| "session.select"
@@ -394,11 +420,11 @@
 ---@field kind? string
 ---The client's label, such as studio. Two clients can share a label.
 ---@field label? string
----The program's name, such as Rex.app or rex.
+---The program's name, such as Rex.app or rex. If it is longer than 256 bytes, the server keeps only the first 256.
 ---@field name? string
 ---What the client runs on: macos, ios, linux, windows, freebsd, web, or other. Left out if the client didn't say. Treat a platform you don't know as other.
 ---@field platform? string
----The program's version, as the program prints it, such as 1.6.0.
+---The program's version, as the program prints it, such as 1.6.0. If it is longer than 256 bytes, the server keeps only the first 256.
 ---@field version? string
 
 ---Who the client is, as the server identified it when it accepted the connection.
@@ -658,11 +684,11 @@
 ---@field kind? string
 ---The client's label, such as studio. Two clients can share a label.
 ---@field label? string
----The program's name, such as Rex.app or rex.
+---The program's name, such as Rex.app or rex. If it is longer than 256 bytes, the server keeps only the first 256.
 ---@field name? string
 ---What the client runs on: macos, ios, linux, windows, freebsd, web, or other. Left out if the client didn't say. Treat a platform you don't know as other.
 ---@field platform? string
----The program's version, as the program prints it, such as 1.6.0.
+---The program's version, as the program prints it, such as 1.6.0. If it is longer than 256 bytes, the server keeps only the first 256.
 ---@field version? string
 
 ---Who the client is, as the server identified it when it accepted the connection.
@@ -701,7 +727,7 @@
 ---@field once? boolean
 
 ---@class RexClientPerformArgs
----The name of an action the client declared, such as pane.split. client.inspect lists them.
+---The name of an action the client declared, such as pane.split. client.inspect lists them. At most 256 bytes.
 ---@field action string
 ---The action's arguments, as a JSON object. Leave it out if there are none.
 ---@field args? any
@@ -725,16 +751,16 @@
 ---@class RexClientReplyArgs
 ---The call_id of the event you're answering.
 ---@field call_id string
----Why the call failed or the action wasn't performed. Set this or result, not both.
+---Why the call failed, the action wasn't performed, or the prompt couldn't be shown. Set this or result, not both.
 ---@field error? nil|RexClientReplyArgsError
----The call's result, or what the action returned. Use null if there is none. Set this or error, not both.
+---The call's result, what the action returned, or the prompt's answer. For a call or action with no output, use null. For a prompt, send a prompt result: text, ids, or cancelled. Set this or error, not both.
 ---@field result? any
 
----Why the call failed or the action wasn't performed. Set this or result, not both.
+---Why the call failed, the action wasn't performed, or the prompt couldn't be shown. Set this or result, not both.
 ---@class RexClientReplyArgsError
 ---The kind of failure, as an error code such as not_found, refused, or internal.
 ---@field code string
----What went wrong, written for people.
+---What went wrong, written for people. In client.reply, a message longer than 4096 bytes is shortened and ends with an ellipsis.
 ---@field message string
 
 ---@class RexClientReplyResult
@@ -952,10 +978,6 @@
 ---@field value? boolean
 
 ---@class RexClientSettingNotificationsActivityIdleInActivityActionArgs
----true turns the setting on and false turns it off. Omit to toggle.
----@field value? boolean
-
----@class RexClientSettingNotificationsActivityProcessesInActivityActionArgs
 ---true turns the setting on and false turns it off. Omit to toggle.
 ---@field value? boolean
 
@@ -1221,6 +1243,12 @@
 
 ---@class RexClientTabMoveActionArgs
 ---@field direction "backward"|"forward"
+
+---@class RexClientTabMuteActionArgs
+---true mutes the tab and false unmutes it. Omit to toggle.
+---@field muted? boolean
+---The identifier that the tab's server assigned to its window. If omitted, the selected tab.
+---@field window_id? string
 
 ---@class RexClientThemeChangeActionArgs
 ---Theme name or ID to fuzzy-match. Omit to open the theme picker.
@@ -1838,6 +1866,32 @@
 ---True if the host was in the list before the call and isn't now. False if there was nothing to remove.
 ---@field removed boolean
 
+---@class RexPaneCopyModeCountActionArgs
+---The digit to add to the count, from 0 through 9.
+---@field digit integer
+
+---@class RexPaneCopyModeFindActionArgs
+---@field direction "forward"|"backward"
+---Whether to stop one character short of the match. The default is false.
+---@field till? boolean
+
+---@class RexPaneCopyModeFindAgainActionArgs
+---@field direction "same"|"opposite"
+
+---@class RexPaneCopyModeMoveActionArgs
+---How many times to repeat the motion. The default is the count typed before it, or 1.
+---@field count? integer
+---@field to "left"|"right"|"up"|"down"|"word_forward"|"word_backward"|"word_end"|"big_word_forward"|"big_word_backward"|"big_word_end"|"line_start"|"line_first_non_blank"|"line_end"|"screen_top"|"screen_middle"|"screen_bottom"|"half_page_up"|"half_page_down"|"page_up"|"page_down"|"history_top"|"history_bottom"|"paragraph_backward"|"paragraph_forward"
+
+---@class RexPaneCopyModeSearchActionArgs
+---@field direction "forward"|"backward"
+
+---@class RexPaneCopyModeSearchAgainActionArgs
+---@field direction "same"|"opposite"
+
+---@class RexPaneCopyModeSelectActionArgs
+---@field mode "char"|"line"|"block"
+
 ---@class RexPaneFocusActionArgs
 ---@field direction "left"|"right"|"up"|"down"
 ---Continue from the opposite edge of the layout when no pane lies in the direction. The default is true.
@@ -1897,6 +1951,7 @@
 ---@field sleep function
 ---Exported by Rex; no signature schema is available.
 ---@field stop function
+---@field ui RexRuntimeUi
 ---Exported by Rex; no signature schema is available.
 ---@field unbind function
 ---Exported by Rex; no signature schema is available.
@@ -1944,7 +1999,6 @@
 ---@overload fun(key: string, action: "client.setting.interface.window.window_width", args: RexClientSettingInterfaceWindowWindowWidthActionArgs?)
 ---@overload fun(key: string, action: "client.setting.notifications.activity.dock_badge", args: RexClientSettingNotificationsActivityDockBadgeActionArgs?)
 ---@overload fun(key: string, action: "client.setting.notifications.activity.idle_in_activity", args: RexClientSettingNotificationsActivityIdleInActivityActionArgs?)
----@overload fun(key: string, action: "client.setting.notifications.activity.processes_in_activity", args: RexClientSettingNotificationsActivityProcessesInActivityActionArgs?)
 ---@overload fun(key: string, action: "client.setting.notifications.activity.sound_volume", args: RexClientSettingNotificationsActivitySoundVolumeActionArgs?)
 ---@overload fun(key: string, action: "client.setting.notifications.activity.sounds", args: RexClientSettingNotificationsActivitySoundsActionArgs?)
 ---@overload fun(key: string, action: "client.setting.notifications.activity.status_blocked", args: RexClientSettingNotificationsActivityStatusBlockedActionArgs?)
@@ -1995,10 +2049,18 @@
 ---@overload fun(key: string, action: "client.setting.themes.light.palette", args: RexClientSettingThemesLightPaletteActionArgs)
 ---@overload fun(key: string, action: "client.tab.goto", args: RexClientTabGotoActionArgs)
 ---@overload fun(key: string, action: "client.tab.move", args: RexClientTabMoveActionArgs)
+---@overload fun(key: string, action: "client.tab.mute", args: RexClientTabMuteActionArgs?)
 ---@overload fun(key: string, action: "client.theme.change", args: RexClientThemeChangeActionArgs?)
 ---@overload fun(key: string, action: "client.theme.import", args: RexClientThemeImportActionArgs)
 ---@overload fun(key: string, action: "client.update.set_automation", args: RexClientUpdateSetAutomationActionArgs)
 ---@overload fun(key: string, action: "client.update.set_channel", args: RexClientUpdateSetChannelActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.count", args: RexPaneCopyModeCountActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.find", args: RexPaneCopyModeFindActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.find_again", args: RexPaneCopyModeFindAgainActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.move", args: RexPaneCopyModeMoveActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.search", args: RexPaneCopyModeSearchActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.search_again", args: RexPaneCopyModeSearchAgainActionArgs)
+---@overload fun(key: string, action: "pane.copy_mode.select", args: RexPaneCopyModeSelectActionArgs)
 ---@overload fun(key: string, action: "pane.focus", args: RexPaneFocusActionArgs)
 ---@overload fun(key: string, action: "pane.move", args: RexPaneMoveActionArgs)
 ---@overload fun(key: string, action: "pane.resize", args: RexPaneResizeActionArgs)
@@ -2159,7 +2221,6 @@
 ---@overload fun(action: "client.setting.interface.window.window_width", args: RexClientSettingInterfaceWindowWindowWidthActionArgs?)
 ---@overload fun(action: "client.setting.notifications.activity.dock_badge", args: RexClientSettingNotificationsActivityDockBadgeActionArgs?)
 ---@overload fun(action: "client.setting.notifications.activity.idle_in_activity", args: RexClientSettingNotificationsActivityIdleInActivityActionArgs?)
----@overload fun(action: "client.setting.notifications.activity.processes_in_activity", args: RexClientSettingNotificationsActivityProcessesInActivityActionArgs?)
 ---@overload fun(action: "client.setting.notifications.activity.sound_volume", args: RexClientSettingNotificationsActivitySoundVolumeActionArgs?)
 ---@overload fun(action: "client.setting.notifications.activity.sounds", args: RexClientSettingNotificationsActivitySoundsActionArgs?)
 ---@overload fun(action: "client.setting.notifications.activity.status_blocked", args: RexClientSettingNotificationsActivityStatusBlockedActionArgs?)
@@ -2210,10 +2271,18 @@
 ---@overload fun(action: "client.setting.themes.light.palette", args: RexClientSettingThemesLightPaletteActionArgs)
 ---@overload fun(action: "client.tab.goto", args: RexClientTabGotoActionArgs)
 ---@overload fun(action: "client.tab.move", args: RexClientTabMoveActionArgs)
+---@overload fun(action: "client.tab.mute", args: RexClientTabMuteActionArgs?)
 ---@overload fun(action: "client.theme.change", args: RexClientThemeChangeActionArgs?)
 ---@overload fun(action: "client.theme.import", args: RexClientThemeImportActionArgs)
 ---@overload fun(action: "client.update.set_automation", args: RexClientUpdateSetAutomationActionArgs)
 ---@overload fun(action: "client.update.set_channel", args: RexClientUpdateSetChannelActionArgs)
+---@overload fun(action: "pane.copy_mode.count", args: RexPaneCopyModeCountActionArgs)
+---@overload fun(action: "pane.copy_mode.find", args: RexPaneCopyModeFindActionArgs)
+---@overload fun(action: "pane.copy_mode.find_again", args: RexPaneCopyModeFindAgainActionArgs)
+---@overload fun(action: "pane.copy_mode.move", args: RexPaneCopyModeMoveActionArgs)
+---@overload fun(action: "pane.copy_mode.search", args: RexPaneCopyModeSearchActionArgs)
+---@overload fun(action: "pane.copy_mode.search_again", args: RexPaneCopyModeSearchAgainActionArgs)
+---@overload fun(action: "pane.copy_mode.select", args: RexPaneCopyModeSelectActionArgs)
 ---@overload fun(action: "pane.focus", args: RexPaneFocusActionArgs)
 ---@overload fun(action: "pane.move", args: RexPaneMoveActionArgs)
 ---@overload fun(action: "pane.resize", args: RexPaneResizeActionArgs)
@@ -2270,7 +2339,6 @@
 ---@overload fun(action: "client.setting.interface.window.window_width", args: RexClientSettingInterfaceWindowWindowWidthActionArgs?): any|nil, string?
 ---@overload fun(action: "client.setting.notifications.activity.dock_badge", args: RexClientSettingNotificationsActivityDockBadgeActionArgs?): any|nil, string?
 ---@overload fun(action: "client.setting.notifications.activity.idle_in_activity", args: RexClientSettingNotificationsActivityIdleInActivityActionArgs?): any|nil, string?
----@overload fun(action: "client.setting.notifications.activity.processes_in_activity", args: RexClientSettingNotificationsActivityProcessesInActivityActionArgs?): any|nil, string?
 ---@overload fun(action: "client.setting.notifications.activity.sound_volume", args: RexClientSettingNotificationsActivitySoundVolumeActionArgs?): any|nil, string?
 ---@overload fun(action: "client.setting.notifications.activity.sounds", args: RexClientSettingNotificationsActivitySoundsActionArgs?): any|nil, string?
 ---@overload fun(action: "client.setting.notifications.activity.status_blocked", args: RexClientSettingNotificationsActivityStatusBlockedActionArgs?): any|nil, string?
@@ -2321,10 +2389,18 @@
 ---@overload fun(action: "client.setting.themes.light.palette", args: RexClientSettingThemesLightPaletteActionArgs): any|nil, string?
 ---@overload fun(action: "client.tab.goto", args: RexClientTabGotoActionArgs): any|nil, string?
 ---@overload fun(action: "client.tab.move", args: RexClientTabMoveActionArgs): any|nil, string?
+---@overload fun(action: "client.tab.mute", args: RexClientTabMuteActionArgs?): any|nil, string?
 ---@overload fun(action: "client.theme.change", args: RexClientThemeChangeActionArgs?): any|nil, string?
 ---@overload fun(action: "client.theme.import", args: RexClientThemeImportActionArgs): any|nil, string?
 ---@overload fun(action: "client.update.set_automation", args: RexClientUpdateSetAutomationActionArgs): any|nil, string?
 ---@overload fun(action: "client.update.set_channel", args: RexClientUpdateSetChannelActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.count", args: RexPaneCopyModeCountActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.find", args: RexPaneCopyModeFindActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.find_again", args: RexPaneCopyModeFindAgainActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.move", args: RexPaneCopyModeMoveActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.search", args: RexPaneCopyModeSearchActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.search_again", args: RexPaneCopyModeSearchAgainActionArgs): any|nil, string?
+---@overload fun(action: "pane.copy_mode.select", args: RexPaneCopyModeSelectActionArgs): any|nil, string?
 ---@overload fun(action: "pane.focus", args: RexPaneFocusActionArgs): any|nil, string?
 ---@overload fun(action: "pane.move", args: RexPaneMoveActionArgs): any|nil, string?
 ---@overload fun(action: "pane.resize", args: RexPaneResizeActionArgs): any|nil, string?
@@ -2567,6 +2643,12 @@
 ---@class RexRuntimeSessionZoomBlock
 ---@overload fun(args: RexSessionZoomBlockArgs): RexSessionZoomBlockResult|nil, string?
 ---@overload fun(...: any): any
+
+---@class RexRuntimeUi
+---Exported by Rex; no signature schema is available.
+---@field input function
+---Exported by Rex; no signature schema is available.
+---@field pick function
 
 ---@class RexServerAppleGrantFileAccessArgs
 ---The files to make readable, in the order they were dropped or pasted. At most 256.
@@ -3696,11 +3778,11 @@
 ---@field kind? string
 ---The client's label, such as studio. Two clients can share a label.
 ---@field label? string
----The program's name, such as Rex.app or rex.
+---The program's name, such as Rex.app or rex. If it is longer than 256 bytes, the server keeps only the first 256.
 ---@field name? string
 ---What the client runs on: macos, ios, linux, windows, freebsd, web, or other. Left out if the client didn't say. Treat a platform you don't know as other.
 ---@field platform? string
----The program's version, as the program prints it, such as 1.6.0.
+---The program's version, as the program prints it, such as 1.6.0. If it is longer than 256 bytes, the server keeps only the first 256.
 ---@field version? string
 
 ---Who the client is, as the server identified it when it accepted the connection.
