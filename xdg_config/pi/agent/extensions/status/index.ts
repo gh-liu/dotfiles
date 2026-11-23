@@ -4,16 +4,16 @@
  * Pi event                                          Footer activity
  * ------------------------------------------------  ----------------
  * session_start (idle), agent_settled (idle, unless ERROR)   READY
- * session_start (active), agent_start               WAITING
- * assistant start/done or content phase end         WAITING
+ * session_start (active), before_agent_start, agent_start    WAITING
+ * content phase end or assistant message_end (non-error)     WAITING
  * thinking_start, thinking_delta                    THINKING
  * text_start, text_delta                            STREAMING
  * toolcall_start, toolcall_delta                    TOOL CALLING
  * tool_execution_start, tool_execution_update       RUNNING TOOLS
  * last tool_execution_end                           WAITING
  * session_before_compact                            COMPACTING
- * ui_prompt_start                                   INPUT NEEDED
- * assistant provider error                          ERROR
+ * ui_prompt_start (overlay over base activity)      INPUT NEEDED
+ * assistant provider error / compaction failure     ERROR
  *
  * WAITING is the conservative fallback while the agent is active but Pi exposes no
  * current thinking, text streaming, or tool execution activity.
@@ -41,6 +41,8 @@ type Activity =
   | "compacting"
   | "awaiting_user"
   | "error";
+
+type BaseActivity = Exclude<Activity, "awaiting_user">;
 
 const ACTIVE_SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"] as const;
 const THINKING_FRAMES = ["∼", "≈", "≋", "≈"] as const;
@@ -416,7 +418,7 @@ function renderStatusLine(
 }
 
 export default function status(pi: ExtensionAPI) {
-  let activity: Activity = "ready";
+  let baseActivity: BaseActivity = "ready";
   let currentFooterTheme: Theme | undefined;
   let currentSessionManager: ExtensionContext["sessionManager"] | undefined;
   let snapshot: StatusSnapshot | undefined;
@@ -425,7 +427,11 @@ export default function status(pi: ExtensionAPI) {
   let spinnerTimer: ReturnType<typeof setInterval> | undefined;
   let settingsWatcher: FSWatcher | undefined;
   let uiPromptActive = false;
+  let agentRunActive = false;
+  let compacting = false;
   const executingToolCalls = new Set<string>();
+
+  const currentActivity = (): Activity => (uiPromptActive ? "awaiting_user" : baseActivity);
 
   const stopSpinner = () => {
     if (spinnerTimer !== undefined) clearInterval(spinnerTimer);
@@ -441,11 +447,15 @@ export default function status(pi: ExtensionAPI) {
     }, 80);
   };
 
-  const setActivity = (next: Activity) => {
-    activity = uiPromptActive ? "awaiting_user" : next;
-    if (ACTIVITY_DISPLAY[activity].spinner.length > 0) startSpinner();
+  const syncActivity = () => {
+    if (ACTIVITY_DISPLAY[currentActivity()].spinner.length > 0) startSpinner();
     else stopSpinner();
     requestRender();
+  };
+
+  const setBaseActivity = (next: BaseActivity) => {
+    baseActivity = next;
+    syncActivity();
   };
 
   const stopSettingsWatcher = () => {
@@ -460,18 +470,31 @@ export default function status(pi: ExtensionAPI) {
     requestRender();
   };
 
+  const activityAfterCompaction = (
+    ctx: ExtensionContext,
+    event: { reason?: string; willRetry?: boolean },
+  ): BaseActivity => {
+    if (event.willRetry) return "waiting";
+    if (event.reason === "manual") return "ready";
+    return agentRunActive || !ctx.isIdle() ? "waiting" : "ready";
+  };
+
   pi.on("session_start", (_event, ctx) => {
     stopSpinner();
     stopSettingsWatcher();
     executingToolCalls.clear();
     uiPromptActive = false;
+    compacting = false;
     if (ctx.mode !== "tui") {
+      agentRunActive = false;
+      baseActivity = "ready";
       currentSessionManager = undefined;
       snapshot = undefined;
       return;
     }
     currentSessionManager = ctx.sessionManager;
-    activity = ctx.isIdle() ? "ready" : "waiting";
+    agentRunActive = !ctx.isIdle();
+    baseActivity = ctx.isIdle() ? "ready" : "waiting";
     snapshot = readSnapshot(pi, ctx);
 
     ctx.ui.setWorkingVisible(false);
@@ -514,7 +537,7 @@ export default function status(pi: ExtensionAPI) {
             renderStatusLine(
               theme,
               width,
-              activity,
+              currentActivity(),
               spinnerFrame,
               snapshot ?? readSnapshot(pi, ctx),
               footerData.getGitBranch(),
@@ -546,31 +569,35 @@ export default function status(pi: ExtensionAPI) {
     } catch {
       settingsWatcher = undefined;
     }
-    if (ACTIVITY_DISPLAY[activity].spinner.length > 0) startSpinner();
+    if (ACTIVITY_DISPLAY[currentActivity()].spinner.length > 0) startSpinner();
+  });
+
+  pi.on("before_agent_start", (_event, ctx) => {
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    agentRunActive = true;
+    compacting = false;
+    executingToolCalls.clear();
+    setBaseActivity("waiting");
   });
 
   pi.on("agent_start", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    agentRunActive = true;
+    compacting = false;
     executingToolCalls.clear();
-    setActivity("waiting");
+    setBaseActivity("waiting");
   });
 
   pi.on("ui_prompt_start", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     uiPromptActive = true;
-    setActivity("awaiting_user");
+    syncActivity();
   });
 
   pi.on("ui_prompt_end", (_event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     uiPromptActive = false;
-    setActivity(
-      executingToolCalls.size > 0
-        ? "running_tools"
-        : ctx.isIdle()
-          ? "ready"
-          : "waiting",
-    );
+    syncActivity();
   });
 
   pi.on("message_update", (event, ctx) => {
@@ -581,29 +608,29 @@ export default function status(pi: ExtensionAPI) {
       case "text_end":
       case "toolcall_end":
       case "done":
-        setActivity("waiting");
+        setBaseActivity("waiting");
         break;
       case "thinking_start":
       case "thinking_delta":
-        setActivity("thinking");
+        setBaseActivity("thinking");
         break;
       case "text_start":
       case "text_delta":
-        setActivity("streaming");
+        setBaseActivity("streaming");
         break;
       case "toolcall_start":
       case "toolcall_delta":
-        setActivity("tool_calling");
+        setBaseActivity("tool_calling");
         break;
       case "error":
-        setActivity(event.assistantMessageEvent.reason === "error" ? "error" : "waiting");
+        setBaseActivity(event.assistantMessageEvent.reason === "error" ? "error" : "waiting");
         break;
     }
   });
 
   pi.on("message_end", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui" || event.message.role !== "assistant") return;
-    setActivity(
+    setBaseActivity(
       event.message.stopReason === "error"
         ? "error"
         : executingToolCalls.size > 0
@@ -615,26 +642,28 @@ export default function status(pi: ExtensionAPI) {
   pi.on("tool_execution_start", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     executingToolCalls.add(event.toolCallId);
-    setActivity("running_tools");
+    setBaseActivity("running_tools");
   });
 
   pi.on("tool_execution_update", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     executingToolCalls.add(event.toolCallId);
-    setActivity("running_tools");
+    setBaseActivity("running_tools");
   });
 
   pi.on("tool_execution_end", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
     executingToolCalls.delete(event.toolCallId);
-    setActivity(executingToolCalls.size > 0 ? "running_tools" : "waiting");
+    setBaseActivity(executingToolCalls.size > 0 ? "running_tools" : "waiting");
   });
 
   pi.on("agent_settled", (_event, ctx) => {
-    if (!isCurrentSession(ctx) || ctx.mode !== "tui" || !ctx.isIdle()) return;
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    agentRunActive = false;
     executingToolCalls.clear();
-    if (activity !== "error") setActivity("ready");
-    refresh(ctx);
+    snapshot = readSnapshot(pi, ctx);
+    if (ctx.isIdle() && baseActivity !== "error") setBaseActivity("ready");
+    else requestRender();
   });
 
   pi.on("turn_end", (_event, ctx) => {
@@ -650,20 +679,34 @@ export default function status(pi: ExtensionAPI) {
     if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
   });
   pi.on("session_tree", (_event, ctx) => {
-    if (isCurrentSession(ctx) && ctx.mode === "tui") refresh(ctx);
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    snapshot = readSnapshot(pi, ctx);
+    if (baseActivity === "error" && ctx.isIdle()) setBaseActivity("ready");
+    else requestRender();
   });
   pi.on("session_before_compact", (_event, ctx) => {
-    if (isCurrentSession(ctx) && ctx.mode === "tui") setActivity("compacting");
+    if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
+    compacting = true;
+    setBaseActivity("compacting");
   });
   pi.on("session_compact", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    setActivity(event.willRetry || !ctx.isIdle() ? "waiting" : "ready");
-    refresh(ctx);
+    compacting = false;
+    snapshot = readSnapshot(pi, ctx);
+    setBaseActivity(activityAfterCompaction(ctx, event));
   });
   pi.on("session_compact_failed", (event, ctx) => {
     if (!isCurrentSession(ctx) || ctx.mode !== "tui") return;
-    setActivity(event.aborted ? (ctx.isIdle() ? "ready" : "waiting") : "error");
-    refresh(ctx);
+    const wasCompacting = compacting;
+    compacting = false;
+    snapshot = readSnapshot(pi, ctx);
+    if (event.aborted) {
+      setBaseActivity(activityAfterCompaction(ctx, event));
+    } else if (wasCompacting) {
+      setBaseActivity("error");
+    } else {
+      requestRender();
+    }
   });
 
   pi.on("session_shutdown", (_event, ctx) => {
@@ -675,6 +718,9 @@ export default function status(pi: ExtensionAPI) {
     stopSettingsWatcher();
     executingToolCalls.clear();
     uiPromptActive = false;
+    agentRunActive = false;
+    compacting = false;
+    baseActivity = "ready";
     currentSessionManager = undefined;
     currentFooterTheme = undefined;
     snapshot = undefined;

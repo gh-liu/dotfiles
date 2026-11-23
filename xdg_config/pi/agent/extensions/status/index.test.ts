@@ -250,7 +250,7 @@ describe.each([undefined, "1"])("status extension (NO_COLOR=%s)", (noColor) => {
     await env.fire("message_update", { assistantMessageEvent: { type: "thinking_delta" } });
     expect(env.render()).toContain("INPUT NEEDED");
     await env.fire("ui_prompt_end", { kind: "confirm", reason: "ui_prompt" });
-    expect(env.render()).toContain("WAITING");
+    expect(env.render()).toContain("THINKING");
 
     await env.fire("session_before_compact");
     expect(env.render()).toContain("COMPACTING");
@@ -532,6 +532,89 @@ describe.each([undefined, "1"])("status extension (NO_COLOR=%s)", (noColor) => {
 
     await env.fire("session_shutdown");
     expect(env.setWorkingVisible).toHaveBeenCalledWith(true);
+  });
+
+  test("returns to READY on manual session_compact even while ctx.isIdle() is still false", async () => {
+    const env = setup();
+    // Pi clears _compactionAbortController after emitting session_compact, so isIdle() is false during the event.
+    env.setIdle(false);
+    await env.fire("session_before_compact", { reason: "manual", willRetry: false });
+    expect(env.render()).toContain("COMPACTING");
+
+    await env.fire("session_compact", { reason: "manual", willRetry: false });
+    expect(env.render()).toContain("READY");
+  });
+
+  test("keeps WAITING after auto-compaction until agent_settled when idle", async () => {
+    const env = setup({ idle: false });
+    await env.fire("agent_start");
+    await env.fire("session_before_compact", { reason: "threshold", willRetry: false });
+    expect(env.render()).toContain("COMPACTING");
+
+    await env.fire("session_compact", { reason: "threshold", willRetry: false });
+    expect(env.render()).toContain("WAITING");
+
+    env.setIdle(true);
+    await env.fire("agent_settled");
+    expect(env.render()).toContain("READY");
+  });
+
+  test("ignores compaction precondition failures before session_before_compact", async () => {
+    const env = setup();
+    expect(env.render()).toContain("READY");
+
+    await env.fire("session_compact_failed", { reason: "manual", aborted: false, willRetry: false });
+    expect(env.render()).toContain("READY");
+  });
+
+  test("preserves underlying ERROR and COMPACTING across ui_prompt overlay", async () => {
+    const env = setup({ idle: false });
+    await env.fire("agent_start");
+    await env.fire("message_end", { message: { role: "assistant", stopReason: "error" } });
+    env.setIdle(true);
+    await env.fire("agent_settled");
+    expect(env.render()).toContain("ERROR");
+
+    // Opening and dismissing a UI prompt while idle must not clear ERROR.
+    await env.fire("ui_prompt_start", { kind: "select", reason: "ui_prompt" });
+    expect(env.render()).toContain("INPUT NEEDED");
+    await env.fire("ui_prompt_end", { kind: "select", reason: "ui_prompt" });
+    expect(env.render()).toContain("ERROR");
+
+    // Confirmation prompt inside session_before_compact must restore COMPACTING.
+    env.setIdle(false);
+    await env.fire("session_before_compact", { reason: "manual", willRetry: false });
+    await env.fire("ui_prompt_start", { kind: "confirm", reason: "ui_prompt" });
+    expect(env.render()).toContain("INPUT NEEDED");
+    await env.fire("ui_prompt_end", { kind: "confirm", reason: "ui_prompt" });
+    expect(env.render()).toContain("COMPACTING");
+
+    // Background error + settle while prompt is open must surface ERROR on prompt close.
+    await env.fire("session_compact", { reason: "manual", willRetry: false });
+    env.setIdle(false);
+    await env.fire("before_agent_start");
+    await env.fire("ui_prompt_start", { kind: "custom", reason: "ui_prompt" });
+    await env.fire("message_end", { message: { role: "assistant", stopReason: "error" } });
+    env.setIdle(true);
+    await env.fire("agent_settled");
+    expect(env.render()).toContain("INPUT NEEDED");
+    await env.fire("ui_prompt_end", { kind: "custom", reason: "ui_prompt" });
+    expect(env.render()).toContain("ERROR");
+  });
+
+  test("transitions to WAITING on before_agent_start and clears ERROR on session_tree when idle", async () => {
+    const env = setup();
+    env.setIdle(false);
+    await env.fire("before_agent_start");
+    expect(env.render()).toContain("WAITING");
+
+    await env.fire("message_end", { message: { role: "assistant", stopReason: "error" } });
+    env.setIdle(true);
+    await env.fire("agent_settled");
+    expect(env.render()).toContain("ERROR");
+
+    await env.fire("session_tree");
+    expect(env.render()).toContain("READY");
   });
 });
 
