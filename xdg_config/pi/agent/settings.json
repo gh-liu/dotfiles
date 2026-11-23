@@ -15,7 +15,8 @@
     "+codemode"
   ],
   "packages": [],
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.2-sol",
-  "defaultThinkingLevel": "medium"
+  "defaultProvider": "magpie",
+  "defaultModel": "group/mixup",
+  "defaultThinkingLevel": "high",
+  "lastChangelogVersion": "1.6.0"
 }

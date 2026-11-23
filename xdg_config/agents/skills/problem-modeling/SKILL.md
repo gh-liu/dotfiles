@@ -1,11 +1,11 @@
 ---
 name: problem-modeling
-description: Model ambiguous software engineering problems before committing to a solution. Use when requirements, scope, system boundaries, or acceptance criteria are unclear, or when a user proposes a solution without defining the underlying problem, rather than when the goal is clear enough to investigate and implement directly.
+description: Model ambiguous software engineering problems before committing to a solution. Use when requirements, scope, system boundaries, or acceptance criteria are unclear, or when a request proposes a solution without defining the underlying problem, rather than when the goal is clear enough to trace existing code and implement directly.
 ---
 
 # Problem modeling
 
-Turn an ambiguous or solution-shaped request into a clear, bounded, and testable problem model before starting implementation. Inspect available code, documentation, and tests before asking questions. Separate confirmed facts, user-reported context, assumptions, and hypotheses, and never invent unstated motivations, budgets, workloads, or thresholds. Apply only the depth needed to unblock the next engineering decision. Do not modify code until key requirements and acceptance criteria are agreed, or the user explicitly asks to proceed.
+Turn an ambiguous or solution-shaped request into a clear, bounded, and testable problem model before starting implementation. Inspect available code, documentation, and tests first; if the goal and acceptance criteria are already clear, switch to `engineering-workflow`. Separate confirmed facts, user-reported context, assumptions, and hypotheses, and never invent unstated motivations, budgets, workloads, or thresholds. Do not modify code until key requirements and acceptance criteria are agreed, or the user explicitly asks to proceed.
 
 ## Frame the problem
 
@@ -38,7 +38,7 @@ Turn an ambiguous or solution-shaped request into a clear, bounded, and testable
 ## Challenge the model
 
 - Before concluding, check whether the model treats a symptom as a cause, confuses a technology choice with a goal, or assumes an unverified root cause. Verify that it covers key anti-goals and does not miss a simpler alternative.
-- Stop modeling once remaining unknowns have safe defaults or an explicit validation plan and the next action no longer depends on unverified critical assumptions.
+- Apply only the depth needed to unblock the next engineering decision: stop modeling once remaining unknowns have safe defaults or an explicit validation plan and the next action no longer depends on unverified critical assumptions.
 
 ## Communicate the model
 
