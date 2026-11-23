@@ -1,5 +1,6 @@
 import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
+import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import { defineTool, SessionManager, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -21,11 +22,14 @@ async function readParentSessionId(path: string, signal?: AbortSignal): Promise<
   }
 }
 
+const readmePath = fileURLToPath(new URL("./README.md", import.meta.url));
+
 export const listSessions = defineTool({
   name: "list_sessions",
   label: "List sessions",
-  description: "List saved Pi sessions (newest first). `title` is the session name or first user message; `parentSessionId` reflects session ancestry (not message branches) and may point outside filtered results. Use `read` (with `offset`/`limit`) on `path`; raw JSONL includes all branches.",
-  exposure: "deferred",
+  exposure: "direct",
+  promptSnippet: "List saved Pi sessions by directory and title",
+  description: `List saved Pi sessions (newest first) by directory and title. Use when finding or inspecting past Pi sessions instead of scanning session directories with bash; inspect a returned path with read. See ${readmePath} for field semantics and codemode usage.`,
   parameters: Type.Object({
     query: Type.Optional(Type.String({ description: "Case-insensitive title substring (trimmed; empty matches all)." })),
     currentDirectoryOnly: Type.Optional(Type.Boolean({ description: "Restrict to current cwd, excluding subdirs (default true)." })),

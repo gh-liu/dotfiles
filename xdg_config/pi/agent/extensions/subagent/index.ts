@@ -2,23 +2,19 @@ import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import { StringEnum } from "@earendil-works/pi-ai";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { MAX_HANDOFF_BYTES, runSubagent, type Thinking } from "./runner.ts";
+import { runSubagent, type Thinking } from "./runner.ts";
 import { renderCall, renderResult } from "./renderer.ts";
 
 const THINKING_LEVELS = Object.keys({
   off: true, minimal: true, low: true, medium: true, high: true, xhigh: true, max: true,
 } satisfies Record<Thinking, true>) as Thinking[];
 
+const readmePath = fileURLToPath(new URL("./README.md", import.meta.url));
+
 export const subagent = defineTool({
   name: "subagent",
   label: "Subagent",
-  description: `Delegate one bounded task to a fresh agent when context isolation outweighs handoff overhead, or the user requests it. Otherwise work directly; use codemode for scripted tool orchestration. Do not duplicate delegated work.
-
-The child cannot see this conversation or prior calls; supply context and accessible file references. It loads project guidance and skills independently. Tools: read, write, edit, bash, codemode. Parent extensions, MCP tools, permission hooks and runtime-only provider configuration are not inherited.
-
-Calls are synchronous and one-shot: multiple calls in one turn run in parallel; no resume, background work or nested delegation. No total runtime/token/cost cap. The working directory, filesystem and shell environment are shared, not sandboxed. Specify read-only or write boundaries, preserve unrelated changes, avoid overlapping writes across parallel calls and carry user constraints/approvals into task. Never bypass approvals. Cancellation does not roll back changes.
-
-Returns a concise handoff, not independent verification; check evidence and changes before relying on them. Output over ${MAX_HANDOFF_BYTES.toLocaleString("en-US")} UTF-8 bytes or incomplete responses fail; failures return diagnostics, not necessarily the requested format. Read ${fileURLToPath(new URL("./README.md", import.meta.url))} for detailed usage and limits.`,
+  description: `Delegate one bounded task to a fresh isolated agent when context isolation outweighs handoff overhead, or when requested; otherwise work directly or use codemode. The child sees no prior conversation, shares the working directory/shell (changes persist on cancellation), and must never bypass user approvals—specify read-only or write boundaries in task. Read ${readmePath} before delegating for tools, model/thinking overrides, parallelism, and handoff limits.`,
   promptSnippet: "Delegate a bounded task to an isolated agent context with a shared filesystem.",
   exposure: "model-only",
   executionMode: "parallel",

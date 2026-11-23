@@ -1,6 +1,7 @@
 import { mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, expect, test, vi } from "vitest";
 import { createReadTool, SessionManager, type ExtensionToolContext } from "@earendil-works/pi-coding-agent";
 import { listSessions } from "./index.ts";
@@ -12,7 +13,7 @@ afterEach(async () => {
   if (root) await rm(root, { recursive: true, force: true });
 });
 
-test("lists only session metadata across projects, with readable paths and deferred exposure", async () => {
+test("lists only session metadata across projects, with readable paths and direct exposure", async () => {
   root = await mkdtemp(join(tmpdir(), "pi-list-sessions-"));
   vi.stubEnv("PI_CODING_AGENT_DIR", join(root, "agent"));
   const ctx = { cwd: join(root, "project-a") } as ExtensionToolContext;
@@ -25,7 +26,11 @@ test("lists only session metadata across projects, with readable paths and defer
   unnamed.appendMessage({ role: "user", content: "Unnamed request", timestamp: Date.now() });
 
   const result = await listSessions.execute("list", { currentDirectoryOnly: false }, undefined, undefined, ctx);
-  expect(listSessions.exposure).toBe("deferred");
+  const readme = fileURLToPath(new URL("./README.md", import.meta.url));
+  expect(listSessions.exposure).toBe("direct");
+  expect(listSessions.promptSnippet).toContain("Pi sessions");
+  expect(listSessions.description).toContain(readme);
+  expect(listSessions.description.replace(readme, "").length).toBeLessThan(350);
   expect(result.structuredContent).toHaveLength(2);
   expect(result.structuredContent).toEqual(expect.arrayContaining([
     { id: named.getSessionId(), title: "Renamed session", path: named.getSessionFile() },

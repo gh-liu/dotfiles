@@ -1,113 +1,54 @@
 # Subagent
 
-Call `subagent({ description, task, model?, thinking? })` directly as a model tool.
-Each call runs synchronously in a fresh Pi session. The child receives the task
-brief and shares the working directory. It can modify files, and those changes
-persist after cancellation. Multiple calls in the same assistant turn run in
-parallel; callers must avoid overlapping writes across parallel calls. Only the
-parent model can invoke this tool.
+`subagent({ description, task, model?, thinking? })` delegates a bounded task to a fresh Pi session and returns a single handoff. Only the parent model can call it (`exposure: "model-only"`).
+
+## Parameters
+
+| Parameter | Required | Rules & defaults |
+| --- | :---: | --- |
+| `description` | Yes | Short task title shown in the UI (1–160 chars, non-empty). |
+| `task` | Yes | Self-contained brief (non-empty). The child cannot see the parent conversation or prior calls. |
+| `model` | No | Defaults to the parent's model. Override with an exact `provider/model-id` from the agent directory's static provider/auth config (the model ID may contain slashes). Unknown, malformed, or unresolved models fail without fallback. |
+| `thinking` | No | Defaults to the parent's level. Accepts `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max`. User instructions take precedence; lower levels suit bounded, low-risk, easily verified work (not exploration categorically). The SDK clamps unsupported levels; missing both parent and requested levels fails explicitly. |
 
 ## When to delegate
 
-Delegate by outcome, not merely because a task is complex: use the child when
-investigation, diagnosis, scoped implementation or verification will produce
-large intermediate context but a concise, reviewable handoff. The solution need
-not be known before delegation. Keep simple lookups, small edits, frequent
-back-and-forth and work requiring the parent's raw reasoning context or exclusive
-tools in the parent. Do not repeat a delegated investigation. Each call is fresh;
-there is no follow-up/resume API or background work across turns (parallel calls
-still complete synchronously within the same turn).
-Supply a self-contained brief with relevant facts and references, scope/non-goals,
-read-only or write boundaries, user constraints/approvals, acceptance checks and
-required evidence. The child chooses its approach unless a method is required.
+- **Delegate** when investigation, diagnosis, scoped implementation, or verification will produce large intermediate context but a concise, reviewable handoff. The solution need not be known up front.
+- **Keep in parent** for simple lookups, small edits, frequent back-and-forth, or work requiring the parent's raw reasoning context or exclusive tools (MCP, parent extensions, dynamic providers).
+- **Do not duplicate** a delegated investigation in the parent.
 
-## Model, thinking and available tools
+## Writing the `task` brief
 
-The child defaults to the parent's model. Override `model` with an exact
-`provider/model-id` from the same agent directory's static provider/auth
-configuration (the model ID may contain slashes). Unknown or malformed models
-fail without fallback. When the selected provider/model differs from the parent's,
-the UI shows it alongside Thinking and Elapsed/Took, including restored sessions;
-identical models are omitted. Model metadata is not appended to the handoff.
-The child retains the parent's project trust and
-loads project guidance, SYSTEM/APPEND instructions and skills independently.
-Thinking defaults to the parent's level. The calling agent may request `off`,
-`minimal`, `low`, `medium`, `high`, `xhigh` or `max` for a clear task-specific
-benefit; user instructions take precedence. Lower levels suit bounded, low-risk,
-easily verified work, not exploration categorically. The SDK clamps unsupported
-levels; the UI metadata records the requested/effective levels and displays any
-adjustment without appending it to the result body. Missing both parent and
-requested levels fails explicitly.
-It does not inherit parent extensions, permission hooks, runtime-only credentials,
-dynamic providers or routers. An unresolved model fails rather than falling back.
-Its tools are explicitly limited to read, write, edit, bash and codemode.
-The SDK's codemode extension is initialized independently for each child and can
-call the child's file and shell tools, but does not inherit parent MCP tools.
-Search and directory listing use bash rather than separate grep/find/ls tools.
-Background cache warming is disabled
-using scoped in-memory settings, without modifying the user's configuration.
-The shell environment and filesystem are shared; installed commands can still
-access the network through bash. Tool isolation is not network isolation, and
-delegation must never bypass required approvals. Independently loaded guidance (`APPEND_SYSTEM.md`) and skills may reference
-tools, `tool_call` hooks, or extension-registered dynamic providers (such as
-classifier or image models not in static config) that are unavailable to this
-child; the child's handoff prompt states this explicitly.
+Supply everything the child needs in one prompt, and let the child choose its method unless a specific approach is required:
+
+- **Goal & context**: relevant facts, exact file paths, and symbols.
+- **Scope & non-goals**: what is in bounds and what to leave untouched.
+- **Write boundaries**: explicitly state read-only or allowed write paths; require preserving unrelated changes and avoid overlapping writes across parallel calls.
+- **User constraints & approvals**: carry required constraints and approvals into `task`.
+- **Verification & deliverable**: acceptance checks, required evidence, and desired output format (direct answer, findings list, comparison table, change report, strict JSON, or Pi compact-style summary when useful).
+
+## Child environment and limits
+
+- **Execution model**: Synchronous and one-shot. Multiple `subagent` calls in the same assistant turn run in parallel; each gets its own tool block, activity stream, and child session file. There is no follow-up/resume API, cross-turn background work, nested delegation, or total runtime/token/cost cap.
+- **Available tools**: Explicitly limited to `read`, `write`, `edit`, `bash`, and `codemode` (each child initializes its own SDK `codemode` over those file/shell tools). Search and directory listing use `bash` rather than separate `grep`/`find`/`ls` tools.
+- **Inherited**: Working directory, filesystem, shell environment (installed commands can still access the network through `bash`), and project trust. The child loads project guidance, `SYSTEM`/`APPEND_SYSTEM.md`, and skills independently. Background cache warming is disabled via scoped in-memory settings without modifying user configuration.
+- **Not inherited**: Parent conversation, parent extensions, MCP tools, permission hooks, runtime-only credentials, and dynamic providers or routers (including extension-registered classifier or image models not in static config). Independently loaded guidance or skills may mention unavailable tools or hooks; the child's handoff prompt warns about this explicitly.
+- **Safety**: Context isolation is not a filesystem or network sandbox. File modifications persist after cancellation, and delegation must never bypass required approvals.
 
 ## Handoff and failures
 
-Only the final handoff enters the parent's model context. Specify the expected
-deliverable and, when important, its format/detail in `task`: a direct answer,
-findings list, comparison table, change report or strict JSON. The task's requested
-format takes precedence; no runtime annotations are appended to successful output.
-Without a format request, the default is a concise, outcome-first handoff with
-necessary evidence, validation results, uncertainties and genuine remaining work.
-Empty sections are omitted. Pi compact-style continuation summaries remain an
-option when useful, not a mandatory template. The child writes the result
-directly; there is no extra summary model call or output-schema validator.
-Callers must validate structured output before using it. Handoffs over
-24,000 UTF-8 bytes and incomplete model responses are reported as failures with a
-child-session reference, never silently truncated into apparent success. Error
-diagnostics are bounded too; failures return diagnostic text, not necessarily the
-requested output format. Success means a complete handoff was returned, not
-that its claims have been independently accepted; the parent must verify them.
+- **What returns**: Only the final handoff enters the parent's context. A format requested in `task` takes precedence, with no runtime annotations appended on success. Without a format request, the child returns a concise, outcome-first handoff with evidence, validation results, uncertainties, and genuine remaining work (omitting empty sections).
+- **No hidden post-processing**: The child writes the handoff directly—there is no extra summary model call or output-schema validator. Validate structured output before consuming it.
+- **Size and failure semantics**: Handoffs over `24,000` UTF-8 bytes and incomplete model responses fail with a child-session reference rather than silently truncating into apparent success. Error diagnostics are bounded and return diagnostic text, not necessarily the requested output format.
+- **Verification**: A successful return means a complete handoff was produced, not that its claims are verified; the parent must check evidence and changes before relying on them.
 
-## Display, session records and cancellation
+## UI, persistence, and cancellation
 
-The codemode-style tool block shows request, live activity, result and time.
-Ctrl+O uses Pi's native expansion state: collapsed previews show 10 visual request
-lines, up to 8 calls (running first, then recent completed) and 5 visual result
-lines. Expanded views show the full
-request, retained call parameters, thinking text and returned handoff. Thinking
-stays status-only when collapsed; expanded text updates while the child thinks.
-Each finished call shows its duration; the bottom displays live Elapsed or final
-Took, including failures/cancellation and restored sessions. Regions are separated
-by one blank line. Child tool calls can run in parallel; activity reports the
-total number still running, including calls hidden by the display/history limits.
-Multiple subagent calls issued in one assistant turn also run in parallel, each
-with its own tool block, activity stream and child session file.
-
-UI metadata retains up to 64 calls and 2,048 argument characters per call, with
-explicit notices for evicted/shortened data. Thinking activities instead retain
-the first 4 KiB of UTF-8 text per segment, without splitting characters, and mark
-truncation explicitly in the expanded view. Unlike Pi's general tool output
-limit (50 KiB / 2,000 lines), this smaller per-activity limit keeps thinking text
-within 256 KiB across 64 retained activities. Raw tool results are not copied
-into parent metadata. Thinking is UI metadata, not part of the model-facing
-handoff; older status-only records cannot recover text they did not retain.
-Full child records are persisted separately under
-`<agentDir>/sessions/subagents/`; expanded output shows the path. These records can
-contain sensitive tool data and thinking, and are not automatically deleted. Parent session
-metadata is bounded, not empty. Cancellation cooperatively aborts the child,
-waits for shutdown, then disposes it; a tool ignoring cancellation can delay this.
-The final tool result reports child usage from all persisted session entries, including
-failed attempts, retries, tool usage and compaction summaries, once each. Pi's parent
-session totals include that usage. Counts and costs depend on usage actually reported
-and recorded by the SDK/provider; missing usage cannot be reconstructed. There is no
-total runtime, token or cost cap in this version.
+- **Display (`Ctrl+O`)**: Uses Pi's codemode-style tool block with request, live activity, result, and `Elapsed`/`Took` (including failures, cancellation, and restored sessions), separated by blank lines. Collapsed view shows 10 visual request lines, up to 8 calls (running first, then recent completed), and 5 visual result lines; expanded view shows full request, retained parameters, live-updating thinking text, and full handoff. The child model is shown alongside `Thinking` and `Elapsed`/`Took` only when it differs from the parent; model and thinking adjustments stay in UI metadata and are not appended to the handoff. Child tool calls can run in parallel; activity reports total running calls, including any hidden by display/history limits.
+- **Metadata retention**: UI metadata keeps up to `64` calls (`2,048` argument characters per call) and `4 KiB` of UTF-8 thinking text per segment without splitting characters (`256 KiB` ceiling across 64 activities, vs. Pi's `50 KiB` / `2,000`-line general output limit), marking eviction and truncation explicitly. Raw tool results are not copied into parent metadata; thinking is UI metadata rather than part of the handoff, and older status-only records cannot recover unretained text.
+- **Session files**: Full child sessions persist under `<agentDir>/sessions/subagents/` (path shown in expanded output). They can contain sensitive tool data and thinking, and are not automatically deleted.
+- **Cancellation & usage**: Cancellation cooperatively aborts the child, waits for shutdown, and disposes it; a tool ignoring cancellation can delay shutdown. The final tool result rolls up child usage from all persisted session entries (including failed attempts, retries, tool usage, and compaction summaries, counted once each) into parent session totals, subject to what the SDK/provider reports.
 
 ## Tests
 
-Run `npm test` from this directory after `npm ci`. The tests exercise real SDK
-parent and child sessions against a local HTTP fixture provider. They cover
-context isolation, untrusted resources, cancellation, failure, and output limits
-without live credentials.
+Run `npm test` from this directory after `npm ci`. Tests run real SDK parent and child sessions against a local HTTP fixture provider, covering context isolation, untrusted resources, cancellation, failure, and output limits without live credentials.

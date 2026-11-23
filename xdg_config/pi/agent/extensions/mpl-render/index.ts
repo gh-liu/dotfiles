@@ -286,12 +286,9 @@ function findRenderedImage(output: readonly CodemodeOutputItem[], marker: string
 export const mplRender = defineTool({
   name: "mpl_render",
   label: "Render chart",
-  exposure: "deferred",
-  description: `Render a PNG chart from native mpl code in QuickJS. Scope: \`mpl\`, \`data\` (JSON, default null), \`palette\`, and \`render(fig)\` (required; optional \`{ scale?: 1..4, dpi? }\`). Show with \`image((await tools.mpl_render({ script, data })).image)\`.
-
-- API: \`mpl.subplots({ figsize, dpi, sharex, sharey, style, rc })\`; positional args first, kwargs in trailing object; do not call \`toPNG*\`.
-- Theme & sizing: Charts follow the current Pi theme by default; explicit \`style\` hands color control back to mpl, and \`rc\` overrides theme keys. \`palette\` (\`{ appearance, colors }\`, e.g. \`palette.colors.accent\`) is null without a UI. Keep \`figsize\` compact (\`[6, 3.6]\`-\`[9.5, 4.2]\`) with \`scale: 2\`.
-- Limits & docs: ${limits.script}c script, ${limits.data}c data, ${limits.pixels}px, ${limits.png}B PNG, ${limits.timeoutMs / 1000}s. Read ${readmePath} and ${apiDeclarations} for details.`,
+  exposure: "direct",
+  promptSnippet: "Render a PNG chart with native mpl (matplotlib-style JS) in QuickJS",
+  description: `Render a PNG chart from native mpl (matplotlib-style JS) code in a QuickJS sandbox. Use when plotting data charts (line, bar, scatter, histogram, heatmap, etc.) or asked to plot with mpl, rather than shelling out to Python/matplotlib. Read ${readmePath} before writing a script (and ${apiDeclarations} if needed) for API, theme palette, terminal sizing, and limits.`,
   parameters: Type.Object({
     script: Type.String({ description: "Async function body using `mpl`, `data`, and `palette`; call render(fig)." }),
     data: Type.Optional(Type.Unknown({ description: "JSON passed to the script as `data`." })),

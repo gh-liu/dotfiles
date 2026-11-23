@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 const EXTENSIONS_DIR = dirname(fileURLToPath(import.meta.url));
 const PI_PKG_PREFIX = "@earendil-works/pi-";
 const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
-const README_PIN_RE = /(The packages pin\s+Pi )\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?( for development\.)/;
+const README_PIN_RE = /(开发依赖固定在 Pi )\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?/;
 
 function printUsage() {
   console.log(`Usage: update-pi-deps.mjs [version] [options]
@@ -138,10 +138,10 @@ function updateManifest(manifestPath, targetVersion, typeboxVersion, dryRun) {
 }
 
 function updateReadme(targetVersion, dryRun) {
-  const readmePath = join(EXTENSIONS_DIR, "README.md");
+  const readmePath = join(EXTENSIONS_DIR, "..", "..", "README.md");
   if (!existsSync(readmePath)) return false;
   const original = readFileSync(readmePath, "utf8");
-  const updated = original.replace(README_PIN_RE, `$1${targetVersion}$2`);
+  const updated = original.replace(README_PIN_RE, `$1${targetVersion}`);
   if (updated === original) return false;
   if (!dryRun) writeFileSync(readmePath, updated, "utf8");
   return true;

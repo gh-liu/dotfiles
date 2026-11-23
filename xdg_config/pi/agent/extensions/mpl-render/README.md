@@ -1,10 +1,10 @@
 # mpl-render for Pi
 
-`tools.mpl_render({ script, data })` runs native [mpl](https://github.com/ivarvong/mpl) code and returns a PNG. Use it from Pi codemode. Pass the returned `image` to `image()` to show it inline on supported terminals and get a temporary PNG path in the tool output.
+`mpl_render({ script, data })` runs native [mpl](https://github.com/ivarvong/mpl) code in QuickJS and returns a PNG. Call it directly as a model tool, or from Pi codemode via `tools.mpl_render({ script, data })` and pass the returned `image` to `image()` to show it inline on supported terminals and get a temporary PNG path in the tool output.
 
 ## Install
 
-With Node.js 24 or newer, run `npm ci` from this directory with install scripts enabled. npm builds the pinned GitHub dependency `mpl`, then runs the package's `postinstall` script to bundle it for QuickJS. With codemode enabled, run `/reload` or restart Pi to load the extension.
+With Node.js 24 or newer, run `npm ci` from this directory with install scripts enabled. npm builds the pinned GitHub dependency `mpl`, then runs the package's `postinstall` script to bundle it for QuickJS. Run `/reload` or restart Pi to load the extension.
 
 ## Use
 

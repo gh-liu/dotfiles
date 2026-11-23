@@ -2,6 +2,7 @@ import { createServer, type ServerResponse } from "node:http";
 import { mkdtemp, mkdir, writeFile, readFile, rm, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   createAgentSession, DefaultResourceLoader, initTheme, ModelRuntime, SessionManager, SettingsManager,
@@ -428,8 +429,13 @@ test("thinking text is visible only when expanded, including live and restored a
 });
 
 test("tool definition exposes plain enum schema, parallel mode, and model-only exposure", () => {
+  const readme = fileURLToPath(new URL("./README.md", import.meta.url));
   expect(subagent.exposure).toBe("model-only");
   expect(subagent.executionMode).toBe("parallel");
+  expect(subagent.promptSnippet).toContain("isolated agent");
+  expect(subagent.description).toContain(readme);
+  expect(subagent.description).toContain("never bypass user approvals");
+  expect(subagent.description.replace(readme, "").length).toBeLessThan(500);
   const thinking = (subagent.parameters as any).properties.thinking;
   expect(thinking).toMatchObject({
     type: "string",

@@ -62,7 +62,7 @@ function minimalPng(width = 1, height = 1, colorType = 6) {
 
 test("renders native mpl code byte-identically to Node mpl", async () => {
   const result = await render({ data, script: chart });
-  expect(mplRender.exposure).toBe("deferred");
+  expect(mplRender.exposure).toBe("direct");
   const image = (result.structuredContent as { image: { data: string; mimeType: string } }).image;
   expect(result.content).toEqual([image]);
   expect(image.mimeType).toBe("image/png");

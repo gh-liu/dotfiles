@@ -110,18 +110,19 @@ test("retries a bundle read after a failure instead of caching the rejection", a
   }
 });
 
-test("keeps essential constraints inline and links local README and API declarations", () => {
+test("keeps tool description concise for routing and links local README and API declarations", () => {
   const readme = fileURLToPath(new URL("./README.md", import.meta.url));
   const declarations = join(dirname(createRequire(import.meta.url).resolve("mpl/package.json")), "dist/browser/api.d.ts");
+  expect(mplRender.exposure).toBe("direct");
+  expect(mplRender.promptSnippet).toContain("mpl");
+  expect(mplRender.description).toContain("mpl");
+  expect(mplRender.description).toContain("Python/matplotlib");
   expect(mplRender.description).toContain(readme);
   expect(mplRender.description).toContain(declarations);
-  expect(mplRender.description).toContain("palette.colors.accent");
-  expect(mplRender.description).toContain("Charts follow the current Pi theme by default");
-  expect(mplRender.description).toContain("hands color control back to mpl");
+  expect(mplRender.description).not.toContain("palette.colors.accent");
   expect(mplRender.description).not.toContain("theme.rc");
-  expect(mplRender.description).toContain("render(fig)");
-  expect(mplRender.description).toContain("subplots");
-  expect(mplRender.exposure).toBe("deferred");
+  const prose = mplRender.description.replace(readme, "").replace(declarations, "");
+  expect(prose.length).toBeLessThan(400);
   expect(JSON.stringify(mplRender.outputSchema)).toContain('"image"');
   expect(JSON.stringify(mplRender.outputSchema)).toContain('"logs"');
 });

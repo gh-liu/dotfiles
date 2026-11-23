@@ -1,6 +1,6 @@
 # Listing saved sessions
 
-Run `list_sessions` from codemode to list sessions for the current working directory,
+Call `list_sessions` directly as a model tool—or from codemode via `tools.list_sessions`—to list sessions for the current working directory,
 most recently modified first. The default scope excludes subdirectories.
 
 ```js
