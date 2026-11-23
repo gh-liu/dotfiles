@@ -5,7 +5,7 @@ description: Draft or revise technical prose that readers use to make a decision
 
 # Technical writing
 
-Before writing, identify who will read the text, what they already know, and what they need to do afterward. Put the judgment or action the reader needs most at the beginning, and add only the background required to understand it. When revising existing text, preserve the original meaning, technical details, and level of certainty. For local or single-sentence edits, preserve the original length and structure instead of expanding unnecessarily.
+Before writing, identify who will read the text, what they already know, and what they need to do afterward. Put the judgment or action the reader needs most at the beginning, and add only the background required to understand it. When revising existing text, keep the document's language, original meaning, technical details, and level of certainty. For local or single-sentence edits, preserve the original length and structure instead of expanding unnecessarily.
 
 ## Organize by the reader's task
 
@@ -13,11 +13,11 @@ Before writing, identify who will read the text, what they already know, and wha
 - **Following a procedure.** State the preconditions first and place real risks before the corresponding step. Write steps in execution order and keep commands copyable. Explain how to verify success and where to investigate on failure.
 - **Taking over work.** Lead with current status and scope of impact, followed by completed work, verification results, and remaining tasks. When blocked, state what is needed to unblock.
 
-## Review checklist
+## Check clarity and accuracy
 
-- Use concrete subjects and verbs to make clear who did what. Express one main idea per sentence. Break longer text into sections aligned with the reader's questions, and use parallel structure for similar information.
+- Use concrete subjects and verbs to make clear who performs or performed each action. Express one main idea per sentence. Break longer text into sections aligned with the reader's questions, and use parallel structure for similar information.
 - Use one term consistently for each concept. Preserve exact identifiers, API names, commands, and quotes. Expand abbreviations on first use when readers may not know them.
-- Check every claim against evidence, keeping the preconditions, scope, units, and exceptions that affect judgment. Clearly separate what was observed, what is inferred, and what is recommended.
+- Check every claim against available evidence, keeping the preconditions, scope, units, and exceptions that affect judgment. When revising standalone text without evidence, do not invent facts or drop uncertainty qualifiers; flag unsupported or ambiguous claims instead. Clearly separate what was observed, what is inferred, and what is recommended.
 
 For example, a troubleshooting note might read: "Logs show this response hit the cache. Stale cache invalidation may explain the outdated data. Retry the same request bypassing the cache and compare the two responses." A verification report might read: "The regression test for timeout retries passed. Retry behavior in production still needs verification."
 

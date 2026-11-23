@@ -15,15 +15,17 @@ Check recent commits for the project's subject format and follow it (for example
 
 Give each commit one logical purpose. In projects with a build step, the repository must build at every commit in the series. Keep an API change and the caller updates it requires together. A later commit may build on an earlier one.
 
-Use `git status`, `git diff --cached`, and `git diff` to identify the changes. Stage related files or hunks together and preserve the user's staging choices. If the staged changes conflict with the requested scope, clarify the scope first. Review `git diff --cached` before running `git commit`.
+Use `git status`, `git diff --cached`, and `git diff` to identify the changes. Stage explicit file paths or hunks and preserve the user's staging choices. Never run `git add -A` or `git add .` blindly when untracked, generated, or sensitive files may be present. In non-interactive shells, split hunks with a patch and `git apply --cached` instead of `git add -p`. If the staged changes conflict with the requested scope, clarify the scope first.
 
-When splitting code changes in a project with a build or test step, verify the build at each committed snapshot. Use a clean worktree if pending edits could affect the result. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
+Review `git diff --cached` before running `git commit`. Do not bypass hooks with `--no-verify` or run `git commit --amend` unless the user explicitly asks. If a hook rejects a commit, fix the underlying issue and run a new `git commit` instead of amending an earlier one.
+
+When splitting code changes in a project with a build or test step, verify the build at each committed snapshot. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If missing untracked dependencies (such as `.env` or `node_modules`) prevent building there, state that limitation. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
 
 ## Problem / Solution
 
-A subject alone is enough for a simple change. When the motivation needs explaining, draw on the issue, tests, or user-provided context. Choose the format for each section independently. Use prose for one point and a bulleted list for several distinct points about the same change.
+A subject alone is enough for a simple change. When the repository has no body template and the motivation needs explaining, draw on the issue, tests, or user-provided context. Choose the format for each section independently. Use prose for one point and a bulleted list for several distinct points about the same change.
 
-- **Problem** describes what happens, under which conditions, and who it affects. For a feature, describe what users previously could not do. Would the problem still make sense if someone chose a different solution?
+- **Problem** describes what happens, under which conditions, and who it affects. For a feature, describe what users previously could not do. Verify that the problem still makes sense if someone chose a different solution.
 - **Solution** explains how the change addresses that problem. Include implementation details that help readers understand the outcome. Check claims about scope against the diff and performance claims against measurements.
 
 ```text

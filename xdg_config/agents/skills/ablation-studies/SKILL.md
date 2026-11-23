@@ -9,7 +9,7 @@ Use the full system as the baseline. For each factor, start from that baseline, 
 
 ## Design the comparison
 
-Predict which outcome should change, on which inputs, and what observation would weaken the explanation. Choose a metric that distinguishes the competing explanations. For a numerical metric, set the smallest difference that would change the decision.
+Predict which outcome should change, on which inputs, and what observation would weaken the explanation. Choose a primary metric that distinguishes the competing explanations; when testing multiple factors or metrics, separate pre-specified checks from exploratory findings. For a numerical metric, set the smallest difference that would change the decision.
 
 Keep the rest of the implementation, inputs, initial state, and evaluation procedure the same. Choose the intervention that answers the question:
 
@@ -24,7 +24,7 @@ Decide how failures count before running. Score system failures by the task metr
 Verify that the baseline exercises the factor and the variant bypasses or replaces it. Run both on the same examples. Before interpreting a speedup or cost reduction, check that both still meet the task requirements.
 
 - **Stochastic runs:** Repeat across seeds, using the same seed within each pair.
-- **Timing measurements:** Alternate which configuration runs first.
+- **Timing measurements:** Alternate which configuration runs first, separate warmup from measured runs, and reset shared caches or state between pairs unless measuring steady-state behavior.
 - **Independent repeats:** Match the unit of repetition to the claim. For retraining, compute the metric over the examples in each run, then record one difference per seed pair, not one per example.
 
 ## Interpret and report

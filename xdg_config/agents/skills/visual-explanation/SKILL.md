@@ -1,6 +1,6 @@
 ---
 name: visual-explanation
-description: Explain engineering relationships, sequences, comparisons, changes, or UI behavior with a minimal diagram, table, diff, or screenshot grounded in evidence. Use when a reader can understand a structure, flow, comparison, or change more easily by seeing it than by reading prose alone.
+description: Explain engineering relationships, sequences, comparisons, changes, or UI behavior with a minimal diagram, table, diff, or screenshot grounded in evidence. Use when a reader can understand a structure, flow, comparison, change, or UI layout and behavior more easily by seeing it than by reading prose alone.
 ---
 
 # Visual explanation
@@ -17,7 +17,9 @@ Decide what the reader needs to see first. If one sentence makes it clear, use t
 | Which step changed in the code or design?                           | Use a diff with enough context to locate the change.                                                                                                 |
 | How does the UI look, and what changes after an action?             | Run the real app to verify layout, styling, and interaction. Use a screenshot for static appearance and before/after states for interaction changes. |
 
-Verify relationships in the visual against code, configuration, logs, or test results, and note which observation supports the conclusion. When the real app is unavailable, use a standalone prototype or generated image to illustrate the expected result, and mark what still needs verification in the real app. Keep commands, code, and other copyable content as plain text.
+For current system behavior, verify relationships in the visual against code, configuration, logs, or test results, and cite the supporting observation. For proposed or unimplemented designs, label planned elements explicitly instead of presenting them as current behavior.
+
+When the output medium does not render Mermaid (such as a plain terminal), prefer compact text trees, pseudocode, Markdown tables, or simple ASCII flows. When the real app is unavailable for UI explanations, prefer a minimal HTML/SVG prototype or text wireframe over a generated image. Reserve generated images for visual concepts, and mark what still needs verification in the real app. Keep commands, code, and other copyable content as plain text.
 
 ## Examples
 
