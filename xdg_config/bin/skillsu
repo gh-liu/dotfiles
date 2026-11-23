@@ -32,10 +32,12 @@ _skills_install() {
 
         # add overwrites selected skills; do not remove unrelated skills first.
 
-        local script_path local_skills_dir
-        script_path=$(realpath "${BASH_SOURCE[0]}") || return
-        local_skills_dir="$(dirname "$script_path")/../agents/skills"
-        skills add "$local_skills_dir" --skill '*' "${target[@]}" || return
+        if [[ $agent != pi ]]; then
+                local script_path local_skills_dir
+                script_path=$(realpath "${BASH_SOURCE[0]}") || return
+                local_skills_dir="$(dirname "$script_path")/../agents/skills"
+                skills add "$local_skills_dir" --skill '*' "${target[@]}" || return
+        fi
 
         # use mcp
         # skills add upstash/context7 "${target[@]}" -s find-docs

@@ -13,3 +13,4 @@ xdg_config/nvim/lazy-lock.json
 
 /xdg_config/pi/agent/extensions/*/node_modules/
 /xdg_config/pi/agent/extensions/mpl-render/mpl.bundle.js
+/xdg_config/pi/agent/skills/
