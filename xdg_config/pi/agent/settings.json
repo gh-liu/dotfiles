@@ -1,5 +1,4 @@
 {
-  "enableInstallTelemetry": false,
   "quietStartup": false,
   "showHardwareCursor": true,
   "hideThinkingBlock": true,
@@ -15,8 +14,8 @@
     "+codemode"
   ],
   "packages": [],
-  "defaultProvider": "magpie",
-  "defaultModel": "group/mixup",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-6.2-sol",
   "defaultThinkingLevel": "high",
-  "lastChangelogVersion": "1.6.0"
+  "enableInstallTelemetry": false
 }
