@@ -24,7 +24,7 @@ Decide how failures count before running. Score system failures by the task metr
 Verify that the baseline exercises the factor and the variant bypasses or replaces it. Run both on the same examples. Before interpreting a speedup or cost reduction, check that both still meet the task requirements.
 
 - **Stochastic runs:** Repeat across seeds, using the same seed within each pair.
-- **Timing measurements:** Alternate which configuration runs first, separate warmup from measured runs, and reset shared caches or state between pairs unless measuring steady-state behavior.
+- **Timing measurements:** Alternate which configuration runs first. For cold-start measurements, reset caches and other shared state before each run. For steady-state measurements, start each configuration from equivalent state and warm it up independently with the same procedure before timing.
 - **Independent repeats:** Match the unit of repetition to the claim. For retraining, compute the metric over the examples in each run, then record one difference per seed pair, not one per example.
 
 ## Interpret and report
@@ -33,6 +33,6 @@ Report both configurations' measured values, the size and direction of the diffe
 
 For stochastic or noisy metrics, quantify uncertainty across independent pairs, for example with a confidence interval for the mean difference. Compare the interval with zero to judge direction and separately with the predefined threshold to judge practical importance. An interval of 2–8 ms saved supports a speedup but leaves open whether it reaches a 5 ms target. For deterministic behavior, report the exact difference and verify the control cases.
 
-## Example: Does the cache reduce database reads?
+## Examples
 
-Start both configurations with an empty cache and replay `A, A, B`, bypassing the cache only in the variant. Verify that responses match, then compare reads per request. If hits explain the reduction, the second `A` should need fewer reads with caching. The first `B` should miss even with caching, so it serves as a control.
+**Does the cache reduce database reads?** Start both configurations with an empty cache and replay `A, A, B`, bypassing the cache only in the variant. Verify that responses match, then compare reads per request. If hits explain the reduction, the second `A` should need fewer reads with caching. The first `B` should miss even with caching, so it serves as a control.

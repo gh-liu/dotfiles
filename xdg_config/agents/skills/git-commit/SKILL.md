@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Create atomic commits and draft or review commit messages following repository conventions. Use when the user invokes /commit or asks to commit changes, split changes into commits, or draft or review a commit message.
+description: Create atomic commits and draft or review commit messages following repository conventions. Use when asked to stage and commit changes, split changes into commits, or draft or review a commit message.
 ---
 
 # Git commits
@@ -19,7 +19,7 @@ Use `git status`, `git diff --cached`, and `git diff` to identify the changes. S
 
 Review `git diff --cached` before running `git commit`. Do not bypass hooks with `--no-verify` or run `git commit --amend` unless the user explicitly asks. If a hook rejects a commit, fix the underlying issue and run a new `git commit` instead of amending an earlier one.
 
-When splitting code changes in a project with a build or test step, verify the build at each committed snapshot. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If missing untracked dependencies (such as `.env` or `node_modules`) prevent building there, state that limitation. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
+When splitting code changes, run the project's applicable checks at each committed snapshot. Build if the project has a build step and run the relevant tests if it has a test suite. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If a missing dependency or local configuration prevents a check from running, identify the check and what it requires. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
 
 ## Problem / Solution
 

@@ -19,7 +19,10 @@ Before writing, identify who will read the text, what they already know, and wha
 - Use one term consistently for each concept. Preserve exact identifiers, API names, commands, and quotes. Expand abbreviations on first use when readers may not know them.
 - Check every claim against available evidence, keeping the preconditions, scope, units, and exceptions that affect judgment. When revising standalone text without evidence, do not invent facts or drop uncertainty qualifiers; flag unsupported or ambiguous claims instead. Clearly separate what was observed, what is inferred, and what is recommended.
 
-- **Troubleshooting example.** "Logs show this response hit the cache. Stale cache invalidation may explain the outdated data. Retry the same request bypassing the cache and compare the two responses."
-- **Verification example.** "The regression test for timeout retries passed. Retry behavior in production still needs verification."
+## Examples
+
+**Troubleshooting.** "Logs show this response hit the cache. Stale cache invalidation may explain the outdated data. Retry the same request bypassing the cache and compare the two responses."
+
+**Verification.** "The regression test for timeout retries passed. Retry behavior in production still needs verification."
 
 Clarity principles are adapted from ASD Simplified Technical English (ASD-STE100).

@@ -1,6 +1,6 @@
 ---
 name: engineering-workflow
-description: Investigate behavior across components, compare implementation options, and verify changes against explicit invariants. Use when tracing existing behavior to define acceptance criteria or root causes, weighing material trade-offs, verifying compatibility or persistent-state invariants, or consulting or writing a lightweight Architecture Decision Record (ADR), rather than when ambiguous requirements need upfront problem modeling.
+description: Investigate behavior across components, compare implementation options, and verify changes against explicit invariants. Use when tracing behavior to set acceptance criteria or root causes, weighing material trade-offs, verifying compatibility or state invariants, or consulting or writing a lightweight Architecture Decision Record (ADR), rather than for explaining existing code (see `read-code`) or ambiguous requirements (see `problem-modeling`).
 ---
 
 # Engineering workflow
@@ -11,7 +11,7 @@ Start from the question that currently affects the decision. When investigation 
 
 - Confirm observable acceptance criteria, out-of-scope boundaries, constraints, and invariants that must hold before and after the change. If core requirements remain ambiguous after codebase inspection, switch to `problem-modeling` before implementing.
 - When a change touches architectural conventions, consult relevant active Architecture Decision Records (ADRs) first to confirm which constraints apply.
-- Trace behavior from the normal entry point across callers, implementations, and configuration, checking against contracts, tests, or logs. For cross-component issues, sketch control or data flow as needed to find the boundary where behavior can be observed and tested independently.
+- Trace behavior from the normal entry point across callers, implementations, and configuration, checking against contracts, tests, or logs. For cross-component issues, sketch control or data flow as needed to find the boundary where behavior can be observed and tested independently; follow `visual-explanation` for the form.
 - When multiple causes are plausible, choose the smallest experiment that distinguishes them. Inspect the deployment environment or external dependencies when necessary. Label inferences and their evidence. If ambiguity remains after investigation and would change the approach or outcome, confirm with the user.
 
 ## Choose an approach
@@ -23,7 +23,7 @@ Start from the question that currently affects the decision. When investigation 
 
 ## Implement and verify
 
-- Break changes into small, independently verifiable steps. For bug fixes, reproduce the issue reliably with a failing regression test before applying the fix. Use a red-green-refactor cycle where appropriate. Lock in long-term behavior with tests, and enforce long-term constraints with types, schemas, or runtime assertions rather than comments alone.
+- Break changes into small, independently verifiable steps. When a regression test can reliably reproduce a bug, run it before and after the fix to confirm it fails and then passes. Otherwise, record evidence of the failure and verify the fix under the triggering conditions where feasible. Lock in long-term behavior with tests, and enforce long-term constraints with types, schemas, or runtime assertions rather than comments alone.
 - Verify acceptance criteria through the entry point users actually exercise, then check the invariants identified during investigation. For example, when changing a persistence format, verify both writing new data and reading existing data.
 - Match verification depth to impact and risk. When critical verification is blocked, state the reason, what the available evidence covers, and what risk remains.
 

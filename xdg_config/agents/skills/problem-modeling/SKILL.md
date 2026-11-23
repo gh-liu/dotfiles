@@ -16,7 +16,7 @@ Turn an ambiguous or solution-shaped request into a clear, bounded, and testable
 ## Model boundaries and interactions
 
 - Separate external realities and contracts from the system under our control and the requirement it must establish. Do not treat every existing implementation choice as an immutable external constraint.
-- For key boundary interactions, identify who initiates an event, who observes it, what crosses the interface, and what guarantees hold. For example, in `Agent --[heartbeat event]--> Monitoring Service --[status]--> Operator`, heartbeat events are the interface mechanism, while accurate failure detection is the requirement. Use a diagram only when it improves clarity.
+- For key boundary interactions, identify who initiates an event, who observes it, what crosses the interface, and what guarantees hold. For example, in `Agent --[heartbeat event]--> Monitoring Service --[status]--> Operator`, heartbeat events are the interface mechanism, while accurate failure detection is the requirement. Add a diagram only when it improves clarity, and follow `visual-explanation` for its form.
 
 ## Shape the scope
 
@@ -43,5 +43,5 @@ Turn an ambiguous or solution-shaped request into a clear, bounded, and testable
 ## Communicate the model
 
 - Once blocking questions are settled, respond in natural, user-facing language with only the elements that help the next decision. Include the relevant subset of: problem statement, system boundaries, constraints and anti-goals, decisions made, acceptance scenarios, remaining non-blocking assumptions, and the recommended next action.
-- Keep internal workflow invisible. Never expose process labels (`Step 1`, `Stopping Criteria`, `Completion Gate`, framework names, or checklist scores) as response headings unless the user explicitly asks about the methodology.
+- Keep process labels (`Step 1`, checklist scores, framework names) out of the response unless the user asks about the methodology.
 - Create or modify files only when the user requests them, project conventions require documentation, or durable handoff demands it. When persistence is needed, prefer updating an existing document or writing one consolidated file rather than splitting into mandatory `problem.md` or `acceptance.md` files.
