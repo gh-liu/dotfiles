@@ -1,4 +1,4 @@
--- Apply with `rex do init_client_settings` or `rex do ~/.config/rex/client_setup.lua`.
+-- Apply with `rex do setup_client` or `rex do ~/.config/rex/setup_client.lua`.
 -- Commented entries document the current defaults; uncomment to pin a value.
 -- Explicit values make repeated runs idempotent. Omitted entries are not reset.
 -- Enum argument casts enable value completion in EmmyLua LS.
@@ -6,7 +6,7 @@
 -- Import Nord and Nord Light on a new machine before selecting them here:
 -- rex do client.theme.import path='/Applications/Ghostty.app/Contents/Resources/ghostty/themes/Nord'
 -- rex do client.theme.import path='/Applications/Ghostty.app/Contents/Resources/ghostty/themes/Nord Light'
-local function apply_client_settings()
+local function setup_client()
         -- Notifications
         rex.client.queue(
                 "client.setting.notifications.overview.position",
@@ -163,7 +163,7 @@ local function apply_client_settings()
 end
 
 -- require passes the module name. A standalone Rex script receives no varargs.
-if ... == "client_setup" then
-        return apply_client_settings
+if ... == "setup_client" then
+        return setup_client
 end
-apply_client_settings()
+setup_client()

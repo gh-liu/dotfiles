@@ -72,9 +72,9 @@ rex.bind("cmd+shift+m", function (ctx)
         return true
 end)
 
--- client settings: rex do init_client_settings
+-- Apply with `rex do setup_client`.
 rex.action({
-        name = "init_client_settings",
+        name = "setup_client",
         title = "Apply client settings from init.lua",
-        run = require("client_setup")
+        run = require("setup_client")
 })
