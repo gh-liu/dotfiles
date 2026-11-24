@@ -7,8 +7,8 @@ Compare the candidate options from the current discussion, incorporating any ext
 
 Extra requirements, constraints, or weights: ${@:-none}
 
-1. **Clarify & filter**:
-   - If the candidate options, acceptance criteria, non-goals, hard constraints, or invariants are unclear, ask clarifying questions instead of inventing options.
+1. **Resolve options, clarify & filter**:
+   - When options are not explicitly listed in the input, infer them from the current discussion—preferring the most recent active set of candidate options (e.g., from prior exploration or trade-off discussion), or from a design doc/ADR explicitly referenced in the discussion. If multiple unrelated option sets compete, or if the candidate options, acceptance criteria, non-goals, hard constraints, or invariants remain unclear, ask clarifying questions instead of guessing or inventing options.
    - Eliminate options that clearly violate hard constraints, invariants, active ADRs, or explicit non-goals without scoring them. Keep options with uncertain bounds in scoring as explicit unverified assumptions. If fewer than two options remain, report the result directly without model scoring.
 2. **Define criteria & neutral state**:
    - Pick 3–6 task-relevant criteria that genuinely distinguish the remaining options. Keep opposing trade-offs (e.g., stronger automated protection vs. lower maintenance burden) as separate criteria instead of averaging sub-questions inside a broad bucket.

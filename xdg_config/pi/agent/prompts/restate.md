@@ -7,6 +7,8 @@ Based on the discussion, decisions, and evidence gathered so far—incorporating
 
 Focus, scope, or new context: ${@:-none}
 
+If no target is given (or only a focus/constraint is provided), infer the target from the current discussion—focusing on the most recent active task thread (briefly noting finished or superseded topics if the conversation spans several). If there is no discussion context to restate or multiple active threads compete ambiguously, say so briefly and ask which task to restate instead of guessing or starting new investigation.
+
 Write in plain, natural engineering prose (adapting headings to the conversation's language rather than copying template labels verbatim, and avoiding raw code, schema, or field dumps unless a specific detail is itself in question):
 
 - **Requirements & non-goals:** Lead with a one- or two-sentence status snapshot, then state the needed outcome, observable acceptance criteria, and what is explicitly out of scope.
