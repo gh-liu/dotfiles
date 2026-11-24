@@ -46,8 +46,6 @@ _skills_install() {
 
         # skills add mattpocock/skills "${target[@]}" -s tdd -s domain-modeling || return
 
-        skills add obra/superpowers --skill brainstorming "${target[@]}" || return
-
         skills add vercel-labs/agent-browser --skill agent-browser "${target[@]}" || return
         skills add typesafe-ai/skills --skill typesafe-ai "${target[@]}" || return
 
