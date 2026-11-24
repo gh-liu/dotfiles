@@ -83,9 +83,9 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 
 | 阶段       | Prompt 入口  | 读写护栏                            | 常配合的 Skills                                       |
 |:-----------|:-------------|:------------------------------------|:------------------------------------------------------|
-| 状态对齐   | `/restate`   | 只读（仅总结）                      | `technical-writing`                                   |
+| 状态对齐   | `/restate`   | 只读（仅总结）                      | —（自包含）                                           |
 | 问题与方案 | `/explore`   | 只读（列约束与选项，不推荐）        | `problem-modeling`、`read-code`、`visual-explanation` |
-| 方案收敛   | `/score`     | 只读（decision 模型量化打分并推荐） | `engineering-workflow`、`typesafe-ai`                 |
+| 方案收敛   | `/score`     | 只读（decision 模型量化打分并推荐） | `typesafe-ai`                                         |
 | 根因定位   | `/debug`     | 只读（最小判别实验）                | `engineering-workflow`、`ablation-studies`            |
 | 最小实现   | `/implement` | 仅改约定范围                        | `engineering-workflow`                                |
 | 补充验证   | `/test`      | 仅改测试与 fixtures                 | `engineering-workflow`                                |
