@@ -36,3 +36,5 @@ For stochastic or noisy metrics, quantify uncertainty across independent pairs, 
 ## Examples
 
 **Does the cache reduce database reads?** Start both configurations with an empty cache and replay `A, A, B`, bypassing the cache only in the variant. Verify that responses match, then compare reads per request. If hits explain the reduction, the second `A` should need fewer reads with caching. The first `B` should miss even with caching, so it serves as a control.
+
+**Does the reranker improve retrieval quality?** Evaluate the full pipeline and a variant with the reranker disabled on the same query set across matched seeds. Verify that latency and error rates remain acceptable, compute a confidence interval for the paired NDCG difference, and compare it against zero separately from the minimum gain required to justify deployment.

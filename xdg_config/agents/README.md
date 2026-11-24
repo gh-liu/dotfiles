@@ -77,20 +77,29 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 - **其他 harness**（如 amp）：脚本用 `skills add` 将 `xdg_config/agents/skills` 安装到该 harness 的全局 skills 目录。修改自建 Skill 后需重新运行 `skillsu <agent>` 同步。
 - **第三方 Skills**：所有 harness 都由脚本通过 `skills add -g` 安装（当前为 agent-browser、typesafe-ai、worktrunk）；`devops-cli` 是指向业务项目的手动 symlink。
 
-## 4. 日常协作工作流（Prompts × Skills）
+## 4. 工程工作流（Skills × Prompts）
 
-日常工程任务围绕**读写护栏**和**阶段切换**组合使用 Prompts 与 Skills：
+自建 Skills（L2）独立于具体入口，按 `理解 → 决策 → 实现 → 验证 → 交付` 覆盖完整工程策略：
 
-| 阶段       | Prompt 入口  | 读写护栏                            | 常配合的 Skills                                       |
-|:-----------|:-------------|:------------------------------------|:------------------------------------------------------|
-| 状态对齐   | `/restate`   | 只读（仅总结）                      | —（自包含）                                           |
-| 问题与方案 | `/explore`   | 只读（列约束与选项，不推荐）        | `problem-modeling`、`read-code`、`visual-explanation` |
-| 方案收敛   | `/score`     | 只读（decision 模型量化打分并推荐） | `typesafe-ai`                                         |
-| 根因定位   | `/debug`     | 只读（最小判别实验）                | `engineering-workflow`、`ablation-studies`            |
-| 最小实现   | `/implement` | 仅改约定范围                        | `engineering-workflow`                                |
-| 补充验证   | `/test`      | 仅改测试与 fixtures                 | `engineering-workflow`                                |
-| 变更审阅   | `/review`    | 只读（质疑必要性与回归风险）        | `read-code`、`technical-writing`                      |
-| 提交变更   | 显式要求提交 | Git 写操作                          | `git-commit`                                          |
+- **理解**：`problem-modeling`（界定模糊问题）、`read-code`（理解代码与 diff）、`root-cause-analysis`（定位异常根因）
+- **决策**：`design-options`（推导硬约束与权衡方案）、`architecture-decision-records`（查阅、撰写或替代 ADR）
+- **实现**：`write-code`（最小改动与代码化约束）
+- **验证**：`verify-changes`（真实入口测试与不变量验证）、`ablation-studies`（单因素对照实验）
+- **交付**：`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（技术文档写作）、`git-commit`（原子提交与本地历史整理）
+
+Prompts（L3）表达用户显式发起的**动作与读写护栏**，在日常任务中与上述策略按阶段配合：
+
+| 阶段       | Prompt 入口  | 读写护栏                            | 常配合的 Skills                                                                 |
+|:-----------|:-------------|:------------------------------------|:--------------------------------------------------------------------------------|
+| 状态对齐   | `/restate`   | 只读（仅总结）                      | —（自包含）                                                                     |
+| 问题与方案 | `/explore`   | 只读（列约束与选项，不推荐）        | `problem-modeling`、`read-code`、`design-options`、`visual-explanation`         |
+| 方案收敛   | `/score`     | 只读（decision 模型量化打分并推荐） | `typesafe-ai`                                                                   |
+| 根因定位   | `/debug`     | 只读（最小判别实验）                | `root-cause-analysis`、`read-code`、`ablation-studies`                          |
+| 最小实现   | `/implement` | 仅改约定范围                        | `write-code`、`verify-changes`                                                  |
+| 补充验证   | `/test`      | 仅改测试与 fixtures                 | `verify-changes`                                                                |
+| 变更审阅   | `/review`    | 只读（质疑必要性与回归风险）        | `read-code`、`verify-changes`、`technical-writing`                              |
+| 架构记录   | 显式要求记录 | 文档写操作                          | `architecture-decision-records`                                                 |
+| 提交变更   | 显式要求提交 | Git 写操作                          | `git-commit`                                                                    |
 
 ### 使用习惯
 

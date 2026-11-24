@@ -9,8 +9,8 @@ Before writing, identify who will read the text, what they already know, and wha
 
 ## Organize by the reader's task
 
-- **Making a decision.** State what needs to be decided and the recommended option first, then present the constraints, evidence, and trade-offs that shape the choice. Note which unverified conditions would change the recommendation.
-- **Following a procedure.** State the preconditions first and place real risks before the corresponding step. Write steps in execution order and keep commands copyable. Explain how to verify success and where to investigate on failure.
+- **Making a decision.** State what needs to be decided and the recommended option first (or summarize the options neutrally if no recommendation is requested), then present the constraints, evidence, and trade-offs that shape the choice. Note which unverified conditions would change the recommendation.
+- **Following a procedure.** State the preconditions first and place real risks before the corresponding step. Write steps in execution order and keep commands copyable. Explain how to verify success, how to roll back or recover state-changing steps, and where to investigate on failure.
 - **Taking over work.** Lead with current status and scope of impact, followed by completed work, verification results, and remaining tasks. When blocked, state what is needed to unblock.
 
 ## Check clarity and accuracy

@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Create atomic commits, fold follow-up changes into existing local commits, and draft or review commit messages following repository conventions. Use when asked to stage and commit changes, split changes into commits, absorb or fixup changes into local commits, or draft or review a commit message.
+description: Create atomic commits, fold follow-up changes into existing local commits, and draft or review commit messages following repository conventions. Use when asked to stage and commit changes, split changes into commits, absorb or fixup changes into local commits, or draft or review a commit message, rather than for reviewing code changes, writing pull request descriptions, or managing branches and worktrees.
 ---
 
 # Git commits
@@ -9,7 +9,7 @@ Follow the repository's contribution guide, commit template, and language conven
 
 ## Subject format
 
-Check recent commits for the project's subject format and follow it (for example, `scope: subject` or `type(scope): subject`). When the repository uses Conventional Commits, write `type(scope): subject`, choosing a type such as `fix` or `feat` and a scope when it helps identify the affected component. Use a short subject that tells readers what changes.
+Match the subject format used in recent commits (for example, `scope: subject` or `type(scope): subject`). When the repository uses Conventional Commits, write `type(scope): subject`, choosing a type such as `fix` or `feat` and a scope when it helps identify the affected component. Use a short subject that tells readers what changes.
 
 ## Atomic commits
 
@@ -19,16 +19,15 @@ Use `git status`, `git diff --cached`, and `git diff` to identify the changes. S
 
 Review `git diff --cached` before running `git commit`. Do not bypass hooks with `--no-verify` or run `git commit --amend` unless the user explicitly asks. If a hook rejects a commit, fix the underlying issue and run a new `git commit` instead of amending an earlier one.
 
-When splitting code changes, run the project's applicable checks at each committed snapshot. Build if the project has a build step and run the relevant tests if it has a test suite. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If a missing dependency or local configuration prevents a check from running, identify the check and what it requires. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
+When splitting code changes, run applicable build and test checks at each committed snapshot. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If a missing dependency or local configuration prevents a check from running, identify the check and what it requires. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
 
 ## Updating local commits
 
-Only rewrite unpushed local commits, and only when the user asks to fold follow-up changes into existing commits instead of adding a new commit. Confirm the local commit range (`git log --oneline <base>..HEAD`) before rewriting history.
+Only rewrite unpushed local commits when the user asks to fold follow-up edits into existing commits. Verify `<base>..HEAD` is unpushed against upstream (for example, `@{u}..HEAD`) and inspect `git log --oneline <base>..HEAD` first. If the range contains merge commits or rebasing conflicts, run `git rebase --abort` and confirm instead of force-resolving.
 
 - For `HEAD` only: stage the changes and run `git commit --amend` (or `--amend --no-edit` if the message still accurately describes the commit).
 - For an earlier local commit: stage the changes, run `git commit --fixup=<sha>`, and fold non-interactively with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`.
-
-When `git-absorb` is installed and staged edits span multiple earlier commits, you may use it to generate `fixup!` commits automatically: preview with `git absorb --dry-run` (pass `--base <ref>` if needed), run `git absorb`, inspect `git log --oneline <base>..HEAD`, and fold with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>` (or undo before rebasing with `git reset --soft PRE_ABSORB_HEAD`). Handle any hunks left staged in the index with `git commit --fixup=<sha>` or a new commit, and avoid passing `-w`/`--whole-file` or `-f`/`--force` blindly.
+- For staged edits spanning multiple earlier commits with `git-absorb`: preview with `git absorb --dry-run` (pass `--base <ref>` if needed) and run `git absorb` without blind `-w`/`--whole-file` or `-f`/`--force`. Inspect `git log --oneline <base>..HEAD` and `git status --short` (undo before rebasing via `git reset --soft PRE_ABSORB_HEAD`). Before rebasing, convert remaining staged hunks meant for an earlier commit with `git commit --fixup=<sha>` and unstage or commit the rest so the index is clean, then fold with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`.
 
 After rewriting commits, re-run the project's applicable build and tests, verify that the updated commit messages still match their diffs, and check `git log --stat <base>..HEAD` and `git status --short`.
 

@@ -1,6 +1,6 @@
 ---
 name: problem-modeling
-description: Model ambiguous software engineering problems before committing to a solution. Use when requirements, scope, system boundaries, or acceptance criteria are unclear, or when a request proposes a solution without defining the underlying problem, rather than when the goal is clear enough to trace existing code and implement directly.
+description: Model ambiguous software engineering problems before committing to a solution. Use when requirements, scope, system boundaries, or acceptance criteria are unclear, or when a request proposes a solution without defining the underlying problem, rather than when the goal is already clear enough to read code, diagnose a failure, compare technical designs, or implement directly.
 ---
 
 # Problem modeling
@@ -11,7 +11,7 @@ Turn an ambiguous or solution-shaped request into a clear, bounded, and testable
 
 - Distinguish the problem (what is wrong or missing), the requirement (what condition must hold), and the solution (how the system might change).
 - State the current situation, observable pain, affected users or systems, consequences of doing nothing, and observable success signals.
-- When a request is solution-shaped, reconstruct the underlying problem as a testable hypothesis without dismissing the proposal. For example, `"Move session storage from MySQL to MongoDB"` may reflect a hypothesis that current storage cannot meet write throughput or schema flexibility needs.
+- When a request is solution-shaped, reconstruct the underlying problem as a testable hypothesis without dismissing the proposal, and check that the model does not treat a symptom as a root cause. For example, `"Move session storage from MySQL to MongoDB"` may reflect a hypothesis that current storage cannot meet write throughput or schema flexibility needs.
 
 ## Model boundaries and interactions
 
@@ -33,15 +33,11 @@ Turn an ambiguous or solution-shaped request into a clear, bounded, and testable
 ## Specify verifiable outcomes
 
 - Express key requirements as concrete scenarios covering relevant normal, boundary, and failure cases, using `Given / When / Then` when helpful.
-- State the invariants that must hold (such as tenant isolation or idempotent delivery) and use measurable criteria instead of vague adjectives (`"fast"`, `"scalable"`). Mark unestablished thresholds or workloads as unresolved.
-
-## Challenge the model
-
-- Before concluding, check whether the model treats a symptom as a cause, confuses a technology choice with a goal, or assumes an unverified root cause. Verify that it covers key anti-goals and does not miss a simpler alternative.
-- Apply only the depth needed to unblock the next engineering decision: stop modeling once remaining unknowns have safe defaults or an explicit validation plan and the next action no longer depends on unverified critical assumptions.
+- State the invariants that must hold (such as tenant isolation or idempotent delivery) and use measurable criteria instead of vague adjectives (`"fast"`, `"scalable"`), marking unestablished numbers as open.
 
 ## Communicate the model
 
+- Apply only the depth needed to unblock the next engineering decision: stop modeling once remaining unknowns have safe defaults or an explicit validation plan and the next action no longer depends on unverified critical assumptions.
 - Once blocking questions are settled, respond in natural, user-facing language with only the elements that help the next decision. Include the relevant subset of: problem statement, system boundaries, constraints and anti-goals, decisions made, acceptance scenarios, remaining non-blocking assumptions, and the recommended next action.
 - Keep process labels (`Step 1`, checklist scores, framework names) out of the response unless the user asks about the methodology.
-- Create or modify files only when the user requests them, project conventions require documentation, or durable handoff demands it. When persistence is needed, prefer updating an existing document or writing one consolidated file rather than splitting into mandatory `problem.md` or `acceptance.md` files.
+- Create or modify documentation files only when the user requests them or repository conventions require them. When persistence is needed, prefer updating an existing document or writing one consolidated file rather than splitting into mandatory `problem.md` or `acceptance.md` files.

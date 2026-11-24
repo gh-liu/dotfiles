@@ -1,6 +1,6 @@
 ---
 name: read-code
-description: Trace a representative execution path, then follow individual functions or values across callers and consumers to explain how the code behaves. Use when reading unfamiliar code, walking someone through a feature, or making sense of a substantial diff before reviewing it, rather than when planning, implementing, or debugging a change.
+description: Trace a representative execution path, then follow individual functions or values across callers and consumers to explain how the code behaves. Use when reading unfamiliar code, walking someone through a feature, or making sense of a substantial diff before reviewing it, rather than when choosing a design, implementing a change, or isolating a failure's root cause.
 ---
 
 # Read code
@@ -26,6 +26,6 @@ Once you can explain the behavior, verify what your passes may have missed and r
 
 ## Explain the behavior
 
-Answer the reader's question directly in terms of the input and its outcome, rather than narrating your reading passes. Point to the few source locations the reader can inspect to check the explanation. If a conclusion depends on a product assumption, identify it. For example, two records may briefly disagree. Whether that matters depends on who can observe the mismatch and what guarantee they rely on.
+Answer the reader's question directly in terms of the input and outcome—or, for a diff, what behavior changes and which callers depend on it—rather than narrating your reading passes. Point to the few source locations the reader can inspect to check the explanation. If a conclusion depends on a product assumption, identify it. For example, two records may briefly disagree. Whether that matters depends on who can observe the mismatch and what guarantee they rely on.
 
 Adapted from Sean Goedecke's [How to read code](https://www.seangoedecke.com/how-to-read-code/).
