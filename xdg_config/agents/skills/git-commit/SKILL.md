@@ -1,6 +1,6 @@
 ---
 name: git-commit
-description: Create atomic commits and draft or review commit messages following repository conventions. Use when asked to stage and commit changes, split changes into commits, or draft or review a commit message.
+description: Create atomic commits, fold follow-up changes into existing local commits, and draft or review commit messages following repository conventions. Use when asked to stage and commit changes, split changes into commits, absorb or fixup changes into local commits, or draft or review a commit message.
 ---
 
 # Git commits
@@ -20,6 +20,17 @@ Use `git status`, `git diff --cached`, and `git diff` to identify the changes. S
 Review `git diff --cached` before running `git commit`. Do not bypass hooks with `--no-verify` or run `git commit --amend` unless the user explicitly asks. If a hook rejects a commit, fix the underlying issue and run a new `git commit` instead of amending an earlier one.
 
 When splitting code changes, run the project's applicable checks at each committed snapshot. Build if the project has a build step and run the relevant tests if it has a test suite. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If a missing dependency or local configuration prevents a check from running, identify the check and what it requires. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
+
+## Updating local commits
+
+Only rewrite unpushed local commits, and only when the user asks to fold follow-up changes into existing commits instead of adding a new commit. Confirm the local commit range (`git log --oneline <base>..HEAD`) before rewriting history.
+
+- For `HEAD` only: stage the changes and run `git commit --amend` (or `--amend --no-edit` if the message still accurately describes the commit).
+- For an earlier local commit: stage the changes, run `git commit --fixup=<sha>`, and fold non-interactively with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`.
+
+When `git-absorb` is installed and staged edits span multiple earlier commits, you may use it to generate `fixup!` commits automatically: preview with `git absorb --dry-run` (pass `--base <ref>` if needed), run `git absorb`, inspect `git log --oneline <base>..HEAD`, and fold with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>` (or undo before rebasing with `git reset --soft PRE_ABSORB_HEAD`). Handle any hunks left staged in the index with `git commit --fixup=<sha>` or a new commit, and avoid passing `-w`/`--whole-file` or `-f`/`--force` blindly.
+
+After rewriting commits, re-run the project's applicable build and tests, verify that the updated commit messages still match their diffs, and check `git log --stat <base>..HEAD` and `git status --short`.
 
 ## Problem / Solution
 
