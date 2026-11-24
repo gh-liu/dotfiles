@@ -1,14 +1,12 @@
 ---
-description: Implement the agreed approach or review revisions with targeted tests and verifiable evidence
-argument-hint: "[chosen option, review items to address, scope, or constraints]"
+description: Implement the agreed change minimally with targeted verification
+argument-hint: "[chosen option or change]"
 ---
 
-Implement the agreed approach or actionable review findings (defects, missed paths/edge cases, agreed simplifications or removals, and missing test coverage) from the current discussion, incorporating any input below.
+Implement: ${@:-the agreed plan, fix, or revision items from the current session}
 
-Chosen option, review items, scope, or extra constraints: ${@:-none}
+1. If something found during implementation invalidates the agreed approach, stop and report it, keeping partial edits.
+2. Run the relevant build, lint, and test checks, separating pre-existing failures from regressions.
+3. Summarize the behavioral change and verification results.
 
-1. **Resolve target & check readiness**: When the input does not explicitly name a target (or only adds constraints), infer the target in order from: (a) the agreed approach or chosen option from the current discussion, (b) clear, undisputed actionable findings from an immediately preceding review (defects, missed paths/edge cases, missing test coverage), or (c) an explicit failing regression test or reproducer left in the discussion or working tree pointing to a production defect. If the discussion focus and uncommitted working-tree changes point to different work, treat that as ambiguous and confirm before modifying files. Also stop and ask before modifying files if no clear starting point exists, or if an approach choice, material constraint, or subjective trade-off (such as a debatable simplification or removal) is still unresolved. Before editing, confirm acceptance criteria, non-goals, constraints, and invariants—consulting active ADRs when touching architectural conventions.
-2. **Implement minimally & cleanly**: Keep changes focused, production-quality, reviewable, and rollback-safe. Address the agreed scope without widening into unrelated refactors or speculative abstractions, follow existing project conventions, and preserve unrelated or parallel changes in the working tree. If implementation reveals an invalidated assumption that would alter the agreed approach, scope, or invariants, stop and confirm instead of working around it silently—reporting any files already modified and leaving them intact rather than reverting silently.
-3. **Add discriminating verification**: For bug fixes or concrete counterexamples, prefer reproducing the failure with a regression test (or using any failing regression test already in the working tree) before verifying the fix. Cover untested behaviors, acceptance criteria from realistic entry points, invariants, and key edge cases with tests that would fail if a substantive change were removed or broken. Run the relevant build, lint, and test checks (or equivalent concrete checks when no test suite applies), distinguishing pre-existing unrelated failures from regressions.
-4. **Report in plain engineering terms**: Lead with a clear, human-readable summary of what behavior changed and why (noting the inferred scope when not explicitly specified, and avoiding internal prompt or workflow labels), then list the touched files, exact verification commands with observed results, and any remaining unverified assumptions, pre-existing failures, skipped checks, or risks.
-5. **Boundaries**: Do not commit, push, or perform destructive git/system actions unless explicitly requested. Clearly separate observed verification results from static inferences.
+Modify only what the agreed scope requires.

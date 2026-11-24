@@ -1,28 +1,12 @@
 ---
-description: Explore codebase context and constraints, then either surface clarifying gaps or propose distinct candidate options
-argument-hint: "[problem, target, or focus]"
+description: Explore candidate options and compare trade-offs without modifying code
+argument-hint: "[problem or requirement]"
 ---
 
-Investigate the codebase, docs, and discussion context for the task below to establish verified facts, constraints, and invariants—then either stop to clarify an ambiguous problem/root cause or generate distinct candidate options ready for comparison and decision.
+Explore candidate options for: ${@:-the problem or requirement under discussion}
 
-Problem, target, or focus: ${@:-none}
+1. Derive hard constraints from existing code and contracts, and lead with them.
+2. Offer options that differ in mechanism or trade-off, including a minimal-change baseline when viable.
+3. Compare options side by side on mechanism, failure risks, and unverified assumptions without recommending one.
 
-1. **Resolve target & ground in reality**: If the input above is omitted or only gives a focus or constraint, infer the target from the current discussion (the active problem, unresolved defect/root cause, requirement, or recently discussed code/topic—focusing on the most recent active thread when the conversation spans multiple topics). If the discussion has no clear target or has competing unrelated topics, stop and ask briefly instead of guessing or scanning the repository broadly. Once the target is identified, inspect the relevant code, entry points, callers, contracts, configuration, tests, and active ADRs (and check `git status`/diff if the discussion refers to in-progress changes). When behavior depends on runtime state or external dependencies, perform read-only checks of the deployment or external environment (e.g., logs, live config, or dependency contracts) instead of guessing from source alone. For complex or cross-component flows, trace the relevant control flow, data flow, call chains, and natural boundaries where behavior can be isolated and verified. Extract concrete facts with `file:line` or observed command/log evidence, identifying existing invariants, hard constraints, and non-goals. If the request is solution-shaped without a stated goal, trace the affected code to reconstruct the underlying problem as a testable hypothesis rather than assuming the proposed mechanism is the only framing.
-2. **Decide whether to clarify first or propose options**: Based on Step 1's evidence, decide internally whether to **stop in the problem/diagnosis space** or **proceed to Step 3**:
-   - **Stop (do not propose candidate solution options)** when any of the following holds:
-     - *Blocking ambiguity*: Even after inspecting code, docs, tests, and active ADRs, core goals, observable acceptance criteria, non-goals, or high-impact constraints/invariants remain unclear such that guessing wrong would change the solution space, public interfaces, data contracts, or architecture (or be costly to reverse).
-     - *Unverified solution-shaped framing*: The request proposes a concrete mechanism or technology without stating the underlying problem, and codebase evidence does not establish what failure or requirement it solves.
-     - *Diagnostic or comprehension scope*: The user is asking to understand existing behavior or isolate a defect/root cause, and either no change is requested yet or multiple plausible root causes remain unconfirmed.
-   - **Proceed to Step 3 (explore candidate options)** when the goal, acceptance criteria, and key boundaries/invariants are clear enough to compare real approaches—or when the user explicitly requests options under stated working assumptions:
-     - Do *not* stall on localized, low-risk, reversible, or option-specific unknowns (e.g., secondary edge cases, unmeasured performance numbers, or implementation details); record them as explicit unverified assumptions (with sensible defaults or decisive checks) and continue to candidate options.
-3. **Explore distinct candidate options** *(only when the gate passes)*: Propose 2–4 genuinely distinct candidate options (differing in mechanism, boundary, or trade-off rather than cosmetic variants), including a minimal-change or status-quo baseline unless ruled out by hard constraints (if ruled out, note why briefly). Check every option against hard constraints, invariants, non-goals, and active ADRs. Describe each option in parallel, neutral terms (avoiding editorial adjectives) for fair comparison:
-   - **Mechanism & scope**: How it achieves the goal and which files, modules, interfaces, or callers it touches.
-   - **Verified facts**: Observed code, test, or doc evidence (`file:line`) backing feasibility or impact.
-   - **Known risks, failure modes & reversibility**: Concrete counterexamples, invariant/regression risks, hidden coupling, and migration or rollback costs.
-   - **Unverified assumptions & decisive checks**: Assumptions that could invalidate the option and the smallest check or experiment that would confirm or refute them.
-4. **Report in plain engineering terms**: Keep the stop/proceed gate as internal reasoning—write directly for a human reader without exposing workflow terms (such as gate names, stop-condition labels, or graph acronyms) or copying template headings verbatim:
-   - **Problem & verified context**: Lead with what the system currently does and why it matters here, citing key `file:line` references (plus any observed runtime/environment evidence), active contracts, hard constraints, invariants, relevant ADRs, and key call/data paths where helpful. State the understood goal, acceptance criteria, non-goals, and any working unverified assumptions.
-   - **Clarifying forks *(if stopping)* or Candidate options *(if proceeding)***:
-     - If stopping: Explain plainly why proposing solutions now would be premature, then give either (i) only the high-impact questions that would change the direction—framed as concrete scenarios with sensible defaults for low-risk reversible choices—or (ii) competing root-cause hypotheses paired with the smallest check or experiment to tell them apart.
-     - If proceeding: Present the 2–4 candidate options side by side, highlight the practical trade-offs that separate them, and note any quick checks worth running before choosing (leaving final selection to the user).
-5. **Boundaries**: Read-only exploration only (including any external or deployment environment checks); do not modify files, mutate remote/runtime state, leave artifacts in the working tree, implement any option, or perform destructive git/system actions. Do not invent unstated requirements, workloads, or thresholds, and clearly separate verified facts (with `file:line` or observed read-only command/log output) from inferences and unverified assumptions.
+Read-only: do not modify files or implement an option.
