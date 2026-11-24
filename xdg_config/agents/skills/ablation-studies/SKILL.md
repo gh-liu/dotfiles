@@ -1,6 +1,6 @@
 ---
 name: ablation-studies
-description: Design and run ablation studies to isolate the effect of a single component, configuration, input, or training choice. Use when testing whether a factor causes an observed effect or measuring what changes when it is removed, disabled, or replaced, rather than tuning for the best overall score.
+description: Design and run ablation studies to isolate the effect of a single component, configuration, input, or training choice. Use when testing whether a factor causes an observed effect or measuring what changes when it is removed, disabled, or replaced, rather than tuning for the best overall score or tracing general bugs across components.
 ---
 
 # Ablation studies

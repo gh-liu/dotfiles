@@ -5,7 +5,7 @@ description: Model ambiguous software engineering problems before committing to 
 
 # Problem modeling
 
-Turn an ambiguous or solution-shaped request into a clear, bounded, and testable problem model before starting implementation. Inspect available code, documentation, and tests first; if the goal and acceptance criteria are already clear, switch to `engineering-workflow`. Separate confirmed facts, user-reported context, assumptions, and hypotheses, and never invent unstated motivations, budgets, workloads, or thresholds. Do not modify code until key requirements and acceptance criteria are agreed, or the user explicitly asks to proceed.
+Turn an ambiguous or solution-shaped request into a clear, bounded, and testable problem model before starting implementation. Inspect available code, documentation, and tests first; if the goal and acceptance criteria are already clear, skip modeling and proceed directly to implementation. Separate confirmed facts, user-reported context, assumptions, and hypotheses, and never invent unstated motivations, budgets, workloads, or thresholds. Do not modify code until key requirements and acceptance criteria are agreed, or the user explicitly asks to proceed.
 
 ## Frame the problem
 
@@ -16,7 +16,7 @@ Turn an ambiguous or solution-shaped request into a clear, bounded, and testable
 ## Model boundaries and interactions
 
 - Separate external realities and contracts from the system under our control and the requirement it must establish. Do not treat every existing implementation choice as an immutable external constraint.
-- For key boundary interactions, identify who initiates an event, who observes it, what crosses the interface, and what guarantees hold. For example, in `Agent --[heartbeat event]--> Monitoring Service --[status]--> Operator`, heartbeat events are the interface mechanism, while accurate failure detection is the requirement. Add a diagram only when it improves clarity, and follow `visual-explanation` for its form.
+- For key boundary interactions, identify who initiates an event, who observes it, what crosses the interface, and what guarantees hold. For example, in `Agent --[heartbeat event]--> Monitoring Service --[status]--> Operator`, heartbeat events are the interface mechanism, while accurate failure detection is the requirement. Add a minimal diagram only when it improves clarity.
 
 ## Shape the scope
 

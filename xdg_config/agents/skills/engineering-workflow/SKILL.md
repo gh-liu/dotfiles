@@ -1,6 +1,6 @@
 ---
 name: engineering-workflow
-description: Investigate behavior across components, compare implementation options, and verify changes against explicit invariants. Use when tracing behavior to set acceptance criteria or root causes, weighing material trade-offs, verifying compatibility or state invariants, or consulting or writing a lightweight Architecture Decision Record (ADR), rather than for explaining existing code (see `read-code`) or ambiguous requirements (see `problem-modeling`).
+description: Investigate behavior across components, compare implementation options, and verify changes against explicit invariants. Use when tracing root causes, weighing trade-offs, verifying invariants, or writing a lightweight ADR, rather than for explaining existing code, clarifying ambiguous requirements, or isolating a single factor's effect.
 ---
 
 # Engineering workflow
@@ -9,9 +9,9 @@ Start from the question that currently affects the decision. When investigation 
 
 ## Understand the problem
 
-- Confirm observable acceptance criteria, out-of-scope boundaries, constraints, and invariants that must hold before and after the change. If core requirements remain ambiguous after codebase inspection, switch to `problem-modeling` before implementing.
+- Confirm observable acceptance criteria, out-of-scope boundaries, constraints, and invariants that must hold before and after the change. If core requirements remain ambiguous after codebase inspection, clarify the problem and acceptance criteria before implementing.
 - When a change touches architectural conventions, consult relevant active Architecture Decision Records (ADRs) first to confirm which constraints apply.
-- Trace behavior from the normal entry point across callers, implementations, and configuration, checking against contracts, tests, or logs. For cross-component issues, sketch control or data flow as needed to find the boundary where behavior can be observed and tested independently; follow `visual-explanation` for the form.
+- Trace behavior from the normal entry point across callers, implementations, and configuration, checking against contracts, tests, or logs. For cross-component issues, sketch control or data flow as needed to find the boundary where behavior can be observed and tested independently.
 - When multiple causes are plausible, choose the smallest experiment that distinguishes them. Inspect the deployment environment or external dependencies when necessary. Label inferences and their evidence. If ambiguity remains after investigation and would change the approach or outcome, confirm with the user.
 
 ## Choose an approach
