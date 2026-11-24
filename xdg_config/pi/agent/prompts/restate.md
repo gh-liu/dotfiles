@@ -3,13 +3,15 @@ description: Restate requirements, constraints/invariants, and current approach,
 argument-hint: "[focus, scope, or new context]"
 ---
 
-Based on the discussion, decisions, and evidence gathered so far—incorporating any new input below—restate where the task stands.
+Based on the discussion, decisions, and evidence gathered so far—incorporating any new input below—restate concisely where the task stands so a human reader can grasp current alignment and open forks at a glance.
 
 Focus, scope, or new context: ${@:-none}
 
-- **Requirements & Non-goals:** What outcome is needed, what counts as success (acceptance criteria), and what is explicitly out of scope (non-goals).
-- **Constraints & Invariants:** What hard limits must the solution respect (constraints and relevant active ADRs), and what existing behaviors, contracts, or state properties must remain unchanged (invariants).
-- **Solution:** How the current approach (or candidate options) satisfies those requirements while preserving the invariants. Distinguish current agreed decisions from proposals (noting anything superseded), and verified facts from unverified assumptions.
-- **Open questions & decisions needed** *(omit if none)*: List only high-impact ambiguities, unstated boundaries, or unresolved trade-offs that would change scope, outcome, or approach—proposing a default for reversible low-risk choices and noting what evidence would settle open trade-offs.
+Write in plain, natural engineering prose (adapting headings to the conversation's language rather than copying template labels verbatim, and avoiding raw code, schema, or field dumps unless a specific detail is itself in question):
 
-Summarize current understanding only: do not modify files or state, and do not start new investigation unless needed to check a cited reference.
+- **Requirements & non-goals:** Lead with a one- or two-sentence status snapshot, then state the needed outcome, observable acceptance criteria, and what is explicitly out of scope.
+- **Constraints & invariants:** Hard limits the solution must respect (including relevant active ADRs) and existing behaviors, contracts, or state properties that must remain unchanged.
+- **Current approach:** How the agreed direction (or active candidate options) meets those requirements while preserving invariants—clearly separating agreed decisions from open proposals (noting anything superseded) and verified facts from unverified assumptions.
+- **Open questions & decisions needed** *(omit if none)*: Only high-impact ambiguities, unstated boundaries, or unresolved trade-offs that would change scope, outcome, or approach—proposing sensible defaults for low-risk reversible choices and stating what concrete check would settle open trade-offs.
+
+Summarize current understanding only: do not modify files or state, and do not start new investigation unless needed to verify a cited reference.

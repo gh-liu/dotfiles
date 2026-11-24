@@ -36,7 +36,8 @@
 ### 编写约束
 
 - **只聚焦自身能力范围**：每个 prompt 只负责单一阶段的职责与硬边界（`Boundaries`），不越界代行其他环节。
-- **使用共同语言，不耦合其他 prompts**：各 prompt 共用同一套状态词汇（如 `acceptance criteria`、`non-goals`、`constraints`、`invariants`、`active ADRs`、`verified facts` vs `unverified assumptions`）以自然衔接，但正文内**不要提及或硬编码其他 `/prompt`**，保证每条命令独立可用、可任意组合。
+- **使用共同语言，不耦合其他 prompts**：各 prompt 共用同一套状态词汇（如 `acceptance criteria`、`non-goals`、`constraints`、`invariants`、`active ADRs`、`verified facts` vs `unverified assumptions`）以自然衔接，但正文内**不要提及或硬编码其他 `/prompt` 或其内部标签**，保证每条命令独立可用、可任意组合。
+- **结论面向人类可读可理解（推理脚手架与输出分离）**：门控、消融、量化打分等结构化方法仅作为模型的内部推理骨架；最终输出必须使用自然、直白的工程语言先给结论再附证据，不向读者倾倒内部状态机术语、自定义枚举标签或模型协议字段。
 
 ## extensions
 
