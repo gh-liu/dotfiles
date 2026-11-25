@@ -23,11 +23,13 @@ When splitting code changes, run applicable build and test checks at each commit
 
 ## Updating local commits
 
-Only rewrite unpushed local commits when the user asks to fold follow-up edits into existing commits. Verify `<base>..HEAD` is unpushed against upstream (for example, `@{u}..HEAD`) and inspect `git log --oneline <base>..HEAD` first. If the range contains merge commits or rebasing conflicts, run `git rebase --abort` and confirm instead of force-resolving.
+Only rewrite unpushed local commits when the user asks to fold follow-up edits into existing commits. Inspect target commits first (`git log --oneline <base>..HEAD` or `-n 1 HEAD`). Stop before rewriting if any target commit is a merge (`git rev-list --merges <base>..HEAD` or `--no-walk --merges HEAD`) or appears in `git branch -r --contains <sha>` across fetched `refs/remotes/*` refs (not only `@{u}`). Confirm first when a configured remote has missing or stale tracking refs.
 
 - For `HEAD` only: stage the changes and run `git commit --amend` (or `--amend --no-edit` if the message still accurately describes the commit).
 - For an earlier local commit: stage the changes, run `git commit --fixup=<sha>`, and fold non-interactively with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`.
 - For staged edits spanning multiple earlier commits with `git-absorb`: preview with `git absorb --dry-run` (pass `--base <ref>` if needed) and run `git absorb` without blind `-w`/`--whole-file` or `-f`/`--force`. Inspect `git log --oneline <base>..HEAD` and `git status --short` (undo before rebasing via `git reset --soft PRE_ABSORB_HEAD`). Before rebasing, convert remaining staged hunks meant for an earlier commit with `git commit --fixup=<sha>` and unstage or commit the rest so the index is clean, then fold with `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`.
+
+If a rebase you started conflicts, run `git rebase --abort`, report the conflicting commit, and confirm instead of force-resolving.
 
 After rewriting commits, re-run the project's applicable build and tests, verify that the updated commit messages still match their diffs, and check `git log --stat <base>..HEAD` and `git status --short`.
 
