@@ -5,8 +5,8 @@ argument-hint: "[capability, behavior, or path]"
 
 Add and run tests for: ${@:-the capability or behavior implemented in the current session}
 
-1. Use the cheapest existing test layer that observes the behavior realistically, without adding a framework. If that needs heavy mocking or a production seam, report the testability gap instead.
-2. Cover key behaviors, boundaries, and error paths not already tested, asserting observable outcomes.
-3. Run the tests and their checks. Fix flawed tests; keep failures that expose production bugs and report them.
+1. Cover observable behavior not already tested. Use the existing test setup; if it cannot exercise the behavior without extensive mocking or production changes, report the gap instead.
+2. Fix a faulty test; if a valid test exposes a production bug, leave it failing and report the defect.
+3. Report what the new coverage catches and the results of running it.
 
 Modify only test files and fixtures.
