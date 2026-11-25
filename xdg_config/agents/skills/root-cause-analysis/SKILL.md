@@ -5,7 +5,7 @@ description: Isolate the root cause of bugs, test failures, regressions, or unex
 
 # Root-cause analysis
 
-Pin down why observed behavior diverges from expected behavior before proposing or implementing a fix. Do not apply speculative fixes while the cause remains unconfirmed; prefer read-only checks, and ask before adding temporary instrumentation when read-only evidence cannot separate the remaining hypotheses.
+Pin down why observed behavior diverges from expected behavior before proposing or implementing a fix. Start with read-only checks. If the evidence leaves several hypotheses open, identify what to observe and which outcome would rule out each hypothesis. Use temporary instrumentation when it is needed and within the task’s scope.
 
 ## Pin down the failure
 

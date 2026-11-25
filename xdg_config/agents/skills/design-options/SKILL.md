@@ -16,7 +16,7 @@ Ground technical choices in verified system constraints before comparing candida
 
 - Include the smallest viable change that satisfies the constraints as a baseline whenever one exists.
 - Make additional candidates differ in mechanism, boundary placement, or trade-off rather than surface phrasing. Drop options that violate hard constraints instead of padding the list; if no candidate satisfies every hard constraint, surface the conflicting constraints instead of silently relaxing one.
-- Guard against speculative generality: propose a new abstraction, indirection, or file split only when you can state what current logic it simplifies, what concrete reuse it serves, or what independent responsibility it isolates.
+- For a candidate that introduces an abstraction, identify the current problem it solves and weigh that benefit against the cost of maintaining the extra layer.
 
 ## Compare trade-offs and risks
 

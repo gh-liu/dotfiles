@@ -11,7 +11,7 @@ Change only what the goal and constraints require. Inspect surrounding implement
 
 - Solve the target problem without bundling unrelated cleanups, renames, or style churn. Preserve existing and parallel edits outside your scope; if they conflict with the change, report the conflict and narrow your footprint.
 - When refactoring, keep observable behavior unchanged and separate structural changes from behavior changes.
-- Introduce a new abstraction, wrapper, or file split only when it simplifies current logic, serves concrete existing reuse, or isolates an independent responsibility. Prefer direct inline code over indirection built for hypothetical future needs.
+- Before extracting a helper or module, identify the caller it simplifies, the call sites that share the logic, or the distinct responsibility it will own. If none applies to the current change, keep the code inline.
 
 ## Encode invariants in code
 

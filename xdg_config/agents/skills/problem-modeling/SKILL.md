@@ -5,7 +5,7 @@ description: Model ambiguous software engineering problems before committing to 
 
 # Problem modeling
 
-Turn an ambiguous or solution-shaped request into a clear, bounded, and testable problem model before starting implementation. Inspect available code, documentation, and tests first; if the goal and acceptance criteria are already clear, skip modeling and proceed directly to implementation. Separate confirmed facts, user-reported context, assumptions, and hypotheses, and never invent unstated motivations, budgets, workloads, or thresholds. Do not modify code until key requirements and acceptance criteria are agreed, or the user explicitly asks to proceed.
+Inspect available code, documentation, and tests to clarify the goal, scope, and acceptance criteria. If these are already clear, skip modeling. Otherwise, frame the request as a bounded, testable problem. Separate confirmed facts, user-reported context, assumptions, and hypotheses, and never invent unstated motivations, budgets, workloads, or thresholds.
 
 ## Frame the problem
 

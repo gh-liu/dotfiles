@@ -17,7 +17,7 @@ Give each commit one logical purpose. In projects with a build step, the reposit
 
 Use `git status`, `git diff --cached`, and `git diff` to identify the changes. Stage explicit file paths or hunks and preserve the user's staging choices. Never run `git add -A` or `git add .` blindly when untracked, generated, or sensitive files may be present. In non-interactive shells, split hunks with a patch and `git apply --cached` instead of `git add -p`. If the staged changes conflict with the requested scope, clarify the scope first.
 
-Review `git diff --cached` before running `git commit`. Do not bypass hooks with `--no-verify` or run `git commit --amend` unless the user explicitly asks. If a hook rejects a commit, fix the underlying issue and run a new `git commit` instead of amending an earlier one.
+Review `git diff --cached` before running `git commit`. Do not bypass hooks with `--no-verify` or run `git commit --amend` unless the user explicitly asks. If a hook rejects a commit, identify the cause from its output. If the cause belongs to this change and the fix is in scope, stage the correction, review the staged diff, and retry `git commit`. Otherwise, report which hook blocked the commit and why.
 
 When splitting code changes, run applicable build and test checks at each committed snapshot. Use a temporary clean worktree if pending edits could affect the result, and remove it afterward. If a missing dependency or local configuration prevents a check from running, identify the check and what it requires. Check `git show --stat -1` and `git status --short` to confirm what was committed and what remains.
 
