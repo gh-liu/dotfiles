@@ -85,7 +85,7 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 - **决策**：`design-options`（推导硬约束与权衡方案）、`architecture-decision-records`（查阅、撰写或替代 ADR）
 - **实现**：`write-code`（最小改动与代码化约束）
 - **验证**：`verify-changes`（真实入口测试与不变量验证）、`ablation-studies`（单因素对照实验）
-- **交付**：`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（技术文档写作）、`git-commit`（原子提交与本地历史整理）
+- **交付**：`explain-code`（按合适层级讲清代码行为与变更）、`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（技术文档写作）、`git-commit`（原子提交与本地历史整理）
 
 Prompts（L3）表达用户显式发起的**动作与读写护栏**，在日常任务中与上述策略按阶段配合：
 
