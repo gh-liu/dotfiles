@@ -1,6 +1,6 @@
 ---
 name: read-code
-description: Trace a representative execution path, then follow individual functions or values across callers and consumers to explain how the code behaves. Use when reading unfamiliar code, walking someone through a feature, or making sense of a substantial diff before reviewing it, rather than when choosing a design, implementing a change, or isolating a failure's root cause.
+description: Trace code from a concrete input to an observable result. Use when explaining unfamiliar behavior, checking which callers a diff affects, or tracing a value during diagnosis or review. A lookup answered by one definition does not need a walkthrough.
 ---
 
 # Read code

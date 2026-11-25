@@ -1,6 +1,6 @@
 ---
 name: verify-changes
-description: Verify code or configuration changes through realistic tests and entry-point checks covering contracts, edge cases, and compatibility invariants. Use when adding or strengthening tests, confirming a bug fix with a regression check, or validating that a change meets acceptance criteria, rather than when running single-factor ablation experiments or implementing production logic alone.
+description: Verify a code or configuration change through the entry point its callers use. Use when adding tests, checking a fix against the original failure, or showing that a change preserves a contract. Measuring a factor's effect alone does not establish correctness.
 ---
 
 # Verify changes

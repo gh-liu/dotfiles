@@ -1,6 +1,6 @@
 ---
 name: root-cause-analysis
-description: Isolate the root cause of bugs, test failures, regressions, or unexpected runtime behavior from observable evidence. Use when observed behavior diverges from expectations and the cause is unknown, rather than when explaining working code, modeling ambiguous requirements, isolating a chosen factor's effect, or implementing a fix.
+description: Distinguish competing causes of a failure using observable evidence. Use when a test fails, a regression appears, or runtime behavior diverges from expectations and the cause is still unknown. A fix for an already confirmed cause does not need a new diagnosis.
 ---
 
 # Root-cause analysis
