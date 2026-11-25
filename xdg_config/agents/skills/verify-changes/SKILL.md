@@ -22,7 +22,8 @@ Prove with independently checkable evidence that a change satisfies its acceptan
 
 ## Interpret results and bound risk
 
-- Run the project's applicable build, lint, type, and test checks, separating pre-existing failures from new regressions. Fix flawed tests, but never weaken assertions or delete checks to mask a real production defect.
+- Run the project's applicable build, lint, type, and test checks, separating pre-existing failures from new regressions.
+- When a test fails or checks the wrong condition, compare its assertion and the observed behavior against the contract. If the test is flawed, specify the assertion that verifies the contract, and update the test only when the task allows editing tests. If production code violates the contract, keep the failing check as evidence and never weaken or delete assertions to make checks pass.
 - When missing credentials, dependencies, or environments block critical verification, state why it is blocked, what the executed checks cover, and what specific risk remains unverified.
 
 ## Examples
