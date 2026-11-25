@@ -26,6 +26,6 @@ Ground technical choices in verified system constraints before comparing candida
 
 ## Examples
 
-**Baseline vs. alternative mechanism.** To deduplicate incoming webhooks, Option A adds a unique constraint on `delivery_id` in the existing Postgres table (minimal baseline, bounded by table write rate), while Option B checks a Redis key with a 24-hour TTL before enqueueing (higher throughput, but loses deduplication across Redis eviction unless backed by durable storage).
+**Webhook deduplication.** Require at most one job per `delivery_id` across concurrent deliveries and retries within 24 hours, even across cache eviction or worker crashes. Drop a non-atomic Redis check or a Redis-only `SET ... NX` TTL lock because races, pre-commit crashes, or eviction violate that guarantee. Compare mechanisms that satisfy the full constraint: Option A uses `INSERT ... ON CONFLICT (delivery_id) DO NOTHING` in Postgres while retaining rows for at least 24 hours (minimal baseline), whereas Option B adds a post-commit Redis lookup in front of the same Postgres constraint to shed duplicate retry storms.
 
 **Conflicting hard constraints.** When a service requires both zero-downtime schema migration and synchronous strict foreign-key validation on a 200M-row table, report the lock-duration conflict instead of silently dropping a constraint, and present phased backfill trade-offs for the user to decide.
