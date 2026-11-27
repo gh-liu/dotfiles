@@ -15,12 +15,12 @@ Inspect available code, documentation, and tests to clarify the goal, scope, and
 
 ## Model boundaries and interactions
 
-- Separate external realities and contracts from the system under our control and the requirement it must establish. Do not treat every existing implementation choice as an immutable external constraint.
+- Separate the real-world domain (where requirements and external contracts live) from the software machine under our control, distinguishing *indicative* facts (how the environment already behaves) from *optative* requirements (how it should behave). Ground every requirement in observable shared phenomena crossing their interface rather than internal implementation choices.
 - For key boundary interactions, identify who initiates an event, who observes it, what crosses the interface, and what guarantees hold. For example, in `Agent --[heartbeat event]--> Monitoring Service --[status]--> Operator`, heartbeat events are the interface mechanism, while accurate failure detection is the requirement. Add a minimal diagram only when it improves clarity.
 
 ## Shape the scope
 
-- Define what is in scope, what is out of scope, what is unacceptable (anti-goals such as silent data loss or breaking existing clients), and which existing guarantees must hold.
+- Define what is in scope, what is out of scope, what is unacceptable (anti-goals such as silent data loss or breaking existing clients), which existing guarantees must hold, and how competing quality priorities rank (such as correctness, latency, and delivery time) so unspoken goals are not traded away by accident.
 - Treat any stated appetite (time or complexity budget) as a constraint on scope rather than an estimate. When scope exceeds that budget, preserve the core outcome, cut optional work, or propose simpler alternatives with explicit trade-offs.
 - Identify high-risk unknowns (rabbit holes) that could consume disproportionate effort. Explain their impact and decide whether to investigate, contain, simplify, or explicitly defer them.
 
@@ -41,3 +41,5 @@ Inspect available code, documentation, and tests to clarify the goal, scope, and
 - Once blocking questions are settled, respond in natural, user-facing language with only the elements that help the next decision. Include the relevant subset of: problem statement, system boundaries, constraints and anti-goals, decisions made, acceptance scenarios, remaining non-blocking assumptions, and the recommended next action.
 - Keep process labels (`Step 1`, checklist scores, framework names) out of the response unless the user asks about the methodology.
 - Create or modify documentation files only when the user requests them or repository conventions require them. When persistence is needed, prefer updating an existing document or writing one consolidated file rather than splitting into mandatory `problem.md` or `acceptance.md` files.
+
+References: Michael Jackson, *Problem Frames*; Pamela Zave and Michael Jackson, *Four Dark Corners of Requirements Engineering* (ACM TOSEM 1997); Donald C. Gause and Gerald M. Weinberg, *Exploring Requirements*; Ryan Singer, *Shape Up*.

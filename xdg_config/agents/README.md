@@ -29,7 +29,7 @@ Agent 的能力与行为按**触发方式**、**职责边界**和**上下文成�
 
 ### 关键边界
 
-- **按入口约定决定步骤放哪**：删掉某个步骤会改变用户调用入口时得到的结果，就在 Prompt 中写明。例如某入口依赖特定模型或工具、并规定其失败时的降级输出，这些都属于入口约定。跨入口通用的做法留在 Skill 中，不在每个 Prompt 里重写。
+- **按入口约定决定步骤放哪**：删掉某个步骤会改变用户调用入口时得到的结果，就在 Prompt 中写明。例如某入口依赖特定模型或工具、并规定其失败时的降级输出，这些都属于入口约定。独立于具体入口的通用判断或方法留在 Skill 中，Prompt 与 Skill 彼此独立、不建立绑定关系。
 - **自建 Skill 边界清晰、可组合**：用 `description` 说明何时加载、哪些相近任务不适用。一个任务可以按需组合多个 Skill，例如先做根因分析缩小候选范围，再用消融实验验证某个因素。避免对同一个决策给出冲突的默认做法；与外部 Skill 冲突时，在自建 Skill 的 `description` 中划清适用范围。
 
 ## 3. 目录结构与单一真源（SSOT）
@@ -79,9 +79,9 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 - **其他 harness**（如 amp）：脚本用 `skills add` 将 `xdg_config/agents/skills` 安装到该 harness 的全局 skills 目录。修改自建 Skill 后需重新运行 `skillsu <agent>` 同步。
 - **第三方 Skills**：所有 harness 都由脚本通过 `skills add -g` 安装（当前为 agent-browser、typesafe-ai、worktrunk）；`devops-cli` 是指向业务项目的手动 symlink。
 
-## 4. 工程工作流（Skills × Prompts）
+## 4. 自建 Skills 与维护习惯
 
-自建 Skills（L2）独立于具体入口，按 `理解 → 决策 → 实现 → 验证 → 交付` 覆盖完整工程策略：
+自建 Skills（L2）按 `理解 → 决策 → 实现 → 验证 → 交付` 覆盖通用工程策略：
 
 - **理解**：`problem-modeling`（界定模糊问题）、`code-reading`（追踪并按合适层级讲清代码行为与 diff）、`failure-diagnosis`（定位异常根因）
 - **决策**：`design-options`（推导硬约束与权衡方案）、`architecture-decisions`（查阅、撰写或替代 ADR）
@@ -89,7 +89,7 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 - **验证**：`change-verification`（真实入口测试与不变量验证）、`ablation-studies`（单因素对照实验）
 - **交付**：`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（结构化技术输出与文档写作）、`git-commits`（原子提交与本地历史整理）
 
-Prompts（L3）是用户显式发起的动作入口，按阶段与上述 Skills 配合。各入口的职责、读写边界、常配合的 Skills 与使用习惯见 [pi/README.md](../pi/README.md#prompts)。架构记录与提交变更没有 Prompt 入口，需显式要求，分别由 `architecture-decisions` 与 `git-commits` 承接（文档写操作 / Git 写操作）。
+各 Harness 的任务入口模板（如 Pi 的 Prompts，见 [pi/README.md](../pi/README.md#prompts)）独立维护，不与具体 Skill 绑定。
 
 ### 使用习惯
 

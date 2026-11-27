@@ -10,17 +10,17 @@ Pin down why observed behavior diverges from expected behavior before proposing 
 ## Pin down the failure
 
 - Record the expected behavior, the actual behavior, and the concrete input, state, or event sequence that triggers the mismatch.
-- Reproduce the failure when feasible so follow-up checks have a reliable baseline. When direct reproduction is unavailable, collect primary evidence from logs, stack traces, metrics, or persisted state instead of guessing from an error message alone.
+- Reproduce the failure when feasible and simplify to a minimal failure-inducing input so follow-up checks have a clean baseline. Comparing state differences between a passing run and a failing run isolates the exact variables driving the cause-effect chain. When direct reproduction is unavailable, collect primary evidence from logs, stack traces, metrics, or persisted state instead of guessing from an error message alone.
 
 ## Trace to the first divergence
 
-- Separate where the error surfaces from where execution or data first went wrong. Follow the triggering path from a known-good boundary to the earliest point where actual state violates the contract.
+- Separate the visible failure from the first infected state and the underlying defect that created it. Observe actual runtime state before theorizing—never guess past what you can inspect. Follow the triggering path from a known-good boundary to the earliest point where actual state violates the contract, bisecting execution or input space (divide and conquer) when the path is large.
 - Check configuration, persisted state, build artifacts, deployment environment, and external dependencies whenever application code alone does not explain the observation.
 - For regressions with a known-good revision and a repeatable check, narrow the introducing commit range before inspecting individual changes in detail.
 
 ## Falsify competing hypotheses
 
-- List the plausible causes consistent with all current evidence. Choose the smallest discriminating check—such as a targeted read-only probe, query, log inspection, or existing test—whose outcome rules out at least one candidate explanation.
+- List the plausible causes consistent with all current evidence. Choose the smallest discriminating check—such as a targeted read-only probe, query, log inspection, or existing test—whose outcome rules out at least one candidate explanation, and change only one variable at a time when probing so you know what shifted the outcome.
 - Update the candidate list after each check. Keep observed facts distinct from inferences, and discard explanations contradicted by evidence rather than patching them with unverified assumptions. For intermittent or timing-sensitive failures, treat a single non-reproducing run as inconclusive rather than falsification.
 
 ## Report the diagnosis
@@ -33,3 +33,5 @@ Pin down why observed behavior diverges from expected behavior before proposing 
 **Symptom vs. first divergence.** Checkout throws `NullPointerException` while formatting the receipt. Tracing the order backward shows `discountRule` becomes `null` during cart deserialization when an expired coupon is present, making deserialization the first divergence.
 
 **Minimal discriminating check.** Two hypotheses explain 502 errors after a deploy: upstream timeout or a missing TLS CA bundle. Inspecting one proxy error log entry distinguishes `upstream timed out` from `x509: certificate signed by unknown authority` before reading application code.
+
+References: Andreas Zeller, *Why Programs Fail* and *Isolating Cause-Effect Chains from Computer Programs* (FSE 2002); David J. Agans, *Debugging: The 9 Indispensable Rules for Finding Even the Most Elusive Software and Hardware Problems*.

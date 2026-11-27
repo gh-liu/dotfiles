@@ -1,6 +1,6 @@
 ---
 name: change-verification
-description: Verify a code or configuration change through the entry point its callers use. Use when adding tests, checking a fix against the original failure, or showing that a change preserves a contract, rather than when isolating a single factor's effect in an experiment.
+description: Verify a code or configuration change through the entry point its callers use. Use when adding tests, checking a fix against the original failure, or showing that a change preserves a contract, rather than when diagnosing an unknown failure cause or isolating a single factor's effect in an experiment.
 ---
 
 # Change verification
@@ -10,12 +10,13 @@ Prove with independently checkable evidence that a change satisfies its acceptan
 ## Exercise realistic entry points
 
 - Verify behavior through the entry point users or external callers actually exercise instead of testing internal helpers in isolation while leaving wiring unchecked.
-- Use the cheapest existing test layer that observes real behavior without adding a new test framework. Avoid heavy mocking that mirrors internal implementation details; if realistic testing requires invasive mocks or a missing production seam, report the testability gap instead.
+- Use the cheapest existing test layer that observes real behavior without adding a new test framework. Isolate external dependencies at existing architectural seams (interfaces, boundaries, configuration hooks) rather than heavy mocks that mirror internal call sequences; if realistic testing requires invasive mocks or a missing production seam, report the testability gap instead.
 - For configuration or schema changes, validate through the actual loader, parser, validator, or dry-run command rather than inspecting the file by eye alone.
 
 ## Check contracts, regressions, and compatibility
 
-- Assert observable outcomes—return values, state transitions, persisted records, or externally visible effects—across normal, boundary, and error paths.
+- Assert observable outcomes—return values, state transitions, persisted records, or externally visible effects—across normal, boundary, and error paths so valid refactors do not break tests. Explicitly test error handlers and fault-triggered multi-event orderings rather than only happy paths, since unhandled or buggy error handling drives most catastrophic failures.
+- When changing poorly tested or legacy code whose intended behavior is unclear, write a characterization test that pins down current behavior before editing so unintended regressions surface immediately.
 - For a reproducible bug, run the regression check before and after the fix (or against the unpatched behavior) to confirm it fails on the defect and passes with the fix. When direct reproduction is infeasible, verify the fix under conditions as close to the trigger as possible.
 - Check invariants that span states or versions. When changing a persistence format, schema, or wire protocol, verify both writing new data and reading existing data.
 - Keep automated tests deterministic and isolated: avoid dependence on wall-clock timing, test execution order, shared mutable state, or live external services unless explicitly verifying an integration.
@@ -31,3 +32,5 @@ Prove with independently checkable evidence that a change satisfies its acceptan
 **State compatibility invariant.** After adding an optional `timezone` field to saved schedules, test both saving and loading a schedule with `timezone` set and loading a legacy fixture without `timezone` to confirm backward-compatible fallback.
 
 **Configuration entry-point check.** After editing a routing or lint configuration file, run the tool's real validation or dry-run command against representative inputs instead of relying on syntax highlighting alone.
+
+References: Michael C. Feathers, *Working Effectively with Legacy Code*; Vladimir Khorikov, *Unit Testing Principles, Practices, and Patterns*; Ding Yuan et al., *Simple Testing Can Prevent Most Critical Failures* (OSDI 2014).

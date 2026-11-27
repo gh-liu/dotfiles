@@ -1,6 +1,6 @@
 ---
 name: architecture-decisions
-description: Consult, draft, or supersede lightweight Architecture Decision Records (ADRs) for long-lived or constraining architectural choices. Use when checking active ADRs before changing architectural conventions, deciding whether a design choice warrants an ADR, or writing or updating an ADR, rather than when exploring or comparing candidate designs before a decision is settled, or writing general technical prose.
+description: Consult, draft, or supersede lightweight Architecture Decision Records (ADRs) for long-lived or constraining architectural choices. Use when checking active ADRs before changing conventions, deciding whether a choice warrants an ADR, or writing or updating one, rather than when comparing unsettled design options or writing general technical prose.
 ---
 
 # Architecture Decision Records
@@ -14,7 +14,8 @@ Use Architecture Decision Records (ADRs) to preserve the constraints, trade-offs
 
 ## Capture trade-offs and re-evaluation triggers
 
-- State the problem to solve, the hard constraints, and the evidence shaping the decision. Compare only the viable alternatives actually considered and explain why the chosen approach won despite its costs.
+- State the problem to solve, the hard constraints, and the evidence shaping the decision. Compare only viable alternatives actually considered—never pad the record with dummy alternatives that fail hard constraints—and explain why the chosen approach won despite its costs.
+- Record concrete long-term costs, operational burden, and coupling consequences of the chosen option rather than listing only benefits or harmless downsides; back every claim with observable evidence instead of sales language. Link related active ADRs that this decision depends on or constrains so architectural rationale stays traceable across records.
 - When a decision relies on assumptions about workload, scale, team structure, or external systems, record its applicability boundary and re-evaluation conditions. Distinguish requirement changes that invalidate the decision outright from observable signals that only warrant investigation, including metric thresholds and observation windows when available.
 - Edit a `Proposed` ADR in place while the decision is still open. Once an ADR is `Accepted`, do not overwrite its history; when a new decision replaces it, create a new ADR with `Supersedes: ADR-<old>` and update only the old record's status to `Superseded by ADR-<new>`.
 
@@ -38,3 +39,5 @@ Supersedes: <ADR-number, omit if none>
 ## Re-evaluation conditions
 <Changes that invalidate this approach, and signals or metric thresholds that trigger review>
 ```
+
+References: Michael Nygard, *Documenting Architecture Decisions*; Olaf Zimmermann, *How to Create Architectural Decision Records (ADRs) — and How Not To*; Philippe Kruchten, Rafael Capilla, and Juan Carlos Dueñas, *The Decision View's Role in Software Architecture Practice* (IEEE Software 2009).

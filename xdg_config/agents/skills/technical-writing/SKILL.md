@@ -1,6 +1,6 @@
 ---
 name: technical-writing
-description: Produce or revise technical prose that readers use to make a decision, follow a procedure, or take over work, such as decision summaries, runbooks, incident reports, and handoffs. Use when writing structured technical responses or documents, or improving wording, clarity, or structure even for a single sentence, rather than for commit messages, ADRs, or diagrams.
+description: Produce or revise technical prose that readers use to make a decision, follow a procedure, or take over work, such as decision summaries, runbooks, incident reports, and handoffs. Use when drafting or revising structured technical documents, or when asked to improve wording, clarity, or structure, rather than for commit messages, ADRs, or diagrams.
 ---
 
 # Technical writing
@@ -15,7 +15,7 @@ Before writing, identify who will read the text, what they already know, and wha
 
 ## Check clarity and accuracy
 
-- Use concrete subjects and verbs to make clear who performs or performed each action. Express one main idea per sentence. Break longer text into sections aligned with the reader's questions, and use parallel structure for similar information.
+- Use concrete subjects and verbs, keeping subject and verb close together instead of wedging long qualifying clauses between actor and action. Express one main idea per sentence, placing familiar context or the shared topic at the start (old before new) and the key new point at the end (stress position). Break longer text into mutually exclusive sections aligned with the reader's questions, and use parallel structure for similar information.
 - Use one term consistently for each concept. Preserve exact identifiers, API names, commands, and quotes. Expand abbreviations on first use when readers may not know them.
 - Check every claim against available evidence, keeping the preconditions, scope, units, and exceptions that affect judgment. When revising standalone text without evidence, do not invent facts or drop uncertainty qualifiers; flag unsupported or ambiguous claims instead. Clearly separate what was observed, what is inferred, and what is recommended.
 
@@ -25,4 +25,4 @@ Before writing, identify who will read the text, what they already know, and wha
 
 **Verification.** "The regression test for timeout retries passed. Retry behavior in production still needs verification."
 
-Clarity principles are adapted from ASD Simplified Technical English (ASD-STE100).
+References: ASD Simplified Technical English (ASD-STE100); Joseph M. Williams, *Style: Lessons in Clarity and Grace*; George D. Gopen and Judith A. Swan, *The Science of Scientific Writing* (American Scientist 1990); Barbara Minto, *The Pyramid Principle*.

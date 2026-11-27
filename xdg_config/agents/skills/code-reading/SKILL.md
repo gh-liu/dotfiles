@@ -9,11 +9,15 @@ Trace the code before explaining it, then lead with the behavior rather than imp
 
 ## Map one execution path
 
-Pick one concrete input or event—usually the case asked about or a primary success path—and follow it from entry to observable result. Identify which functions hand work to which others. On this first pass, a tentative label such as "loads the saved order" is enough to move past a helper; open its implementation whenever the answer depends on its exact behavior, side effects, or edge cases, and never present an uninspected helper as verified fact.
+- Pick one concrete input or event—usually the case asked about or a primary success path—and follow it from entry to observable result, anchoring first on high-signal beacons (entry handlers, type definitions, state mutations, invariant checks, and tests) before diving into dense logic.
+- Identify which functions hand work to which others; for convoluted expressions or multi-step transformations, write down intermediate values instead of holding large state in working memory.
+- On this first pass, a tentative label such as "loads the saved order" is enough to move past a helper; open its implementation whenever the answer depends on its exact behavior, side effects, or edge cases, and never present an uninspected helper as verified fact.
 
 ## Follow one thread at a time
 
-Choose one function or value that matters to the question. For a function, inspect callers, arguments, return handling, and errors; for a value, trace where it originates, changes, and is consumed—including unchanged callers outside a diff. When direct call sites do not appear, check indirect links such as interface implementations, callbacks, event handlers, or configuration, and note any dispatch path you cannot verify statically. Keep each pass focused, starting another pass only when a different caller, branch, or piece of data could change the explanation.
+- Choose one function or value that matters to the question. Once you find one relevant anchor, build your working set by traversing its actual incoming and outgoing dependencies rather than scanning files linearly or relying on keyword searches over surface cues alone.
+- For a function, inspect callers, arguments, return handling, and errors; for a value, trace where it originates, changes, and is consumed—including unchanged callers outside a diff.
+- When direct call sites do not appear, check indirect links such as interface implementations, callbacks, event handlers, or configuration, and note any dispatch path you cannot verify statically. Keep each pass focused, starting another pass only when a different caller, branch, or piece of data could change the explanation.
 
 ## Check for gaps
 
@@ -35,4 +39,4 @@ After the first sentence, the reader should be able to say what the code does or
 
 **Name ownership, not just the symptom.** The renderer now frees the tab's frame buffer after the last callback reads it. Previously, closing the tab freed the buffer while a callback could still use it.
 
-Adapted from Sean Goedecke's [How to read code](https://www.seangoedecke.com/how-to-read-code/).
+References: Sean Goedecke, [How to read code](https://www.seangoedecke.com/how-to-read-code/); Felienne Hermans, *The Programmer's Brain*; Amy J. Ko et al., *An Exploratory Study of How Developers Seek, Relate, and Collect Relevant Information during Software Maintenance Tasks* (IEEE TSE 2006).

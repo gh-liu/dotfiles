@@ -5,7 +5,7 @@ description: Explain engineering relationships, execution flows, comparisons, ch
 
 # Visual explanation
 
-Decide what the reader needs to see first. If one sentence makes it clear, use text. When a visual helps, keep only the elements needed to answer that question.
+Use a minimal, evidence-grounded diagram, table, diff, or screenshot when it explains a system or change more clearly than prose. Decide what the reader needs to see first; if one sentence makes it clear, use text, and when a visual helps, keep only the elements needed to answer that question.
 
 ## Choose the visual form
 
@@ -28,8 +28,11 @@ When the output medium does not render Mermaid (such as a plain terminal), prefe
 
 ## Keep the visual minimal
 
-- Include only the elements the reader needs to answer the question; drop participants, states, and columns the answer does not depend on.
-- Label each edge or column header with the action or attribute it carries, so the reader does not have to infer it.
-- Split a visual that answers two different questions instead of enlarging it.
+- Maximize the data-ink ratio: include only the elements the reader needs to answer the question, dropping decorative boxes, redundant labels, and participants, states, or columns the answer does not depend on. Group related elements spatially so readers infer relationships by direct lookup rather than linear search.
+- Keep one abstraction level per diagram (such as system context, container, component, or code) instead of mixing high-level services with individual functions, and add a brief legend whenever shapes, colors, or line styles carry meaning.
+- Label each edge or column header with the action or attribute it carries, so the reader does not have to infer it; for quantitative comparisons, prefer position along a common aligned scale (dots, bars, lines) over harder-to-judge areas, angles, or color gradients.
+- Split a visual that answers two different questions instead of enlarging it; when comparing metrics or states across conditions, prefer aligned small multiples on shared scales over one crowded chart.
 
 For examples of pseudocode, a text tree, a sequence diagram, and a diff, see [visual explanation examples](references/examples.md).
+
+References: Edward R. Tufte, *The Visual Display of Quantitative Information*; Simon Brown, *The C4 Model for Visualising Software Architecture*; Jill H. Larkin and Herbert A. Simon, *Why a Diagram is (Sometimes) Worth Ten Thousand Words* (Cognitive Science 1987); William S. Cleveland and Robert McGill, *Graphical Perception* (JASA 1984).
