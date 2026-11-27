@@ -5,10 +5,14 @@ argument-hint: "[task or topic]"
 
 Concisely restate the status of: ${@:-the current task in this session}
 
-Cover:
+Strategy:
+- Capture the latest effective state rather than a chronological recap, checking cited references only when needed.
+- Separate confirmed facts and agreed decisions from unverified assumptions or proposals; surface missing or ambiguous items as open questions instead of inferring them.
+
+Output:
 - Desired outcome, acceptance criteria, and explicit non-goals.
 - Hard constraints and existing contracts that must hold.
 - Completed work, remaining work, and agreed decisions.
 - Unresolved questions affecting scope or direction (omit if none).
 
-Summarize only: do not modify files or start new investigation beyond checking cited references.
+Boundary: Summarize only; do not modify files or investigate beyond cited references.

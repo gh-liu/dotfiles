@@ -34,10 +34,35 @@
 | `/test`      | 在最低成本真实测试层补强测试覆盖               | 当前会话实现的能力或目标行为       | 仅测试   |
 | `/review`    | 审查正确性、变更必要性、更简替代与测试缺口     | 当前会话实现或修改的代码变更       | 只读     |
 
+### 模板格式
+
+所有模板统一采用轻量标签分节的固定 Markdown 骨架（frontmatter + 目标首句 + `Strategy:` / `Output:` / `Boundary:`）：
+
+```markdown
+---
+description: <verb-first summary of action and boundary>
+argument-hint: "[<optional target>]"
+---
+
+<Action>: ${@:-<default target in the current session>}
+
+Strategy:
+- <How to execute and core criteria; inline conditional stop or degradation.>
+
+Output:
+- <Information priority and required decision elements.>
+
+Boundary: <Unconditional side-effect and authority boundary.>
+```
+
 ### 编写约束
 
 - **`/动词 [宾语]` 语法与会话默认目标**：命令名统一取单一动词，调用形式为 `/动词 [宾语]`，`argument-hint` 用方括号标注可选宾语（如 `"[changes, git ref, or path]"`）。正文首句通过 `${@:-...}` 将未传参时的默认目标绑定到当前会话对应产物；需要作用到会话外目标（如特定路径或 Git 范围）时由调用方显式传参，不在模板内堆叠多级 Git 回退猜测逻辑。
-- **聚焦单一能力，保持精简**：每个模板只写三件事——**动作与目标绑定（`${@:-...}`）**、**该动作独有的 2–4 条核心判准**、**明确的读写边界**（如 `Read-only` / `Summarize only` / `Recommend only` / `Modify only test files`），不越界代行相邻阶段职责。
+- **统一四段结构，聚焦单一能力**：每个模板只覆盖单一动作，按上述固定骨架的四个位置各司其职（保持精简，不越界代行相邻阶段职责）：
+  1. **任务目标（首句）**：明确动作并绑定默认目标（`${@:-...}`）。
+  2. **执行策略与约束（`Strategy:`）**：规定如何执行及核心判准，与结果表述分离。前提不满足或触发异常时的**条件退化/停止分支**（如证据不足、仅剩单一方案、方案失效、决策模型失败时的状态处置与降级输出）紧贴对应条目书写，避免硬凑结论。
+  3. **执行结果（`Output:`）**：聚焦结果本身与核心决策要素，约束信息优先级而非死板排版格式。
+  4. **任务边界（`Boundary:`）**：末尾单行声明无条件红线，同时划清**副作用/写边界**（如 `Read-only`、`Modify only test files and fixtures`）与**决策权/阶段边界**（如不替用户推荐、只总结不新开调查、只推荐不实现）。
 - **解耦常驻规则、Skills 与底层 API**：正文内不硬编码其他 `/prompt` 名称（靠会话上下文自然衔接），不重复 `AGENTS.md` 已有的全局纪律（如保护无关未提交改动、引用证据），也不抄入 skill 细则或工具沙箱的内部函数签名，避免双源维护。
 - **结论面向人类可读（推理脚手架与输出分离）**：假设鉴别、必要性反问、量化打分等仅作为推理骨架；输出用直白工程语言先给结论再附证据，不暴露内部流程标签或模型协议字段。
 

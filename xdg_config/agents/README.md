@@ -24,7 +24,7 @@ Agent 的能力与行为按**触发方式**、**职责边界**和**上下文成�
    - 不能（需要强类型约束、权限隔离、UI 渲染、外部服务接入或独立子会话）→ 新增 **L1**（Tool / Extension / MCP）。
    - 能 → 复用现有工具。能用 schema 或脚本直接检查的约束，优先用代码检查。
 3. **分别判断是否需要 Prompt 和 Skill。** 两者可以同时需要，也可以都不需要。
-   - **用户需要一个有明确约定的入口吗？** 需要 → 写 **L3（Prompt）**，说明调用时要完成什么、允许改什么、应交付什么结果。
+   - **用户需要一个有明确约定的入口吗？** 需要 → 写 **L3（Prompt）**，按「目标 → 执行策略与约束 → 执行结果 → 任务边界」四段说明调用时要完成什么、怎么执行、应交付什么结果以及读写与决策边界。模板格式与编写规范见 [pi/README.md](../pi/README.md#prompts)。
    - **即使不通过这个入口，这类任务是否仍需要模型无法可靠推断的指导？** 需要 → 写 **L2（Skill）**。例如两份数据冲突时以哪份为准，或几种做法都可行时团队选哪种。已知的内部约定不必等模型反复犯错才记录。编写规范见 [skills/README.md](skills/README.md)。
 
 ### 关键边界
@@ -47,14 +47,16 @@ xdg_config/
 ├── amp/
 │   └── AGENTS.md -> <dotfiles>/xdg_config/agents/AGENTS.md
 ├── bin/skillsu                    # Skills 安装/同步脚本
-└── pi/agent/                      # Harness 专属层（以 pi 为例）
-    ├── AGENTS.md -> <dotfiles>/xdg_config/agents/AGENTS.md
-    ├── APPEND_SYSTEM.md           # L0 pi 专属补充（codemode、classifier）
-    ├── settings.json              # 引用 ../../agents/skills
-    ├── keybindings.json           # pi 快捷键
-    ├── mcp.json                   # L1 MCP 服务配置
-    ├── extensions/                # L1 pi 扩展工具（mpl-render、subagent 等）
-    └── prompts/                   # L3 任务入口模板
+└── pi/                            # Harness 专属层（以 pi 为例）
+    ├── README.md                  # Pi 会话、Prompt 模板格式与扩展编写规范
+    └── agent/
+        ├── AGENTS.md -> <dotfiles>/xdg_config/agents/AGENTS.md
+        ├── APPEND_SYSTEM.md       # L0 pi 专属补充（codemode、classifier）
+        ├── settings.json          # 引用 ../../agents/skills
+        ├── keybindings.json       # pi 快捷键
+        ├── mcp.json               # L1 MCP 服务配置
+        ├── extensions/            # L1 pi 扩展工具（mpl-render、subagent 等）
+        └── prompts/               # L3 任务入口模板
 
 ~/.agents/skills/                  # L2 外部安装或本地项目链接的工具型 Skills
                                    # （如 agent-browser、typesafe-ai、worktrunk、devops-cli）
