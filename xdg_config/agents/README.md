@@ -24,12 +24,12 @@ Agent 的能力与行为按**触发方式**、**职责边界**和**上下文成�
    - 不能（需要强类型约束、权限隔离、UI 渲染、外部服务接入或独立子会话）→ 新增 **L1**（Tool / Extension / MCP）。
    - 能 → 复用现有工具。能用 schema 或脚本直接检查的约束，优先用代码检查。
 3. **分别判断是否需要 Prompt 和 Skill。** 两者可以同时需要，也可以都不需要。
-   - **用户需要一个有明确约定的入口吗？** 需要 → 写 **L3（Prompt）**，按「目标 → 执行策略与约束 → 执行结果 → 任务边界」四段说明调用时要完成什么、怎么执行、应交付什么结果以及读写与决策边界。模板格式与编写规范见 [pi/README.md](../pi/README.md#prompts)。
+   - **用户需要一个有明确约定的入口吗？** 需要 → 写 **L3（Prompt）**，约定调用时要完成什么、怎么执行、应交付什么结果以及读写与决策边界。模板格式与编写规范见 [pi/README.md](../pi/README.md#prompts)。
    - **即使不通过这个入口，这类任务是否仍需要模型无法可靠推断的指导？** 需要 → 写 **L2（Skill）**。例如两份数据冲突时以哪份为准，或几种做法都可行时团队选哪种。已知的内部约定不必等模型反复犯错才记录。编写规范见 [skills/README.md](skills/README.md)。
 
 ### 关键边界
 
-- **按入口约定决定步骤放哪**：删掉某个步骤会改变用户调用入口时得到的结果，就在 Prompt 中写明。例如 `/score` 要求用 decision 模型评分；调用失败时留空缺失分数，不给推荐。跨入口通用的做法留在 Skill 中，不在每个 Prompt 里重写。
+- **按入口约定决定步骤放哪**：删掉某个步骤会改变用户调用入口时得到的结果，就在 Prompt 中写明。例如某入口依赖特定模型或工具、并规定其失败时的降级输出，这些都属于入口约定。跨入口通用的做法留在 Skill 中，不在每个 Prompt 里重写。
 - **自建 Skill 边界清晰、可组合**：用 `description` 说明何时加载、哪些相近任务不适用。一个任务可以按需组合多个 Skill，例如先做根因分析缩小候选范围，再用消融实验验证某个因素。避免对同一个决策给出冲突的默认做法；与外部 Skill 冲突时，在自建 Skill 的 `description` 中划清适用范围。
 
 ## 3. 目录结构与单一真源（SSOT）
@@ -89,24 +89,10 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 - **验证**：`verify-changes`（真实入口测试与不变量验证）、`ablation-studies`（单因素对照实验）
 - **交付**：`explain-code`（按合适层级讲清代码行为与变更）、`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（技术文档写作）、`git-commit`（原子提交与本地历史整理）
 
-Prompts（L3）表达用户显式发起的**动作与读写护栏**，在日常任务中与上述策略按阶段配合：
-
-| 阶段       | Prompt 入口  | 读写护栏                            | 常配合的 Skills                                                                 |
-|:-----------|:-------------|:------------------------------------|:--------------------------------------------------------------------------------|
-| 状态对齐   | `/restate`   | 只读（仅总结）                      | —（自包含）                                                                     |
-| 问题与方案 | `/explore`   | 只读（列约束与选项，不推荐）        | `problem-modeling`、`read-code`、`design-options`、`visual-explanation`         |
-| 方案收敛   | `/score`     | 只读（decision 模型量化打分并推荐） | `typesafe-ai`                                                                   |
-| 根因定位   | `/debug`     | 只读（最小判别实验）                | `root-cause-analysis`、`read-code`、`ablation-studies`                          |
-| 最小实现   | `/implement` | 仅改约定范围                        | `write-code`、`verify-changes`                                                  |
-| 补充验证   | `/test`      | 仅改测试与 fixtures                 | `verify-changes`                                                                |
-| 变更审阅   | `/review`    | 只读（质疑必要性与回归风险）        | `read-code`、`verify-changes`、`technical-writing`                              |
-| 架构记录   | 显式要求记录 | 文档写操作                          | `architecture-decision-records`                                                 |
-| 提交变更   | 显式要求提交 | Git 写操作                          | `git-commit`                                                                    |
+Prompts（L3）是用户显式发起的动作入口，按阶段与上述 Skills 配合。各入口的职责、读写边界、常配合的 Skills 与使用习惯见 [pi/README.md](../pi/README.md#prompts)。架构记录与提交变更没有 Prompt 入口，需显式要求，分别由 `architecture-decision-records` 与 `git-commit` 承接（文档写操作 / Git 写操作）。
 
 ### 使用习惯
 
-- **先只读、后修改**：问题未定型或根因未证实前，优先用只读入口（`/explore`、`/debug`、`/restate`）收敛共识，再进入 `/implement`。
-- **把护栏留在入口**：通过 Prompt 的显式边界（只读 / 只改测试 / 仅改约定范围）防止模型越界，比事后回滚成本更低。
 - **定期回收与瘦身**：
   - 同类任务中反复纠正的判断或步骤 → 按第 2 节判断是否沉淀为 Skill；需要随任务入口显式声明的读写护栏 → 放在 Prompt。
   - 长期不再触发的 Skill 或 Prompt → 及时清理，保持路由清晰。

@@ -3,7 +3,7 @@ description: Isolate the root cause of a bug or failure without modifying code
 argument-hint: "[bug, error, or target]"
 ---
 
-Isolate the root cause of: ${@:-the bug, failing check, or unexpected behavior in the current session}
+Diagnose: ${@:-the bug, failing check, or unexpected behavior in the current session}
 
 Strategy:
 - Use the smallest read-only check that distinguishes the remaining explanations.
