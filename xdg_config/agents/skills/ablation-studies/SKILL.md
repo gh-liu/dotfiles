@@ -1,11 +1,11 @@
 ---
 name: ablation-studies
-description: Design or run a matched comparison to isolate a factor's effect. Use when a component, setting, input, or training choice can be removed or replaced and the question is what changes as a result. Searching for the best overall configuration is a different task.
+description: Design or run a matched comparison to isolate a factor's effect. Use when a component, setting, input, or training choice can be removed or replaced to measure what changes, rather than when searching for the best overall configuration or verifying general correctness.
 ---
 
 # Ablation studies
 
-Use the full system as the baseline. For each factor, start from that baseline, remove, disable, or replace the factor, and compare performance on the same task.
+Use the full system as the baseline. For each factor, start from that baseline, remove, disable, or replace the factor, and compare performance on the same task. Skip ablation when the goal is tuning for the best overall configuration rather than isolating an individual factor's effect.
 
 ## Design the comparison
 

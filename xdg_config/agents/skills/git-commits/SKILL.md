@@ -1,5 +1,5 @@
 ---
-name: git-commit
+name: git-commits
 description: Create atomic commits, fold follow-up changes into existing local commits, and draft or review commit messages following repository conventions. Use when asked to stage and commit changes, split changes into commits, absorb or fixup changes into local commits, or draft or review a commit message, rather than for reviewing code changes, writing pull request descriptions, or managing branches and worktrees.
 ---
 

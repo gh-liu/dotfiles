@@ -1,11 +1,11 @@
 ---
-name: verify-changes
-description: Verify a code or configuration change through the entry point its callers use. Use when adding tests, checking a fix against the original failure, or showing that a change preserves a contract. Measuring a factor's effect alone does not establish correctness.
+name: change-verification
+description: Verify a code or configuration change through the entry point its callers use. Use when adding tests, checking a fix against the original failure, or showing that a change preserves a contract, rather than when isolating a single factor's effect in an experiment.
 ---
 
-# Verify changes
+# Change verification
 
-Prove with independently checkable evidence that a change satisfies its acceptance criteria and preserves existing invariants. Match verification depth to the change's impact and risk.
+Prove with independently checkable evidence that a change satisfies its acceptance criteria and preserves existing invariants. Match verification depth to the change's impact and risk: targeted tests and static checks suffice for local, low-risk edits, while contract, schema, or cross-component changes require realistic entry-point and compatibility checks.
 
 ## Exercise realistic entry points
 

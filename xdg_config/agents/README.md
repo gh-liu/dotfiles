@@ -83,13 +83,13 @@ Skills 通过 [`skillsu`](../bin/skillsu) 安装，用法为 `skillsu [agent]`�
 
 自建 Skills（L2）独立于具体入口，按 `理解 → 决策 → 实现 → 验证 → 交付` 覆盖完整工程策略：
 
-- **理解**：`problem-modeling`（界定模糊问题）、`read-code`（理解代码与 diff）、`root-cause-analysis`（定位异常根因）
-- **决策**：`design-options`（推导硬约束与权衡方案）、`architecture-decision-records`（查阅、撰写或替代 ADR）
-- **实现**：`write-code`（最小改动与代码化约束）
-- **验证**：`verify-changes`（真实入口测试与不变量验证）、`ablation-studies`（单因素对照实验）
-- **交付**：`explain-code`（按合适层级讲清代码行为与变更）、`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（技术文档写作）、`git-commit`（原子提交与本地历史整理）
+- **理解**：`problem-modeling`（界定模糊问题）、`code-reading`（追踪并按合适层级讲清代码行为与 diff）、`failure-diagnosis`（定位异常根因）
+- **决策**：`design-options`（推导硬约束与权衡方案）、`architecture-decisions`（查阅、撰写或替代 ADR）
+- **实现**：`code-writing`（最小改动与代码化约束）
+- **验证**：`change-verification`（真实入口测试与不变量验证）、`ablation-studies`（单因素对照实验）
+- **交付**：`visual-explanation`（图表、diff 与界面展示）、`technical-writing`（结构化技术输出与文档写作）、`git-commits`（原子提交与本地历史整理）
 
-Prompts（L3）是用户显式发起的动作入口，按阶段与上述 Skills 配合。各入口的职责、读写边界、常配合的 Skills 与使用习惯见 [pi/README.md](../pi/README.md#prompts)。架构记录与提交变更没有 Prompt 入口，需显式要求，分别由 `architecture-decision-records` 与 `git-commit` 承接（文档写操作 / Git 写操作）。
+Prompts（L3）是用户显式发起的动作入口，按阶段与上述 Skills 配合。各入口的职责、读写边界、常配合的 Skills 与使用习惯见 [pi/README.md](../pi/README.md#prompts)。架构记录与提交变更没有 Prompt 入口，需显式要求，分别由 `architecture-decisions` 与 `git-commits` 承接（文档写操作 / Git 写操作）。
 
 ### 使用习惯
 

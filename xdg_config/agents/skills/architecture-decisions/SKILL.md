@@ -1,5 +1,5 @@
 ---
-name: architecture-decision-records
+name: architecture-decisions
 description: Consult, draft, or supersede lightweight Architecture Decision Records (ADRs) for long-lived or constraining architectural choices. Use when checking active ADRs before changing architectural conventions, deciding whether a design choice warrants an ADR, or writing or updating an ADR, rather than when exploring or comparing candidate designs before a decision is settled, or writing general technical prose.
 ---
 

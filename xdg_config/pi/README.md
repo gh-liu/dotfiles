@@ -27,12 +27,12 @@
 | 阶段       | Prompt       | 职责                                          | 默认目标（省略宾语时）             | 写边界              | 常配合的 Skills                                                         |
 |:-----------|:-------------|:----------------------------------------------|:-----------------------------------|:--------------------|:------------------------------------------------------------------------|
 | 状态对齐   | `/restate`   | 压缩重述目标、约束/不变量、方案进展与未决问题 | 当前会话推进的任务状态             | 只读（仅总结）      | —（自包含）                                                             |
-| 问题与方案 | `/explore`   | 基于代码硬约束发散候选方案并对比核心取舍      | 当前会话讨论的问题或需求           | 只读（不推荐）      | `problem-modeling`、`read-code`、`design-options`、`visual-explanation` |
-| 方案收敛   | `/score`     | 硬约束过滤 + decision 模型加权比选并推荐      | 当前会话提出的候选方案             | 只读（只推荐）      | `typesafe-ai`                                                           |
-| 根因定位   | `/diagnose`  | 故障取证、竞争假设鉴别与根因定位              | 当前会话暴露的报错、失败或异常行为 | 只读（不修复）      | `root-cause-analysis`、`read-code`、`ablation-studies`                  |
-| 最小实现   | `/implement` | 按既定范围最小实现并完成针对性验证            | 当前会话敲定的方案、修复或修改项   | 仅改约定范围        | `write-code`、`verify-changes`                                          |
-| 测试验证   | `/test`      | 复用已有测试，仅为未覆盖的可观测行为补测并运行 | 当前会话实现的能力或目标行为       | 仅改测试与 fixtures | `verify-changes`                                                        |
-| 变更审阅   | `/review`    | 审查正确性、变更必要性、更简替代与测试缺口    | 当前会话实现或修改的代码变更       | 只读                | `read-code`、`verify-changes`、`technical-writing`                      |
+| 问题与方案 | `/explore`   | 基于代码硬约束发散候选方案并对比核心取舍      | 当前会话讨论的问题或需求           | 只读（不推荐）      | `problem-modeling`、`code-reading`、`design-options`、`visual-explanation` |
+| 方案收敛   | `/score`     | 硬约束过滤 + decision 模型加权比选并推荐      | 当前会话提出的候选方案             | 只读（只推荐）      | `typesafe-ai`                                                              |
+| 根因定位   | `/diagnose`  | 故障取证、竞争假设鉴别与根因定位              | 当前会话暴露的报错、失败或异常行为 | 只读（不修复）      | `failure-diagnosis`、`code-reading`、`ablation-studies`                    |
+| 最小实现   | `/implement` | 按既定范围最小实现并完成针对性验证            | 当前会话敲定的方案、修复或修改项   | 仅改约定范围        | `code-writing`、`change-verification`                                      |
+| 测试验证   | `/test`      | 复用已有测试，仅为未覆盖的可观测行为补测并运行 | 当前会话实现的能力或目标行为       | 仅改测试与 fixtures | `change-verification`                                                      |
+| 变更审阅   | `/review`    | 审查正确性、变更必要性、更简替代与测试缺口    | 当前会话实现或修改的代码变更       | 只读                | `code-reading`、`change-verification`、`technical-writing`                 |
 
 ### 使用习惯
 

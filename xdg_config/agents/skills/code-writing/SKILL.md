@@ -1,9 +1,9 @@
 ---
-name: write-code
+name: code-writing
 description: Implement, modify, or refactor production code with minimal scope while encoding invariants in types, schemas, or assertions. Use when turning an agreed design, clear requirement, or confirmed bug diagnosis into code changes, rather than when clarifying ambiguous goals, reading unfamiliar code, diagnosing an unknown root cause, or writing tests alone.
 ---
 
-# Write code
+# Code writing
 
 Change only what the goal and constraints require. Inspect surrounding implementations, callers, and error handling before editing so new code follows established project patterns.
 

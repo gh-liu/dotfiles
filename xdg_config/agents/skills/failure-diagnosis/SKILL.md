@@ -1,11 +1,11 @@
 ---
-name: root-cause-analysis
-description: Distinguish competing causes of a failure using observable evidence. Use when a test fails, a regression appears, or runtime behavior diverges from expectations and the cause is still unknown. A fix for an already confirmed cause does not need a new diagnosis.
+name: failure-diagnosis
+description: Distinguish competing causes of a failure using observable evidence. Use when a test fails, a regression appears, or runtime behavior diverges from expectations and the cause is still unknown, rather than when implementing a fix for an already confirmed cause.
 ---
 
-# Root-cause analysis
+# Failure diagnosis
 
-Pin down why observed behavior diverges from expected behavior before proposing or implementing a fix. Start with read-only checks. If the evidence leaves several hypotheses open, identify what to observe and which outcome would rule out each hypothesis. Use temporary instrumentation when it is needed and within the task’s scope.
+Pin down why observed behavior diverges from expected behavior before proposing or implementing a fix. If primary evidence already confirms the cause, skip further diagnosis and move to fixing and verifying. Start with read-only checks; if the evidence leaves several hypotheses open, identify what to observe and which outcome would rule out each hypothesis, using temporary instrumentation only when needed and within the task's scope.
 
 ## Pin down the failure
 
