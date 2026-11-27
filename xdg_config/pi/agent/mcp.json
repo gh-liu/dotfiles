@@ -1,5 +1,15 @@
 {
   "mcpServers": {
+    "magpie-artifacts": {
+      "command": "/Applications/magpie.app/Contents/MacOS/magpie",
+      "args": [
+        "mcp",
+        "artifacts"
+      ],
+      "toolExposure": {
+        "publish_artifact": "direct"
+      }
+    },
     "exa": {
       "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa",
       "headers": {

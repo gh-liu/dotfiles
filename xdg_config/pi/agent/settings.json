@@ -17,8 +17,9 @@
   "skills": [
     "../../agents/skills"
   ],
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.2-sol",
+  "defaultProvider": "magpie",
+  "defaultModel": "agy-cli/gemini-4-neon",
   "defaultThinkingLevel": "high",
-  "enableInstallTelemetry": false
+  "enableInstallTelemetry": false,
+  "lastChangelogVersion": "1.6.0"
 }

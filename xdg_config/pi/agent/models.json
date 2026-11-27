@@ -9,12 +9,46 @@
       },
       "models": [
         {
-          "contextWindow": 512000,
+          "api": "openai-responses",
+          "compat": {
+            "supportsStrictMode": true
+          },
+          "contextWindow": 272000,
           "cost": {
-            "cacheRead": 0.003,
-            "cacheWrite": 0,
-            "input": 0.15,
-            "output": 0.6
+            "cacheRead": 0.1,
+            "cacheWrite": 2.5,
+            "input": 2,
+            "output": 10
+          },
+          "id": "group/hard-to-strong-easy-to-cheap",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 128000,
+          "name": "Hard to strong, easy to cheap · routing group",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "high": "high",
+            "low": "low",
+            "max": "max",
+            "medium": "medium",
+            "minimal": null,
+            "off": null,
+            "xhigh": "xhigh"
+          }
+        },
+        {
+          "api": "openai-responses",
+          "compat": {
+            "supportsStrictMode": true
+          },
+          "contextWindow": 500000,
+          "cost": {
+            "cacheRead": 0.05,
+            "cacheWrite": 1.25,
+            "input": 1,
+            "output": 5
           },
           "id": "group/mixup",
           "input": [
@@ -27,39 +61,6 @@
           "thinkingLevelMap": {
             "high": "high",
             "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "api": "openai-responses",
-          "compat": {
-            "supportsStrictMode": true
-          },
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 1,
-            "cacheWrite": 12.5,
-            "input": 10,
-            "output": 50
-          },
-          "id": "hqy-o/gpt-6-astra",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 128000,
-          "name": "GPT-6 Astra · hqy-o",
-          "promptCache": {
-            "short": 300
-          },
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
             "max": "max",
             "medium": "medium",
             "minimal": null,
@@ -68,73 +69,52 @@
           }
         },
         {
-          "api": "openai-responses",
-          "compat": {
-            "supportsStrictMode": true
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 0.2,
+            "cacheWrite": 5,
+            "input": 4,
+            "output": 20
           },
-          "contextWindow": 512000,
+          "id": "auto/claude-opus-5-5",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 64000,
+          "name": "Claude Opus 5.5 · routing group",
+          "promptCache": {
+            "short": 300
+          },
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "high": "high",
+            "low": "low",
+            "max": null,
+            "medium": "medium",
+            "minimal": null,
+            "off": null,
+            "xhigh": null
+          }
+        },
+        {
+          "contextWindow": 1000000,
           "cost": {
             "cacheRead": 0.1,
             "cacheWrite": 2.5,
             "input": 2,
             "output": 10
           },
-          "id": "hqy-o/gpt-6.1-sol",
+          "id": "auto/claude-sonnet-5-5",
           "input": [
             "text",
             "image"
           ],
-          "maxTokens": 128000,
-          "name": "GPT-6.1 Sol · hqy-o",
+          "maxTokens": 64000,
+          "name": "Claude Sonnet 5.5 · routing group",
           "promptCache": {
             "short": 300
           },
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "api": "openai-responses",
-          "compat": {
-            "supportsStrictMode": true
-          },
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.003,
-            "cacheWrite": 0,
-            "input": 0.15,
-            "output": 0.6
-          },
-          "id": "hqy-ds/deepseek/deepseek-flash",
-          "input": [
-            "text",
-            "image"
-          ],
-          "maxTokens": 393216,
-          "name": "DeepSeek V4.1 Flash 1017 · hqy-ds",
-          "reasoning": true
-        },
-        {
-          "contextWindow": 256000,
-          "cost": {
-            "cacheRead": 0.5,
-            "cacheWrite": 0,
-            "input": 2,
-            "output": 6
-          },
-          "id": "cursor/grok-4.7@256k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Grok 4.7 @ 256k · Cursor",
           "reasoning": true,
           "thinkingLevelMap": {
             "high": "high",
@@ -143,390 +123,15 @@
             "medium": "medium",
             "minimal": null,
             "off": null,
-            "xhigh": "xhigh"
+            "xhigh": null
           }
         },
         {
+          "api": "openai-responses",
+          "compat": {
+            "supportsStrictMode": true
+          },
           "contextWindow": 500000,
-          "cost": {
-            "cacheRead": 0.5,
-            "cacheWrite": 0,
-            "input": 2,
-            "output": 6
-          },
-          "id": "cursor/grok-4.7@500k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Grok 4.7 @ 500k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 5,
-            "input": 4,
-            "output": 20
-          },
-          "id": "cursor/claude-opus-5-5@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Claude Opus 5.5 @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 5,
-            "input": 4,
-            "output": 20
-          },
-          "id": "cursor/claude-opus-5-5@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Claude Opus 5.5 @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.15,
-            "cacheWrite": 0,
-            "input": 3,
-            "output": 15
-          },
-          "id": "cursor/gemini-4-neon@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Neon @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.15,
-            "cacheWrite": 0,
-            "input": 3,
-            "output": 15
-          },
-          "id": "cursor/gemini-4-neon@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Neon @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 0,
-            "input": 2,
-            "output": 10
-          },
-          "id": "cursor/gemini-4-carbon@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Carbon @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": null
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 0,
-            "input": 2,
-            "output": 10
-          },
-          "id": "cursor/gemini-4-carbon@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Carbon @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": null
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.075,
-            "cacheWrite": 0,
-            "input": 1.5,
-            "output": 7.5
-          },
-          "id": "cursor/gemini-4-hydrogen@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Hydrogen @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.075,
-            "cacheWrite": 0,
-            "input": 1.5,
-            "output": 7.5
-          },
-          "id": "cursor/gemini-4-hydrogen@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Hydrogen @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 0,
-            "input": 2,
-            "output": 10
-          },
-          "id": "cursor/gemini-4-argon@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Argon @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": null
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 0,
-            "input": 2,
-            "output": 10
-          },
-          "id": "cursor/gemini-4-argon@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Gemini 4 Argon @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": null,
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": null
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 10,
-            "input": 8,
-            "output": 40
-          },
-          "id": "cursor/claude-fable-5-2@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Claude Fable 5.2 @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.2,
-            "cacheWrite": 10,
-            "input": 8,
-            "output": 40
-          },
-          "id": "cursor/claude-fable-5-2@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Claude Fable 5.2 @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 300000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 2.5,
-            "input": 2,
-            "output": 10
-          },
-          "id": "cursor/claude-sonnet-5-5@300k",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Claude Sonnet 5.5 @ 300k · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "contextWindow": 512000,
-          "cost": {
-            "cacheRead": 0.1,
-            "cacheWrite": 2.5,
-            "input": 2,
-            "output": 10
-          },
-          "id": "cursor/claude-sonnet-5-5@1m",
-          "input": [
-            "text",
-            "image"
-          ],
-          "name": "Claude Sonnet 5.5 @ 1m · Cursor",
-          "reasoning": true,
-          "thinkingLevelMap": {
-            "high": "high",
-            "low": "low",
-            "max": "max",
-            "medium": "medium",
-            "minimal": null,
-            "off": null,
-            "xhigh": "xhigh"
-          }
-        },
-        {
-          "api": "openai-responses",
-          "compat": {
-            "supportsStrictMode": true
-          },
-          "contextWindow": 512000,
           "cost": {
             "cacheRead": 0.1,
             "cacheWrite": 2.5,
@@ -559,7 +164,7 @@
           "compat": {
             "supportsStrictMode": true
           },
-          "contextWindow": 512000,
+          "contextWindow": 272000,
           "cost": {
             "cacheRead": 0.4,
             "cacheWrite": 10,
@@ -592,7 +197,7 @@
           "compat": {
             "supportsStrictMode": true
           },
-          "contextWindow": 512000,
+          "contextWindow": 500000,
           "cost": {
             "cacheRead": 0.05,
             "cacheWrite": 1.25,
@@ -621,12 +226,45 @@
           }
         },
         {
+          "api": "openai-responses",
+          "compat": {
+            "supportsStrictMode": true
+          },
+          "contextWindow": 272000,
+          "cost": {
+            "cacheRead": 0.01,
+            "cacheWrite": 0.125,
+            "input": 0.1,
+            "output": 0.5
+          },
+          "id": "codex/gpt-6-luna",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 128000,
+          "name": "GPT-6-Luna · Codex",
+          "promptCache": {
+            "short": 300
+          },
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "high": "high",
+            "low": "low",
+            "max": "max",
+            "medium": "medium",
+            "minimal": null,
+            "off": null,
+            "xhigh": "xhigh"
+          }
+        },
+        {
           "api": "anthropic-messages",
           "baseUrl": "http://127.0.0.1:3425",
           "compat": {
             "forceAdaptiveThinking": true
           },
-          "contextWindow": 512000,
+          "contextWindow": 1048576,
           "cost": {
             "cacheRead": 0.15,
             "cacheWrite": 0,
@@ -657,7 +295,38 @@
           "compat": {
             "forceAdaptiveThinking": true
           },
-          "contextWindow": 512000,
+          "contextWindow": 1048576,
+          "cost": {
+            "cacheRead": 0.2,
+            "cacheWrite": 0,
+            "input": 4,
+            "output": 20
+          },
+          "id": "agy-cli/gemini-4-carbon",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 262144,
+          "name": "Gemini 4 Carbon · Antigravity (local agy CLI)",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "high": "high",
+            "low": "low",
+            "max": null,
+            "medium": "medium",
+            "minimal": null,
+            "off": null,
+            "xhigh": null
+          }
+        },
+        {
+          "api": "anthropic-messages",
+          "baseUrl": "http://127.0.0.1:3425",
+          "compat": {
+            "forceAdaptiveThinking": true
+          },
+          "contextWindow": 1048576,
           "cost": {
             "cacheRead": 0.2,
             "cacheWrite": 0,
@@ -688,7 +357,7 @@
           "compat": {
             "forceAdaptiveThinking": true
           },
-          "contextWindow": 512000,
+          "contextWindow": 1048576,
           "cost": {
             "cacheRead": 0.075,
             "cacheWrite": 0,
@@ -711,6 +380,74 @@
             "minimal": null,
             "off": null,
             "xhigh": "xhigh"
+          }
+        },
+        {
+          "api": "anthropic-messages",
+          "baseUrl": "http://127.0.0.1:3425",
+          "compat": {
+            "forceAdaptiveThinking": true
+          },
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 0.2,
+            "cacheWrite": 5,
+            "input": 4,
+            "output": 20
+          },
+          "id": "agy-cli/claude-opus-5-5",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 64000,
+          "name": "Claude Opus 5.5 · Antigravity (local agy CLI)",
+          "promptCache": {
+            "long": 3600,
+            "short": 300
+          },
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "high": "high",
+            "low": "low",
+            "max": null,
+            "medium": "medium",
+            "minimal": null,
+            "xhigh": null
+          }
+        },
+        {
+          "api": "anthropic-messages",
+          "baseUrl": "http://127.0.0.1:3425",
+          "compat": {
+            "forceAdaptiveThinking": true
+          },
+          "contextWindow": 1000000,
+          "cost": {
+            "cacheRead": 0.1,
+            "cacheWrite": 2.5,
+            "input": 2,
+            "output": 10
+          },
+          "id": "agy-cli/claude-sonnet-5-5",
+          "input": [
+            "text",
+            "image"
+          ],
+          "maxTokens": 64000,
+          "name": "Claude Sonnet 5.5 · Antigravity (local agy CLI)",
+          "promptCache": {
+            "long": 3600,
+            "short": 300
+          },
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "high": "high",
+            "low": "low",
+            "max": null,
+            "medium": "medium",
+            "minimal": null,
+            "xhigh": null
           }
         }
       ],

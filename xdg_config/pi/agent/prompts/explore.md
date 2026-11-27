@@ -6,7 +6,7 @@ argument-hint: "[problem or requirement]"
 Explore candidate options for: ${@:-the problem or requirement under discussion}
 
 Strategy:
-- Derive the constraints supported by the code and its contracts.
+- Derive the constraints supported by the code, its contracts, and external references when relevant.
 - Identify viable options that meet those constraints, including the smallest change that works. If only one option fits, explain why instead of inventing a second.
 
 Output:

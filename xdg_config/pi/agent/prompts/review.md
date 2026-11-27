@@ -6,8 +6,8 @@ argument-hint: "[changes, git ref, or path]"
 Review: ${@:-the code changes made in the current session}
 
 Strategy:
-- Check correctness, contract and edge-case safety, hidden coupling, and whether tests would catch regressions.
 - Reason from first principles: identify the underlying contract, invariants, and constraints before accepting assumptions or implementation details.
+- Check correctness, contract and edge-case safety, hidden coupling, and whether tests would catch regressions.
 - Question necessity: for each substantive change, ask what breaks if it is removed or replaced with a simpler mechanism.
 
 Output:
